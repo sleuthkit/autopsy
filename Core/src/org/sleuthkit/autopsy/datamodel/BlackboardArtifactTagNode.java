@@ -22,12 +22,14 @@ import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
@@ -93,7 +95,13 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.comment.text"),
                 "",
                 tag.getComment()));
-
+        try {
+            List<BlackboardArtifactTag> tags = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(tag.getArtifact());
+            properties.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
+                    "", tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+        } catch (TskCoreException ex) {
+            //LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+        }
         return propertySheet;
     }
 

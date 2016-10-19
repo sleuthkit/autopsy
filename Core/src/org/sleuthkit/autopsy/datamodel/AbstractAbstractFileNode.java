@@ -286,9 +286,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         final String NO_DESCR = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.desc");
         try {
             List<ContentTag> tags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
-            ss.put(new NodeProperty<>(NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.name"),
-                    NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
-                        NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+            ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
+                    NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }

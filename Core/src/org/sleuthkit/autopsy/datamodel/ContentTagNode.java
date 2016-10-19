@@ -21,12 +21,14 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -103,6 +105,13 @@ class ContentTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
                 "",
                 content.getSize()));
+        try {
+            List<ContentTag> tags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
+            properties.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
+                    "", tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+        } catch (TskCoreException ex) {
+            //LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+        }
         return propertySheet;
     }
 

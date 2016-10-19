@@ -202,6 +202,9 @@ public class KeywordHits implements AutopsyVisitableItem {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
             }
 
+            setChanged();
+            notifyObservers();
+
             populateMaps(artifactIds);
         }
     }
@@ -306,6 +309,12 @@ public class KeywordHits implements AutopsyVisitableItem {
                         removeNotify();
                         skCase = null;
                     }
+                } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
+                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
+                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
+                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+                    refresh(true);
+                    keywordResults.update();
                 }
             }
         };
@@ -409,24 +418,25 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class TermFactory extends ChildFactory<String> implements Observer {
 
         private String setName;
 
         private TermFactory(String setName) {
             super();
             this.setName = setName;
-        }
-
-        @Override
-        protected void addNotify() {
             keywordResults.addObserver(this);
         }
 
-        @Override
-        protected void removeNotify() {
-            keywordResults.deleteObserver(this);
-        }
+//        @Override
+//        protected void addNotify() {
+//            keywordResults.addObserver(this);
+//        }
+//
+//        @Override
+//        protected void removeNotify() {
+//            keywordResults.deleteObserver(this);
+//        }
 
         @Override
         protected boolean createKeys(List<String> list) {
@@ -507,7 +517,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {
+    public class HitsFactory extends ChildFactory<Long> implements Observer {
 
         private String keyword;
         private String setName;
@@ -516,17 +526,18 @@ public class KeywordHits implements AutopsyVisitableItem {
             super();
             this.setName = setName;
             this.keyword = keyword;
-        }
-
-        @Override
-        protected void addNotify() {
             keywordResults.addObserver(this);
         }
 
-        @Override
-        protected void removeNotify() {
-            keywordResults.deleteObserver(this);
-        }
+//        @Override
+//        protected void addNotify() {
+//            keywordResults.addObserver(this);
+//        }
+//
+//        @Override
+//        protected void removeNotify() {
+//            keywordResults.deleteObserver(this);
+//        }
 
         @Override
         protected boolean createKeys(List<Long> list) {

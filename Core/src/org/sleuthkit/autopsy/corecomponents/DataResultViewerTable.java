@@ -458,7 +458,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     if (col != 0) {
                         try {
                             int tag_col = ov.getOutline().getColumnModel().getColumnIndex("Tags");
-                            Property cellProp = (Property)(table.getModel().getValueAt(row, tag_col));
+                            Property<?> cellProp = (Property)(table.getModel().getValueAt(row, tag_col));
                             if (cellProp != null) {
                                 String valueString = cellProp.getValue().toString();//((Property) value).getValue().toString();
                                 if (!valueString.equals("")) {

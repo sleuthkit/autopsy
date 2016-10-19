@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * factory built on top of the NetBeans Children.Keys class.
  */
 public class Tags implements AutopsyVisitableItem {
-    // Creation of a RootNode object corresponding to a Tags object is done 
-    // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren 
+    // Creation of a RootNode object corresponding to a Tags object is done
+    // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren
     // override of Children.Keys<T>.createNodes().
 
     private final TagResults tagResults = new TagResults();
@@ -134,7 +134,7 @@ public class Tags implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCase();
-                        refresh(true);
+                        //refresh(true);
                         tagResults.update();
                     } catch (IllegalStateException notUsed) {
                         /**
@@ -203,7 +203,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public void update(Observable o, Object arg) {
-            refresh(true);
+            //refresh(true);
         }
     }
 
@@ -409,7 +409,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public void update(Observable o, Object arg) {
-            refresh(true);
+            refresh(true); //this caused table to update
         }
     }
 
@@ -505,7 +505,7 @@ public class Tags implements AutopsyVisitableItem {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
         }
-        
+
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);
