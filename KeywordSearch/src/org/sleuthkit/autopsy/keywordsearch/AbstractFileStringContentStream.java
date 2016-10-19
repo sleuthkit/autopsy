@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,7 +25,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -36,11 +35,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 class AbstractFileStringContentStream implements ContentStream {
     //input
 
-    private AbstractFile content;
-    private Charset charset;
+    private final AbstractFile content;
+    private final Charset charset;
     //converted
-    private InputStream stream;
-    private static Logger logger = Logger.getLogger(AbstractFileStringContentStream.class.getName());
+    private final InputStream stream;
 
     public AbstractFileStringContentStream(AbstractFile content, Charset charset, InputStream inputStream) {
         this.content = content;
