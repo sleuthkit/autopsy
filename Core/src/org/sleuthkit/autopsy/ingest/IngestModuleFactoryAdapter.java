@@ -54,7 +54,7 @@ public abstract class IngestModuleFactoryAdapter implements IngestModuleFactory 
     }
 
     @Override
-    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings ingestOptions) {
+    public IngestModuleIngestJobSettingsPanel getIngestJobSettingsPanel(IngestModuleIngestJobSettings settings) {
         throw new UnsupportedOperationException();
     }
 

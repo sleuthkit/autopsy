@@ -271,7 +271,7 @@ class ReportHTML implements TableReportModule {
              * them all the general account icon, but we could do something else
              * in the future.
              */
-            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
             iconFileName = "accounts.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
         } else {  // no defined artifact found for this dataType
@@ -1126,13 +1126,17 @@ class ReportHTML implements TableReportModule {
         if (thumbFile.exists() == false) {
             return null;
         }
+        File to = new File(thumbsPath);
+        FileObject from = FileUtil.toFileObject(thumbFile);
+        FileObject dest = FileUtil.toFileObject(to);
         try {
-            File to = new File(thumbsPath);
-            FileObject from = FileUtil.toFileObject(thumbFile);
-            FileObject dest = FileUtil.toFileObject(to);
             FileUtil.copyFile(from, dest, thumbFile.getName(), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
+        } catch (NullPointerException ex) {
+            logger.log(Level.SEVERE, "NPE generated from FileUtil.copyFile, probably because FileUtil.toFileObject returned null. \n" +
+                    "The File argument for toFileObject was " + thumbFile + " with toString: " + thumbFile.toString() + "\n" +
+                    "The FileObject returned by toFileObject, passed into FileUtil.copyFile, was " + from, ex);
         }
 
         return THUMBS_REL_PATH + thumbFile.getName();

@@ -104,7 +104,8 @@ public class UNCPathUtilities {
     /**
      * This method converts a passed in path to UNC if it is not already UNC.
      * The UNC path will end up in one of the following two forms:
-     * \\hostname\somefolder\otherfolder or \\IP_ADDRESS\somefolder\otherfolder
+     * \\\\hostname\\somefolder\\otherfolder or
+     * \\\\IP_ADDRESS\\somefolder\\otherfolder
      *
      * This is accomplished by checking the mapped drives list the operating
      * system maintains and substituting where required. If the drive of the

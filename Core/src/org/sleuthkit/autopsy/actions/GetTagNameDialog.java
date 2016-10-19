@@ -53,7 +53,7 @@ public class GetTagNameDialog extends JDialog {
     /**
      * Show the Tag Name Dialog and return the TagName selected by the user. The
      * dialog will be centered with the main autopsy window as its owner. To set
-     * another window as the owner use {@link #doDialog(java.awt.Window) }
+     * another window as the owner use doDialog(Window) instead.
      *
      * @return a TagName instance selected by the user, or null if the user
      *         canceled the dialog.

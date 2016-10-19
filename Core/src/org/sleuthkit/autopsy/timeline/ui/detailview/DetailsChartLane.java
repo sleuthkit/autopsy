@@ -62,13 +62,13 @@ import org.sleuthkit.autopsy.timeline.ui.AbstractTimelineChart;
 import org.sleuthkit.autopsy.timeline.ui.ContextMenuProvider;
 
 /**
- * One "lane" of a the details view, contains all the core logic and
- * layout code.
+ * One "lane" of a the details view, contains all the core logic and layout
+ * code.
  *
  * NOTE: It was too hard to control the threading of this chart via the
- * complicated default listeners. Instead clients should use {@link #addDataItem(javafx.scene.chart.XYChart.Data)
- * } and {@link #removeDataItem(javafx.scene.chart.XYChart.Data) } to add and
- * remove data.
+ * complicated default listeners. Instead clients should use
+ * addDataItem(javafx.scene.chart.XYChart.Data) and
+ * removeDataItem(javafx.scene.chart.XYChart.Data) to add and remove data.
  */
 abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTime, Y> implements ContextMenuProvider {
 
@@ -225,12 +225,8 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
      * greater than the left x coord, increment y position, do check again until
      * maxXatY less than left x coord.
      *
-     * @param nodes            collection of nodes to layout, sorted by event
-     *                         start time
-     * @param minY             the minimum y coordinate to position the nodes
-     *                         at.
-     * @param descriptionWidth the value of the maximum description width to set
-     *                         for each node.
+     * @param nodes collection of nodes to layout, sorted by event start time
+     * @param minY  the minimum y coordinate to position the nodes at.
      *
      * @return the maximum y coordinate used by any of the layed out nodes.
      */
@@ -358,8 +354,8 @@ abstract class DetailsChartLane<Y extends TimeLineEvent> extends XYChart<DateTim
      */
     synchronized Iterable<EventNodeBase<?>> getNodes(Predicate<EventNodeBase<?>> p) {
         //use this recursive function to flatten the tree of nodes into an single stream.
-        Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener =
-                new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
+        Function<EventNodeBase<?>, Stream<EventNodeBase<?>>> stripeFlattener
+                = new Function<EventNodeBase<?>, Stream<EventNodeBase<?>>>() {
             @Override
             public Stream<EventNodeBase<?>> apply(EventNodeBase<?> node) {
                 return Stream.concat(
