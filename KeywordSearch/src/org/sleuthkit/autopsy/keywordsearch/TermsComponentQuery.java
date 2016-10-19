@@ -264,10 +264,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             //regex keyword
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
 
-            if (StringUtils.isNotEmpty(listName)) {
-                attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
-            }
-
             //make keyword hit artifact
             try {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
@@ -276,6 +272,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
                 LOGGER.log(Level.SEVERE, "Error adding bb artifact for keyword hit", tskCoreException); //NON-NLS
                 return null;
             }
+        }
+        if (StringUtils.isNotBlank(listName)) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
         //preview
         if (snippet != null) {
