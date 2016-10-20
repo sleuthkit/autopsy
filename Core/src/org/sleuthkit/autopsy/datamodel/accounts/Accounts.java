@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel.accounts;
 
-import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
-import org.sleuthkit.autopsy.datamodel.AutopsyVisitableItem;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
 import com.google.common.collect.TreeRangeMap;
@@ -59,6 +57,8 @@ import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
+import org.sleuthkit.autopsy.datamodel.AutopsyVisitableItem;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
@@ -168,6 +168,9 @@ final public class Accounts implements AutopsyVisitableItem {
         @Subscribe
         abstract void handleReviewStatusChange(ReviewStatusChangeEvent event);
 
+        @Subscribe
+        abstract void handleDataAdded(ModuleDataEvent event);
+
         @Override
         protected void removeNotify() {
             super.removeNotify();
@@ -220,7 +223,7 @@ final public class Accounts implements AutopsyVisitableItem {
                             ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                             if (null != eventData
                                     && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                                refreshKeys();
+                                reviewStatusBus.post(eventData);
                             }
                         } catch (IllegalStateException notUsed) {
                             // Case is closed, do nothing.
@@ -251,7 +254,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
 
@@ -373,8 +382,15 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
 
+            @Subscribe
             @Override
             void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
         }
@@ -417,10 +433,12 @@ final public class Accounts implements AutopsyVisitableItem {
          */
         final private class ViewModeFactory extends ObservingChildren<CreditCardViewMode> {
 
-            @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-                refreshKeys();
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            }
+
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
             }
 
             /**
@@ -476,7 +494,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
 
@@ -589,7 +613,12 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Subscribe
-        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateDisplayName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
     }
@@ -607,7 +636,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
 
@@ -703,7 +738,12 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Subscribe
-        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateDisplayName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
     }
@@ -940,15 +980,18 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
                 refreshKeys();
-                //make sure to refresh  the nodes for artifacts that changed statuses.
+                //make sure to refresh the nodes for artifacts that changed statuses.
                 event.artifacts.stream().map(BlackboardArtifact::getArtifactID).forEach(this::refreshKey);
             }
 
-            /**
-             *
-             */
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
+                refreshKeys();
+            }
+
             @Override
             protected List<Long> createKeys() {
                 List<Long> list = new ArrayList<>();
@@ -990,7 +1033,6 @@ final public class Accounts implements AutopsyVisitableItem {
             }
         }
         private final BinResult bin;
-//        private final CreditCardNumberFactory accountFactory;
 
         private BINNode(BinResult bin) {
             super(Children.LEAF);
@@ -1003,7 +1045,12 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Subscribe
-        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateDisplayName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
 
@@ -1367,7 +1414,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    class ReviewStatusChangeEvent {
+    private class ReviewStatusChangeEvent {
 
         Collection<? extends BlackboardArtifact> artifacts;
         BlackboardArtifact.ReviewStatus newReviewStatus;

@@ -209,7 +209,11 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             //if we couldn't parse the CCN abort this artifact
             final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
             if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
-                LOGGER.log(Level.SEVERE, "Failed to parse CCN from hit: " + hit.getSnippet());
+                if (hit.isArtifactHit()) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", termHit, hit.getSnippet(), hit.getArtifact().getArtifactID()));
+                } else {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", termHit, hit.getSnippet(), hit.getContent().getId()));                    
+                }
                 return null;
             }
 

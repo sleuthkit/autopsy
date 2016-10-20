@@ -250,11 +250,12 @@ class QueryResults {
 
         //list
         attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
-        detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-        detailsSb.append("</tr>"); //NON-NLS
-
+        if (attr != null) {
+            detailsSb.append("<tr>"); //NON-NLS
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
+            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+            detailsSb.append("</tr>"); //NON-NLS
+        }
         //regex
         if (!keywordSearchQuery.isLiteral()) {
             attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
