@@ -202,10 +202,10 @@ public class KeywordHits implements AutopsyVisitableItem {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS
             }
 
+            populateMaps(artifactIds);
+
             setChanged();
             notifyObservers();
-
-            populateMaps(artifactIds);
         }
     }
 
@@ -519,8 +519,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     public class HitsFactory extends ChildFactory<Long> implements Observer {
 
-        private String keyword;
-        private String setName;
+        private final String keyword;
+        private final String setName;
 
         public HitsFactory(String setName, String keyword) {
             super();

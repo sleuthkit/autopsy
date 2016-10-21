@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -37,6 +38,7 @@ import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -95,13 +97,16 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagNode.createSheet.comment.text"),
                 "",
                 tag.getComment()));
+
+        List<Tag> tags = new ArrayList<>();
         try {
-            List<BlackboardArtifactTag> tags = Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(tag.getArtifact());
-            properties.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
-                    "", tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(tag.getArtifact()));
         } catch (TskCoreException ex) {
-            //LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get tags for artifact " + tag.getArtifact().getDisplayName(), ex);
         }
+        properties.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
+                "", tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+
         return propertySheet;
     }
 

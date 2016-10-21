@@ -42,8 +42,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
@@ -60,8 +60,12 @@ import org.openide.nodes.Sheet;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * DataResult sortable table viewer
@@ -77,6 +81,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
+    private static final Color TAGGED_COLOR = new Color(230, 235, 240);
     private Node currentRoot;
     // The following two variables keep track of whether the user is trying
     // to move the first column, which is not allowed.
@@ -114,6 +119,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
 
+        // add a listener so that when columns are moved, the new order is stored
         ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
             @Override
             public void columnAdded(TableColumnModelEvent e) {
@@ -134,7 +140,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (fromIndex == toIndex) {
                     return;
                 }
-                // To keep track of attempts to move the first column
+                // to keep track of attempts to move the first column
                 if (oldColumnIndex == -1) {
                     oldColumnIndex = fromIndex;
                 }
@@ -151,6 +157,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
         });
 
+        // add a listener to move columns back if user tries to move the first column out of place
         ov.getOutline().getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
@@ -442,41 +449,55 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
                 }
             }
-            // Node[] childrenNodes = currentRoot.getChildren().getNodes();
-            final TableCellRenderer DEFAULT_RENDERER = ov.getOutline().getDefaultRenderer(Object.class);
-            final Color TAGGED_COLOR = new Color(230, 235, 240);
-            final Color SELECTED_COLOR = new Color(51, 153, 255);
-            
-            
-            class CustomRenderer extends DefaultTableCellRenderer {
+
+            /**
+             * This custom renderer extends the renderer that was already being
+             * used by the outline table. This renderer colors a row if the file
+             * or artifact associated with the row's node is tagged.
+             */
+            class ColorTagCustomRenderer extends DefaultOutlineCellRenderer {
                 private static final long serialVersionUID = 1L;
                 @Override
                 public Component getTableCellRendererComponent(JTable table,
                         Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-                    Component component = DEFAULT_RENDERER.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-                    
-                    if (col != 0) {
-                        try {
-                            int tag_col = ov.getOutline().getColumnModel().getColumnIndex("Tags");
-                            Property<?> cellProp = (Property)(table.getModel().getValueAt(row, tag_col));
-                            if (cellProp != null) {
-                                String valueString = cellProp.getValue().toString();//((Property) value).getValue().toString();
-                                if (!valueString.equals("")) {
-                                    component.setBackground(TAGGED_COLOR);
-                                    if (isSelected) {
-                                        component.setBackground(SELECTED_COLOR);
+
+                    Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                    if (!isSelected) {
+                        Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
+                        boolean tagFound = false;
+                        if (node != null) {
+                            //see if there is a blackboard artifact at the node and whether the artifact is tagged
+                            BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
+                            if (artifact != null) {
+                                try {
+                                    tagFound = !Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty();
+                                } catch (TskCoreException ex) {
+                                    Exceptions.printStackTrace(ex);
+                                }
+                            }
+
+                            //if no tags have been found yet, see if the abstract file at the node is tagged
+                            if (!tagFound) {
+                                AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
+                                if (abstractFile != null) {
+                                    try {
+                                        tagFound = !Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(abstractFile).isEmpty();
+                                    } catch (TskCoreException ex) {
+                                        Exceptions.printStackTrace(ex);
                                     }
                                 }
                             }
-                        } catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException ex) {
+
+                            //if the node does have associated tags, set its background color
+                            if (tagFound) {
+                                component.setBackground(TAGGED_COLOR);
+                            }
                         }
-                        
                     }
                     return component;
                 }
             }
-            ov.getOutline().setDefaultRenderer(Object.class, new CustomRenderer());
-            
+            ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
         }
     }
     

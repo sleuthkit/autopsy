@@ -81,11 +81,6 @@ public class DataSourcesNode extends DisplayableItemNode {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                     reloadKeys();
-                } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                    reloadKeys();
                 }
             }
         };

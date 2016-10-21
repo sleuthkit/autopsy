@@ -134,7 +134,7 @@ public class Tags implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCase();
-                        //refresh(true);
+                        refresh(true);
                         tagResults.update();
                     } catch (IllegalStateException notUsed) {
                         /**
@@ -203,7 +203,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public void update(Observable o, Object arg) {
-            //refresh(true);
+            refresh(true);
         }
     }
 
