@@ -33,7 +33,7 @@ class Keyword {
 
     private String searchTerm;
     private boolean isLiteral;
-    private boolean isWholeword;
+    private boolean isWholeWord;
     private BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType;
 
     /**
@@ -48,7 +48,7 @@ class Keyword {
     Keyword(String searchTerm, boolean isLiteral) {
         this.searchTerm = searchTerm;
         this.isLiteral = isLiteral;
-        this.isWholeword = true;
+        this.isWholeWord = true;
     }
 
     /**
@@ -59,14 +59,14 @@ class Keyword {
      * @param searchTerm  The search term.
      * @param isLiteral   Whether or not the search term is a literal term,
      *                    instead of a regex.
-     * @param isWholeword Whether or not the search term, if it is a literal
+     * @param isWholeWord Whether or not the search term, if it is a literal
      *                    search term, should be treated as a whole word rather
      *                    than a substring.
      */
-    Keyword(String searchTerm, boolean isLiteral, boolean isWholeword) {
+    Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord) {
         this.searchTerm = searchTerm;
         this.isLiteral = isLiteral;
-        this.isWholeword = isWholeword;
+        this.isWholeWord = isWholeWord;
     }
 
     /**
@@ -116,7 +116,7 @@ class Keyword {
      * @return True or false.
      */
     boolean searchTermIsWholeWord() {
-        return isWholeword;
+        return isWholeWord;
     }
 
     /**
@@ -147,7 +147,7 @@ class Keyword {
 
     @Override
     public String toString() {
-        return String.format("Keyword{term='%s', isLiteral=%s, artifactAtrributeType=%s}", searchTerm, isLiteral, artifactAtrributeType);
+        return String.format("Keyword{searchTerm='%s', isLiteral=%s, isWholeWord=%s}", searchTerm, isLiteral, isWholeWord);
     }
 
     @Override
@@ -159,17 +159,17 @@ class Keyword {
             return false;
         }
         Keyword other = (Keyword) obj;
-        if ((this.searchTerm == null) ? (other.searchTerm != null) : !this.searchTerm.equals(other.searchTerm)) {
-            return false;
-        }
-        return (this.isLiteral == other.isLiteral);
+        return (this.searchTerm.equals(other.searchTerm)
+                && this.isLiteral == other.isLiteral
+                && this.isWholeWord == other.isWholeWord);
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 17 * hash + (this.searchTerm != null ? this.searchTerm.hashCode() : 0);
+        hash = 17 * hash + this.searchTerm.hashCode();
         hash = 17 * hash + (this.isLiteral ? 1 : 0);
+        hash = 17 * hash + (this.isWholeWord ? 1 : 0);
         return hash;
     }
 
