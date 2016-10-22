@@ -16,7 +16,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.base.CharMatcher;
@@ -47,47 +46,43 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- * Performs a regular expression query, making use of the Solr terms component.
- * The terms component is described in the Apache Solr Reference Guide as a
- * component that "provides access to the indexed terms in a field and the
- * number of documents that match each term."
+ * Implements a regex query that will be performed as a two step operation. In
+ * the first step, the Solr terms component is used to find any terms in the
+ * index that match the regex. In the second step, term queries are executed for
+ * each matched term to produce the set of keyword hits for the regex.
  */
 final class TermsComponentQuery implements KeywordSearchQuery {
 
     private static final Logger LOGGER = Logger.getLogger(TermsComponentQuery.class.getName());
-    private static final boolean DEBUG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
-
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
-    private static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
-
-    //TODO: move these regex and the luhn check to a new class, something like: CreditCardNumberValidator
-    /*
-     * Track 2 is numeric plus six punctuation symbolls :;<=>?
-     *
-     * This regex matches 12-19 digit ccns embeded in a track 2 formated string.
-     * This regex matches (and extracts groups) even if the entire track is not
-     * present as long as the part that is conforms to the track format.
-     *
-     */
-    private static final Pattern TRACK2_PATTERN = Pattern.compile(
-            "[:;<=>?]?" //(optional)start sentinel //NON-NLS
-            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
-            + "(?:[:;<=>?]" //separator //NON-NLS
-            + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
-            + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
-            + "(?:(?<discretionary>[^:;<=>?]*)" //discretionary data, not containing punctuation marks //NON-NLS
-            + "(?:[:;<=>?]" //end sentinel //NON-NLS
-            + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
-            + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
+    private static final String SEARCH_HANDLER = "/terms"; //NON-NLS
+    private static final String SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
+    private static final int TERMS_SEARCH_TIMEOUT = 90 * 1000; // Milliseconds
+    private static final String CASE_INSENSITIVE = "case_insensitive"; //NON-NLS
+    private static final boolean DEBUG_FLAG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
+    private static final int MAX_TERMS_QUERY_RESULTS = 20000;
+    private final KeywordList keywordList;
+    private final Keyword keyword;
+    private String searchTerm;
+    private boolean searchTermIsEscaped;
+    private final List<KeywordQueryFilter> filters = new ArrayList<>(); // THIS APPEARS TO BE UNUSED
 
     /*
-     * Track 1 is alphanumeric.
-     *
-     * This regex matches 12-19 digit ccns embeded in a track 1 formated string.
-     * This regex matches (and extracts groups) even if the entire track is not
-     * present as long as the part that is conforms to the track format.
+     * The following fields are part of the initial implementation of credit
+     * card account search and should be factored into another class when time
+     * permits.
      */
-    private static final Pattern TRACK1_PATTERN = Pattern.compile(
+    private static final Pattern CREDIT_CARD_NUM_PATTERN = Pattern.compile("(?<ccn>[3456]([ -]?\\d){11,18})");   //12-19 digits, with possible single spaces or dashes in between. First digit is 3,4,5, or 6 //NON-NLS
+    private static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
+    private static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
+            /*
+             * Track 1 is alphanumeric.
+             *
+             * This regex matches 12-19 digit ccns embeded in a track 1 formated
+             * string. This regex matches (and extracts groups) even if the
+             * entire track is not present as long as the part that is conforms
+             * to the track format.
+             */
             "(?:" //begin nested optinal group //NON-NLS
             + "%?" //optional start sentinal: % //NON-NLS
             + "B)?" //format code  //NON-NLS
@@ -101,125 +96,303 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?:\\?" // end sentinal: ? //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
-    private static final Pattern CCN_PATTERN = Pattern.compile("(?<ccn>[3456]([ -]?\\d){11,18})");   //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
-    private static final LuhnCheckDigit LUHN_CHECK = new LuhnCheckDigit();
+    private static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
+            /*
+             * Track 2 is numeric plus six punctuation symbolls :;<=>?
+             *
+             * This regex matches 12-19 digit ccns embeded in a track 2 formated
+             * string. This regex matches (and extracts groups) even if the
+             * entire track is not present as long as the part that is conforms
+             * to the track format.
+             *
+             */
+            "[:;<=>?]?" //(optional)start sentinel //NON-NLS
+            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?:[:;<=>?]" //separator //NON-NLS
+            + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
+            + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
+            + "(?:(?<discretionary>[^:;<=>?]*)" //discretionary data, not containing punctuation marks //NON-NLS
+            + "(?:[:;<=>?]" //end sentinel //NON-NLS
+            + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
+            + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
+    private static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
 
-    //corresponds to field in Solr schema, analyzed with white-space tokenizer only
-    private static final String TERMS_SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
-    private static final String TERMS_HANDLER = "/terms"; //NON-NLS
-    private static final int TERMS_TIMEOUT = 90 * 1000; //in ms
-    private static final String CASE_INSENSITIVE = "case_insensitive"; //NON-NLS
-    private static final int MAX_TERMS_RESULTS = 20000;
-
-    private String escapedQuery;
-    private final KeywordList keywordList;
-    private final Keyword keyword;
-    private boolean isEscaped;
-    private final List<KeywordQueryFilter> filters = new ArrayList<>();
-
+    /**
+     * Constructs an object that implements a regex query that will be performed
+     * as a two step operation. In the first step, the Solr terms component is
+     * used to find any terms in the index that match the regex. In the second
+     * step, term queries are executed for each matched term to produce the set
+     * of keyword hits for the regex.
+     *
+     * @param keywordList A keyword list that contains the keyword that provides
+     *                    the regex search term for the query.
+     * @param keyword     The keyword that provides the regex search term for
+     *                    the query.
+     */
+    // TODO: Why is both the list and the keyword added to the state of this
+    // object?
+    // TODO: Why is the search term not escaped and given substring wildcards,
+    // if needed, here in the constructor?
     TermsComponentQuery(KeywordList keywordList, Keyword keyword) {
-        this.keyword = keyword;
-
         this.keywordList = keywordList;
-        this.escapedQuery = keyword.getSearchTerm();
-    }
-
-    @Override
-    public void addFilter(KeywordQueryFilter filter) {
-        this.filters.add(filter);
+        this.keyword = keyword;
+        this.searchTerm = keyword.getSearchTerm();
     }
 
     /**
-     * @param field
+     * Gets the keyword list that contains the keyword that provides the regex
+     * search term for the query.
      *
-     * @deprecated This method is unused and no-op
+     * @return The keyword list.
      */
     @Override
-    @Deprecated
-    public void setField(String field) {
+    public KeywordList getKeywordList() {
+        return keywordList;
     }
 
+    /**
+     * Gets the original search term for the query, without any escaping or, if
+     * it is a literal term, the addition of wildcards for a substring search.
+     *
+     * @return The original search term.
+     */
+    @Override
+    public String getQueryString() {
+        return keyword.getSearchTerm();
+    }
+
+    /**
+     * Indicates whether or not the search term for the query is a literal term
+     * that needs have wildcards added to it to make the query a substring
+     * search.
+     *
+     * @return True or false.
+     */
+    @Override
+    public boolean isLiteral() {
+        return false;
+    }
+
+    /**
+     * Adds wild cards to the search term for the query, which makes the query a
+     * substring search, if it is a literal search term.
+     */
     @Override
     public void setSubstringQuery() {
-        escapedQuery = ".*" + escapedQuery + ".*";
+        searchTerm = ".*" + searchTerm + ".*";
     }
 
+    /**
+     * Escapes the search term for the query.
+     */
     @Override
     public void escape() {
-        escapedQuery = Pattern.quote(keyword.getSearchTerm());
-        isEscaped = true;
+        searchTerm = Pattern.quote(keyword.getSearchTerm());
+        searchTermIsEscaped = true;
     }
 
+    /**
+     * Indicates whether or not the search term has been escaped yet.
+     *
+     * @return True or false.
+     */
+    @Override
+    public boolean isEscaped() {
+        return searchTermIsEscaped;
+    }
+
+    /**
+     * Gets the escaped search term for the query, assuming it has been escaped
+     * by a call to TermsComponentQuery.escape.
+     *
+     * @return The search term, possibly escaped.
+     */
+    @Override
+    public String getEscapedQueryString() {
+        return this.searchTerm;
+    }
+
+    /**
+     * Indicates whether or not the search term is a valid regex.
+     *
+     * @return True or false.
+     */
     @Override
     public boolean validate() {
-        if (escapedQuery.isEmpty()) {
+        if (searchTerm.isEmpty()) {
             return false;
         }
-
         try {
-            Pattern.compile(escapedQuery);
+            Pattern.compile(searchTerm);
             return true;
         } catch (IllegalArgumentException ex) {
             return false;
         }
     }
 
+    /**
+     * Does nothing, not applicable to a regex query, which always searches a
+     * field created specifically for regex sesarches.
+     *
+     * @param field The name of a Solr document field to search.
+     */
     @Override
-    public boolean isEscaped() {
-        return isEscaped;
+    public void setField(String field) {
     }
 
+    /**
+     * Adds a filter to the query.
+     *
+     * @param filter The filter.
+     */
+    // TODO: Document this better.
     @Override
-    public boolean isLiteral() {
-        return false;
+    public void addFilter(KeywordQueryFilter filter) {
+        this.filters.add(filter);
     }
 
+    /**
+     * Executes the regex query as a two step operation. In the first step, the
+     * Solr terms component is used to find any terms in the index that match
+     * the regex. In the second step, term queries are executed for each matched
+     * term to produce the set of keyword hits for the regex.
+     *
+     * @return A QueryResult object or null.
+     *
+     * @throws NoOpenCoreException
+     */
+    // TODO: Make it so this cannot cause NPEs; this method should throw 
+    // exceptions instead of logging them and returning null.
     @Override
-    public String getEscapedQueryString() {
-        return this.escapedQuery;
+    public QueryResults performQuery() throws NoOpenCoreException {
+        /*
+         * Do a query using the Solr terms component to find any terms in the
+         * index that match the regex.
+         */
+        final SolrQuery termsQuery = new SolrQuery();
+        termsQuery.setRequestHandler(SEARCH_HANDLER);
+        termsQuery.setTerms(true);
+        termsQuery.setTermsRegexFlag(CASE_INSENSITIVE);
+        termsQuery.setTermsRegex(searchTerm);
+        termsQuery.addTermsField(SEARCH_FIELD);
+        termsQuery.setTimeAllowed(TERMS_SEARCH_TIMEOUT);
+        termsQuery.setShowDebugInfo(DEBUG_FLAG);
+        termsQuery.setTermsLimit(MAX_TERMS_QUERY_RESULTS);
+        List<Term> terms = null;
+        try {
+            terms = KeywordSearch.getServer().queryTerms(termsQuery).getTerms(SEARCH_FIELD);
+        } catch (KeywordSearchModuleException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing the regex terms query: " + keyword.getSearchTerm(), ex); //NON-NLS
+            //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
+        }
+
+        /*
+         * Do a term query for each term that matched the regex.
+         */
+        QueryResults results = new QueryResults(this, keywordList);
+        for (Term term : terms) {
+            /*
+             * If searching for credit card account numbers, do a Luhn check on
+             * the term and discard it if it does not pass.
+             */
+            if (keyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+                Matcher matcher = CREDIT_CARD_NUM_PATTERN.matcher(term.getTerm());
+                matcher.find();
+                final String ccn = CharMatcher.anyOf(" -").removeFrom(matcher.group("ccn"));
+                if (false == CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                    continue;
+                }
+            }
+
+            /*
+             * Do an ordinary query with the escaped term and convert the query
+             * results into a single list of keyword hits without duplicates.
+             *
+             * Note that the filters field appears to be unused. There is an old
+             * comment here, what does it mean? "Note: we can't set filter query
+             * on terms query but setting filter query on fileResults query will
+             * yield the same result." The filter is NOT being added to the term
+             * query.
+             */
+            String escapedTerm = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
+            LuceneQuery termQuery = new LuceneQuery(keywordList, new Keyword(escapedTerm, true));
+            filters.forEach(termQuery::addFilter); // This appears to be unused
+            QueryResults termQueryResult = termQuery.performQuery();
+            Set<KeywordHit> termHits = new HashSet<>();
+            for (Keyword word : termQueryResult.getKeywords()) {
+                termHits.addAll(termQueryResult.getResults(word));
+            }
+            results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(termHits));
+        }
+        return results;
     }
 
+    /**
+     * Converts the keyword hits for a given search term into artifacts.
+     *
+     * @param searchTerm The search term.
+     * @param hit        The keyword hit.
+     * @param snippet    The document snippet that contains the hit
+     * @param listName   The name of the keyword list that contained the keyword
+     *                   for which the hit was found.
+     *
+     * 
+     *
+     * @return An object that wraps an artifact and a mapping by id of its
+     *         attributes.
+     */
+    // TODO: Are we actually making meaningful use of the KeywordCachedArtifact
+    // class?
     @Override
-    public String getQueryString() {
-        return keyword.getSearchTerm();
-    }
-
-    @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String searchTerm, KeywordHit hit, String snippet, String listName) {
+        /*
+         * Create either a "plain vanilla" keyword hit artifact with keyword and
+         * regex attributes, or a credit card account artifact with attributes
+         * parsed from from the snippet for the hit and looked up based on the
+         * parsed bank identifcation number.
+         */
         BlackboardArtifact newArtifact;
-
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        if (keyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+        if (keyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, searchTerm));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getSearchTerm()));
+            try {
+                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
+                return null;
+            }
+        } else {
+            /*
+             * Parse the credit card account attributes from the snippet for the
+             * hit.
+             */
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.name()));
-
             Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
-
-            //try to match it against the track 1 regex
-            Matcher matcher = TRACK1_PATTERN.matcher(hit.getSnippet());
+            Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
             if (matcher.find()) {
                 parseTrack1Data(parsedTrackAttributeMap, matcher);
             }
-
-            //then try to match it against the track 2 regex
-            matcher = TRACK2_PATTERN.matcher(hit.getSnippet());
+            matcher = CREDIT_CARD_TRACK2_PATTERN.matcher(hit.getSnippet());
             if (matcher.find()) {
                 parseTrack2Data(parsedTrackAttributeMap, matcher);
             }
-
-            //if we couldn't parse the CCN abort this artifact
             final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
             if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
                 if (hit.isArtifactHit()) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", termHit, hit.getSnippet(), hit.getArtifact().getArtifactID()));
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifact().getArtifactID())); //NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", termHit, hit.getSnippet(), hit.getContent().getId()));                    
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContent().getId())); //NON-NLS
                 }
                 return null;
             }
-
             attributes.addAll(parsedTrackAttributeMap.values());
 
-            //look up the bank name, schem, etc from the BIN
+            /*
+             * Look up the bank name, scheme, etc. attributes for the bank
+             * indentification number (BIN).
+             */
             final int bin = Integer.parseInt(ccnAttribute.getValueString().substring(0, 8));
             CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
             if (binInfo != null) {
@@ -242,9 +415,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             }
 
             /*
-             * if the hit is from unused or unalocated blocks, record the
-             * KEYWORD_SEARCH_DOCUMENT_ID, so we can show just that chunk in the
-             * UI
+             * If the hit is from unused or unallocated space, record the Solr
+             * document id to support showing just the chunk that contained the
+             * hit.
              */
             if (hit.getContent() instanceof AbstractFile) {
                 AbstractFile file = (AbstractFile) hit.getContent();
@@ -254,43 +427,28 @@ final class TermsComponentQuery implements KeywordSearchQuery {
                 }
             }
 
-            // make account artifact
+            /*
+             * Create an account artifact.
+             */
             try {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
-            } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.SEVERE, "Error adding bb artifact for account", tskCoreException); //NON-NLS
-                return null;
-            }
-        } else {
-
-            //regex match
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
-            //regex keyword
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getSearchTerm()));
-
-            //make keyword hit artifact
-            try {
-                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-
-            } catch (TskCoreException tskCoreException) {
-                LOGGER.log(Level.SEVERE, "Error adding bb artifact for keyword hit", tskCoreException); //NON-NLS
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.SEVERE, "Error adding artifact for account to blackboard", ex); //NON-NLS
                 return null;
             }
         }
+
         if (StringUtils.isNotBlank(listName)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
-        //preview
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-
         if (hit.isArtifactHit()) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
 
         try {
-            //TODO: do we still/really need this KeywordCachedArtifact class? 
             newArtifact.addAttributes(attributes);
             KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);
             writeResult.add(attributes);
@@ -301,100 +459,49 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         }
     }
 
-    @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
-        /*
-         * Execute the regex query to get a list of terms that match the regex.
-         * Note that the field that is being searched is tokenized based on
-         * whitespace.
-         */
-        //create the query
-        final SolrQuery q = new SolrQuery();
-        q.setRequestHandler(TERMS_HANDLER);
-        q.setTerms(true);
-        q.setTermsRegexFlag(CASE_INSENSITIVE);
-        q.setTermsRegex(escapedQuery);
-        q.addTermsField(TERMS_SEARCH_FIELD);
-        q.setTimeAllowed(TERMS_TIMEOUT);
-        q.setShowDebugInfo(DEBUG);
-        q.setTermsLimit(MAX_TERMS_RESULTS);
-        LOGGER.log(Level.INFO, "Query: {0}", q.toString()); //NON-NLS
-
-        //execute the query
-        List<Term> terms = null;
-        try {
-            terms = KeywordSearch.getServer().queryTerms(q).getTerms(TERMS_SEARCH_FIELD);
-        } catch (KeywordSearchModuleException ex) {
-            LOGGER.log(Level.SEVERE, "Error executing the regex terms query: " + keyword.getSearchTerm(), ex); //NON-NLS
-            //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
-        }
-
-        /*
-         * For each term that matched the regex, query for full set of document
-         * hits for that term.
-         */
-        QueryResults results = new QueryResults(this, keywordList);
-        int resultSize = 0;
-
-        for (Term term : terms) {
-            final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
-
-            if (keyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-                //If the keyword is a credit card number, pass it through luhn validator
-                Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
-                matcher.find();
-                final String ccn = CharMatcher.anyOf(" -").removeFrom(matcher.group("ccn"));
-                if (false == LUHN_CHECK.isValid(ccn)) {
-                    continue; //if the hit does not pass the luhn check, skip it.
-                }
-            }
-
-            /*
-             * Note: we can't set filter query on terms query but setting filter
-             * query on fileResults query will yield the same result
-             */
-            LuceneQuery filesQuery = new LuceneQuery(keywordList, new Keyword(termStr, true));
-            filters.forEach(filesQuery::addFilter);
-
-            try {
-                QueryResults fileQueryResults = filesQuery.performQuery();
-                Set<KeywordHit> filesResults = new HashSet<>();
-                for (Keyword key : fileQueryResults.getKeywords()) {                //flatten results into a single list
-                    List<KeywordHit> keyRes = fileQueryResults.getResults(key);
-                    resultSize += keyRes.size();
-                    filesResults.addAll(keyRes);
-                }
-                results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(filesResults));
-            } catch (NoOpenCoreException | RuntimeException e) {
-                LOGGER.log(Level.WARNING, "Error executing Solr query,", e); //NON-NLS
-                throw e;
-            }
-        }
-
-        //TODO limit how many results we store, not to hit memory limits
-        LOGGER.log(Level.INFO, "Regex # results: {0}", resultSize); //NON-NLS
-
-        return results;
-    }
-
-    @Override
-    public KeywordList getKeywordList() {
-        return keywordList;
+    /**
+     * Parses the track 2 data from the snippet for a credit card account number
+     * hit and turns them into artifact attributes.
+     *
+     * @param attributesMap A map of artifact attribute objects, used to avoid
+     *                      creating duplicate attributes.
+     * @param matcher       A matcher for the snippet.
+     */
+    static private void parseTrack2Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributesMap, Matcher matcher) {
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_NUMBER, "accountNumber", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_EXPIRATION, "expiration", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_SERVICE_CODE, "serviceCode", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_DISCRETIONARY, "discretionary", matcher);
+        addAttributeIfNotAlreadyCaptured(attributesMap, ATTRIBUTE_TYPE.TSK_CARD_LRC, "LRC", matcher);
     }
 
     /**
-     * Add an attribute of the the given type to the given artifact with the
-     * value taken from the matcher. If an attribute of the given type already
-     * exists on the artifact or if the value is null, no attribute is added.
+     * Parses the track 1 data from the snippet for a credit card account number
+     * hit and turns them into artifact attributes. The track 1 data has the
+     * same fields as the track two data, plus the account holder's name.
      *
-     * @param attributeMap
-     * @param attrType
-     * @param groupName
-     * @param matcher *
+     * @param attributesMap A map of artifact attribute objects, used to avoid
+     *                      creating duplicate attributes.
+     * @param matcher       A matcher for the snippet.
+     */
+    static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
+        parseTrack2Data(attributeMap, matcher);
+        addAttributeIfNotAlreadyCaptured(attributeMap, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
+    }
+
+    /**
+     * Creates an attribute of the the given type to the given artifact with a
+     * value parsed from the snippet for a credit account number hit.
+     *
+     * @param attributesMap A map of artifact attribute objects, used to avoid
+     *                      creating duplicate attributes.
+     * @param attrType      The type of attribute to create.
+     * @param groupName     The group name of the regular expression that was
+     *                      used to parse the attribute data.
+     * @param matcher       A matcher for the snippet.
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
-
         attributeMap.computeIfAbsent(type, (BlackboardAttribute.Type t) -> {
             String value = matcher.group(groupName);
             if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
@@ -407,34 +514,4 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         });
     }
 
-    /**
-     * Parse the track 2 data from a KeywordHit and add it to the given
-     * artifact.
-     *
-     * @param attributeMAp
-     * @param matcher
-     */
-    static private void parseTrack2Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMAp, Matcher matcher) {
-        //try to add all the attrributes common to track 1 and 2
-        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_NUMBER, "accountNumber", matcher);
-        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_EXPIRATION, "expiration", matcher);
-        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_SERVICE_CODE, "serviceCode", matcher);
-        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_DISCRETIONARY, "discretionary", matcher);
-        addAttributeIfNotAlreadyCaptured(attributeMAp, ATTRIBUTE_TYPE.TSK_CARD_LRC, "LRC", matcher);
-
-    }
-
-    /**
-     * Parse the track 1 data from a KeywordHit and add it to the given
-     * artifact.
-     *
-     * @param attributeMap
-     * @param matcher
-     */
-    static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
-        // track 1 has all the fields present in track 2
-        parseTrack2Data(attributeMap, matcher);
-        //plus it also has the account holders name
-        addAttributeIfNotAlreadyCaptured(attributeMap, ATTRIBUTE_TYPE.TSK_NAME_PERSON, "name", matcher);
-    }
 }
