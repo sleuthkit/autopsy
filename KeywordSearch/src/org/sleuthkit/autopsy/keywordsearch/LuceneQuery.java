@@ -55,7 +55,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private final String keywordString; //original unescaped query
     private String keywordStringEscaped;
     private boolean isEscaped;
-    private Keyword keywordQuery = null;
+    private Keyword keyword = null;
     private KeywordList keywordList = null;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
@@ -72,15 +72,15 @@ class LuceneQuery implements KeywordSearchQuery {
     /**
      * Constructor with query to process.
      *
-     * @param keywordQuery
+     * @param keyword
      */
-    public LuceneQuery(KeywordList keywordList, Keyword keywordQuery) {
+    public LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
-        this.keywordQuery = keywordQuery;
+        this.keyword = keyword;
 
         // @@@ BC: Long-term, we should try to get rid of this string and use only the
         // keyword object.  Refactoring did not make its way through this yet.
-        this.keywordString = keywordQuery.getQuery();
+        this.keywordString = keyword.getSearchTerm();
         this.keywordStringEscaped = this.keywordString;
     }
 
@@ -168,8 +168,8 @@ class LuceneQuery implements KeywordSearchQuery {
         //bogus - workaround the dir tree table issue
         //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
         //selector
-        if (keywordQuery != null) {
-            BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
+        if (keyword != null) {
+            BlackboardAttribute.ATTRIBUTE_TYPE selType = keyword.getArtifactAttributeType();
             if (selType != null) {
                 attributes.add(new BlackboardAttribute(selType, MODULE_NAME, termHit));
             }

@@ -403,7 +403,7 @@ public final class SearchRunner {
             ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
             int i = 0;
             for (Keyword keywordQuery : keywords) {
-                subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getQuery());
+                subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getSearchTerm());
                 progressGroup.addContributor(subProgresses[i]);
                 i++;
             }
@@ -419,11 +419,11 @@ public final class SearchRunner {
 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
-                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keywordQuery.getQuery()); //NON-NLS
+                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keywordQuery.getSearchTerm()); //NON-NLS
                         return null;
                     }
 
-                    final String queryStr = keywordQuery.getQuery();
+                    final String queryStr = keywordQuery.getSearchTerm();
                     final KeywordList list = keywordToList.get(queryStr);
 
                     //new subProgress will be active after the initial query
@@ -434,7 +434,7 @@ public final class SearchRunner {
 
                     KeywordSearchQuery keywordSearchQuery = null;
 
-                    boolean isRegex = !keywordQuery.isLiteral();
+                    boolean isRegex = !keywordQuery.searchTermIsLiteral();
                     if (isRegex) {
                         keywordSearchQuery = new TermsComponentQuery(list, keywordQuery);
                     } else {
@@ -454,16 +454,16 @@ public final class SearchRunner {
                     try {
                         queryResults = keywordSearchQuery.performQuery();
                     } catch (NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex); //NON-NLS
+                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getSearchTerm(), ex); //NON-NLS
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
                         return null;
                     } catch (CancellationException e) {
-                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keywordQuery.getQuery()); //NON-NLS
+                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keywordQuery.getSearchTerm()); //NON-NLS
                         return null;
                     } catch (Exception e) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e); //NON-NLS
+                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getSearchTerm(), e); //NON-NLS
                         continue;
                     }
 
@@ -481,7 +481,7 @@ public final class SearchRunner {
                         int totalUnits = newResults.getKeywords().size();
                         subProgresses[keywordsSearched].start(totalUnits);
                         int unitProgress = 0;
-                        String queryDisplayStr = keywordQuery.getQuery();
+                        String queryDisplayStr = keywordQuery.getSearchTerm();
                         if (queryDisplayStr.length() > 50) {
                             queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
                         }
@@ -547,7 +547,7 @@ public final class SearchRunner {
                 keywordLists.add(list);
                 for (Keyword k : list.getKeywords()) {
                     keywords.add(k);
-                    keywordToList.put(k.getQuery(), list);
+                    keywordToList.put(k.getSearchTerm(), list);
                 }
             }
         }

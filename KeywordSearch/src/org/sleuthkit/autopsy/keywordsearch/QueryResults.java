@@ -115,7 +115,7 @@ class QueryResults {
 
         for (final Keyword keyword : getKeywords()) {
             if (worker.isCancelled()) {
-                logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getQuery()); //NON-NLS
+                logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
                 break;
             }
 
@@ -124,7 +124,7 @@ class QueryResults {
                 progress.progress(keyword.toString(), unitProgress);
             }
             if (subProgress != null) {
-                String hitDisplayStr = keyword.getQuery();
+                String hitDisplayStr = keyword.getSearchTerm();
                 if (hitDisplayStr.length() > 50) {
                     hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
                 }
@@ -132,7 +132,7 @@ class QueryResults {
             }
 
             for (KeywordHit hit : getOneHitPerObject(keyword)) {
-                String termString = keyword.getQuery();
+                String termString = keyword.getSearchTerm();
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                 String snippet;
                 try {

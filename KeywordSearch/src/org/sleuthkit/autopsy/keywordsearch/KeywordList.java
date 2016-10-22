@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,22 +21,27 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * A list of keywords for which to search. Includes list creation and
+ * modification metadata and a setting that indicates whether messages should be
+ * sent to the ingest messages inbox when a keyword in the list is found.
+ */
 public class KeywordList {
 
     private String name;
     private Date created;
     private Date modified;
     private Boolean useForIngest;
-    private Boolean ingestMessages;
+    private Boolean postIngestMessages;
     private List<Keyword> keywords;
     private Boolean locked;
 
-    KeywordList(String name, Date created, Date modified, Boolean useForIngest, Boolean ingestMessages, List<Keyword> keywords, boolean locked) {
+    KeywordList(String name, Date created, Date modified, Boolean useForIngest, Boolean postIngestMessages, List<Keyword> keywords, boolean locked) {
         this.name = name;
         this.created = created;
         this.modified = modified;
         this.useForIngest = useForIngest;
-        this.ingestMessages = ingestMessages;
+        this.postIngestMessages = postIngestMessages;
         this.keywords = keywords;
         this.locked = locked;
     }
@@ -96,11 +101,11 @@ public class KeywordList {
     }
 
     Boolean getIngestMessages() {
-        return ingestMessages;
+        return postIngestMessages;
     }
 
     void setIngestMessages(boolean ingestMessages) {
-        this.ingestMessages = ingestMessages;
+        this.postIngestMessages = ingestMessages;
     }
 
     List<Keyword> getKeywords() {
@@ -114,7 +119,7 @@ public class KeywordList {
     boolean hasKeyword(String keyword) {
         //note, this ignores isLiteral
         for (Keyword k : keywords) {
-            if (k.getQuery().equals(keyword)) {
+            if (k.getSearchTerm().equals(keyword)) {
                 return true;
             }
         }

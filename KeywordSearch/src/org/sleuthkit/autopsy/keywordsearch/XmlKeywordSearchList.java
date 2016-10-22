@@ -123,13 +123,13 @@ final class XmlKeywordSearchList extends KeywordSearchList {
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
-                    String literal = keyword.isLiteral() ? "true" : "false"; //NON-NLS
+                    String literal = keyword.searchTermIsLiteral() ? "true" : "false"; //NON-NLS
                     keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
-                    BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
+                    BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getArtifactAttributeType();
                     if (selectorType != null) {
                         keywordEl.setAttribute(KEYWORD_SELECTOR_ATTR, selectorType.getLabel());
                     }
-                    keywordEl.setTextContent(keyword.getQuery());
+                    keywordEl.setTextContent(keyword.getSearchTerm());
                     listEl.appendChild(keywordEl);
                 }
                 rootEl.appendChild(listEl);
@@ -199,7 +199,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                     String selector = wordEl.getAttribute(KEYWORD_SELECTOR_ATTR);
                     if (!selector.equals("")) {
                         BlackboardAttribute.ATTRIBUTE_TYPE selectorType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(selector);
-                        keyword.setType(selectorType);
+                        keyword.setArtifactAttributeType(selectorType);
                     }
                     words.add(keyword);
 

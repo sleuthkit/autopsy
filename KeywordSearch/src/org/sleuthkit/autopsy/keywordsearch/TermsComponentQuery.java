@@ -121,7 +121,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         this.keyword = keyword;
 
         this.keywordList = keywordList;
-        this.escapedQuery = keyword.getQuery();
+        this.escapedQuery = keyword.getSearchTerm();
     }
 
     @Override
@@ -146,7 +146,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
 
     @Override
     public void escape() {
-        escapedQuery = Pattern.quote(keyword.getQuery());
+        escapedQuery = Pattern.quote(keyword.getSearchTerm());
         isEscaped = true;
     }
 
@@ -181,7 +181,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
 
     @Override
     public String getQueryString() {
-        return keyword.getQuery();
+        return keyword.getSearchTerm();
     }
 
     @Override
@@ -189,7 +189,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         BlackboardArtifact newArtifact;
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+        if (keyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.name()));
 
             Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
@@ -266,7 +266,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             //regex match
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
             //regex keyword
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getQuery()));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getSearchTerm()));
 
             //make keyword hit artifact
             try {
@@ -325,7 +325,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         try {
             terms = KeywordSearch.getServer().queryTerms(q).getTerms(TERMS_SEARCH_FIELD);
         } catch (KeywordSearchModuleException ex) {
-            LOGGER.log(Level.SEVERE, "Error executing the regex terms query: " + keyword.getQuery(), ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error executing the regex terms query: " + keyword.getSearchTerm(), ex); //NON-NLS
             //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
         }
 
@@ -339,7 +339,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         for (Term term : terms) {
             final String termStr = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
 
-            if (keyword.getType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            if (keyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 //If the keyword is a credit card number, pass it through luhn validator
                 Matcher matcher = CCN_PATTERN.matcher(term.getTerm());
                 matcher.find();

@@ -55,9 +55,9 @@ class KeywordSearchQueryDelegator {
         for (KeywordList keywordList : keywordLists) {
             for (Keyword keyword : keywordList.getKeywords()) {
                 KeywordSearchQuery query;
-                if (keyword.isLiteral()) {
+                if (keyword.searchTermIsLiteral()) {
                     // literal, exact match
-                    if (keyword.isWholeword()) {
+                    if (keyword.searchTermHasWildcards()) {
                         query = new LuceneQuery(keywordList, keyword);
                         query.escape();
                     } // literal, substring match

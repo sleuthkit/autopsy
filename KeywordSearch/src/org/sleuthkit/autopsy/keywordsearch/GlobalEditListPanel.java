@@ -581,10 +581,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             Keyword word = currentKeywordList.getKeywords().get(rowIndex);
             switch (columnIndex) {
                 case 0:
-                    ret = (Object) word.getQuery();
+                    ret = (Object) word.getSearchTerm();
                     break;
                 case 1:
-                    ret = (Object) !word.isLiteral();
+                    ret = (Object) !word.searchTermIsLiteral();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
