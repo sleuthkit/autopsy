@@ -99,7 +99,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
             doc.appendChild(rootEl);
 
             for (String listName : theLists.keySet()) {
-                if (theLists.get(listName).isLocked() == true) {
+                if (theLists.get(listName).isEditable() == true) {
                     continue;
                 }
                 KeywordList list = theLists.get(listName);
