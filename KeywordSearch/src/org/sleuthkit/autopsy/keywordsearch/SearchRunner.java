@@ -436,7 +436,7 @@ public final class SearchRunner {
 
                     boolean isRegex = !keywordQuery.searchTermIsLiteral();
                     if (isRegex) {
-                        keywordSearchQuery = new RegexQuery(list, keywordQuery);
+                        keywordSearchQuery = new TermsComponentQuery(list, keywordQuery);
                     } else {
                         keywordSearchQuery = new LuceneQuery(list, keywordQuery);
                         keywordSearchQuery.escape();

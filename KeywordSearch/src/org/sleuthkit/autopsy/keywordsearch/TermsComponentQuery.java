@@ -51,9 +51,9 @@ import org.sleuthkit.datamodel.TskData;
  * index that match the regex. In the second step, term queries are executed for
  * each matched term to produce the set of keyword hits for the regex.
  */
-final class RegexQuery implements KeywordSearchQuery {
+final class TermsComponentQuery implements KeywordSearchQuery {
 
-    private static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TermsComponentQuery.class.getName());
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     private static final String SEARCH_HANDLER = "/terms"; //NON-NLS
     private static final String SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
@@ -133,7 +133,7 @@ final class RegexQuery implements KeywordSearchQuery {
     // object?
     // TODO: Why is the search term not escaped and given substring wildcards,
     // if needed, here in the constructor?
-    RegexQuery(KeywordList keywordList, Keyword keyword) {
+    TermsComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
         this.keyword = keyword;
         this.searchTerm = keyword.getSearchTerm();
@@ -203,7 +203,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
     /**
      * Gets the escaped search term for the query, assuming it has been escaped
-     * by a call to RegexQuery.escape.
+     * by a call to TermsComponentQuery.escape.
      *
      * @return The search term, possibly escaped.
      */
