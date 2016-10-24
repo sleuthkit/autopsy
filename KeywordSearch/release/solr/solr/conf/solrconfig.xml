@@ -1061,12 +1061,12 @@
                   startup="lazy" />
 
   <!-- Admin Handlers
-
+       Admin Handlers were removed in Solr 5.
        Admin Handlers - This will register all the standard admin
        RequestHandlers.  
     -->
-  <requestHandler name="/admin/" 
-                  class="solr.admin.AdminHandlers" />
+  <!--requestHandler name="/admin/" 
+                  class="solr.admin.AdminHandlers" /-->
   <!-- This single handler is equivalent to the following... -->
   <!--
      <requestHandler name="/admin/luke"       class="solr.admin.LukeRequestHandler" />
