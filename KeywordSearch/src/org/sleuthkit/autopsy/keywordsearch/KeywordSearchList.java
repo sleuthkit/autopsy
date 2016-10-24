@@ -124,7 +124,7 @@ abstract class KeywordSearchList {
         List<Keyword> ccns = new ArrayList<>();
         ccns.add(new Keyword(CCN_REGEX, false, BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
         lockedLists.add("Credit Card Numbers");
-        addList("Credit Card Numbers", ccns, true, false, true);
+        addList("Credit Card Numbers", ccns, false, false, true);
     }
 
     /**
