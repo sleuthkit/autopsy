@@ -226,11 +226,6 @@ public class FileSize implements AutopsyVisitableItem {
                         if (evt.getNewValue() == null) {
                             removeListeners();
                         }
-                    } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                            || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
-                            || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                            || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                        update();
                     }
                 }
             };

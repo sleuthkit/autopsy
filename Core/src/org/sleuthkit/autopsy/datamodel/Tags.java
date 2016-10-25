@@ -409,7 +409,7 @@ public class Tags implements AutopsyVisitableItem {
 
         @Override
         public void update(Observable o, Object arg) {
-            refresh(true); //this caused table to update
+            refresh(true);
         }
     }
 

@@ -299,6 +299,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.MIMETYPE.toString(), content.getMIMEType() == null ? "" : content.getMIMEType());
     }
 
+    /**
+     * Used by subclasses of AbstractAbstractFileNode to add the tags property
+     * to their sheets.
+     * @param ss 
+     */
     protected void addTagProperty(Sheet.Set ss) {
         final String NO_DESCR = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.desc");
         List<Tag> tags = new ArrayList<>();

@@ -449,8 +449,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             /**
              * This custom renderer extends the renderer that was already being
-             * used by the outline table. This renderer colors a row if the file
-             * or artifact associated with the row's node is tagged.
+             * used by the outline table. This renderer colors a row if the
+             * tags property of the node is not empty.
              */
             class ColorTagCustomRenderer extends DefaultOutlineCellRenderer {
                 private static final long serialVersionUID = 1L;
@@ -459,13 +459,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         Object value, boolean isSelected, boolean hasFocus, int row, int col) {
 
                     Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                    // only override the color if a node is not selected
                     if (!isSelected) {
                         Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
                         boolean tagFound = false;
                         if (node != null) {
                             Node.PropertySet[] propSets = node.getPropertySets();
-
                             if (propSets.length != 0) {
+                                // currently, a node has only one property set, named Sheet.PROPERTIES ("properties")
                                 Node.Property<?>[] props = propSets[0].getProperties();
                                 for (Property<?> prop : props) {
                                     if (prop.getName().equals("Tags")) {

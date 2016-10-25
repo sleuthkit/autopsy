@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskData;
 public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
     public static enum LayoutContentPropertyType {
-        
+
         PARTS {
                     @Override
                     public String toString() {

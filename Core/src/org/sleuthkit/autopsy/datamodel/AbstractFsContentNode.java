@@ -89,5 +89,5 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
 
         return s;
     }
-    
+
 }

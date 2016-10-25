@@ -269,12 +269,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
                         removeNotify();
                         skCase = null;
                     }
-                } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                    refresh(true);
-                    emailResults.update();
                 }
             }
         };

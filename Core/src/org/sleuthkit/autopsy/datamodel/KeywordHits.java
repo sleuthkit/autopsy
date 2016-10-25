@@ -409,25 +409,24 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    private class TermFactory extends ChildFactory<String> implements Observer {
+    private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
 
         private String setName;
 
         private TermFactory(String setName) {
             super();
             this.setName = setName;
+        }
+
+        @Override
+        protected void addNotify() {
             keywordResults.addObserver(this);
         }
 
-//        @Override
-//        protected void addNotify() {
-//            keywordResults.addObserver(this);
-//        }
-//
-//        @Override
-//        protected void removeNotify() {
-//            keywordResults.deleteObserver(this);
-//        }
+        @Override
+        protected void removeNotify() {
+            keywordResults.deleteObserver(this);
+        }
 
         @Override
         protected boolean createKeys(List<String> list) {
@@ -508,7 +507,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    public class HitsFactory extends ChildFactory<Long> implements Observer {
+    public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {
 
         private final String keyword;
         private final String setName;
@@ -517,18 +516,17 @@ public class KeywordHits implements AutopsyVisitableItem {
             super();
             this.setName = setName;
             this.keyword = keyword;
+        }
+
+        @Override
+        protected void addNotify() {
             keywordResults.addObserver(this);
         }
 
-//        @Override
-//        protected void addNotify() {
-//            keywordResults.addObserver(this);
-//        }
-//
-//        @Override
-//        protected void removeNotify() {
-//            keywordResults.deleteObserver(this);
-//        }
+        @Override
+        protected void removeNotify() {
+            keywordResults.deleteObserver(this);
+        }
 
         @Override
         protected boolean createKeys(List<Long> list) {

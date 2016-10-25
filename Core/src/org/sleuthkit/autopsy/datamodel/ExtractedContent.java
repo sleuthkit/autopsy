@@ -244,21 +244,9 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     removeNotify();
                     skCase = null;
                 }
-            } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                    || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
-                    || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                    || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                try {
-                    Case.getCurrentCase();
-                    refresh(true);
-                } catch (IllegalStateException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
             }
         };
-        
+
         @Override
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
@@ -443,16 +431,6 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          * Case is closed, do nothing.
                          */
                     }
-                } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
-                    try {
-                        Case.getCurrentCase();
-                        refresh(true);
-                    } catch (IllegalStateException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
-                    }
                 }
             }
         };
@@ -461,14 +439,12 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
-            Case.addPropertyChangeListener(pcl);
         }
 
         @Override
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removePropertyChangeListener(pcl);
         }
 
         @Override
