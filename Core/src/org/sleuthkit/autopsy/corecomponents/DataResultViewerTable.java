@@ -471,8 +471,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                                     if (prop.getName().equals("Tags")) {
                                         try {
                                             tagFound = !prop.getValue().equals("");
-                                        } catch (IllegalAccessException | InvocationTargetException ex) {
-                                            Exceptions.printStackTrace(ex);
+                                        } catch (IllegalAccessException | InvocationTargetException ignore) {
                                         }
                                         break;
                                     }
