@@ -78,7 +78,7 @@ public class HashsetHits implements AutopsyVisitableItem {
     private class HashsetResults extends Observable {
 
         // maps hashset name to list of artifacts for that set
-
+        // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Set<Long>> hashSetHitsMap = new LinkedHashMap<>();
 
         HashsetResults() {
@@ -86,18 +86,25 @@ public class HashsetHits implements AutopsyVisitableItem {
         }
 
         List<String> getSetNames() {
-            List<String> names = new ArrayList<>(hashSetHitsMap.keySet());
+            List<String> names;
+            synchronized (hashSetHitsMap) {
+                names = new ArrayList<>(hashSetHitsMap.keySet());
+            }
             Collections.sort(names);
             return names;
         }
 
         Set<Long> getArtifactIds(String hashSetName) {
-            return hashSetHitsMap.get(hashSetName);
+            synchronized (hashSetHitsMap) {            
+                return hashSetHitsMap.get(hashSetName);
+            }
         }
 
         @SuppressWarnings("deprecation")
         final void update() {
-            hashSetHitsMap.clear();
+            synchronized (hashSetHitsMap) {
+                hashSetHitsMap.clear();
+            }
 
             if (skCase == null) {
                 return;
@@ -113,13 +120,15 @@ public class HashsetHits implements AutopsyVisitableItem {
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
-                while (resultSet.next()) {
-                    String setName = resultSet.getString("value_text"); //NON-NLS
-                    long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
-                    if (!hashSetHitsMap.containsKey(setName)) {
-                        hashSetHitsMap.put(setName, new HashSet<Long>());
+                synchronized (hashSetHitsMap) {
+                    while (resultSet.next()) {
+                        String setName = resultSet.getString("value_text"); //NON-NLS
+                        long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                        if (!hashSetHitsMap.containsKey(setName)) {
+                            hashSetHitsMap.put(setName, new HashSet<Long>());
+                        }
+                        hashSetHitsMap.get(setName).add(artifactId);
                     }
-                    hashSetHitsMap.get(setName).add(artifactId);
                 }
             } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "SQL Exception occurred: ", ex); //NON-NLS

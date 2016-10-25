@@ -30,6 +30,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -52,7 +54,7 @@ class MissingImageDialog extends javax.swing.JDialog {
     private JFileChooser fc = new JFileChooser();
 
     private MissingImageDialog(long obj_id, SleuthkitCase db) {
-        super(new JFrame(), true);
+        super((JFrame) WindowManager.getDefault().getMainWindow(), true);
         this.obj_id = obj_id;
         this.db = db;
         initComponents();
@@ -117,7 +119,7 @@ class MissingImageDialog extends javax.swing.JDialog {
         // Enable this based on whether there is a valid path
         if (!pathNameTextField.getText().isEmpty()) {
             String filePath = pathNameTextField.getText();
-            boolean isExist = Case.pathExists(filePath) || Case.driveExists(filePath);
+            boolean isExist = new File(filePath).isFile() || DriveUtils.driveExists(filePath);
             selectButton.setEnabled(isExist);
         }
     }

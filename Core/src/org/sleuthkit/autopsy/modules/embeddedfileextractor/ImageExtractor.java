@@ -46,8 +46,10 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 class ImageExtractor {
 
@@ -185,7 +187,7 @@ class ImageExtractor {
             try {
                 listOfExtractedImageAbstractFiles.add(fileManager.addDerivedFile(extractedImage.getFileName(), extractedImage.getLocalPath(), extractedImage.getSize(),
                         extractedImage.getCtime(), extractedImage.getCrtime(), extractedImage.getAtime(), extractedImage.getAtime(),
-                        true, abstractFile, null, EmbeddedFileExtractorModuleFactory.getModuleName(), null, null));
+                        true, abstractFile, null, EmbeddedFileExtractorModuleFactory.getModuleName(), null, null, TskData.EncodingType.XOR1));
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImage.addToDB.exception.msg"), ex); //NON-NLS
             }
@@ -591,7 +593,7 @@ class ImageExtractor {
      *                   specified location.
      */
     private void writeExtractedImage(String outputPath, byte[] data) {
-        try (FileOutputStream fos = new FileOutputStream(outputPath)) {
+        try (EncodedFileOutputStream fos = new EncodedFileOutputStream(new FileOutputStream(outputPath), TskData.EncodingType.XOR1)) {
             fos.write(data);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Could not write to the provided location: " + outputPath, ex); //NON-NLS

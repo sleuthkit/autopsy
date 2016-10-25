@@ -190,7 +190,9 @@ public class ImageDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void cancel() {
-        addImageTask.cancelTask();
+        if (null != addImageTask) {
+            addImageTask.cancelTask();
+        }
     }
 
     /**

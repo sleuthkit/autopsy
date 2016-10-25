@@ -161,7 +161,7 @@ class ExtractRegistry extends Extract {
             String outputPathBase = RAImageIngestModule.getRAOutputPath(currentCase, "reg") + File.separator + regFileName + "-regripper-" + Integer.toString(j++); //NON-NLS
             File regFileNameLocalFile = new File(regFileNameLocal);
             try {
-                ContentUtils.writeToFile(regFile, regFileNameLocalFile);
+                ContentUtils.writeToFile(regFile, regFileNameLocalFile, context::dataSourceIngestIsCancelled);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing the temp registry file. {0}", ex); //NON-NLS
                 this.addErrorMessage(

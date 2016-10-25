@@ -22,6 +22,10 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
+import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts.AccountsRootNode;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
@@ -188,6 +192,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         @Override
         public AbstractNode visit(Reports reportsItem) {
             return new Reports.ReportsListNode();
+        }
+
+        @Override
+        public AbstractNode visit(Accounts accountsItem) {
+            return accountsItem.new AccountsRootNode();
         }
 
         @Override

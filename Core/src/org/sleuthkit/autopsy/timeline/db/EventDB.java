@@ -71,6 +71,8 @@ import org.sleuthkit.autopsy.timeline.utils.RangeDivisionInfo;
 import org.sleuthkit.autopsy.timeline.zooming.DescriptionLoD;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 import org.sleuthkit.autopsy.timeline.zooming.ZoomParams;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskData;
@@ -79,8 +81,8 @@ import org.sqlite.SQLiteJDBCLoader;
 /**
  * Provides access to the Timeline SQLite database.
  *
- * This class borrows a lot of ideas and techniques from {@link  SleuthkitCase}.
- * Creating an abstract base class for SQLite databases, or using a higherlevel
+ * This class borrows a lot of ideas and techniques from SleuthkitCase. Creating
+ * an abstract base class for SQLite databases, or using a higherlevel
  * persistence api may make sense in the future.
  */
 public class EventDB {
@@ -101,7 +103,7 @@ public class EventDB {
      * the given path. If a database does not already exist at that path, one is
      * created.
      *
-     * @param autoCase the Autopsy {@link Case} the is events database is for.
+     * @param autoCase the Autopsy Case the is events database is for.
      *
      * @return a new EventDB or null if there was an error.
      */
@@ -668,8 +670,71 @@ public class EventDB {
     }
 
     /**
+     * Get a List of event IDs for the events that are derived from the given
+     * artifact.
+     *
+     * @param artifact The BlackboardArtifact to get derived event IDs for.
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given artifact.
+     */
+    List<Long> getEventIDsForArtifact(BlackboardArtifact artifact) {
+        DBLock.lock();
+
+        String query = "SELECT event_id FROM events WHERE artifact_id == " + artifact.getArtifactID();
+
+        ArrayList<Long> results = new ArrayList<>();
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);) {
+            while (rs.next()) {
+                results.add(rs.getLong("event_id"));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing getEventIDsForArtifact query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return results;
+    }
+
+    /**
+     * Get a List of event IDs for the events that are derived from the given
+     * file.
+     *
+     * @param file                    The AbstractFile to get derived event IDs
+     *                                for.
+     * @param includeDerivedArtifacts If true, also get event IDs for events
+     *                                derived from artifacts derived form this
+     *                                file. If false, only gets events derived
+     *                                directly from this file (file system
+     *                                timestamps).
+     *
+     * @return A List of event IDs for the events that are derived from the
+     *         given file.
+     */
+    List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) {
+        DBLock.lock();
+
+        String query = "SELECT event_id FROM events WHERE file_id == " + file.getId()
+                + (includeDerivedArtifacts ? "" : " AND artifact_id IS NULL");
+
+        ArrayList<Long> results = new ArrayList<>();
+        try (Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(query);) {
+            while (rs.next()) {
+                results.add(rs.getLong("event_id"));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error executing getEventIDsForFile query.", ex); // NON-NLS
+        } finally {
+            DBLock.unlock();
+        }
+        return results;
+    }
+
+    /**
      * create the tags table if it doesn't already exist. This is broken out as
-     * a separate method so it can be used by {@link #reInitializeTags() }
+     * a separate method so it can be used by reInitializeTags()
      */
     private void initializeTagsTable() {
         try (Statement stmt = con.createStatement()) {
@@ -1149,6 +1214,7 @@ public class EventDB {
      * @param useSubTypes    use the sub_type column if true, else use the
      *                       base_type column
      * @param descriptionLOD the description level of detail for this event
+     * @param filter
      *
      * @return an AggregateEvent corresponding to the current row in the given
      *         result set
@@ -1251,8 +1317,6 @@ public class EventDB {
 
         /**
          * factory creation method
-         *
-         * @param con the {@link  ava.sql.Connection}
          *
          * @return a LogicalFileTransaction for the given connection
          *

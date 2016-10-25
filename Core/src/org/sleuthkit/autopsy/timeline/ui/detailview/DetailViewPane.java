@@ -102,12 +102,6 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
      * Constructor for a DetailViewPane
      *
      * @param controller       the Controller to use
-     * @param partPane         the Pane that represents the smaller part of the
-     *                         time unit displayed on the horizontal axis
-     * @param contextPane      the Pane that represents the larger/contextual
-     *                         part of the time unit displayed on the horizontal
-     *                         axis
-     * @param bottomLeftSpacer a spacer to keep everything aligned.
      */
     public DetailViewPane(TimeLineController controller) {
         super(controller);
@@ -367,7 +361,7 @@ public class DetailViewPane extends AbstractTimelineChart<DateTime, EventStripe,
     }
 
     @NbBundle.Messages({
-        "DetailViewPane.loggedTask.queryDb=Retreiving event data",
+        "DetailViewPane.loggedTask.queryDb=Retrieving event data",
         "DetailViewPane.loggedTask.name=Updating Details View",
         "DetailViewPane.loggedTask.updateUI=Populating view",
         "DetailViewPane.loggedTask.continueButton=Continue",

@@ -30,7 +30,7 @@ public enum ZoomRanges {
     THREE_YEARS(NbBundle.getMessage(ZoomRanges.class, "Timeline.ui.ZoomRanges.threeyears.text"), Years.THREE),
     FIVE_YEARS(NbBundle.getMessage(ZoomRanges.class, "Timeline.ui.ZoomRanges.fiveyears.text"), Years.years(5)),
     TEN_YEARS(NbBundle.getMessage(ZoomRanges.class, "Timeline.ui.ZoomRanges.tenyears.text"), Years.years(10)),
-    ALL(NbBundle.getMessage(ZoomRanges.class, "Timeline.ui.ZoomRanges.all.text"), Minutes.ONE);
+    ALL(NbBundle.getMessage(ZoomRanges.class, "Timeline.ui.ZoomRanges.all.text"), Years.years(1_000_000));
 
     private ZoomRanges(String displayName, ReadablePeriod period) {
         this.displayName = displayName;

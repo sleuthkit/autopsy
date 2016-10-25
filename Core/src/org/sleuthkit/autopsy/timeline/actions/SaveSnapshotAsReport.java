@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.timeline.actions;
 import java.awt.Desktop;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -32,6 +33,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Control;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -39,10 +41,14 @@ import javax.swing.JOptionPane;
 import org.apache.commons.lang3.StringUtils;
 import org.controlsfx.control.HyperlinkLabel;
 import org.controlsfx.control.action.Action;
+import org.controlsfx.validation.ValidationResult;
+import org.controlsfx.validation.ValidationSupport;
+import org.controlsfx.validation.Validator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.PromptDialogManager;
 import org.sleuthkit.autopsy.timeline.TimeLineController;
 import org.sleuthkit.autopsy.timeline.snapshot.SnapShotReportWriter;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -80,7 +86,8 @@ public class SaveSnapshotAsReport extends Action {
         "SaveSnapShotAsReport.ErrorWritingReport=Error writing report to disk at {0}.",
         "# {0} - generated default report name",
         "SaveSnapShotAsReport.reportName.prompt=leave empty for default report name: {0}.",
-        "SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report."
+        "SaveSnapShotAsReport.reportName.header=Enter a report name for the Timeline Snapshot Report.",
+        "SaveSnapShotAsReport.duplicateReportNameError.text=A report with that name already exists."
     })
     public SaveSnapshotAsReport(TimeLineController controller, Supplier<Node> nodeSupplier) {
         super(Bundle.SaveSnapShotAsReport_action_name_text());
@@ -98,12 +105,31 @@ public class SaveSnapshotAsReport extends Action {
 
             //prompt user to pick report name
             TextInputDialog textInputDialog = new TextInputDialog();
+            PromptDialogManager.setDialogIcons(textInputDialog);
             textInputDialog.setTitle(Bundle.SaveSnapShotAsReport_action_dialogs_title());
             textInputDialog.getEditor().setPromptText(Bundle.SaveSnapShotAsReport_reportName_prompt(defaultReportName));
-            //keep prompt even if text field has focus, until user starts typing.
-            textInputDialog.getEditor().setStyle("-fx-prompt-text-fill: derive(-fx-control-inner-background, -30%);");//NON_NLS 
             textInputDialog.setHeaderText(Bundle.SaveSnapShotAsReport_reportName_header());
 
+            //keep prompt even if text field has focus, until user starts typing.
+            textInputDialog.getEditor().setStyle("-fx-prompt-text-fill: derive(-fx-control-inner-background, -30%);");//NON_NLS 
+
+            /*
+             * Create a ValidationSupport to validate that a report with the
+             * entered name doesn't exist on disk already. Disable ok button if
+             * report name is not validated.
+             */
+            ValidationSupport validationSupport = new ValidationSupport();
+            validationSupport.registerValidator(textInputDialog.getEditor(), false, new Validator<String>() {
+                @Override
+                public ValidationResult apply(Control textField, String enteredReportName) {
+                    String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);
+                    boolean exists = Files.exists(Paths.get(currentCase.getReportDirectory(), reportName));
+                    return ValidationResult.fromErrorIf(textField, Bundle.SaveSnapShotAsReport_duplicateReportNameError_text(), exists);
+                }
+            });
+            textInputDialog.getDialogPane().lookupButton(ButtonType.OK).disableProperty().bind(validationSupport.invalidProperty());
+
+            //show dialog and handle result
             textInputDialog.showAndWait().ifPresent(enteredReportName -> {
                 //reportName defaults to case name + timestamp if left blank
                 String reportName = StringUtils.defaultIfBlank(enteredReportName, defaultReportName);

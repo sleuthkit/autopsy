@@ -96,9 +96,6 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
 
@@ -243,7 +240,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
          * Write the virtual machine file to disk.
          */
         File localFile = Paths.get(outputFolderForThisVM, vmFile.getName()).toFile();
-        ContentUtils.writeToFile(vmFile, localFile);
+        ContentUtils.writeToFile(vmFile, localFile, context::dataSourceIngestIsCancelled);
     }
 
     /**
@@ -327,9 +324,6 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             vmDataSources = new ArrayList<>();
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void done(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> content) {
             for (String error : errList) {
@@ -357,9 +351,6 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             }
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void doneEDT(DataSourceProcessorResult result, List<String> errList, List<Content> newContents) {
             done(result, errList, newContents);

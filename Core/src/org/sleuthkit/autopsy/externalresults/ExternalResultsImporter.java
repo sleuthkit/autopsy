@@ -44,6 +44,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
@@ -101,7 +102,8 @@ public final class ExternalResultsImporter {
                             DerivedFile derivedFile = fileManager.addDerivedFile(localFile.getName(), relativePath, localFile.length(),
                                     0, 0, 0, 0, // Do not currently have file times for derived files from external processes.
                                     true, parentFile,
-                                    "", "", "", ""); // Not currently providing derivation info for derived files from external processes.
+                                    "", "", "", "", // Not currently providing derivation info for derived files from external processes.
+                                    TskData.EncodingType.NONE);  // Don't allow external encoded files
                             IngestServices.getInstance().fireModuleContentEvent(new ModuleContentEvent(derivedFile));
                         } else {
                             String errorMessage = NbBundle.getMessage(this.getClass(),

@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -49,7 +50,8 @@ class GoogleMapLocationAnalyzer {
     private static final Logger logger = Logger.getLogger(GoogleMapLocationAnalyzer.class.getName());
     private static Blackboard blackboard;
 
-    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
+    public static void findGeoLocations(Content dataSource, FileManager fileManager,
+            IngestJobContext context) {
         List<AbstractFile> absFiles;
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
@@ -60,7 +62,7 @@ class GoogleMapLocationAnalyzer {
             for (AbstractFile abstractFile : absFiles) {
                 try {
                     File jFile = new java.io.File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, jFile);
+                    ContentUtils.writeToFile(abstractFile, jFile, context::dataSourceIngestIsCancelled);
                     findGeoLocationsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing Google map locations", e); //NON-NLS

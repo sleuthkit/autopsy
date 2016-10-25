@@ -139,7 +139,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         try {
-            ContentUtils.writeToFile(abstractFile, file);
+            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed writing pst file to disk.", ex); //NON-NLS
             return ProcessResult.OK;
@@ -198,7 +198,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * Parse and extract email messages and attachments from an MBox file.
      *
      * @param abstractFile
-     * @param ingestContext
      *
      * @return
      */
@@ -232,7 +231,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         }
 
         try {
-            ContentUtils.writeToFile(abstractFile, file);
+            ContentUtils.writeToFile(abstractFile, file, context::fileIngestIsCancelled);
         } catch (IOException ex) {
             logger.log(Level.WARNING, "Failed writing mbox file to disk.", ex); //NON-NLS
             return ProcessResult.OK;
@@ -292,7 +291,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @param emails
      * @param abstractFile
-     * @param ingestContext
      */
     private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) {
         List<AbstractFile> derivedFiles = new ArrayList<>();
@@ -331,11 +329,12 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             long cTime = attach.getcTime();
             String relPath = attach.getLocalPath();
             long size = attach.getSize();
+            TskData.EncodingType encodingType = attach.getEncodingType();
 
             try {
                 DerivedFile df = fileManager.addDerivedFile(filename, relPath,
                         size, cTime, crTime, aTime, mTime, true, abstractFile, "",
-                        EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "");
+                        EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "", encodingType);
                 files.add(df);
             } catch (TskCoreException ex) {
                 postErrorMessage(

@@ -45,7 +45,7 @@ If you only want to analyze files, then you want to get the AbstractFile object 
 \code
     AbstractFile file = node.getLookup().lookup(AbstractFile.class);
 \endcode
-If file is null, then it means that the node isn't for a AbstractFile (perhaps its of a full volume). 
+If file is null, then it means that the node isn't for an AbstractFile (perhaps its of a full volume). 
 Once you have the AbstractFile object, you can get the file's name, content, and metadata. 
 
 If you want to get whatever is passed in, then you can use the more generic lookup: 

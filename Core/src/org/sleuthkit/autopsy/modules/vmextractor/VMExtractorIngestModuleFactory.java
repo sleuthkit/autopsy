@@ -41,41 +41,26 @@ public final class VMExtractorIngestModuleFactory extends IngestModuleFactoryAda
         return NbBundle.getMessage(VMExtractorIngestModuleFactory.class, "VMExtractorIngestModuleFactory.moduleDisplayName");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(this.getClass(), "VMExtractorIngestModuleFactory.moduleDescription");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleVersionNumber() {
         return NbBundle.getMessage(this.getClass(), "VMExtractorIngestModuleFactory.version");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean isDataSourceIngestModuleFactory() {
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
         return new VMExtractorIngestModule();

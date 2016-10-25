@@ -27,7 +27,6 @@ package org.sleuthkit.autopsy.filesearch;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JTextField;
@@ -39,8 +38,6 @@ import javax.swing.event.DocumentListener;
  * @author pmartel
  */
 class NameSearchPanel extends javax.swing.JPanel {
-
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form NameSearchPanel
@@ -76,17 +73,17 @@ class NameSearchPanel extends javax.swing.JPanel {
         this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+                firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
             }
         });
 
@@ -104,16 +101,6 @@ class NameSearchPanel extends javax.swing.JPanel {
         boolean enabled = nameCheckBox.isSelected();
         this.searchTextField.setEnabled(enabled);
         this.noteNameLabel.setEnabled(enabled);
-    }
-    
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
     }
 
     /**
@@ -200,7 +187,7 @@ class NameSearchPanel extends javax.swing.JPanel {
 
     private void nameCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameCheckBoxActionPerformed
         setComponentsEnabled();
-        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_nameCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

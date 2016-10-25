@@ -72,6 +72,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
     private final class EmailResults extends Observable {
 
+        // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 
         EmailResults() {
@@ -79,20 +80,28 @@ public class EmailExtracted implements AutopsyVisitableItem {
         }
 
         public Set<String> getAccounts() {
-            return accounts.keySet();
+            synchronized (accounts) {
+                return accounts.keySet();
+            }
         }
 
         public Set<String> getFolders(String account) {
-            return accounts.get(account).keySet();
+            synchronized (accounts) {
+                return accounts.get(account).keySet();
+            }
         }
 
         public List<Long> getArtifactIds(String account, String folder) {
-            return accounts.get(account).get(folder);
+            synchronized (accounts) {
+                return accounts.get(account).get(folder);
+            }
         }
 
         @SuppressWarnings("deprecation")
         public void update() {
-            accounts.clear();
+            synchronized (accounts) {
+                accounts.clear();
+            }
             if (skCase == null) {
                 return;
             }
@@ -107,24 +116,26 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
-                while (resultSet.next()) {
-                    final String path = resultSet.getString("value_text"); //NON-NLS
-                    final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
-                    final Map<String, String> parsedPath = parsePath(path);
-                    final String account = parsedPath.get(MAIL_ACCOUNT);
-                    final String folder = parsedPath.get(MAIL_FOLDER);
+                synchronized (accounts) {
+                    while (resultSet.next()) {
+                        final String path = resultSet.getString("value_text"); //NON-NLS
+                        final long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
+                        final Map<String, String> parsedPath = parsePath(path);
+                        final String account = parsedPath.get(MAIL_ACCOUNT);
+                        final String folder = parsedPath.get(MAIL_FOLDER);
 
-                    Map<String, List<Long>> folders = accounts.get(account);
-                    if (folders == null) {
-                        folders = new LinkedHashMap<>();
-                        accounts.put(account, folders);
+                        Map<String, List<Long>> folders = accounts.get(account);
+                        if (folders == null) {
+                            folders = new LinkedHashMap<>();
+                            accounts.put(account, folders);
+                        }
+                        List<Long> messages = folders.get(folder);
+                        if (messages == null) {
+                            messages = new ArrayList<>();
+                            folders.put(folder, messages);
+                        }
+                        messages.add(artifactId);
                     }
-                    List<Long> messages = folders.get(folder);
-                    if (messages == null) {
-                        messages = new ArrayList<>();
-                        folders.put(folder, messages);
-                    }
-                    messages.add(artifactId);
                 }
             } catch (TskCoreException | SQLException ex) {
                 logger.log(Level.WARNING, "Cannot initialize email extraction: ", ex); //NON-NLS

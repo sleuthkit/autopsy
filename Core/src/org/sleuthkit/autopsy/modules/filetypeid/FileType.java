@@ -43,6 +43,8 @@ class FileType implements Serializable {
     private static final long serialVersionUID = 1L;
     private final String mimeType;
     private final List<Signature> signatures;
+    private final boolean createInterestingFileHit;
+    private final String interestingFilesSetName;
 
     /**
      * Creates a representation of a file type characterized by file signatures.
@@ -53,11 +55,27 @@ class FileType implements Serializable {
      * @throws IllegalArgumentException If an empty list of signatures is given.
      */
     FileType(String mimeType, List<Signature> signatures) throws IllegalArgumentException {
+        this(mimeType, signatures, false, "");
+    }
+
+    /**
+     * Creates a representation of a file type characterized by file signatures.
+     *
+     * @param mimeType   The mime type to associate with this file type.
+     * @param signatures The signatures that characterize this file type.
+     * @param createInterestingFileHit  Create interesting file hit for file type?
+     * @param setName    Name of the interesting file set in which to create hit.
+     *
+     * @throws IllegalArgumentException If an empty list of signatures is given.
+     */
+    FileType(String mimeType, List<Signature> signatures, boolean createInterestingFileHit, String setName) throws IllegalArgumentException {
         if (signatures.isEmpty()) {
             throw new IllegalArgumentException("Must have at least one signature.");
         }
         this.mimeType = mimeType;
         this.signatures = new ArrayList<>(signatures);
+        this.createInterestingFileHit = createInterestingFileHit;
+        this.interestingFilesSetName = setName;
     }
 
     /**
@@ -67,6 +85,26 @@ class FileType implements Serializable {
      */
     String getMimeType() {
         return mimeType;
+    }
+
+    /**
+     * Gets the name of the interesting files set associated with this file
+     * type.
+     *
+     * @return The interesting files set name.
+     */
+    String getInterestingFilesSetName() {
+        return interestingFilesSetName;
+    }
+
+    /**
+     * Should an interesting files hit be created for this file type?
+     *
+     * @return true if an interesting files hit should be created, otherwise
+     * false
+     */
+    boolean createInterestingFileHit() {
+        return createInterestingFileHit;
     }
 
     /**

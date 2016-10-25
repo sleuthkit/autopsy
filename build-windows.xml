@@ -53,6 +53,7 @@
             <include name="libeay32.dll"/>
             <include name="ssleay32.dll"/>
             <include name="libintl-8.dll"/>
+            <include name="libiconv-2.dll"/>
             <include name="libpq.dll"/>
             <include name="msvcr120.dll"/>
         </fileset>
@@ -80,7 +81,8 @@
         <fileset dir="${win32.TskLib.postgres_path}" id="postgres32dlls">
             <include name="libeay32.dll"/>
             <include name="ssleay32.dll"/>
-            <include name="intl.dll"/>
+            <include name="libintl-8.dll"/>
+            <include name="libiconv-2.dll"/>
             <include name="libpq.dll"/>
             <include name="msvcr120.dll"/>
         </fileset>

@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A Record to hold generic information about email messages, regardless of the
@@ -191,6 +192,8 @@ class EmailMessage {
         private long aTime = 0L;
 
         private long mTime = 0L;
+        
+        private TskData.EncodingType encodingType = TskData.EncodingType.NONE;
 
         String getName() {
             return name;
@@ -275,5 +278,14 @@ class EmailMessage {
                 this.mTime = mTime.getTime() / 1000;
             }
         }
+        
+        void setEncodingType(TskData.EncodingType encodingType){
+            this.encodingType = encodingType;
+        }
+        
+        TskData.EncodingType getEncodingType(){
+            return encodingType;
+        }
+        
     }
 }

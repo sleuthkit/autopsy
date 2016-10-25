@@ -30,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -55,7 +56,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
      * unknown, known, or known bad.
      */
     HashDbImportDatabaseDialog() {
-        super(new JFrame(),
+        super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(HashDbImportDatabaseDialog.class, "HashDbImportDatabaseDialog.importHashDbMsg"),
                 true);
         initFileChooser();

@@ -76,7 +76,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
                 final BlackboardAttribute latitude = getAttributeSafe(artf, new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_GEO_LATITUDE));
                 return stringValueOf(latitude) + " " + stringValueOf(longitude); // NON-NLS
             },
-            EMPTY_EXTRACTOR),
+            new EmptyExtractor()),
     CALL_LOG(NbBundle.getMessage(MiscTypes.class, "MiscTypes.Calls.name"), "calllog.png", // NON-NLS
             new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_CALLLOG),
             new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_START),
@@ -104,7 +104,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
 
                 @Override
         public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) throws TskCoreException {
-            final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttrubuteType());
+            final BlackboardAttribute dateTimeAttr = artf.getAttribute(getDateTimeAttributeType());
 
                     long time = dateTimeAttr.getValueLong();
 
@@ -120,8 +120,8 @@ public enum MiscTypes implements EventType, ArtifactEventType {
             new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_INSTALLED_PROG),
             new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME),
             new AttributeExtractor(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_PROG_NAME)),
-            EMPTY_EXTRACTOR,
-            EMPTY_EXTRACTOR),
+            new EmptyExtractor(),
+            new EmptyExtractor()),
     EXIF(NbBundle.getMessage(MiscTypes.class, "MiscTypes.exif.name"), "camera-icon-16.png", // NON-NLS
             new BlackboardArtifact.Type(ARTIFACT_TYPE.TSK_METADATA_EXIF),
             new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_DATETIME_CREATED),
@@ -199,7 +199,7 @@ public enum MiscTypes implements EventType, ArtifactEventType {
     }
 
     @Override
-    public BlackboardAttribute.Type getDateTimeAttrubuteType() {
+    public BlackboardAttribute.Type getDateTimeAttributeType() {
         return dateTimeAttributeType;
     }
 

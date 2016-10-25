@@ -33,6 +33,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -53,8 +54,8 @@ class CacheLocationAnalyzer {
      * cache.cell stores mobile tower GPS locations and cache.wifi stores GPS
      * and MAC info from Wifi points.
      */
-    public static void findGeoLocations(Content dataSource, FileManager fileManager) {
-
+    public static void findGeoLocations(Content dataSource, FileManager fileManager,
+            IngestJobContext context) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
             List<AbstractFile> abstractFiles = fileManager.findFiles(dataSource, "cache.cell"); //NON-NLS
@@ -66,7 +67,7 @@ class CacheLocationAnalyzer {
                         continue;
                     }
                     File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, jFile);
+                    ContentUtils.writeToFile(abstractFile, jFile, context::dataSourceIngestIsCancelled);
 
                     findGeoLocationsInFile(jFile, abstractFile);
                 } catch (Exception e) {

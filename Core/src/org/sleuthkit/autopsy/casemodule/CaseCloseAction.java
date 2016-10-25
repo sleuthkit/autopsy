@@ -36,11 +36,19 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
+import org.openide.awt.ActionRegistration;
 
 /**
  * The action to close the current Case. This class should be disabled on
  * creation and it will be enabled on new case creation or case opened.
  */
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
+@ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
+@ActionReferences(value = {
+    @ActionReference(path = "Toolbars/Case", position = 104)})
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     JButton toolbarButton = new JButton();
@@ -87,7 +95,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
             }
         }
 
-        if (Case.existsCurrentCase() == false) {
+        if (Case.isCaseOpen() == false) {
             return;
         }
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

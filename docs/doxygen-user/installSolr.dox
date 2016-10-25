@@ -7,7 +7,7 @@ A central Solr server is needed to store keyword indexes. To install Solr, perfo
 
 You will need:
 - 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
-- Download the Apache Solr 4.10.3-0 installation package from https://bitnami.com/stack/solr/installer. 
+- Download the Apache Solr 4.10.3-0 installation package from https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr  or  <a href="https://sourceforge.net/projects/autopsy/files/CollaborativeServices/Solr/bitnami-solr-4.10.3-0-windows-installer.exe/download">Direct Download Link</a>
 - Access to an installed version of Autopsy so that you can copy files from it. 
 - A network-accessible machine to install Solr upon. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
@@ -81,11 +81,12 @@ The log file should end up looking like this (modified lines are highlighted in 
     <br><br>
     <i>cmd /c C:\\Bitnami\\solr-4.10.3-0\\apache-solr\\scripts\\serviceinstall.bat INSTALL</i>
     <br><br>
-    Your command prompt should look like the screenshot below. Very likely it will say "The solrJetty service could not be started." This is okay.
+    Note the argument "INSTALL" is case sensitive. Your command prompt should look like the screenshot below. Very likely it will say "The solrJetty service could not be started." This is okay.
 <br><br>
 \image html solrinstall1.PNG
 <br><br>
-8. Press _Start_, type _services.msc_, and press _Enter_. Find _solrJetty_. If the service is running, press _Stop the service_, then double click it, and switch to the _Log On_ tab to change the logon credentials to a user who will have access to read and write the primary shared drive. If the machine is on a domain, the Account Name will be in the form of _DOMAINNAME\\username_ as shown in the example below. Note that in the screenshot below, the domain name is _DOMAIN_ and the user name is _username_. These are just examples, not real values.
+8. Press _Start_, type _services.msc_, and press _Enter_. Find _solrJetty_. If the service is running, press _Stop the service_, then double click it, and switch to the _Log On_ tab to change the logon credentials to a user who will have access to read and write the primary shared drive. Note that selecting "Local System account" will work only if Solr service and case output folders are on the same machine. Using "Local System account" to run Solr service and having case output folders on a different machine will result in Solr being unable to create index files. 
+<br>If the machine is on a domain, the Account Name will be in the form of _DOMAINNAME\\username_ as shown in the example below. Note that in the screenshot below, the domain name is _DOMAIN_ and the user name is _username_. These are just examples, not real values.
 <br><br>
 \image html solrinstall2.PNG
 <br>

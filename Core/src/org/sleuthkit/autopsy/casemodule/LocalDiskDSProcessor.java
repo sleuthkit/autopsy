@@ -169,7 +169,9 @@ public class LocalDiskDSProcessor implements DataSourceProcessor {
      */
     @Override
     public void cancel() {
-        addDiskTask.cancelTask();
+        if (null != addDiskTask) {
+            addDiskTask.cancelTask();
+        }
     }
 
     /**

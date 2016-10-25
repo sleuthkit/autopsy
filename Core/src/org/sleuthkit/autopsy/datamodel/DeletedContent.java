@@ -163,7 +163,7 @@ public class DeletedContent implements AutopsyVisitableItem {
         private SleuthkitCase skCase;
         private Observable notifier;
         // true if we have already told user that not all files will be shown
-        private static boolean maxFilesDialogShown = false;
+        private static volatile boolean maxFilesDialogShown = false;
 
         public DeletedContentsChildren(SleuthkitCase skCase) {
             this.skCase = skCase;

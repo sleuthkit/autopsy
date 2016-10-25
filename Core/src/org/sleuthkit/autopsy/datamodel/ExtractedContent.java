@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2015 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,27 +37,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_BLUETOOTH_PAIRING;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CALENDAR_ENTRY;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ENCRYPTION_DETECTED;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_BOOKMARK;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_LAST_KNOWN_LOCATION;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GPS_SEARCH;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INSTALLED_PROG;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_METADATA_EXIF;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_RECENT_OBJECT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_SERVICE_ACCOUNT;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_SPEED_DIAL_ENTRY;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY;
-import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_SEARCH_QUERY;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT;
+import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -209,18 +195,13 @@ public class ExtractedContent implements AutopsyVisitableItem {
             super();
 
             // these are shown in other parts of the UI tree
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_GEN_INFO));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT));
-            doNotShow.add(new BlackboardArtifact.Type(
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_GEN_INFO));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_EMAIL_MSG));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_HASHSET_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_KEYWORD_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_FILE_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_INTERESTING_ARTIFACT_HIT));
+            doNotShow.add(new BlackboardArtifact.Type(TSK_ACCOUNT));
         }
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -295,11 +276,11 @@ public class ExtractedContent implements AutopsyVisitableItem {
                     types.removeAll(doNotShow);
                     Collections.sort(types,
                             new Comparator<BlackboardArtifact.Type>() {
-                                @Override
-                                public int compare(BlackboardArtifact.Type a, BlackboardArtifact.Type b) {
-                                    return a.getDisplayName().compareTo(b.getDisplayName());
-                                }
-                            });
+                        @Override
+                        public int compare(BlackboardArtifact.Type a, BlackboardArtifact.Type b) {
+                            return a.getDisplayName().compareTo(b.getDisplayName());
+                        }
+                    });
                     list.addAll(types);
 
                     // the create node method will get called only for new types
@@ -358,7 +339,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                 Logger.getLogger(TypeNode.class.getName())
                         .log(Level.WARNING, "Error getting child count", ex); //NON-NLS
             }
-            super.setDisplayName(type.getDisplayName() + " (" + childCount + ")");
+            super.setDisplayName(type.getDisplayName() + " \u200E(\u200E" + childCount + ")\u200E");
         }
 
         @Override

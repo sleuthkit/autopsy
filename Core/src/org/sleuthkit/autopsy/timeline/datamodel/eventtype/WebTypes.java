@@ -45,7 +45,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
 
                 @Override
         public AttributeEventDescription parseAttributesHelper(BlackboardArtifact artf) throws TskCoreException {
-            long time = artf.getAttribute(getDateTimeAttrubuteType()).getValueLong();
+            long time = artf.getAttribute(getDateTimeAttributeType()).getValueLong();
                     String domain = getShortExtractor().apply(artf);
                     String path = getMedExtractor().apply(artf);
                     String fileName = StringUtils.substringAfterLast(path, "/");
@@ -103,7 +103,7 @@ public enum WebTypes implements EventType, ArtifactEventType {
     }
 
     @Override
-    public BlackboardAttribute.Type getDateTimeAttrubuteType() {
+    public BlackboardAttribute.Type getDateTimeAttributeType() {
         return dateTimeAttributeType;
     }
 

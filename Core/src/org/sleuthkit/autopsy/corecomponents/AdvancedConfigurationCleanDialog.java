@@ -9,6 +9,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import org.openide.windows.WindowManager;
 
 /**
  * Displays a panel in a new clean dialog. A clean dialog contains nothing but
@@ -28,7 +29,7 @@ public class AdvancedConfigurationCleanDialog extends javax.swing.JDialog {
      * Creates new form AdvancedConfigurationDialog
      */
     public AdvancedConfigurationCleanDialog(boolean resizable) {
-        super(new JFrame(), true);
+        super((JFrame) WindowManager.getDefault().getMainWindow(), true);
         setResizable(resizable);
         if (resizable) {
             this.setIconImage(null);

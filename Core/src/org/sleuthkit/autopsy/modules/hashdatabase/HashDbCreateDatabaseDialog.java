@@ -29,6 +29,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import org.apache.commons.io.FilenameUtils;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -55,7 +56,7 @@ final class HashDbCreateDatabaseDialog extends javax.swing.JDialog {
      * known or known bad.
      */
     HashDbCreateDatabaseDialog() {
-        super(new JFrame(), NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.createHashDbMsg"), true);
+        super((JFrame) WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(HashDbCreateDatabaseDialog.class, "HashDbCreateDatabaseDialog.createHashDbMsg"), true);
         initFileChooser();
         initComponents();
         display();

@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.EventQueue;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +72,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     // definitions manager. Note that it is a tree map to aid in displaying
     // files sets in sorted order by name.
     private TreeMap<String, FilesSet> filesSets;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Constructs an interesting item definitions panel.
@@ -123,16 +120,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.equalitySignComboBox.setSelectedIndex(2);
     }
     
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
-    }
-
     /**
      * @inheritDoc
      */
@@ -914,7 +901,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 762, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -928,7 +915,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
     private void newSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSetButtonActionPerformed
         this.doFileSetsDialog(null);
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_newSetButtonActionPerformed
 
     private void deleteRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteRuleButtonActionPerformed
@@ -946,7 +933,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         } else {
             this.resetRuleComponents();
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteRuleButtonActionPerformed
 
     private void deleteSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSetButtonActionPerformed
@@ -961,7 +948,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         } else {
             this.resetComponents();
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteSetButtonActionPerformed
 
     private void ignoreKnownFilesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ignoreKnownFilesCheckboxActionPerformed
@@ -970,17 +957,17 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
     private void editSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSetButtonActionPerformed
         this.doFileSetsDialog(this.setsList.getSelectedValue());
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_editSetButtonActionPerformed
 
     private void editRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editRuleButtonActionPerformed
         this.doFilesSetRuleDialog(this.rulesList.getSelectedValue());
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_editRuleButtonActionPerformed
 
     private void newRuleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newRuleButtonActionPerformed
         this.doFilesSetRuleDialog(null);
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     private void fileNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNameTextFieldActionPerformed

@@ -166,11 +166,11 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         List<String> timeZones = new ArrayList<>();
 
-        if (Case.existsCurrentCase()) {
+        if (Case.isCaseOpen()) {
             // get the latest case
             Case currentCase = Case.getCurrentCase(); // get the most updated case
 
-            Set<TimeZone> caseTimeZones = currentCase.getTimeZone();
+            Set<TimeZone> caseTimeZones = currentCase.getTimeZones();
             Iterator<TimeZone> iterator = caseTimeZones.iterator();
             while (iterator.hasNext()) {
                 TimeZone zone = iterator.next();

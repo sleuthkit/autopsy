@@ -37,7 +37,9 @@ import org.sleuthkit.autopsy.ingest.IngestMonitor;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import static org.sleuthkit.autopsy.thunderbirdparser.ThunderbirdMboxFileIngestModule.getRelModuleOutputPath;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Parser for extracting emails from pst/ost Mircosoft Outlook data files.
@@ -234,6 +236,7 @@ class PstParser {
                 attachment.setmTime(mTime);
                 attachment.setLocalPath(relPath);
                 attachment.setSize(attach.getFilesize());
+                attachment.setEncodingType(TskData.EncodingType.XOR1);
                 email.addAttachment(attachment);
             } catch (PSTException | IOException | NullPointerException ex) {
                 /**
@@ -260,7 +263,8 @@ class PstParser {
      * @throws PSTException
      */
     private void saveAttachmentToDisk(PSTAttachment attach, String outPath) throws IOException, PSTException {
-        try (InputStream attachmentStream = attach.getFileInputStream(); FileOutputStream out = new FileOutputStream(outPath)) {
+        try (InputStream attachmentStream = attach.getFileInputStream(); 
+                EncodedFileOutputStream out = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1)) {
             // 8176 is the block size used internally and should give the best performance
             int bufferSize = 8176;
             byte[] buffer = new byte[bufferSize];

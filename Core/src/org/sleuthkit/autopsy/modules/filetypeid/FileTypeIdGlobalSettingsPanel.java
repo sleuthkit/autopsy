@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.modules.filetypeid;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -74,7 +73,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     // modules obtained and shared a per data source ingest job snapshot of the
     // file type definitions.
     IngestJobEventPropertyChangeListener ingestJobEventsListener;
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates a panel to allow a user to make custom file type definitions.
@@ -98,16 +96,6 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         setOffsetRealtiveToComboBoxModel();
         addTypeListSelectionListener();
         populateTypeDetailsComponents();
-    }
-
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
     }
 
     /**
@@ -341,6 +329,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jScrollPane2.setMinimumSize(new java.awt.Dimension(300, 0));
         jScrollPane2.setPreferredSize(new java.awt.Dimension(550, 275));
 
+        jSplitPane1.setDividerSize(1);
         jSplitPane1.setMinimumSize(new java.awt.Dimension(0, 0));
 
         jPanel1.setMinimumSize(new java.awt.Dimension(362, 0));
@@ -491,7 +480,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
+            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 507, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -501,7 +490,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         if (result == AddFileTypeDialog.BUTTON_PRESSED.OK) {
             fileTypes.add(dialog.getFileType());
             updateFileTypesListModel();
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
 
     }//GEN-LAST:event_newTypeButtonActionPerformed
@@ -513,7 +502,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         if (!typesListModel.isEmpty()) {
             typesList.setSelectedIndex(0);
         }
-        pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteTypeButtonActionPerformed
 
     private void editTypeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editTypeButtonActionPerformed
@@ -524,7 +513,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             this.fileTypes.remove(selected);
             this.fileTypes.add(selected, dialog.getFileType());
             updateFileTypesListModel();
-            pcs.firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_editTypeButtonActionPerformed
 

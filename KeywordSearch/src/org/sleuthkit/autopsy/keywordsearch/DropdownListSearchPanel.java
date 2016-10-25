@@ -39,6 +39,9 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import javax.swing.ImageIcon;
+import static javax.swing.SwingConstants.CENTER;
+import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  * Viewer panel widget for keyword lists that is used in the ingest config and
@@ -93,7 +96,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
                 column.setPreferredWidth(((int) (rightWidth * 0.78)));
             } else {
                 column.setPreferredWidth(((int) (rightWidth * 0.20)));
-                column.setCellRenderer(new RightCheckBoxRenderer());
+                column.setCellRenderer(new CheckBoxRenderer());
             }
         }
 
@@ -220,8 +223,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         keywordsTable.setBackground(new java.awt.Color(240, 240, 240));
         keywordsTable.setFont(keywordsTable.getFont().deriveFont(keywordsTable.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         keywordsTable.setModel(keywordsTableModel);
-        keywordsTable.setShowHorizontalLines(false);
-        keywordsTable.setShowVerticalLines(false);
+        keywordsTable.setGridColor(new java.awt.Color(153, 153, 153));
         rightPane.setViewportView(keywordsTable);
 
         jSplitPane1.setRightComponent(rightPane);
@@ -597,26 +599,31 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         }
     }
 
-    private class RightCheckBoxRenderer extends JCheckBox implements TableCellRenderer {
+    /**
+     * A cell renderer for boolean cells that shows a center-aligned green check
+     * mark if true, nothing if false.
+     */
+    private class CheckBoxRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1L;
+        final ImageIcon theCheck = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/checkmark.png")); // NON-NLS
+
+        CheckBoxRenderer() {
+            setHorizontalAlignment(CENTER);
+        }
 
         @Override
-        public Component getTableCellRendererComponent(
-                JTable table, Object value,
-                boolean isSelected, boolean hasFocus,
-                int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 
-            this.setHorizontalAlignment(JCheckBox.CENTER);
-            this.setVerticalAlignment(JCheckBox.CENTER);
-
-            Boolean selected = (Boolean) table.getModel().getValueAt(row, 1);
-            setSelected(selected);
-            if (isSelected) {
-                setBackground(keywordsTable.getSelectionBackground());
-            } else {
-                setBackground(keywordsTable.getBackground());
+            if ((value instanceof Boolean)) {
+                if ((Boolean) value) {
+                    setIcon(theCheck);
+                    setToolTipText(Bundle.IsRegularExpression());
+                } else {
+                    setIcon(null);
+                    setToolTipText(null);
+                }
             }
-            setEnabled(false);
-
             return this;
         }
     }

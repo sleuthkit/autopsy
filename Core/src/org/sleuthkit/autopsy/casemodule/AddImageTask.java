@@ -101,7 +101,7 @@ class AddImageTask implements Runnable {
         try {
             currentCase.getSleuthkitCase().acquireExclusiveLock();
             synchronized (tskAddImageProcessLock) {
-                tskAddImageProcess = currentCase.makeAddImageProcess(timeZone, true, ignoreFatOrphanFiles);
+                tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, true, ignoreFatOrphanFiles);
             }
             Thread progressUpdateThread = new Thread(new ProgressUpdater(progressMonitor, tskAddImageProcess));
             progressUpdateThread.start();

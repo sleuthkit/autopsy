@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.coreutils.ThreadConfined;
  * Manager for the various prompts and dialogs Timeline shows the user related
  * to rebuilding the database. Methods must only be called on the JFX thread.
  */
-class PromptDialogManager {
+public final class PromptDialogManager {
 
     private static final Logger LOGGER = Logger.getLogger(PromptDialogManager.class.getName());
 
@@ -143,7 +143,7 @@ class PromptDialogManager {
      * @param dialog The dialog to set the title bar icon for.
      */
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
-    static private void setDialogIcons(Dialog<?> dialog) {
+    public static void setDialogIcons(Dialog<?> dialog) {
         ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll(AUTOPSY_ICON);
     }
 

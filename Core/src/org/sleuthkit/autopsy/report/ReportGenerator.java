@@ -41,6 +41,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingWorker;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -110,7 +111,7 @@ class ReportGenerator {
      * parent dialog.
      */
     private void displayProgressPanel() {
-        final JDialog dialog = new JDialog(new JFrame(), true);
+        final JDialog dialog = new JDialog((JFrame) WindowManager.getDefault().getMainWindow(), true);
         dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         dialog.setTitle(NbBundle.getMessage(this.getClass(), "ReportGenerator.displayProgress.title.text"));
         dialog.add(this.reportGenerationPanel);

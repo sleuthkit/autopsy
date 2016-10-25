@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2014-2015 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,25 +50,23 @@ public final class IngestJob {
         OUT_OF_DISK_SPACE(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.outOfDiskSpace.text")),
         SERVICES_DOWN(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.servicesDown.text")),
         CASE_CLOSED(NbBundle.getMessage(IngestJob.class, "IngestJob.cancelReason.caseClosed.text"));
-        
+
         private final String displayName;
-        
+
         private CancellationReason(String displayName) {
             this.displayName = displayName;
         }
-        
+
         public String getDisplayName() {
             return displayName;
         }
     }
 
-    private static final AtomicLong nextId = new AtomicLong(0L);
+    private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final Map<Long, DataSourceIngestJob> dataSourceJobs;
     private final AtomicInteger incompleteJobsCount;
-    private boolean started;
-    private boolean cancelled;
-    private CancellationReason cancellationReason;
+    private volatile CancellationReason cancellationReason;
 
     /**
      * Constructs an ingest job that runs a collection of data sources through a
@@ -127,14 +125,7 @@ public final class IngestJob {
      *
      * @return A collection of ingest module start up errors, empty on success.
      */
-    synchronized List<IngestModuleError> start() {
-        List<IngestModuleError> errors = new ArrayList<>();
-        if (started) {
-            errors.add(new IngestModuleError("IngestJob", new IllegalStateException("Job already started"))); //NON-NLS
-            return errors;
-        }
-        started = true;
-
+    List<IngestModuleError> start() {
         /*
          * Try to start each data source ingest job. Note that there is a not
          * unwarranted assumption here that if there is going to be a module
@@ -143,6 +134,7 @@ public final class IngestJob {
          * TODO (RC): Consider separating module start up from pipeline startup
          * so that no processing is done if this assumption is false.
          */
+        List<IngestModuleError> errors = new ArrayList<>();
         for (DataSourceIngestJob dataSourceJob : this.dataSourceJobs.values()) {
             errors.addAll(dataSourceJob.start());
             if (errors.isEmpty() == false) {
@@ -205,7 +197,7 @@ public final class IngestJob {
      * @deprecated Use cancel(CancellationReason reason) instead
      */
     @Deprecated
-    synchronized public void cancel() {
+    public void cancel() {
         cancel(CancellationReason.USER_CANCELLED);
     }
 
@@ -217,12 +209,11 @@ public final class IngestJob {
      *
      * @param reason The reason for cancellation.
      */
-    synchronized public void cancel(CancellationReason reason) {
+    public void cancel(CancellationReason reason) {
+        this.cancellationReason = reason;
         this.dataSourceJobs.values().stream().forEach((job) -> {
             job.cancel(reason);
         });
-        this.cancelled = true;
-        this.cancellationReason = reason;
     }
 
     /**
@@ -230,7 +221,7 @@ public final class IngestJob {
      *
      * @return The cancellation reason, may be not cancelled.
      */
-    synchronized public CancellationReason getCancellationReason() {
+    public CancellationReason getCancellationReason() {
         return this.cancellationReason;
     }
 
@@ -240,8 +231,8 @@ public final class IngestJob {
      *
      * @return True or false.
      */
-    synchronized public boolean isCancelled() {
-        return this.cancelled;
+    public boolean isCancelled() {
+        return (CancellationReason.NOT_CANCELLED != this.cancellationReason);
     }
 
     /**
@@ -311,7 +302,7 @@ public final class IngestJob {
              *
              * @return The cancellation reason, may be not cancelled.
              */
-            synchronized public CancellationReason getCancellationReason() {
+            public CancellationReason getCancellationReason() {
                 return snapshot.getCancellationReason();
             }
 
@@ -353,7 +344,7 @@ public final class IngestJob {
                     fileIngestStartTime = childFileIngestStartTime;
                 }
             }
-            this.jobCancelled = cancelled;
+            this.jobCancelled = isCancelled();
             this.jobCancellationReason = cancellationReason;
         }
 
@@ -401,7 +392,7 @@ public final class IngestJob {
          *
          * @return The cancellation reason, may be not cancelled.
          */
-        synchronized public CancellationReason getCancellationReason() {
+        public CancellationReason getCancellationReason() {
             return this.jobCancellationReason;
         }
 
@@ -432,9 +423,9 @@ public final class IngestJob {
          * used to get basic information about the module and to request
          * cancellation of the module.
          *
-         * @param DataSourceIngestJob The data source ingest job that owns the
-         *                            data source level ingest module.
-         * @param module              The data source level ingest module.
+         * @param job    The data source ingest job that owns the data source
+         *               level ingest module.
+         * @param module The data source level ingest module.
          */
         private DataSourceIngestModuleHandle(DataSourceIngestJob job, DataSourceIngestPipeline.PipelineModule module) {
             this.job = job;

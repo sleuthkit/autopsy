@@ -93,6 +93,9 @@ public class HashDbIngestModule implements FileIngestModule {
     @Override
     public void startUp(org.sleuthkit.autopsy.ingest.IngestJobContext context) throws IngestModuleException {
         jobId = context.getJobId();
+        if (!hashDbManager.verifyAllDatabasesLoadedCorrectly()) {
+            throw new IngestModuleException("Could not load all hash databases");
+        }
         updateEnabledHashSets(hashDbManager.getKnownBadFileHashSets(), knownBadHashSets);
         updateEnabledHashSets(hashDbManager.getKnownFileHashSets(), knownHashSets);
 

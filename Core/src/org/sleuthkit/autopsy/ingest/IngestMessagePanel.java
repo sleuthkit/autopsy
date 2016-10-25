@@ -35,10 +35,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
@@ -49,10 +48,12 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import org.sleuthkit.autopsy.ingest.IngestMessage.*;
-import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import java.util.logging.Level;
+import org.sleuthkit.autopsy.ingest.IngestMessage.*;
+import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Notification window showing messages from modules to user

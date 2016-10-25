@@ -39,10 +39,25 @@ There may also be an "Advanced" button that is enabled in the lower corner.  Pre
 
 As an example, the hash lookup module will allow you to enable or disable hash databases in the "run time" options panel, but requires you to go to the "Advanced" dialog to add or remove hash databases from the Autopsy configuration. 
 
+<br><br>
+\section ingest_already_run Notification of Ingest Already Run
+If an ingest module has already been run for a particular data source, you will see a triangular yellow icon with an exclaimation point next to the module in the "Run Ingest Modules" dialog, as shown in the screenshot below.
+<br><br>
+\image html ingest-already-run.PNG
+<br><br>
+If an older version of an ingest module has been run for a particular data source, you will see a round blue icon with an "i" next to the module in the "Run Ingest Modules" dialog, as shown in the screenshot below.
+<br><br>
+\image html previous-version-already-run.PNG
+<br><br>
+
+Clicking "View Ingest History" will show you the ingest history in tabular form, allowing you to see which modules were run on which data sources and when, as shown in the screenshot below.
+<br><br>
+\image html ingest-history.PNG
+<br><br>
 
 \section ingest_results Viewing Ingest Module Results
 
-Ingest modules run in the background.  An ingest module can provide you results in a variety of ways, but we recommend specific methods:
+Ingest modules run in the background. An ingest module can provide you results in a variety of ways, but we recommend specific methods:
 
 -# If they post results to the Blackboard, then you will find them in the "Results" area of the tree in the main interface.
 -# They can send a message to the Ingest Inbox so that you get a message each time something really important is found. 

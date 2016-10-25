@@ -26,17 +26,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings.IngestType;
@@ -110,7 +107,7 @@ public final class RunIngestModulesDialog extends JDialog {
          */
         IngestJobSettings ingestJobSettings = new IngestJobSettings(RunIngestModulesDialog.class.getCanonicalName(), this.ingestType);
         RunIngestModulesDialog.showWarnings(ingestJobSettings);
-        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings, dataSources);
         setPreferredSize(this.ingestJobSettingsPanel.getPreferredSize());
         add(this.ingestJobSettingsPanel, BorderLayout.CENTER);
 

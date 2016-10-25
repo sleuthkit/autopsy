@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -27,6 +28,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
@@ -107,12 +109,15 @@ class ContentTagNode extends DisplayableItemNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), false);
-        for (Action a : super.getActions(true)) {
-            actions.add(a);
+        actions.addAll(Arrays.asList(super.getActions(context)));
+
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        if (file != null) {
+            actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
         actions.add(null); // Adds a menu item separator. 
         actions.add(DeleteContentTagAction.getInstance());
-        return actions.toArray(new Action[0]);
+        return actions.toArray(new Action[actions.size()]);
     }
 
     @Override

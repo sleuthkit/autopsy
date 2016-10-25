@@ -57,6 +57,8 @@ import org.apache.tika.parser.txt.CharsetDetector;
 import org.apache.tika.parser.txt.CharsetMatch;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.EncodedFileOutputStream;
 
 /**
  * A parser that extracts information about email messages and attachments from
@@ -285,11 +287,11 @@ class MboxParser {
 
         String uniqueFilename = fileID + "-" + index + "-" + email.getSentDate() + "-" + filename;
         String outPath = outputDirPath + uniqueFilename;
-        FileOutputStream fos;
+        EncodedFileOutputStream fos;
         BinaryBody bb;
         try {
-            fos = new FileOutputStream(outPath);
-        } catch (FileNotFoundException ex) {
+            fos = new EncodedFileOutputStream(new FileOutputStream(outPath), TskData.EncodingType.XOR1);
+        } catch (IOException ex) {
             addErrorMessage(
                     NbBundle.getMessage(this.getClass(),
                             "MboxParser.handleAttch.errMsg.failedToCreateOnDisk", outPath));
@@ -322,6 +324,7 @@ class MboxParser {
         attach.setLocalPath(ThunderbirdMboxFileIngestModule.getRelModuleOutputPath()
                 + File.separator + uniqueFilename);
         attach.setSize(new File(outPath).length());
+        attach.setEncodingType(TskData.EncodingType.XOR1);
         email.addAttachment(attach);
     }
 

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,41 +19,83 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.IngestJobInfo;
+import org.sleuthkit.datamodel.IngestModuleInfo;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * User interface component to allow a user to make ingest job settings.
+ * A panel to allow a user to make ingest job settings.
  */
 public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
+    private static ImageIcon warningIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/warning_triangle.png"));
+    private static ImageIcon infoIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/information-frame.png"));
     private final IngestJobSettings settings;
-    private final List<IngestModuleModel> modules;
+    private final List<Content> dataSources = new ArrayList<>();
+    private final List<IngestJobInfo> ingestJobs = new ArrayList<>();
+    private final List<IngestModuleModel> modules = new ArrayList<>();
+    private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private IngestModuleModel selectedModule;
+    private static final Logger logger = Logger.getLogger(IngestJobSettingsPanel.class.getName());
 
     /**
-     * Construct a user interface component to allow a user to make ingest job
-     * settings.
+     * Construct a panel to allow a user to make ingest job settings.
      *
      * @param settings The initial settings for the ingest job.
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
-        this.modules = new ArrayList<>();
+        for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
+            modules.add(new IngestModuleModel(moduleTemplate));
+        }
+        initComponents();
+        customizeComponents();
+    }
+
+    /**
+     * Construct a panel to allow a user to make ingest job settings.
+     *
+     * @param settings    The initial settings for the ingest job.
+     * @param dataSources The data sources ingest is being run on.
+     */
+    IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
+        this.settings = settings;
+        this.dataSources.addAll(dataSources);
+        try {
+            SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
+            ingestJobs.addAll(skCase.getIngestJobs());
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "No open case", ex);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to load ingest job information", ex);
+        }
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             this.modules.add(new IngestModuleModel(moduleTemplate));
         }
@@ -82,7 +124,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
     @Messages({"IngestJobSettingsPanel.noPerRunSettings=The selected module has no per-run settings."})
     private void customizeComponents() {
-        modulesTable.setModel(new IngestModulesTableModel());
+        modulesTable.setModel(tableModel);
         modulesTable.setTableHeader(null);
         modulesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -104,29 +146,36 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         // Add a selection listener to the table model that will display the  
         // ingest job options panel of the currently selected module model and 
         // enable or disable the resources configuration panel invocation button.
-        modulesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
-                if (!listSelectionModel.isSelectionEmpty()) {
-                    int index = listSelectionModel.getMinSelectionIndex();
-                    selectedModule = modules.get(index);
-                    ingestSettingsPanel.removeAll();
-                    if (null != selectedModule.getModuleSettingsPanel()) {
-                        ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
-                    } else {
-                        ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
-                    }
-                    ingestSettingsPanel.revalidate();
-                    ingestSettingsPanel.repaint();
-                    globalSettingsButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
-                    descriptionLabel.setText(selectedModule.getDescription());
-                    descriptionLabel.setToolTipText(selectedModule.getDescription());
+        modulesTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
+            if (!listSelectionModel.isSelectionEmpty()) {
+                int index = listSelectionModel.getMinSelectionIndex();
+                selectedModule = modules.get(index);
+                ingestSettingsPanel.removeAll();
+                if (null != selectedModule.getModuleSettingsPanel()) {
+                    ingestSettingsPanel.add(selectedModule.getModuleSettingsPanel());
+                } else {
+                    ingestSettingsPanel.add(new JLabel(Bundle.IngestJobSettingsPanel_noPerRunSettings()));
                 }
+                ingestSettingsPanel.revalidate();
+                ingestSettingsPanel.repaint();
+                globalSettingsButton.setEnabled(null != selectedModule.getGlobalSettingsPanel());
+                descriptionLabel.setText(selectedModule.getDescription());
+                descriptionLabel.setToolTipText(selectedModule.getDescription());
             }
         });
         modulesTable.setRowSelectionInterval(0, 0);
         processUnallocCheckbox.setSelected(this.settings.getProcessUnallocatedSpace());
+        this.modulesTable.getColumnModel().getColumn(0).setMaxWidth(22);
+        this.modulesTable.getColumnModel().getColumn(1).setMaxWidth(20);
+        this.modulesTable.getColumnModel().getColumn(1).setMinWidth(20);
+        modulesTable.setRowHeight(20);
+
+        /*
+         * Only enable the ingest jobs history panel if there are data sources
+         * and jobs for which to display the history.
+         */
+        pastJobsButton.setEnabled(!dataSources.isEmpty() && !ingestJobs.isEmpty());
     }
 
     /**
@@ -150,6 +199,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         jButtonSelectAll = new javax.swing.JButton();
         jButtonDeselectAll = new javax.swing.JButton();
         processUnallocCheckbox = new javax.swing.JCheckBox();
+        pastJobsButton = new javax.swing.JButton();
 
         setMaximumSize(new java.awt.Dimension(5750, 3000));
         setMinimumSize(new java.awt.Dimension(0, 0));
@@ -201,8 +251,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 302, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 321, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(globalSettingsButton)))
@@ -244,6 +294,13 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        pastJobsButton.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.pastJobsButton.text")); // NOI18N
+        pastJobsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pastJobsButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -251,19 +308,19 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 256, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 271, Short.MAX_VALUE)
-                        .addGap(10, 10, 10))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(24, 24, 24)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(processUnallocCheckbox)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jButtonSelectAll, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(jButtonSelectAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(pastJobsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(5, 5, 5)
                                 .addComponent(jButtonDeselectAll)))
-                        .addGap(32, 32, 32)))
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 343, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -275,11 +332,13 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                         .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButtonDeselectAll)
-                            .addComponent(jButtonSelectAll))
+                            .addComponent(jButtonSelectAll)
+                            .addComponent(jButtonDeselectAll))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(pastJobsButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 428, Short.MAX_VALUE)
                         .addContainerGap())))
         );
@@ -288,14 +347,11 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private void globalSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_globalSettingsButtonActionPerformed
         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
 
-        dialog.addApplyButtonListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (selectedModule.hasGlobalSettingsPanel()) {
-                    selectedModule.saveResourcesConfig();
-                }
-                dialog.close();
+        dialog.addApplyButtonListener((ActionEvent e) -> {
+            if (selectedModule.hasGlobalSettingsPanel()) {
+                selectedModule.saveResourcesConfig();
             }
+            dialog.close();
         });
 
         dialog.addWindowListener(new WindowAdapter() {
@@ -319,6 +375,20 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
         this.settings.setProcessUnallocatedSpace(processUnallocCheckbox.isSelected());
     }//GEN-LAST:event_processUnallocCheckboxActionPerformed
+    @Messages({"IngestJobSettingsPanel.pastJobsButton.action.frame.title=Ingest History"})
+    private void pastJobsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pastJobsButtonActionPerformed
+        JDialog topFrame = (JDialog) SwingUtilities.getWindowAncestor(this);
+        JDialog dialog = new JDialog(topFrame, Bundle.IngestJobSettingsPanel_pastJobsButton_action_frame_title(), false);
+        IngestJobInfoPanel ingestInfo = new IngestJobInfoPanel();
+        dialog.add(ingestInfo);
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        double w = dialog.getSize().getWidth();
+        double h = dialog.getSize().getHeight();
+        dialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+        dialog.setResizable(true);
+        dialog.pack();
+        dialog.setVisible(true);
+    }//GEN-LAST:event_pastJobsButtonActionPerformed
 
     private void SelectAllModules(boolean set) {
         for (IngestModuleModel module : modules) {
@@ -338,6 +408,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JScrollPane modulesScrollPane;
     private javax.swing.JTable modulesTable;
+    private javax.swing.JButton pastJobsButton;
     private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.ButtonGroup timeGroup;
     // End of variables declaration//GEN-END:variables
@@ -410,6 +481,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     private class IngestModulesTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
+
         @Override
         public int getRowCount() {
             return modules.size();
@@ -417,16 +490,19 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         @Override
         public int getColumnCount() {
-            return 2;
+            return 3;
         }
 
         @Override
         public Object getValueAt(int rowIndex, int columnIndex) {
             IngestModuleModel module = modules.get(rowIndex);
-            if (columnIndex == 0) {
-                return module.isEnabled();
-            } else {
-                return module.getName();
+            switch (columnIndex) {
+                case 0:
+                    return module.isEnabled();
+                case 1:
+                    return getIcon(module);
+                default:
+                    return module.getName();
             }
         }
 
@@ -446,13 +522,71 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         public Class<?> getColumnClass(int c) {
             return getValueAt(0, c).getClass();
         }
+
+        private ImageIcon getIcon(IngestModuleModel module) {
+            if (dataSources.isEmpty() || ingestJobs.isEmpty()) {
+                return null;
+            }
+            boolean previousVersionRun = false;
+            for (IngestJobInfo ingestJob : ingestJobs) {
+                if (ingestJob.getStatus() != IngestJobInfo.IngestJobStatusType.COMPLETED) {
+                    continue;
+                }
+                long objectId = ingestJob.getObjectId();
+                boolean isSameDataSource = false;
+                for (Content dataSource : dataSources) {
+                    isSameDataSource = isSameDataSource || dataSource.getId() == objectId;
+                }
+                if (isSameDataSource) {
+                    IngestModuleFactory factory = module.getIngestModuleTemplate().getModuleFactory();
+                    if (factory.isDataSourceIngestModuleFactory()) {
+                        String uniqueName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + "-"
+                                + factory.getModuleDisplayName() + "-"
+                                + IngestModuleInfo.IngestModuleType.DATA_SOURCE_LEVEL.toString() + "-"
+                                + factory.getModuleVersionNumber();
+                        for (IngestModuleInfo ingestModuleInfo : ingestJob.getIngestModuleInfo()) {
+                            boolean sameModule = ingestModuleInfo.getUniqueName().equals(uniqueName);
+                            if (sameModule) {
+                                if (ingestModuleInfo.getVersion().equals(module.getIngestModuleTemplate().getModuleFactory().getModuleVersionNumber())) {
+                                    return warningIcon;
+                                }
+                            }
+                            previousVersionRun = previousVersionRun || sameModule;
+                        }
+                    }
+                    if (factory.isFileIngestModuleFactory()) {
+                        String uniqueName = FactoryClassNameNormalizer.normalize(factory.getClass().getCanonicalName()) + "-"
+                                + factory.getModuleDisplayName() + "-"
+                                + IngestModuleInfo.IngestModuleType.FILE_LEVEL.toString() + "-"
+                                + factory.getModuleVersionNumber();
+                        for (IngestModuleInfo ingestModuleInfo : ingestJob.getIngestModuleInfo()) {
+                            boolean sameModule = ingestModuleInfo.getUniqueName().equals(uniqueName);
+                            if (sameModule) {
+                                if (ingestModuleInfo.getVersion().equals(module.getIngestModuleTemplate().getModuleFactory().getModuleVersionNumber())) {
+                                    return warningIcon;
+                                }
+                            }
+                            previousVersionRun = previousVersionRun || sameModule;
+                        }
+                    }
+                }
+            }
+            if (previousVersionRun) {
+                return infoIcon;
+            }
+            return null;
+        }
     }
 
     /**
      * Custom cell renderer to create tool tips displaying ingest module
      * descriptions.
      */
+    @Messages({"IngestJobSettingsPanel.IngestModulesTableRenderer.warning.message=This ingest module has been run before on this data source.",
+        "IngestJobSettingsPanel.IngestModulesTableRenderer.info.message=A previous version of this ingest module has been run before on this data source."})
     private class IngestModulesTableRenderer extends DefaultTableCellRenderer {
+
+        private static final long serialVersionUID = 1L;
 
         List<String> tooltips = new ArrayList<>();
 
@@ -465,8 +599,17 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if (1 == column) {
+            if (2 == column) {
+                setIcon(null);
                 setToolTipText(tooltips.get(row));
+            } else if (1 == column) {
+                setIcon((Icon) value);
+                setText("");
+                if (warningIcon.equals(value)) {
+                    setToolTipText(Bundle.IngestJobSettingsPanel_IngestModulesTableRenderer_warning_message());
+                } else if (infoIcon.equals(value)) {
+                    setToolTipText(Bundle.IngestJobSettingsPanel_IngestModulesTableRenderer_info_message());
+                }
             }
             return this;
         }

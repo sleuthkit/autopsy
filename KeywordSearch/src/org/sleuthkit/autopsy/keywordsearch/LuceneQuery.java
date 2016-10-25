@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -36,6 +35,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -491,14 +491,14 @@ class LuceneQuery implements KeywordSearchQuery {
 
             // get object id of left doc
             String leftID = left.getFieldValue(idName).toString();
-            int index = leftID.indexOf(Server.ID_CHUNK_SEP);
+            int index = leftID.indexOf(Server.CHUNK_ID_SEPARATOR);
             if (index != -1) {
                 leftID = leftID.substring(0, index);
             }
 
             // get object id of right doc
             String rightID = right.getFieldValue(idName).toString();
-            index = rightID.indexOf(Server.ID_CHUNK_SEP);
+            index = rightID.indexOf(Server.CHUNK_ID_SEPARATOR);
             if (index != -1) {
                 rightID = rightID.substring(0, index);
             }

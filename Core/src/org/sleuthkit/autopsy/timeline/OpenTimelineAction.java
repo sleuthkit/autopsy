@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.logging.Level;
 import javax.swing.ImageIcon;
@@ -38,51 +36,64 @@ import org.sleuthkit.autopsy.core.Installer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 
+/**
+ * An Action that opens the Timeline window. Has methods to open the window in
+ * various specific states (e.g., showing a specific artifact in the List View)
+ */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.timeline.Timeline")
 @ActionRegistration(displayName = "#CTL_MakeTimeline", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Menu/Tools", position = 100),
+    @ActionReference(path = "Menu/Tools", position = 102),
     @ActionReference(path = "Toolbars/Case", position = 102)})
-public class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
+public final class OpenTimelineAction extends CallableSystemAction implements Presenter.Toolbar {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(OpenTimelineAction.class.getName());
 
-    private static final boolean fxInited = Installer.isJavaFxInited();
+    private static final boolean FX_INITED = Installer.isJavaFxInited();
 
     private static TimeLineController timeLineController = null;
 
-    private JButton toolbarButton = new JButton();
+    private final JButton toolbarButton = new JButton(getName(),
+          new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
 
+
+    /**
+     * Invalidate the reference to the controller so that a new one will be
+     * instantiated the next time this action is invoked
+     */
     synchronized static void invalidateController() {
         timeLineController = null;
     }
 
     public OpenTimelineAction() {
-        toolbarButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                performAction();
-            }
-        });
+        toolbarButton.addActionListener(actionEvent -> performAction());
         this.setEnabled(false);
     }
 
     @Override
     public boolean isEnabled() {
         /**
-         * we disabled the check to hasData() because if it is executed while a
-         * data source is being added, it blocks the edt
+         * We used to also check if Case.getCurrentCase().hasData() was true. We
+         * disabled that check because if it is executed while a data source is
+         * being added, it blocks the edt
          */
-        return Case.isCaseOpen() && fxInited;// && Case.getCurrentCase().hasData();
+        return Case.isCaseOpen() && FX_INITED;
+    }
+
+    @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void performAction() {
+        showTimeline();
     }
 
     @NbBundle.Messages({
         "OpenTimelineAction.settingsErrorMessage=Failed to initialize timeline settings.",
         "OpenTimeLineAction.msgdlg.text=Could not create timeline, there are no data sources."})
-    @Override
-    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
-    public void performAction() {
+    synchronized private void showTimeline(AbstractFile file, BlackboardArtifact artifact) {
         try {
             Case currentCase = Case.getCurrentCase();
             if (currentCase.hasData() == false) {
@@ -97,7 +108,9 @@ public class OpenTimelineAction extends CallableSystemAction implements Presente
                     timeLineController.shutDownTimeLine();
                     timeLineController = new TimeLineController(currentCase);
                 }
-                timeLineController.openTimeLine();
+
+                timeLineController.showTimeLine(file, artifact);
+
             } catch (IOException iOException) {
                 MessageNotifyUtil.Message.error(Bundle.OpenTimelineAction_settingsErrorMessage());
                 LOGGER.log(Level.SEVERE, "Failed to initialize per case timeline settings.", iOException);
@@ -107,9 +120,41 @@ public class OpenTimelineAction extends CallableSystemAction implements Presente
         }
     }
 
+    /**
+     * Open the Timeline window with the default initial view.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void showTimeline() {
+        showTimeline(null, null);
+    }
+
+    /**
+     * Open the Timeline window with the given file selected in ListView. The
+     * user will be prompted to choose which timestamp to use for the file, and
+     * how much time to show around it.
+     *
+     * @param file The AbstractFile to show in the Timeline.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void showFileInTimeline(AbstractFile file) {
+        showTimeline(file, null);
+    }
+
+    /**
+     * Open the Timeline window with the given artifact selected in ListView.
+     * The how much time to show around it.
+     *
+     * @param artifact The BlackboardArtifact to show in the Timeline.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    public void showArtifactInTimeline(BlackboardArtifact artifact) {
+        showTimeline(null, artifact);
+    }
+
     @Override
+    @NbBundle.Messages("OpenTimelineAction.displayName=Timeline")
     public String getName() {
-        return NbBundle.getMessage(OpenTimelineAction.class, "CTL_MakeTimeline");
+        return Bundle.OpenTimelineAction_displayName();
     }
 
     @Override
@@ -143,7 +188,6 @@ public class OpenTimelineAction extends CallableSystemAction implements Presente
         ImageIcon icon = new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png")); //NON-NLS
         toolbarButton.setIcon(icon);
         toolbarButton.setText(this.getName());
-
         return toolbarButton;
     }
 }

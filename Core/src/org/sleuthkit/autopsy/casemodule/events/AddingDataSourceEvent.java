@@ -48,12 +48,25 @@ public final class AddingDataSourceEvent extends AutopsyEvent implements Seriali
     }
 
     /**
-     * Gets the unique id for the data source used to pair this
-     * AddindDataSourceEvent with a a DataSourceAddedEvent or a
+     * Gets the unique event id used to pair this
+     * AddindDataSourceEvent with a corresponding DataSourceAddedEvent or
      * AddingDataSourceFailedEvent.
      *
-     * @return The unique id.
+     * @return The unique event id.
      */
+    public UUID getEventId() {
+        return dataSourceId;
+    }
+
+    /**
+     * Gets the unique event id used to pair this
+     * AddindDataSourceEvent with a corresponding DataSourceAddedEvent or
+     * AddingDataSourceFailedEvent.
+     *
+     * @return The unique event id.
+     * @deprecated Use getEventId instead.
+     */
+    @Deprecated
     public UUID getDataSourceId() {
         return dataSourceId;
     }

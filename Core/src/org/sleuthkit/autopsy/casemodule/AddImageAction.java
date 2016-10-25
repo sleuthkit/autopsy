@@ -34,6 +34,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
+import org.openide.awt.ActionID;
+import org.openide.awt.ActionReference;
+import org.openide.awt.ActionReferences;
+import org.openide.awt.ActionRegistration;
 import org.openide.util.ChangeSupport;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
@@ -53,6 +57,10 @@ import org.sleuthkit.datamodel.Image;
  */
 // TODO: need annotation because there's a "Lookup.getDefault().lookup(AddImageAction.class)"
 // used in AddImageWizardPanel1 (among other places). It really shouldn't be done like that.
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.AddImageAction")
+@ActionRegistration(displayName = "#CTL_AddImage", lazy = false)
+@ActionReferences(value = {
+    @ActionReference(path = "Toolbars/Case", position = 100)})
 @ServiceProvider(service = AddImageAction.class)
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
 

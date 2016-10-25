@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dialog;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +44,6 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
  */
 class LocalFilesPanel extends JPanel {
 
-    private PropertyChangeSupport pcs = null;
     private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
@@ -146,24 +143,6 @@ class LocalFilesPanel extends JPanel {
         errorLabel.setVisible(false);
         displayName = "";
         this.displayNameLabel.setText(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.displayNameLabel.text"));
-    }
-
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
-        super.addPropertyChangeListener(pcl);
-
-        if (pcs == null) {
-            pcs = new PropertyChangeSupport(this);
-        }
-
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        super.removePropertyChangeListener(pcl);
-
-        pcs.removePropertyChangeListener(pcl);
     }
 
     public String getFileSetName() {
@@ -312,7 +291,7 @@ class LocalFilesPanel extends JPanel {
         }
 
         try {
-            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "LocalFilesPanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.moduleErr"),

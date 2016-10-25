@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import javax.swing.Action;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
@@ -31,6 +34,9 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -38,7 +44,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Node wrapping a blackboard artifact object. This is generated from several
@@ -49,7 +54,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private final BlackboardArtifact artifact;
     private final Content associated;
     private List<NodeProperty<? extends Object>> customProperties;
-    static final Logger logger = Logger.getLogger(BlackboardArtifactNode.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
     /*
      * Artifact types which should have the full unique path of the associated
      * content as a property.
@@ -100,13 +105,54 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
     }
 
+    @Override
+    @NbBundle.Messages({
+        "BlackboardArtifactNode.getAction.errorTitle=Error getting actions",
+        "BlackboardArtifactNode.getAction.resultErrorMessage=There was a problem getting actions for the selected result."
+        + "  The 'View Result in Timeline' action will not be available.",
+        "BlackboardArtifactNode.getAction.linkedFileMessage=There was a problem getting actions for the selected result. "
+        + " The 'View File in Timeline' action will not be available."})
+    public Action[] getActions(boolean context) {
+        List<Action> actionsList = new ArrayList<>();
+        actionsList.addAll(Arrays.asList(super.getActions(context)));
+
+        //if this artifact has a time stamp add the action to view it in the timeline
+        try {
+            if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
+                actionsList.add(new ViewArtifactInTimelineAction(artifact));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting arttribute(s) from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_resultErrorMessage());
+        }
+
+        // if the artifact links to another file, add an action to go to that file
+        try {
+            AbstractFile c = findLinked(artifact);
+            if (c != null) {
+                actionsList.add(ViewFileInTimelineAction.createViewFileAction(c));
+            }
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
+        }
+
+        //if this artifact has associated content, add the action to view the content in the timeline
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        if (null != file) {
+            actionsList.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+        }
+
+        return actionsList.toArray(new Action[actionsList.size()]);
+    }
+
     /**
      * Set the filter node display name. The value will either be the file name
      * or something along the lines of e.g. "Messages Artifact" for keyword hits
      * on artifacts.
      */
     private void setDisplayName() {
-        String displayName = "";
+        String displayName = ""; //NON-NLS
         if (associated != null) {
             displayName = associated.getName();
         }
@@ -120,7 +166,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
-                            displayName = associatedArtifact.getDisplayName() + " Artifact"; // NON-NLS
+                            displayName = associatedArtifact.getDisplayName() + " Artifact";
                         }
                     }
                 }
@@ -131,6 +177,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setDisplayName(displayName);
     }
 
+    @Override
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -138,13 +185,13 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             ss = Sheet.createPropertiesSet();
             s.put(ss);
         }
-        final String NO_DESCR = NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.noDesc.text");
+        final String NO_DESCR = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.noDesc.text");
 
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, artifact);
 
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.name"),
-                NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.srcFile.displayName"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.name"),
+                NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getDisplayName()));
 
@@ -165,63 +212,63 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
 
         // If mismatch, add props for extension and file type
         if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_EXT_MISMATCH_DETECTED.getTypeID()) {
-            String ext = "";
-            String actualMimeType = "";
+            String ext = ""; //NON-NLS
+            String actualMimeType = ""; //NON-NLS
             if (associated instanceof AbstractFile) {
                 AbstractFile af = (AbstractFile) associated;
                 ext = af.getNameExtension();
                 actualMimeType = af.getMIMEType();
                 if (actualMimeType == null) {
-                    actualMimeType = "";
+                    actualMimeType = ""; //NON-NLS
                 }
             }
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.name"),
-                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.ext.displayName"),
+            ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.ext.name"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.ext.displayName"),
                     NO_DESCR,
                     ext));
             ss.put(new NodeProperty<>(
-                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.name"),
-                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.mimeType.displayName"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.mimeType.name"),
+                    NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.mimeType.displayName"),
                     NO_DESCR,
                     actualMimeType));
         }
 
         if (Arrays.asList(SHOW_UNIQUE_PATH).contains(artifactTypeId)) {
-            String sourcePath = "";
+            String sourcePath = ""; //NON-NLS
             try {
                 sourcePath = associated.getUniquePath();
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to get unique path from: {0}", associated.getName()); //NON-NLS
+                LOGGER.log(Level.WARNING, "Failed to get unique path from: {0}", associated.getName()); //NON-NLS
             }
 
             if (sourcePath.isEmpty() == false) {
                 ss.put(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.filePath.name"),
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.filePath.displayName"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.filePath.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.filePath.displayName"),
                         NO_DESCR,
                         sourcePath));
             }
 
             if (Arrays.asList(SHOW_FILE_METADATA).contains(artifactTypeId)) {
                 AbstractFile file = associated instanceof AbstractFile ? (AbstractFile) associated : null;
-                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.name"),
-                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileModifiedTime.displayName"),
+                ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileModifiedTime.displayName"),
                         "",
                         file != null ? ContentUtils.getStringTime(file.getMtime(), file) : ""));
-                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.name"),
-                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileChangedTime.displayName"),
+                ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileChangedTime.displayName"),
                         "",
                         file != null ? ContentUtils.getStringTime(file.getCtime(), file) : ""));
-                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.name"),
-                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileAccessedTime.displayName"),
+                ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileAccessedTime.displayName"),
                         "",
                         file != null ? ContentUtils.getStringTime(file.getAtime(), file) : ""));
-                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.name"),
-                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileCreatedTime.displayName"),
+                ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileCreatedTime.displayName"),
                         "",
                         file != null ? ContentUtils.getStringTime(file.getCrtime(), file) : ""));
-                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.name"),
-                        NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
+                ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "ContentTagNode.createSheet.fileSize.displayName"),
                         "",
                         associated.getSize()));
             }
@@ -235,13 +282,13 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     dataSourceStr = getRootParentName();
                 }
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Failed to get image name from {0}", associated.getName()); //NON-NLS
+                LOGGER.log(Level.WARNING, "Failed to get image name from {0}", associated.getName()); //NON-NLS
             }
 
             if (dataSourceStr.isEmpty() == false) {
                 ss.put(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.dataSrc.name"),
-                        NbBundle.getMessage(this.getClass(), "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.dataSrc.name"),
+                        NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.dataSrc.displayName"),
                         NO_DESCR,
                         dataSourceStr));
             }
@@ -258,7 +305,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 parentName = parent.getName();
             }
         } catch (TskCoreException ex) {
-            logger.log(Level.WARNING, "Failed to get parent name from {0}", associated.getName()); //NON-NLS
+            LOGGER.log(Level.WARNING, "Failed to get parent name from {0}", associated.getName()); //NON-NLS
             return "";
         }
         return parentName;
@@ -270,13 +317,12 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      *
      * @param np NodeProperty to add
      */
-    public <T> void addNodeProperty(NodeProperty<T> np) {
+    public void addNodeProperty(NodeProperty<?> np) {
         if (null == customProperties) {
             //lazy create the list
             customProperties = new ArrayList<>();
         }
         customProperties.add(np);
-
     }
 
     /**
@@ -296,7 +342,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                    continue;
                 } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
                     map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
@@ -317,8 +362,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
                 }
             }
-        } catch (TskException ex) {
-            logger.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
         }
     }
 
@@ -357,8 +402,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private static Content getAssociatedContent(BlackboardArtifact artifact) {
         try {
             return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Getting file failed", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Getting file failed", ex); //NON-NLS
         }
         throw new IllegalArgumentException(
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
@@ -388,17 +433,12 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 }
             }
             if (keyword != null) {
-                boolean isRegexp = (regexp != null && !regexp.equals(""));
-                String origQuery;
-                if (isRegexp) {
-                    origQuery = regexp;
-                } else {
-                    origQuery = keyword;
-                }
+                boolean isRegexp = StringUtils.isNotBlank(regexp);
+                String origQuery = isRegexp ? regexp : keyword;
                 return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
             }
-        } catch (TskException ex) {
-            logger.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
         }
         return null;
     }

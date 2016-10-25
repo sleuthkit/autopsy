@@ -122,41 +122,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 //                }
 //            }
 //        });
-        /**
-         * Add mouse listener to perform action on double-click A somewhat hacky
-         * way to perform action even if the column clicked is not the first
-         * one.
-         */
-        ov.getOutline().addMouseListener(new MouseListener() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    Node[] nodes = DataResultViewerTable.this.em.getSelectedNodes();
-                    for (Node node : nodes) {
-                        Action action = node.getPreferredAction();
-                        if (action != null) {
-                            action.actionPerformed(null);
-                        }
-                    }
-                }
-            }
-        });
     }
 
     /**

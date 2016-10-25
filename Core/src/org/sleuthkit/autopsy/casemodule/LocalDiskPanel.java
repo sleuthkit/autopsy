@@ -22,8 +22,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -54,15 +52,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 final class LocalDiskPanel extends JPanel {
 
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
-
     private static LocalDiskPanel instance;
-
-    private PropertyChangeSupport pcs = null;
-
     private List<LocalDisk> disks;
-
     private LocalDiskModel model;
-
     private boolean enableNext = false;
 
     /**
@@ -252,24 +244,6 @@ final class LocalDiskPanel extends JPanel {
 
     }
 
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
-        super.addPropertyChangeListener(pcl);
-
-        if (pcs == null) {
-            pcs = new PropertyChangeSupport(this);
-        }
-
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        super.removePropertyChangeListener(pcl);
-
-        pcs.removePropertyChangeListener(pcl);
-    }
-
     /**
      * Creates the drop down list for the time zones and then makes the local
      * machine time zone to be selected.
@@ -353,7 +327,7 @@ final class LocalDiskPanel extends JPanel {
                 enableNext = true;
 
                 try {
-                    pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+                    firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e); //NON-NLS
                     MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),

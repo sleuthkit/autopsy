@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.OpenFromArguments;
+import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -91,7 +92,7 @@ public class Installer extends ModuleInstall {
                     }
                 }
             }
-            Case.invokeStartupDialog();
+            StartupWindowProvider.getInstance().open();
         });
 
     }

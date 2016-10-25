@@ -91,8 +91,6 @@ public class STIXReportModule implements GeneralReportModule {
     }
 
     /**
-     * .
-     *
      * @param baseReportDir path to save the report
      * @param progressPanel panel to update the report's progress
      */
@@ -171,12 +169,14 @@ public class STIXReportModule implements GeneralReportModule {
                 }
                 try {
                     processFile(file.getAbsolutePath(), progressPanel, output);
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Unable to process STIX file %s", file), ex); //NON-NLS
+                } catch (TskCoreException | JAXBException ex) {
+                    String errMsg = String.format("Unable to process STIX file %s", file);
+                    logger.log(Level.SEVERE, errMsg, ex); //NON-NLS
                     MessageNotifyUtil.Notify.show("STIXReportModule", //NON-NLS
-                            ex.getLocalizedMessage(),
+                            errMsg,
                             MessageNotifyUtil.MessageType.ERROR);
                     hadErrors = true;
+                    break;
                 }
                 // Clear out the ID maps before loading the next file
                 idToObjectMap = new HashMap<String, ObjectType>();
@@ -212,11 +212,13 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param stixFile      - Name of the file
      * @param progressPanel - Progress panel (for updating)
+     * @param output
      *
+     * @throws JAXBException
      * @throws TskCoreException
      */
     private void processFile(String stixFile, ReportProgressPanel progressPanel, BufferedWriter output) throws
-            TskCoreException {
+            JAXBException, TskCoreException {
 
         // Load the STIX file
         STIXPackage stix;
@@ -244,23 +246,18 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @return Unmarshalled file contents
      *
-     * @throws TskCoreException
+     * @throws JAXBException
      */
-    private STIXPackage loadSTIXFile(String stixFileName) throws TskCoreException {
-        try {
-            // Create STIXPackage object from xml.
-            File file = new File(stixFileName);
-            JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
-                    + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
-            return stix;
-        } catch (JAXBException ex) {
-            logger.log(Level.SEVERE, String.format("Unable to load STIX file %s", stixFileName), ex.getLocalizedMessage()); //NON-NLS
-            throw new TskCoreException("Error loading STIX file (" + ex.toString() + ")"); //NON-NLS
-        }
+    private STIXPackage loadSTIXFile(String stixFileName) throws JAXBException {
+        // Create STIXPackage object from xml.
+        File file = new File(stixFileName);
+        JAXBContext jaxbContext = JAXBContext.newInstance("org.mitre.stix.stix_1:org.mitre.stix.common_1:org.mitre.stix.indicator_2:" //NON-NLS
+                + "org.mitre.cybox.objects:org.mitre.cybox.cybox_2:org.mitre.cybox.common_2"); //NON-NLS
+        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+        STIXPackage stix = (STIXPackage) jaxbUnmarshaller.unmarshal(file);
+        return stix;
     }
-
+    
     /**
      * Do the initial processing of the list of observables. For each
      * observable, save it in a map using the ID as key.
@@ -283,6 +280,7 @@ public class STIXReportModule implements GeneralReportModule {
      * artifacts.
      *
      * @param stix STIXPackage
+     * @param output
      */
     private void processIndicators(STIXPackage stix, BufferedWriter output) throws TskCoreException {
         if (stix.getIndicators() != null) {
@@ -367,6 +365,7 @@ public class STIXReportModule implements GeneralReportModule {
      *                  indicator
      * @param resultStr - Full results for this indicator
      * @param found     - true if the indicator was found in datasource(s)
+     * @param output
      */
     private void writeResultsToFile(Indicator ind, String resultStr, boolean found, BufferedWriter output) {
         if (output != null) {
@@ -403,6 +402,7 @@ public class STIXReportModule implements GeneralReportModule {
      * Write the a header for the current file to the output file.
      *
      * @param a_fileName
+     * @param output
      */
     private void printFileHeader(String a_fileName, BufferedWriter output) {
         if (output != null) {
@@ -598,6 +598,7 @@ public class STIXReportModule implements GeneralReportModule {
      *
      * @param obj     The object to evaluate against the datasource(s)
      * @param spacing For formatting the output
+     * @param id
      *
      * @return
      */

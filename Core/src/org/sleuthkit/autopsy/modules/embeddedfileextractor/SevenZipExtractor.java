@@ -18,9 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -60,6 +58,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.EncodedFileOutputStream;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -104,7 +103,8 @@ class SevenZipExtractor {
         XGZIP("application/x-gzip"), //NON-NLS
         XBZIP2("application/x-bzip2"), //NON-NLS
         XTAR("application/x-tar"), //NON-NLS
-        XGTAR("application/x-gtar"); //NON-NLS
+        XGTAR("application/x-gtar"),
+        XRAR("application/x-rar-compressed"); //NON-NLS
 
         private final String mimeType;
 
@@ -148,7 +148,6 @@ class SevenZipExtractor {
                     return true;
                 }
             }
-
             return false;
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "Error executing FileTypeDetector.getFileType()", ex); // NON-NLS
@@ -623,8 +622,8 @@ class SevenZipExtractor {
         UnpackStream(String localAbsPath) {
             this.localAbsPath = localAbsPath;
             try {
-                output = new BufferedOutputStream(new FileOutputStream(localAbsPath));
-            } catch (FileNotFoundException ex) {
+                output = new EncodedFileOutputStream(new FileOutputStream(localAbsPath), TskData.EncodingType.XOR1);
+            } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error writing extracted file: " + localAbsPath, ex); //NON-NLS
             }
 
@@ -794,6 +793,7 @@ class SevenZipExtractor {
         /**
          * recursive method that traverses the path
          *
+         * @param parent
          * @param tokenPath
          *
          * @return
@@ -868,7 +868,8 @@ class SevenZipExtractor {
             try {
                 DerivedFile df = fileManager.addDerivedFile(fileName, node.getLocalRelPath(), node.getSize(),
                         node.getCtime(), node.getCrtime(), node.getAtime(), node.getMtime(),
-                        node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(), "", "");
+                        node.isIsFile(), node.getParent().getFile(), "", EmbeddedFileExtractorModuleFactory.getModuleName(),
+                        "", "", TskData.EncodingType.XOR1);
                 node.setFile(df);
 
             } catch (TskCoreException ex) {

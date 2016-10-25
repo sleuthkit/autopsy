@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
@@ -36,6 +34,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
@@ -46,7 +45,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
-    private PropertyChangeSupport pcs = null;
     private JFileChooser fc = new JFileChooser();
 
     // Externally supplied name is used to store settings 
@@ -79,7 +77,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
 
         this.contextName = context;
-        pcs = new PropertyChangeSupport(this);
 
         createTimeZoneList();
     }
@@ -206,7 +203,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
 
         try {
-            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
@@ -272,9 +269,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(path);
 
-        boolean isExist = Case.pathExists(path);
-        boolean isPhysicalDrive = Case.isPhysicalDrive(path);
-        boolean isPartition = Case.isPartition(path);
+        boolean isExist = new File(path).isFile();
+        boolean isPhysicalDrive = DriveUtils.isPhysicalDrive(path);
+        boolean isPartition = DriveUtils.isPartition(path);
 
         return (isExist || isPhysicalDrive || isPartition);
     }
@@ -356,7 +353,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public void insertUpdate(DocumentEvent e) {
 
         try {
-            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
@@ -368,7 +365,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     @Override
     public void removeUpdate(DocumentEvent e) {
         try {
-            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
@@ -381,7 +378,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public void changedUpdate(DocumentEvent e) {
 
         try {
-            pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
@@ -396,23 +393,4 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public void select() {
         pathTextField.requestFocusInWindow();
     }
-
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
-        super.addPropertyChangeListener(pcl);
-
-        if (pcs == null) {
-            pcs = new PropertyChangeSupport(this);
-        }
-
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        super.removePropertyChangeListener(pcl);
-
-        pcs.removePropertyChangeListener(pcl);
-    }
-
 }

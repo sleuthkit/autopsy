@@ -32,12 +32,12 @@ import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * A basic history implementation. Keeps a history (and forward) stack of state
- * objects of type <T>. exposes current state and availability of
- * advance/retreat operations via methods and JFX {@link  Property}s. Null is not
+ * objects of type T. exposes current state and availability of
+ * advance/retreat operations via methods and JFX Property objects. Null is not
  * a valid state, and will only be the current state before the first call to
  * advance.
  *
- * @param <T> the type of objects used to represent the
+ * @param T the type of objects used to represent the
  *            current/historical/future states
  */
 @ThreadSafe
@@ -168,7 +168,7 @@ public class History<T> {
      *
      * TODO: this really should not extend SimpleListProperty but should
      * delegate to an appropriate observable implementation while implementing
-     * the {@link Deque} interface
+     * the Deque interface
      */
     private static class ObservableStack<T> extends SimpleListProperty<T> {
 

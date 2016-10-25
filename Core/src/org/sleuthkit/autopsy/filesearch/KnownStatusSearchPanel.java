@@ -24,8 +24,6 @@
  */
 package org.sleuthkit.autopsy.filesearch;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import javax.swing.JCheckBox;
 
 /**
@@ -33,8 +31,6 @@ import javax.swing.JCheckBox;
  * @author pmartel
  */
 class KnownStatusSearchPanel extends javax.swing.JPanel {
-
-    private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     /**
      * Creates new form KnownStatusSearchPanel
@@ -65,16 +61,6 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
         this.unknownOptionCheckBox.setEnabled(enabled);
         this.knownOptionCheckBox.setEnabled(enabled);
         this.knownBadOptionCheckBox.setEnabled(enabled);
-    }
-
-    @Override
-    public void addPropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        pcs.removePropertyChangeListener(pcl);
     }
 
     boolean isValidSearch() {
@@ -155,20 +141,20 @@ class KnownStatusSearchPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void knownOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownOptionCheckBoxActionPerformed
-        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_knownOptionCheckBoxActionPerformed
 
     private void knownCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownCheckBoxActionPerformed
         setComponentsEnabled();
-        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_knownCheckBoxActionPerformed
 
     private void unknownOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unknownOptionCheckBoxActionPerformed
-        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_unknownOptionCheckBoxActionPerformed
 
     private void knownBadOptionCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_knownBadOptionCheckBoxActionPerformed
-        pcs.firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
+        firePropertyChange(FileSearchPanel.EVENT.CHECKED.toString(), null, null);
     }//GEN-LAST:event_knownBadOptionCheckBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

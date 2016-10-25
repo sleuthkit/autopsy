@@ -34,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.services.FileManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -49,7 +50,8 @@ class TextMessageAnalyzer {
     private static final Logger logger = Logger.getLogger(TextMessageAnalyzer.class.getName());
     private static Blackboard blackboard;
 
-    public static void findTexts(Content dataSource, FileManager fileManager) {
+    public static void findTexts(Content dataSource, FileManager fileManager,
+            IngestJobContext context) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
         try {
 
@@ -57,7 +59,7 @@ class TextMessageAnalyzer {
             for (AbstractFile abstractFile : absFiles) {
                 try {
                     File jFile = new File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName());
-                    ContentUtils.writeToFile(abstractFile, jFile);
+                    ContentUtils.writeToFile(abstractFile, jFile, context::dataSourceIngestIsCancelled);
                     findTextsInDB(jFile.toString(), abstractFile);
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Error parsing text messages", e); //NON-NLS

@@ -38,6 +38,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -63,6 +64,7 @@ public class HashDbManager implements PropertyChangeListener {
     private Set<String> hashSetPaths = new HashSet<>();
     PropertyChangeSupport changeSupport = new PropertyChangeSupport(HashDbManager.class);
     private static final Logger logger = Logger.getLogger(HashDbManager.class.getName());
+    private boolean allDatabasesLoadedCorrectly = false;
 
     /**
      * Property change event support In events: For both of these enums, the old
@@ -92,6 +94,10 @@ public class HashDbManager implements PropertyChangeListener {
 
     public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
         changeSupport.removePropertyChangeListener(listener);
+    }
+    
+    synchronized boolean verifyAllDatabasesLoadedCorrectly(){
+        return allDatabasesLoadedCorrectly;
     }
 
     private HashDbManager() {
@@ -457,7 +463,7 @@ public class HashDbManager implements PropertyChangeListener {
      */
     @Messages({"# {0} - database name", "HashDbManager.noDbPath.message=Couldn't get valid database path for: {0}"})
     private void configureSettings(HashLookupSettings settings) {
-        boolean dbInfoRemoved = false;
+        allDatabasesLoadedCorrectly = true;
         List<HashDbInfo> hashDbInfoList = settings.getHashDbInfo();
         for (HashDbInfo hashDb : hashDbInfoList) {
             try {
@@ -466,7 +472,7 @@ public class HashDbManager implements PropertyChangeListener {
                     addHashDatabase(SleuthkitJNI.openHashDatabase(dbPath), hashDb.getHashSetName(), hashDb.getSearchDuringIngest(), hashDb.getSendIngestMessages(), hashDb.getKnownFilesType());
                 } else {
                     logger.log(Level.WARNING, Bundle.HashDbManager_noDbPath_message(hashDb.getHashSetName()));
-                    dbInfoRemoved = true;
+                    allDatabasesLoadedCorrectly = false;
                 }
             } catch (TskCoreException ex) {
                 Logger.getLogger(HashDbManager.class.getName()).log(Level.SEVERE, "Error opening hash database", ex); //NON-NLS
@@ -475,13 +481,23 @@ public class HashDbManager implements PropertyChangeListener {
                                 "HashDbManager.unableToOpenHashDbMsg", hashDb.getHashSetName()),
                         NbBundle.getMessage(this.getClass(), "HashDbManager.openHashDbErr"),
                         JOptionPane.ERROR_MESSAGE);
-                dbInfoRemoved = true;
+                allDatabasesLoadedCorrectly = false;
             }
         }
-        if (dbInfoRemoved) {
+        
+        /* NOTE: When RuntimeProperties.coreComponentsAreActive() is "false", 
+        I don't think we should overwrite hash db settings file because we 
+        were unable to load a database. The user should have to fix the issue or 
+        remove the database from settings. Overwiting the settings effectively removes 
+        the database from HashLookupSettings and the user may not know about this 
+        because the dialogs are not being displayed. The next time user starts Autopsy, HashDB 
+        will load without errors and the user may think that the problem was solved.*/
+        if (!allDatabasesLoadedCorrectly && RuntimeProperties.coreComponentsAreActive()) {
             try {
                 HashLookupSettings.writeSettings(new HashLookupSettings(this.knownHashSets, this.knownBadHashSets));
+                allDatabasesLoadedCorrectly = true;
             } catch (HashLookupSettings.HashLookupSettingsException ex) {
+                allDatabasesLoadedCorrectly = false;
                 logger.log(Level.SEVERE, "Could not overwrite hash database settings.", ex);
             }
         }
@@ -496,7 +512,8 @@ public class HashDbManager implements PropertyChangeListener {
 
         // Give the user an opportunity to find the desired file.
         String newPath = null;
-        if (JOptionPane.showConfirmDialog(null,
+        if (RuntimeProperties.coreComponentsAreActive() && 
+                JOptionPane.showConfirmDialog(null,
                 NbBundle.getMessage(this.getClass(), "HashDbManager.dlgMsg.dbNotFoundAtLoc",
                         hashSetName, configuredPath),
                 NbBundle.getMessage(this.getClass(), "HashDbManager.dlgTitle.MissingDb"),

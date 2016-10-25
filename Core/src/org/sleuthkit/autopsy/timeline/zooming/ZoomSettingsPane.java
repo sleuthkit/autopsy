@@ -143,11 +143,6 @@ public class ZoomSettingsPane extends TitledPane {
      * from Integer index to Enum value displayed as the slider tick
      * label(labelIndexMapper).
      *
-     * @param <DriverType>        The type of the driving model property.
-     * @param <EnumType>          The type of the Enum that is represented along
-     *                            the slider.
-     *
-     *
      * @param slider              The slider that we are configuring.
      *
      * @param sliderValueConsumer The consumer that will get passed the newly

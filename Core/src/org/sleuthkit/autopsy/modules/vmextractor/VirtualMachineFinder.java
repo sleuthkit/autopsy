@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012-2015 Basis Technology Corp.
+ * Copyright 2012-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,8 +40,8 @@ public final class VirtualMachineFinder {
     private static final Logger logger = Logger.getLogger(VirtualMachineFinder.class.getName());
 
     private static final int MAX_VMDK_DESCRIPTOR_FILE_SIZE_BYTES = 10000;
-    private static final int MIN_VMDK_EXTENT_DESCRIPTOR_FIELDS_NUM = 4; // See readExtentFilesFromVmdkDescriptorFile() for details
-    private static final int FILE_NAME_FIELD_INDX_IN_EXTENT_DESCRIPTOR = 3; // See readExtentFilesFromVmdkDescriptorFile() for details
+    private static final int MIN_VMDK_EXTENT_DESCRIPTOR_FIELDS = 4; // See readExtentFilesFromVmdkDescriptorFile() for details
+    private static final int FILE_NAME_FIELD_INDX = 3; // See readExtentFilesFromVmdkDescriptorFile() for details
 
     private static final GeneralFilter virtualMachineFilter = new GeneralFilter(GeneralFilter.VIRTUAL_MACHINE_EXTS, GeneralFilter.VIRTUAL_MACHINE_DESC);
     private static final List<FileFilter> vmFiltersList = new ArrayList<>();
@@ -58,12 +58,8 @@ public final class VirtualMachineFinder {
         vmdkFiltersList.add(vmdkFilter);
     }
 
-    private static boolean isVirtualMachine(String fileName) {
-        // is file a virtual machine
-        if (!isAcceptedByFiler(new File(fileName), vmFiltersList)) {
-            return false;
-        }
-        return true;
+    public static final boolean isVirtualMachine(String fileName) {
+        return isAcceptedByFiler(new File(fileName), vmFiltersList);
     }
 
     /**
@@ -119,8 +115,8 @@ public final class VirtualMachineFinder {
 
         // remove from the list all VMDK files that are listed in the descriptor file
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
+            String line = br.readLine();
+            while (null != line) {
                 // The extent descriptions provide the following key information:
                 // Access – may be RW, RDONLY, or NOACCESS
                 // Size in sectors – a sector is 512 bytes
@@ -131,52 +127,24 @@ public final class VirtualMachineFinder {
                 // Example: RW 4192256 SPARSE "win7-ult-vm-0-s001.vmdk"
 
                 String[] splited = line.split(" ");
-                if (splited.length < MIN_VMDK_EXTENT_DESCRIPTOR_FIELDS_NUM) {
+                if (splited.length < MIN_VMDK_EXTENT_DESCRIPTOR_FIELDS) {
                     // line doesn't have enough fields, can't be an extent descriptor
                     continue;
                 }
                 if (splited[0].equals("RW") || splited[0].equals("RDONLY") || splited[0].equals("NOACCESS")) { //NON-NLS
                     // found an extent descriptor
                     // remove quotation marks around the file name
-                    String extentFileName = splited[FILE_NAME_FIELD_INDX_IN_EXTENT_DESCRIPTOR].replace("\"", "");
+                    String extentFileName = splited[FILE_NAME_FIELD_INDX].replace("\"", "");
 
                     // add extent file to list of extent files
                     extentFiles.add(extentFileName);
                 }
+                line = br.readLine();
             }
         } catch (Exception ex) {
             logger.log(Level.WARNING, String.format("Error while parsing vmdk descriptor file %s", file.toString()), ex); //NON-NLS
         }
         return extentFiles;
-    }
-
-    /**
-     * Identifies whether a vmdk file is part of split vmdk image
-     *
-     * @param fileName Name of the vmdk file
-     *
-     * @return True if the file is part of split vmdk image, false if not
-     */
-    private static boolean isPartOfSplitVMDKImage(String fileName) {
-
-        // only need to worry about ".vmdk" images
-        if (!isAcceptedByFiler(new File(fileName), vmdkFiltersList)) {
-            return false;
-        }
-
-        // this needs to identify and handle different VMDK scenarios:
-        //  i  single image in a single file
-        // ii. Single image split over multiple files - just need to pass the first to TSK and it will combine the split image files.
-        //       Note there may be more than  than one split images in a single dir, 
-        //       e.g. icrd-te-google.vmdk, icrd-te-google-s001.vmdk, icrd-te-google-s002.vmdk... (split sparse vmdk format)
-        //       e.g. win7-ult-vm.vmdk, win7-ult-vm-f001.vmdk, win7-ult-vm-f002.vmdk... (split flat vmdk format)
-        String fName = fileName.toLowerCase();
-        int lastPeriod = fName.lastIndexOf('.');
-        if (-1 == lastPeriod) {
-            return false;
-        }
-        String fNameNoExt = fName.substring(0, lastPeriod);
-        return fNameNoExt.matches(".*-[fs]\\d+$");  // anything followed by "-" then either "f" or "s" and followed by digits at the end of the string 
     }
 
     private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
@@ -207,4 +175,11 @@ public final class VirtualMachineFinder {
         }
         return new ArrayList<>(Arrays.asList(files));
     }
+
+    /**
+     * Prevent instantiation of this utility class.
+     */
+    private VirtualMachineFinder() {
+    }
+    
 }
