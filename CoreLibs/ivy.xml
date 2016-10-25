@@ -16,7 +16,7 @@
         <dependency conf="autopsy_core->*" org="org.jbundle.thin.base.screen" name="jcalendarbutton" rev="1.4.6"/>
         
         <!-- commmon -->
-        <dependency org="com.google.guava" name="guava" rev="18.0"/>
+        <dependency org="com.google.guava" name="guava" rev="19.0"/>
         <dependency conf="autopsy_core->*" org="org.apache.commons" name="commons-lang3" rev="3.0"/>
         <dependency conf="autopsy_core->*" org="org.apache.commons" name="commons-csv" rev="1.4"/>
     

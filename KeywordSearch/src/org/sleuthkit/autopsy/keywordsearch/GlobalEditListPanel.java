@@ -100,7 +100,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         lsm.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                if (lsm.isSelectionEmpty() || currentKeywordList.isLocked() || IngestManager.getInstance().isIngestRunning()) {
+                if (lsm.isSelectionEmpty() || currentKeywordList.isEditable() || IngestManager.getInstance().isIngestRunning()) {
                     deleteWordButton.setEnabled(false);
                 } else {
                     deleteWordButton.setEnabled(true);
@@ -140,7 +140,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         listOptionsSeparator.setEnabled(canEditList);
 
         // items that need an unlocked list w/out ingest running
-        boolean isListLocked = ((isListSelected == false) || (currentKeywordList.isLocked()));
+        boolean isListLocked = ((isListSelected == false) || (currentKeywordList.isEditable()));
         boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
         newWordButton.setEnabled(canAddWord);
         keywordOptionsLabel.setEnabled(canAddWord);
@@ -581,10 +581,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             Keyword word = currentKeywordList.getKeywords().get(rowIndex);
             switch (columnIndex) {
                 case 0:
-                    ret = (Object) word.getQuery();
+                    ret = (Object) word.getSearchTerm();
                     break;
                 case 1:
-                    ret = (Object) !word.isLiteral();
+                    ret = (Object) !word.searchTermIsLiteral();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
