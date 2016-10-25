@@ -76,7 +76,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         }
 
         // add tags property to the sheet
-        AbstractAbstractFileNode.addTagProperty(ss, content);
+        addTagProperty(ss);
 
         return s;
     }

@@ -30,6 +30,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
@@ -101,15 +103,29 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 } catch (NullPointerException ex) {
                     // Skip
                 }
-
+                
             }
         } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
             if (evt.getNewValue() == null) {
                 // case was closed. Remove listeners so that we don't get called with a stale case handle
                 removeListeners();
             }
+        } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
+            ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
+            if (event.getAddedTag().getContent().equals(content)) {
+                updateSheet();
+            }
+        } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+            ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
+            if (event.getDeletedTagInfo().getContentID() == content.getId()) {
+                updateSheet();
+            }
         }
     };
+
+    private void updateSheet() {
+        this.setSheet(createSheet());
+    }
 
     // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
     public static enum AbstractFilePropertyType {
@@ -283,7 +299,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.MIMETYPE.toString(), content.getMIMEType() == null ? "" : content.getMIMEType());
     }
 
-    static void addTagProperty(Sheet.Set ss, Content content) {
+    protected void addTagProperty(Sheet.Set ss) {
         final String NO_DESCR = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.desc");
         List<Tag> tags = new ArrayList<>();
         try {

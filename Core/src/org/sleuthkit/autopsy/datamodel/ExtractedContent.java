@@ -444,9 +444,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
                          */
                     }
                 } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
                     try {
                         Case.getCurrentCase();
                         refresh(true);

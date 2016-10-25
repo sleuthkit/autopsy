@@ -60,18 +60,14 @@ import org.openide.nodes.Sheet;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * DataResult sortable table viewer
  */
-// @@@ Restore implementation of DataResultViewerTable as a DataResultViewer 
-// service provider when DataResultViewers can be made compatible with node 
+// @@@ Restore implementation of DataResultViewerTable as a DataResultViewer
+// service provider when DataResultViewers can be made compatible with node
 // multiple selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
@@ -166,7 +162,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
                 oldColumnIndex = -1;
             }
-        }); 
+        });
     }
 
     /**
@@ -423,11 +419,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 for (int column = 0; column < ov.getOutline().getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
-                    int columnWidthLimit = (column == 0) ? 250 : 300;
+                    int columnWidthLimit = (column == 0) ? 350 : 300;
                     int valuesWidth = 0;
 
-                    // find the maximum width needed to fit the values for the first 30 rows, at most
-                    for (int row = 0; row < Math.min(30, ov.getOutline().getRowCount()); row++) {
+                    // find the maximum width needed to fit the values for the first 15 rows, at most
+                    // *15 is an arbitrary number
+                    for (int row = 0; row < Math.min(15, ov.getOutline().getRowCount()); row++) {
                         TableCellRenderer renderer = ov.getOutline().getCellRenderer(row, column);
                         Component comp = ov.getOutline().prepareRenderer(renderer, row, column);
                         valuesWidth = Math.max(comp.getPreferredSize().width, valuesWidth);
@@ -466,32 +463,26 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                         Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
                         boolean tagFound = false;
                         if (node != null) {
-                            //see if there is a blackboard artifact at the node and whether the artifact is tagged
-                            BlackboardArtifact artifact = node.getLookup().lookup(BlackboardArtifact.class);
-                            if (artifact != null) {
-                                try {
-                                    tagFound = !Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact).isEmpty();
-                                } catch (TskCoreException ex) {
-                                    Exceptions.printStackTrace(ex);
-                                }
-                            }
+                            Node.PropertySet[] propSets = node.getPropertySets();
 
-                            //if no tags have been found yet, see if the abstract file at the node is tagged
-                            if (!tagFound) {
-                                AbstractFile abstractFile = node.getLookup().lookup(AbstractFile.class);
-                                if (abstractFile != null) {
-                                    try {
-                                        tagFound = !Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(abstractFile).isEmpty();
-                                    } catch (TskCoreException ex) {
-                                        Exceptions.printStackTrace(ex);
+                            if (propSets.length != 0) {
+                                Node.Property<?>[] props = propSets[0].getProperties();
+                                for (Property<?> prop : props) {
+                                    if (prop.getName().equals("Tags")) {
+                                        try {
+                                            tagFound = !prop.getValue().equals("");
+                                        } catch (IllegalAccessException | InvocationTargetException ex) {
+                                            Exceptions.printStackTrace(ex);
+                                        }
+                                        break;
                                     }
                                 }
                             }
+                        }
 
-                            //if the node does have associated tags, set its background color
-                            if (tagFound) {
-                                component.setBackground(TAGGED_COLOR);
-                            }
+                        //if the node does have associated tags, set its background color
+                        if (tagFound) {
+                            component.setBackground(TAGGED_COLOR);
                         }
                     }
                     return component;
@@ -500,7 +491,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
         }
     }
-    
+
     /**
      * Store the current column order into a preference file.
      */
@@ -580,8 +571,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".column";
     }
 
-    // Populate a two-dimensional array with rows of property values for up 
-    // to maxRows children of the node passed in. 
+    // Populate a two-dimensional array with rows of property values for up
+    // to maxRows children of the node passed in.
     private static Object[][] getRowValues(Node node, int maxRows) {
         int numRows = Math.min(maxRows, node.getChildren().getNodesCount());
         Object[][] rowValues = new Object[numRows][];
@@ -591,10 +582,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 break;
             }
             // BC: I got this once, I think it was because the table
-            // refreshed while we were in this method 
-            // could be better synchronized.  Or it was from 
-            // the lazy nodes updating...  Didn't have time 
-            // to fully debug it. 
+            // refreshed while we were in this method
+            // could be better synchronized.  Or it was from
+            // the lazy nodes updating...  Didn't have time
+            // to fully debug it.
             if (rowCount > numRows) {
                 break;
             }

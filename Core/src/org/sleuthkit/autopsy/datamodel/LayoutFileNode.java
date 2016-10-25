@@ -87,7 +87,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         }
 
         // add tags property to the sheet
-        AbstractAbstractFileNode.addTagProperty(ss, content);
+        addTagProperty(ss);
 
         return s;
     }

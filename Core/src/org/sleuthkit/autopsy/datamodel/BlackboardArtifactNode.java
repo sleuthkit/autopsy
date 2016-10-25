@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +38,10 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -72,6 +78,39 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private static final Integer[] SHOW_FILE_METADATA = new Integer[]{
         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),};
 
+    private final PropertyChangeListener pcl = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())) {
+                BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
+                if (event.getAddedTag().getArtifact().equals(artifact)) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
+                BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
+                if (event.getDeletedTagInfo().getArtifactID() == artifact.getArtifactID()) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
+                ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
+                if (event.getAddedTag().getContent().equals(associated)) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+                ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
+                if (event.getDeletedTagInfo().getContentID()== associated.getId()) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                if (evt.getNewValue() == null) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    removeListeners();
+                }
+            }
+        }
+    };
+
     /**
      * Construct blackboard artifact node from an artifact and using provided
      * icon
@@ -88,6 +127,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
+        Case.addPropertyChangeListener(pcl);
     }
 
     /**
@@ -105,6 +145,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
+        Case.addPropertyChangeListener(pcl);
+    }
+
+    private void removeListeners() {
+        Case.removePropertyChangeListener(pcl);
     }
 
     @Override
@@ -309,6 +354,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
 
         return s;
+    }
+
+    private void updateSheet() {
+        this.setSheet(createSheet());
     }
 
     private String getRootParentName() {

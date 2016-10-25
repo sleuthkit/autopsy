@@ -203,9 +203,6 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             populateMaps(artifactIds);
-
-            setChanged();
-            notifyObservers();
         }
     }
 
@@ -309,12 +306,6 @@ public class KeywordHits implements AutopsyVisitableItem {
                         removeNotify();
                         skCase = null;
                     }
-                } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())
-                        || eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
-                    refresh(true);
-                    keywordResults.update();
                 }
             }
         };
@@ -457,8 +448,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     public class TermNode extends DisplayableItemNode implements Observer {
 
-        private String setName;
-        private String keyword;
+        private final String setName;
+        private final String keyword;
 
         public TermNode(String setName, String keyword) {
             super(Children.create(new HitsFactory(setName, keyword), true), Lookups.singleton(keyword));

@@ -85,7 +85,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         }
 
         // add tags property to the sheet
-        AbstractAbstractFileNode.addTagProperty(ss, content);
+        addTagProperty(ss);
 
         return s;
     }
