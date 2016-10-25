@@ -45,6 +45,9 @@ import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
+import javafx.scene.layout.StackPane;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * HTML view of file contents
@@ -61,6 +64,7 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
     
     private static final Logger logger = Logger.getLogger(DataContentViewerHTML.class.getName());
     
+  
     public DataContentViewerHTML() {
         initComponents();
         customizeComponents();
@@ -84,8 +88,8 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
                 
                 stage.setResizable(true);
                 
-                Group root = new Group();
-                Scene scene = new Scene(root, 80, 20);
+                StackPane root = new StackPane();
+                Scene scene = new Scene(root);
                 stage.setScene(scene);
                 
                 browser = new WebView();
@@ -169,10 +173,25 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
         }
         Content content = node.getLookup().lookup(Content.class);
         if (content != null && content.getSize() > 0) {
+            //look at content to make sure it is HTML 
             
-            //look at content to make sure it is HTML
+            final String PATTERN_STRING = "<(?:\"[^\"]*\"['\"]*|'[^']*'['\"]*|[^'\">])+>";
+            dataSource = content;
+            try {
+            long size = content.getSize();
+            byte[] dataBytes = new byte[(int)size];
+            dataSource.read(dataBytes, 0, (int)size);
             
-            return true;
+            String str = new String(dataBytes);
+            Pattern pattern = Pattern.compile(PATTERN_STRING);
+            Matcher matcher = pattern.matcher(str);
+            
+            System.out.println("the matcher" + matcher.find());
+            if (matcher.find() == true)
+               return true;
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
 
         return false;
