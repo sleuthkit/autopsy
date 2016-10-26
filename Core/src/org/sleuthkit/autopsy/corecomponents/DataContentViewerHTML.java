@@ -59,6 +59,9 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
+import javafx.scene.layout.StackPane;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * HTML view of file contents
@@ -76,6 +79,7 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
     
     private static final Logger logger = Logger.getLogger(DataContentViewerHTML.class.getName());
     
+  
     public DataContentViewerHTML() {
         
         try {
@@ -106,8 +110,8 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
                 
                 stage.setResizable(true);
                 
-                Group root = new Group();
-                scene = new Scene(root);
+                StackPane root = new StackPane();
+                Scene scene = new Scene(root);
                 stage.setScene(scene);
                 
                 browser = new WebView();
