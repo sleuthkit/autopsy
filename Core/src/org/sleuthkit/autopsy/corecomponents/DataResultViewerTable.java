@@ -57,7 +57,6 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.nodes.Sheet;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -71,6 +70,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 // multiple selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
+
+    private static final long serialVersionUID = 1L;
 
     private final String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
     // This is a set because we add properties of up to 100 child nodes, and we want unique properties
@@ -405,10 +406,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         // get first row's values for the table
-        Object[][] content;
-        content = getRowValues(root, 1);
-
-        if (content != null) {
+        if (root.getChildren().getNodesCount() != 0) {
 
             final Graphics graphics = ov.getGraphics();
             if (graphics != null) {
@@ -438,13 +436,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     columnWidth = Math.min(columnWidth, columnWidthLimit);
 
                     ov.getOutline().getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
-                }
-
-                // if there's no content just auto resize all columns
-                if (content.length <= 0) {
-                    // turn on the auto resize
-                    ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                }
+                }                    
             }
 
             /**
@@ -479,7 +471,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                                 }
                             }
                         }
-
                         //if the node does have associated tags, set its background color
                         if (tagFound) {
                             component.setBackground(TAGGED_COLOR);
@@ -489,6 +480,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
             }
             ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
+        } else {
+            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
     }
 
@@ -571,41 +564,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".column";
     }
 
-    // Populate a two-dimensional array with rows of property values for up
-    // to maxRows children of the node passed in.
-    private static Object[][] getRowValues(Node node, int maxRows) {
-        int numRows = Math.min(maxRows, node.getChildren().getNodesCount());
-        Object[][] rowValues = new Object[numRows][];
-        int rowCount = 0;
-        for (Node child : node.getChildren().getNodes()) {
-            if (rowCount >= maxRows) {
-                break;
-            }
-            // BC: I got this once, I think it was because the table
-            // refreshed while we were in this method
-            // could be better synchronized.  Or it was from
-            // the lazy nodes updating...  Didn't have time
-            // to fully debug it.
-            if (rowCount > numRows) {
-                break;
-            }
-            PropertySet[] propertySets = child.getPropertySets();
-            if (propertySets.length > 0) {
-                Property<?>[] properties = propertySets[0].getProperties();
-                rowValues[rowCount] = new Object[properties.length];
-                for (int j = 0; j < properties.length; ++j) {
-                    try {
-                        rowValues[rowCount][j] = properties[j].getValue();
-                    } catch (IllegalAccessException | InvocationTargetException ignore) {
-                        rowValues[rowCount][j] = "n/a"; //NON-NLS
-                    }
-                }
-            }
-            ++rowCount;
-        }
-        return rowValues;
-    }
-
     @Override
     public String getTitle() {
         return NbBundle.getMessage(this.getClass(), "DataResultViewerTable.title");
@@ -640,11 +598,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTable(nme.getNode());
                 } else {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            setupTable(nme.getNode());
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        setupTable(nme.getNode());
                     });
                 }
             }
