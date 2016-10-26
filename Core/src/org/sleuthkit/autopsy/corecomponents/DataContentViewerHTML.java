@@ -18,16 +18,27 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.logging.Level;
 import com.sun.javafx.application.PlatformImpl;
+import java.awt.Dimension;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import javafx.embed.swing.JFXPanel;
+import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebErrorEvent;
 import javafx.scene.web.WebView;
 import javax.swing.JButton;
 import org.openide.util.NbBundle;
@@ -42,6 +53,9 @@ import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.datamodel.DataConversion;
+import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
@@ -52,28 +66,36 @@ import org.sleuthkit.datamodel.TskException;
 @ServiceProvider(service = DataContentViewer.class, position = 6)
 public class DataContentViewerHTML extends javax.swing.JPanel implements DataContentViewer {
 
-    private Content dataSource;
+    private AbstractFile dataSource;
+    private FileTypeDetector fileTypeDetector;
     private Stage stage;
     private WebView browser;
     private JFXPanel jfxPanel;
-    private JButton swingButton;
     private WebEngine webEngine;
+    private Scene scene;
     
     private static final Logger logger = Logger.getLogger(DataContentViewerHTML.class.getName());
     
     public DataContentViewerHTML() {
+        
+        try {
+            fileTypeDetector = new FileTypeDetector();
+        } catch (FileTypeDetectorInitException e) {
+            e.printStackTrace();
+        }
+        
         initComponents();
         customizeComponents();
         resetComponent();
         logger.log(Level.INFO, "Created HTMLView instance: " + this); //NON-NLS
     }
     
-    private void initComponents() {
+    private void initComponents() {     
+        
        jfxPanel = new JFXPanel();
-       createScene();
-       
        setLayout(new BorderLayout());
        add(jfxPanel, BorderLayout.CENTER);
+       createScene();     
     }
     
     private void createScene() {
@@ -85,16 +107,14 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
                 stage.setResizable(true);
                 
                 Group root = new Group();
-                Scene scene = new Scene(root, 80, 20);
+                scene = new Scene(root);
                 stage.setScene(scene);
                 
                 browser = new WebView();
                 webEngine = browser.getEngine();
-                //webEngine.load("https://www.google.com");
                 
                 ObservableList<javafx.scene.Node> children = root.getChildren();
                 children.add(browser);
-                
                 jfxPanel.setScene(scene);
             }
         });
@@ -112,25 +132,22 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
             return;
         }
 
-        Content content = selectedNode.getLookup().lookup(Content.class);
-        if (content == null) {
+        AbstractFile file = selectedNode.getLookup().lookup(AbstractFile.class);
+        if (file == null) {
             resetComponent();
             return;
         }
         
-        dataSource = content;
+        dataSource = file;
         
         try {  
             
-            long size = content.getSize();
+            long size = file.getSize();
             byte[] dataBytes = new byte[(int)size];
             dataSource.read(dataBytes, 0, (int)size);
-            String str = new String(dataBytes);
-            PlatformImpl.startup(new Runnable() {
-                @Override
-                public void run() {
-                    webEngine.loadContent(str);
-                }
+            String HTML = new String(dataBytes);
+            PlatformImpl.startup(() -> {
+                webEngine.loadContent(HTML);
             });
         } catch (TskCoreException ex) {
             Exceptions.printStackTrace(ex);
@@ -159,20 +176,43 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
 
     @Override
     public void resetComponent() {
-        
+        PlatformImpl.startup(() -> {
+            webEngine.loadContent("");
+        });
     }
 
     @Override
     public boolean isSupported(Node node) {
+        
         if (node == null) {
             return false;
         }
-        Content content = node.getLookup().lookup(Content.class);
-        if (content != null && content.getSize() > 0) {
+        
+        if(node.getLookup().lookupAll(BlackboardArtifact.class).size() > 0) {
+            return false;
+        }
+        
+        AbstractFile file = node.getLookup().lookup(AbstractFile.class);
+        
+        if (file != null && file.getSize() > 0 && file.isFile()) {
             
-            //look at content to make sure it is HTML
+            String acceptedMIMEType = NbBundle.getMessage(this.getClass(), 
+                        "DataContentViewerHTML.acceptedMIMEType");
             
-            return true;
+            if(file.getMIMEType() == null) {
+                
+                if(fileTypeDetector == null)
+                    return false;
+                
+                try {
+                    return fileTypeDetector.detect(file).equals(acceptedMIMEType);
+                } catch (TskCoreException ex) {
+                     Exceptions.printStackTrace(ex);
+                    return false;
+                }
+            }
+            else 
+                return file.getMIMEType().equals(acceptedMIMEType);     
         }
 
         return false;
@@ -181,7 +221,9 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
     @Override
     public int isPreferred(Node node) {
         if(isSupported(node))
-            return 10;
+            //A preference of 8 is returned, because the viewer might want to see
+            //the string version of the file.
+            return 8;
         else 
             return 0;
     }
