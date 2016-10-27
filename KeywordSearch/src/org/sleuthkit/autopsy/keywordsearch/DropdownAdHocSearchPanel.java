@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * types of ad hoc keyword searches. The first option is a standard Lucene query
  * for one or more terms, with or without wildcards and explicit Boolean
  * operators, or a phrase. The second option is a Lucene query for a substring
- * of a single rerm. The third option is a regex query using first the terms
+ * of a single term. The third option is a regex query using first the terms
  * component, followed by standard Lucene queries for any terms found.
  *
  * The toolbar uses a different font from the rest of the application,
