@@ -46,7 +46,7 @@ class DropdownToolbar extends javax.swing.JPanel {
     private KeywordPropertyChangeListener listener;
     private boolean active = false;
     private static DropdownToolbar instance;
-    private DropdownSingleTermSearchPanel dropPanel = null;
+    private DropdownAdHocSearchPanel dropPanel = null;
 
     private DropdownToolbar() {
         initComponents();
@@ -92,7 +92,7 @@ class DropdownToolbar extends javax.swing.JPanel {
             }
         });
 
-        dropPanel = DropdownSingleTermSearchPanel.getDefault();
+        dropPanel = DropdownAdHocSearchPanel.getDefault();
         dropPanel.addSearchButtonActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
