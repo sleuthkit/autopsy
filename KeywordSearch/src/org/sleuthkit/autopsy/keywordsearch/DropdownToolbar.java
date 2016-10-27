@@ -46,7 +46,7 @@ class DropdownToolbar extends javax.swing.JPanel {
     private KeywordPropertyChangeListener listener;
     private boolean active = false;
     private static DropdownToolbar instance;
-    private DropdownSingleTermSearchPanel dropPanel = null;
+    private DropdownAdHocSearchPanel dropPanel = null;
 
     private DropdownToolbar() {
         initComponents();
@@ -92,7 +92,7 @@ class DropdownToolbar extends javax.swing.JPanel {
             }
         });
 
-        dropPanel = DropdownSingleTermSearchPanel.getDefault();
+        dropPanel = DropdownAdHocSearchPanel.getDefault();
         dropPanel.addSearchButtonActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -222,7 +222,7 @@ class DropdownToolbar extends javax.swing.JPanel {
         public void propertyChange(PropertyChangeEvent evt) {
             String changed = evt.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                dropPanel.resetSearchBox();
+                dropPanel.clearSearchBox();
                 setFields(null != evt.getNewValue() && RuntimeProperties.coreComponentsAreActive());
             } else if (changed.equals(Server.CORE_EVT)) {
                 final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
