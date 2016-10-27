@@ -222,7 +222,7 @@ class DropdownToolbar extends javax.swing.JPanel {
         public void propertyChange(PropertyChangeEvent evt) {
             String changed = evt.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                dropPanel.resetSearchBox();
+                dropPanel.clearSearchBox();
                 setFields(null != evt.getNewValue() && RuntimeProperties.coreComponentsAreActive());
             } else if (changed.equals(Server.CORE_EVT)) {
                 final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
