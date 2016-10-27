@@ -148,6 +148,14 @@ final public class Accounts implements AutopsyVisitableItem {
     private abstract class ObservingChildren<X> extends Children.Keys<X> {
 
         /**
+         * Override of default constructor to force lazy creation of nodes, by
+         * concrete instances of ObservingChildren
+         */
+        ObservingChildren() {
+            super(true);
+        }
+
+        /**
          * Create of keys used by this Children object to represent the child
          * nodes.
          */
