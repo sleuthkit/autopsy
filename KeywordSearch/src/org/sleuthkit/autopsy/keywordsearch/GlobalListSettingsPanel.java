@@ -115,14 +115,14 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
-        //listsManagementPanel.addPropertyChangeListener(l);
-        //editListPanel.addPropertyChangeListener(l);
+        listsManagementPanel.addPropertyChangeListener(l);
+        editListPanel.addPropertyChangeListener(l);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
-        //listsManagementPanel.removePropertyChangeListener(l);
-        //editListPanel.removePropertyChangeListener(l);
+        listsManagementPanel.removePropertyChangeListener(l);
+        editListPanel.removePropertyChangeListener(l);
     }
 
     @Override

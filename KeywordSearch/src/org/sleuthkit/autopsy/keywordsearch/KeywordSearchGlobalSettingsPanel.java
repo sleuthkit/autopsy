@@ -53,16 +53,16 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
-        //listsPanel.addPropertyChangeListener(l);
-        //languagesPanel.addPropertyChangeListener(l);
-        //generalPanel.addPropertyChangeListener(l);
+        listsPanel.addPropertyChangeListener(l);
+        languagesPanel.addPropertyChangeListener(l);
+        generalPanel.addPropertyChangeListener(l);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
-        //listsPanel.removePropertyChangeListener(l);
-        //languagesPanel.removePropertyChangeListener(l);
-        //generalPanel.removePropertyChangeListener(l);
+        listsPanel.removePropertyChangeListener(l);
+        languagesPanel.removePropertyChangeListener(l);
+        generalPanel.removePropertyChangeListener(l);
     }
 
     /**
