@@ -67,7 +67,6 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
 
         this.contextName = context;
         pcs = new PropertyChangeSupport(this);
-        createTimeZoneList();
     }
 
     /**
@@ -77,6 +76,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
         RawDSInputPanel instance = new RawDSInputPanel(context);
 
         instance.postInit();
+        instance.createTimeZoneList();
 
         return instance;
     }

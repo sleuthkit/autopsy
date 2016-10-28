@@ -142,6 +142,9 @@ public class RawDSProcessor implements DataSourceProcessor {
    
     @Override
     public void cancel() {
+        if (null != addImageTask) {
+            addImageTask.cancelTask();
+        }
     }
 
     /**

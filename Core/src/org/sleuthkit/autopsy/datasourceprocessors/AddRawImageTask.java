@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 
@@ -49,7 +50,9 @@ class AddRawImageTask implements Runnable {
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
-    private volatile boolean cancelled = false;  //ZL: where do this use
+    private final Object tskAddImageProcessLock;
+    private boolean tskAddImageProcessStopped;
+    private SleuthkitJNI.CaseDbHandle.AddImageProcess tskAddImageProcess;
    
     /**
      * Constructs a runnable that adds a raw data source to a case database.
@@ -74,6 +77,7 @@ class AddRawImageTask implements Runnable {
         this.chunkSize = chunkSize;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
+        tskAddImageProcessLock = new Object();
     }
 
     /**
@@ -85,15 +89,11 @@ class AddRawImageTask implements Runnable {
          * Process the input image file.
          */
         progressMonitor.setIndeterminate(true);
+        progressMonitor.setProgress(0);
         List<Content> newDataSources = new ArrayList<>();
         List<String> errorMessages = new ArrayList<>();
         addImageToCase(newDataSources, errorMessages);
 
-        /*
-         * This appears to be the best that can be done to indicate completion
-         * with the DataSourceProcessorProgressMonitor in its current form.
-         */
-        progressMonitor.setProgress(0); //ZL TODO???
         progressMonitor.setProgress(100);
 
         /**
@@ -185,8 +185,25 @@ class AddRawImageTask implements Runnable {
      * partial processing of the input.
      */
     public void cancelTask() {
-        logger.log(Level.WARNING, "AddMPFImageTask cancelled, processing may be incomplete");
-        cancelled = true;
+        logger.log(Level.WARNING, "AddRAWImageTask cancelled, processing may be incomplete");
+        synchronized (tskAddImageProcessLock) {
+            if (null != tskAddImageProcess) {
+                try {
+                    /*
+                     * All this does is set a flag that will make the TSK add
+                     * image process exit when the flag is checked between
+                     * processing steps. The state of the flag is not
+                     * accessible, so record it here so that it is known that
+                     * the revert method of the process object needs to be
+                     * called.
+                     */
+                    tskAddImageProcess.stop();
+                    tskAddImageProcessStopped = true;
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageFilePath), ex); //NON-NLS
+                }
+            }
+        }
     }
 
 }
