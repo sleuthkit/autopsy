@@ -23,48 +23,42 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.logging.Level;
 import com.sun.javafx.application.PlatformImpl;
-import java.awt.Dimension;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.security.cert.X509Certificate;
 import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import javafx.embed.swing.JFXPanel;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.web.WebView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebErrorEvent;
-import javafx.scene.web.WebView;
-import javax.swing.JButton;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JTextPane;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Utilities;
 import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.datamodel.DataConversion;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
-import javafx.scene.layout.StackPane;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
+
+
 
 /**
- * HTML view of file contents
+ * HTML view of file contents. This viewer uses a JavaFX WebView to display HTML data.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 6)
 public class DataContentViewerHTML extends javax.swing.JPanel implements DataContentViewer {
@@ -76,6 +70,10 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
     private JFXPanel jfxPanel;
     private WebEngine webEngine;
     private Scene scene;
+    private Button javaScriptButton;
+    
+    private final String enableJavaScriptTxt;
+    private final String disableJavaScriptTxt;
     
     private static final Logger logger = Logger.getLogger(DataContentViewerHTML.class.getName());
     
@@ -84,13 +82,19 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
         
         try {
             fileTypeDetector = new FileTypeDetector();
-        } catch (FileTypeDetectorInitException e) {
-            e.printStackTrace();
+        } catch (FileTypeDetectorInitException ex) {
+            Exceptions.printStackTrace(ex);
         }
         
         initComponents();
-        customizeComponents();
-        resetComponent();
+        resetComponents();
+        
+        enableJavaScriptTxt = NbBundle.getMessage(this.getClass(), 
+                "DataContentViewerHTML.enableJavaScriptBtnTxt");
+        disableJavaScriptTxt = NbBundle.getMessage(this.getClass(), 
+                "DataContentViewerHTML.disableJavaScriptBtnTxt");        
+        
+        
         logger.log(Level.INFO, "Created HTMLView instance: " + this); //NON-NLS
     }
     
@@ -99,33 +103,88 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
        jfxPanel = new JFXPanel();
        setLayout(new BorderLayout());
        add(jfxPanel, BorderLayout.CENTER);
-       createScene();     
+       createWebViewScene();     
     }
     
-    private void createScene() {
-        PlatformImpl.startup(new Runnable() {
-            @Override
-            public void run() {
-                stage = new Stage();
-                
-                stage.setResizable(true);
-                
-                StackPane root = new StackPane();
-                Scene scene = new Scene(root);
-                stage.setScene(scene);
-                
-                browser = new WebView();
-                webEngine = browser.getEngine();
-                
-                ObservableList<javafx.scene.Node> children = root.getChildren();
-                children.add(browser);
-                jfxPanel.setScene(scene);
-            }
-        });
-    }
-    
-    private void customizeComponents() {
+    private void resetComponents() {
         
+        //Disable JavaScript 
+        PlatformImpl.runLater(()-> {
+            webEngine.setJavaScriptEnabled(false);
+            javaScriptButton.setText(enableJavaScriptTxt);
+        });
+        
+        //Load an empty "page"
+        loadWebEngineContent("");
+    }
+    
+    /**
+     * Loads HTML content into the webEngine as long as the engine is not null and the
+     * content is not null. 
+     * @param content Not null. The content to load into the web engine.
+     */
+    private void loadWebEngineContent(String content) {
+        if(content != null && webEngine != null) {
+            PlatformImpl.runLater(() -> {
+                webEngine.loadContent(content);
+            });
+        }
+    }
+    
+    /**
+     * Loads an HTML file into the webEngine as long as the engine is not null and the
+     * content is not null.
+     * @param localFilePath Not null. The  local file path to the HTML file to be loaded.
+     */
+    private void loadWebEngineFileURL(String localFilePath) {
+        
+        if(localFilePath != null && webEngine != null) {
+            PlatformImpl.runLater(() -> {
+                webEngine.load("file://" + localFilePath);
+            });
+        }
+    }
+    
+    private void createWebViewScene() {
+        PlatformImpl.startup(() -> {
+            
+            stage = new Stage();
+            stage.setResizable(true);
+            
+            BorderPane root = new BorderPane();
+            scene = new Scene(root);
+            stage.setScene(scene);
+            
+            //Button bar components
+            HBox btnBox = new HBox();
+            btnBox.setPadding(new Insets(10, 10, 10, 10));
+            btnBox.setSpacing(10);
+            
+            javaScriptButton = new Button(enableJavaScriptTxt);
+            javaScriptButton.setOnAction((ActionEvent event) -> {
+                if(webEngine.isJavaScriptEnabled()) {
+                    webEngine.setJavaScriptEnabled(false);
+                    javaScriptButton.setText(enableJavaScriptTxt);
+                } else {
+                    webEngine.setJavaScriptEnabled(true);
+                    javaScriptButton.setText(disableJavaScriptTxt);
+                }
+                webEngine.reload();                
+            });
+            
+            btnBox.getChildren().add(javaScriptButton);
+            
+            //Webview components
+            browser = new WebView();
+            webEngine = browser.getEngine();
+            
+            //Javascript disabled by default
+            webEngine.setJavaScriptEnabled(false);
+            
+            root.setTop(btnBox);
+            root.setCenter(browser);
+            jfxPanel.setScene(scene);
+        });
     }
     
     @Override
@@ -144,18 +203,27 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
         
         dataSource = file;
         
-        try {  
-            
-            long size = file.getSize();
-            byte[] dataBytes = new byte[(int)size];
-            dataSource.read(dataBytes, 0, (int)size);
-            String HTML = new String(dataBytes);
-            PlatformImpl.startup(() -> {
-                webEngine.loadContent(HTML);
-            });
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+        resetComponent();
+
+        //Local files with .html extensions are loaded with a file URL
+        if(dataSource.getType() == TSK_DB_FILES_TYPE_ENUM.LOCAL &&
+                dataSource.getLocalAbsPath().endsWith(".html")) {
+            loadWebEngineFileURL(dataSource.getLocalAbsPath());
         }
+        else { //Non-local files, or local files without a .html extension are loaded as a string
+            try {            
+
+                long size = file.getSize();
+                byte[] dataBytes = new byte[(int)size];
+                dataSource.read(dataBytes, 0, (int)size);
+                String HTML = new String(dataBytes);
+                loadWebEngineContent(HTML);
+
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+        
     }
 
     @Override
@@ -180,9 +248,7 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
 
     @Override
     public void resetComponent() {
-        PlatformImpl.startup(() -> {
-            webEngine.loadContent("");
-        });
+        resetComponents();
     }
 
     @Override
@@ -203,6 +269,7 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
             String acceptedMIMEType = NbBundle.getMessage(this.getClass(), 
                         "DataContentViewerHTML.acceptedMIMEType");
             
+            //If the MIMEType has not already been detected, detect it.
             if(file.getMIMEType() == null) {
                 
                 if(fileTypeDetector == null)
@@ -225,8 +292,9 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
     @Override
     public int isPreferred(Node node) {
         if(isSupported(node))
-            //A preference of 8 is returned, because the viewer might want to see
-            //the string version of the file.
+            //A preference of 8 is returned, because the viewer might be interested
+            //in seeing other views of the file first. Example, the viewer might
+            //be more interested in the strings view of the HTML content.
             return 8;
         else 
             return 0;
