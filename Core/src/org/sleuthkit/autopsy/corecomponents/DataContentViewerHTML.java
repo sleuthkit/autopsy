@@ -23,25 +23,16 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.logging.Level;
 import com.sun.javafx.application.PlatformImpl;
-import java.security.cert.X509Certificate;
-import javafx.collections.ObservableList;
 import javafx.stage.Stage;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.WebView;
-import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
@@ -52,7 +43,6 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetecto
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
 
