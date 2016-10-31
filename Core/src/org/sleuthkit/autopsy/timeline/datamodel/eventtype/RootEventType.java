@@ -27,7 +27,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.timeline.zooming.EventTypeZoomLevel;
 
 /**
- * A singleton {@link } EventType to represent the root type of all event types.
+ * A singleton EventType to represent the root type of all event types.
  */
 public class RootEventType implements EventType {
 

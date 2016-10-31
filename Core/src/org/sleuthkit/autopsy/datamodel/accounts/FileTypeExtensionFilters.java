@@ -16,20 +16,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel;
+package org.sleuthkit.autopsy.datamodel.accounts;
 
+import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
+import org.sleuthkit.autopsy.datamodel.AutopsyVisitableItem;
 import java.util.Arrays;
 import java.util.List;
-
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.FileTypeExtensions;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * Filters database results by file extension.
  */
-class FileTypeExtensionFilters implements AutopsyVisitableItem {
+public class FileTypeExtensionFilters implements AutopsyVisitableItem {
 
-    private SleuthkitCase skCase;
+    private final SleuthkitCase skCase;
 
     // root node filters
     public enum RootFilter implements AutopsyVisitableItem, SearchFilterInterface {
@@ -53,10 +55,10 @@ class FileTypeExtensionFilters implements AutopsyVisitableItem {
                 NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.tskExecFilter.text"),
                 Arrays.asList(".exe", ".dll", ".bat", ".cmd", ".com")); //NON-NLS
 
-        private int id;
-        private String name;
-        private String displayName;
-        private List<String> filter;
+        private final int id;
+        private final String name;
+        private final String displayName;
+        private final List<String> filter;
 
         private RootFilter(int id, String name, String displayName, List<String> filter) {
             this.id = id;
@@ -110,10 +112,10 @@ class FileTypeExtensionFilters implements AutopsyVisitableItem {
                 NbBundle.getMessage(FileTypeExtensionFilters.class, "FileTypeExtensionFilters.autDocRtfFilter.text"),
                 Arrays.asList(".rtf")); //NON-NLS
 
-        private int id;
-        private String name;
-        private String displayName;
-        private List<String> filter;
+        private final int id;
+        private final String name;
+        private final String displayName;
+        private final List<String> filter;
 
         private DocumentFilter(int id, String name, String displayName, List<String> filter) {
             this.id = id;
@@ -157,10 +159,10 @@ class FileTypeExtensionFilters implements AutopsyVisitableItem {
         ExecutableFilter_CMD(3, "ExecutableFilter_CMD", ".cmd", Arrays.asList(".cmd")), //NON-NLS
         ExecutableFilter_COM(4, "ExecutableFilter_COM", ".com", Arrays.asList(".com")); //NON-NLS
 
-        private int id;
-        private String name;
-        private String displayName;
-        private List<String> filter;
+        private final int id;
+        private final String name;
+        private final String displayName;
+        private final List<String> filter;
 
         private ExecutableFilter(int id, String name, String displayName, List<String> filter) {
             this.id = id;
@@ -208,7 +210,7 @@ class FileTypeExtensionFilters implements AutopsyVisitableItem {
         return this.skCase;
     }
 
-    interface SearchFilterInterface {
+    public interface SearchFilterInterface {
 
         public String getName();
 

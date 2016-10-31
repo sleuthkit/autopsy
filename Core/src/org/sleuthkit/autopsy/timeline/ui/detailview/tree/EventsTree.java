@@ -56,7 +56,7 @@ import org.sleuthkit.autopsy.timeline.filters.DescriptionFilter;
 import org.sleuthkit.autopsy.timeline.ui.detailview.DetailViewPane;
 
 /**
- * Shows all {@link  EventBundles} from the assigned {@link DetailViewPane} in a
+ * Shows all EventBundles from the assigned DetailViewPane in a
  * tree organized by type and then description. Hidden bundles are shown grayed
  * out. Right clicking on a item in the tree shows a context menu to show/hide
  * it.

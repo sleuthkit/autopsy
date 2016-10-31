@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 public final class AddingDataSourceEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final UUID eventId;
+    private final UUID dataSourceId;
 
     /**
      * Constructs an event published when a data source is being added to a
@@ -42,9 +42,9 @@ public final class AddingDataSourceEvent extends AutopsyEvent implements Seriali
      *                     DataSourceAddedEvent or a
      *                     AddingDataSourceFailedEvent.
      */
-    public AddingDataSourceEvent(UUID eventId) {
+    public AddingDataSourceEvent(UUID dataSourceId) {
         super(Case.Events.ADDING_DATA_SOURCE.toString(), null, null);
-        this.eventId = eventId;
+        this.dataSourceId = dataSourceId;
     }
 
     /**
@@ -55,7 +55,7 @@ public final class AddingDataSourceEvent extends AutopsyEvent implements Seriali
      * @return The unique event id.
      */
     public UUID getEventId() {
-        return eventId;
+        return dataSourceId;
     }
 
     /**
@@ -68,7 +68,7 @@ public final class AddingDataSourceEvent extends AutopsyEvent implements Seriali
      */
     @Deprecated
     public UUID getDataSourceId() {
-        return eventId;
+        return dataSourceId;
     }
 
 }

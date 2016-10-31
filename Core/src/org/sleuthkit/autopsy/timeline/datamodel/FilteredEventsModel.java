@@ -297,9 +297,6 @@ public final class FilteredEventsModel {
      * system events for the same file, with the same timestamp, are combined
      * together.
      *
-     * @param timeRange The Interval that all returned events must be within.
-     * @param filter    The Filter that all returned events must pass.
-     *
      * @return A List of combined events, sorted by timestamp.
      */
     public List<CombinedEvent> getCombinedEvents() {
@@ -380,7 +377,7 @@ public final class FilteredEventsModel {
     }
 
     /**
-     * @param aggregation
+     * @param params
      *
      * @return a list of aggregated events that are within the requested time
      *         range and pass the requested filter, using the given aggregation
@@ -445,8 +442,8 @@ public final class FilteredEventsModel {
      * @return A List of event IDs for the events that are derived from the
      *         given file.
      */
-    public List<Long> getEventIDsForFile(AbstractFile file, boolean includedDerivedArtifacts) {
-        return repo.getEventIDsForFile(file, includedDerivedArtifacts);
+    public List<Long> getEventIDsForFile(AbstractFile file, boolean includeDerivedArtifacts) {
+        return repo.getEventIDsForFile(file, includeDerivedArtifacts);
     }
 
     /**

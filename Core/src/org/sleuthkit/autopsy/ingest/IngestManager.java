@@ -514,7 +514,7 @@ public class IngestManager {
      *
      * @return The ingest job that was started on success or null on failure.
      *
-     * @Deprecated. Use beginIngestJob() instead.
+     * @deprecated. Use beginIngestJob() instead.
      */
     @Deprecated
     public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
@@ -1044,9 +1044,6 @@ public class IngestManager {
             this.publisher = publisher;
         }
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public void run() {
             publisher.publish(event);

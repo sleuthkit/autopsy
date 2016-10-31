@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
@@ -47,7 +48,7 @@ import org.sleuthkit.datamodel.Content;
 class QueryResults {
 
     private static final Logger logger = Logger.getLogger(QueryResults.class.getName());
-
+    private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     /**
      * The query that generated the results.
      */
@@ -114,7 +115,7 @@ class QueryResults {
 
         for (final Keyword keyword : getKeywords()) {
             if (worker.isCancelled()) {
-                logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getQuery()); //NON-NLS
+                logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
                 break;
             }
 
@@ -123,7 +124,7 @@ class QueryResults {
                 progress.progress(keyword.toString(), unitProgress);
             }
             if (subProgress != null) {
-                String hitDisplayStr = keyword.getQuery();
+                String hitDisplayStr = keyword.getSearchTerm();
                 if (hitDisplayStr.length() > 50) {
                     hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
                 }
@@ -131,7 +132,7 @@ class QueryResults {
             }
 
             for (KeywordHit hit : getOneHitPerObject(keyword)) {
-                String termString = keyword.getQuery();
+                String termString = keyword.getSearchTerm();
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                 String snippet;
                 try {
@@ -161,7 +162,13 @@ class QueryResults {
 
         // Update artifact browser
         if (!newArtifacts.isEmpty()) {
-            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(KeywordSearchModuleFactory.getModuleName(), BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT, newArtifacts));
+            newArtifacts.stream()
+                    //group artifacts by type
+                    .collect(Collectors.groupingBy(BlackboardArtifact::getArtifactTypeID))
+                    //for each type send an event
+                    .forEach((typeID, artifacts) ->
+                            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
+
         }
 
         return newArtifacts;
@@ -177,16 +184,14 @@ class QueryResults {
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
 
-        HashMap<Long, KeywordHit> hits = new HashMap<Long, KeywordHit>();
+        HashMap<Long, KeywordHit> hits = new HashMap<>();
 
         // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
         for (KeywordHit hit : getResults(keyword)) {
             if (!hits.containsKey(hit.getSolrObjectId())) {
                 hits.put(hit.getSolrObjectId(), hit);
-            } else {
-                if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
-                    hits.put(hit.getSolrObjectId(), hit);
-                }
+            } else if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                hits.put(hit.getSolrObjectId(), hit);
             }
         }
         return hits.values();
@@ -245,11 +250,12 @@ class QueryResults {
 
         //list
         attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
-        detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
-        detailsSb.append("</tr>"); //NON-NLS
-
+        if (attr != null) {
+            detailsSb.append("<tr>"); //NON-NLS
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
+            detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
+            detailsSb.append("</tr>"); //NON-NLS
+        }
         //regex
         if (!keywordSearchQuery.isLiteral()) {
             attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
@@ -262,7 +268,7 @@ class QueryResults {
         }
         detailsSb.append("</table>"); //NON-NLS
 
-        IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(KeywordSearchModuleFactory.getModuleName(), subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+        IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
     }
 
 }

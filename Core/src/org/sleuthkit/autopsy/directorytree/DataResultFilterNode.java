@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,36 +38,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.DeletedContentNode;
-import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.AccountNode;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted.FolderNode;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent.TypeNode;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
-import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
-import org.sleuthkit.autopsy.datamodel.FileTypeNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesNode;
-import org.sleuthkit.autopsy.datamodel.HashsetHits;
-import org.sleuthkit.autopsy.datamodel.HashsetHits.HashsetNameNode;
-import org.sleuthkit.autopsy.datamodel.ImageNode;
-import org.sleuthkit.autopsy.datamodel.InterestingHits;
-import org.sleuthkit.autopsy.datamodel.KeywordHits;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.ListNode;
-import org.sleuthkit.autopsy.datamodel.KeywordHits.TermNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
-import org.sleuthkit.autopsy.datamodel.RecentFilesFilterNode;
-import org.sleuthkit.autopsy.datamodel.RecentFilesNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
-import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
-import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -301,109 +279,9 @@ public class DataResultFilterNode extends FilterNode {
     private class GetPreferredActionsDisplayableItemNodeVisitor extends DisplayableItemNodeVisitor.Default<AbstractAction> {
 
         @Override
-        public AbstractAction visit(ImageNode in) {
-            return openChild(in);
-        }
-
-        @Override
-        public AbstractAction visit(VolumeNode vn) {
-            return openChild(vn);
-        }
-
-        @Override
-        public AbstractAction visit(ExtractedContent.RootNode ecn) {
-            return openChild(ecn);
-        }
-
-        @Override
-        public AbstractAction visit(KeywordHits.RootNode khrn) {
-            return openChild(khrn);
-        }
-
-        @Override
-        public AbstractAction visit(HashsetHits.RootNode hhrn) {
-            return openChild(hhrn);
-        }
-
-        @Override
-        public AbstractAction visit(HashsetNameNode hhsn) {
-            return openChild(hhsn);
-        }
-
-        @Override
-        public AbstractAction visit(InterestingHits.RootNode iarn) {
-            return openChild(iarn);
-        }
-
-        @Override
-        public AbstractAction visit(InterestingHits.SetNameNode iasn) {
-            return openChild(iasn);
-        }
-
-        @Override
-        public AbstractAction visit(EmailExtracted.RootNode eern) {
-            return openChild(eern);
-        }
-
-        @Override
-        public AbstractAction visit(AccountNode eean) {
-            return openChild(eean);
-        }
-
-        @Override
-        public AbstractAction visit(FolderNode eefn) {
-            return openChild(eefn);
-        }
-
-        @Override
-        public AbstractAction visit(RecentFilesNode rfn) {
-            return openChild(rfn);
-        }
-
-        @Override
-        public AbstractAction visit(DeletedContentsNode dcn) {
-            return openChild(dcn);
-        }
-
-        @Override
-        public AbstractAction visit(DeletedContentNode dcn) {
-            return openChild(dcn);
-        }
-
-        @Override
-        public AbstractAction visit(FileSizeRootNode fsrn) {
-            return openChild(fsrn);
-        }
-
-        @Override
-        public AbstractAction visit(FileSizeNode fsn) {
-            return openChild(fsn);
-        }
-
-        @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
             return new ViewContextAction(
                     NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInDir.text"), ban);
-        }
-
-        @Override
-        public AbstractAction visit(TypeNode atn) {
-            return openChild(atn);
-        }
-
-        @Override
-        public AbstractAction visit(Tags.TagNameNode node) {
-            return openChild(node);
-        }
-
-        @Override
-        public AbstractAction visit(Tags.ContentTagTypeNode node) {
-            return openChild(node);
-        }
-
-        @Override
-        public AbstractAction visit(Tags.BlackboardArtifactTagTypeNode node) {
-            return openChild(node);
         }
 
         @Override
@@ -415,11 +293,6 @@ public class DataResultFilterNode extends FilterNode {
             } else {
                 return null;
             }
-        }
-
-        @Override
-        public AbstractAction visit(VirtualDirectoryNode ldn) {
-            return openChild(ldn);
         }
 
         @Override
@@ -441,38 +314,13 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         @Override
-        public AbstractAction visit(FileTypeNode fsfn) {
-            return openChild(fsfn);
-        }
-
-        @Override
-        public AbstractAction visit(FileTypesNode sfn) {
-            return openChild(sfn);
-        }
-
-        @Override
-        public AbstractAction visit(RecentFilesFilterNode rffn) {
-            return openChild(rffn);
-        }
-
-        @Override
-        public AbstractAction visit(ListNode khsn) {
-            return openChild(khsn);
-        }
-
-        @Override
-        public AbstractAction visit(TermNode khmln) {
-            return openChild(khmln);
-        }
-
-        @Override
         public AbstractAction visit(Reports.ReportNode reportNode) {
             return reportNode.getPreferredAction();
         }
 
         @Override
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
-            return null;
+            return openChild(c);
         }
 
         /**
