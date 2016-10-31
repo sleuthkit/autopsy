@@ -116,6 +116,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         // skip non-files
         if ((abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (abstractFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
                 || (abstractFile.isFile() == false)) {
             return ProcessResult.OK;
         }
