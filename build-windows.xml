@@ -43,68 +43,40 @@
     <!-- copy 64-bit dlls into the installer folder -->
     <target name="copyWinTskLibs64ToBaseDir" if="win64.TskLib.exists">
         <fileset dir="${win64.TskLib.path}" id="win64dlls">
-            <include name="libewf.dll" />
-            <include name="libvmdk.dll"/> 
-            <include name="libvhdi.dll"/>            
-            <include name="zlib.dll"/>
+            <include name="*.dll" />
+            <exclude name="libtsk_jni.dll"/> 
         </fileset>
         
-        <fileset dir="${win64.TskLib.postgres_path}" id="postgres64dlls">
-            <include name="libeay32.dll"/>
-            <include name="ssleay32.dll"/>
-            <include name="libintl-8.dll"/>
-            <include name="libiconv-2.dll"/>
-            <include name="libpq.dll"/>
-            <include name="msvcr120.dll"/>
-        </fileset>
-
         <copy todir="${amd64}" overwrite="true">
             <fileset refid="win64dlls" />
-            <fileset refid="postgres64dlls" />
         </copy>
 
         <copy todir="${x86_64}" overwrite="true">
             <fileset refid="win64dlls" />
-            <fileset refid="postgres64dlls" />
         </copy>		
     </target>
 
     <!-- copy 32-bit dlls into the installer folder -->
     <target name="copyWinTskLibs32ToBaseDir" if="win32.TskLib.exists">
         <fileset dir="${win32.TskLib.path}" id="win32dlls">
-            <include name="zlib.dll" />
-            <include name="libvmdk.dll"/>
-            <include name="libvhdi.dll"/> 
-            <include name="libewf.dll"/>          
+            <include name="*.dll" />
+            <exclude name="libtsk_jni.dll"/> 
         </fileset>
         
-        <fileset dir="${win32.TskLib.postgres_path}" id="postgres32dlls">
-            <include name="libeay32.dll"/>
-            <include name="ssleay32.dll"/>
-            <include name="libintl-8.dll"/>
-            <include name="libiconv-2.dll"/>
-            <include name="libpq.dll"/>
-            <include name="msvcr120.dll"/>
-        </fileset>
-
         <copy todir="${i386}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="postgres32dlls" />
         </copy>
 
         <copy todir="${x86}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="postgres32dlls" />
         </copy>
 
         <copy todir="${i586}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="postgres32dlls" />
         </copy>	
 
         <copy todir="${i686}" overwrite="true">
             <fileset refid="win32dlls" />
-            <fileset refid="postgres32dlls" />
         </copy>
     </target>
     
@@ -115,57 +87,4 @@
         <antcall target="copyWinTskLibs64ToBaseDir" inheritRefs="true" />
     </target>
 
-    <!-- CRT LIBS TO ZIP  - gets called from build.xml -->
-    <target name="copyLibsToZip" depends="copyCRT32ToZIP,copyCRT64ToZIP"/>
-    
-    <target name="copyCRT32ToZIP">
-
-        <!-- verify we have the 32-bit dlls -->
-        <property name="CRT32.path" value="${thirdparty.dir}/crt/win32"/>
-        <available file="${CRT32.path}"  property="crtFound"/>
-        <fail unless="crtFound" message="32-bit CRT not found in the thirdparty repo in path: ${CRT32.path}"/>
-
-        <!-- copy them from third party -->
-        <property name="zip-lib-path" value="${zip-tmp}/${app.name}/${app.name}/modules/lib/"/>
-        <fileset dir="${CRT32.path}" id="crt32dlls">
-            <include name="*.dll"/>
-        </fileset>
-
-        <copy todir="${zip-lib-path}/x86" overwrite="true">
-            <fileset refid="crt32dlls"/>
-        </copy>
-        
-        <copy todir="${zip-lib-path}/i386" overwrite="true">
-            <fileset refid="crt32dlls"/>
-        </copy>
-        
-        <copy todir="${zip-lib-path}/i586" overwrite="true">
-            <fileset refid="crt32dlls"/>
-        </copy>
-        
-        <copy todir="${zip-lib-path}/i686" overwrite="true">
-            <fileset refid="crt32dlls"/>
-        </copy>
-    </target>
-    
-    <target name="copyCRT64ToZIP">
-        <!-- Verify we have the 64-bit -->
-        <property name="CRT64.path" value="${thirdparty.dir}/crt/win64"/>
-        <available file="${CRT64.path}"  property="crtFound"/>
-        <fail unless="crtFound" message="64-bit CRT not found in the thirdparty repo in path: ${CRT64.path}"/>
-
-        <!-- Copy the libs -->
-        <property name="zip-lib-path" value="${zip-tmp}/${app.name}/${app.name}/modules/lib/"/>
-        <fileset dir="${CRT64.path}" id="crt64dlls">
-            <include name="*.dll"/>
-        </fileset>
-
-        <copy todir="${zip-lib-path}/x86_64" overwrite="true">
-            <fileset refid="crt64dlls"/>
-        </copy>
-        
-        <copy todir="${zip-lib-path}/amd64" overwrite="true">
-            <fileset refid="crt64dlls"/>
-        </copy>
-    </target>
 </project>

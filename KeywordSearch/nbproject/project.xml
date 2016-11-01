@@ -374,6 +374,10 @@
                 <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-lang-2.4.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang-2.4.jar</binary-origin>
             </class-path-extension>

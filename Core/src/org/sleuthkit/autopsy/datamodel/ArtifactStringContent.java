@@ -87,14 +87,9 @@ public class ArtifactStringContent implements StringContent {
                             buffer.append(str);
                             break;
                         case INTEGER:
-                            buffer.append(attr.getValueInt());
-                            break;
                         case LONG:
-                            buffer.append(attr.getValueLong());
-                            break;
                         case DOUBLE:
-                            buffer.append(attr.getValueDouble());
-                            break;
+							buffer.append(attr.getDisplayString());
                         case BYTE:
                             buffer.append(Arrays.toString(attr.getValueBytes()));
                             break;

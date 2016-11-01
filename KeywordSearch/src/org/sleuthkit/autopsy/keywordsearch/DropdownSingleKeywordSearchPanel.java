@@ -50,7 +50,7 @@ public class DropdownSingleKeywordSearchPanel extends KeywordSearchPanel {
 
     /**
      * Gets the default instance of a dropdown panel that provides GUI
-     * components that allow a user to do three types of ad hoc keyword
+     * components that allow a user to do three types of ad hoc single keyword
      * searches.
      */
     public static synchronized DropdownSingleKeywordSearchPanel getDefault() {
@@ -62,7 +62,7 @@ public class DropdownSingleKeywordSearchPanel extends KeywordSearchPanel {
 
     /**
      * Constructs a dropdown panel that provides GUI components that allow a
-     * user to do three types of ad hoc searches.
+     * user to do three types of ad hoc single keyword searches.
      */
     public DropdownSingleKeywordSearchPanel() {
         initComponents();
