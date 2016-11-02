@@ -75,10 +75,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
-    // The following two variables keep track of whether the user is trying
-    // to move the first column, which is not allowed.
-    private int oldColumnIndex = -1;
-    private int newColumnIndex = -1;
+    // When a column in the table is moved, these two variables keep track of where
+    // the column started and where it ended up.
+    private int startColumnIndex = -1;
+    private int endColumnIndex = -1;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -131,11 +131,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (fromIndex == toIndex) {
                     return;
                 }
-                // To keep track of attempts to move the first column
-                if (oldColumnIndex == -1) {
-                    oldColumnIndex = fromIndex;
+
+                /* Because a column may be dragged to several different positions before
+                 * the mouse is released (thus causing multiple TableColumnModelEvents to
+                 * be fired), we want to keep track of the starting column index in this
+                 * potential series of movements. Therefore we only keep track of the
+                 * original fromIndex in startColumnIndex, but we always update
+                 * endColumnIndex to know the final position of the moved column.
+                 * See the MouseListener mouseReleased method.
+                */
+                if (startColumnIndex == -1) {
+                    startColumnIndex = fromIndex;
                 }
-                newColumnIndex = toIndex;
+                endColumnIndex = toIndex;
 
                 List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
                 Node.Property<?> prop = props.remove(fromIndex);
@@ -151,10 +159,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (oldColumnIndex != -1 && (oldColumnIndex == 0 || newColumnIndex == 0)) {
-                    ov.getOutline().moveColumn(newColumnIndex, oldColumnIndex);
+                /* If the startColumnIndex is not -1 (which is the reset value), that
+                 * means columns have been moved around. We then check to see if either
+                 * the starting or end position is 0 (the first column), and then swap
+                 * them back if that is the case because we don't want to allow movement
+                 * of the first column. We then reset startColumnIndex to -1, the reset
+                 * value.
+                 * We check if startColumnIndex is at reset or not because it is
+                 * possible for the mouse to be released and a MouseEvent to be fired
+                 * without having moved any columns.
+                 */
+                if (startColumnIndex != -1 && (startColumnIndex == 0 || endColumnIndex == 0)) {
+                    ov.getOutline().moveColumn(endColumnIndex, startColumnIndex);
                 }
-                oldColumnIndex = -1;
+                startColumnIndex = -1;
             }
         }); 
     }
@@ -211,68 +229,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Gets regular Bean property set properties from first child of Node.
-     *
-     * @param parent Node with at least one child to get properties from
-     *
-     * @return Properties,
-     */
-    private Node.Property<?>[] getChildPropertyHeaders(Node parent) {
-        Node firstChild = parent.getChildren().getNodeAt(0);
-
-        if (firstChild == null) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
-        } else {
-            for (PropertySet ps : firstChild.getPropertySets()) {
-                if (ps.getName().equals(Sheet.PROPERTIES)) {
-                    return ps.getProperties();
-                }
-            }
-
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.childWithoutPropertySet"));
-        }
-    }
-
-    /**
-     * Gets regular Bean property set properties from all first children and,
-     * recursively, subchildren of Node. Note: won't work out the box for lazy
-     * load - you need to set all children props for the parent by hand
-     *
-     * @param parent Node with at least one child to get properties from
-     *
-     * @return Properties,
-     */
-    @SuppressWarnings("rawtypes")
-    private Node.Property[] getAllChildPropertyHeaders(Node parent) {
-        Node firstChild = parent.getChildren().getNodeAt(0);
-
-        Property[] properties = null;
-
-        if (firstChild == null) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
-        } else {
-            Set<Property> allProperties = new LinkedHashSet<>();
-            while (firstChild != null) {
-                for (PropertySet ps : firstChild.getPropertySets()) {
-                    final Property[] props = ps.getProperties();
-                    final int propsNum = props.length;
-                    for (int i = 0; i < propsNum; ++i) {
-                        allProperties.add(props[i]);
-                    }
-                }
-                firstChild = firstChild.getChildren().getNodeAt(0);
-            }
-
-            properties = allProperties.toArray(new Property<?>[0]);
-        }
-        return properties;
-
-    }
-
-    /**
      * Gets regular Bean property set properties from all children and,
      * recursively, subchildren of Node. Note: won't work out the box for lazy
      * load - you need to set all children props for the parent by hand
@@ -313,6 +269,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     public void setNode(Node selectedNode) {
         final OutlineView ov = ((OutlineView) this.tableScrollPanel);
+        /* The quick filter must be reset because when determining column width,
+         * ETable.getRowCount is called, and the documentation states that quick
+         * filters must be unset for the method to work
+         * "If the quick-filter is applied the number of rows do not match the number of rows in the model."
+         */
         ov.getOutline().unsetQuickFilter();
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -398,11 +359,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // Just let the table resize itself.
         ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        // get first row's values for the table
-        Object[][] content;
-        content = getRowValues(root, 1);
-
-        if (content != null) {
+        if (root.getChildren().getNodesCount() != 0) {
 
             final Graphics graphics = ov.getGraphics();
             if (graphics != null) {
@@ -432,13 +389,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                     ov.getOutline().getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }
-
-                // if there's no content just auto resize all columns
-                if (content.length <= 0) {
-                    // turn on the auto resize
-                    ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                }
             }
+        } else {
+            // if there's no content just auto resize all columns
+            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
     }
 
@@ -493,7 +447,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         int offset = props.size();
         for (Property<?> prop : props) {
             Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getPreferenceKey(prop, tfn.getItemType()), "-1"));
-            if (value >= 0) {
+            if (value >= 0 && value < offset) {
                 propsFromPreferences.put(value, prop);
             } else {
                 propsFromPreferences.put(offset, prop);
@@ -519,41 +473,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private String getPreferenceKey(Property<?> prop, String type) {
         return type.replaceAll("[^a-zA-Z0-9_]", "") + "."
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".column";
-    }
-
-    // Populate a two-dimensional array with rows of property values for up 
-    // to maxRows children of the node passed in. 
-    private static Object[][] getRowValues(Node node, int maxRows) {
-        int numRows = Math.min(maxRows, node.getChildren().getNodesCount());
-        Object[][] rowValues = new Object[numRows][];
-        int rowCount = 0;
-        for (Node child : node.getChildren().getNodes()) {
-            if (rowCount >= maxRows) {
-                break;
-            }
-            // BC: I got this once, I think it was because the table
-            // refreshed while we were in this method 
-            // could be better synchronized.  Or it was from 
-            // the lazy nodes updating...  Didn't have time 
-            // to fully debug it. 
-            if (rowCount > numRows) {
-                break;
-            }
-            PropertySet[] propertySets = child.getPropertySets();
-            if (propertySets.length > 0) {
-                Property<?>[] properties = propertySets[0].getProperties();
-                rowValues[rowCount] = new Object[properties.length];
-                for (int j = 0; j < properties.length; ++j) {
-                    try {
-                        rowValues[rowCount][j] = properties[j].getValue();
-                    } catch (IllegalAccessException | InvocationTargetException ignore) {
-                        rowValues[rowCount][j] = "n/a"; //NON-NLS
-                    }
-                }
-            }
-            ++rowCount;
-        }
-        return rowValues;
     }
 
     @Override
