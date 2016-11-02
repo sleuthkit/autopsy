@@ -373,8 +373,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     int columnWidthLimit = (column == 0) ? 250 : 350;
                     int valuesWidth = 0;
 
-                    // find the maximum width needed to fit the values for the first 30 rows, at most
-                    for (int row = 0; row < Math.min(30, ov.getOutline().getRowCount()); row++) {
+                    // find the maximum width needed to fit the values for the first 100 rows, at most
+                    for (int row = 0; row < Math.min(100, ov.getOutline().getRowCount()); row++) {
                         TableCellRenderer renderer = ov.getOutline().getCellRenderer(row, column);
                         Component comp = ov.getOutline().prepareRenderer(renderer, row, column);
                         valuesWidth = Math.max(comp.getPreferredSize().width, valuesWidth);
