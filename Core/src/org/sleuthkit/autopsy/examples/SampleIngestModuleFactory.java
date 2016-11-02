@@ -215,7 +215,7 @@ public class SampleIngestModuleFactory implements IngestModuleFactory {
      * implementation of this method that throws an
      * UnsupportedOperationException.
      *
-     * @param setting Per ingest job settings to initialize the panel.
+     * @param settings Per ingest job settings to initialize the panel.
      *
      * @return An ingest job settings panel.
      */

@@ -97,11 +97,11 @@ public class TagsManager implements Closeable {
      */
     public synchronized Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
         /**
-         * Order is important here. The keys (display names) for the standard
-         * tag types and current user's custom tag types are added to the map
-         * first, with null TagName values. If tag name entries exist for those
-         * keys, loading of the tag names from the database supplies the missing
-         * values.
+         * Order is important here. The keys (display names) for the current
+         * user's custom tag types are added to the map first, with null TagName
+         * values. If tag name entries exist for those keys, loading of the tag
+         * names from the database supplies the missing values. Standard tag
+         * names are added during the initialization of the case database.
          *
          * Note that creating the map on demand increases the probability that
          * the display names of newly added custom tag types and the display
@@ -109,7 +109,6 @@ public class TagsManager implements Closeable {
          * map.
          */
         Map<String, TagName> tagNames = new HashMap<>();
-        tagNames.put(NbBundle.getMessage(this.getClass(), "TagsManager.predefTagNames.bookmark.text"), null);
         Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
         for (TagNameDefiniton tagType : customTypes) {
             tagNames.put(tagType.getDisplayName(), null);
@@ -536,5 +535,4 @@ public class TagsManager implements Closeable {
     @Deprecated
     public synchronized void close() throws IOException {
     }
-
 }

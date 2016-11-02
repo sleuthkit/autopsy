@@ -42,13 +42,13 @@ public class TikaFileTypeDetector {
     /**
      * Detect the mime type of the passed in file and save it to the blackboard
      *
-     * @deprecated Use FileTypeDetector.detectAndPostToBlackboard(AbstractFile
-     * file) instead.
      * @param abstractFile
      *
      * @return mime type or null
      *
      * @throws TskCoreException
+     * @deprecated Use FileTypeDetector.detectAndPostToBlackboard(AbstractFile
+     * file) instead.
      */
     @Deprecated
     public synchronized String detectAndSave(AbstractFile abstractFile) throws TskCoreException {
@@ -67,10 +67,11 @@ public class TikaFileTypeDetector {
     /**
      * Detect the mime type of the passed in file
      *
-     * @deprecated Use FileTypeDetector.detect(AbstractFile file) instead.
      * @param abstractFile
      *
      * @return mime type of detected format or null
+     *
+     * @deprecated Use FileTypeDetector.detect(AbstractFile file) instead.
      */
     @Deprecated
     public synchronized String detect(AbstractFile abstractFile) {

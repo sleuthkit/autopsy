@@ -74,7 +74,7 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append("<tr><td>"); //NON-NLS
                     buffer.append(attr.getAttributeType().getDisplayName());
                     buffer.append("</td>"); //NON-NLS
-
+                    
                     // value column
                     buffer.append("<td>"); //NON-NLS
                     switch (attr.getAttributeType().getValueType()) {

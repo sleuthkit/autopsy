@@ -35,9 +35,10 @@ final public class FilterTreeItem extends TreeItem<Filter> {
      * the given filter
      *
      *
-     * @param filter the filter for this item. if f has sub-filters, tree items
-     *               will be made for them added added to the children of this
-     *               FilterTreeItem
+     * @param filter       the filter for this item. if f has sub-filters, tree
+     *                     items will be made for them added added to the
+     *                     children of this FilterTreeItem
+     * @param expansionMap
      */
     public FilterTreeItem(Filter filter, ObservableMap<Filter, Boolean> expansionMap) {
         super(filter);

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,7 @@ class Ingester {
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
     private static final int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
-    private static final String docContentEncoding = "UTF-8"; //NON-NLS
+    private static final String ENCODING = "UTF-8"; //NON-NLS
 
     private Ingester() {
     }
@@ -134,7 +134,7 @@ class Ingester {
 
         //overwrite id with the chunk id
         params.put(Server.Schema.ID.toString(),
-                Server.getChunkIdString(sourceContent.getId(), fec.getChunkId()));
+                Server.getChunkIdString(sourceContent.getId(), fec.getChunkNumber()));
 
         ingest(bcs, params, size);
     }
@@ -298,7 +298,7 @@ class Ingester {
             if (read != 0) {
                 String s = "";
                 try {
-                    s = new String(docChunkContentBuf, 0, read, docContentEncoding);
+                    s = new String(docChunkContentBuf, 0, read, ENCODING);
                     // Sanitize by replacing non-UTF-8 characters with caret '^' before adding to index
                     char[] chars = null;
                     for (int i = 0; i < s.length(); i++) {

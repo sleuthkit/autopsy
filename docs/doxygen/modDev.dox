@@ -59,7 +59,7 @@ After the module is created, you will need to do some further configuration.
 - Note, you will also need to come back to this section if you update the platform.  You may need to add a new dependency for the version of the Autopsy-core that comes with the updated platform. 
 - Autopsy requires that all modules restart Autopsy after they are installed. Configure your module this way under Build -> Packaging.  Check the box that says Needs Restart on Install.
 
-You now have a NetBeans module that is using Autopsy as its build platform.  That means you will have access to all of the services and utilities that Autopsy provides (such as \ref services_page). 
+You now have a NetBeans module that is using Autopsy as its build platform.  That means you will have access to all of the services and utilities that Autopsy provides. 
 
 
 \subsubsection mod_dev_mod_config_other Optional Settings

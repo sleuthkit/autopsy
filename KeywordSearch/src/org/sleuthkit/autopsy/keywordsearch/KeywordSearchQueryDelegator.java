@@ -24,12 +24,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Responsible for running a keyword search query and displaying the results.
@@ -55,20 +55,20 @@ class KeywordSearchQueryDelegator {
         for (KeywordList keywordList : keywordLists) {
             for (Keyword keyword : keywordList.getKeywords()) {
                 KeywordSearchQuery query;
-                if (keyword.isLiteral()) {
+                if (keyword.searchTermIsLiteral()) {
                     // literal, exact match
-                    if (keyword.isWholeword()) {
+                    if (keyword.searchTermIsWholeWord()) {
                         query = new LuceneQuery(keywordList, keyword);
                         query.escape();
                     } // literal, substring match
                     else {
-                        query = new TermComponentQuery(keywordList, keyword);
+                        query = new TermsComponentQuery(keywordList, keyword);
                         query.escape();
                         query.setSubstringQuery();
                     }
                 } // regexp
                 else {
-                    query = new TermComponentQuery(keywordList, keyword);
+                    query = new TermsComponentQuery(keywordList, keyword);
                 }
                 queryDelegates.add(query);
             }
@@ -98,8 +98,8 @@ class KeywordSearchQueryDelegator {
 
         Node rootNode;
         if (queryRequests.size() > 0) {
-            Children childNodes
-                    = Children.create(new KeywordSearchResultFactory(queryRequests, searchResultWin), true);
+            Children childNodes =
+                    Children.create(new KeywordSearchResultFactory(queryRequests, searchResultWin), true);
 
             rootNode = new AbstractNode(childNodes);
         } else {

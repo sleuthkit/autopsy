@@ -639,9 +639,6 @@ final class IngestTasksScheduler {
      */
     private final class DataSourceIngestTaskQueue implements IngestTaskQueue {
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public IngestTask getNextTask() throws InterruptedException {
             return IngestTasksScheduler.this.pendingDataSourceTasks.take();
@@ -654,9 +651,6 @@ final class IngestTasksScheduler {
      */
     private final class FileIngestTaskQueue implements IngestTaskQueue {
 
-        /**
-         * @inheritDoc
-         */
         @Override
         public IngestTask getNextTask() throws InterruptedException {
             FileIngestTask task = IngestTasksScheduler.this.pendingFileTasks.takeFirst();
