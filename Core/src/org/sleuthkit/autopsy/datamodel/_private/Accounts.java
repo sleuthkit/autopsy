@@ -323,6 +323,11 @@ final public class Accounts implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -393,6 +398,11 @@ final public class Accounts implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -457,6 +467,11 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
         }
     }
 
@@ -576,6 +591,11 @@ final public class Accounts implements AutopsyVisitableItem {
             return v.visit(this);
         }
 
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
+
         @Subscribe
         public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
@@ -688,6 +708,11 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
         }
 
         @Subscribe
@@ -870,6 +895,11 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
+
+        @Override
         @NbBundle.Messages({
             "Accounts.FileWithCCNNode.nameProperty.displayName=File",
             "Accounts.FileWithCCNNode.accountsProperty.displayName=Accounts",
@@ -1032,6 +1062,11 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
         }
 
         private Sheet.Set getPropertySet(Sheet s) {
