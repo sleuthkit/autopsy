@@ -29,6 +29,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -108,7 +109,8 @@ class KeywordSearchQueryDelegator {
 
         final String pathText = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.pathText.text");
 
-        DataResultTopComponent.initInstance(pathText, rootNode, queryRequests.size(), searchResultWin);
+        DataResultTopComponent.initInstance(pathText, new TableFilterNode(rootNode, true, KeywordSearch.class.getName()),
+                queryRequests.size(), searchResultWin);
 
         searchResultWin.requestActive();
     }

@@ -26,7 +26,6 @@ import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,7 +53,6 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -415,7 +413,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getPreferenceKey(prop, tfn.getItemType()), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), String.valueOf(i));
         }
     }
 
@@ -434,8 +432,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (currentRoot instanceof TableFilterNode) {
             tfn = (TableFilterNode) currentRoot;
         } else {
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO,
-                    "Node {0} is not a TableFilterNode, columns are going to be in default order", currentRoot.getName());
+            // The node is not a TableFilterNode, columns are going to be in default order
             return props;
         }
 
@@ -446,7 +443,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         Map<Integer, Node.Property<?>> propsFromPreferences = new TreeMap<>();
         int offset = props.size();
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getPreferenceKey(prop, tfn.getItemType()), "-1"));
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), "-1"));
             if (value >= 0 && value < offset) {
                 propsFromPreferences.put(value, prop);
             } else {
@@ -470,7 +467,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param type The type of the current node
      * @return     A generated key for the preference file
      */
-    private String getPreferenceKey(Property<?> prop, String type) {
+    private String getColumnPreferenceKey(Property<?> prop, String type) {
         return type.replaceAll("[^a-zA-Z0-9_]", "") + "."
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".column";
     }
