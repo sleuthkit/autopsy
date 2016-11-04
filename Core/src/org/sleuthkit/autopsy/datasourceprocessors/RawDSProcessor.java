@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class RawDSProcessor implements DataSourceProcessor {
-    private static final String DATA_SOURCE_TYPE = "Raw Data Source";
+    private static final String DATA_SOURCE_TYPE = "Unallocated Space Image File";
     private final RawDSInputPanel configPanel;
     private AddRawImageTask addImageTask;
 
