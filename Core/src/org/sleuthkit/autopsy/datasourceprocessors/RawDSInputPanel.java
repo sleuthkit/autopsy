@@ -33,15 +33,14 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
-public class RawDSInputPanel extends JPanel implements DocumentListener {
-    public static final long TWO_GB = 2000000000L;
+final class RawDSInputPanel extends JPanel implements DocumentListener {
+    private static final long TWO_GB = 2000000000L;
     private static final long serialVersionUID = 1L;    //default
     private final String PROP_LASTINPUT_PATH = "LBL_LastInputFile_PATH";
     private PropertyChangeSupport pcs = null;
     private final JFileChooser fc = new JFileChooser();
     // Externally supplied name is used to store settings 
     private final String contextName;
-    private double chunkSize;
     /**
      * Creates new form RawDSInputPanel
      */
@@ -54,17 +53,6 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
         fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fc.setMultiSelectionEnabled(false);
 
-        /*boolean firstFilter = true;
-        for (FileFilter filter : fileChooserFilters) {
-            if (firstFilter) {  // set the first on the list as the default selection
-                fc.setFileFilter(filter);
-                firstFilter = false;
-            } else {
-                fc.addChoosableFileFilter(filter);
-            }
-        }*/
-        //fc.setFileFilter(null);
-
         this.contextName = context;
         pcs = new PropertyChangeSupport(this);
     }
@@ -72,7 +60,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
     /**
      * Creates and returns an instance of a RawDSInputPanel.
      */
-    public static synchronized RawDSInputPanel createInstance(String context) {
+    static synchronized RawDSInputPanel createInstance(String context) {
         RawDSInputPanel instance = new RawDSInputPanel(context);
 
         instance.postInit();
@@ -91,7 +79,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
      * Creates the drop down list for the time zones and then makes the local
      * machine time zone to be selected.
      */
-    public void createTimeZoneList() {
+    private void createTimeZoneList() {
         // load and add all timezone
         String[] ids = SimpleTimeZone.getAvailableIDs();
         for (String id : ids) {
@@ -101,15 +89,6 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
             int minutes = (offset % 3600) / 60;
             String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id);
 
-            /*
-             * DateFormat dfm = new SimpleDateFormat("z");
-             * dfm.setTimeZone(zone); boolean hasDaylight =
-             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
-             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
-             * = hour * -1; String result = first + Integer.toString(mid);
-             * if(hasDaylight){ result = result + second; }
-             * timeZoneComboBox.addItem(item + " (" + result + ")");
-             */
             timeZoneComboBox.addItem(item);
         }
         // get the current timezone
@@ -277,11 +256,11 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
      *
      * @return the image path
      */
-    public String getImageFilePath() {
+    String getImageFilePath() {
         return pathTextField.getText();
     }
 
-    public void reset() {
+    void reset() {
         //reset the UI elements to default 
         pathTextField.setText(null);
         j2GBBreakupRadioButton.setSelected(true);
@@ -295,7 +274,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
         }
     }
 
-    public String getTimeZone() {
+    String getTimeZone() {
         String tz = timeZoneComboBox.getSelectedItem().toString();
         return tz.substring(tz.indexOf(")") + 2).trim();
     }
@@ -305,7 +284,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
-    public boolean validatePanel() {
+    boolean validatePanel() {
         errorLabel.setVisible(false);
         String path = getImageFilePath();
         if (path == null || path.isEmpty()) {
@@ -333,7 +312,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
         }
     }
 
-    public void storeSettings() {
+    void storeSettings() {
         String inFilePath = getImageFilePath();
         if (null != inFilePath) {
             String imagePath = inFilePath.substring(0, inFilePath.lastIndexOf(File.separator) + 1);
@@ -341,7 +320,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
         }
     }
 
-    public void readSettings() {
+    void readSettings() {
         String inFilePath = ModuleSettings.getConfigSetting(contextName, PROP_LASTINPUT_PATH);
         if (null != inFilePath) {
             if (!inFilePath.isEmpty()) {
@@ -375,7 +354,7 @@ public class RawDSInputPanel extends JPanel implements DocumentListener {
     /**
      * Set the focus to the pathTextField.
      */
-    public void select() {
+    void select() {
         pathTextField.requestFocusInWindow();
     }
 

@@ -134,7 +134,7 @@ public class RawDSProcessor implements DataSourceProcessor {
      * @param progressMonitor          Progress monitor for reporting progress
      *                                 during processing.
      */
-    public void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    private void run(String deviceId, String imageFilePath, String timeZone, long chunkSize, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         addImageTask = new AddRawImageTask(deviceId, imageFilePath, timeZone, chunkSize, progressMonitor, callback);
         new Thread(addImageTask).start();
     }

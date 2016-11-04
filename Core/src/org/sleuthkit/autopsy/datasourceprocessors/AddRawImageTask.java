@@ -39,10 +39,9 @@ import org.sleuthkit.datamodel.TskFileRange;
 /*
  * A runnable that adds a raw data source to a case database. 
  */
-class AddRawImageTask implements Runnable {
+final class AddRawImageTask implements Runnable {
 
     private static final Logger logger = Logger.getLogger(AddRawImageTask.class.getName());
-    private static final String MODULE_NAME = "Raw Data Source Processor";
     private final String deviceId;
     private final String imageFilePath;
     private final String timeZone;
@@ -50,9 +49,10 @@ class AddRawImageTask implements Runnable {
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
-    private final Object tskAddImageProcessLock;
     private boolean tskAddImageProcessStopped;
+    private final Object tskAddImageProcessLock;
     private SleuthkitJNI.CaseDbHandle.AddImageProcess tskAddImageProcess;
+    private static final long TWO_GB = 2000000000L;
    
     /**
      * Constructs a runnable that adds a raw data source to a case database.
@@ -157,16 +157,15 @@ class AddRawImageTask implements Runnable {
             int sequence = 0;
             //start byte and end byte
             long start = 0;
-            if (chunkSize > 0 && imageSize >= RawDSInputPanel.TWO_GB) {
-                for (double size = RawDSInputPanel.TWO_GB; size < dataSource.getSize(); size += RawDSInputPanel.TWO_GB) {
-                    fileRanges.add(new TskFileRange(start, RawDSInputPanel.TWO_GB, sequence));
-                    start += RawDSInputPanel.TWO_GB;
-                    //TODO: remember the last piece
+            if (chunkSize > 0 && imageSize >= TWO_GB) {
+                for (double size = TWO_GB; size < dataSource.getSize(); size += TWO_GB) {
+                    fileRanges.add(new TskFileRange(start, TWO_GB, sequence));
+                    start += TWO_GB;
                     sequence++;
                 }
                 
             } 
-            double leftoverSize = imageSize - sequence * RawDSInputPanel.TWO_GB;
+            double leftoverSize = imageSize - sequence * TWO_GB;
             fileRanges.add(new TskFileRange(start, (long)leftoverSize, sequence));
             
             
@@ -184,7 +183,7 @@ class AddRawImageTask implements Runnable {
      * Attempts to cancel the processing of the input image file. May result in
      * partial processing of the input.
      */
-    public void cancelTask() {
+    void cancelTask() {
         logger.log(Level.WARNING, "AddRAWImageTask cancelled, processing may be incomplete");
         synchronized (tskAddImageProcessLock) {
             if (null != tskAddImageProcess) {
