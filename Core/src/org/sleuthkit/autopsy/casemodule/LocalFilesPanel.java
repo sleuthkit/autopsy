@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Dialog;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -47,7 +48,7 @@ class LocalFilesPanel extends JPanel {
     private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
-    public static final String FILES_SEP = ",";
+    public static final String FILES_SEP = "|";
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     private String displayName = "";
 
@@ -74,6 +75,7 @@ class LocalFilesPanel extends JPanel {
     }
 
     //@Override
+    @Deprecated
     public String getContentPaths() {
         //TODO consider interface change to return list of paths instead
 
@@ -86,6 +88,17 @@ class LocalFilesPanel extends JPanel {
             b.append(FILES_SEP);
         }
         return b.toString();
+    }
+
+    public List<String> getContentPathsList() {
+        List<String> pathsList = new ArrayList<>();
+        if (currentFiles == null) {
+            return pathsList;
+        }
+        for (File f : currentFiles) {
+            pathsList.add(f.getAbsolutePath());
+        }
+        return pathsList;
     }
 
     //@Override
@@ -103,7 +116,7 @@ class LocalFilesPanel extends JPanel {
     public boolean validatePanel() {
 
         // display warning if there is one (but don't disable "next" button)
-        warnIfPathIsInvalid(getContentPaths());
+        warnIfPathIsInvalid(getContentPathsList());
 
         return enableNext;
     }
@@ -112,13 +125,11 @@ class LocalFilesPanel extends JPanel {
      * Validates path to selected data source and displays warning if it is
      * invalid.
      *
-     * @param path Absolute path to the selected data source
+     * @param paths Absolute paths to the selected data source
      */
-    private void warnIfPathIsInvalid(String path) {
+    private void warnIfPathIsInvalid(List<String> pathsList) {
         errorLabel.setVisible(false);
 
-        // Path variable for "Local files" module is a coma separated string containg multiple paths
-        List<String> pathsList = Arrays.asList(path.split(","));
         CaseType currentCaseType = Case.getCurrentCase().getCaseType();
 
         for (String currentPath : pathsList) {

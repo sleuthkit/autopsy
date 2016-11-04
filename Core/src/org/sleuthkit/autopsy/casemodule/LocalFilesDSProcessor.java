@@ -122,7 +122,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
-            localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
+            localFilePaths = configPanel.getContentPathsList();
         }
         run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
     }
