@@ -33,6 +33,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
+import org.openide.util.NbBundle.Messages;
 
 /*
  * A runnable that adds a raw data source to a case database. 
@@ -115,15 +116,21 @@ final class AddRawImageTask implements Runnable {
      *                       are added to this list for eventual return to the
      *                       caller via the callback.
      */
+    @Messages({"AddRawImageTask.progress.add.text=Adding raw image: ",
+               "AddRawImageTask.image.critical.error.adding=Critical error adding ",
+               "AddRawImageTask.for.device=for device ",
+               "AddRawImageTask.image.notExisting=is not existing.",
+               "AddRawImageTask.image.noncritical.error.adding=Non-critical error adding "})
     private void addImageToCase(List<Content> dataSources, List<String> errorMessages) {
-        progressMonitor.setProgressText(String.format("Adding raw image: %s", imageFilePath));
+        progressMonitor.setProgressText(Bundle.AddRawImageTask_progress_add_text() + imageFilePath);
         List<String> imageFilePaths = new ArrayList<>();
         SleuthkitCase caseDatabase = Case.getCurrentCase().getSleuthkitCase();
         caseDatabase.acquireExclusiveLock();
 
         File imageFile = Paths.get(imageFilePath).toFile();
         if (!imageFile.exists()) {
-            errorMessages.add(String.format("Critical error adding %s for device %s is not existing.", imageFilePath, deviceId));
+            errorMessages.add(Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePath + Bundle.AddRawImageTask_for_device() 
+                    + deviceId + Bundle.AddRawImageTask_image_notExisting());
             criticalErrorOccurred = true;
             return;
         }
@@ -144,7 +151,7 @@ final class AddRawImageTask implements Runnable {
              */
             String verificationError = dataSource.verifyImageSize();
             if (!verificationError.isEmpty()) {
-                errorMessages.add(String.format("Non-critical error adding %s for device %s: %s", imageFilePaths, deviceId, verificationError));
+                errorMessages.add(Bundle.AddRawImageTask_image_noncritical_error_adding() + imageFilePaths + Bundle.AddRawImageTask_for_device() +  deviceId + ":" + verificationError);
             }
 
             long imageSize = dataSource.getSize();
@@ -166,7 +173,7 @@ final class AddRawImageTask implements Runnable {
             caseDatabase.addLayoutFiles(dataSource, fileRanges);
 
         } catch (TskCoreException ex) {
-            errorMessages.add(String.format("Critical error adding %s for device %s: %s", imageFilePaths, deviceId, ex.getLocalizedMessage()));
+            errorMessages.add(Bundle.AddRawImageTask_image_critical_error_adding() + imageFilePaths + Bundle.AddRawImageTask_for_device() + deviceId + ":" + ex.getLocalizedMessage());
             criticalErrorOccurred = true;
         } finally {
             caseDatabase.releaseExclusiveLock();

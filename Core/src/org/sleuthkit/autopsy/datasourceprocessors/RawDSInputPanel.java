@@ -359,23 +359,4 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
     void select() {
         pathTextField.requestFocusInWindow();
     }
-
-    @Override
-    public synchronized void addPropertyChangeListener(PropertyChangeListener pcl) {
-        super.addPropertyChangeListener(pcl);
-
-        if (pcs == null) {
-            pcs = new PropertyChangeSupport(this);
-        }
-
-        pcs.addPropertyChangeListener(pcl);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener pcl) {
-        super.removePropertyChangeListener(pcl);
-
-        pcs.removePropertyChangeListener(pcl);
-    }
-
 }
