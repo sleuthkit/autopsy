@@ -119,7 +119,7 @@ final class FileIngestPipeline {
         List<IngestModuleError> errors = new ArrayList<>();
         if (!this.job.isCancelled()) {
             AbstractFile file = task.getFile();
-            if(file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)){ // TEMP TEMP
+            //if(file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)){ // TEMP TEMP
             for (PipelineModule module : this.modules) {
                 try {
                     FileIngestPipeline.ingestManager.setIngestTaskProgress(task, module.getDisplayName());
@@ -142,7 +142,7 @@ final class FileIngestPipeline {
             if (!this.job.isCancelled()) {
                 IngestManager.getInstance().fireFileIngestDone(file);
             }
-            }// END TEMP
+            //}// END TEMP
         }
         FileIngestPipeline.ingestManager.setIngestTaskProgressCompleted(task);
         return errors;

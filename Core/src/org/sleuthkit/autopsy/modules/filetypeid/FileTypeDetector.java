@@ -207,7 +207,8 @@ public class FileTypeDetector {
         if (!file.isFile() || file.getSize() <= 0
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)
+                || (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
             mimeType = MimeTypes.OCTET_STREAM;
         }
 
@@ -289,6 +290,7 @@ public class FileTypeDetector {
              * posting because general info artifacts are different from other
              * artifacts, e.g., they are not displayed in the results tree.
              */
+            
             BlackboardArtifact getInfoArt = file.getGenInfoArtifact();
             @SuppressWarnings("deprecation")
             BlackboardAttribute batt = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_FILE_TYPE_SIG, FileTypeIdModuleFactory.getModuleName(), mimeType);

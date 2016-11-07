@@ -85,11 +85,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile file) {
-
-        //skip slack files
-        if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
-            return ProcessResult.OK;
-        }
         
         /**
          * Attempt to detect the file type. Do it within an exception firewall,

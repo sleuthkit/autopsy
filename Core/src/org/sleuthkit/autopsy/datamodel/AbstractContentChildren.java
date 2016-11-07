@@ -111,7 +111,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         
         @Override
         public AbstractContentNode<? extends Content> visit(SlackFile sf) {
-            return new FileNode(sf);
+            return new SlackFileNode(sf);
         }
 
         @Override
