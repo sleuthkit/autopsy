@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors;
 
-import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.Calendar;
 import java.util.SimpleTimeZone;
@@ -37,7 +36,6 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
     private static final long TWO_GB = 2000000000L;
     private static final long serialVersionUID = 1L;    //default
     private final String PROP_LASTINPUT_PATH = "LBL_LastInputFile_PATH";
-    private PropertyChangeSupport pcs = null;
     private final JFileChooser fc = new JFileChooser();
     // Externally supplied name is used to store settings 
     private final String contextName;
@@ -54,7 +52,6 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
         fc.setMultiSelectionEnabled(false);
 
         this.contextName = context;
-        pcs = new PropertyChangeSupport(this);
     }
 
     /**
@@ -333,17 +330,17 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
      */
     @Override
     public void insertUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
     public void removeUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
     @Override
     public void changedUpdate(DocumentEvent e) {
-        pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
     }
 
     /**
