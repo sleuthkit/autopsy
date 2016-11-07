@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors;
 
+import java.util.UUID;
 import javax.swing.JPanel;
+import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
@@ -32,7 +34,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  */
 @ServiceProvider(service = DataSourceProcessor.class)
 public class RawDSProcessor implements DataSourceProcessor {
-    private static final String DATA_SOURCE_TYPE = "Unallocated Space Image File";
     private final RawDSInputPanel configPanel;
     private AddRawImageTask addImageTask;
 
@@ -53,8 +54,9 @@ public class RawDSProcessor implements DataSourceProcessor {
      *
      * @return A data source type display string for this data source processor.
      */
+    @Messages({"RawDSProcessor.dataSourceType=Unallocated Space Image File"})
     public static String getType() {
-        return DATA_SOURCE_TYPE;
+        return Bundle.RawDSProcessor_dataSourceType();
     }
 
     /**
@@ -66,7 +68,7 @@ public class RawDSProcessor implements DataSourceProcessor {
      */
     @Override
     public String getDataSourceType() {
-        return DATA_SOURCE_TYPE;
+        return  Bundle.RawDSProcessor_dataSourceType();
     }
 
     /**
@@ -113,8 +115,7 @@ public class RawDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         configPanel.storeSettings();
-        run("0", configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), progressMonitor, callback); //TODO: change hard coded deviceId
-        
+        run(UUID.randomUUID().toString(), configPanel.getImageFilePath(), configPanel.getTimeZone(), configPanel.getChunkSize(), progressMonitor, callback);       
     }
 
     /**
@@ -142,9 +143,6 @@ public class RawDSProcessor implements DataSourceProcessor {
    
     @Override
     public void cancel() {
-        if (null != addImageTask) {
-            addImageTask.cancelTask();
-        }
     }
 
     /**

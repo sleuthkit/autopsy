@@ -28,6 +28,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -266,7 +267,7 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
         j2GBBreakupRadioButton.setSelected(true);
     }
 
-    public long getChunkSize() {
+    long getChunkSize() {
         if (jNoBreakupRadioButton.isSelected()) {
             return -1;
         } else { //if have more choices here, the selection of each radiobutton should be checked
@@ -305,10 +306,11 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
      *
      * @param path Absolute path to the selected data source
      */
+    @Messages({"RawDSInputPanel.error.text=Path to multi-user data source is on \"C:\" drive"})
     private void warnIfPathIsInvalid(String path) {
         if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
-            errorLabel.setText("Path to multi-user data source is on \"C:\" drive");
+            errorLabel.setText(Bundle.RawDSInputPanel_error_text());
         }
     }
 

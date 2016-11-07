@@ -24,7 +24,6 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -32,7 +31,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 
@@ -49,9 +47,6 @@ final class AddRawImageTask implements Runnable {
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
     private boolean criticalErrorOccurred;
-    private boolean tskAddImageProcessStopped;
-    private final Object tskAddImageProcessLock;
-    private SleuthkitJNI.CaseDbHandle.AddImageProcess tskAddImageProcess;
     private static final long TWO_GB = 2000000000L;
    
     /**
@@ -77,7 +72,6 @@ final class AddRawImageTask implements Runnable {
         this.chunkSize = chunkSize;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
-        tskAddImageProcessLock = new Object();
     }
 
     /**
@@ -179,30 +173,4 @@ final class AddRawImageTask implements Runnable {
         }
 
     }    
-    /**
-     * Attempts to cancel the processing of the input image file. May result in
-     * partial processing of the input.
-     */
-    void cancelTask() {
-        logger.log(Level.WARNING, "AddRAWImageTask cancelled, processing may be incomplete");
-        synchronized (tskAddImageProcessLock) {
-            if (null != tskAddImageProcess) {
-                try {
-                    /*
-                     * All this does is set a flag that will make the TSK add
-                     * image process exit when the flag is checked between
-                     * processing steps. The state of the flag is not
-                     * accessible, so record it here so that it is known that
-                     * the revert method of the process object needs to be
-                     * called.
-                     */
-                    tskAddImageProcess.stop();
-                    tskAddImageProcessStopped = true;
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imageFilePath), ex); //NON-NLS
-                }
-            }
-        }
-    }
-
 }
