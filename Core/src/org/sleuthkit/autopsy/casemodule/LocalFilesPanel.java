@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Dialog;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -33,9 +31,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
@@ -45,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
  */
 class LocalFilesPanel extends JPanel {
 
-    private Set<File> currentFiles = new TreeSet<File>(); //keep currents in a set to disallow duplicates per add
+    private Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = "|";
