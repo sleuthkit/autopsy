@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datasourceprocessors;
 
-import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.Calendar;
@@ -229,7 +228,6 @@ final class RawDSInputPanel extends JPanel implements DocumentListener {
           String path = fc.getSelectedFile().getPath();
           pathTextField.setText(path);
       }
-      pcs.firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
     }//GEN-LAST:event_browseButtonActionPerformed
 
     private void j2GBBreakupRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_j2GBBreakupRadioButtonActionPerformed
