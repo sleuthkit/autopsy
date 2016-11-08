@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,9 +38,9 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
-class LocalFilesPanel extends JPanel {
+final class LocalFilesPanel extends JPanel {
 
-    private Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
+    private final Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
     public static final String FILES_SEP = "|";
@@ -69,23 +69,7 @@ class LocalFilesPanel extends JPanel {
         this.displayNameLabel.setText(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.displayNameLabel.text"));
     }
 
-    //@Override
-    @Deprecated
-    public String getContentPaths() {
-        //TODO consider interface change to return list of paths instead
-
-        if (currentFiles == null) {
-            return "";
-        }
-        StringBuilder b = new StringBuilder();
-        for (File f : currentFiles) {
-            b.append(f.getAbsolutePath());
-            b.append(FILES_SEP);
-        }
-        return b.toString();
-    }
-
-    public List<String> getContentPathsList() {
+    public List<String> getContentPaths() {
         List<String> pathsList = new ArrayList<>();
         if (currentFiles == null) {
             return pathsList;
@@ -96,23 +80,13 @@ class LocalFilesPanel extends JPanel {
         return pathsList;
     }
 
-    //@Override
-    public void setContentPath(String s) {
-        //for the local file panel we don't need to restore the last paths used
-        //when the wizard restarts
-    }
-
-    //@Override
     public String getContentType() {
         return NbBundle.getMessage(this.getClass(), "LocalFilesPanel.contentType.text");
     }
 
-    //@Override
     public boolean validatePanel() {
-
         // display warning if there is one (but don't disable "next" button)
-        warnIfPathIsInvalid(getContentPathsList());
-
+        warnIfPathIsInvalid(getContentPaths());
         return enableNext;
     }
 
@@ -136,12 +110,10 @@ class LocalFilesPanel extends JPanel {
         }
     }
 
-    //@Override
     public void select() {
         reset();
     }
 
-    //@Override
     public void reset() {
         currentFiles.clear();
         selectedPaths.setText("");
@@ -290,11 +262,7 @@ class LocalFilesPanel extends JPanel {
 
         }
 
-        if (!currentFiles.isEmpty()) {
-            enableNext = true;
-        } else {
-            enableNext = false;
-        }
+        enableNext = !currentFiles.isEmpty();
 
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
