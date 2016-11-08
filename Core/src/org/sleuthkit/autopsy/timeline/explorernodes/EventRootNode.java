@@ -61,16 +61,11 @@ public class EventRootNode extends DisplayableItemNode {
         return null;
     }
 
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "EventRoot";
-//    }
     /**
      * ChildFactory for EventNodes.
      */
