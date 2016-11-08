@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.autopsy.ingest.IngestModule.ProcessResult;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
-import org.sleuthkit.datamodel.TskData;
 
 /**
  * Detects the type of a file based on signature (magic) values. Posts results
@@ -85,7 +84,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile file) {
-        
         /**
          * Attempt to detect the file type. Do it within an exception firewall,
          * so that any issues with reading file content or complaints from tika
