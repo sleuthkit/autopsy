@@ -39,6 +39,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
         skipNoExtCheckBox.setSelected(settings.skipFilesWithNoExtension());
         skipTextPlain.setSelected(settings.skipFilesWithTextPlainMimeType());
         skipKnownFiles.setSelected(settings.skipKnownFiles());
+        checkOnlyImageExe.setSelected(settings.checkOnlyImageExeTypes());
     }
 
     @Override
@@ -58,6 +59,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
         skipNoExtCheckBox = new javax.swing.JCheckBox();
         skipTextPlain = new javax.swing.JCheckBox();
         skipKnownFiles = new javax.swing.JCheckBox();
+        checkOnlyImageExe = new javax.swing.JCheckBox();
 
         skipNoExtCheckBox.setSelected(true);
         skipNoExtCheckBox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.skipNoExtCheckBox.text")); // NOI18N
@@ -83,17 +85,24 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
             }
         });
 
+        checkOnlyImageExe.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.checkOnlyImageExe.text")); // NOI18N
+        checkOnlyImageExe.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkOnlyImageExeActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(skipTextPlain)
                     .addComponent(skipNoExtCheckBox)
-                    .addComponent(skipKnownFiles))
-                .addGap(0, 10, Short.MAX_VALUE))
+                    .addComponent(skipKnownFiles)
+                    .addComponent(checkOnlyImageExe)))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -103,7 +112,9 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
                 .addComponent(skipTextPlain)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(skipKnownFiles)
-                .addContainerGap(28, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(checkOnlyImageExe)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -119,7 +130,12 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
         settings.setSkipKnownFiles(skipKnownFiles.isSelected());
     }//GEN-LAST:event_skipKnownFilesActionPerformed
 
+    private void checkOnlyImageExeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkOnlyImageExeActionPerformed
+        settings.setCheckOnlyImageExeTypes(checkOnlyImageExe.isSelected());
+    }//GEN-LAST:event_checkOnlyImageExeActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox checkOnlyImageExe;
     private javax.swing.JCheckBox skipKnownFiles;
     private javax.swing.JCheckBox skipNoExtCheckBox;
     private javax.swing.JCheckBox skipTextPlain;

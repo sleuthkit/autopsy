@@ -178,6 +178,11 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
                 return false;
             }
         }
+        if (settings.checkOnlyImageExeTypes()) {
+            if (!FileExtMismatchDetectorModuleSettings.IMAGE_AND_EXECUTABLE_MIME_TYPES.contains(currActualSigType)) {
+                return false;
+            }
+        }
 
         //get known allowed values from the map for this type
         Set<String> allowedExtSet = mimeTypeToExtsMap.get(currActualSigType);
