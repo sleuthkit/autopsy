@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,10 +103,16 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
 
             // Each tag name in the current set of tags gets its own menu item in
             // the "Quick Tags" sub-menu. Selecting one of these menu items adds
-            // a tag with the associated tag name. 
+            // a tag with the associated tag name.
             if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                 for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
-                    JMenuItem tagNameItem = new JMenuItem(entry.getKey());
+                    String tagDisplayName = entry.getKey();
+                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName);
+                    // for the bookmark tag name only, added shortcut label
+                    if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
+                        tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
+                    }
+
                     tagNameItem.addActionListener((ActionEvent e) -> {
                         getAndAddTag(entry.getKey(), entry.getValue(), NO_COMMENT);
                     });
@@ -133,7 +139,7 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
             quickTagMenu.add(newTagMenuItem);
 
             // Create a "Choose Tag and Comment..." menu item. Selecting this item initiates
-            // a dialog that can be used to create or select a tag name with an 
+            // a dialog that can be used to create or select a tag name with an
             // optional comment and adds a tag with the resulting name.
             JMenuItem tagAndCommentItem = new JMenuItem(
                     NbBundle.getMessage(this.getClass(), "AddTagAction.tagAndComment"));
@@ -163,7 +169,11 @@ abstract class AddTagAction extends AbstractAction implements Presenter.Popup {
                 try {
                     tagName = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
                 } catch (TagsManager.TagNameAlreadyExistsException ex) {
-                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database.", ex); //NON-NLS
+                    try {
+                        tagName = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                    } catch (TskCoreException ex1) {
+                        Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
+                    }
                 } catch (TskCoreException ex) {
                     Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
                 }

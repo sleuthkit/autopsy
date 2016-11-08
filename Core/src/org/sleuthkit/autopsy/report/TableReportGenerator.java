@@ -178,7 +178,7 @@ class TableReportGenerator {
                      * compund name by appending a ":" and the account type.
                      */
                     final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountType;
-                    writeTableForDataType(groupedArtifacts.get(accountType), type, compundDataTypeName, comment);
+                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
                 }
             } else {
                 //all other artifact types are sent to writeTableForDataType directly
@@ -1495,6 +1495,9 @@ class TableReportGenerator {
         } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             columns.add(new StatusColumn());
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));            
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added

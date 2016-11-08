@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel._private.RecentFiles;
+import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;

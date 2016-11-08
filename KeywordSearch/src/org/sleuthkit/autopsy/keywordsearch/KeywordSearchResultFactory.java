@@ -255,8 +255,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             //the query is executed later on demand
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
-                Keyword term = queryResults.getKeywords().iterator().next();
-                return constructEscapedSolrQuery(term.getQuery(), literal_query);
+                Keyword keyword = queryResults.getKeywords().iterator().next();
+                return constructEscapedSolrQuery(keyword.getSearchTerm(), literal_query);
             } else {
                 //find terms for this content hit
                 List<Keyword> hitTerms = new ArrayList<>();
@@ -274,7 +274,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 int curTerm = 0;
                 for (Keyword term : hitTerms) {
                     //escape subqueries, MAKE SURE they are not escaped again later
-                    highlightQuery.append(constructEscapedSolrQuery(term.getQuery(), literal_query));
+                    highlightQuery.append(constructEscapedSolrQuery(term.getSearchTerm(), literal_query));
                     if (lastTerm != curTerm) {
                         highlightQuery.append(" "); //acts as OR ||
                     }

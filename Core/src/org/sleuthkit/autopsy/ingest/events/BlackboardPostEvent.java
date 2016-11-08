@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,6 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -48,8 +47,8 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
      * Constructs an event to be published when new content is added to a case
      * or there is a change a recorded attribute of existing content.
      *
-     * @param contentEvent A ModuleDataEvent object containing the data
-     *                     associated with the blackboard post.
+     * @param eventData A ModuleDataEvent object containing the data associated
+     *                  with the blackboard post.
      */
     public BlackboardPostEvent(ModuleDataEvent eventData) {
         /**
@@ -61,11 +60,11 @@ public final class BlackboardPostEvent extends AutopsyEvent implements Serializa
          */
         super(
                 IngestManager.IngestModuleEvent.DATA_ADDED.toString(),
-                new SerializableEventData(eventData.getModuleName(), eventData.getBlackboardArtifactType() , eventData.getArtifacts() != null
-                                ? eventData.getArtifacts()
-                                .stream()
-                                .map(BlackboardArtifact::getArtifactID)
-                                .collect(Collectors.toList()) : Collections.emptyList()),
+                new SerializableEventData(eventData.getModuleName(), eventData.getBlackboardArtifactType(), eventData.getArtifacts() != null
+                        ? eventData.getArtifacts()
+                        .stream()
+                        .map(BlackboardArtifact::getArtifactID)
+                        .collect(Collectors.toList()) : Collections.emptyList()),
                 null
         );
         this.eventData = eventData;

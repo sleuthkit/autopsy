@@ -96,7 +96,7 @@ class AccountsText implements IndexedText {
 
         this.solrServer = KeywordSearch.getServer();
 
-        final int separatorIndex = solrDocumentId.indexOf(Server.ID_CHUNK_SEP);
+        final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
         if (-1 == separatorIndex) {
             //no chunk id in solrDocumentId
             this.solrObjectId = Long.parseLong(solrDocumentId);
@@ -240,14 +240,14 @@ class AccountsText implements IndexedText {
             q.setShowDebugInfo(DEBUG); //debug
             q.setQuery(queryString);
             q.setFields(Server.Schema.ID.toString());  //for this case we only need the document ids
-            q.addFilterQuery(Server.Schema.ID.toString() + ":" + this.solrObjectId + Server.ID_CHUNK_SEP + "*");
+            q.addFilterQuery(Server.Schema.ID.toString() + ":" + this.solrObjectId + Server.CHUNK_ID_SEPARATOR + "*");
 
             try {
                 QueryResponse response = solrServer.query(q, METHOD.POST);
                 for (SolrDocument resultDoc : response.getResults()) {
                     final String resultDocumentId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     // Put the solr chunk id in the map
-                    String resultChunkID = StringUtils.substringAfter(resultDocumentId, Server.ID_CHUNK_SEP);
+                    String resultChunkID = StringUtils.substringAfter(resultDocumentId, Server.CHUNK_ID_SEPARATOR);
                     if (StringUtils.isNotBlank(resultChunkID)) {
                         sortedPagesWithHits.add(Integer.parseInt(resultChunkID));
                     } else {
@@ -295,7 +295,7 @@ class AccountsText implements IndexedText {
         q.setQuery(queryString);
 
         //set the documentID filter
-        String queryDocumentID = this.solrObjectId + Server.ID_CHUNK_SEP + this.currentPage;
+        String queryDocumentID = this.solrObjectId + Server.CHUNK_ID_SEPARATOR + this.currentPage;
         q.addFilterQuery(Server.Schema.ID.toString() + ":" + queryDocumentID);
 
         //configure the highlighter

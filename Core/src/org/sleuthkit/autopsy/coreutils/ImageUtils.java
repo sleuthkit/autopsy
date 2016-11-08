@@ -1,18 +1,18 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-16 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -323,7 +323,7 @@ public class ImageUtils {
 
     /**
      * Get the location of the cached thumbnail for a file with the given fileID
-     * as a java {@link File}. The returned File may not exist on disk yet.
+     * as a java File. The returned File may not exist on disk yet.
      *
      * @param fileID the fileID to get the cached thumbnail location for
      *
@@ -510,7 +510,6 @@ public class ImageUtils {
      * public methods that pull particular (usually meta-)data out of a image
      * file.
      *
-     * @param <T>               the type of the property to be retrieved.
      * @param file              the file to extract the data from
      * @param errorTemplate     a message template used to log errors. Should
      *                          take one parameter: the file's unique path or
@@ -560,10 +559,10 @@ public class ImageUtils {
     }
 
     /**
-     * Create a new {@link Task} that will get a thumbnail for the given image
-     * of the specified size. If a cached thumbnail is available it will be
-     * returned as the result of the task, otherwise a new thumbnail will be
-     * created and cached.
+     * Create a new Task that will get a thumbnail for the given image of the
+     * specified size. If a cached thumbnail is available it will be returned as
+     * the result of the task, otherwise a new thumbnail will be created and
+     * cached.
      *
      * Note: the returned task is suitable for running in a background thread,
      * but is not started automatically. Clients are responsible for running the
@@ -712,8 +711,8 @@ public class ImageUtils {
     }
 
     /**
-     * Create a new {@link Task} that will read the file into memory as an
-     * {@link javafx.scene.image.Image}
+     * Create a new Task that will read the file into memory as an
+     * javafx.scene.image.Image.
      *
      * Note: the returned task is suitable for running in a background thread,
      * but is not started automatically. Clients are responsible for running the

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel._private;
+package org.sleuthkit.autopsy.datamodel.accounts;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeMap;
@@ -57,6 +57,8 @@ import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
+import org.sleuthkit.autopsy.datamodel.AutopsyVisitableItem;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataModelActionsFactory;
@@ -74,6 +76,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData.DbType;
 
 /**
  * AutopsyVisitableItem for the Accounts section of the tree. All nodes,
@@ -145,6 +148,14 @@ final public class Accounts implements AutopsyVisitableItem {
     private abstract class ObservingChildren<X> extends Children.Keys<X> {
 
         /**
+         * Override of default constructor to force lazy creation of nodes, by
+         * concrete instances of ObservingChildren
+         */
+        ObservingChildren() {
+            super(true);
+        }
+
+        /**
          * Create of keys used by this Children object to represent the child
          * nodes.
          */
@@ -164,6 +175,9 @@ final public class Accounts implements AutopsyVisitableItem {
          */
         @Subscribe
         abstract void handleReviewStatusChange(ReviewStatusChangeEvent event);
+
+        @Subscribe
+        abstract void handleDataAdded(ModuleDataEvent event);
 
         @Override
         protected void removeNotify() {
@@ -217,7 +231,7 @@ final public class Accounts implements AutopsyVisitableItem {
                             ModuleDataEvent eventData = (ModuleDataEvent) evt.getOldValue();
                             if (null != eventData
                                     && eventData.getBlackboardArtifactType().getTypeID() == ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                                refreshKeys();
+                                reviewStatusBus.post(eventData);
                             }
                         } catch (IllegalStateException notUsed) {
                             // Case is closed, do nothing.
@@ -248,7 +262,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
 
@@ -375,8 +395,15 @@ final public class Accounts implements AutopsyVisitableItem {
                 }
             }
 
+            @Subscribe
             @Override
             void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
         }
@@ -424,10 +451,12 @@ final public class Accounts implements AutopsyVisitableItem {
          */
         final private class ViewModeFactory extends ObservingChildren<CreditCardViewMode> {
 
-            @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
-                refreshKeys();
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            }
+
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
             }
 
             /**
@@ -488,7 +517,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
 
@@ -497,10 +532,15 @@ final public class Accounts implements AutopsyVisitableItem {
                 List<FileWithCCN> list = new ArrayList<>();
                 String query
                         = "SELECT blackboard_artifacts.obj_id," //NON-NLS
-                        + "      solr_attribute.value_text AS solr_document_id, " //NON-NLS
-                        + "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
-                        + "      COUNT( blackboard_artifacts.artifact_id) AS hits,  " //NON-NLS
-                        + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids "
+                        + "      solr_attribute.value_text AS solr_document_id, "; //NON-NLS
+                if(skCase.getDatabaseType().equals(DbType.POSTGRESQL)){
+                    query += "      string_agg(blackboard_artifacts.artifact_id::character varying, ',') AS artifact_IDs, " //NON-NLS
+                           + "      string_agg(blackboard_artifacts.review_status_id::character varying, ',') AS review_status_ids, ";
+                } else {
+                    query += "      GROUP_CONCAT(blackboard_artifacts.artifact_id) AS artifact_IDs, " //NON-NLS
+                           + "      GROUP_CONCAT(blackboard_artifacts.review_status_id) AS review_status_ids, ";
+                }
+                query +=  "      COUNT( blackboard_artifacts.artifact_id) AS hits  " //NON-NLS
                         + " FROM blackboard_artifacts " //NON-NLS
                         + " LEFT JOIN blackboard_attributes as solr_attribute ON blackboard_artifacts.artifact_id = solr_attribute.artifact_id " //NON-NLS
                         + "                                AND solr_attribute.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID.getTypeID() //NON-NLS
@@ -569,11 +609,15 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
-                    + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text )";
+                    + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text ) AS foo";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
-                    setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count(*)")));
+                    if(skCase.getDatabaseType().equals(DbType.POSTGRESQL)){
+                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count")));
+                    } else {
+                        setDisplayName(Bundle.Accounts_ByFileNode_displayName(rs.getLong("count(*)")));
+                    }
                 }
             } catch (TskCoreException | SQLException ex) {
                 LOGGER.log(Level.SEVERE, "Error querying for files with ccn hits.", ex); //NON-NLS
@@ -597,7 +641,12 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Subscribe
-        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateDisplayName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
     }
@@ -615,7 +664,13 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+                refreshKeys();
+            }
+
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
                 refreshKeys();
             }
 
@@ -716,7 +771,12 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Subscribe
-        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateDisplayName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
     }
@@ -958,15 +1018,18 @@ final public class Accounts implements AutopsyVisitableItem {
 
             @Subscribe
             @Override
-            public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            void handleReviewStatusChange(ReviewStatusChangeEvent event) {
                 refreshKeys();
-                //make sure to refresh  the nodes for artifacts that changed statuses.
+                //make sure to refresh the nodes for artifacts that changed statuses.
                 event.artifacts.stream().map(BlackboardArtifact::getArtifactID).forEach(this::refreshKey);
             }
 
-            /**
-             *
-             */
+            @Subscribe
+            @Override
+            void handleDataAdded(ModuleDataEvent event) {
+                refreshKeys();
+            }
+
             @Override
             protected List<Long> createKeys() {
                 List<Long> list = new ArrayList<>();
@@ -977,7 +1040,7 @@ final public class Accounts implements AutopsyVisitableItem {
                         + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                         + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                         + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
-                        + "     AND blackboard_attributes.value_text >= \"" + bin.getBINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getBINEnd() + 1) + "\"" //NON-NLS
+                        + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
                         + getRejectedArtifactFilterClause()
                         + " ORDER BY blackboard_attributes.value_text"; //NON-NLS
                 try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
@@ -1008,12 +1071,11 @@ final public class Accounts implements AutopsyVisitableItem {
             }
         }
         private final BinResult bin;
-//        private final CreditCardNumberFactory accountFactory;
 
         private BINNode(BinResult bin) {
             super(Children.LEAF);
-            setChildren(Children.createLazy(CreditCardNumberFactory::new));
             this.bin = bin;
+            setChildren(Children.createLazy(CreditCardNumberFactory::new));
             setName(getBinRangeString());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
@@ -1021,7 +1083,12 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Subscribe
-        public void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+        void handleReviewStatusChange(ReviewStatusChangeEvent event) {
+            updateDisplayName();
+        }
+
+        @Subscribe
+        void handleDataAdded(ModuleDataEvent event) {
             updateDisplayName();
         }
 
@@ -1032,7 +1099,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "      JOIN blackboard_attributes ON blackboard_artifacts.artifact_id = blackboard_attributes.artifact_id " //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + "     AND blackboard_attributes.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID() //NON-NLS
-                    + "     AND blackboard_attributes.value_text >= \"" + bin.getBINStart() + "\" AND  blackboard_attributes.value_text < \"" + (bin.getBINEnd() + 1) + "\"" //NON-NLS
+                    + "     AND blackboard_attributes.value_text >= '" + bin.getBINStart() + "' AND  blackboard_attributes.value_text < '" + (bin.getBINEnd() + 1) + "'" //NON-NLS
                     + getRejectedArtifactFilterClause();
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
@@ -1295,7 +1362,7 @@ final public class Accounts implements AutopsyVisitableItem {
 
     private final class ToggleShowRejected extends AbstractAction {
 
-        @NbBundle.Messages("ToggleShowRejected.name=Show Rejcted Results")
+        @NbBundle.Messages("ToggleShowRejected.name=Show Rejected Results")
         ToggleShowRejected() {
             super(Bundle.ToggleShowRejected_name());
         }
@@ -1332,18 +1399,27 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         if (newStatus == BlackboardArtifact.ReviewStatus.REJECTED && showRejected == false) {
                             List<Node> siblings = Arrays.asList(node.getParentNode().getChildren().getNodes());
-                            int indexOf = siblings.indexOf(node);
-                            //there is no previous for the first node, so instead we select the next one
-                            Node sibling = indexOf > 0
-                                    ? siblings.get(indexOf - 1)
-                                    : siblings.get(indexOf + 1);
-                            createPath = NodeOp.createPath(sibling, null);
+                            if (siblings.size() > 1) {
+                                int indexOf = siblings.indexOf(node);
+                                //there is no previous for the first node, so instead we select the next one
+                                Node sibling = indexOf > 0
+                                        ? siblings.get(indexOf - 1)
+                                        : siblings.get(Integer.max(indexOf + 1, siblings.size() - 1));
+                                createPath = NodeOp.createPath(sibling, null);
+                            } else {
+                                /* if there are no other siblings to select,
+                                 * just return null, but note we need to filter
+                                 * this out of stream below */
+                                return null;
+                            }
                         } else {
                             createPath = NodeOp.createPath(node, null);
                         }
                         //for the reselect to work we need to strip off the first part of the path.
                         return Arrays.copyOfRange(createPath, 1, createPath.length);
-                    }).collect(Collectors.toList());
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
 
             //change status of selected artifacts
             final Collection<? extends BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
@@ -1390,7 +1466,7 @@ final public class Accounts implements AutopsyVisitableItem {
         }
     }
 
-    class ReviewStatusChangeEvent {
+    private class ReviewStatusChangeEvent {
 
         Collection<? extends BlackboardArtifact> artifacts;
         BlackboardArtifact.ReviewStatus newReviewStatus;

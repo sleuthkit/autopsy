@@ -82,7 +82,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 }
 
                 XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
-                if (writer.listExists(listName) && writer.getList(listName).isLocked()) {
+                if (writer.listExists(listName) && writer.getList(listName).isEditable()) {
                     KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
                     return;
                 }

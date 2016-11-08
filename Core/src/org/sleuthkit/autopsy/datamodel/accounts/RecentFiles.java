@@ -16,8 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel._private;
+package org.sleuthkit.autopsy.datamodel.accounts;
 
+import org.sleuthkit.autopsy.datamodel.AutopsyVisitableItem;
+import org.sleuthkit.autopsy.datamodel.AutopsyItemVisitor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.SleuthkitCase;
 

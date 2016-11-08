@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel._private.FileTypeExtensionFilters;
+import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;

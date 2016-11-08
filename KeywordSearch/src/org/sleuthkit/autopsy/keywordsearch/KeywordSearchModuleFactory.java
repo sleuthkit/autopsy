@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 @ServiceProvider(service = IngestModuleFactory.class)
 public class KeywordSearchModuleFactory extends IngestModuleFactoryAdapter {
 
-    private static final HashSet<String> defaultDisabledKeywordListNames = new HashSet<>(Arrays.asList("Phone Numbers", "IP Addresses", "URLs")); //NON-NLS
+    private static final HashSet<String> defaultDisabledKeywordListNames = new HashSet<>(Arrays.asList("Phone Numbers", "IP Addresses", "URLs", "Credit Card Numbers")); //NON-NLS
     private KeywordSearchJobSettingsPanel jobSettingsPanel = null;
 
     @Override

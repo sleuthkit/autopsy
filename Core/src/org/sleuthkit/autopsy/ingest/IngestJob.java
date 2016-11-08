@@ -65,7 +65,7 @@ public final class IngestJob {
     private final static AtomicLong nextId = new AtomicLong(0L);
     private final long id;
     private final Map<Long, DataSourceIngestJob> dataSourceJobs;
-    private final AtomicInteger incompleteJobsCount;    
+    private final AtomicInteger incompleteJobsCount;
     private volatile CancellationReason cancellationReason;
 
     /**
@@ -423,9 +423,9 @@ public final class IngestJob {
          * used to get basic information about the module and to request
          * cancellation of the module.
          *
-         * @param DataSourceIngestJob The data source ingest job that owns the
-         *                            data source level ingest module.
-         * @param module              The data source level ingest module.
+         * @param job    The data source ingest job that owns the data source
+         *               level ingest module.
+         * @param module The data source level ingest module.
          */
         private DataSourceIngestModuleHandle(DataSourceIngestJob job, DataSourceIngestPipeline.PipelineModule module) {
             this.job = job;

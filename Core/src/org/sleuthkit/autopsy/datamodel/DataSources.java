@@ -18,9 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel._private.AutopsyItemVisitor;
-import org.sleuthkit.autopsy.datamodel._private.AutopsyVisitableItem;
-
 /**
  * Root node to store the data sources in a case
  */

@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel._private.AutopsyItemVisitor;
-import org.sleuthkit.autopsy.datamodel._private.AutopsyVisitableItem;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;

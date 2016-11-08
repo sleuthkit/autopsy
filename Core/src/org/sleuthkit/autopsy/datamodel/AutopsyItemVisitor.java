@@ -16,20 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datamodel._private;
+package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.DataSources;
-import org.sleuthkit.autopsy.datamodel.DeletedContent;
-import org.sleuthkit.autopsy.datamodel.EmailExtracted;
-import org.sleuthkit.autopsy.datamodel.ExtractedContent;
-import org.sleuthkit.autopsy.datamodel.FileSize;
-import org.sleuthkit.autopsy.datamodel.HashsetHits;
-import org.sleuthkit.autopsy.datamodel.InterestingHits;
-import org.sleuthkit.autopsy.datamodel.KeywordHits;
-import org.sleuthkit.autopsy.datamodel.Reports;
-import org.sleuthkit.autopsy.datamodel.Results;
-import org.sleuthkit.autopsy.datamodel.Tags;
-import org.sleuthkit.autopsy.datamodel.Views;
+import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
+import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles;
 
 /**
  * This visitor goes over the AutopsyVisitableItems, which are currently the

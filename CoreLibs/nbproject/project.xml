@@ -744,10 +744,6 @@
                 <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-18.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-18.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imageio-tga-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-tga-3.2.jar</binary-origin>
             </class-path-extension>
@@ -850,6 +846,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
