@@ -114,9 +114,6 @@ class TableReportGenerator {
             // report on the tagged images
             makeThumbnailTable();
         }
-
-        // finish progress, wrap up
-        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 
     /**
