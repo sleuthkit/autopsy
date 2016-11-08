@@ -40,32 +40,32 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
+import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
-import org.apache.solr.client.solrj.SolrRequest;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.common.util.NamedList;
-import org.openide.modules.InstalledFileLocator;
-import org.openide.modules.Places;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.datamodel.Content;
-import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.client.solrj.impl.XMLResponseParser;
-import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
+import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.util.NamedList;
+import org.openide.modules.InstalledFileLocator;
+import org.openide.modules.Places;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Handles management of a either a local or centralized Solr server and its
@@ -157,7 +157,9 @@ public class Server {
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private static final String DEFAULT_CORE_NAME = "coreCase"; //NON-NLS
     public static final String CORE_EVT = "CORE_EVT"; //NON-NLS
+    @Deprecated
     public static final char ID_CHUNK_SEP = '_';
+    public static final String CHUNK_ID_SEPARATOR = "_";
     private String javaPath = "java"; //NON-NLS
     public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
     private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
@@ -1057,7 +1059,7 @@ public class Server {
      * @return formatted string id
      */
     public static String getChunkIdString(long parentID, int childID) {
-        return Long.toString(parentID) + Server.ID_CHUNK_SEP + Integer.toString(childID);
+        return Long.toString(parentID) + Server.CHUNK_ID_SEPARATOR + Integer.toString(childID);
     }
 
     /**
@@ -1277,7 +1279,7 @@ public class Server {
             q.setQuery("*:*");
             String filterQuery = Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             if (chunkID != 0) {
-                filterQuery = filterQuery + Server.ID_CHUNK_SEP + chunkID;
+                filterQuery = filterQuery + Server.CHUNK_ID_SEPARATOR + chunkID;
             }
             q.addFilterQuery(filterQuery);
             q.setFields(Schema.TEXT.toString());
@@ -1346,7 +1348,7 @@ public class Server {
          * @throws SolrServerException
          */
         private int queryNumIndexedChunks() throws SolrServerException {
-            SolrQuery q = new SolrQuery(Server.Schema.ID + ":*" + Server.ID_CHUNK_SEP + "*");
+            SolrQuery q = new SolrQuery(Server.Schema.ID + ":*" + Server.CHUNK_ID_SEPARATOR + "*");
             q.setRows(0);
             int numChunks = (int) query(q).getResults().getNumFound();
             return numChunks;
@@ -1400,7 +1402,7 @@ public class Server {
         private int queryNumFileChunks(long contentID) throws SolrServerException {
             String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q
-                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.ID_CHUNK_SEP + "*");
+                    = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
         }

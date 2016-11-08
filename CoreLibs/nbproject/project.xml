@@ -228,6 +228,7 @@
                 <package>org.apache.commons.codec.digest</package>
                 <package>org.apache.commons.codec.language</package>
                 <package>org.apache.commons.codec.net</package>
+                <package>org.apache.commons.csv</package>
                 <package>org.apache.commons.io</package>
                 <package>org.apache.commons.io.comparator</package>
                 <package>org.apache.commons.io.filefilter</package>
@@ -743,10 +744,6 @@
                 <binary-origin>release/modules/ext/mail-1.4.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-18.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-18.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/imageio-tga-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-tga-3.2.jar</binary-origin>
             </class-path-extension>
@@ -815,6 +812,10 @@
                 <binary-origin>release/modules/ext/jfxtras-controls-8.0-r4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/commons-csv-1.4.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-csv-1.4.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/imageio-sgi-3.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/imageio-sgi-3.2.jar</binary-origin>
             </class-path-extension>
@@ -845,6 +846,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/slf4j-simple-1.6.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-bmp-3.2.jar</runtime-relative-path>
@@ -895,6 +900,10 @@
                 <binary-origin>release/modules/ext/poi-3.8.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/commons-lang3-3.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-lang3-3.0.jar</binary-origin>
             </class-path-extension>
@@ -917,10 +926,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/gstreamer-java-1.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/gstreamer-java-1.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/controlsfx-8.40.11.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/dom4j-1.6.1.jar</runtime-relative-path>

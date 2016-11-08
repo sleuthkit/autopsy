@@ -15,7 +15,7 @@
         <or>
             <matches string="${java.version}" pattern="1\.8\.0_6[6-9]"/>
             <matches string="${java.version}" pattern="1\.8\.0_[7-9][0-9]"/>
-         <matches string="${java.version}" pattern="1\.8\.0_[1-9][0-9][0-9]"/>
+            <matches string="${java.version}" pattern="1\.8\.0_[1-9][0-9][0-9]"/>
             <matches string="${java.version}" pattern="1\.8\.[1-9]_[0-9][0-9]"/>
             <equals arg1="${ant.java.version}" arg2="1.9"/>
         </or>
@@ -91,8 +91,6 @@
                 </copy>
             </then>
         </if>
-        
-        <antcall target="copyLibsToZip"/>
         
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <!-- for Japanese localized version add option:  -Duser.language=ja -->        

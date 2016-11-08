@@ -42,6 +42,9 @@ public class GeneralFilter extends FileFilter {
     public static final String VIRTUAL_MACHINE_DESC = NbBundle.getMessage(GeneralFilter.class,
             "GeneralFilter.virtualMachineImageDesc.text");    
 
+    public static final List<String> EXECUTABLE_EXTS = Arrays.asList(new String[]{".exe"}); //NON-NLS
+    public static final String EXECUTABLE_DESC = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.executableDesc.text");
+    
     private List<String> extensions;
     private String desc;
 

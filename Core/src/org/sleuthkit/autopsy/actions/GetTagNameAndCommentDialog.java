@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.actions;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -43,7 +43,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final String NO_TAG_NAMES_MESSAGE = NbBundle.getMessage(GetTagNameAndCommentDialog.class,
             "GetTagNameAndCommentDialog.noTags");
-    private final HashMap<String, TagName> tagNames = new HashMap<>();
+    private final Map<String, TagName> tagNamesMap = new TreeMap<>();
     private TagNameAndComment tagNameAndComment = null;
 
     public static class TagNameAndComment {
@@ -91,13 +91,18 @@ public class GetTagNameAndCommentDialog extends JDialog {
      *         dialog.
      */
     public static TagNameAndComment doDialog(Window owner) {
-        return new GetTagNameAndCommentDialog(owner).tagNameAndComment;
+        GetTagNameAndCommentDialog dialog = new GetTagNameAndCommentDialog(owner);
+        dialog.display();
+        return dialog.tagNameAndComment;
     }
 
     private GetTagNameAndCommentDialog(Window owner) {
         super(owner,
                 NbBundle.getMessage(GetTagNameAndCommentDialog.class, "GetTagNameAndCommentDialog.createTag"),
                 ModalityType.APPLICATION_MODAL);
+    }
+
+    private void display() {
         initComponents();
 
         // Set up the dialog to close when Esc is pressed.
@@ -106,6 +111,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
         actionMap.put(cancelName, new AbstractAction() {
+            private static final long serialVersionUID = 1L;
             @Override
             public void actionPerformed(ActionEvent e) {
                 dispose();
@@ -114,27 +120,27 @@ public class GetTagNameAndCommentDialog extends JDialog {
 
         // Populate the combo box with the available tag names and save the 
         // tag name DTOs to be enable to return the one the user selects.
+        // Tag name DTOs may be null (user tag names that have not been used do
+        // not exist in the database).
         TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-        List<TagName> currentTagNames = null;
         try {
-            currentTagNames = tagsManager.getAllTagNames();
+            tagNamesMap.putAll(tagsManager.getDisplayNamesToTagNamesMap());
         } catch (TskCoreException ex) {
             Logger.getLogger(GetTagNameAndCommentDialog.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
         }
-        if (null != currentTagNames && currentTagNames.isEmpty()) {
+        if (null != tagNamesMap && tagNamesMap.isEmpty()) {
             tagCombo.addItem(NO_TAG_NAMES_MESSAGE);
         } else {
-            for (TagName tagName : currentTagNames) {
-                tagNames.put(tagName.getDisplayName(), tagName);
-                tagCombo.addItem(tagName.getDisplayName());
+            for (String tagDisplayName : tagNamesMap.keySet()) {
+                tagCombo.addItem(tagDisplayName);
             }
         }
 
         // Center and show the dialog box. 
-        this.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
-        setVisible(true);
+        this.setLocationRelativeTo(this.getOwner());
+        setVisible(true);        
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -197,7 +203,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(newTagButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 48, Short.MAX_VALUE)
                         .addComponent(okButton, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
@@ -240,7 +246,22 @@ public class GetTagNameAndCommentDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        tagNameAndComment = new TagNameAndComment(tagNames.get((String) tagCombo.getSelectedItem()), commentText.getText());
+        String tagDisplayName = (String) tagCombo.getSelectedItem();
+        TagName tagNameFromCombo = tagNamesMap.get(tagDisplayName);
+        if (tagNameFromCombo == null) {
+            try {
+                tagNameFromCombo = Case.getCurrentCase().getServices().getTagsManager().addTagName(tagDisplayName);
+            } catch (TagsManager.TagNameAlreadyExistsException ex) {
+                try {
+                    tagNameFromCombo = Case.getCurrentCase().getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagDisplayName);
+                } catch (TskCoreException ex1) {
+                    Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, tagDisplayName + " already exists in database but an error occurred in retrieving it.", ex1); //NON-NLS
+                }
+            } catch (TskCoreException ex) {
+                Logger.getLogger(AddTagAction.class.getName()).log(Level.SEVERE, "Error adding " + tagDisplayName + " tag name", ex); //NON-NLS
+            }
+        }
+        tagNameAndComment = new TagNameAndComment(tagNameFromCombo, commentText.getText());
         dispose();
     }//GEN-LAST:event_okButtonActionPerformed
 
@@ -257,7 +278,7 @@ public class GetTagNameAndCommentDialog extends JDialog {
     private void newTagButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTagButtonActionPerformed
         TagName newTagName = GetTagNameDialog.doDialog(this);
         if (newTagName != null) {
-            tagNames.put(newTagName.getDisplayName(), newTagName);
+            tagNamesMap.put(newTagName.getDisplayName(), newTagName);
             tagCombo.addItem(newTagName.getDisplayName());
             tagCombo.setSelectedItem(newTagName.getDisplayName());
         }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-16 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimaps;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -43,6 +47,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.BlackboardAttribute.Type;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -109,9 +114,6 @@ class TableReportGenerator {
             // report on the tagged images
             makeThumbnailTable();
         }
-
-        // finish progress, wrap up
-        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 
     /**
@@ -119,10 +121,10 @@ class TableReportGenerator {
      */
     private void makeBlackboardArtifactTables() {
         // Make a comment string describing the tag names filter in effect. 
-        StringBuilder comment = new StringBuilder();
+        String comment = "";
         if (!tagNamesFilter.isEmpty()) {
-            comment.append(NbBundle.getMessage(this.getClass(), "ReportGenerator.artifactTable.taggedResults.text"));
-            comment.append(makeCommaSeparatedList(tagNamesFilter));
+            comment += NbBundle.getMessage(this.getClass(), "ReportGenerator.artifactTable.taggedResults.text");
+            comment += makeCommaSeparatedList(tagNamesFilter);
         }
 
         // Add a table to the report for every enabled blackboard artifact type.
@@ -139,10 +141,10 @@ class TableReportGenerator {
 
             // Keyword hits and hashset hit artifacts get special handling.
             if (type.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                writeKeywordHits(tableReport, comment.toString(), tagNamesFilter);
+                writeKeywordHits(tableReport, comment, tagNamesFilter);
                 continue;
             } else if (type.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()) {
-                writeHashsetHits(tableReport, comment.toString(), tagNamesFilter);
+                writeHashsetHits(tableReport, comment, tagNamesFilter);
                 continue;
             }
 
@@ -152,52 +154,90 @@ class TableReportGenerator {
                 continue;
             }
 
-            /*
-                 Gets all of the attribute types of this artifact type by adding
-                 all of the types to a set
-             */
-            Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>((BlackboardAttribute.Type o1, BlackboardAttribute.Type o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
-            for (ArtifactData data : artifactList) {
-                List<BlackboardAttribute> attributes = data.getAttributes();
-                for (BlackboardAttribute attribute : attributes) {
-                    attrTypeSet.add(attribute.getAttributeType());
+            /* TSK_ACCOUNT artifacts get grouped by their TSK_ACCOUNT_TYPE
+             * attribute, and then handed off to the standard method for writing
+             * tables. */
+            if (type.getTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                //Group account artifacts by their account type
+                ListMultimap<String, ArtifactData> groupedArtifacts = Multimaps.index(artifactList,
+                        artifactData -> {
+                            try {
+                                return artifactData.getArtifact().getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE)).getValueString();
+                            } catch (TskCoreException ex) {
+                                logger.log(Level.SEVERE, "Unable to get value of TSK_ACCOUNT_TYPE attribute. Defaulting to \"unknown\"", ex);
+                                return "unknown";
+                            }
+                        });
+                for (String accountType : groupedArtifacts.keySet()) {
+                    /* If the report is a ReportHTML, the data type name
+                     * eventualy makes it to useDataTypeIcon which expects but
+                     * does not require a artifact name, so we make a synthetic
+                     * compund name by appending a ":" and the account type.
+                     */
+                    final String compundDataTypeName = BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName() + ": " + accountType;
+                    writeTableForDataType(new ArrayList<>(groupedArtifacts.get(accountType)), type, compundDataTypeName, comment);
                 }
+            } else {
+                //all other artifact types are sent to writeTableForDataType directly
+                writeTableForDataType(artifactList, type, type.getDisplayName(), comment);
             }
-            // Get the columns appropriate for the artifact type. This is
-            // used to get the data that will be in the cells below based on
-            // type, and display the column headers.
-            List<Column> columns = getArtifactTableColumns(type.getTypeID(), attrTypeSet);
-            if (columns.isEmpty()) {
-                continue;
-            }
-            columnHeaderMap.put(type.getTypeID(), columns);
-
-            // The artifact list is sorted now, as getting the row data is 
-            // dependent on having the columns, which is necessary for 
-            // sorting.
-            Collections.sort(artifactList);
-            List<String> columnHeaderNames = new ArrayList<>();
-            for (Column currColumn : columns) {
-                columnHeaderNames.add(currColumn.getColumnHeader());
-            }
-
-            tableReport.startDataType(type.getDisplayName(), comment.toString());
-            tableReport.startTable(columnHeaderNames);
-            for (ArtifactData artifactData : artifactList) {
-                // Get the row data for this artifact, and has the 
-                // module add it.
-                List<String> rowData = artifactData.getRow();
-                if (rowData.isEmpty()) {
-                    continue;
-                }
-
-                tableReport.addRow(rowData);
-            }
-            // Finish up this data type
-            progressPanel.increment();
-            tableReport.endTable();
-            tableReport.endDataType();
         }
+    }
+
+    /**
+     *
+     * Write the given list of artifacts to the table for the given type.
+     *
+     * @param artifactList The List of artifacts to include in the table.
+     * @param type         The Type of artifacts included in the table. All the
+     *                     artifacts in artifactList should be of this type.
+     * @param tableName    The name of the table.
+     * @param comment      A comment to put in the header.
+     */
+    private void writeTableForDataType(List<ArtifactData> artifactList, BlackboardArtifact.Type type, String tableName, String comment) {
+        /*
+         * Make a sorted set of all of the attribute types that are on any of
+         * the given artifacts.
+         */
+        Set<BlackboardAttribute.Type> attrTypeSet = new TreeSet<>(Comparator.comparing(BlackboardAttribute.Type::getDisplayName));
+        for (ArtifactData data : artifactList) {
+            List<BlackboardAttribute> attributes = data.getAttributes();
+            for (BlackboardAttribute attribute : attributes) {
+                attrTypeSet.add(attribute.getAttributeType());
+            }
+        }
+        /* Get the columns appropriate for the artifact type. This is used to
+         * get the data that will be in the cells below based on type, and
+         * display the column headers.
+         */
+        List<Column> columns = getArtifactTableColumns(type.getTypeID(), attrTypeSet);
+        if (columns.isEmpty()) {
+            return;
+        }
+        columnHeaderMap.put(type.getTypeID(), columns);
+
+        /* The artifact list is sorted now, as getting the row data is dependent
+         * on having the columns, which is necessary for sorting.
+         */
+        Collections.sort(artifactList);
+
+        tableReport.startDataType(tableName, comment);
+        tableReport.startTable(Lists.transform(columns, Column::getColumnHeader));
+
+        for (ArtifactData artifactData : artifactList) {
+            // Get the row data for this artifact, and has the
+            // module add it.
+            List<String> rowData = artifactData.getRow();
+            if (rowData.isEmpty()) {
+                return;
+            }
+
+            tableReport.addRow(rowData);
+        }
+        // Finish up this data type
+        progressPanel.increment();
+        tableReport.endTable();
+        tableReport.endDataType();
     }
 
     /**
@@ -1449,6 +1489,12 @@ class TableReportGenerator {
 
             columns.add(new AttributeColumn(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.remotePath"),
                     new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_REMOTE_PATH)));
+        } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+            columns.add(new StatusColumn());
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));            
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added
@@ -1562,6 +1608,27 @@ class TableReportGenerator {
         Set<BlackboardAttribute.Type> removeTypeFromSet(Set<BlackboardAttribute.Type> types);
     }
 
+    private class StatusColumn implements Column {
+
+        @NbBundle.Messages("TableReportGenerator.StatusColumn.Header=Review Status")
+        @Override
+        public String getColumnHeader() {
+            return Bundle.TableReportGenerator_StatusColumn_Header();
+        }
+
+        @Override
+        public String getCellData(ArtifactData artData) {
+            return artData.getArtifact().getReviewStatus().getDisplayName();
+        }
+
+        @Override
+        public Set<BlackboardAttribute.Type> removeTypeFromSet(Set<BlackboardAttribute.Type> types) {
+            // This column doesn't have a type, so nothing to remove
+            return types;
+        }
+
+    }
+
     private class AttributeColumn implements Column {
 
         private final String columnHeader;
@@ -1621,10 +1688,6 @@ class TableReportGenerator {
         @Override
         public String getCellData(ArtifactData artData) {
             return getFileUniquePath(artData.getContent());
-            /*else if (this.columnHeader.equals(NbBundle.getMessage(this.getClass(), "ReportGenerator.artTableColHdr.tags"))) {
-             return makeCommaSeparatedList(artData.getTags());
-             }
-             return "";*/
         }
 
         @Override

@@ -69,6 +69,6 @@ Autopsy provides services and utilities to make it easier to write modules. Unfo
  - PlatformUtil.extractResourceToUserConfigDir()
  - PlatformUtil.isWindowsOS()
 - File Utilities: The org.sleuthkit.autopsy.coreutils.FileUtil class assists with creating and deleting folders, etc.
-- IngestModules also have a class that provides additional services unique to their needs.  See \ref ingest_modules_services_ingest. 
+- Ingest modules also have access to an IngestServices class that provides additional services unique to their needs. 
 
 */

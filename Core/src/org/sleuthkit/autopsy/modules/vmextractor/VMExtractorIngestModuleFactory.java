@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.vmextractor;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -41,41 +42,26 @@ public final class VMExtractorIngestModuleFactory extends IngestModuleFactoryAda
         return NbBundle.getMessage(VMExtractorIngestModuleFactory.class, "VMExtractorIngestModuleFactory.moduleDisplayName");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleDescription() {
         return NbBundle.getMessage(this.getClass(), "VMExtractorIngestModuleFactory.moduleDescription");
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public String getModuleVersionNumber() {
-        return NbBundle.getMessage(this.getClass(), "VMExtractorIngestModuleFactory.version");
+        return Version.getVersion();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean isDataSourceIngestModuleFactory() {
         return true;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public DataSourceIngestModule createDataSourceIngestModule(IngestModuleIngestJobSettings settings) {
         return new VMExtractorIngestModule();

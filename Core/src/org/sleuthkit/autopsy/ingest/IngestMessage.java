@@ -192,8 +192,6 @@ public class IngestMessage {
     /**
      * Create a simple message with a subject only
      *
-     * @param ID          ID of the message, unique in the context of module
-     *                    that generated it
      * @param messageType message type
      * @param source      originating module
      * @param subject     message subject to be displayed
@@ -227,8 +225,6 @@ public class IngestMessage {
     /**
      * Create warning message
      *
-     * @param ID          ID of the message, unique in the context of module
-     *                    that generated it
      * @param source      originating module
      * @param subject     message subject to be displayed
      * @param detailsHtml html formatted detailed message (without leading and
@@ -248,8 +244,6 @@ public class IngestMessage {
 
     /**
      *
-     * @param ID          ID of the message, unique in the context of module
-     *                    that generated it
      * @param source      originating module
      * @param subject     message subject to be displayed
      * @param detailsHtml html formatted detailed message (without leading and

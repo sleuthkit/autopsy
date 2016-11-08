@@ -28,12 +28,21 @@ import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Slider;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.text.Text;
+import org.controlsfx.control.PopOver;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.FXMLConstructor;
@@ -55,6 +64,9 @@ public class Toolbar extends ToolBar {
     private static final Logger LOGGER = Logger.getLogger(Toolbar.class.getName());
 
     private static final int SIZE_SLIDER_DEFAULT = 100;
+
+    @FXML
+    private ImageView sortHelpImageView;
 
     @FXML
     private ComboBox<DrawableAttribute<?>> groupByBox;
@@ -104,7 +116,9 @@ public class Toolbar extends ToolBar {
         "Toolbar.descRadio=Descending",
         "Toolbar.tagImageViewLabel=Tag Group's Files:",
         "Toolbar.categoryImageViewLabel=Categorize Group's Files:",
-        "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):"})
+        "Toolbar.thumbnailSizeLabel=Thumbnail Size (px):",
+        "Toolbar.sortHelp=The sort direction (ascending/descending) affects the queue of unseen groups that Image Gallery maintains, but changes to this queue aren't apparent until the \"Next Unseen Group\" button is pressed.",
+        "Toolbar.sortHelpTitle=Group Sorting",})
     void initialize() {
         assert catGroupMenuButton != null : "fx:id=\"catSelectedMenubutton\" was not injected: check your FXML file 'Toolbar.fxml'.";
         assert groupByBox != null : "fx:id=\"groupByBox\" was not injected: check your FXML file 'Toolbar.fxml'.";
@@ -169,7 +183,43 @@ public class Toolbar extends ToolBar {
         sortChooser.sortOrderProperty().addListener(queryInvalidationListener);
         sortChooser.setComparator(GroupSortBy.PRIORITY);
         getItems().add(1, sortChooser);
+        sortHelpImageView.setCursor(Cursor.HAND);
 
+        sortHelpImageView.setOnMouseClicked(clicked -> {
+            Text text = new Text(Bundle.Toolbar_sortHelp());
+            text.setWrappingWidth(480);  //This is a hack to fix the layout.
+            showPopoverHelp(sortHelpImageView,
+                    Bundle.Toolbar_sortHelpTitle(),
+                    sortHelpImageView.getImage(), text);
+        });
+
+    }
+
+    /**
+     *
+     * Static utility to to show a Popover with the given Node as owner.
+     *
+     * @param owner       The owner of the Popover
+     * @param headerText  A short String that will be shown in the top-left
+     *                    corner of the Popover.
+     * @param headerImage An Image that will be shown at the top-right corner of
+     *                    the Popover.
+     * @param content     The main content of the Popover, shown in the
+     *                    bottom-center
+     *
+     */
+    private static void showPopoverHelp(final Node owner, final String headerText, final Image headerImage, final Node content) {
+        Pane borderPane = new BorderPane(null, null, new ImageView(headerImage),
+                content,
+                new Label(headerText));
+        borderPane.setPadding(new Insets(10));
+        borderPane.setPrefWidth(500);
+
+        PopOver popOver = new PopOver(borderPane);
+        popOver.setDetachable(false);
+        popOver.setArrowLocation(PopOver.ArrowLocation.TOP_CENTER);
+
+        popOver.show(owner);
     }
 
     private void syncGroupControlsEnabledState(GroupViewState newViewState) {

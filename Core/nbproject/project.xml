@@ -222,6 +222,10 @@
                 </dependency>
             </module-dependencies>
             <public-packages>
+                <package>net.sf.sevenzipjbinding</package>
+                <package>net.sf.sevenzipjbinding.impl</package>
+                <package>net.sf.sevenzipjbinding.simple</package>
+                <package>net.sf.sevenzipjbinding.simple.impl</package>
                 <package>org.sleuthkit.autopsy.actions</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.events</package>
@@ -251,8 +255,8 @@
                 <binary-origin>release/modules/ext/jdom-2.0.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
+                <runtime-relative-path>ext/postgresql-9.4.1211.jre7.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-9.4.1211.jre7.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>

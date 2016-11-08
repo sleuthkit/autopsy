@@ -562,8 +562,8 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             Boolean regex;
 
             KeywordTableEntry(Keyword keyword) {
-                this.name = keyword.getQuery();
-                this.regex = !keyword.isLiteral();
+                this.name = keyword.getSearchTerm();
+                this.regex = !keyword.searchTermIsLiteral();
             }
 
             @Override

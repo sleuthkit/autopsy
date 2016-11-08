@@ -20,13 +20,9 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.Component;
 import java.io.File;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.JOptionPane;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.FsContent;
-import org.sleuthkit.datamodel.TskException;
 
 class KeywordSearchUtil {
 

@@ -72,7 +72,7 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
      * Update the match time total and increment num of files for this job
      *
      * @param ingestJobId
-     * @param matchTimeInc amount of time to add
+     * @param processTimeInc amount of time to add
      */
     private static synchronized void addToTotals(long ingestJobId, long processTimeInc) {
         IngestJobTotals ingestJobTotals = totalsForIngestJobs.get(ingestJobId);

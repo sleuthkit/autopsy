@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -43,6 +44,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
 import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskDataException;
 import org.apache.commons.lang3.StringUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.CarvingResult;
 import org.sleuthkit.datamodel.TskData;
 
@@ -53,6 +55,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class FileManager implements Closeable {
 
+    private static final Logger LOGGER = Logger.getLogger(FileManager.class.getName());
     private SleuthkitCase caseDb;
 
     /**
@@ -265,7 +268,6 @@ public class FileManager implements Closeable {
      * components at the volume level and above are removed for the search.
      *
      * @param dataSource The data source.
-     * @param fileName   The full or partial file name.
      * @param filePath   The file path (path components volume at the volume
      *                   level or above will be removed).
      *
@@ -343,7 +345,7 @@ public class FileManager implements Closeable {
         }
         return caseDb.addCarvedFiles(carvingResult);
     }
-        
+
     /**
      * Interface for receiving a notification for each file or directory added
      * to the case database by a FileManager add files operation.
@@ -353,7 +355,7 @@ public class FileManager implements Closeable {
         /**
          * Called after a file or directory is added to the case database.
          *
-         * @param An AbstractFile represeting the added file or directory.
+         * @param newFile AbstractFile representing the added file or directory.
          */
         void fileAdded(AbstractFile newFile);
     }
@@ -427,7 +429,11 @@ public class FileManager implements Closeable {
 
         } catch (TskCoreException ex) {
             if (null != trans) {
-                trans.rollback();
+                try {
+                    trans.rollback();
+                } catch (TskCoreException ex2) {
+                    LOGGER.log(Level.SEVERE, String.format("Failed to rollback transaction after exception: %s", ex.getMessage()), ex2);
+                }
             }
             throw ex;
         }
@@ -492,8 +498,6 @@ public class FileManager implements Closeable {
      * @param trans              A case database transaction.
      * @param parentDirectory    The root virtual direcotry of the data source.
      * @param localFile          The local/logical file or directory.
-     * @param addProgressUpdater notifier to receive progress notifications on
-     *                           folders added, or null if not used
      * @param encodingType       Type of encoding used when storing the file
      *
      * @returns File object of file added or new virtualdirectory for the
@@ -506,7 +510,7 @@ public class FileManager implements Closeable {
      * @throws TskCoreException If there is a problem completing a database
      *                          operation.
      */
-    private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile, 
+    private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile,
             TskData.EncodingType encodingType, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         if (localFile.isDirectory()) {
             /*
@@ -542,7 +546,7 @@ public class FileManager implements Closeable {
     public synchronized void close() throws IOException {
         caseDb = null;
     }
-        
+
     /**
      * Adds a set of local/logical files and/or directories to the case database
      * as data source.
@@ -607,8 +611,9 @@ public class FileManager implements Closeable {
      * Adds a collection of carved files to the '$CarvedFiles' virtual directory
      * of a data source, volume or file system.
      *
-     * @param A collection of CarvedFileContainer objects, one per carved file,
-     *          all of which must have the same parent object id.
+     * @param filesToAdd A collection of CarvedFileContainer objects, one per
+     *                   carved file, all of which must have the same parent
+     *                   object id.
      *
      * @return A collection of LayoutFile object representing the carved files.
      *
@@ -624,7 +629,7 @@ public class FileManager implements Closeable {
         }
         return caseDb.addCarvedFiles(filesToAdd);
     }
-    
+
     /**
      * Adds a derived file to the case.
      *
@@ -652,8 +657,8 @@ public class FileManager implements Closeable {
      *
      * @throws TskCoreException if there is a problem adding the file to the
      *                          case database.
-     * 
-     * @Deprecated Use the version with explicit EncodingType instead
+     *
+     * @deprecated Use the version with explicit EncodingType instead
      */
     @Deprecated
     public synchronized DerivedFile addDerivedFile(String fileName,
@@ -663,10 +668,10 @@ public class FileManager implements Closeable {
             boolean isFile,
             AbstractFile parentFile,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails) throws TskCoreException {
-        return addDerivedFile(fileName, localPath, size, ctime, crtime, atime, mtime, isFile, parentFile, 
+        return addDerivedFile(fileName, localPath, size, ctime, crtime, atime, mtime, isFile, parentFile,
                 rederiveDetails, toolName, toolVersion, otherDetails, TskData.EncodingType.NONE);
     }
-    
+
     /**
      * Adds a file or directory of logical/local files data source to the case
      * database, recursively adding the contents of directories.
@@ -674,7 +679,7 @@ public class FileManager implements Closeable {
      * @param trans              A case database transaction.
      * @param parentDirectory    The root virtual direcotry of the data source.
      * @param localFile          The local/logical file or directory.
-     * @param addProgressUpdater notifier to receive progress notifications on
+     * @param progressUpdater notifier to receive progress notifications on
      *                           folders added, or null if not used
      *
      * @returns File object of file added or new virtualdirectory for the
@@ -686,8 +691,8 @@ public class FileManager implements Closeable {
      *
      * @throws TskCoreException If there is a problem completing a database
      *                          operation.
-     * 
-     * @Deprecated Use the version with explicit EncodingType instead
+     *
+     * @deprecated Use the version with explicit EncodingType instead
      */
     @Deprecated
     private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile, FileAddProgressUpdater progressUpdater) throws TskCoreException {

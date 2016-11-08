@@ -329,6 +329,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jScrollPane2.setMinimumSize(new java.awt.Dimension(300, 0));
         jScrollPane2.setPreferredSize(new java.awt.Dimension(550, 275));
 
+        jSplitPane1.setDividerSize(1);
         jSplitPane1.setMinimumSize(new java.awt.Dimension(0, 0));
 
         jPanel1.setMinimumSize(new java.awt.Dimension(362, 0));
@@ -479,7 +480,7 @@ final class FileTypeIdGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 345, Short.MAX_VALUE)
+            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 507, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 

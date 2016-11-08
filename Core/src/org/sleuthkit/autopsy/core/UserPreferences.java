@@ -65,6 +65,7 @@ public final class UserPreferences {
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
     private static final String DEFAULT_PORT_STRING = "61616";
     private static final int DEFAULT_PORT_INT = 61616;
+    private static final String APP_NAME = "AppName";
 
     // Prevent instantiation.
     private UserPreferences() {
@@ -282,6 +283,23 @@ public final class UserPreferences {
      */
     public static void setIsTimeOutEnabled(boolean enabled) {
         preferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
+    }
+    
+    /**
+     * Get the display name for this program
+     * @return Name of this program
+     */
+    public static String getAppName(){
+        return preferences.get(APP_NAME, "Autopsy");
+    }
+    
+    /**
+     * Set the display name for this program
+     * 
+     * @param name Display name
+     */
+    public static void setAppName(String name){
+        preferences.put(APP_NAME, name);
     }
     
     

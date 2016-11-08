@@ -1,4 +1,4 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
  * 
@@ -254,6 +254,9 @@ class ReportHTML implements TableReportModule {
                 case TSK_REMOTE_DRIVE:
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/drive_network.png"); //NON-NLS
                     break;
+                case TSK_ACCOUNT:
+                    in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
+                    break;
                 default:
                     logger.log(Level.WARNING, "useDataTypeIcon: unhandled artifact type = " + dataType); //NON-NLS
                     in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
@@ -261,7 +264,17 @@ class ReportHTML implements TableReportModule {
                     iconFilePath = path + File.separator + iconFileName;
                     break;
             }
-        } else {  // no defined artifact found for this dataType 
+        } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
+            /* TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
+             * attribute, with a synthetic compound dataType name, so they are
+             * not caught by the switch statement above. For now we just give
+             * them all the general account icon, but we could do something else
+             * in the future.
+             */
+            in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/accounts.png"); //NON-NLS
+            iconFileName = "accounts.png"; //NON-NLS
+            iconFilePath = path + File.separator + iconFileName;
+        } else {  // no defined artifact found for this dataType
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/star.png"); //NON-NLS
             iconFileName = "star.png"; //NON-NLS
             iconFilePath = path + File.separator + iconFileName;
@@ -719,8 +732,7 @@ class ReportHTML implements TableReportModule {
      */
     public String saveContent(AbstractFile file, String dirName) {
         // clean up the dir name passed in
-        String dirName2 = dirName.replace("/", "_");
-        dirName2 = dirName2.replace("\\", "_");
+        String dirName2 = org.sleuthkit.autopsy.coreutils.FileUtil.escapeFileName(dirName);
 
         // Make a folder for the local file with the same tagName as the tag.
         StringBuilder localFilePath = new StringBuilder();  // full path
@@ -840,13 +852,13 @@ class ReportHTML implements TableReportModule {
             StringBuilder index = new StringBuilder();
             final String reportTitle = reportBranding.getReportTitle();
             String iconPath = reportBranding.getAgencyLogoPath();
-            if (iconPath == null){
+            if (iconPath == null) {
                 // use default Autopsy icon if custom icon is not set
                 iconPath = "favicon.ico";
             }
             index.append("<head>\n<title>").append(reportTitle).append(" ").append(
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
-                            "</title>\n"); //NON-NLS
+                    "</title>\n"); //NON-NLS
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"")
                     .append(iconPath).append("\" />\n"); //NON-NLS
             index.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n"); //NON-NLS
@@ -1045,10 +1057,10 @@ class ReportHTML implements TableReportModule {
                     .append("</td><td>").append(caseName).append("</td></tr>\n"); //NON-NLS NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.caseNum")) //NON-NLS
                     .append("</td><td>").append(!caseNumber.isEmpty() ? caseNumber : NbBundle //NON-NLS
-                                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
+                    .getMessage(this.getClass(), "ReportHTML.writeSum.noCaseNum")).append("</td></tr>\n"); //NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.examiner")).append("</td><td>") //NON-NLS
                     .append(!examiner.isEmpty() ? examiner : NbBundle
-                                    .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
+                            .getMessage(this.getClass(), "ReportHTML.writeSum.noExaminer"))
                     .append("</td></tr>\n"); //NON-NLS
             summary.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "ReportHTML.writeSum.numImages")) //NON-NLS
                     .append("</td><td>").append(imagecount).append("</td></tr>\n"); //NON-NLS
@@ -1114,13 +1126,17 @@ class ReportHTML implements TableReportModule {
         if (thumbFile.exists() == false) {
             return null;
         }
+        File to = new File(thumbsPath);
+        FileObject from = FileUtil.toFileObject(thumbFile);
+        FileObject dest = FileUtil.toFileObject(to);
         try {
-            File to = new File(thumbsPath);
-            FileObject from = FileUtil.toFileObject(thumbFile);
-            FileObject dest = FileUtil.toFileObject(to);
             FileUtil.copyFile(from, dest, thumbFile.getName(), "");
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
+        } catch (NullPointerException ex) {
+            logger.log(Level.SEVERE, "NPE generated from FileUtil.copyFile, probably because FileUtil.toFileObject returned null. \n" +
+                    "The File argument for toFileObject was " + thumbFile + " with toString: " + thumbFile.toString() + "\n" +
+                    "The FileObject returned by toFileObject, passed into FileUtil.copyFile, was " + from, ex);
         }
 
         return THUMBS_REL_PATH + thumbFile.getName();

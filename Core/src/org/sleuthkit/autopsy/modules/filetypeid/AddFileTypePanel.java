@@ -85,7 +85,9 @@ class AddFileTypePanel extends javax.swing.JPanel {
      *         type is given.
      */
     @Messages({"AddMimeTypePanel.emptySigList.message=Must have at least one signature.",
-        "AddMimeTypePanel.emptySigList.title=Invalid Signature List"})
+        "AddMimeTypePanel.emptySigList.title=Invalid Signature List",
+        "AddMimeTypePanel.emptySetName.message=Interesting files set name is required if alert is requested.",
+        "AddMimeTypePanel.emptySetName.title=Missing Interesting Files Set Name"})
     FileType getFileType() {
         String typeName = mimeTypeTextField.getText();
         if (typeName.isEmpty()) {
@@ -108,8 +110,20 @@ class AddFileTypePanel extends javax.swing.JPanel {
         for (int i = 0; i < this.signaturesListModel.getSize(); i++) {
             sigList.add(this.signaturesListModel.elementAt(i));
         }
-        return new FileType(typeName, sigList);
 
+        String setName = "";
+        if (this.postHitCheckBox.isSelected()) {
+            if (this.setNameTextField.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null,
+                        Bundle.AddMimeTypePanel_emptySetName_message(),
+                        Bundle.AddMimeTypePanel_emptySetName_title(),
+                        JOptionPane.ERROR_MESSAGE);
+
+                return null;
+            }
+            setName = this.setNameTextField.getText();
+        }
+        return new FileType(typeName, sigList, this.postHitCheckBox.isSelected(), setName);
     }
 
     /**
@@ -163,6 +177,9 @@ class AddFileTypePanel extends javax.swing.JPanel {
         mimeTypeTextField = new javax.swing.JTextField();
         addSigButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
+        postHitCheckBox = new javax.swing.JCheckBox();
+        setNameLabel = new javax.swing.JLabel();
+        setNameTextField = new javax.swing.JTextField();
 
         editSigButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(editSigButton, org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.editSigButton.text")); // NOI18N
@@ -203,6 +220,19 @@ class AddFileTypePanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.jLabel1.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(postHitCheckBox, org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.postHitCheckBox.text")); // NOI18N
+        postHitCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                postHitCheckBoxActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(setNameLabel, org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.setNameLabel.text")); // NOI18N
+        setNameLabel.setEnabled(postHitCheckBox.isSelected());
+
+        setNameTextField.setText(org.openide.util.NbBundle.getMessage(AddFileTypePanel.class, "AddFileTypePanel.setNameTextField.text")); // NOI18N
+        setNameTextField.setEnabled(postHitCheckBox.isSelected());
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -211,22 +241,30 @@ class AddFileTypePanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addComponent(mimeTypeLabel)
+                        .addGap(18, 18, 18)
+                        .addComponent(mimeTypeTextField))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addComponent(addSigButton)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                    .addComponent(addSigButton)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addComponent(editSigButton)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                    .addComponent(deleteSigButton))
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 393, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(28, 28, 28)
+                                .addComponent(setNameLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(editSigButton)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(deleteSigButton))
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 393, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(setNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(mimeTypeLabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(mimeTypeTextField)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(postHitCheckBox))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -245,7 +283,13 @@ class AddFileTypePanel extends javax.swing.JPanel {
                     .addComponent(addSigButton)
                     .addComponent(editSigButton)
                     .addComponent(deleteSigButton))
-                .addContainerGap())
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(postHitCheckBox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(setNameLabel)
+                    .addComponent(setNameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -280,6 +324,13 @@ class AddFileTypePanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_addSigButtonActionPerformed
 
+    private void postHitCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_postHitCheckBoxActionPerformed
+        if (evt.getSource().equals(postHitCheckBox)) {
+            this.setNameLabel.setEnabled(postHitCheckBox.isSelected());
+            this.setNameTextField.setEnabled(postHitCheckBox.isSelected());
+        }
+    }//GEN-LAST:event_postHitCheckBoxActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addSigButton;
@@ -289,6 +340,9 @@ class AddFileTypePanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel mimeTypeLabel;
     private javax.swing.JTextField mimeTypeTextField;
+    private javax.swing.JCheckBox postHitCheckBox;
+    private javax.swing.JLabel setNameLabel;
+    private javax.swing.JTextField setNameTextField;
     private javax.swing.JList<FileType.Signature> signatureList;
     // End of variables declaration//GEN-END:variables
 }
