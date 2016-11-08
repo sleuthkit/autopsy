@@ -33,6 +33,8 @@ public class ResultsNode extends DisplayableItemNode {
     @NbBundle.Messages("ResultsNode.name.text=Results")
     public static final String NAME = Bundle.ResultsNode_name_text();
 
+    
+    
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(
                 new ExtractedContent(sleuthkitCase),

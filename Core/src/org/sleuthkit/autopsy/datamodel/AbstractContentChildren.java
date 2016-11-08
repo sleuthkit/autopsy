@@ -190,6 +190,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
+        public AbstractNode visit(FileTypes ft) {
+            return new FileTypesNew(ft.getSleuthkitCase());
+        }
+
+        @Override
         public AbstractNode visit(Reports reportsItem) {
             return new Reports.ReportsListNode();
         }

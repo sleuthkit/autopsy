@@ -140,6 +140,8 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(Accounts.DefaultAccountTypeNode node);
 
+    T visit(FileTypesNew fileTypes);
+
     /**
      * Visitor with an implementable default behavior for all types. Override
      * specific visit types to not use the default behavior.
@@ -256,7 +258,11 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(ResultsNode rn) {
             return defaultVisit(rn);
         }
-
+        
+        @Override
+        public T visit(FileTypesNew ft) {
+            return defaultVisit(ft);
+        }
         @Override
         public T visit(DataSourcesNode in) {
             return defaultVisit(in);
