@@ -127,7 +127,7 @@ public class ExternalViewerAction extends AbstractAction {
                 runtime.exec(s);
             } catch (IOException ex) {
                 logger.log(Level.WARNING, "Could not open the specified viewer for the given file: " + file.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
             }
         } else {
             try {
