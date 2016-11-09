@@ -444,7 +444,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         int offset = props.size();
         for (Property<?> prop : props) {
             Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), "-1"));
-            if (value >= 0 && value < offset) {
+            if (value >= 0 && value < offset && !propsFromPreferences.containsKey(value)) {
                 propsFromPreferences.put(value, prop);
             } else {
                 propsFromPreferences.put(offset, prop);
