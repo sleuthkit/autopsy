@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -167,7 +168,8 @@ public class Server {
     static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
     static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort"; //NON-NLS
-    private static final String KEY = "jjk#09s"; //NON-NLS
+//    private static final String KEY = "jjk#09s"; //NON-NLS
+    private static final String KEY = "solrrocks"; //NON-NLS
     static final String DEFAULT_SOLR_SERVER_HOST = "localhost"; //NON-NLS
     static final int DEFAULT_SOLR_SERVER_PORT = 23232;
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
@@ -194,6 +196,7 @@ public class Server {
     private final ReentrantReadWriteLock currentCoreLock;
 
     private final File solrFolder;
+    private Path solrCmdPath;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
 
@@ -208,6 +211,7 @@ public class Server {
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
+        solrCmdPath = Paths.get(solrFolder.getAbsolutePath(), "bin", "solr.cmd");
 
         currentCoreLock = new ReentrantReadWriteLock(true);
         uncPathUtilities = new UNCPathUtilities();
@@ -325,6 +329,33 @@ public class Server {
     }
 
     /**
+     * Run a Solr command with the given arguments.
+     * @param solrArguments Command line arguments to pass to the Solr command.
+     * @return
+     * @throws IOException
+     */
+    private Process runSolrCommand(List<String> solrArguments) throws IOException {
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(solrCmdPath.toString());
+        commandLine.addAll(solrArguments);
+
+        ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
+        solrProcessBuilder.directory(solrFolder);
+
+        // Redirect stdout and stderr to files to prevent blocking.
+        Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
+        solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
+
+        Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
+        solrProcessBuilder.redirectError(solrStderrPath.toFile());
+
+        logger.log(Level.INFO, "Running Solr command: {0}", solrProcessBuilder.command()); //NON-NLS
+        Process process = solrProcessBuilder.start();
+        logger.log(Level.INFO, "Finished running Solr command"); //NON-NLS
+        return process;
+    }
+
+    /**
      * Get list of PIDs of currently running Solr processes
      *
      * @return
@@ -333,7 +364,7 @@ public class Server {
         List<Long> pids = new ArrayList<>();
 
         //NOTE: these needs to be in sync with process start string in start()
-        final String pidsQuery = "Args.4.eq=-DSTOP.KEY=" + KEY + ",Args.6.eq=start.jar"; //NON-NLS
+        final String pidsQuery = "Args.*.eq=-DSTOP.KEY=" + KEY + ",Args.*.eq=start.jar"; //NON-NLS
 
         long[] pidsArr = PlatformUtil.getJavaPIDs(pidsQuery);
         if (pidsArr != null) {
@@ -399,29 +430,7 @@ public class Server {
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
-                final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; //NON-NLS
-                List<String> commandLine = new ArrayList<>();
-                commandLine.add(javaPath);
-                commandLine.add(MAX_SOLR_MEM_MB_PAR);
-                commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
-                commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
-                commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
-                commandLine.add("-jar"); //NON-NLS
-                commandLine.add("start.jar"); //NON-NLS
-
-                ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
-                solrProcessBuilder.directory(solrFolder);
-
-                // Redirect stdout and stderr to files to prevent blocking.
-                Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
-                solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
-
-                Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
-                solrProcessBuilder.redirectError(solrStderrPath.toFile());
-
-                logger.log(Level.INFO, "Starting Solr using: {0}", solrProcessBuilder.command()); //NON-NLS
-                curSolrProcess = solrProcessBuilder.start();
-                logger.log(Level.INFO, "Finished starting Solr"); //NON-NLS
+                curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
 
                 try {
                     //block for 10 seconds, give time to fully start the process
@@ -514,17 +523,10 @@ public class Server {
             logger.log(Level.INFO, "Stopping Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
 
             //try graceful shutdown
-            final String[] SOLR_STOP_CMD = {
-                javaPath,
-                "-DSTOP.PORT=" + currentSolrStopPort, //NON-NLS
-                "-DSTOP.KEY=" + KEY, //NON-NLS
-                "-jar", //NON-NLS
-                "start.jar", //NON-NLS
-                "--stop", //NON-NLS
-            };
-            Process stop = Runtime.getRuntime().exec(SOLR_STOP_CMD, null, solrFolder);
-            logger.log(Level.INFO, "Waiting for stopping Solr server"); //NON-NLS
-            stop.waitFor();
+            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
+
+            logger.log(Level.INFO, "Waiting for Solr server to stop"); //NON-NLS
+            process.waitFor();
 
             //if still running, forcefully stop it
             if (curSolrProcess != null) {
@@ -532,7 +534,8 @@ public class Server {
                 curSolrProcess = null;
             }
 
-        } catch (InterruptedException | IOException ex) {
+        } catch (IOException | InterruptedException ex) {
+            logger.log(Level.WARNING, "Error while attempting to stop Solr server", ex);
         } finally {
             //stop Solr stream -> log redirect threads
             try {

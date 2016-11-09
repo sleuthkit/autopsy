@@ -1,0 +1,37 @@
+0    INFO  (main) [   ] o.e.j.u.log Logging initialized @745ms
+234  INFO  (main) [   ] o.e.j.s.Server jetty-9.3.8.v20160314
+250  INFO  (main) [   ] o.e.j.d.p.ScanningAppProvider Deployment monitor [file:///C:/Temp/lucene-solr-releases-lucene-solr-6.2.1/lucene-solr-releases-lucene-solr-6.2.1/solr/server/contexts/] at interval 0
+2390 INFO  (main) [   ] o.e.j.w.StandardDescriptorProcessor NO JSP Support for /solr, did not find org.apache.jasper.servlet.JspServlet
+2390 WARN  (main) [   ] o.e.j.s.SecurityHandler ServletContext@o.e.j.w.WebAppContext@4e1d422d{/solr,file:///C:/Temp/lucene-solr-releases-lucene-solr-6.2.1/lucene-solr-releases-lucene-solr-6.2.1/solr/server/solr-webapp/webapp/,STARTING}{c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server/solr-webapp/webapp} has uncovered http methods for path: /
+2406 INFO  (main) [   ] o.a.s.s.SolrDispatchFilter SolrDispatchFilter.init(): WebAppClassLoader=25548982@185d8b6
+2437 INFO  (main) [   ] o.a.s.c.SolrResourceLoader JNDI not configured for solr (NoInitialContextEx)
+2437 INFO  (main) [   ] o.a.s.c.SolrResourceLoader using system property solr.solr.home: c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr
+2437 INFO  (main) [   ] o.a.s.c.SolrResourceLoader new SolrResourceLoader for directory: 'c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr'
+2437 INFO  (main) [   ] o.a.s.c.SolrResourceLoader JNDI not configured for solr (NoInitialContextEx)
+2437 INFO  (main) [   ] o.a.s.c.SolrResourceLoader using system property solr.solr.home: c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr
+2437 INFO  (main) [   ] o.a.s.c.SolrXmlConfig Loading container configuration from c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr\solr.xml
+2577 INFO  (main) [   ] o.a.s.c.CorePropertiesLocator Config-defined core root directory: c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr
+2609 INFO  (main) [   ] o.a.s.c.CoreContainer New CoreContainer 2011791487
+2609 INFO  (main) [   ] o.a.s.c.CoreContainer Loading cores into CoreContainer [instanceDir=c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr]
+2609 WARN  (main) [   ] o.a.s.c.CoreContainer Couldn't add files from c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr\lib to classpath: c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr\lib
+2624 INFO  (main) [   ] o.a.s.h.c.HttpShardHandlerFactory created with socketTimeout : 600000,connTimeout : 60000,maxConnectionsPerHost : 20,maxConnections : 10000,corePoolSize : 0,maximumPoolSize : 2147483647,maxThreadIdleTime : 5,sizeOfQueue : -1,fairnessPolicy : false,useRetries : false,connectionsEvictorSleepDelay : 5000,maxConnectionIdleTime : 40000,
+3359 INFO  (main) [   ] o.a.s.u.UpdateShardHandler Creating UpdateShardHandler HTTP client with params: socketTimeout=600000&connTimeout=60000&retry=true
+3374 INFO  (main) [   ] o.a.s.l.LogWatcher SLF4J impl is org.slf4j.impl.Log4jLoggerFactory
+3374 INFO  (main) [   ] o.a.s.l.LogWatcher Registering Log Listener [Log4j (org.slf4j.impl.Log4jLoggerFactory)]
+3374 INFO  (main) [   ] o.a.s.c.CoreContainer Security conf doesn't exist. Skipping setup for authorization module.
+3374 INFO  (main) [   ] o.a.s.c.CoreContainer No authentication plugin used.
+3452 INFO  (main) [   ] o.a.s.c.CorePropertiesLocator Looking for core definitions underneath c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server\solr
+3468 INFO  (main) [   ] o.a.s.c.CorePropertiesLocator Found 0 core definitions
+3468 INFO  (main) [   ] o.a.s.s.SolrDispatchFilter user.dir=c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server
+3468 INFO  (main) [   ] o.a.s.s.SolrDispatchFilter SolrDispatchFilter.init() done
+3484 INFO  (main) [   ] o.e.j.s.h.ContextHandler Started o.e.j.w.WebAppContext@4e1d422d{/solr,file:///C:/Temp/lucene-solr-releases-lucene-solr-6.2.1/lucene-solr-releases-lucene-solr-6.2.1/solr/server/solr-webapp/webapp/,AVAILABLE}{c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server/solr-webapp/webapp}
+3515 INFO  (main) [   ] o.e.j.s.ServerConnector Started ServerConnector@fa4c865{HTTP/1.1,[http/1.1]}{0.0.0.0:23232}
+3515 INFO  (main) [   ] o.e.j.s.Server Started @4257ms
+3843 INFO  (qtp1389647288-15) [   ] o.a.s.s.HttpSolrCall [admin] webapp=null path=/admin/info/system params={wt=json} status=0 QTime=218
+30306 INFO  (qtp1389647288-15) [   ] o.a.s.s.HttpSolrCall [admin] webapp=null path=/admin/cores params={indexInfo=false&wt=json&_=1478634564156} status=0 QTime=1
+30342 INFO  (qtp1389647288-19) [   ] o.a.s.s.HttpSolrCall [admin] webapp=null path=/admin/info/system params={wt=json&_=1478634564156} status=0 QTime=33
+30354 INFO  (qtp1389647288-22) [   ] o.a.s.s.HttpSolrCall [admin] webapp=null path=/admin/info/system params={wt=json&_=1478634564156} status=0 QTime=47
+311125 INFO  (ShutdownMonitor) [   ] o.e.j.s.ServerConnector Stopped ServerConnector@fa4c865{HTTP/1.1,[http/1.1]}{0.0.0.0:23232}
+311125 INFO  (ShutdownMonitor) [   ] o.a.s.c.CoreContainer Shutting down CoreContainer instance=2011791487
+311135 INFO  (ShutdownMonitor) [   ] o.e.j.s.h.ContextHandler Stopped o.e.j.w.WebAppContext@4e1d422d{/solr,null,UNAVAILABLE}{c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server/solr-webapp/webapp}
+311135 WARN  (ShutdownMonitor) [   ] o.e.j.s.ServletContextHandler ServletContextHandler.setHandler should not be called directly. Use insertHandler or setSessionHandler etc.
