@@ -7,7 +7,7 @@
         
         <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
-        <conf name="solr-war"/>
+        <!--<conf name="solr-war"/>-->
         <conf name="start-solr"/>
         <conf name="jetty-libs"/>
         <conf name="slf4j-libs"/>
@@ -15,11 +15,11 @@
     </configurations>
     <dependencies>
         <!-- Solr -->
-        <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="4.9.1"/>
-        <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
+        <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="6.2.1"/>
+        <!--<dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="6.2.1" transitive="false" />-->
 
         <!-- Autopsy -->
-        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="4.9.1"/>
+        <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="6.2.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
         <dependency conf="autopsy->*" org="org.apache.tika" name="tika-parsers" rev="1.5"/>

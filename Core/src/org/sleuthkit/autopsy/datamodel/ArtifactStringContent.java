@@ -89,8 +89,9 @@ public class ArtifactStringContent implements StringContent {
                         case INTEGER:
                         case LONG:
                         case DOUBLE:
+							buffer.append(attr.getDisplayString());
                         case BYTE:
-                            buffer.append(attr.getDisplayString());
+                            buffer.append(Arrays.toString(attr.getValueBytes()));
                             break;
                         case DATETIME:
                             long epoch = attr.getValueLong();

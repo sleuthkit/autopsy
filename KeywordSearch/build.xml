@@ -43,7 +43,7 @@
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
         <ivy:retrieve conf="autopsy" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr-war" sync="true" pattern="release/solr/webapps/solr.war" />
+        <!-- <ivy:retrieve conf="solr-war" sync="true" pattern="release/solr/webapps/solr.war" /> -->
         <ivy:retrieve conf="start-solr" sync="true" pattern="release/solr/start.jar" />
         <ivy:retrieve conf="jetty-libs" sync="true" pattern="release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr-libs" sync="true" pattern="release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />

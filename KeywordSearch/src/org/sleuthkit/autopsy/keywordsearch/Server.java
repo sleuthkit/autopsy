@@ -50,6 +50,10 @@ import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
+import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
@@ -184,11 +188,12 @@ public class Server {
     };
 
     // A reference to the locally running Solr instance.
-    private final HttpSolrServer localSolrServer;
+    private final HttpSolrClient localSolrServer;
+    private final Builder builder;
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
-    private HttpSolrServer currentSolrServer;
+    private HttpSolrClient currentSolrServer;
 
     private Core currentCore;
     private final ReentrantReadWriteLock currentCoreLock;
@@ -204,7 +209,8 @@ public class Server {
     Server() {
         initSettings();
 
-        this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
+        this.builder = new Builder("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
+        this.localSolrServer = this.builder.build();
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
         javaPath = PlatformUtil.getJavaPath();
@@ -701,7 +707,7 @@ public class Server {
             } else {
                 String host = UserPreferences.getIndexingServerHost();
                 String port = UserPreferences.getIndexingServerPort();
-                currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
+                currentSolrServer = new Builder("http://" + host + ":" + port + "/solr").build(); //NON-NLS
             }
             connectToSolrServer(currentSolrServer);
 
@@ -761,7 +767,7 @@ public class Server {
             }
             try {
                 return currentCore.queryNumIndexedFiles();
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxFiles.exception.msg"), ex);
             }
         } finally {
@@ -786,7 +792,7 @@ public class Server {
             }
             try {
                 return currentCore.queryNumIndexedChunks();
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxChunks.exception.msg"), ex);
             }
         } finally {
@@ -811,7 +817,7 @@ public class Server {
             }
             try {
                 return currentCore.queryNumIndexedDocuments();
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumIdxDocs.exception.msg"), ex);
             }
         } finally {
@@ -837,7 +843,7 @@ public class Server {
             }
             try {
                 return currentCore.queryIsIndexed(contentID);
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryIsIdxd.exception.msg"), ex);
             }
 
@@ -865,7 +871,7 @@ public class Server {
             }
             try {
                 return currentCore.queryNumFileChunks(fileID);
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryNumFileChunks.exception.msg"), ex);
             }
         } finally {
@@ -883,7 +889,7 @@ public class Server {
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
      */
-    public QueryResponse query(SolrQuery sq) throws KeywordSearchModuleException, NoOpenCoreException {
+    public QueryResponse query(SolrQuery sq) throws KeywordSearchModuleException, NoOpenCoreException, IOException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCore) {
@@ -918,7 +924,7 @@ public class Server {
             }
             try {
                 return currentCore.query(sq, method);
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query2.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -944,7 +950,7 @@ public class Server {
             }
             try {
                 return currentCore.queryTerms(sq);
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryTerms.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -1135,7 +1141,7 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
+    void connectToSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
         CoreAdminRequest.getStatus(null, solrServer);
     }
 
@@ -1187,13 +1193,13 @@ public class Server {
 
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
-        private final HttpSolrServer solrCore;
+        private final HttpSolrClient solrCore;
 
         private Core(String name, CaseType caseType) {
             this.name = name;
             this.caseType = caseType;
 
-            this.solrCore = new HttpSolrServer(currentSolrServer.getBaseURL() + "/" + name);
+            this.solrCore = new Builder(currentSolrServer.getBaseURL() + "/" + name).build(); //NON-NLS
 
             //TODO test these settings
             //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
@@ -1204,7 +1210,6 @@ public class Server {
             // allowCompression defaults to false.
             // Server side must support gzip or deflate for this to have any effect.
             solrCore.setAllowCompression(true);
-            solrCore.setMaxRetries(1); // defaults to 0.  > 1 not recommended.
             solrCore.setParser(new XMLResponseParser()); // binary parser is used by default
 
         }
@@ -1218,7 +1223,7 @@ public class Server {
             return name;
         }
 
-        private QueryResponse query(SolrQuery sq) throws SolrServerException {
+        private QueryResponse query(SolrQuery sq) throws SolrServerException, IOException {
             return solrCore.query(sq);
         }
 
@@ -1233,11 +1238,11 @@ public class Server {
 
         }
 
-        private QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException {
+        private QueryResponse query(SolrQuery sq, SolrRequest.METHOD method) throws SolrServerException, IOException {
             return solrCore.query(sq, method);
         }
 
-        private TermsResponse queryTerms(SolrQuery sq) throws SolrServerException {
+        private TermsResponse queryTerms(SolrQuery sq) throws SolrServerException, IOException {
             QueryResponse qres = solrCore.query(sq);
             return qres.getTermsResponse();
         }
@@ -1301,7 +1306,7 @@ public class Server {
                         }
                     }
                 }
-            } catch (SolrServerException ex) {
+            } catch (SolrServerException | IOException ex) {
                 logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
                 return null;
             }
@@ -1335,7 +1340,7 @@ public class Server {
          *
          * @throws SolrServerException
          */
-        private int queryNumIndexedFiles() throws SolrServerException {
+        private int queryNumIndexedFiles() throws SolrServerException, IOException {
             return queryNumIndexedDocuments() - queryNumIndexedChunks();
         }
 
@@ -1347,7 +1352,7 @@ public class Server {
          *
          * @throws SolrServerException
          */
-        private int queryNumIndexedChunks() throws SolrServerException {
+        private int queryNumIndexedChunks() throws SolrServerException, IOException {
             SolrQuery q = new SolrQuery(Server.Schema.ID + ":*" + Server.CHUNK_ID_SEPARATOR + "*");
             q.setRows(0);
             int numChunks = (int) query(q).getResults().getNumFound();
@@ -1364,7 +1369,7 @@ public class Server {
          *
          * @throws SolrServerException
          */
-        private int queryNumIndexedDocuments() throws SolrServerException {
+        private int queryNumIndexedDocuments() throws SolrServerException, IOException {
             SolrQuery q = new SolrQuery("*:*");
             q.setRows(0);
             return (int) query(q).getResults().getNumFound();
@@ -1379,7 +1384,7 @@ public class Server {
          *
          * @throws SolrServerException
          */
-        private boolean queryIsIndexed(long contentID) throws SolrServerException {
+        private boolean queryIsIndexed(long contentID) throws SolrServerException, IOException {
             String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             SolrQuery q = new SolrQuery("*:*");
             q.addFilterQuery(Server.Schema.ID.toString() + ":" + id);
@@ -1399,7 +1404,7 @@ public class Server {
          *
          * @throws SolrServerException
          */
-        private int queryNumFileChunks(long contentID) throws SolrServerException {
+        private int queryNumFileChunks(long contentID) throws SolrServerException, IOException {
             String id = KeywordSearchUtil.escapeLuceneQuery(Long.toString(contentID));
             final SolrQuery q
                     = new SolrQuery(Server.Schema.ID + ":" + id + Server.CHUNK_ID_SEPARATOR + "*");

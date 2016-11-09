@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.IOException;
 import java.util.HashMap;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -184,12 +184,12 @@ public class SolrSearchService implements KeywordSearchService {
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
-        HttpSolrServer solrServer = null;
+        HttpSolrClient solrServer = null;
         if (host == null || host.isEmpty()) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.MissingHostname")); //NON-NLS
         }
         try {
-            solrServer = new HttpSolrServer("http://" + host + ":" + Integer.toString(port) + "/solr"); //NON-NLS;
+            solrServer = new HttpSolrClient.Builder("http://" + host + ":" + Integer.toString(port) + "/solr").build(); //NON-NLS
             KeywordSearch.getServer().connectToSolrServer(solrServer);
         } catch (SolrServerException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrConnectionCheck.HostnameOrPort")); //NON-NLS
@@ -218,7 +218,11 @@ public class SolrSearchService implements KeywordSearchService {
             throw new KeywordSearchServiceException(ex.getMessage());
         } finally {
             if (null != solrServer) {
-                solrServer.shutdown();
+                try {
+                    solrServer.close();
+                } catch (IOException ex) {
+                    throw new KeywordSearchServiceException(ex.getMessage());
+                }
             }
         }
     }
