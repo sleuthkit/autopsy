@@ -39,6 +39,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 
 /**
  * visual component for the first panel of add image wizard. Allows the user to
@@ -92,7 +93,8 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             datasourceProcessorsMap.remove(LocalDiskDSProcessor.getType());
         }
         coreDSPTypes.add(LocalFilesDSProcessor.getType());
-
+        coreDSPTypes.add(RawDSProcessor.getType());
+        
         for (String dspType : coreDSPTypes) {
             typeComboBox.addItem(dspType);
         }

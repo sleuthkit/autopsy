@@ -29,6 +29,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -55,20 +56,20 @@ class KeywordSearchQueryDelegator {
         for (KeywordList keywordList : keywordLists) {
             for (Keyword keyword : keywordList.getKeywords()) {
                 KeywordSearchQuery query;
-                if (keyword.isLiteral()) {
+                if (keyword.searchTermIsLiteral()) {
                     // literal, exact match
-                    if (keyword.isWholeword()) {
+                    if (keyword.searchTermIsWholeWord()) {
                         query = new LuceneQuery(keywordList, keyword);
                         query.escape();
                     } // literal, substring match
                     else {
-                        query = new TermComponentQuery(keywordList, keyword);
+                        query = new TermsComponentQuery(keywordList, keyword);
                         query.escape();
                         query.setSubstringQuery();
                     }
                 } // regexp
                 else {
-                    query = new TermComponentQuery(keywordList, keyword);
+                    query = new TermsComponentQuery(keywordList, keyword);
                 }
                 queryDelegates.add(query);
             }
@@ -108,7 +109,8 @@ class KeywordSearchQueryDelegator {
 
         final String pathText = NbBundle.getMessage(this.getClass(), "KeywordSearchQueryManager.pathText.text");
 
-        DataResultTopComponent.initInstance(pathText, rootNode, queryRequests.size(), searchResultWin);
+        DataResultTopComponent.initInstance(pathText, new TableFilterNode(rootNode, true, KeywordSearch.class.getName()),
+                queryRequests.size(), searchResultWin);
 
         searchResultWin.requestActive();
     }

@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.logging.Level;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -56,11 +55,9 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * DataResult sortable table viewer
@@ -80,10 +77,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private static final Color TAGGED_COLOR = new Color(230, 235, 240);
     private Node currentRoot;
-    // The following two variables keep track of whether the user is trying
-    // to move the first column, which is not allowed.
-    private int oldColumnIndex = -1;
-    private int newColumnIndex = -1;
+    // When a column in the table is moved, these two variables keep track of where
+    // the column started and where it ended up.
+    private int startColumnIndex = -1;
+    private int endColumnIndex = -1;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -137,11 +134,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (fromIndex == toIndex) {
                     return;
                 }
-                // to keep track of attempts to move the first column
-                if (oldColumnIndex == -1) {
-                    oldColumnIndex = fromIndex;
+
+                /* Because a column may be dragged to several different positions before
+                 * the mouse is released (thus causing multiple TableColumnModelEvents to
+                 * be fired), we want to keep track of the starting column index in this
+                 * potential series of movements. Therefore we only keep track of the
+                 * original fromIndex in startColumnIndex, but we always update
+                 * endColumnIndex to know the final position of the moved column.
+                 * See the MouseListener mouseReleased method.
+                */
+                if (startColumnIndex == -1) {
+                    startColumnIndex = fromIndex;
                 }
-                newColumnIndex = toIndex;
+                endColumnIndex = toIndex;
 
                 List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
                 Node.Property<?> prop = props.remove(fromIndex);
@@ -158,10 +163,20 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (oldColumnIndex != -1 && (oldColumnIndex == 0 || newColumnIndex == 0)) {
-                    ov.getOutline().moveColumn(newColumnIndex, oldColumnIndex);
+                /* If the startColumnIndex is not -1 (which is the reset value), that
+                 * means columns have been moved around. We then check to see if either
+                 * the starting or end position is 0 (the first column), and then swap
+                 * them back if that is the case because we don't want to allow movement
+                 * of the first column. We then reset startColumnIndex to -1, the reset
+                 * value.
+                 * We check if startColumnIndex is at reset or not because it is
+                 * possible for the mouse to be released and a MouseEvent to be fired
+                 * without having moved any columns.
+                 */
+                if (startColumnIndex != -1 && (startColumnIndex == 0 || endColumnIndex == 0)) {
+                    ov.getOutline().moveColumn(endColumnIndex, startColumnIndex);
                 }
-                oldColumnIndex = -1;
+                startColumnIndex = -1;
             }
         });
     }
@@ -218,68 +233,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Gets regular Bean property set properties from first child of Node.
-     *
-     * @param parent Node with at least one child to get properties from
-     *
-     * @return Properties,
-     */
-    private Node.Property<?>[] getChildPropertyHeaders(Node parent) {
-        Node firstChild = parent.getChildren().getNodeAt(0);
-
-        if (firstChild == null) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
-        } else {
-            for (PropertySet ps : firstChild.getPropertySets()) {
-                if (ps.getName().equals(Sheet.PROPERTIES)) {
-                    return ps.getProperties();
-                }
-            }
-
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.childWithoutPropertySet"));
-        }
-    }
-
-    /**
-     * Gets regular Bean property set properties from all first children and,
-     * recursively, subchildren of Node. Note: won't work out the box for lazy
-     * load - you need to set all children props for the parent by hand
-     *
-     * @param parent Node with at least one child to get properties from
-     *
-     * @return Properties,
-     */
-    @SuppressWarnings("rawtypes")
-    private Node.Property[] getAllChildPropertyHeaders(Node parent) {
-        Node firstChild = parent.getChildren().getNodeAt(0);
-
-        Property[] properties = null;
-
-        if (firstChild == null) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
-        } else {
-            Set<Property> allProperties = new LinkedHashSet<>();
-            while (firstChild != null) {
-                for (PropertySet ps : firstChild.getPropertySets()) {
-                    final Property[] props = ps.getProperties();
-                    final int propsNum = props.length;
-                    for (int i = 0; i < propsNum; ++i) {
-                        allProperties.add(props[i]);
-                    }
-                }
-                firstChild = firstChild.getChildren().getNodeAt(0);
-            }
-
-            properties = allProperties.toArray(new Property<?>[0]);
-        }
-        return properties;
-
-    }
-
-    /**
      * Gets regular Bean property set properties from all children and,
      * recursively, subchildren of Node. Note: won't work out the box for lazy
      * load - you need to set all children props for the parent by hand
@@ -320,6 +273,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     public void setNode(Node selectedNode) {
         final OutlineView ov = ((OutlineView) this.tableScrollPanel);
+        /* The quick filter must be reset because when determining column width,
+         * ETable.getRowCount is called, and the documentation states that quick
+         * filters must be unset for the method to work
+         * "If the quick-filter is applied the number of rows do not match the number of rows in the model."
+         */
         ov.getOutline().unsetQuickFilter();
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -405,9 +363,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // Just let the table resize itself.
         ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        // get first row's values for the table
         if (root.getChildren().getNodesCount() != 0) {
-
             final Graphics graphics = ov.getGraphics();
             if (graphics != null) {
                 final FontMetrics metrics = graphics.getFontMetrics();
@@ -420,9 +376,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     int columnWidthLimit = (column == 0) ? 350 : 300;
                     int valuesWidth = 0;
 
-                    // find the maximum width needed to fit the values for the first 15 rows, at most
-                    // *15 is an arbitrary number
-                    for (int row = 0; row < Math.min(15, ov.getOutline().getRowCount()); row++) {
+                    // find the maximum width needed to fit the values for the first 100 rows, at most
+                    for (int row = 0; row < Math.min(100, ov.getOutline().getRowCount()); row++) {
                         TableCellRenderer renderer = ov.getOutline().getCellRenderer(row, column);
                         Component comp = ov.getOutline().prepareRenderer(renderer, row, column);
                         valuesWidth = Math.max(comp.getPreferredSize().width, valuesWidth);
@@ -438,51 +393,52 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     ov.getOutline().getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }                    
             }
+        } else {
+            // if there's no content just auto resize all columns
+            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        }
 
-            /**
-             * This custom renderer extends the renderer that was already being
-             * used by the outline table. This renderer colors a row if the
-             * tags property of the node is not empty.
-             */
-            class ColorTagCustomRenderer extends DefaultOutlineCellRenderer {
-                private static final long serialVersionUID = 1L;
-                @Override
-                public Component getTableCellRendererComponent(JTable table,
-                        Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-
-                    Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-                    // only override the color if a node is not selected
-                    if (!isSelected) {
-                        Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
-                        boolean tagFound = false;
-                        if (node != null) {
-                            Node.PropertySet[] propSets = node.getPropertySets();
-                            if (propSets.length != 0) {
-                                // currently, a node has only one property set, named Sheet.PROPERTIES ("properties")
-                                Node.Property<?>[] props = propSets[0].getProperties();
-                                for (Property<?> prop : props) {
-                                    if (prop.getName().equals("Tags")) {
-                                        try {
-                                            tagFound = !prop.getValue().equals("");
-                                        } catch (IllegalAccessException | InvocationTargetException ignore) {
-                                        }
-                                        break;
+        /**
+         * This custom renderer extends the renderer that was already being
+         * used by the outline table. This renderer colors a row if the
+         * tags property of the node is not empty.
+         */
+        class ColorTagCustomRenderer extends DefaultOutlineCellRenderer {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public Component getTableCellRendererComponent(JTable table,
+                    Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                
+                Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                // only override the color if a node is not selected
+                if (!isSelected) {
+                    Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
+                    boolean tagFound = false;
+                    if (node != null) {
+                        Node.PropertySet[] propSets = node.getPropertySets();
+                        if (propSets.length != 0) {
+                            // currently, a node has only one property set, named Sheet.PROPERTIES ("properties")
+                            Node.Property<?>[] props = propSets[0].getProperties();
+                            for (Property<?> prop : props) {
+                                if (prop.getName().equals("Tags")) {
+                                    try {
+                                        tagFound = !prop.getValue().equals("");
+                                    } catch (IllegalAccessException | InvocationTargetException ignore) {
                                     }
+                                    break;
                                 }
                             }
                         }
-                        //if the node does have associated tags, set its background color
-                        if (tagFound) {
-                            component.setBackground(TAGGED_COLOR);
-                        }
                     }
-                    return component;
+                    //if the node does have associated tags, set its background color
+                    if (tagFound) {
+                        component.setBackground(TAGGED_COLOR);
+                    }
                 }
+                return component;
             }
-            ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
-        } else {
-            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
+        ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
     }
 
     /**
@@ -504,7 +460,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
         for (int i = 0; i < props.size(); i++) {
             Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getPreferenceKey(prop, tfn.getItemType()), String.valueOf(i));
+            NbPreferences.forModule(this.getClass()).put(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), String.valueOf(i));
         }
     }
 
@@ -523,8 +479,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (currentRoot instanceof TableFilterNode) {
             tfn = (TableFilterNode) currentRoot;
         } else {
-            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO,
-                    "Node {0} is not a TableFilterNode, columns are going to be in default order", currentRoot.getName());
+            // The node is not a TableFilterNode, columns are going to be in default order
             return props;
         }
 
@@ -535,8 +490,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         Map<Integer, Node.Property<?>> propsFromPreferences = new TreeMap<>();
         int offset = props.size();
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getPreferenceKey(prop, tfn.getItemType()), "-1"));
-            if (value >= 0) {
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), "-1"));
+            if (value >= 0 && value < offset) {
                 propsFromPreferences.put(value, prop);
             } else {
                 propsFromPreferences.put(offset, prop);
@@ -559,7 +514,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param type The type of the current node
      * @return     A generated key for the preference file
      */
-    private String getPreferenceKey(Property<?> prop, String type) {
+    private String getColumnPreferenceKey(Property<?> prop, String type) {
         return type.replaceAll("[^a-zA-Z0-9_]", "") + "."
                 + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".column";
     }

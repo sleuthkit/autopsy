@@ -176,7 +176,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         }
         boolean shouldAdd = false;
         if (writer.listExists(listName)) {
-            if (writer.getList(listName).isLocked()) {
+            if (writer.getList(listName).isEditable()) {
                 boolean replace = KeywordSearchUtil.displayConfirmDialog(
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchListsManagementPanel.newKeywordListDescription", listName),

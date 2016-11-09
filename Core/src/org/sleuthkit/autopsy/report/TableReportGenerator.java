@@ -114,9 +114,6 @@ class TableReportGenerator {
             // report on the tagged images
             makeThumbnailTable();
         }
-
-        // finish progress, wrap up
-        progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
     }
 
     /**
@@ -1495,6 +1492,9 @@ class TableReportGenerator {
         } else if (artifactTypeId == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             columns.add(new StatusColumn());
             attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
+            attributeTypeSet.remove(new Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));            
         } else {
             // This is the case that it is a custom type. The reason an else is 
             // necessary is to make sure that the source file column is added
