@@ -37,14 +37,21 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     private boolean skipKnownFiles;
     private boolean checkOnlyImageExeTypes;
 
+    /*
+     * For "basic mode" only image and executable files should be checked for
+     * mismatches. This is a set of the MIME types that would be checked under
+     * this basic mode.
+     */
     static final Set<String> IMAGE_AND_EXECUTABLE_MIME_TYPES = Stream.of(
             "image/bmp",
             "image/gif",
             "image/jpeg",
             "image/png",
             "image/tiff",
+            "image/x-ms-bmp",
             "application/dos-exe",
             "application/exe",
+            "application/x-dosexec",
             "application/x-exe",
             "application/x-msdownload").collect(Collectors.toSet());
 
