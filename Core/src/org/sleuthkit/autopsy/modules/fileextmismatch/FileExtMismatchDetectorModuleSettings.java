@@ -37,16 +37,16 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     private boolean skipKnownFiles;
     private boolean checkOnlyImageExeTypes;
 
-    static final Set<String> IMAGE_AND_EXECUTABLE_MIME_TYPES =
-            Stream.of("image/bmp",
-                      "image/gif",
-                      "image/jpeg",
-                      "image/png",
-                      "image/tiff",
-                      "application/dos-exe",
-                      "application/exe",
-                      "application/x-exe",
-                      "application/x-msdownload").collect(Collectors.toSet());
+    static final Set<String> IMAGE_AND_EXECUTABLE_MIME_TYPES = Stream.of(
+            "image/bmp",
+            "image/gif",
+            "image/jpeg",
+            "image/png",
+            "image/tiff",
+            "application/dos-exe",
+            "application/exe",
+            "application/x-exe",
+            "application/x-msdownload").collect(Collectors.toSet());
 
     FileExtMismatchDetectorModuleSettings() {
         this.skipFilesWithNoExtension = true;
