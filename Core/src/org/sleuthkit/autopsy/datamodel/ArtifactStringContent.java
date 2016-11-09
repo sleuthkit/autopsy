@@ -131,14 +131,6 @@ public class ArtifactStringContent implements StringContent {
                 buffer.append("</td>"); //NON-NLS
                 buffer.append("</tr>\n"); //NON-NLS
 
-                // add artifact ID (useful for debugging)
-                buffer.append("<tr><td>"); //NON-NLS
-                buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.artifactId.text"));
-                buffer.append("</td><td>"); //NON-NLS
-                buffer.append(artifact.getArtifactID());
-                buffer.append("</td>"); //NON-NLS
-                buffer.append("</tr>\n"); //NON-NLS
-
                 buffer.append("</table>"); //NON-NLS
                 buffer.append("</html>\n"); //NON-NLS
 

@@ -170,6 +170,8 @@ class ReportGenerator {
                 TableReportGenerator generator = new TableReportGenerator(artifactTypeSelections, tagNameSelections, progressPanel, tableReport);
                 generator.execute();
                 tableReport.endReport();
+                // finish progress, wrap up
+                progressPanel.complete(ReportProgressPanel.ReportStatus.COMPLETE);
                 errorList = generator.getErrorList();
             });
             worker.execute();

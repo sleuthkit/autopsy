@@ -105,21 +105,19 @@ public class FileTypesNode extends DisplayableItemNode {
         return s;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        if(filter == null)
-//            return "FileTypes"; //NON-NLS
-//        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER))
-//            return "FileTypesDoc"; //NON-NLS
-//        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER))
-//            return "FileTypesExe"; //NON-NLS
-//        return "FileTypes"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        /**
+         * Because Documents and Executable are further expandable, their
+         * column order settings should be stored separately.
+         */
+        if(filter == null)
+            return getClass().getName();
+        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER) ||
+                filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER))
+            return getClass().getName() + filter.getName();
+        return getClass().getName();
+    }
 
     /**
      *
