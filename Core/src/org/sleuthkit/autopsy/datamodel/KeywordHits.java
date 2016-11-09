@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -346,7 +346,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     public class ListNode extends DisplayableItemNode implements Observer {
 
-        private String listName;
+        private final String listName;
 
         public ListNode(String listName) {
             super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName));
@@ -411,7 +411,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
 
-        private String setName;
+        private final String setName;
 
         private TermFactory(String setName) {
             super();

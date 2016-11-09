@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- *
- * Copyright 2011-2015 Basis Technology Corp.
+ * 
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -325,7 +325,7 @@ public class Tags implements AutopsyVisitableItem {
     public class ContentTagTypeNode extends DisplayableItemNode implements Observer {
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
-        private TagName tagName;
+        private final TagName tagName;
 
         public ContentTagTypeNode(TagName tagName) {
             super(Children.create(new ContentTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + CONTENT_DISPLAY_NAME));
@@ -423,7 +423,7 @@ public class Tags implements AutopsyVisitableItem {
      */
     public class BlackboardArtifactTagTypeNode extends DisplayableItemNode implements Observer {
 
-        private TagName tagName;
+        private final TagName tagName;
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
         public BlackboardArtifactTagTypeNode(TagName tagName) {
