@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- *
- * Copyright 2013-2014 Basis Technology Corp.
+ * 
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.logging.Level;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -56,20 +56,24 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
-import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * DataResult sortable table viewer
  */
-// @@@ Restore implementation of DataResultViewerTable as a DataResultViewer 
-// service provider when DataResultViewers can be made compatible with node 
+// @@@ Restore implementation of DataResultViewerTable as a DataResultViewer
+// service provider when DataResultViewers can be made compatible with node
 // multiple selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private final String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
-    // This is a set because we add properties of up to 100 child nodes, and we want unique properties
-    private final Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
+    /* The properties map maps
+     * key: stored value of column index -> value: property at that index
+     * We move around stored values instead of directly using the column indices
+     * in order to not override settings for a column that may not appear in the
+     * current table view due to its collection of its children's properties.
+     */
+    private final Map<Integer, Property<?>> propertiesMap = new TreeMap<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
     private Node currentRoot;
@@ -143,13 +147,38 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
                 endColumnIndex = toIndex;
 
-                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-                Node.Property<?> prop = props.remove(fromIndex);
-                props.add(toIndex, prop);
-                propertiesAcc.clear();
-                for (int j = 0; j < props.size(); ++j) {
-                    propertiesAcc.add(props.get(j));
+                // This array contains the keys of propertiesMap in order
+                int[] indicesList = new int[propertiesMap.size()];
+                int pos = 0;
+                for (int key : propertiesMap.keySet()) {
+                    indicesList[pos++] = key;
                 }
+                int leftIndex = Math.min(fromIndex, toIndex);
+                int rightIndex = Math.max(fromIndex, toIndex);
+                // Now we can copy the range of keys that have been affected by
+                // the column movement
+                int[] range = Arrays.copyOfRange(indicesList, leftIndex, rightIndex + 1);
+                int rangeSize = range.length;
+
+                // column moved right, shift all properties left, put in moved
+                // property at the rightmost index
+                if (fromIndex < toIndex) {
+                    Property<?> movedProp = propertiesMap.get(range[0]);
+                    for (int i = 0; i < rangeSize - 1; i++) {
+                        propertiesMap.put(range[i], propertiesMap.get(range[i + 1]));
+                    }
+                    propertiesMap.put(range[rangeSize - 1], movedProp);
+                }
+                // column moved left, shift all properties right, put in moved
+                // property at the leftmost index
+                else {
+                    Property<?> movedProp = propertiesMap.get(range[rangeSize - 1]);
+                    for (int i = rangeSize - 1; i > 0; i--) {
+                        propertiesMap.put(range[i], propertiesMap.get(range[i - 1]));
+                    }
+                    propertiesMap.put(range[0], movedProp);
+                }
+
                 storeState();
             }
         });
@@ -172,7 +201,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
                 startColumnIndex = -1;
             }
-        }); 
+        });
     }
 
     /**
@@ -235,7 +264,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param rows   max number of rows to retrieve properties for (can be used
      *               for memory optimization)
      */
-    private void getAllChildPropertyHeadersRec(Node parent, int rows) {
+    private void getAllChildPropertyHeadersRec(Node parent, int rows, Set<Property<?>> propertiesAcc) {
         Children children = parent.getChildren();
         int childCount = 0;
         for (Node child : children.getNodes()) {
@@ -249,7 +278,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     propertiesAcc.add(props[j]);
                 }
             }
-            getAllChildPropertyHeadersRec(child, rows);
+            getAllChildPropertyHeadersRec(child, rows, propertiesAcc);
         }
     }
 
@@ -398,7 +427,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Store the current column order into a preference file.
      */
     private synchronized void storeState() {
-        if (currentRoot == null || propertiesAcc.isEmpty()) {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
             return;
         }
 
@@ -410,10 +439,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         // Store the current order of the columns into settings
-        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-        for (int i = 0; i < props.size(); i++) {
-            Property<?> prop = props.get(i);
-            NbPreferences.forModule(this.getClass()).put(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), String.valueOf(i));
+        for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
+            Property<?> prop = entry.getValue();
+            int storeValue = entry.getKey();
+            NbPreferences.forModule(this.getClass()).put(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), String.valueOf(storeValue));
         }
     }
 
@@ -423,8 +452,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @return a List<Node.Property<?>> of the preferences in order
      */
     private synchronized List<Node.Property<?>> loadState() {
-        propertiesAcc.clear();
-        this.getAllChildPropertyHeadersRec(currentRoot, 100);
+        // This is a set because we add properties of up to 100 child nodes, and we want unique properties
+        Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
+        this.getAllChildPropertyHeadersRec(currentRoot, 100, propertiesAcc);
+
         List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
 
         // If node is not table filter node, use default order for columns
@@ -436,27 +467,37 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return props;
         }
 
+        propertiesMap.clear();
         /*
-         * Use a map instead of a list and replacing its values by index to
-         * avoid index out of bounds errors
+         * We load column index values into the properties map. If a property's
+         * index is outside the range of the number of properties or the index
+         * has already appeared as the position of another property, we put that
+         * property at the end.
          */
-        Map<Integer, Node.Property<?>> propsFromPreferences = new TreeMap<>();
         int offset = props.size();
+        boolean noPreviousSettings = true;
         for (Property<?> prop : props) {
             Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), "-1"));
-            if (value >= 0 && value < offset && !propsFromPreferences.containsKey(value)) {
-                propsFromPreferences.put(value, prop);
+            if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
+                propertiesMap.put(value, prop);
+                noPreviousSettings = false;
             } else {
-                propsFromPreferences.put(offset, prop);
+                propertiesMap.put(offset, prop);
                 offset++;
             }
         }
 
-        propertiesAcc.clear();
-        for (Property<?> prop : propsFromPreferences.values()) {
-            propertiesAcc.add(prop);
+        // If none of the properties had previous settings, we should decrement
+        // each value by the number of properties to make the values 0-indexed.
+        if (noPreviousSettings) {
+            Integer[] keys = propertiesMap.keySet().toArray(new Integer[propertiesMap.keySet().size()]);
+            for (int key : keys) {
+                propertiesMap.put(key - props.size(), propertiesMap.get(key));
+                propertiesMap.remove(key);
+            }
         }
-        return new ArrayList<>(propsFromPreferences.values());
+
+        return new ArrayList<>(propertiesMap.values());
     }
 
     /**
