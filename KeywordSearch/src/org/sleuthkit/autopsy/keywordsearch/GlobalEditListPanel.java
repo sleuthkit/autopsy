@@ -47,11 +47,14 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import static javax.swing.SwingConstants.CENTER;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.openide.util.NbBundle.Messages;
 
@@ -117,11 +120,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             public void propertyChange(PropertyChangeEvent evt) {
                 Object source = evt.getSource();
                 if (source instanceof String && ((String) source).equals("LOCAL")) { //NON-NLS
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            setButtonStates();
-                        }
+                    EventQueue.invokeLater(() -> {
+                        setButtonStates();
                     });
                 }
             }
@@ -355,12 +355,26 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         chRegex.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.kwReToolTip"));
         JTextField addWordField = new JTextField(25);
         addWordField.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.enterNewWordToolTip"));
+        addWordField.addAncestorListener(new AncestorListener() {
+            @Override
+            public void ancestorAdded(AncestorEvent event) {
+                JComponent component = event.getComponent();
+                component.requestFocusInWindow();
+            }
+
+            @Override
+            public void ancestorRemoved(AncestorEvent event) {
+            }
+
+            @Override
+            public void ancestorMoved(AncestorEvent event) {
+            }
+        });
 
         JPanel addKeywordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         addKeywordPanel.add(new JLabel(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addKeyword.message")));
         addKeywordPanel.add(addWordField);
         addKeywordPanel.add(chRegex);
-
         addKeywordPanel.setPreferredSize(new Dimension(250, 80));
 
         int result = JOptionPane.showConfirmDialog(null, addKeywordPanel,
@@ -379,7 +393,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addWordButtonAction.kwAlreadyExistsMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 return;
             }
-            
+
             //check if valid
             boolean valid = true;
             try {
@@ -394,21 +408,20 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.invalidKwMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            
+
             //add & reset checkbox
             tableModel.addKeyword(keyword);
             XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             setFocusOnKeywordTextBox();
             setButtonStates();
-        } else {
-            return;
         }
     }//GEN-LAST:event_newWordButtonActionPerformed
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
-        if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"), NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-
+        if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"),
+                NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"),
+                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
             tableModel.deleteSelected(keywordTable.getSelectedRows());
             XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
             setButtonStates();
