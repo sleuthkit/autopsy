@@ -556,6 +556,7 @@
 		also be useful for Lucene based queries containing special characters-->
    <!-- populated via copyField -->
    <field name="content_ws" type="text_ws" indexed="true" stored="false" multiValued="true" /> 
+   <field name="content_str" type="string" indexed="true" stored="true" multiValued="true" /> 
 	
    <!-- Uncommenting the following will create a "timestamp" field using
         a default value of "NOW" to indicate when each document was indexed.
@@ -637,6 +638,11 @@
    
    <copyField source="content" dest="content_ws"/>
    <copyField source="file_name" dest="content_ws"/>
+   
+   <copyField source="content" dest="content_str"/>
+   <copyField source="file_name" dest="content_str"/>
+   
+   
    <!--<copyField source="meta" dest="content_ws"/>-->
 	
    <!-- Above, multiple source fields are copied to the [text] field. 
