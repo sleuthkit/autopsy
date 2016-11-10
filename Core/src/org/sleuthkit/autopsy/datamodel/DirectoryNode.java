@@ -107,6 +107,6 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
 
     @Override
     public String getItemType() {
-        return getClass().getName();
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
     }
 }
