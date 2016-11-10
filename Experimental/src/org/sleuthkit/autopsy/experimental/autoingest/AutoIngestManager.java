@@ -63,6 +63,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -2144,31 +2145,28 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
-            AutomatedIngestDataSourceProcessor selectedProcessor = null;
             try {
                 caseForJob.notifyAddingDataSource(taskId);
 
                 // lookup all AutomatedIngestDataSourceProcessors 
                 Collection<? extends AutomatedIngestDataSourceProcessor> processorCandidates = Lookup.getDefault().lookupAll(AutomatedIngestDataSourceProcessor.class);
 
-                int selectedProcessorConfidence = 0;
+                Map<AutomatedIngestDataSourceProcessor, Integer> validDataSourceProcessorsMap = new HashMap<>();
                 for (AutomatedIngestDataSourceProcessor processor : processorCandidates) {
-                    int confidence = 0;
                     try {
-                        confidence = processor.canProcess(dataSource.getPath());
+                        int confidence = processor.canProcess(dataSource.getPath());
+                        if(confidence > 0){
+                            validDataSourceProcessorsMap.put(processor, confidence);
+                        }
                     } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
                         SYS_LOGGER.log(Level.SEVERE, "Exception while determining whether data source processor {0} can process {1}", new Object[]{processor.getDataSourceType(), dataSource.getPath()});
                         // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
                         throw ex;
                     }
-                    if (confidence > selectedProcessorConfidence) {
-                        selectedProcessor = processor;
-                        selectedProcessorConfidence = confidence;
-                    }
                 }
 
                 // did we find a data source processor that can process the data source
-                if (selectedProcessor == null) {
+                if (validDataSourceProcessorsMap.isEmpty()) {
                     // This should never happen. We should add all unsupported data sources as logical files.
                     AutoIngestAlertFile.create(caseDirectoryPath);
                     currentJob.setErrorsOccurred(true);
@@ -2176,20 +2174,37 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     SYS_LOGGER.log(Level.WARNING, "Unsupported data source {0} for {1}", new Object[]{dataSource.getPath(), manifestPath});  // NON-NLS
                     return;
                 }
+                
+                // Get an ordered list of data source processors to try
+                List<AutomatedIngestDataSourceProcessor> validDataSourceProcessors = validDataSourceProcessorsMap.entrySet().stream()
+                    .sorted(Map.Entry.<AutomatedIngestDataSourceProcessor, Integer>comparingByValue().reversed())
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
 
                 synchronized (ingestLock) {
-                    SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
-                    try {
-                        selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
-                    } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
-                        AutoIngestAlertFile.create(caseDirectoryPath);
-                        currentJob.setErrorsOccurred(true);
-                        jobLogger.logFailedToAddDataSource();
-                        SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
-                        // rethrow the exception. It will get caught & handled upstream and will result in AIM auto-pause.
-                        throw ex;
+                    // Try each DSP in decreasing order of confidence
+                    for(AutomatedIngestDataSourceProcessor selectedProcessor:validDataSourceProcessors){
+                        jobLogger.logDataSourceProcessorSelected(selectedProcessor.getDataSourceType());
+                        SYS_LOGGER.log(Level.INFO, "Identified data source type for {0} as {1}", new Object[]{manifestPath, selectedProcessor.getDataSourceType()});
+                        try {
+                            selectedProcessor.process(dataSource.getDeviceId(), dataSource.getPath(), progressMonitor, callBack);
+                            ingestLock.wait();
+                            return;
+                        } catch (AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException ex) {
+                            // Log that the current DSP failed and set the error flag. We consider it an error
+                            // if a DSP fails even if a later one succeeds since we expected to be able to process
+                            // the data source which each DSP on the list.
+                            AutoIngestAlertFile.create(caseDirectoryPath);
+                            currentJob.setErrorsOccurred(true);
+                            jobLogger.logDataSourceProcessorError(selectedProcessor.getDataSourceType());
+                            SYS_LOGGER.log(Level.SEVERE, "Exception while processing {0} with data source processor {1}", new Object[]{dataSource.getPath(), selectedProcessor.getDataSourceType()});
+                        }
                     }
-                    ingestLock.wait();
+                    // If we get to this point, none of the processors were successful
+                    SYS_LOGGER.log(Level.SEVERE, "All data source processors failed to process {0}", dataSource.getPath());
+                    jobLogger.logFailedToAddDataSource();
+                    // Throw an exception. It will get caught & handled upstream and will result in AIM auto-pause.
+                    throw new AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException("Failed to process "  + dataSource.getPath() + " with all data source processors");               
                 }
             } finally {
                 currentJob.setDataSourceProcessor(null);

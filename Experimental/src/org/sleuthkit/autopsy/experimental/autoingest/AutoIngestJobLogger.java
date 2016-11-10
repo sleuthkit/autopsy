@@ -191,6 +191,32 @@ final class AutoIngestJobLogger {
     void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException { // RJCTODO: Is this used now?
         log(MessageCategory.WARNING, "Cancelled adding data source to case");
     }
+    
+    /**
+     * Logs selection of a data source processor
+     * @param dsp  Name of the data source processor
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
+     */
+    void logDataSourceProcessorSelected(String dsp) throws AutoIngestJobLoggerException, InterruptedException{
+        log(MessageCategory.INFO, "Using data source processor: " + dsp);
+    }
+    
+    /**
+     * Logs the failure of the selected data source processor.
+     * @param dsp  Name of the data source processor
+     * @throws AutoIngestJobLoggerException if there is an error writing the log
+     *                                      message.
+     * @throws InterruptedException         if interrupted while blocked waiting
+     *                                      to acquire an exclusive lock on the
+     *                                      log file.
+     */
+    void logDataSourceProcessorError(String dsp) throws AutoIngestJobLoggerException, InterruptedException{
+        log(MessageCategory.ERROR, "Error processing with data source processor: " + dsp);
+    }
 
     /**
      * Logs the addition of a data source to the case database.
