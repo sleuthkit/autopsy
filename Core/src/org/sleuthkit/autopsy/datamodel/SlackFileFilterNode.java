@@ -25,7 +25,6 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -169,9 +168,9 @@ public class SlackFileFilterNode extends FilterNode {
         @Override
         protected Node[] createNodes(Node arg) {
             if (filter) {
-                // Filter out child nodes that represent known files
+                // Filter out child nodes that represent slack files
                 AbstractFile file = arg.getLookup().lookup(AbstractFile.class);
-                if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                if ((file != null) && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                     return new Node[]{};
                 }
             }
