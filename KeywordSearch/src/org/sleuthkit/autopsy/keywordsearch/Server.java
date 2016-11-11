@@ -162,7 +162,7 @@ public class Server {
     public static final String CHUNK_ID_SEPARATOR = "_";
     private String javaPath = "java"; //NON-NLS
     public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
-    private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
+    private static final int MAX_SOLR_MEM_MB = 1024; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
     static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
