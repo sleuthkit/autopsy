@@ -226,10 +226,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
     @Override
     public String getItemType() {
-        if (!(this.content.isDataSource())) {
-            return getClass().getName() + "NotDataSource"; //NON-NLS
-        } else {
-            return getClass().getName() + "DataSource"; //NON-NLS
-        }
+        // use content.isDataSource if different column settings are desired
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
     }
 }

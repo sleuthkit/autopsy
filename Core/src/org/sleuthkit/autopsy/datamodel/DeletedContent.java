@@ -330,7 +330,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                  * Return getClass().getName() + filter.getName() if custom
                  * settings are desired for different filters.
                  */
-                return getClass().getName();
+                return DisplayableItemNode.FILE_PARENT_NODE_KEY;
             }
         }
         

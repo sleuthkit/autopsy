@@ -33,6 +33,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class DisplayableItemNode extends AbstractNode {
 
+    final static String FILE_PARENT_NODE_KEY = "orgsleuthkitautopsydatamodel" + "FileTypeParentNode";
+
     public DisplayableItemNode(Children children) {
         super(children);
     }
