@@ -32,9 +32,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 class Keyword {
 
-    static final String EXACT = NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.exactButton.text");
-    static final String SUBSTRING = NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.substringButton.text");
-    static final String REGEX = NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.regexButton.text");
     private String searchTerm;
     private boolean isLiteral;
     private boolean isWholeWord;
@@ -126,12 +123,12 @@ class Keyword {
     String getSearchTermType() {
         if (isLiteral) {
             if (isWholeWord) {
-                return EXACT;
+                return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.exactButton.text");
             } else {
-                return SUBSTRING;
+                return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.substringButton.text");
             }
         } else {
-            return REGEX;
+            return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.regexButton.text");
         }
     }
 
