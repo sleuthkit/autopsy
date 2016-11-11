@@ -43,7 +43,7 @@ abstract class KeywordSearchList {
     private static final String IP_ADDRESS_REGEX = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])";  //NON-NLS
     private static final String EMAIL_ADDRESS_REGEX = "(?=.{8})[a-z0-9%+_-]+(?:\\.[a-z0-9%+_-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,4}(?<!\\.txt|\\.exe|\\.dll|\\.jpg|\\.xml)";  //NON-NLS
     private static final String URL_REGEX = "((((ht|f)tp(s?))\\://)|www\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*";  //NON-NLS
-    private static final String CCN_REGEX = ".*[3456]([ -]?\\d){11,18}.*";  //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+    private static final String CCN_REGEX = ".*[3-6]([ -]?[0-9]){11,18}.*";  //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
 
     protected String filePath;
     Map<String, KeywordList> theLists; //the keyword data 
