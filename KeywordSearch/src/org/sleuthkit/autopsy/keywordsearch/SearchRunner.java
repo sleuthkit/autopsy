@@ -38,6 +38,7 @@ import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -453,8 +454,9 @@ public final class SearchRunner {
                     // Do the actual search
                     try {
                         queryResults = keywordSearchQuery.performQuery();
-                    } catch (NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                    } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                        logger.log(Level.SEVERE, "Error performing query: " + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(SearchRunner.class, "Server.query.exception.msg", queryStr), ex.getCause().getMessage());
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
@@ -462,9 +464,6 @@ public final class SearchRunner {
                     } catch (CancellationException e) {
                         logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keywordQuery.getSearchTerm()); //NON-NLS
                         return null;
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getSearchTerm(), e); //NON-NLS
-                        continue;
                     }
 
                     // calculate new results by substracting results already obtained in this ingest

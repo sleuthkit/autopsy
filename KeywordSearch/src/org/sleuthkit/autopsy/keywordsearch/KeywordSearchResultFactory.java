@@ -38,6 +38,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
@@ -158,10 +159,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         QueryResults queryResults;
         try {
             queryResults = keywordSearchQuery.performQuery();
-        } catch (NoOpenCoreException ex) {
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Could not perform the query " + keywordSearchQuery.getQueryString(), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearchResultFactory.class, "Server.query.exception.msg"), ex.getCause().getMessage());
             return false;
-        }
+        } 
 
         int id = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();

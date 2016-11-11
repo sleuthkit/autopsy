@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
@@ -143,8 +144,9 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
                 try {
                     hits = chunksQuery.performQuery();
-                } catch (NoOpenCoreException ex) {
-                    logger.log(Level.INFO, "Could not get chunk info and get highlights", ex); //NON-NLS
+                } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                    logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights" + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(HighlightedText.class, "Server.query.exception.msg", queryStr), ex.getCause().getMessage());
                     return;
                 }
             }
