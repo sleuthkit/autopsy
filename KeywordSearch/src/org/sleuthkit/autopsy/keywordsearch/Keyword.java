@@ -175,9 +175,9 @@ class Keyword {
             return false;
         }
         Keyword other = (Keyword) obj;
-        return (this.searchTerm.equals(other.searchTerm)
-                && this.isLiteral == other.isLiteral
-                && this.isWholeWord == other.isWholeWord);
+        return (this.searchTerm.equals(other.getSearchTerm())
+                && this.isLiteral == other.searchTermIsLiteral()
+                && this.isWholeWord == other.searchTermIsWholeWord());
     }
 
     @Override
