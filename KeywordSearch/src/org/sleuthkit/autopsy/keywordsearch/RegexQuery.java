@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle;
@@ -92,7 +93,7 @@ final class RegexQuery implements KeywordSearchQuery {
     public QueryResults performQuery() throws NoOpenCoreException {
         QueryResults results = new QueryResults(this, keywordList);
 
-        ListMultimap<Keyword, KeywordHit> hits = ArrayListMultimap.create();
+        ListMultimap<Keyword, KeywordHit> hitsMultMap = ArrayListMultimap.create();
 
         final Server solrServer = KeywordSearch.getServer();
         SolrQuery solrQuery = new SolrQuery();
@@ -116,14 +117,15 @@ final class RegexQuery implements KeywordSearchQuery {
             solrQuery.setStart(start);
 
             try {
-                resultList = solrServer.query(solrQuery, SolrRequest.METHOD.POST).getResults();
+                final QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
+                resultList = response.getResults();
 
                 for (SolrDocument resultDoc : filterOneHitPerDocument(resultList)) {
 
                     try {
-                        KeywordHit contentHit = createKeywordtHit(resultDoc);
-                        if (contentHit != null) {
-                            hits.put(new Keyword(contentHit.getHit(), true), contentHit);
+                        List<KeywordHit> keywordHits = createKeywordtHits(resultDoc);
+                        for (KeywordHit hit : keywordHits) {
+                            hitsMultMap.put(new Keyword(hit.getHit(), true), hit);
                         }
                     } catch (TskException ex) {
                         //
@@ -136,8 +138,8 @@ final class RegexQuery implements KeywordSearchQuery {
 
             start = start + MAX_RESULTS;
         }
-        for (Keyword k : hits.keySet()) {
-            results.addResult(k, hits.get(k));
+        for (Keyword k : hitsMultMap.keySet()) {
+            results.addResult(k, hitsMultMap.get(k));
         }
 
         return results;
@@ -170,7 +172,9 @@ final class RegexQuery implements KeywordSearchQuery {
         return solrDocumentsWithMatches;
     }
 
-    private KeywordHit createKeywordtHit(SolrDocument solrDoc) throws TskException {
+    private List<KeywordHit> createKeywordtHits(SolrDocument solrDoc) throws TskException {
+
+        List<KeywordHit> hits = new ArrayList<>();
         /**
          * Get the first snippet from the document if keyword search is
          * configured to use snippets.
@@ -181,11 +185,11 @@ final class RegexQuery implements KeywordSearchQuery {
 
         for (Object value : fieldValues) {
             String content = value.toString();
-            String snippet = "";
 
             Matcher hitMatcher = Pattern.compile(keywordString).matcher(content);
 
-            if (hitMatcher.find()) {
+            while (hitMatcher.find()) {
+                String snippet = "";
                 final String hit = hitMatcher.group();
                 /*
                  * If searching for credit card account numbers, do a Luhn check
@@ -201,15 +205,16 @@ final class RegexQuery implements KeywordSearchQuery {
                 }
 
                 if (KeywordSearchSettings.getShowSnippets()) {
-                    snippet = content.substring(hitMatcher.start() - 30, hitMatcher.start() - 1);
+                    int maxIndex = content.length() - 1;
+                    snippet = content.substring(Integer.max(0, hitMatcher.start() - 30), Integer.max(0, hitMatcher.start() - 1));
                     snippet += "<<" + hit + "<<";
-                    snippet += content.substring(hitMatcher.end() + 1, hitMatcher.end() + 30);
+                    snippet += content.substring(Integer.min(maxIndex, hitMatcher.end() + 1), Integer.min(maxIndex, hitMatcher.end() + 30));
                 }
 
-                return new KeywordHit(docId, snippet, hit);
+                hits.add(new KeywordHit(docId, snippet, hit));
             }
         }
-        return null;
+        return hits;
     }
 
     @Override
