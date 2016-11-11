@@ -42,7 +42,7 @@ import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesNew;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
@@ -234,9 +234,10 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public List<Action> visit(FileTypesNew fileTypes) {
+        public List<Action> visit(FileTypesNode fileTypes) {
           return defaultVisit(fileTypes);
         }
+        
         
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
@@ -331,9 +332,12 @@ public class DataResultFilterNode extends FilterNode {
         }
         
         @Override
-        public AbstractAction visit(FileTypesNew fileTypes) {
+        public AbstractAction visit(FileTypesNode fileTypes) {
             return openChild(fileTypes);
         }
+        
+
+        
         /**
          * Tell the originating ExplorerManager to display the given
          * dataModelNode.

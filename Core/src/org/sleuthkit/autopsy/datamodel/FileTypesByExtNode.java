@@ -37,9 +37,9 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for root of file types view. Children are nodes for specific types.
  */
-public class FileTypesNode extends DisplayableItemNode {
+public class FileTypesByExtNode extends DisplayableItemNode {
 
-    private static final String FNAME = NbBundle.getMessage(FileTypesNode.class, "FileTypesNode.fname.text");
+    private static final String FNAME = NbBundle.getMessage(FileTypesByExtNode.class, "FileTypesNode.fname.text");
     private final FileTypeExtensionFilters.RootFilter filter;
     /**
      *
@@ -47,7 +47,7 @@ public class FileTypesNode extends DisplayableItemNode {
      * @param filter null to display root node of file type tree, pass in
      *               something to provide a sub-node.
      */
-    FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
+    FileTypesByExtNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
         super(Children.create(new FileTypesChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
         this.filter = filter;
         init();
@@ -60,7 +60,7 @@ public class FileTypesNode extends DisplayableItemNode {
      * @param o      Observable that was created by a higher-level node that
      *               provides updates on events
      */
-    private FileTypesNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
+    private FileTypesByExtNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
         super(Children.create(new FileTypesChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
         this.filter = filter;
         init();
@@ -220,11 +220,11 @@ public class FileTypesNode extends DisplayableItemNode {
         protected Node createNodeForKey(FileTypeExtensionFilters.SearchFilterInterface key) {
             // make new nodes for the sub-nodes
             if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER.getName())) {
-                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER, notifier);
+                return new FileTypesByExtNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER, notifier);
             } else if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
-                return new FileTypesNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER, notifier);
+                return new FileTypesByExtNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER, notifier);
             } else {
-                return new FileTypeNode(key, skCase, notifier);
+                return new FileTypeByExtNode(key, skCase, notifier);
             }
         }
     }

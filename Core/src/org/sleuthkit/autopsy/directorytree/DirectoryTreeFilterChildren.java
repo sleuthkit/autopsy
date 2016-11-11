@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesNew;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
@@ -239,9 +239,10 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
-        public Boolean visit(FileTypesNew ft) {
+        public Boolean visit(FileTypesNode ft) {
             return defaultVisit(ft);
         }
+
     }
 
     private static class ShowItemVisitor extends DisplayableItemNodeVisitor.Default<Boolean> {
@@ -281,8 +282,9 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
-        public Boolean visit(FileTypesNew fileTypes) {
+        public Boolean visit(FileTypesNode fileTypes) {
            return defaultVisit(fileTypes);
         }
+
     }
 }

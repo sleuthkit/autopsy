@@ -22,6 +22,7 @@ import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsChildren.De
 import org.sleuthkit.autopsy.datamodel.DeletedContent.DeletedContentsNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootChildren.FileSizeNode;
 import org.sleuthkit.autopsy.datamodel.FileSize.FileSizeRootNode;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 
 /**
@@ -54,7 +55,7 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
-    T visit(FileTypeNode fsfn);
+    T visit(FileTypeByExtNode fsfn);
 
     T visit(DeletedContentNode dcn);
 
@@ -64,7 +65,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileSizeNode fsn);
 
-    T visit(FileTypesNode sfn);
+    T visit(FileTypesByExtNode sfn);
 
     T visit(RecentFilesNode rfn);
 
@@ -140,7 +141,14 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(Accounts.DefaultAccountTypeNode node);
 
-    T visit(FileTypesNew fileTypes);
+    T visit(FileTypes.FileTypesNode fileTypes);
+
+    T visit(FileTypesByMimeType.FileTypesByMimeTypeNode aThis);
+
+    T visit(FileTypesByMimeType.MediaTypeNode aThis);
+
+    T visit(FileTypesByMimeType.MediaSubTypeNode aThis);
+
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -195,10 +203,21 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypeNode fsfn) {
+        public T visit(FileTypeByExtNode fsfn) {
             return defaultVisit(fsfn);
         }
-
+        @Override
+        public T visit(FileTypesByMimeType.FileTypesByMimeTypeNode ftByMimeTypeNode) {
+            return defaultVisit(ftByMimeTypeNode);
+        }
+        @Override
+        public T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaTypeNode) {
+            return defaultVisit(ftByMimeTypeMediaTypeNode);
+        }
+        @Override
+        public T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaTypeNode) {
+            return defaultVisit(ftByMimeTypeMediaTypeNode);
+        }
         @Override
         public T visit(DeletedContentNode dcn) {
             return defaultVisit(dcn);
@@ -220,7 +239,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypesNode sfn) {
+        public T visit(FileTypesByExtNode sfn) {
             return defaultVisit(sfn);
         }
 
@@ -260,7 +279,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(FileTypesNew ft) {
+        public T visit(FileTypesNode ft) {
             return defaultVisit(ft);
         }
         @Override

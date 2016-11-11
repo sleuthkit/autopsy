@@ -71,7 +71,10 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(Accounts accountsItem);
 
-    T visit(FileTypes aThis);
+    T visit(FileTypes fileTypesItem);
+
+    T visit(FileTypesByMimeType aThis);
+
 
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
@@ -101,7 +104,12 @@ public interface AutopsyItemVisitor<T> {
         public T visit(FileTypeExtensionFilters.ExecutableFilter ef) {
             return defaultVisit(ef);
         }
-
+        
+        @Override
+        public T visit(FileTypesByMimeType ftByMimeType) {
+            return defaultVisit(ftByMimeType);
+        }
+        
         @Override
         public T visit(DeletedContent dc) {
             return defaultVisit(dc);
