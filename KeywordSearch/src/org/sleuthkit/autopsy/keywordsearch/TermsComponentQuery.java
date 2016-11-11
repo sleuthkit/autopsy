@@ -277,8 +277,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         termsQuery.setShowDebugInfo(DEBUG_FLAG);
         termsQuery.setTermsLimit(MAX_TERMS_QUERY_RESULTS);
         List<Term> terms = KeywordSearch.getServer().queryTerms(termsQuery).getTerms(SEARCH_FIELD);
-            //LOGGER.log(Level.SEVERE, "Error executing the regex terms query: " + keyword.getSearchTerm(), ex); //NON-NLS
-            //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
         /*
          * Do a term query for each term that matched the regex.
          */

@@ -31,6 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
@@ -101,6 +102,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
      * The main goal of this method is to figure out which pages / chunks have
      * hits.
      */
+    @Messages({"HighlightedText.query.exception.msg=Could not perform the query to get chunk info and get highlights:"})
     private void loadPageInfo() {
         if (isPageInfoLoaded) {
             return;
@@ -145,8 +147,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 try {
                     hits = chunksQuery.performQuery();
                 } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                    logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights" + keywordQuery.getSearchTerm(), ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error(NbBundle.getMessage(HighlightedText.class, "Server.query.exception.msg", queryStr), ex.getCause().getMessage());
+                    logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights:" + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(Bundle.HighlightedText_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
                     return;
                 }
             }

@@ -37,6 +37,7 @@ import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
@@ -384,6 +385,7 @@ public final class SearchRunner {
         }
 
         @Override
+        @Messages("SearchRunner.query.exception.msg=Error performing query:")
         protected Object doInBackground() throws Exception {
             final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
                     + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
@@ -456,7 +458,7 @@ public final class SearchRunner {
                         queryResults = keywordSearchQuery.performQuery();
                     } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
                         logger.log(Level.SEVERE, "Error performing query: " + keywordQuery.getSearchTerm(), ex); //NON-NLS
-                        MessageNotifyUtil.Notify.error(NbBundle.getMessage(SearchRunner.class, "Server.query.exception.msg", queryStr), ex.getCause().getMessage());
+                        MessageNotifyUtil.Notify.error(Bundle.SearchRunner_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
