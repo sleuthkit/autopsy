@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -31,6 +32,9 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 class Keyword {
 
+    static final String EXACT = NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.exactButton.text");
+    static final String SUBSTRING = NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.substringButton.text");
+    static final String REGEX = NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.regexButton.text");
     private String searchTerm;
     private boolean isLiteral;
     private boolean isWholeWord;
@@ -117,6 +121,18 @@ class Keyword {
      */
     boolean searchTermIsWholeWord() {
         return isWholeWord;
+    }
+
+    String getSearchTermType() {
+        if (isLiteral) {
+            if (isWholeWord) {
+                return EXACT;
+            } else {
+                return SUBSTRING;
+            }
+        } else {
+            return REGEX;
+        }
     }
 
     /**
