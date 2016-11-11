@@ -64,10 +64,13 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         spMaximumRetryAttempts.setValue(AutoIngestUserPreferences.getMaxNumTimesToProcessImage());
         int maxJobsPerCase = AutoIngestUserPreferences.getMaxConcurrentJobsForOneCase();
         spConcurrentJobsPerCase.setValue(maxJobsPerCase);
+        spInputScanInterval.setValue(AutoIngestUserPreferences.getMinutesOfInputScanInterval());
+        spInputScanInterval.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         spSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         spMaximumRetryAttempts.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         cbTimeoutEnabled.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         lbSecondsBetweenJobs.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
+        lbInputScanInterval.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         lbTimeoutText.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         lbRetriesAllowed.setEnabled(mode == AutoIngestSettingsPanel.OptionsUiMode.AIM);
         cbTimeoutEnabled.setSelected(UserPreferences.getIsTimeOutEnabled());
@@ -80,6 +83,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         uiComponents.add(spSecondsBetweenJobs);
         uiComponents.add(spMaximumRetryAttempts);
         uiComponents.add(spSecondsBetweenJobs);
+        uiComponents.add(spInputScanInterval);
         uiComponents.add(lbSecondsBetweenJobs);
         uiComponents.add(lbTimeoutText);
         uiComponents.add(lbRetriesAllowed);
@@ -88,6 +92,8 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         uiComponents.add(lbRestartRequired);
         uiComponents.add(lbTimeoutHours);
         uiComponents.add(spTimeoutHours);
+        uiComponents.add(lbInputScanInterval);
+        uiComponents.add(lbInputScanIntervalMinutes);
         uiComponents.add(spConcurrentJobsPerCase);
 
         String disabledText = " " + NbBundle.getMessage(AutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.ItemDisabled.text");
@@ -102,6 +108,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         AutoIngestUserPreferences.setSecondsToSleepBetweenCases((int) spSecondsBetweenJobs.getValue());
         AutoIngestUserPreferences.setMaxNumTimesToProcessImage((int) spMaximumRetryAttempts.getValue());
         AutoIngestUserPreferences.setMaxConcurrentIngestNodesForOneCase((int) spConcurrentJobsPerCase.getValue());
+        AutoIngestUserPreferences.setMinutesOfInputScanInterval((int) spInputScanInterval.getValue());
         UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
         boolean isChecked = cbTimeoutEnabled.isSelected();
         UserPreferences.setIsTimeOutEnabled(isChecked);
@@ -132,31 +139,57 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lbSecondsBetweenJobs = new javax.swing.JLabel();
-        spSecondsBetweenJobs = new javax.swing.JSpinner();
-        lbNumberOfThreads = new javax.swing.JLabel();
-        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<>();
-        lbRestartRequired = new javax.swing.JLabel();
-        lbRetriesAllowed = new javax.swing.JLabel();
         spMainScrollPane = new javax.swing.JScrollPane();
         tbWarning = new javax.swing.JTextArea();
+        jPanelAutoIngestJobSettings = new javax.swing.JPanel();
+        lbSecondsBetweenJobs = new javax.swing.JLabel();
         lbTimeoutText = new javax.swing.JLabel();
-        lbTimeoutHours = new javax.swing.JLabel();
-        cbTimeoutEnabled = new javax.swing.JCheckBox();
-        filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(130, 0), new java.awt.Dimension(130, 0), new java.awt.Dimension(130, 32767));
-        spMaximumRetryAttempts = new javax.swing.JSpinner();
+        lbInputScanInterval = new javax.swing.JLabel();
+        lbRetriesAllowed = new javax.swing.JLabel();
+        lbNumberOfThreads = new javax.swing.JLabel();
         lbConcurrentJobsPerCase = new javax.swing.JLabel();
+        cbTimeoutEnabled = new javax.swing.JCheckBox();
+        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<>();
+        lbRestartRequired = new javax.swing.JLabel();
         spConcurrentJobsPerCase = new javax.swing.JSpinner();
+        spMaximumRetryAttempts = new javax.swing.JSpinner();
+        spInputScanInterval = new javax.swing.JSpinner();
         spTimeoutHours = new javax.swing.JSpinner();
+        spSecondsBetweenJobs = new javax.swing.JSpinner();
         lbSecondsBetweenJobsSeconds = new javax.swing.JLabel();
+        lbTimeoutHours = new javax.swing.JLabel();
+        lbInputScanIntervalMinutes = new javax.swing.JLabel();
+
+        tbWarning.setEditable(false);
+        tbWarning.setColumns(20);
+        tbWarning.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
+        tbWarning.setRows(5);
+        tbWarning.setText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.tbWarning.text")); // NOI18N
+        tbWarning.setAutoscrolls(false);
+        spMainScrollPane.setViewportView(tbWarning);
+
+        jPanelAutoIngestJobSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.jPanelAutoIngestJobSettings.border.title"))); // NOI18N
+        jPanelAutoIngestJobSettings.setName("Automated Ingest Job Settings"); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbSecondsBetweenJobs, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobs.text")); // NOI18N
-        lbSecondsBetweenJobs.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobs.toolTipText")); // NOI18N
 
-        spSecondsBetweenJobs.setModel(new javax.swing.SpinnerNumberModel(30, 30, 3600, 10));
-        spSecondsBetweenJobs.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spSecondsBetweenJobs.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutText, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutText.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbInputScanInterval, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbInputScanInterval.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbRetriesAllowed, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbNumberOfThreads, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbNumberOfThreads.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbConcurrentJobsPerCase, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(cbTimeoutEnabled, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.cbTimeoutEnabled.text")); // NOI18N
+        cbTimeoutEnabled.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.cbTimeoutEnabled.toolTipText")); // NOI18N
+        cbTimeoutEnabled.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cbTimeoutEnabledItemStateChanged(evt);
+            }
+        });
 
         numberOfFileIngestThreadsComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -167,148 +200,136 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
         lbRestartRequired.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbRestartRequired, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbRestartRequired.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbRetriesAllowed, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.text")); // NOI18N
-        lbRetriesAllowed.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.toolTipText")); // NOI18N
-        lbRetriesAllowed.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
-
-        tbWarning.setEditable(false);
-        tbWarning.setColumns(20);
-        tbWarning.setFont(new java.awt.Font("Monospaced", 1, 14)); // NOI18N
-        tbWarning.setRows(5);
-        tbWarning.setText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.tbWarning.text")); // NOI18N
-        tbWarning.setAutoscrolls(false);
-        spMainScrollPane.setViewportView(tbWarning);
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutText, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutText.text")); // NOI18N
-        lbTimeoutText.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutText.toolTipText")); // NOI18N
-        lbTimeoutText.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                lbTimeoutTextMouseClicked(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutHours, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutHours.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(cbTimeoutEnabled, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.cbTimeoutEnabled.text")); // NOI18N
-        cbTimeoutEnabled.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.cbTimeoutEnabled.toolTipText")); // NOI18N
-        cbTimeoutEnabled.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cbTimeoutEnabledItemStateChanged(evt);
-            }
-        });
+        spConcurrentJobsPerCase.setModel(new javax.swing.SpinnerNumberModel(3, 1, 100, 1));
+        spConcurrentJobsPerCase.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedOptionsPanel.lbConcurrentJobsPerCase.toolTipText")); // NOI18N
 
         spMaximumRetryAttempts.setModel(new javax.swing.SpinnerNumberModel(2, 0, 9999999, 1));
         spMaximumRetryAttempts.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spMaximumRetryAttempts.toolTipText")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbConcurrentJobsPerCase, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.text")); // NOI18N
-        lbConcurrentJobsPerCase.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.toolTipText")); // NOI18N
-        lbConcurrentJobsPerCase.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
-
-        spConcurrentJobsPerCase.setModel(new javax.swing.SpinnerNumberModel(3, 1, 100, 1));
-        spConcurrentJobsPerCase.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedOptionsPanel.lbConcurrentJobsPerCase.toolTipText")); // NOI18N
+        spInputScanInterval.setModel(new javax.swing.SpinnerNumberModel(60, 1, 100000, 1));
+        spInputScanInterval.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spInputScanInterval.toolTipText")); // NOI18N
 
         spTimeoutHours.setModel(new javax.swing.SpinnerNumberModel(60, 1, 100000, 1));
         spTimeoutHours.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spTimeoutHours.toolTipText")); // NOI18N
 
+        spSecondsBetweenJobs.setModel(new javax.swing.SpinnerNumberModel(30, 30, 3600, 10));
+        spSecondsBetweenJobs.setToolTipText(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spSecondsBetweenJobs.toolTipText")); // NOI18N
+
         org.openide.awt.Mnemonics.setLocalizedText(lbSecondsBetweenJobsSeconds, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobsSeconds.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbTimeoutHours, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbTimeoutHours.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbInputScanIntervalMinutes, org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.lbInputScanIntervalMinutes.text")); // NOI18N
+
+        javax.swing.GroupLayout jPanelAutoIngestJobSettingsLayout = new javax.swing.GroupLayout(jPanelAutoIngestJobSettings);
+        jPanelAutoIngestJobSettings.setLayout(jPanelAutoIngestJobSettingsLayout);
+        jPanelAutoIngestJobSettingsLayout.setHorizontalGroup(
+            jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(cbTimeoutEnabled)
+                .addGap(5, 5, 5)
+                .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                        .addComponent(lbSecondsBetweenJobs)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(spSecondsBetweenJobs, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                        .addComponent(lbTimeoutText)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(spTimeoutHours, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                                .addComponent(lbInputScanInterval)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(spInputScanInterval, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                                .addComponent(lbRetriesAllowed)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(spMaximumRetryAttempts, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                                .addComponent(lbConcurrentJobsPerCase)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(spConcurrentJobsPerCase, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                                .addComponent(lbNumberOfThreads)
+                                .addGap(18, 18, 18)
+                                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbRestartRequired)
+                    .addComponent(lbSecondsBetweenJobsSeconds)
+                    .addComponent(lbTimeoutHours)
+                    .addComponent(lbInputScanIntervalMinutes))
+                .addContainerGap(237, Short.MAX_VALUE))
+        );
+        jPanelAutoIngestJobSettingsLayout.setVerticalGroup(
+            jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(lbRestartRequired)
+                    .addGroup(jPanelAutoIngestJobSettingsLayout.createSequentialGroup()
+                        .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbSecondsBetweenJobs)
+                            .addComponent(spSecondsBetweenJobs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbSecondsBetweenJobsSeconds))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(lbTimeoutText)
+                                .addComponent(spTimeoutHours, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(lbTimeoutHours))
+                            .addComponent(cbTimeoutEnabled))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbInputScanInterval)
+                            .addComponent(spInputScanInterval, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lbInputScanIntervalMinutes))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbRetriesAllowed)
+                            .addComponent(spMaximumRetryAttempts, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbConcurrentJobsPerCase)
+                            .addComponent(spConcurrentJobsPerCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanelAutoIngestJobSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbNumberOfThreads)
+                            .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(44, Short.MAX_VALUE))
+        );
+
+        spMaximumRetryAttempts.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spMaximumRetryAttempts.AccessibleContext.accessibleDescription")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(213, 213, 213)
-                .addComponent(filler1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(58, 58, 58))
-            .addGroup(layout.createSequentialGroup()
                 .addGap(16, 16, 16)
-                .addComponent(spMainScrollPane)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jPanelAutoIngestJobSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(spMainScrollPane))
                 .addGap(16, 16, 16))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(cbTimeoutEnabled)
-                .addGap(6, 6, 6)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbSecondsBetweenJobs)
-                    .addComponent(lbTimeoutText)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbRetriesAllowed)
-                            .addComponent(lbConcurrentJobsPerCase)
-                            .addComponent(lbNumberOfThreads))
-                        .addGap(25, 25, 25)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(spMaximumRetryAttempts, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(spConcurrentJobsPerCase, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(spTimeoutHours, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(spSecondsBetweenJobs, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lbSecondsBetweenJobsSeconds)
-                                    .addComponent(lbTimeoutHours)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(lbRestartRequired)))))
-                .addContainerGap(18, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(20, 20, 20)
                 .addComponent(spMainScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbSecondsBetweenJobs)
-                    .addComponent(spSecondsBetweenJobs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbSecondsBetweenJobsSeconds))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(lbTimeoutText)
-                        .addComponent(lbTimeoutHours)
-                        .addComponent(spTimeoutHours, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(cbTimeoutEnabled))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(spMaximumRetryAttempts, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbRetriesAllowed))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(spConcurrentJobsPerCase, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbConcurrentJobsPerCase))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(filler1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(lbRestartRequired)
-                    .addComponent(lbNumberOfThreads)
-                    .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(241, Short.MAX_VALUE))
+                .addComponent(jPanelAutoIngestJobSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(145, 145, 145))
         );
-
-        spMaximumRetryAttempts.getAccessibleContext().setAccessibleDescription(org.openide.util.NbBundle.getMessage(AdvancedAutoIngestSettingsPanel.class, "AdvancedAutoIngestSettingsPanel.spMaximumRetryAttempts.AccessibleContext.accessibleDescription")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void cbTimeoutEnabledItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbTimeoutEnabledItemStateChanged
         setCheckboxEnabledState();
     }//GEN-LAST:event_cbTimeoutEnabledItemStateChanged
-
-    private void lbTimeoutTextMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_lbTimeoutTextMouseClicked
-        if (cbTimeoutEnabled.isEnabled()) {
-            if (cbTimeoutEnabled.isSelected()) {
-                spTimeoutHours.setEnabled(true);
-                lbTimeoutHours.setEnabled(true);
-                cbTimeoutEnabled.setSelected(false);
-            } else {
-                spTimeoutHours.setEnabled(false);
-                lbTimeoutHours.setEnabled(false);
-                cbTimeoutEnabled.setSelected(true);
-            }
-        }
-    }//GEN-LAST:event_lbTimeoutTextMouseClicked
 
     private void numberOfFileIngestThreadsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numberOfFileIngestThreadsComboBoxActionPerformed
         // TODO add your handling code here:
@@ -316,8 +337,10 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JCheckBox cbTimeoutEnabled;
-    private javax.swing.Box.Filler filler1;
+    private javax.swing.JPanel jPanelAutoIngestJobSettings;
     private javax.swing.JLabel lbConcurrentJobsPerCase;
+    private javax.swing.JLabel lbInputScanInterval;
+    private javax.swing.JLabel lbInputScanIntervalMinutes;
     private javax.swing.JLabel lbNumberOfThreads;
     private javax.swing.JLabel lbRestartRequired;
     private javax.swing.JLabel lbRetriesAllowed;
@@ -327,6 +350,7 @@ class AdvancedAutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel lbTimeoutText;
     private javax.swing.JComboBox<Integer> numberOfFileIngestThreadsComboBox;
     private javax.swing.JSpinner spConcurrentJobsPerCase;
+    private javax.swing.JSpinner spInputScanInterval;
     private javax.swing.JScrollPane spMainScrollPane;
     private javax.swing.JSpinner spMaximumRetryAttempts;
     private javax.swing.JSpinner spSecondsBetweenJobs;

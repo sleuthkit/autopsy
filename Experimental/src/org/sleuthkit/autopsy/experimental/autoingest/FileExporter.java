@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -83,13 +84,14 @@ final class FileExporter {
      *
      * @param deviceId    The device id.
      * @param dataSources The data sources.
-     *
+     * @param cancelCheck A function used to check if the file AutoInjectJob process
+     *                    should be terminated.
      * @throws FileExportException if there is an error in the export process.
      */
-    void process(String deviceId, List<Content> dataSources) throws FileExportException {
+    void process(String deviceId, List<Content> dataSources, Supplier<Boolean> cancelCheck) throws FileExportException {
         this.deviceId = deviceId;
         try {            
-            if (!isEnabled()) {
+            if (!isEnabled() || cancelCheck.get()) {
                 return;
             }
             // File Exporter requires several ingest modules to run beforehand.
@@ -101,8 +103,11 @@ final class FileExporter {
             
             setUp();
             for (Content dataSource : dataSources) {
-                Map<Long, List<String>> fileIdsToRuleNames = evaluateRules(dataSource);
-                exportFiles(fileIdsToRuleNames);
+                Map<Long, List<String>> fileIdsToRuleNames = evaluateRules(dataSource, cancelCheck);
+                if (cancelCheck.get()) {
+                    break;
+                }
+                exportFiles(fileIdsToRuleNames, cancelCheck);
             }
             closeCatalogs();
             writeFlagFiles();
@@ -259,17 +264,22 @@ final class FileExporter {
      * names of the rules satisfied by the file.
      *
      * @param dataSource The data source.
+     * @param cancelCheck A function used to check if the file AutoInjectJob process
+     *                    should be terminated.
      *
      * @return The map of file ids to rule name lists.
      *
      * @throws FileExportRuleSet.ExportRulesException If there is a problem
      *                                                evaluating a rule.
      */
-    private Map<Long, List<String>> evaluateRules(Content dataSource) throws FileExportRuleSet.ExportRulesException {
+    private Map<Long, List<String>> evaluateRules(Content dataSource, Supplier<Boolean> cancelCheck) throws FileExportRuleSet.ExportRulesException {
         TreeMap<String, FileExportRuleSet> ruleSets = settings.getRuleSets();
         Map<Long, List<String>> fileIdsToRuleNames = new HashMap<>();
         for (FileExportRuleSet ruleSet : ruleSets.values()) {
             for (Rule rule : ruleSet.getRules().values()) {
+                if (cancelCheck.get()) {
+                    return fileIdsToRuleNames;
+                }
                 List<Long> fileIds = rule.evaluate(dataSource.getId());
                 for (Long fileId : fileIds) {
                     List<String> ruleList;
@@ -292,15 +302,20 @@ final class FileExporter {
      * the file satisfied.
      *
      * @param fileIdsToRuleNames The map of file ids to rule name lists.
+     * @param cancelCheck A function used to check if the file write process
+     *                    should be terminated.
      *
      * @throws TskCoreException If there is a problem querying file metadata or
      *                          getting file content.
      * @throws IOException      If there is a problem writing a file to
      *                          secondary storage.
      */
-    private void exportFiles(Map<Long, List<String>> fileIdsToRuleNames) throws TskCoreException, IOException {
+    private void exportFiles(Map<Long, List<String>> fileIdsToRuleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException {
         for (Map.Entry<Long, List<String>> entry : fileIdsToRuleNames.entrySet()) {
-            exportFile(entry.getKey(), entry.getValue());
+           if (cancelCheck.get()) {
+              return;
+           }
+           exportFile(entry.getKey(), entry.getValue(), cancelCheck);
         }
     }
 
@@ -311,13 +326,15 @@ final class FileExporter {
      * @param fileId    The id of the file to export.
      * @param ruleNames The names of the export rules the file satisfied.
      * @param progress  The progress reporter for this module.
+     * @param cancelCheck A function used to check if the file write process
+     *                    should be terminated.
      *
      * @throws TskCoreException If there is a problem querying file metadata or
      *                          getting file content.
      * @throws IOException      If there is a problem writing the file to
      *                          storage.
      */
-    private void exportFile(Long fileId, List<String> ruleNames) throws TskCoreException, IOException {
+    private void exportFile(Long fileId, List<String> ruleNames, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException {
         AbstractFile file = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(fileId);
         if (!shouldExportFile(file)) {
             return;
@@ -327,7 +344,10 @@ final class FileExporter {
         for (BlackboardArtifact artifact : artifacts) {
             artifactsToAttributes.put(artifact, artifact.getAttributes());
         }
-        Path filePath = exportFileToSecondaryStorage(file);
+        Path filePath = exportFileToSecondaryStorage(file, cancelCheck);
+        if (filePath == null) {
+            return;
+        }
         addFileToCatalog(file, artifactsToAttributes, filePath, masterCatalog);
         for (String ruleName : ruleNames) {
             JsonGenerator ruleCatalog = this.ruleNamesToCatalogs.get(ruleName);
@@ -396,6 +416,8 @@ final class FileExporter {
      * outputDir/text-html/D1/31/DD/02/D131DD02C5E6EEC4
      *
      * @param file The file to export.
+     * @param cancelCheck A function used to check if the file write process
+     *                    should be terminated.
      *
      * @return The path to the exported file.
      *
@@ -403,7 +425,7 @@ final class FileExporter {
      *                          database.
      * @throws IOException      If the file cannot be written.
      */
-    private Path exportFileToSecondaryStorage(AbstractFile file) throws TskCoreException, IOException {
+    private Path exportFileToSecondaryStorage(AbstractFile file, Supplier<Boolean> cancelCheck) throws TskCoreException, IOException {
         /*
          * Get the MIME type of the file to be used as a path component.
          */
@@ -427,7 +449,11 @@ final class FileExporter {
         File exportFile = exportFilePath.toFile();
         if (!exportFile.exists()) {
             Files.createDirectories(exportFilePath.getParent());
-            ContentUtils.writeToFile(file, exportFile);
+            ContentUtils.writeToFile(file, exportFile, cancelCheck);
+            if (cancelCheck.get()) {
+                Files.delete(exportFilePath);
+                return null;
+            }
         }
 
         return exportFilePath;

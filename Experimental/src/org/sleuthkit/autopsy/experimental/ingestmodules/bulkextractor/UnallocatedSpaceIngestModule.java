@@ -139,7 +139,11 @@ final class UnallocatedSpaceIngestModule implements FileIngestModule {
             // Write the file to disk.
             Path tempDirPath = UnallocatedSpaceIngestModule.tempPathsByJob.get(this.context.getJobId());
             tempFilePath = Paths.get(tempDirPath.toString(), file.getName());
-            ContentUtils.writeToFile(file, tempFilePath.toFile());
+            ContentUtils.writeToFile(file, tempFilePath.toFile(), this.context::fileIngestIsCancelled);
+            if (this.context.fileIngestIsCancelled()) {
+                Files.delete(tempFilePath);
+                return ProcessResult.OK;
+            }
 
             // Make an output directory for Bulk Extractor. 
             Path outputDirPath = Utilities.getOutputSubdirectoryPath(this.rootOutputDirPath, file.getId());

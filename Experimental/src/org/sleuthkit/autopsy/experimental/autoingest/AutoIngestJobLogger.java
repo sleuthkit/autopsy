@@ -33,7 +33,10 @@ import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationServic
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
 import javax.annotation.concurrent.Immutable;
+import org.sleuthkit.autopsy.ingest.IngestModuleError;
+import org.sleuthkit.autopsy.ingest.IngestManager.IngestManagerException;
 
 /**
  * A logger for the processing of an auto ingest job by an auto ingest node. An

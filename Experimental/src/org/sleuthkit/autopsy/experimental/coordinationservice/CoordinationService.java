@@ -157,6 +157,7 @@ public final class CoordinationService {
             try {
                 service = new CoordinationService(rootNode);
             } catch (Exception ex) {
+                curator = null;
                 throw new CoordinationServiceException("Failed to create coordination service", ex);
             }
             rootNodesToServices.put(rootNode, service);

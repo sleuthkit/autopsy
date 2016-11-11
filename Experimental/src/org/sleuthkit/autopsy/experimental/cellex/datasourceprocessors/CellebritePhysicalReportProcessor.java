@@ -60,15 +60,16 @@ import org.sleuthkit.autopsy.coreutils.TimeStampUtils;
 )
 public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSourceProcessor {
 
-    private static final String DATA_SOURCE_TYPE = "Cellebrite Android";
+    private static final String DATA_SOURCE_TYPE = "Cellebrite Physical Report";
     private final CellebritePhysicalReportInputPanel configPanel;
     private AddCellebritePhysicalReportTask addImagesTask;
     
     private static final List<String> CELLEBRITE_EXTS = Arrays.asList(new String[]{".bin"});
-    private static final GeneralFilter binImageFilter = new GeneralFilter(CELLEBRITE_EXTS, "");
-    private static final List<FileFilter> cellebriteImageFiltersList = new ArrayList<>();
+    private static final String CELLEBRITE_DESC = "Cellebrite Physical Files (*.bin)";
+    private static final GeneralFilter binFileFilter = new GeneralFilter(CELLEBRITE_EXTS, CELLEBRITE_DESC);
+    private static final List<FileFilter> filtersList = new ArrayList<>();
     static {
-        cellebriteImageFiltersList.add(binImageFilter);
+        filtersList.add(binFileFilter);
     }
 
     private static final GeneralFilter zipFilter = new GeneralFilter(Arrays.asList(new String[]{".zip"}), "");
@@ -89,6 +90,16 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
         configPanel = CellebritePhysicalReportInputPanel.createInstance(CellebritePhysicalReportProcessor.class.getName());
     }
 
+/**
+     * Gets the file extensions supported by this data source processor as a
+     * list of file filters.
+     *
+     * @return List<FileFilter> List of FileFilter objects
+     */
+    public static final List<FileFilter> getFileFilterList() {
+        return filtersList;
+    }     
+    
     /**
      * Gets a string that describes the type of data sources this processor is
      * able to add to the case database. The string is suitable for display in a
@@ -177,7 +188,9 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
      */
     @Override
     public void cancel() {
-        addImagesTask.cancelTask();
+        if (null != addImagesTask) {
+            addImagesTask.cancelTask();
+        }
     }
 
     /**
@@ -259,7 +272,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
                 
         String fileName = dataSourcePath.getFileName().toString();        
         // is it a ".bin" image
-        if (!isAcceptedByFiler(new File(fileName), cellebriteImageFiltersList)) {
+        if (!isAcceptedByFiler(new File(fileName), filtersList)) {
             return false;
         }
 

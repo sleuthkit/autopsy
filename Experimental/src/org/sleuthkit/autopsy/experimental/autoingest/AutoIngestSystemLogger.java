@@ -38,6 +38,7 @@ final class AutoIngestSystemLogger {
     private static final int LOG_SIZE = 0; // In bytes, zero is unlimited
     private static final int LOG_FILE_COUNT = 10;
     private static final Logger LOGGER = Logger.getLogger("AutoIngest"); //NON-NLS
+    private static final String NEWLINE = System.lineSeparator();
     @GuardedBy("AutoIngestSystemLogger")
     private static boolean configured;
 
@@ -59,17 +60,17 @@ final class AutoIngestSystemLogger {
                         Throwable thrown = record.getThrown();
                         String stackTrace = ""; //NON-NLS
                         while (thrown != null) {
-                            stackTrace += thrown.toString() + "\n";
+                            stackTrace += thrown.toString() + NEWLINE;
                             for (StackTraceElement traceElem : record.getThrown().getStackTrace()) {
-                                stackTrace += "\t" + traceElem.toString() + "\n"; //NON-NLS
+                                stackTrace += "\t" + traceElem.toString() + NEWLINE; //NON-NLS
                             }
                             thrown = thrown.getCause();
                         }
                         return (new Timestamp(record.getMillis())).toString() + " " //NON-NLS
                                 + record.getSourceClassName() + " " //NON-NLS
-                                + record.getSourceMethodName() + "\n" //NON-NLS
+                                + record.getSourceMethodName() + NEWLINE
                                 + record.getLevel() + ": " //NON-NLS
-                                + this.formatMessage(record) + "\n" //NON-NLS
+                                + this.formatMessage(record) + NEWLINE
                                 + stackTrace;
                     }
                 });

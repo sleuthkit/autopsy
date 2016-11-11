@@ -210,7 +210,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     synchronized StageDetails getStageDetails() {
         String description;
         Date startDate;
-        if (null != this.ingestJob) {
+        if (Stage.CANCELLING != this.stage && null != this.ingestJob) {
             IngestJob.ProgressSnapshot progress = this.ingestJob.getSnapshot();
             IngestJob.DataSourceIngestModuleHandle ingestModuleHandle = progress.runningDataSourceIngestModule();
             if (null != ingestModuleHandle) {

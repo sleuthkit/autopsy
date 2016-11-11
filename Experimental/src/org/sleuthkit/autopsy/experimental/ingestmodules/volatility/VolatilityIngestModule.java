@@ -283,9 +283,10 @@ final class VolatilityIngestModule implements DataSourceIngestModule {
                 }
 
                 hiberFilePath = Paths.get(tempDirPath.toString(), file.getName());
-                progressBar.progress("Saving file: " + file.getName(), completeTasks++);
-                ContentUtils.writeToFile(file, hiberFilePath.toFile());
-
+                progressBar.progress("Saving file: " + file.getName(), completeTasks);
+                completeTasks++;
+                ContentUtils.writeToFile(file, hiberFilePath.toFile(), context::dataSourceIngestIsCancelled);
+                    
                 // Because it can take a while to save the hiberfil.sys we
                 // check to see if the task was cancelled while the file was being saved.
                 if (this.context.dataSourceIngestIsCancelled()) {
@@ -326,7 +327,8 @@ final class VolatilityIngestModule implements DataSourceIngestModule {
                         VolatilityIngestModule.logger.log(Level.WARNING, "Volatility returned error exit value = {0} when processing {1}", new Object[]{exitValue, file.getName()}); // NON-NLS
                     }
 
-                    progressBar.progress(completeTasks++); // Update progress bar as each plugin completes.   
+                    progressBar.progress(completeTasks); // Update progress bar as each plugin completes.
+                    completeTasks++;
                 }
 
                 // Delete hiberfil
