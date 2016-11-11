@@ -149,6 +149,8 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileTypesByMimeType.MediaSubTypeNode aThis);
 
+    T visit(FileTypesByMimeType.EmptyNode aThis);
+
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -218,6 +220,11 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaTypeNode) {
             return defaultVisit(ftByMimeTypeMediaTypeNode);
         }
+        @Override
+        public T visit(FileTypesByMimeType.EmptyNode ftByMimeTypeEmptyNode) {
+            return defaultVisit(ftByMimeTypeEmptyNode);
+        } 
+
         @Override
         public T visit(DeletedContentNode dcn) {
             return defaultVisit(dcn);

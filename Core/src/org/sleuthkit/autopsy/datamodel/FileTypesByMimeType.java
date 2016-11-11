@@ -58,7 +58,6 @@ import org.sleuthkit.datamodel.TskData;
 class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
     static SleuthkitCase skCase;
-    static final String EMPTY_MIME_TREE_STRING = "Data not available. Run file type identification module.";
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
      * which exist in the database. This hashmap will store them with the media
@@ -77,7 +76,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                     || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-               //             || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
+                    //             || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
                     || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
                 /**
                  * Checking for a current case is a stop gap measure until a
@@ -144,7 +143,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
         IngestManager.getInstance().addIngestJobEventListener(pcl);
         IngestManager.getInstance().addIngestModuleEventListener(pcl);
 //        Case.addPropertyChangeListener(pcl);
-
+        //       populateHashMap();
         FileTypesByMimeType.skCase = skCase;
     }
 
@@ -172,7 +171,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
         @Override
         public boolean isLeafTypeNode() {
 //            if (!existingMimeTypes.isEmpty()) {
-                return false;
+            return false;
 //            }
 //            else {
 //                return true;
@@ -194,6 +193,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
     class FileTypesByMimeTypeNodeChildren extends ChildFactory<String> implements Observer {
 
         private SleuthkitCase skCase;
+        static final String EMPTY_MIME_TREE_STRING = "Data not available. Run file type identification module.";
 
         /**
          *
@@ -207,17 +207,21 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<String> mediaTypeNodes) {
-//           if (!existingMimeTypes.isEmpty()) {
-                mediaTypeNodes.addAll(getMediaTypeList());              
-//            } else {
-//               mediaTypeNodes.add(EMPTY_MIME_TREE_STRING);
-//            }
+            if (!existingMimeTypes.isEmpty()) {
+                mediaTypeNodes.addAll(getMediaTypeList());
+            } else {
+                mediaTypeNodes.add(EMPTY_MIME_TREE_STRING);
+            }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(String key) {
+            if (!existingMimeTypes.isEmpty()) {
                 return new MediaTypeNode(key);
+            } else {
+                return new EmptyNode(EMPTY_MIME_TREE_STRING);
+            }
 
         }
 
@@ -226,6 +230,31 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
             refresh(true);
         }
 
+    }
+
+    class EmptyNode extends DisplayableItemNode {
+
+        EmptyNode(String name) {
+            super(Children.LEAF);
+            super.setName(name);
+            setName(name);
+            setDisplayName(name);
+        }
+
+        @Override
+        public boolean isLeafTypeNode() {
+            return true;
+        }
+
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+            return v.visit(this);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     class MediaTypeNode extends DisplayableItemNode {
@@ -267,20 +296,14 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<String> mediaTypeNodes) {
-//            if (!existingMimeTypes.isEmpty() && !mediaType.equals(EMPTY_MIME_TREE_STRING)) {
-//                System.out.println(mediaType);
-//                System.out.println(existingMimeTypes.size());
-                mediaTypeNodes.addAll(existingMimeTypes.get(mediaType));
-                return true;
-//            } else {
-//                return false;
-//            }
+            mediaTypeNodes.addAll(existingMimeTypes.get(mediaType));
+            return true;
         }
 
         @Override
         protected Node createNodeForKey(String subtype) {
-                String mimeType = mediaType + "/" + subtype;
-                return new MediaSubTypeNode(mimeType);
+            String mimeType = mediaType + "/" + subtype;
+            return new MediaSubTypeNode(mimeType);
         }
 
         @Override
