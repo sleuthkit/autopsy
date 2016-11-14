@@ -30,19 +30,21 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  */
 final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJobSettings {
 
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 1L;
     private long versionNumber;
     private boolean skipFilesWithNoExtension;
-    private boolean skipFilesWithTextPlainMimeType;
     private boolean skipKnownFiles;
-    private boolean checkOnlyImageExeTypes;
+    private CHECK_TYPE_SETTING checkType;
 
+    enum CHECK_TYPE_SETTING {
+        ALL, NO_TEXT_FILES, ONLY_MEDIA_AND_EXE
+    }
     /*
      * For "basic mode" only image and executable files should be checked for
-     * mismatches. This is a set of the MIME types that would be checked under
-     * this basic mode.
+     * mismatches. This is a set of the MIME types that would be checked when
+     * checkType is ONLY_MEDIA_AND_EXE.
      */
-    static final Set<String> IMAGE_AND_EXECUTABLE_MIME_TYPES = Stream.of(
+    static final Set<String> MEDIA_AND_EXE_MIME_TYPES = Stream.of(
             "image/bmp",
             "image/gif",
             "image/jpeg",
@@ -57,16 +59,14 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
 
     FileExtMismatchDetectorModuleSettings() {
         this.skipFilesWithNoExtension = true;
-        this.skipFilesWithTextPlainMimeType = true;
         this.skipKnownFiles = true;
-        this.checkOnlyImageExeTypes = true;
+        this.checkType = CHECK_TYPE_SETTING.ONLY_MEDIA_AND_EXE;
     }
 
-    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType, boolean checkOnlyImageExeTypes) {
+    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, CHECK_TYPE_SETTING checkType) {
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
-        this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
         this.skipKnownFiles = skipKnownFiles;
-        this.checkOnlyImageExeTypes = checkOnlyImageExeTypes;
+        this.checkType = checkType;
     }
 
     @Override
@@ -82,14 +82,6 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         return skipFilesWithNoExtension;
     }
 
-    void setSkipFilesWithTextPlainMimeType(boolean skipFilesWithTextPlainMimeType) {
-        this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
-    }
-
-    boolean skipFilesWithTextPlainMimeType() {
-        return skipFilesWithTextPlainMimeType;
-    }
-
     void setSkipKnownFiles(boolean skipKnownFiles) {
         this.skipKnownFiles = skipKnownFiles;
     }
@@ -98,12 +90,12 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         return skipKnownFiles;
     }
 
-    void setCheckOnlyImageExeTypes(boolean checkOnlyImageExeTypes) {
-        this.checkOnlyImageExeTypes = checkOnlyImageExeTypes;
+    void setCheckTypeSetting(CHECK_TYPE_SETTING checkType) {
+        this.checkType = checkType;
     }
 
-    boolean checkOnlyImageExeTypes() {
-        return checkOnlyImageExeTypes;
+    CHECK_TYPE_SETTING getCheckTypeSetting() {
+        return checkType;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -115,13 +107,7 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
              * desired default value of true.
              */
             skipKnownFiles = true;
-        } else if (1L == versionNumber) {
-            /*
-             * If the version number is 1, checkOnlyImageExeTypes would be a new
-             * field. Change this to the default value of true.
-             */
-            checkOnlyImageExeTypes = true;
         }
-        versionNumber = 2;
+        versionNumber = 1;
     }
 }

@@ -36,10 +36,22 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
     }
 
     private void customizeComponents() {
+        switch (settings.getCheckTypeSetting()) {
+            case ALL:
+                checkAllRadioButton.setSelected(true);
+                break;
+            case NO_TEXT_FILES:
+                checkNoTextRadioButton.setSelected(true);
+                break;
+            case ONLY_MEDIA_AND_EXE:
+                checkMediaExeRadioButton.setSelected(true);
+                break;
+            default:
+                checkMediaExeRadioButton.setSelected(true);
+                break;
+        }
         skipNoExtCheckBox.setSelected(settings.skipFilesWithNoExtension());
-        skipTextPlain.setSelected(settings.skipFilesWithTextPlainMimeType());
         skipKnownFiles.setSelected(settings.skipKnownFiles());
-        checkOnlyImageExe.setSelected(settings.checkOnlyImageExeTypes());
     }
 
     @Override
@@ -56,24 +68,18 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        checkTypeButtonGroup = new javax.swing.ButtonGroup();
         skipNoExtCheckBox = new javax.swing.JCheckBox();
-        skipTextPlain = new javax.swing.JCheckBox();
         skipKnownFiles = new javax.swing.JCheckBox();
-        checkOnlyImageExe = new javax.swing.JCheckBox();
+        checkAllRadioButton = new javax.swing.JRadioButton();
+        checkNoTextRadioButton = new javax.swing.JRadioButton();
+        checkMediaExeRadioButton = new javax.swing.JRadioButton();
 
         skipNoExtCheckBox.setSelected(true);
         skipNoExtCheckBox.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.skipNoExtCheckBox.text")); // NOI18N
         skipNoExtCheckBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 skipNoExtCheckBoxActionPerformed(evt);
-            }
-        });
-
-        skipTextPlain.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.skipTextPlain.text")); // NOI18N
-        skipTextPlain.setSelected(true);
-        skipTextPlain.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                skipTextPlainActionPerformed(evt);
             }
         });
 
@@ -85,10 +91,27 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
             }
         });
 
-        checkOnlyImageExe.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.checkOnlyImageExe.text")); // NOI18N
-        checkOnlyImageExe.addActionListener(new java.awt.event.ActionListener() {
+        checkTypeButtonGroup.add(checkAllRadioButton);
+        checkAllRadioButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.checkAllRadioButton.text")); // NOI18N
+        checkAllRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                checkOnlyImageExeActionPerformed(evt);
+                checkAllRadioButtonActionPerformed(evt);
+            }
+        });
+
+        checkTypeButtonGroup.add(checkNoTextRadioButton);
+        checkNoTextRadioButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.checkNoTextRadioButton.text")); // NOI18N
+        checkNoTextRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkNoTextRadioButtonActionPerformed(evt);
+            }
+        });
+
+        checkTypeButtonGroup.add(checkMediaExeRadioButton);
+        checkMediaExeRadioButton.setText(org.openide.util.NbBundle.getMessage(FileExtMismatchModuleSettingsPanel.class, "FileExtMismatchModuleSettingsPanel.checkMediaExeRadioButton.text")); // NOI18N
+        checkMediaExeRadioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                checkMediaExeRadioButtonActionPerformed(evt);
             }
         });
 
@@ -99,23 +122,26 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(skipTextPlain)
-                    .addComponent(skipKnownFiles)
+                    .addComponent(checkAllRadioButton)
+                    .addComponent(checkNoTextRadioButton)
+                    .addComponent(checkMediaExeRadioButton)
                     .addComponent(skipNoExtCheckBox)
-                    .addComponent(checkOnlyImageExe))
+                    .addComponent(skipKnownFiles))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(skipNoExtCheckBox)
+                .addComponent(checkAllRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(checkNoTextRadioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(checkMediaExeRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(skipTextPlain)
+                .addComponent(skipNoExtCheckBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(skipKnownFiles)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(checkOnlyImageExe)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -124,22 +150,28 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
         settings.setSkipFilesWithNoExtension(skipNoExtCheckBox.isSelected());
     }//GEN-LAST:event_skipNoExtCheckBoxActionPerformed
 
-    private void skipTextPlainActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipTextPlainActionPerformed
-        settings.setSkipFilesWithTextPlainMimeType(skipTextPlain.isSelected());
-    }//GEN-LAST:event_skipTextPlainActionPerformed
-
     private void skipKnownFilesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipKnownFilesActionPerformed
         settings.setSkipKnownFiles(skipKnownFiles.isSelected());
     }//GEN-LAST:event_skipKnownFilesActionPerformed
 
-    private void checkOnlyImageExeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkOnlyImageExeActionPerformed
-        settings.setCheckOnlyImageExeTypes(checkOnlyImageExe.isSelected());
-    }//GEN-LAST:event_checkOnlyImageExeActionPerformed
+    private void checkAllRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkAllRadioButtonActionPerformed
+        settings.setCheckTypeSetting(FileExtMismatchDetectorModuleSettings.CHECK_TYPE_SETTING.ALL);
+    }//GEN-LAST:event_checkAllRadioButtonActionPerformed
+
+    private void checkNoTextRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkNoTextRadioButtonActionPerformed
+        settings.setCheckTypeSetting(FileExtMismatchDetectorModuleSettings.CHECK_TYPE_SETTING.NO_TEXT_FILES);
+    }//GEN-LAST:event_checkNoTextRadioButtonActionPerformed
+
+    private void checkMediaExeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkMediaExeRadioButtonActionPerformed
+        settings.setCheckTypeSetting(FileExtMismatchDetectorModuleSettings.CHECK_TYPE_SETTING.ONLY_MEDIA_AND_EXE);
+    }//GEN-LAST:event_checkMediaExeRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JCheckBox checkOnlyImageExe;
+    private javax.swing.JRadioButton checkAllRadioButton;
+    private javax.swing.JRadioButton checkMediaExeRadioButton;
+    private javax.swing.JRadioButton checkNoTextRadioButton;
+    private javax.swing.ButtonGroup checkTypeButtonGroup;
     private javax.swing.JCheckBox skipKnownFiles;
     private javax.swing.JCheckBox skipNoExtCheckBox;
-    private javax.swing.JCheckBox skipTextPlain;
     // End of variables declaration//GEN-END:variables
 }
