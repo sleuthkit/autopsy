@@ -143,13 +143,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileTypes.FileTypesNode fileTypes);
 
-    T visit(FileTypesByMimeType.FileTypesByMimeTypeNode aThis);
+    T visit(FileTypesByMimeType.FileTypesByMimeTypeNode ftByMimeTypeNode);
 
-    T visit(FileTypesByMimeType.MediaTypeNode aThis);
+    T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaType);
 
-    T visit(FileTypesByMimeType.MediaSubTypeNode aThis);
-
-    T visit(FileTypesByMimeType.EmptyNode aThis);
+    T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaSubType);
 
 
     /**
@@ -208,22 +206,21 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(FileTypeByExtNode fsfn) {
             return defaultVisit(fsfn);
         }
+        
         @Override
         public T visit(FileTypesByMimeType.FileTypesByMimeTypeNode ftByMimeTypeNode) {
             return defaultVisit(ftByMimeTypeNode);
         }
+        
         @Override
         public T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaTypeNode) {
             return defaultVisit(ftByMimeTypeMediaTypeNode);
         }
+        
         @Override
         public T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaTypeNode) {
             return defaultVisit(ftByMimeTypeMediaTypeNode);
         }
-        @Override
-        public T visit(FileTypesByMimeType.EmptyNode ftByMimeTypeEmptyNode) {
-            return defaultVisit(ftByMimeTypeEmptyNode);
-        } 
 
         @Override
         public T visit(DeletedContentNode dcn) {

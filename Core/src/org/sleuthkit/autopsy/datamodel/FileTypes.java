@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * Results node support
+ * File Types node support
  */
 public class FileTypes implements AutopsyVisitableItem {
 
@@ -46,8 +46,7 @@ public class FileTypes implements AutopsyVisitableItem {
     }
 
     /**
-     *
-     * @author wschaefer
+     * Node which will contain By Mime Type and By Extension nodes.
      */
     public static class FileTypesNode extends DisplayableItemNode {
 
