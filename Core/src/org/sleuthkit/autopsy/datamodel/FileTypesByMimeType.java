@@ -118,7 +118,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
      */
     private void populateHashMap() {
         StringBuilder allDistinctMimeTypesQuery = new StringBuilder();
-        allDistinctMimeTypesQuery.append("SELECT DISTINCT mime_type from tsk_files where mime_type NOT null");
+        allDistinctMimeTypesQuery.append("SELECT DISTINCT mime_type from tsk_files where mime_type NOT null");  //NON-NLS
         allDistinctMimeTypesQuery.append(" AND dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(";"); //NON-NLS
         synchronized (existingMimeTypes) {
             existingMimeTypes.clear();
@@ -421,7 +421,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
             if (UserPreferences.hideKnownFilesInViewsTree()) {
                 query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
             }
-            query.append(" AND mime_type = '").append(mime_type).append("'");
+            query.append(" AND mime_type = '").append(mime_type).append("'");  //NON-NLS
             return query.toString();
         }
 
