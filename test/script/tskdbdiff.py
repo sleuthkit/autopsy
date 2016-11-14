@@ -357,7 +357,7 @@ def normalize_db_entry(line, table):
     layout_index = line.find('INSERT INTO "tsk_file_layout"')
     data_source_info_index = line.find('INSERT INTO "data_source_info"')
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"')
-    parens = line[line.find('(') + 1 : line.find(')')]
+    parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
     
     # remove object ID

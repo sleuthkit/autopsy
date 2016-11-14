@@ -288,7 +288,11 @@ public class FileSize implements AutopsyVisitableItem {
 
             @Override
             public String getItemType() {
-                return getClass().getName();
+                /**
+                 * Return getClass().getName() + filter.getName() if custom
+                 * settings are desired for different filters.
+                 */
+                return DisplayableItemNode.FILE_PARENT_NODE_KEY;
             }
 
             // update the display name when new events are fired
