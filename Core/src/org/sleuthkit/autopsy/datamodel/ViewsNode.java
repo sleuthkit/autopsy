@@ -36,7 +36,6 @@ public class ViewsNode extends DisplayableItemNode {
 
     public ViewsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(
-             //   new FileTypeExtensionFilters(sleuthkitCase),
                 new FileTypes(sleuthkitCase),
                 // June '15: Recent Files was removed because it was not useful w/out filtering
                 // add it back in if we can filter the results to a more managable size. 

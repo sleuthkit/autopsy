@@ -48,7 +48,7 @@ public class FileTypesByExtNode extends DisplayableItemNode {
      *               something to provide a sub-node.
      */
     FileTypesByExtNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
-        super(Children.create(new FileTypesChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+        super(Children.create(new FileTypesByExtChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
         this.filter = filter;
         init();
     }
@@ -61,7 +61,7 @@ public class FileTypesByExtNode extends DisplayableItemNode {
      *               provides updates on events
      */
     private FileTypesByExtNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
-        super(Children.create(new FileTypesChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+        super(Children.create(new FileTypesByExtChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
         this.filter = filter;
         init();
     }
@@ -122,7 +122,7 @@ public class FileTypesByExtNode extends DisplayableItemNode {
     /**
      *
      */
-    static class FileTypesChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
+    static class FileTypesByExtChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
 
         private SleuthkitCase skCase;
         private FileTypeExtensionFilters.RootFilter filter;
@@ -135,12 +135,12 @@ public class FileTypesByExtNode extends DisplayableItemNode {
          * @param o      Observable that provides updates based on events being
          *               fired (or null if one needs to be created)
          */
-        public FileTypesChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
+        public FileTypesByExtChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
             super();
             this.skCase = skCase;
             this.filter = filter;
             if (o == null) {
-                this.notifier = new FileTypesChildrenObservable();
+                this.notifier = new FileTypesByExtChildrenObservable();
             } else {
                 this.notifier = o;
             }
@@ -150,9 +150,9 @@ public class FileTypesByExtNode extends DisplayableItemNode {
          * Listens for case and ingest invest. Updates observers when events are
          * fired. FileType and FileTypes nodes are all listening to this.
          */
-        private final class FileTypesChildrenObservable extends Observable {
+        private final class FileTypesByExtChildrenObservable extends Observable {
 
-            FileTypesChildrenObservable() {
+            FileTypesByExtChildrenObservable() {
                 IngestManager.getInstance().addIngestJobEventListener(pcl);
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
                 Case.addPropertyChangeListener(pcl);

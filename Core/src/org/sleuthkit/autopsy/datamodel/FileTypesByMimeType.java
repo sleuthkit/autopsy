@@ -57,9 +57,9 @@ import org.sleuthkit.datamodel.TskData;
  * Listener which is checking for changes in IngestJobEvent Completed or
  * Cancelled and IngestModuleEvent Content Changed.
  */
-class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
+public class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
-    static SleuthkitCase skCase;
+    private static SleuthkitCase skCase;
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
      * which exist in the database. This hashmap will store them with the media
@@ -175,15 +175,15 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
      * when the file detection module has not been run and MIME type is
      * currently unknown.
      */
-    class FileTypesByMimeTypeNode extends DisplayableItemNode {
+    public class FileTypesByMimeTypeNode extends DisplayableItemNode {
 
         @NbBundle.Messages("FileTypesByMimeType.name.text=By MIME Type")
         final String NAME = Bundle.FileTypesByMimeType_name_text();
 
         FileTypesByMimeTypeNode(SleuthkitCase sleuthkitCase) {
             super(Children.create(new FileTypesByMimeTypeNodeChildren(), true));
-            setName(NAME);
-            setDisplayName(NAME);
+            super.setName(NAME);
+            super.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
         }
 
@@ -200,6 +200,10 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
         @Override
         public String getItemType() {
             return getClass().getName();
+        }
+
+        public boolean isEmpty() {
+            return existingMimeTypes.isEmpty();
         }
 
     }
@@ -225,12 +229,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(String key) {
-            if (!existingMimeTypes.isEmpty()) {
-                return new MediaTypeNode(key);
-            } else {
-                return null;
-            }
-
+            return new MediaTypeNode(key);
         }
 
         @Override
@@ -468,4 +467,47 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
         }
 
     }
+
+    /**
+     * EmptyNode Class made for edge case where no mime exist in the database
+     * yet. Creates a node to display information on why the tree is empty.
+     *
+     * Swapped for the FileTypesByMimeType node in
+     * DirectoryTreeTopComponent.respondSelection
+     */
+    static public class EmptyNode extends AbstractNode {
+
+        public EmptyNode() {
+            super(Children.create(new EmptyChildFactory(), true));
+
+        }
+
+        static class EmptyChildFactory extends ChildFactory<String> {
+
+            String FILE_ID_MSG = "Data not available. Run file type identification module.";  //NON-NLS
+
+            @Override
+            protected boolean createKeys(List<String> list) {
+                list.add(FILE_ID_MSG);
+                return true;
+            }
+
+            @Override
+            protected Node createNodeForKey(String key) {
+                return new MessageNode(key);
+            }
+
+        }
+
+        static class MessageNode extends AbstractNode {
+
+            MessageNode(String name) {
+                super(Children.LEAF);
+                super.setName(name);
+                setName(name);
+                setDisplayName(name);
+            }
+        }
+    }
+
 }
