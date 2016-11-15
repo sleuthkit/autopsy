@@ -45,10 +45,7 @@ import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
-import org.apache.solr.client.solrj.response.CoreAdminResponse;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -436,7 +433,10 @@ public class Server {
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
-                curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
+                curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", //NON-NLS
+                        Integer.toString(currentSolrServerPort),
+                        "-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
+                        "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
 
                 try {
                     //block for 10 seconds, give time to fully start the process
@@ -572,9 +572,9 @@ public class Server {
                 return false;
             }
 
-            if (curSolrProcess != null && !curSolrProcess.isAlive()) {
-                return false;
-            }
+//            if (curSolrProcess != null && !curSolrProcess.isAlive()) {
+//                return false;
+//            }
 
             // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
