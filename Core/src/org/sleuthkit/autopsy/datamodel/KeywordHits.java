@@ -248,15 +248,10 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "KeywordRoot"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class ListFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -408,15 +403,10 @@ public class KeywordHits implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "KeywordList"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -511,15 +501,10 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "KeywordTerm"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {

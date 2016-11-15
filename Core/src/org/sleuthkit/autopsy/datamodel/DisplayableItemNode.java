@@ -33,6 +33,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class DisplayableItemNode extends AbstractNode {
 
+    final static String FILE_PARENT_NODE_KEY = "orgsleuthkitautopsydatamodel" + "FileTypeParentNode";
+
     public DisplayableItemNode(Children children) {
         super(children);
     }
@@ -45,17 +47,21 @@ public abstract class DisplayableItemNode extends AbstractNode {
 
     public abstract <T> T accept(DisplayableItemNodeVisitor<T> v);
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
+    /**
+     * Returns type of DisplayableItemNode to allow TableFilterNode to pass
+     * the information to DataResultViewerTable to allow custom settings for
+     * column orderings.
      * 
-     * Added to support this feature.
+     * @return A String representing the type of node, based on its name and
+     *         whether or not it wraps any special items (filters, artifact
+     *         types).
      */
-//    public abstract String getItemType();
+    public abstract String getItemType();
+
     /**
      * this code started as a cut and past of
      * DataResultFilterNode.GetPopupActionsDisplayableItemNodeVisitor.findLinked(BlackboardArtifactNode
      * ba)
-     *
      *
      * @param artifact
      *

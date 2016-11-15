@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -325,15 +325,11 @@ public class RegressionTest extends TestCase {
     }
 
     public void testGenerateReportToolbar() {
-
         logger.info("Generate Report Toolbars");
-        // Force the action if necessary:
-        //new Action("Tools|Generate Report", null).perform();
-        //new Timeout("pausing", 1000).sleep();
         MainWindowOperator mwo = MainWindowOperator.getDefault();
         JButtonOperator jbo = new JButtonOperator(mwo, "Generate Report");
         jbo.pushNoBlock();
-        new Timeout("pausing", 1000).sleep();
+        new Timeout("pausing", 5000).sleep();
     }
 
     public void testGenerateReportButton() throws IOException {
@@ -355,10 +351,10 @@ public class RegressionTest extends TestCase {
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
-        JLabel waiter = JLabelOperator.waitJLabel(previewDialog, "Complete", false, false);
+        JLabelOperator.waitJLabel(previewDialog, "Complete", false, false);
         JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
         jbo2.pushNoBlock();
-        new Timeout("pausing", 3000).sleep(); // Give the program a second to idle to be safe
+        new Timeout("pausing", 10000).sleep();
         System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
     }
