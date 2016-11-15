@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
@@ -640,18 +641,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
                         Node sffn = new SlackFileFilterNode(kffn, SlackFileFilterNode.getSelectionContext(originNode));
-                        /*
-                         * TODO (AUT-1849): Correct or remove peristent column
-                         * reordering code
-                         *
-                         * The following conditional was added to support this
-                         * feature.
-                         */
-//                        if(originNode instanceof DisplayableItemNode) {
-//                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
-//                        } else {
-                        dataResult.setNode(new TableFilterNode(sffn, true));
-//                        }
+
+
+                        // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
+                        if (originNode instanceof DisplayableItemNode) {
+                            dataResult.setNode(new TableFilterNode(sffn, true, ((DisplayableItemNode) originNode).getItemType()));
+                        } else {
+                            dataResult.setNode(new TableFilterNode(sffn, true));
+                        }
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);
