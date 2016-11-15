@@ -200,7 +200,7 @@ class ExtractRegistry extends Extract {
             // create a report for the full output
             if (!regOutputFiles.fullPlugins.isEmpty()) {
                 try {
-                    currentCase.addReport(regOutputFiles.fullPlugins, NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"), "RegRipper " + regFile.getUniquePath() + " from hive " + regFileNameLocal); //NON-NLS
+                    currentCase.addReport(regOutputFiles.fullPlugins, NbBundle.getMessage(this.getClass(), "ExtractRegistry.parentModuleName.noSpace"), "RegRipper " + regFile.getUniquePath()); //NON-NLS
                 } catch (TskCoreException e) {
                     this.addErrorMessage("Error adding regripper output as Autopsy report: " + e.getLocalizedMessage()); //NON-NLS
                 }
