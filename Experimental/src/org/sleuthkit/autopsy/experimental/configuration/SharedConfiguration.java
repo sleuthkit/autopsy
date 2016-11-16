@@ -96,6 +96,7 @@ public class SharedConfiguration {
     private String sharedConfigFolder;
     private int fileIngestThreads;
     private boolean sharedConfigMaster;
+    private boolean showToolsWarning;
     private boolean displayLocalTime;
     private boolean hideKnownFilesInDataSource;
     private boolean hideKnownFilesInViews;
@@ -338,6 +339,8 @@ public class SharedConfiguration {
     private void saveNonSharedSettings() {
         sharedConfigMaster = AutoIngestUserPreferences.getSharedConfigMaster();
         sharedConfigFolder = AutoIngestUserPreferences.getSharedConfigFolder();
+		showToolsWarning = AutoIngestUserPreferences.getShowToolsWarning();
+		// Get mode????
         displayLocalTime = UserPreferences.displayTimesInLocalTime();
         hideKnownFilesInDataSource = UserPreferences.hideKnownFilesInDataSourcesTree();
         hideKnownFilesInViews = UserPreferences.hideKnownFilesInViewsTree();
@@ -351,6 +354,8 @@ public class SharedConfiguration {
     private void restoreNonSharedSettings() {
         AutoIngestUserPreferences.setSharedConfigFolder(sharedConfigFolder);
         AutoIngestUserPreferences.setSharedConfigMaster(sharedConfigMaster);
+		AutoIngestUserPreferences.setShowToolsWarning(showToolsWarning);
+		// Load mode???
         UserPreferences.setDisplayTimesInLocalTime(displayLocalTime);
         UserPreferences.setHideKnownFilesInDataSourcesTree(hideKnownFilesInDataSource);
         UserPreferences.setHideKnownFilesInViewsTree(hideKnownFilesInViews);

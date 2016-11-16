@@ -107,6 +107,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private AutoIngestManager manager;
     private ExecutorService updateExecutor;
     private boolean isPaused;
+    private boolean autoIngestStarted;
     private Color pendingTableBackground;
     private Color pendingTablelForeground;
 
@@ -569,6 +570,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     boolean enabled = row >= 0 && row < completedTable.getRowCount();
                     bnDeleteCase.setEnabled(enabled);
                     bnShowCaseLog.setEnabled(enabled);
+                    bnReprocessJob.setEnabled(enabled);
                 });
     }
 
@@ -576,16 +578,17 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * Sets the initial state of the buttons on the panel.
      */
     private void initButtons() {
-        bnOptions.setEnabled(false);
+        bnOptions.setEnabled(true);
         bnDeleteCase.setEnabled(false);
         enablePendingTableButtons(false);
         bnShowCaseLog.setEnabled(false);
-        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text"));
-        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.toolTipText"));
-        bnPause.setEnabled(false);
-        bnRefresh.setEnabled(false);
+        bnReprocessJob.setEnabled(false);
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnStart.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnStart.toolTipText"));
+        bnPause.setEnabled(true);    //initial label for bnPause is 'Start' and it's enabled for user to start the process
+        bnRefresh.setEnabled(false); //at initial stage, nothing to refresh
         enableRunningTableButtons(false);
-        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.running"));
+        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnStart.startMessage"));
     }
 
     /**
@@ -621,6 +624,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          */
         try {
             manager.startUp();
+            autoIngestStarted = true;
         } catch (AutoIngestManager.AutoIngestManagerStartupException ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
             tbStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupError"));
@@ -657,8 +661,13 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         updateExecutor.submit(new UpdateAllJobsTablesTask());
         manager.scanInputDirsNow();
 
-        bnPause.setEnabled(true);
+		//bnPause.setEnabled(true);
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.toolTipText"));
         bnRefresh.setEnabled(true);
+        bnOptions.setEnabled(false);
+        
+        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.running"));
     }
 
     /**
@@ -745,7 +754,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         "AutoIngestDashboard.PauseDueToSharedConfigError=Paused, unable to update shared configuration.",
         "AutoIngestDashboard.PauseDueToIngestJobStartFailure=Paused, unable to start ingest job processing.",
         "AutoIngestDashboard.PauseDueToFileExporterError=Paused, unable to load File Exporter settings.",
-        "AutoIngestDashboard.bnPause.running=Running"
+        "AutoIngestDashboard.bnPause.running=Running",
+        "AutoIngestDashboard.bnStart.startMessage=Waiting to start",
+        "AutoIngestDashboard.bnStart.text=Start",
+        "AutoIngestDashboard.bnStart.toolTipText=Start processing auto ingest jobs"
     })
     @Override
     public void update(Observable o, Object arg) {
@@ -762,6 +774,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     EventQueue.invokeLater(() -> {
                         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.paused"));
                         bnOptions.setEnabled(true);
+                        bnRefresh.setEnabled(false);
                         isPaused = true;
                     });
                     break;
@@ -769,6 +782,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     EventQueue.invokeLater(() -> {
                         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PauseDueToSystemError"));
                         bnOptions.setEnabled(true);
+                        bnRefresh.setEnabled(false);
                         pause(false);
                         isPaused = true;
                         setServicesStatusMessage();
@@ -823,6 +837,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * currently running job, if any.
              */
             manager.pause();
+            bnRefresh.setEnabled(false);
         }
     }
 
@@ -842,6 +857,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text"));
         bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.toolTipText"));
         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.running"));
+        bnRefresh.setEnabled(true);
 
         /**
          * Remove the graying out of the pending table.
@@ -1091,6 +1107,16 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         } catch (Exception ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
         }
+    }
+    
+    /**
+     * Get the current lists of jobs and update the UI.
+     */
+    private void refreshTables(){
+        JobsSnapshot jobsSnapshot = manager.getCurrentJobsSnapshot();
+        refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
+        refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
+        refreshTable(jobsSnapshot.getRunningJobs(), runningTableModel, null);
     }
 
     /**
@@ -1438,8 +1464,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * @param evt - The button click event.
      */
     private void bnRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnRefreshActionPerformed
-        manager.scanInputDirsNow();
-        updateExecutor.submit(new UpdateAllJobsTablesTask());
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        manager.scanInputDirsAndWait();
+        refreshTables();
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }//GEN-LAST:event_bnRefreshActionPerformed
 
     /**
@@ -1476,6 +1504,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 completedTable.clearSelection();
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 CaseDeletionResult result = manager.deleteCase(caseName, caseDirectoryPath);
+                refreshTables();
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 if (CaseDeletionResult.FAILED == result) {
                     JOptionPane.showMessageDialog(this,
@@ -1488,7 +1517,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                             org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"),
                             JOptionPane.INFORMATION_MESSAGE);
                 }
-                updateExecutor.submit(new UpdateAllJobsTablesTask());
             }
         }
     }//GEN-LAST:event_bnDeleteCaseActionPerformed
@@ -1517,8 +1545,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * see it).
              */
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            List<AutoIngestJob> runningJobs = manager.cancelCurrentJob();
-            refreshTable(runningJobs, runningTableModel, null);
+            manager.cancelCurrentJob();
+            refreshTables();
             this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnCancelJobActionPerformed
@@ -1540,6 +1568,17 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * @param evt The button click event.
      */
     private void bnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPauseActionPerformed
+        
+        if (!autoIngestStarted) {
+            //put up a wait cursor during the start up operation
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+            startUp();
+
+            this.setCursor(null);
+            //done for startup
+            return;
+        }
         if (!isPaused) {
             tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.pausing"));
             pause(true);
@@ -1584,8 +1623,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * see it).
              */
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            List<AutoIngestJob> runningJobs = manager.cancelCurrentDataSourceLevelIngestModule();
-            refreshTable(runningJobs, runningTableModel, null);
+            manager.cancelCurrentDataSourceLevelIngestModule();
+            refreshTables();
             this.setCursor(Cursor.getDefaultCursor());
         }
     }//GEN-LAST:event_bnCancelModuleActionPerformed
@@ -1609,8 +1648,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            List<AutoIngestJob> prioritizedQueue = manager.prioritizeCase(caseName);
-            refreshTable(prioritizedQueue, pendingTableModel, null);
+            manager.prioritizeCase(caseName);
+            refreshTables();
             pendingTable.clearSelection();
             enablePendingTableButtons(false);
             AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
@@ -1658,8 +1697,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
-            List<AutoIngestJob> prioritizedQueue = manager.prioritizeJob(manifestFilePath);
-            refreshTable(prioritizedQueue, pendingTableModel, null);
+            manager.prioritizeJob(manifestFilePath);
+            refreshTables();
             pendingTable.clearSelection();
             enablePendingTableButtons(false);
             AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
@@ -1684,10 +1723,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         Path manifestPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal());
-        JobsSnapshot jobsSnapshot = manager.reprocessJob(manifestPath);
-        refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
-        refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
-        refreshTable(jobsSnapshot.getRunningJobs(), runningTableModel, null);
+        manager.reprocessJob(manifestPath);
+        refreshTables();
         AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
     }//GEN-LAST:event_bnReprocessJobActionPerformed
 

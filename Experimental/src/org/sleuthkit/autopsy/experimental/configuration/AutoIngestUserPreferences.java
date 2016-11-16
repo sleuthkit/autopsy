@@ -18,10 +18,18 @@
  */
 package org.sleuthkit.autopsy.experimental.configuration;
 
+import java.util.Base64;
 import java.util.prefs.PreferenceChangeListener;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
 
 /**
  * Provides convenient access to a Preferences node for auto ingest user preferences
@@ -47,8 +55,16 @@ public final class AutoIngestUserPreferences {
     private static final String SHARED_CONFIG_MASTER = "SharedSettingsMaster"; // NON-NLS
     private static final String AUTO_MODE_CONTEXT_STRING = "AutoModeContext"; // NON-NLS
     private static final String SLEEP_BETWEEN_CASES_TIME = "SleepBetweenCasesTime"; // NON-NLS
+	private static final String SHOW_TOOLS_WARNING = "ShowToolsWarning"; // NON-NLS
     private static final String MAX_NUM_TIMES_TO_PROCESS_IMAGE = "MaxNumTimesToAttemptToProcessImage"; // NON-NLS
     private static final String MAX_CONCURRENT_NODES_FOR_ONE_CASE = "MaxConcurrentNodesForOneCase"; // NON-NLS
+    private static final String STATUS_DATABASE_LOGGING_ENABLED = "StatusDatabaseLoggingEnabled"; // NON-NLS
+    private static final String LOGGING_DB_HOSTNAME_OR_IP = "LoggingHostnameOrIP"; // NON-NLS
+    private static final String LOGGING_PORT = "LoggingPort"; // NON-NLS
+    private static final String LOGGING_USERNAME = "LoggingUsername"; // NON-NLS
+    private static final String LOGGING_PASSWORD = "LoggingPassword"; // NON-NLS
+    private static final String LOGGING_DATABASE_NAME = "LoggingDatabaseName"; // NON-NLS
+    private static final String INPUT_SCAN_INTERVAL_TIME = "IntervalBetweenInputScan"; // NON-NLS
 
     // Prevent instantiation.
     private AutoIngestUserPreferences() {
@@ -235,6 +251,24 @@ public final class AutoIngestUserPreferences {
     }
 
     /**
+     * Save whether tools warning dialog should be shown on startup.
+     *
+     * @param showToolsWarning true = show warning dialog, false = don't show
+     */
+    public static void setShowToolsWarning(boolean showToolsWarning) {
+        preferences.putBoolean(SHOW_TOOLS_WARNING, showToolsWarning);
+    }
+
+    /**
+     * Retrieve tools warning dialog setting.
+     *
+     * @return
+     */
+    public static boolean getShowToolsWarning() {
+        return preferences.getBoolean(SHOW_TOOLS_WARNING, true);
+    }
+
+    /**
      * Get the configured time to sleep between cases to prevent
      * database locks
      *
@@ -246,8 +280,10 @@ public final class AutoIngestUserPreferences {
     }
 
     /**
-     * Set the configured time to sleep between cases to prevent
-     * database locks
+     * Sets the wait time used by auto ingest nodes to ensure proper
+     * synchronization of node operations in circumstances where delays may
+     * occur, e.g., network file system latency effects on the visibility of
+     * newly created shared directories and files.
      *
      * @param int value the number of seconds to sleep between cases
      */
@@ -296,5 +332,197 @@ public final class AutoIngestUserPreferences {
      */
     public static void setMaxConcurrentIngestNodesForOneCase(int numberOfNodes) {
         preferences.putInt(MAX_CONCURRENT_NODES_FOR_ONE_CASE, numberOfNodes);
-    }    
+    }
+
+    /**
+     * Get status database logging checkbox state for automated ingest mode from
+     * persistent storage.
+     *
+     * @return Boolean true if database logging is enabled.
+     */
+    public static Boolean getStatusDatabaseLoggingEnabled() {
+        return preferences.getBoolean(STATUS_DATABASE_LOGGING_ENABLED, false);
+    }
+
+    /**
+     * Save status database logging checkbox state for automated ingest mode to
+     * persistent storage.
+     *
+     * @param databaseLoggingEnabled true = use database logging in auto-ingest
+     *                               mode
+     */
+    public static void setStatusDatabaseLoggingEnabled(boolean databaseLoggingEnabled) {
+        preferences.putBoolean(STATUS_DATABASE_LOGGING_ENABLED, databaseLoggingEnabled);
+    }
+
+    /**
+     * Get the logging database hostname from persistent storage.
+     *
+     * @return Logging database hostname or IP
+     */
+    public static String getLoggingDatabaseHostnameOrIP() {
+        return preferences.get(LOGGING_DB_HOSTNAME_OR_IP, "");
+    }
+
+    /**
+     * Save the logging database hostname to persistent storage.
+     *
+     * @param hostname Logging database hostname or IP
+     */
+    public static void setLoggingDatabaseHostnameOrIP(String hostname) {
+        preferences.put(LOGGING_DB_HOSTNAME_OR_IP, hostname);
+    }
+
+    /**
+     * Get the logging database port from persistent storage.
+     *
+     * @return logging database port
+     */
+    public static String getLoggingPort() {
+        return preferences.get(LOGGING_PORT, "");
+    }
+
+    /**
+     * Save the logging database port to persistent storage.
+     *
+     * @param port Logging database port
+     */
+    public static void setLoggingPort(String port) {
+        preferences.put(LOGGING_PORT, port);
+    }
+
+    /**
+     * Get the logging database username from persistent storage.
+     *
+     * @return logging database username
+     */
+    public static String getLoggingUsername() {
+        return preferences.get(LOGGING_USERNAME, "");
+    }
+
+    /**
+     * Save the logging database username to persistent storage.
+     *
+     * @param username Logging database username
+     */
+    public static void setLoggingUsername(String username) {
+        preferences.put(LOGGING_USERNAME, username);
+    }
+
+    /**
+     * Get the logging database password from persistent storage.
+     *
+     * @return logging database password
+     */
+    public static String getLoggingPassword() throws UserPreferencesException { 
+        return TextConverter.convertHexTextToText(preferences.get(LOGGING_PASSWORD, ""));
+    }
+
+    /**
+     * Save the logging database password to persistent storage.
+     *
+     * @param password Logging database password
+     */
+    public static void setLoggingPassword(String password) throws UserPreferencesException {
+        preferences.put(LOGGING_PASSWORD, TextConverter.convertTextToHexText(password));
+    }
+
+    /**
+     * Get the logging database name from persistent storage.
+     *
+     * @return logging database name
+     */
+    public static String getLoggingDatabaseName() {
+        return preferences.get(LOGGING_DATABASE_NAME, "");
+    }
+
+    /**
+     * Save the logging database name to persistent storage.
+     *
+     * @param name Logging database name
+     */
+    public static void setLoggingDatabaseName(String name) {
+        preferences.put(LOGGING_DATABASE_NAME, name);
+    }
+
+    /**
+     * Get the configured time for input scan interval
+     *
+     * @return int the value in minutes, default is 60 minutes.
+     */
+    public static int getMinutesOfInputScanInterval() {
+        int answer = Integer.parseInt(preferences.get(INPUT_SCAN_INTERVAL_TIME, "60"));
+        return answer;
+    }
+
+    /**
+     * Set the configured time for input scan interval
+     *
+     * @param int value the number of minutes for input interval
+     */
+    public static void setMinutesOfInputScanInterval(int value) {
+        preferences.put(INPUT_SCAN_INTERVAL_TIME, Integer.toString(value));
+    }
+    
+    /**
+     * Copied from Autopsy UserPreferences - can be removed once everything is merged together.
+     * Provides ability to convert text to hex text.
+     */
+    static final class TextConverter {
+
+        private static final char[] TMP = "hgleri21auty84fwe".toCharArray(); //NON-NLS
+        private static final byte[] SALT = {
+            (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+            (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,};
+
+        /**
+         * Convert text to hex text.
+         *
+         * @param property Input text string.
+         *
+         * @return Converted hex string.
+         *
+         * @throws org.sleuthkit.autopsy.core.UserPreferencesException
+         */
+        static String convertTextToHexText(String property) throws UserPreferencesException {
+            try {
+                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
+                SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
+                pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+                return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
+            } catch (Exception ex) {
+                throw new UserPreferencesException("Error encrypting text");
+            }
+        }
+
+        private static String base64Encode(byte[] bytes) {
+            return Base64.getEncoder().encodeToString(bytes);
+        }
+
+        /**
+         * Convert hex text back to text.
+         *
+         * @param property Input hex text string.
+         *
+         * @return Converted text string.
+         *
+         * @throws org.sleuthkit.autopsy.core.UserPreferencesException
+         */
+        static String convertHexTextToText(String property) throws UserPreferencesException {
+            try {
+                SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES"); //NON-NLS
+                SecretKey key = keyFactory.generateSecret(new PBEKeySpec(TMP));
+                Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES"); //NON-NLS
+                pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+                return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
+            } catch (Exception ex) {
+                throw new UserPreferencesException("Error decrypting text");
+            }
+        }
+
+        private static byte[] base64Decode(String property) {
+            return Base64.getDecoder().decode(property);
+        }
+    }
 }

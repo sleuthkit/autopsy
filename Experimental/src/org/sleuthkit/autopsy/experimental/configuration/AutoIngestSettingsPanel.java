@@ -596,6 +596,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             jPanelIngestSettings.setEnabled(mode == OptionsUiMode.AIM);
             bnEditIngestSettings.setEnabled(mode == OptionsUiMode.AIM);
             bnAdvancedSettings.setEnabled(mode == OptionsUiMode.AIM);
+            bnLogging.setEnabled(mode == OptionsUiMode.AIM);
             jPanelSharedConfig.setEnabled(mode == OptionsUiMode.AIM);
             sharedConfigCheckbox.setEnabled(mode == OptionsUiMode.AIM);
             masterNodeCheckBox.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
@@ -665,6 +666,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnEditIngestSettings = new javax.swing.JButton();
         bnAdvancedSettings = new javax.swing.JButton();
         bnFileExport = new javax.swing.JButton();
+        bnLogging = new javax.swing.JButton();
         cbJoinAutoIngestCluster = new javax.swing.JCheckBox();
         tbOops = new javax.swing.JTextField();
 
@@ -937,6 +939,13 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(bnLogging, org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.bnLogging.text")); // NOI18N
+        bnLogging.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnLoggingActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanelIngestSettingsLayout = new javax.swing.GroupLayout(jPanelIngestSettings);
         jPanelIngestSettings.setLayout(jPanelIngestSettingsLayout);
         jPanelIngestSettingsLayout.setHorizontalGroup(
@@ -948,6 +957,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addComponent(bnAdvancedSettings, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnFileExport, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bnLogging, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanelIngestSettingsLayout.setVerticalGroup(
@@ -957,7 +968,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addGroup(jPanelIngestSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bnEditIngestSettings)
                     .addComponent(bnFileExport)
-                    .addComponent(bnAdvancedSettings))
+                    .addComponent(bnAdvancedSettings)
+                    .addComponent(bnLogging))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -1228,6 +1240,23 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_tbOopsActionPerformed
 
+    private void bnLoggingActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnLoggingActionPerformed
+        JDialog jDialog = new JDialog();
+        NodeStatusLogPanel loggingPanel = new NodeStatusLogPanel(jDialog);
+
+        JScrollPane jScrollPane = new JScrollPane(loggingPanel);
+        jScrollPane.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        jScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        jScrollPane.setMinimumSize(new Dimension(100, 100));
+        jDialog.add(jScrollPane);
+        jDialog.setTitle(NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.NodeStatusLogging.text"));
+        jDialog.setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame32.gif"));
+        jDialog.setModalityType(java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        jDialog.pack();
+        jDialog.setLocationRelativeTo(this);
+        jDialog.setVisible(true);
+    }//GEN-LAST:event_bnLoggingActionPerformed
+
     private void enableUI(boolean state) {
         enableOptionsBasedOnMode(OptionsUiMode.DOWNLOADING_CONFIGURATION);
         downloadButton.setEnabled(state);
@@ -1339,6 +1368,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnAdvancedSettings.setEnabled(enabled);
         bnEditIngestSettings.setEnabled(enabled);
         bnFileExport.setEnabled(enabled);
+        bnLogging.setEnabled(enabled);
         browseInputFolderButton.setEnabled(enabled);
         browseOutputFolderButton.setEnabled(enabled);
         browseSharedSettingsButton.setEnabled(sharedConfigCheckbox.isSelected() && jRadioButtonAutomated.isSelected());
@@ -1362,6 +1392,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JButton bnAdvancedSettings;
     private javax.swing.JButton bnEditIngestSettings;
     private javax.swing.JButton bnFileExport;
+    private javax.swing.JButton bnLogging;
     private javax.swing.JButton browseInputFolderButton;
     private javax.swing.JButton browseOutputFolderButton;
     private javax.swing.JButton browseSharedSettingsButton;
