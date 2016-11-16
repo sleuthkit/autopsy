@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -72,6 +73,23 @@ public class DataModelActionsFactory {
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(new HashSearchAction(SEARCH_FOR_FILES_SAME_MD5, fileNode));
+        actions.add(null); // creates a menu separator
+        actions.add(AddContentTagAction.getInstance());
+        if (isArtifactSource) {
+            actions.add(AddBlackboardArtifactTagAction.getInstance());
+        }
+        actions.addAll(ContextMenuExtensionPoint.getActions());
+        return actions;
+    }
+    
+    public static List<Action> getActions(SlackFile slackFile, boolean isArtifactSource) {
+        List<Action> actions = new ArrayList<>();
+        actions.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), slackFile));
+        final SlackFileNode slackFileNode = new SlackFileNode(slackFile);
+        actions.add(null); // creates a menu separator
+        actions.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, slackFileNode));
+        actions.add(null); // creates a menu separator
+        actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
         actions.add(AddContentTagAction.getInstance());
         if (isArtifactSource) {
@@ -184,6 +202,8 @@ public class DataModelActionsFactory {
             return getActions((LocalFile) content, isArtifactSource);
         } else if (content instanceof DerivedFile) {
             return getActions((DerivedFile) content, isArtifactSource);
+        } else if (content instanceof SlackFile) {
+            return getActions((SlackFile) content, isArtifactSource);
         } else {
             return new ArrayList<>();
         }
