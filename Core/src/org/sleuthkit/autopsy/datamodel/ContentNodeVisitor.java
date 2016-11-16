@@ -41,6 +41,8 @@ interface ContentNodeVisitor<T> {
     T visit(LayoutFileNode lcn);
 
     T visit(LocalFileNode dfn);
+    
+    T visit(SlackFileNode sfn);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -92,6 +94,11 @@ interface ContentNodeVisitor<T> {
         @Override
         public T visit(VirtualDirectoryNode ldn) {
             return defaultVisit(ldn);
+        }
+
+        @Override
+        public T visit(SlackFileNode sfn) {
+            return defaultVisit(sfn);
         }
     }
 }

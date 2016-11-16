@@ -1,4 +1,6 @@
-Place Jython modules HERE in their respective folders. Eg. - 
+Do not place user modules here. Place them in the folder at C:\Users\JDoe\AppData\Roaming\Autopsy\python_modules where JDoe is your Windows username. You can also access this folder by launching Autopsy and clicking Tools -> Python Plugins through the menu.
+
+Place Jython modules HERE in their respective folders. Eg. -
 InternalPythonModules/
 				- testModule1/
 							- testModule1.py

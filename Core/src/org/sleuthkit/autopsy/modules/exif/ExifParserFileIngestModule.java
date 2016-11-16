@@ -104,7 +104,8 @@ public final class ExifParserFileIngestModule implements FileIngestModule {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
         //skip unalloc
-        if (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+        if ((content.getType().equals(TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
+                (content.getType().equals(TSK_DB_FILES_TYPE_ENUM.SLACK)))) {
             return ProcessResult.OK;
         }
 

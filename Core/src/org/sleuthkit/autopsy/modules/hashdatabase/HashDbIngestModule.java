@@ -146,7 +146,8 @@ public class HashDbIngestModule implements FileIngestModule {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
         // Skip unallocated space files.
-        if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+        if ((file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
+                file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
             return ProcessResult.OK;
         }
 
