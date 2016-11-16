@@ -172,15 +172,10 @@ public class InterestingHits implements AutopsyVisitableItem {
             return s;
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "InterestingHitsRoot"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class SetNameFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -328,15 +323,14 @@ public class InterestingHits implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "InterestingHitsSetName"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            /**
+             * For custom settings for each rule set, return
+             * getClass().getName() + setName instead.
+             */
+            return getClass().getName();
+        }
     }
 
     private class HitFactory extends ChildFactory<Long> implements Observer {

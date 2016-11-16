@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
+import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
@@ -67,6 +68,7 @@ import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.datamodel.SlackFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
@@ -127,9 +129,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             public void preferenceChange(PreferenceChangeEvent evt) {
                 switch (evt.getKey()) {
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE:
+                    case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SOURCES_TREE:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
+                    case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:   
                         // TODO: Need a way to refresh the Views subtree
                         break;
                 }
@@ -636,18 +640,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
-                        /*
-                         * TODO (AUT-1849): Correct or remove peristent column
-                         * reordering code
-                         *
-                         * The following conditional was added to support this
-                         * feature.
-                         */
-//                        if(originNode instanceof DisplayableItemNode) {
-//                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
-//                        } else {
-                        dataResult.setNode(new TableFilterNode(kffn, true));
-//                        }
+                        Node sffn = new SlackFileFilterNode(kffn, SlackFileFilterNode.getSelectionContext(originNode));
+
+
+                        // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
+                        if (originNode instanceof DisplayableItemNode) {
+                            dataResult.setNode(new TableFilterNode(sffn, true, ((DisplayableItemNode) originNode).getItemType()));
+                        } else {
+                            dataResult.setNode(new TableFilterNode(sffn, true));
+                        }
 
                         String displayName = "";
                         Content content = originNode.getLookup().lookup(Content.class);
