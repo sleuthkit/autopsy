@@ -83,16 +83,6 @@ public class FileTypeNode extends DisplayableItemNode {
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "FileType"; //NON-NLS
-//    }
-
     // update the display name when new events are fired
     private class FileTypeNodeObserver implements Observer {
 
@@ -141,6 +131,16 @@ public class FileTypeNode extends DisplayableItemNode {
     @Override
     public boolean isLeafTypeNode() {
         return true;
+    }
+
+    /**
+     * Consider allowing different configurations for Images, Videos, etc
+     * (in which case we'd return getClass().getName() + filter.getName()
+     * for all filters).
+     */
+    @Override
+    public String getItemType() {
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
     }
 
     /**

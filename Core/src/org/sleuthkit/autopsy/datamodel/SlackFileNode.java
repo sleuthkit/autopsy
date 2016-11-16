@@ -21,17 +21,12 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Action;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
-import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
-import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
@@ -40,20 +35,20 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * This class is the Node for an AbstractFile. It may have derived files
  * children.
  */
-public class FileNode extends AbstractFsContentNode<AbstractFile> {
+public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
 
     /**
      * Constructor
      *
      * @param file underlying Content
      */
-    public FileNode(AbstractFile file) {
+    public SlackFileNode(AbstractFile file) {
         this(file, true);
 
         setIcon(file);
     }
 
-    public FileNode(AbstractFile file, boolean directoryBrowseMode) {
+    public SlackFileNode(AbstractFile file, boolean directoryBrowseMode) {
         super(file, directoryBrowseMode);
 
         setIcon(file);
@@ -73,27 +68,20 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     }
 
     @Override
-    @NbBundle.Messages({
-        "FileNode.getActions.viewFileInDir.text=View File in Directory",
-        "FileNode.getActions.viewInNewWin.text=View in New Window",
-        "FileNode.getActions.openInExtViewer.text=Open in External Viewer",
-        "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
         for (Action a : super.getActions(true)) {
             actionsList.add(a);
         }
+        
         if (!this.getDirectoryBrowseMode()) {
-            actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
+            actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "SlackFileNode.viewFileInDir.text"), this.content));
             actionsList.add(null); // creates a menu separator
         }
-        actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
-        actionsList.add(new ExternalViewerAction(Bundle.FileNode_getActions_openInExtViewer_text(), this));
-        actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
-
+        actionsList.add(new NewWindowViewAction(
+                NbBundle.getMessage(this.getClass(), "SlackFileNode.getActions.viewInNewWin.text"), this));
         actionsList.add(null); // creates a menu separator
         actionsList.add(ExtractAction.getInstance());
-        actionsList.add(new HashSearchAction(Bundle.FileNode_getActions_searchFilesSameMD5_text(), this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
@@ -113,53 +101,8 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     // Given a file, returns the correct icon for said
     // file based off it's extension
     static String getIconForFileType(AbstractFile file) {
-        // Get the name, extension
-        String ext = file.getNameExtension();
 
-        if (StringUtils.isBlank(ext)) {
             return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
-        } else {
-            ext = "." + ext;
-        }
-
-        if (ImageUtils.isImageThumbnailSupported(file)
-                || FileTypeExtensions.getImageExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
-        }
-        // Videos
-        if (FileTypeExtensions.getVideoExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/video-file.png"; //NON-NLS
-        }
-        // Audio Files
-        if (FileTypeExtensions.getAudioExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/audio-file.png"; //NON-NLS
-        }
-        // Documents
-        if (FileTypeExtensions.getDocumentExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/doc-file.png"; //NON-NLS
-        }
-        // Executables / System Files
-        if (FileTypeExtensions.getExecutableExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/exe-file.png"; //NON-NLS
-        }
-        // Text Files
-        if (FileTypeExtensions.getTextExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/text-file.png"; //NON-NLS
-        }
-        // Web Files
-        if (FileTypeExtensions.getWebExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/web-file.png"; //NON-NLS
-        }
-        // PDFs
-        if (FileTypeExtensions.getPDFExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/pdf-file.png"; //NON-NLS
-        }
-        // Archives
-        if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/archive-file.png"; //NON-NLS
-        }
-        // Else return the default
-        return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
     }
 
     @Override
@@ -169,7 +112,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         // not will check if it has children using the Content API
         return true;
     }
-
+    
     @Override
     public String getItemType() {
         return getClass().getName();

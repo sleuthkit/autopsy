@@ -78,7 +78,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         this.contextName = context;
 
-        createTimeZoneList();
     }
 
     /**
@@ -89,6 +88,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
         instance.postInit();
+        instance.createTimeZoneList();
 
         return instance;
     }

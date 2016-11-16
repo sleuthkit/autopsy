@@ -101,6 +101,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         useBestViewerRB.setSelected(!keepPreferredViewer);
         dataSourcesHideKnownCB.setSelected(UserPreferences.hideKnownFilesInDataSourcesTree());
         viewsHideKnownCB.setSelected(UserPreferences.hideKnownFilesInViewsTree());
+        dataSourcesHideSlackCB.setSelected(UserPreferences.hideSlackFilesInDataSourcesTree());
+        viewsHideSlackCB.setSelected(UserPreferences.hideSlackFilesInViewsTree());
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
@@ -124,6 +126,8 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setKeepPreferredContentViewer(keepCurrentViewerRB.isSelected());
         UserPreferences.setHideKnownFilesInDataSourcesTree(dataSourcesHideKnownCB.isSelected());
         UserPreferences.setHideKnownFilesInViewsTree(viewsHideKnownCB.isSelected());
+        UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCB.isSelected());
+        UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
         UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
 
@@ -167,6 +171,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         jCheckBoxEnableProcTimeout = new javax.swing.JCheckBox();
         jLabelProcessTimeOutUnits = new javax.swing.JLabel();
         jFormattedTextFieldProcTimeOutHrs = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        dataSourcesHideSlackCB = new javax.swing.JCheckBox();
+        viewsHideSlackCB = new javax.swing.JCheckBox();
+        jLabelHideSlackFiles = new javax.swing.JLabel();
 
         jScrollPane1.setBorder(null);
 
@@ -253,6 +260,22 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         });
 
+        org.openide.awt.Mnemonics.setLocalizedText(dataSourcesHideSlackCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.dataSourcesHideSlackCB.text")); // NOI18N
+        dataSourcesHideSlackCB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dataSourcesHideSlackCBActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(viewsHideSlackCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.viewsHideSlackCB.text")); // NOI18N
+        viewsHideSlackCB.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewsHideSlackCBActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(jLabelHideSlackFiles, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelHideSlackFiles.text")); // NOI18N
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -260,38 +283,52 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(keepCurrentViewerRB)
-                            .addComponent(useBestViewerRB)
-                            .addComponent(dataSourcesHideKnownCB)
-                            .addComponent(viewsHideKnownCB)
                             .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(10, 10, 10)
                                 .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(restartRequiredLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addComponent(restartRequiredLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabelTimeDisplay)
+                                    .addComponent(jLabelNumThreads)
+                                    .addComponent(jLabelSetProcessTimeOut)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(useLocalTimeRB)
+                                            .addComponent(useGMTTimeRB)
+                                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                                .addComponent(jCheckBoxEnableProcTimeout)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(jLabelProcessTimeOutUnits)))))
+                                .addGap(213, 213, 213)))
+                        .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabelHideKnownFiles)
-                            .addComponent(jLabelTimeDisplay)
+                            .addComponent(jLabelSelectFile)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(useLocalTimeRB)
-                                    .addComponent(useGMTTimeRB)))
-                            .addComponent(jLabelSelectFile)
-                            .addComponent(jLabelNumThreads)
+                                    .addComponent(keepCurrentViewerRB)
+                                    .addComponent(useBestViewerRB)
+                                    .addComponent(dataSourcesHideKnownCB)
+                                    .addComponent(viewsHideKnownCB))))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabelHideSlackFiles)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(jCheckBoxEnableProcTimeout)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabelProcessTimeOutUnits))
-                            .addComponent(jLabelSetProcessTimeOut))
-                        .addGap(213, 213, 213)))
-                .addContainerGap())
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(dataSourcesHideSlackCB)
+                                    .addComponent(viewsHideSlackCB))))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -308,7 +345,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(dataSourcesHideKnownCB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(viewsHideKnownCB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabelHideSlackFiles)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(dataSourcesHideSlackCB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(viewsHideSlackCB)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabelTimeDisplay)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(useLocalTimeRB)
@@ -328,7 +371,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabelProcessTimeOutUnits)))
-                .addContainerGap())
+                .addContainerGap(49, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel1);
@@ -337,11 +380,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 657, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 402, Short.MAX_VALUE)
+            .addComponent(jScrollPane1)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -382,13 +425,23 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
 
+    private void dataSourcesHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourcesHideSlackCBActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_dataSourcesHideSlackCBActionPerformed
+
+    private void viewsHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewsHideSlackCBActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_viewsHideSlackCBActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup3;
     private javax.swing.JCheckBox dataSourcesHideKnownCB;
+    private javax.swing.JCheckBox dataSourcesHideSlackCB;
     private javax.swing.JCheckBox jCheckBoxEnableProcTimeout;
     private javax.swing.JFormattedTextField jFormattedTextFieldProcTimeOutHrs;
     private javax.swing.JLabel jLabelHideKnownFiles;
+    private javax.swing.JLabel jLabelHideSlackFiles;
     private javax.swing.JLabel jLabelNumThreads;
     private javax.swing.JLabel jLabelProcessTimeOutUnits;
     private javax.swing.JLabel jLabelSelectFile;
@@ -403,5 +456,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.JRadioButton useGMTTimeRB;
     private javax.swing.JRadioButton useLocalTimeRB;
     private javax.swing.JCheckBox viewsHideKnownCB;
+    private javax.swing.JCheckBox viewsHideSlackCB;
     // End of variables declaration//GEN-END:variables
 }
