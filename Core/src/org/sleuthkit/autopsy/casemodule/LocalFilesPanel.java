@@ -43,7 +43,6 @@ final class LocalFilesPanel extends JPanel {
     private final Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
-    public static final String FILES_SEP = "|";
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     private String displayName = "";
 
@@ -259,7 +258,6 @@ final class LocalFilesPanel extends JPanel {
             }
             this.selectedPaths.setText(allPaths.toString());
             this.selectedPaths.setToolTipText(allPaths.toString());
-
         }
 
         enableNext = !currentFiles.isEmpty();

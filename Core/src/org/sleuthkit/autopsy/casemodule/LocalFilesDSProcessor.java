@@ -192,8 +192,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      */
     @Deprecated
     public void setDataSourceOptions(String paths) {
-        //LocalFilesPanel.FILES_SEP is currently ","
-        this.localFilePaths = Arrays.asList(paths.split(LocalFilesPanel.FILES_SEP));
+        // The LocalFilesPanel used to separate file paths with a comma and pass
+        // them as a string, but because file names are allowed to contain
+        // commas, this approach was buggy and replaced. We now pass a list of
+        // String paths.
+        this.localFilePaths = Arrays.asList(paths.split(","));
         setDataSourceOptionsCalled = true;
     }
 
