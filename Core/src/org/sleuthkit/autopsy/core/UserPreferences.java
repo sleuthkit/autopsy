@@ -45,6 +45,8 @@ public final class UserPreferences {
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
     public static final String HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
+    public static final String HIDE_SLACK_FILES_IN_DATA_SOURCES_TREE = "HideSlackFilesInDataSourcesTree"; //NON-NLS 
+    public static final String HIDE_SLACK_FILES_IN_VIEWS_TREE = "HideSlackFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
     public static final String IS_MULTI_USER_MODE_ENABLED = "IsMultiUserModeEnabled"; //NON-NLS
@@ -122,6 +124,22 @@ public final class UserPreferences {
 
     public static void setHideKnownFilesInViewsTree(boolean value) {
         preferences.putBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, value);
+    }
+
+    public static boolean hideSlackFilesInDataSourcesTree() {
+        return preferences.getBoolean(HIDE_SLACK_FILES_IN_DATA_SOURCES_TREE, true);
+    }
+
+    public static void setHideSlackFilesInDataSourcesTree(boolean value) {
+        preferences.putBoolean(HIDE_SLACK_FILES_IN_DATA_SOURCES_TREE, value);
+    }
+
+    public static boolean hideSlackFilesInViewsTree() {
+        return preferences.getBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, true);
+    }
+
+    public static void setHideSlackFilesInViewsTree(boolean value) {
+        preferences.putBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, value);
     }
 
     public static boolean displayTimesInLocalTime() {

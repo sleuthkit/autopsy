@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -351,6 +352,18 @@ public final class ContentUtils {
             } catch (IOException ex) {
                 logger.log(Level.SEVERE,
                         "Error extracting local file to " + dest.getAbsolutePath(), //NON-NLS
+                        ex);
+            }
+            return null;
+        }
+        
+        @Override
+        public Void visit(SlackFile f) {
+            try {
+                ContentUtils.writeToFile(f, dest, progress, worker, source);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE,
+                        "Trouble extracting slack file to " + dest.getAbsolutePath(), //NON-NLS
                         ex);
             }
             return null;

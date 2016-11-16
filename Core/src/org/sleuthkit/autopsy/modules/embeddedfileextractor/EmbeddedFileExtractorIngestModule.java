@@ -108,7 +108,8 @@ public final class EmbeddedFileExtractorIngestModule implements FileIngestModule
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
         // skip the unallocated blocks
-        if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
+        if ((abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) ||
+                (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK))) {
             return ProcessResult.OK;
         }
 

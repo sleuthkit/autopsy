@@ -517,7 +517,8 @@ public class EventsRepository {
                 //reset database //TODO: can we do more incremental updates? -jm
                 eventDB.reInitializeDB();
                 //grab ids of all files
-                List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'"); //NON-NLS
+                List<Long> fileIDs = skCase.findAllFileIdsWhere("name != '.' AND name != '..'" + 
+                        " AND type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()); //NON-NLS
                 final int numFiles = fileIDs.size();
 
                 trans = eventDB.beginTransaction();
