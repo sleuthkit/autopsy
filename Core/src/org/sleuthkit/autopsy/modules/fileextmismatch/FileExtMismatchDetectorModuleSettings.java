@@ -20,6 +20,9 @@ package org.sleuthkit.autopsy.modules.fileextmismatch;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
@@ -30,19 +33,43 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     private static final long serialVersionUID = 1L;
     private long versionNumber;
     private boolean skipFilesWithNoExtension;
-    private boolean skipFilesWithTextPlainMimeType;
     private boolean skipKnownFiles;
+    private CHECK_TYPE checkType;
+
+    // no longer used, but kept in to maintain compatibility with serialization
+    private boolean skipFilesWithTextPlainMimeType;
+
+    enum CHECK_TYPE {
+        ALL, NO_TEXT_FILES, ONLY_MEDIA_AND_EXE
+    }
+    /*
+     * For "basic mode" only image and executable files should be checked for
+     * mismatches. This is a set of the MIME types that would be checked when
+     * checkType is ONLY_MEDIA_AND_EXE.
+     */
+    static final Set<String> MEDIA_AND_EXE_MIME_TYPES = Stream.of(
+            "image/bmp",
+            "image/gif",
+            "image/jpeg",
+            "image/png",
+            "image/tiff",
+            "image/x-ms-bmp",
+            "application/dos-exe",
+            "application/exe",
+            "application/x-dosexec",
+            "application/x-exe",
+            "application/x-msdownload").collect(Collectors.toSet());
 
     FileExtMismatchDetectorModuleSettings() {
         this.skipFilesWithNoExtension = true;
-        this.skipFilesWithTextPlainMimeType = true;
         this.skipKnownFiles = true;
+        this.checkType = CHECK_TYPE.ONLY_MEDIA_AND_EXE;
     }
 
-    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, boolean skipFilesWithTextPlainMimeType) {
+    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, CHECK_TYPE checkType) {
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
-        this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
         this.skipKnownFiles = skipKnownFiles;
+        this.checkType = checkType;
     }
 
     @Override
@@ -58,20 +85,20 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         return skipFilesWithNoExtension;
     }
 
-    void setSkipFilesWithTextPlainMimeType(boolean skipFilesWithTextPlainMimeType) {
-        this.skipFilesWithTextPlainMimeType = skipFilesWithTextPlainMimeType;
-    }
-
-    boolean skipFilesWithTextPlainMimeType() {
-        return skipFilesWithTextPlainMimeType;
+    void setSkipKnownFiles(boolean skipKnownFiles) {
+        this.skipKnownFiles = skipKnownFiles;
     }
 
     boolean skipKnownFiles() {
         return skipKnownFiles;
     }
 
-    void setSkipKnownFiles(boolean skipKnownFiles) {
-        this.skipKnownFiles = skipKnownFiles;
+    void setCheckType(CHECK_TYPE checkType) {
+        this.checkType = checkType;
+    }
+
+    CHECK_TYPE getCheckType() {
+        return checkType;
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -86,5 +113,4 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         }
         versionNumber = 1;
     }
-
 }
