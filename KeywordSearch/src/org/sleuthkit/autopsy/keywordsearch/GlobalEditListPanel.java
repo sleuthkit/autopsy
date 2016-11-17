@@ -535,7 +535,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                     colName = NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.kwColName");
                     break;
                 case 1:
-                    colName = NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.keywordTypeName");
+                    colName = NbBundle.getMessage(this.getClass(), "KeywordSearch.typeColLbl");
                     break;
                 default:
                     ;
