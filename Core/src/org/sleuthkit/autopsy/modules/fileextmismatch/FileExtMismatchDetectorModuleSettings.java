@@ -34,12 +34,12 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     private long versionNumber;
     private boolean skipFilesWithNoExtension;
     private boolean skipKnownFiles;
-    private CHECK_TYPE_SETTING checkType;
+    private CHECK_TYPE checkType;
 
     // no longer used, but kept in to maintain compatibility with serialization
     private boolean skipFilesWithTextPlainMimeType;
 
-    enum CHECK_TYPE_SETTING {
+    enum CHECK_TYPE {
         ALL, NO_TEXT_FILES, ONLY_MEDIA_AND_EXE
     }
     /*
@@ -63,10 +63,10 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     FileExtMismatchDetectorModuleSettings() {
         this.skipFilesWithNoExtension = true;
         this.skipKnownFiles = true;
-        this.checkType = CHECK_TYPE_SETTING.ONLY_MEDIA_AND_EXE;
+        this.checkType = CHECK_TYPE.ONLY_MEDIA_AND_EXE;
     }
 
-    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, CHECK_TYPE_SETTING checkType) {
+    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, CHECK_TYPE checkType) {
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
         this.skipKnownFiles = skipKnownFiles;
         this.checkType = checkType;
@@ -93,11 +93,11 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
         return skipKnownFiles;
     }
 
-    void setCheckTypeSetting(CHECK_TYPE_SETTING checkType) {
+    void setCheckType(CHECK_TYPE checkType) {
         this.checkType = checkType;
     }
 
-    CHECK_TYPE_SETTING getCheckTypeSetting() {
+    CHECK_TYPE getCheckType() {
         return checkType;
     }
 

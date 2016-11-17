@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleSettings.CHECK_TYPE_SETTING;
+import org.sleuthkit.autopsy.modules.fileextmismatch.FileExtMismatchDetectorModuleSettings.CHECK_TYPE;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -175,13 +175,13 @@ public class FileExtMismatchIngestModule implements FileIngestModule {
         if (currActualSigType == null) {
             return false;
         }
-        if (settings.getCheckTypeSetting() != CHECK_TYPE_SETTING.ALL) {
-            if (settings.getCheckTypeSetting() == CHECK_TYPE_SETTING.NO_TEXT_FILES) {
+        if (settings.getCheckType() != CHECK_TYPE.ALL) {
+            if (settings.getCheckType() == CHECK_TYPE.NO_TEXT_FILES) {
                 if (!currActualExt.isEmpty() && currActualSigType.equals("text/plain")) { //NON-NLS
                     return false;
                 }
             }
-            if (settings.getCheckTypeSetting() == CHECK_TYPE_SETTING.ONLY_MEDIA_AND_EXE) {
+            if (settings.getCheckType() == CHECK_TYPE.ONLY_MEDIA_AND_EXE) {
                 if (!FileExtMismatchDetectorModuleSettings.MEDIA_AND_EXE_MIME_TYPES.contains(currActualSigType)) {
                     return false;
                 }

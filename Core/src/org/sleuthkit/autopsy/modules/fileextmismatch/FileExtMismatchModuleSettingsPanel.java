@@ -36,7 +36,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
     }
 
     private void customizeComponents() {
-        switch (settings.getCheckTypeSetting()) {
+        switch (settings.getCheckType()) {
             case ALL:
                 checkAllRadioButton.setSelected(true);
                 break;
@@ -155,15 +155,15 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
     }//GEN-LAST:event_skipKnownFilesActionPerformed
 
     private void checkAllRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkAllRadioButtonActionPerformed
-        settings.setCheckTypeSetting(FileExtMismatchDetectorModuleSettings.CHECK_TYPE_SETTING.ALL);
+        settings.setCheckType(FileExtMismatchDetectorModuleSettings.CHECK_TYPE.ALL);
     }//GEN-LAST:event_checkAllRadioButtonActionPerformed
 
     private void checkNoTextRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkNoTextRadioButtonActionPerformed
-        settings.setCheckTypeSetting(FileExtMismatchDetectorModuleSettings.CHECK_TYPE_SETTING.NO_TEXT_FILES);
+        settings.setCheckType(FileExtMismatchDetectorModuleSettings.CHECK_TYPE.NO_TEXT_FILES);
     }//GEN-LAST:event_checkNoTextRadioButtonActionPerformed
 
     private void checkMediaExeRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkMediaExeRadioButtonActionPerformed
-        settings.setCheckTypeSetting(FileExtMismatchDetectorModuleSettings.CHECK_TYPE_SETTING.ONLY_MEDIA_AND_EXE);
+        settings.setCheckType(FileExtMismatchDetectorModuleSettings.CHECK_TYPE.ONLY_MEDIA_AND_EXE);
     }//GEN-LAST:event_checkMediaExeRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
