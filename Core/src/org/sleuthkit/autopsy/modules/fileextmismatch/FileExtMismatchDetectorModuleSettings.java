@@ -36,6 +36,9 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     private boolean skipKnownFiles;
     private CHECK_TYPE_SETTING checkType;
 
+    // no longer used, but kept in to maintain compatibility with serialization
+    private boolean skipFilesWithTextPlainMimeType;
+
     enum CHECK_TYPE_SETTING {
         ALL, NO_TEXT_FILES, ONLY_MEDIA_AND_EXE
     }
