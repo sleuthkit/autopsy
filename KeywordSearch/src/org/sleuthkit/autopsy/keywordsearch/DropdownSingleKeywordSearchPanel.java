@@ -52,6 +52,7 @@ public class DropdownSingleKeywordSearchPanel extends KeywordSearchPanel {
      * Gets the default instance of a dropdown panel that provides GUI
      * components that allow a user to do three types of ad hoc single keyword
      * searches.
+     * @return the default instance of DropdownSingleKeywordSearchPanel
      */
     public static synchronized DropdownSingleKeywordSearchPanel getDefault() {
         if (null == defaultInstance) {
