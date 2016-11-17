@@ -30,6 +30,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 
 /**
  * Extracts a File object to a temporary file in the case directory, and then
@@ -68,13 +69,12 @@ public class ExternalViewerAction extends AbstractAction {
         // no point opening a file if it's empty, and java doesn't know how to
         // find an application for files without an extension
         // or if file is executable (for security reasons)
-        if (!(size > 0) || extPos == -1 || isExecutable) {
+        // Also skip slack files since their extension is the original extension + "-slack"
+        if (!(size > 0) || extPos == -1 || isExecutable || (fileNode instanceof SlackFileNode)) {
             this.setEnabled(false);
         }
     }
 
-    @Messages({"ExternalViewerAction.actionPerformed.failure.message=Could not find a viewer for the given file.",
-        "ExternalViewerAction.actionPerformed.failure.title=Open Failure"})
     @Override
     public void actionPerformed(ActionEvent e) {
         // Get the temp folder path of the case
@@ -93,32 +93,73 @@ public class ExternalViewerAction extends AbstractAction {
             logger.log(Level.WARNING, "Can't save to temporary file.", ex); //NON-NLS
         }
 
+        ExternalViewerAction.openFile(fileObject.getMIMEType(), fileObjectExt, tempFile);
+
+        // delete the temporary file on exit
+        tempFile.deleteOnExit();
+    }
+
+    /**
+     * Opens a file, taking into account user preferences and then the default
+     * associated application.
+     *
+     * @param mimeType MIME type of the file
+     * @param ext      extension of the file
+     * @param file     the file object
+     */
+    @Messages({
+        "ExternalViewerAction.actionPerformed.failure.title=Open File Failure",
+        "ExternalViewerAction.actionPerformed.failure.IO.message=There is no associated editor for files of this type or the associated application failed to launch.",
+        "ExternalViewerAction.actionPerformed.failure.support.message=This platform (operating system) does not support opening a file in an editor this way.",
+        "ExternalViewerAction.actionPerformed.failure.missingFile.message=The file no longer exists.",
+        "ExternalViewerAction.actionPerformed.failure.permission.message=Permission to open the file was denied."})
+    public static void openFile(String mimeType, String ext, File file) {
         /**
          * Check if the file MIME type or extension exists in the user defined
          * settings. Otherwise open with the default associated application.
          */
-        String exePath = ExternalViewerRulesManager.getInstance().getExePathForName(fileObject.getMIMEType());
+        String exePath = ExternalViewerRulesManager.getInstance().getExePathForName(mimeType);
         if (exePath.equals("")) {
-            exePath = ExternalViewerRulesManager.getInstance().getExePathForName(fileObjectExt);
+            exePath = ExternalViewerRulesManager.getInstance().getExePathForName(ext);
         }
         if (!exePath.equals("")) {
             Runtime runtime = Runtime.getRuntime();
-            String[] s = new String[]{exePath, tempFile.getAbsolutePath()};
+            String[] s = new String[]{exePath, file.getAbsolutePath()};
             try {
                 runtime.exec(s);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not open the specified viewer for the given file: " + tempFile.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+                logger.log(Level.WARNING, "Could not open the specified viewer for the given file: " + file.getName(), ex); //NON-NLS
+                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
             }
         } else {
             try {
-                Desktop.getDesktop().open(tempFile);
+                Desktop.getDesktop().open(file);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, "Could not find a viewer for the given file: " + tempFile.getName(), ex); //NON-NLS
-                JOptionPane.showMessageDialog(null, Bundle.ExternalViewerAction_actionPerformed_failure_message(), Bundle.ExternalViewerAction_actionPerformed_failure_title(), JOptionPane.ERROR_MESSAGE);
+                logger.log(Level.WARNING, "Could not find a viewer for the given file: " + file.getName(), ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        Bundle.ExternalViewerAction_actionPerformed_failure_IO_message(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (UnsupportedOperationException ex) {
+                logger.log(Level.WARNING, "Platform cannot open " + file.getName() + " in the defined editor.", ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        Bundle.ExternalViewerAction_actionPerformed_failure_support_message(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                logger.log(Level.WARNING, "Could not find the given file: " + file.getName(), ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        Bundle.ExternalViewerAction_actionPerformed_failure_missingFile_message(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (SecurityException ex) {
+                logger.log(Level.WARNING, "Could not get permission to open the given file: " + file.getName(), ex); //NON-NLS
+                JOptionPane.showMessageDialog(null,
+                        Bundle.ExternalViewerAction_actionPerformed_failure_permission_message(),
+                        Bundle.ExternalViewerAction_actionPerformed_failure_title(),
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
-        // delete the file on exit
-        tempFile.deleteOnExit();
     }
+
 }

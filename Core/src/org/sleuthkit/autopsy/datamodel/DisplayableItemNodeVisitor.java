@@ -48,6 +48,9 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VolumeNode vn);
+    
+    T visit(SlackFileNode sfn);
+    
 
     /*
      * Views Area
@@ -175,6 +178,11 @@ public interface DisplayableItemNodeVisitor<T> {
         @Override
         public T visit(VolumeNode vn) {
             return defaultVisit(vn);
+        }
+
+        @Override
+        public T visit(SlackFileNode sfn) {
+            return defaultVisit(sfn);
         }
 
         @Override

@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -215,6 +216,13 @@ class Ingester {
             return params;
         }
 
+        @Override
+        public Map<String, String> visit(SlackFile f) {
+            Map<String, String> params = getCommonFields(f);
+            getCommonFileContentFields(params, f);
+            return params;
+        }
+
         private Map<String, String> getCommonFileContentFields(Map<String, String> params, AbstractFile file) {
             params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
             params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
@@ -256,7 +264,6 @@ class Ingester {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
-
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
             String msg = NbBundle.getMessage(this.getClass(),

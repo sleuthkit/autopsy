@@ -224,13 +224,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         return result;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "VirtualDirectory"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        // use content.isDataSource if different column settings are desired
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
+    }
 }
