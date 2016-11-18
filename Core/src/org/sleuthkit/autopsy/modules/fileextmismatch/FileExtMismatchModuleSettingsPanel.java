@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,11 +22,12 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
 
 /**
- * UI component used to set ingest job options for file extension mismatch
- * detector ingest modules.
+ * UI component used to set ingest job options for the file extension mismatch
+ * detection ingest module.
  */
 final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel {
 
+    private static final long serialVersionUID = 1L;
     private final FileExtMismatchDetectorModuleSettings settings;
 
     FileExtMismatchModuleSettingsPanel(FileExtMismatchDetectorModuleSettings settings) {
@@ -47,7 +48,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
                 checkMediaExeRadioButton.setSelected(true);
                 break;
             default:
-                checkNoTextRadioButton.setSelected(true);
+                checkMediaExeRadioButton.setSelected(true);
                 break;
         }
         skipNoExtCheckBox.setSelected(settings.skipFilesWithNoExtension());

@@ -26,26 +26,28 @@ import java.util.stream.Stream;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
 /**
- * Ingest options for the file extension mismatch detector ingest module.
+ * Ingest options for the file extension mismatch detection ingest module.
  */
 final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJobSettings {
 
     private static final long serialVersionUID = 1L;
     private long versionNumber;
     private boolean skipFilesWithNoExtension;
+    private boolean skipFilesWithTextPlainMimeType; // No longer used, retained to maintain serialization compatibility.
     private boolean skipKnownFiles;
     private CHECK_TYPE checkType;
 
-    // no longer used, but kept in to maintain compatibility with serialization
-    private boolean skipFilesWithTextPlainMimeType;
-
+    /*
+     * Extension mismatches can be checked for all files, for all files except
+     * text files, or for media and executable files only.
+     */
     enum CHECK_TYPE {
         ALL, NO_TEXT_FILES, ONLY_MEDIA_AND_EXE
     }
+
     /*
-     * For "basic mode" only image and executable files should be checked for
-     * mismatches. This is a set of the MIME types that would be checked when
-     * checkType is ONLY_MEDIA_AND_EXE.
+     * The set of the MIME types that will be checked for extension mismatches
+     * when checkType is ONLY_MEDIA_AND_EXE.
      */
     static final Set<String> MEDIA_AND_EXE_MIME_TYPES = Stream.of(
             "image/bmp",
@@ -60,57 +62,117 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
             "application/x-exe",
             "application/x-msdownload").collect(Collectors.toSet());
 
+    /**
+     * Constructs an object with the ingest options for the file extension
+     * mismatch detection ingest module.
+     */
     FileExtMismatchDetectorModuleSettings() {
+        this.versionNumber = 2;
         this.skipFilesWithNoExtension = true;
         this.skipKnownFiles = true;
-        this.checkType = CHECK_TYPE.NO_TEXT_FILES;
+        this.checkType = CHECK_TYPE.ONLY_MEDIA_AND_EXE;
     }
 
-    FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, CHECK_TYPE checkType) {
-        this.skipFilesWithNoExtension = skipFilesWithNoExtension;
-        this.skipKnownFiles = skipKnownFiles;
-        this.checkType = checkType;
-    }
-
+    /**
+     * Gets the serialization version number.
+     *
+     * @return A serialization version number.
+     */
     @Override
     public long getVersionNumber() {
         return serialVersionUID;
     }
 
+    /**
+     * Sets the flag indicating whether or not files without extensions should
+     * be skipped during file extension mismatch checking.
+     *
+     * @param skipFilesWithNoExtension The desired value of the flag.
+     */
     void setSkipFilesWithNoExtension(boolean skipFilesWithNoExtension) {
         this.skipFilesWithNoExtension = skipFilesWithNoExtension;
     }
 
+    /**
+     * Gets the flag indicating whether or not files without extensions should
+     * be skipped during file extension mismatch checking.
+     *
+     * @return The flag value.
+     */
     boolean skipFilesWithNoExtension() {
         return skipFilesWithNoExtension;
     }
 
+    /**
+     * Sets the flag indicating whether or not known files should be skipped
+     * during file extension mismatch checking.
+     *
+     * @param skipKnownFiles The desired value of the flag.
+     */
     void setSkipKnownFiles(boolean skipKnownFiles) {
         this.skipKnownFiles = skipKnownFiles;
     }
 
+    /**
+     * Gets the flag indicating whether or not known files should be skipped
+     * during file extension mismatch checking.
+     *
+     * @return The flag value.
+     */
     boolean skipKnownFiles() {
         return skipKnownFiles;
     }
 
+    /**
+     * Sets whether extension mismatches should be checked for all files, for
+     * all files except text files, or for media and executable files only.
+     *
+     * @param checkType The check type.
+     */
     void setCheckType(CHECK_TYPE checkType) {
         this.checkType = checkType;
     }
 
+    /**
+     * Gets whether extension mismatches should be checked for all files, for
+     * all files except text files, or for media and executable files only.
+     *
+     * @return checkType The check type.
+     */
     CHECK_TYPE getCheckType() {
         return checkType;
     }
 
+    /**
+     * Called by convention by the serialization infrastructure when
+     * deserializing a FileExtMismatchDetectorModuleSettings object.
+     *
+     * @param in The object input stream provided by the serialization
+     *           infrastructure.
+     *
+     * @throws IOException            If there is a problem reading the
+     *                                serialized data.
+     * @throws ClassNotFoundException If the class definition for the serialized
+     *                                data cannot be found.
+     */
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         if (0L == versionNumber) {
             /*
              * If the version number is set to the Java field default value of
-             * zero, then skipKnownFiles is a new field. Change this to the
-             * desired default value of true.
+             * zero, then versionNumber and skipKnownFiles are new fields.
+             * Change this to the desired default value of true.
              */
             skipKnownFiles = true;
+            versionNumber = 1;
         }
-        versionNumber = 1;
+        if (1 == versionNumber) {
+            /*
+             * Set the default value of the new checkType field, it is currently
+             * null.
+             */
+            checkType = CHECK_TYPE.ONLY_MEDIA_AND_EXE;
+            versionNumber = 2;
+        }
     }
 }
