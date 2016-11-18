@@ -172,7 +172,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * before object construction is complete.
              */
             instance = new AutoIngestDashboard();
-            instance.startUp();
         }
         return instance;
     }
