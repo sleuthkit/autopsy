@@ -63,7 +63,7 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     FileExtMismatchDetectorModuleSettings() {
         this.skipFilesWithNoExtension = true;
         this.skipKnownFiles = true;
-        this.checkType = CHECK_TYPE.ONLY_MEDIA_AND_EXE;
+        this.checkType = CHECK_TYPE.NO_TEXT_FILES;
     }
 
     FileExtMismatchDetectorModuleSettings(boolean skipKnownFiles, boolean skipFilesWithNoExtension, CHECK_TYPE checkType) {
