@@ -159,6 +159,10 @@
                 <runtime-relative-path>ext/solr-solrj-4.9.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/solr-solrj-4.9.1.jar</binary-origin>
             </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
+            </class-path-extension>
         </data>
     </configuration>
 </project>

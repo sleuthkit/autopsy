@@ -340,7 +340,6 @@ public class SharedConfiguration {
         sharedConfigMaster = AutoIngestUserPreferences.getSharedConfigMaster();
         sharedConfigFolder = AutoIngestUserPreferences.getSharedConfigFolder();
 		showToolsWarning = AutoIngestUserPreferences.getShowToolsWarning();
-		// Get mode????
         displayLocalTime = UserPreferences.displayTimesInLocalTime();
         hideKnownFilesInDataSource = UserPreferences.hideKnownFilesInDataSourcesTree();
         hideKnownFilesInViews = UserPreferences.hideKnownFilesInViewsTree();
@@ -355,7 +354,6 @@ public class SharedConfiguration {
         AutoIngestUserPreferences.setSharedConfigFolder(sharedConfigFolder);
         AutoIngestUserPreferences.setSharedConfigMaster(sharedConfigMaster);
 		AutoIngestUserPreferences.setShowToolsWarning(showToolsWarning);
-		// Load mode???
         UserPreferences.setDisplayTimesInLocalTime(displayLocalTime);
         UserPreferences.setHideKnownFilesInDataSourcesTree(hideKnownFilesInDataSource);
         UserPreferences.setHideKnownFilesInViewsTree(hideKnownFilesInViews);
@@ -595,7 +593,7 @@ public class SharedConfiguration {
      */
     private void uploadEnabledModulesSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading enabled module configuration");
-        copyToRemoteFolder(AUTO_MODE_CONTEXT_FILE, moduleDirPath, remoteFolder, true);
+        copyToRemoteFolder(AUTO_MODE_CONTEXT_FILE, moduleDirPath, remoteFolder, false);
     }
 
     /**
@@ -607,7 +605,7 @@ public class SharedConfiguration {
      */
     private void downloadEnabledModuleSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading enabled module configuration");
-        copyToLocalFolder(AUTO_MODE_CONTEXT_FILE, moduleDirPath, remoteFolder, true);
+        copyToLocalFolder(AUTO_MODE_CONTEXT_FILE, moduleDirPath, remoteFolder, false);
     }
 
     /**
@@ -707,7 +705,7 @@ public class SharedConfiguration {
     private void uploadFileExtMismatchSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Uploading File Extension Mismatch module configuration");
         copyToRemoteFolder(FILE_EXT_MISMATCH_SETTINGS, moduleDirPath, remoteFolder, true);
-        copyToRemoteFolder(FILE_EXT_MISMATCH_SETTINGS_LEGACY, moduleDirPath, remoteFolder, true);
+        copyToRemoteFolder(FILE_EXT_MISMATCH_SETTINGS_LEGACY, moduleDirPath, remoteFolder, false);
     }
 
     /**
@@ -720,7 +718,7 @@ public class SharedConfiguration {
     private void downloadFileExtMismatchSettings(File remoteFolder) throws SharedConfigurationException {
         publishTask("Downloading File Extension Mismatch module configuration");
         copyToLocalFolder(FILE_EXT_MISMATCH_SETTINGS, moduleDirPath, remoteFolder, true);
-        copyToLocalFolder(FILE_EXT_MISMATCH_SETTINGS_LEGACY, moduleDirPath, remoteFolder, true);
+        copyToLocalFolder(FILE_EXT_MISMATCH_SETTINGS_LEGACY, moduleDirPath, remoteFolder, false);
     }
 
     /**

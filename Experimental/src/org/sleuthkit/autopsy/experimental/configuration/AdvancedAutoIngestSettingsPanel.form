@@ -16,11 +16,16 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
-              <EmptySpace min="16" pref="16" max="-2" attributes="0"/>
+          <Group type="102" alignment="1" attributes="0">
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="jPanelAutoIngestJobSettings" alignment="1" max="32767" attributes="0"/>
-                  <Component id="spMainScrollPane" max="32767" attributes="0"/>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jPanelAutoIngestJobSettings" max="32767" attributes="0"/>
+                  </Group>
+                  <Group type="102" alignment="0" attributes="0">
+                      <EmptySpace min="16" pref="16" max="-2" attributes="0"/>
+                      <Component id="spMainScrollPane" pref="640" max="32767" attributes="0"/>
+                  </Group>
               </Group>
               <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
           </Group>
@@ -33,7 +38,7 @@
               <Component id="spMainScrollPane" min="-2" pref="106" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanelAutoIngestJobSettings" max="32767" attributes="0"/>
-              <EmptySpace min="-2" pref="145" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -83,6 +88,34 @@
                   <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
+                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
+                              <Group type="102" alignment="1" attributes="0">
+                                  <Component id="lbInputScanInterval" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="49" pref="49" max="-2" attributes="0"/>
+                              </Group>
+                              <Group type="102" alignment="1" attributes="0">
+                                  <Component id="lbRetriesAllowed" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="54" pref="54" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="lbConcurrentJobsPerCase" alignment="0" min="-2" max="-2" attributes="0"/>
+                              <Component id="lbNumberOfThreads" alignment="0" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <EmptySpace min="0" pref="41" max="32767" attributes="0"/>
+                                  <Group type="103" groupAlignment="1" attributes="0">
+                                      <Component id="spInputScanInterval" min="-2" pref="90" max="-2" attributes="0"/>
+                                      <Component id="spMaximumRetryAttempts" min="-2" pref="90" max="-2" attributes="0"/>
+                                      <Component id="spConcurrentJobsPerCase" alignment="1" min="-2" pref="90" max="-2" attributes="0"/>
+                                  </Group>
+                              </Group>
+                              <Group type="102" attributes="0">
+                                  <EmptySpace max="32767" attributes="0"/>
+                                  <Component id="numberOfFileIngestThreadsComboBox" min="-2" pref="91" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                      </Group>
+                      <Group type="102" attributes="0">
                           <Component id="lbSecondsBetweenJobs" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="32767" attributes="0"/>
                           <Component id="spSecondsBetweenJobs" min="-2" pref="90" max="-2" attributes="0"/>
@@ -92,31 +125,6 @@
                           <EmptySpace max="32767" attributes="0"/>
                           <Component id="spTimeoutHours" min="-2" pref="90" max="-2" attributes="0"/>
                       </Group>
-                      <Group type="102" alignment="1" attributes="0">
-                          <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                          <Group type="103" groupAlignment="1" max="-2" attributes="0">
-                              <Group type="102" attributes="0">
-                                  <Component id="lbInputScanInterval" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="spInputScanInterval" min="-2" pref="90" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" attributes="0">
-                                  <Component id="lbRetriesAllowed" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="spMaximumRetryAttempts" min="-2" pref="90" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="lbConcurrentJobsPerCase" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
-                                  <Component id="spConcurrentJobsPerCase" min="-2" pref="90" max="-2" attributes="0"/>
-                              </Group>
-                              <Group type="102" alignment="0" attributes="0">
-                                  <Component id="lbNumberOfThreads" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Component id="numberOfFileIngestThreadsComboBox" min="-2" pref="91" max="-2" attributes="0"/>
-                              </Group>
-                          </Group>
-                      </Group>
                   </Group>
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
@@ -125,7 +133,7 @@
                       <Component id="lbTimeoutHours" min="-2" max="-2" attributes="0"/>
                       <Component id="lbInputScanIntervalMinutes" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace pref="237" max="32767" attributes="0"/>
+                  <EmptySpace pref="50" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -141,7 +149,7 @@
                               <Component id="spSecondsBetweenJobs" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="lbSecondsBetweenJobsSeconds" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="lbTimeoutText" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -150,30 +158,30 @@
                               </Group>
                               <Component id="cbTimeoutEnabled" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="lbInputScanInterval" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="spInputScanInterval" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="lbInputScanIntervalMinutes" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="lbRetriesAllowed" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="spMaximumRetryAttempts" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="lbConcurrentJobsPerCase" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="spConcurrentJobsPerCase" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="lbNumberOfThreads" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="numberOfFileIngestThreadsComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
-                  <EmptySpace pref="44" max="32767" attributes="0"/>
+                  <EmptySpace max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -184,12 +192,18 @@
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobs.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbSecondsBetweenJobs.toolTipText_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lbTimeoutText">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbTimeoutText.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbTimeoutText.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -198,12 +212,18 @@
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbInputScanInterval.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbInputScanInterval.toolTipText_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lbRetriesAllowed">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.toolTipText_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -212,12 +232,18 @@
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbNumberOfThreads.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbNumberOfThreads.toolTipText_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lbConcurrentJobsPerCase">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.toolTipText_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -232,12 +258,16 @@
           </Properties>
           <Events>
             <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cbTimeoutEnabledItemStateChanged"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cbTimeoutEnabledActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JComboBox" name="numberOfFileIngestThreadsComboBox">
           <Properties>
             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
               <StringArray count="0"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.numberOfFileIngestThreadsComboBox.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <Events>
@@ -263,7 +293,7 @@
               <SpinnerModel initial="3" maximum="100" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedOptionsPanel.lbConcurrentJobsPerCase.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbConcurrentJobsPerCase.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>
@@ -273,7 +303,7 @@
               <SpinnerModel initial="2" maximum="9999999" minimum="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
             </Property>
             <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.spMaximumRetryAttempts.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbRetriesAllowed.toolTipText_2" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
           <AccessibilityProperties>
@@ -324,12 +354,18 @@
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbTimeoutHours.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbTimeoutHours.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
           </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lbInputScanIntervalMinutes">
           <Properties>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbInputScanIntervalMinutes.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="AdvancedAutoIngestSettingsPanel.lbInputScanIntervalMinutes.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
           </Properties>
         </Component>

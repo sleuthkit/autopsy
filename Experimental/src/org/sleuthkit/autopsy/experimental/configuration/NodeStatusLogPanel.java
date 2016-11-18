@@ -261,6 +261,7 @@ public class NodeStatusLogPanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(lbTestDbWarning, org.openide.util.NbBundle.getMessage(NodeStatusLogPanel.class, "NodeStatusLogPanel.lbTestDbWarning.text")); // NOI18N
 
         tbDbName.setText(org.openide.util.NbBundle.getMessage(NodeStatusLogPanel.class, "NodeStatusLogPanel.tbDbName.text")); // NOI18N
+        tbDbName.setToolTipText(org.openide.util.NbBundle.getMessage(NodeStatusLogPanel.class, "NodeStatusLogPanel.tbDbName.toolTipText_1")); // NOI18N
 
         javax.swing.GroupLayout pnDatabaseSettingsLayout = new javax.swing.GroupLayout(pnDatabaseSettings);
         pnDatabaseSettings.setLayout(pnDatabaseSettingsLayout);

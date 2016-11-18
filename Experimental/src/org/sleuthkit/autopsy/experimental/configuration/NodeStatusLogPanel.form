@@ -231,6 +231,9 @@
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="experimental/configuration/Bundle.properties" key="NodeStatusLogPanel.tbDbName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
             </Property>
+            <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="org/sleuthkit/autopsy/experimental/configuration/Bundle.properties" key="NodeStatusLogPanel.tbDbName.toolTipText_1" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            </Property>
           </Properties>
         </Component>
       </SubComponents>
