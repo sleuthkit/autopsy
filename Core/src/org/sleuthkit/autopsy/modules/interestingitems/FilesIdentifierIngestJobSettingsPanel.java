@@ -83,7 +83,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          */
         List<FilesSetRow> filesSetRows = new ArrayList<>();
         try {
-            this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+            this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME, InterestingItemDefsManager.LEGACY_FILES_SET_DEFS_FILE_NAME));
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_getError());
             this.filesSetSnapshot = new TreeMap<>();
@@ -138,7 +138,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         List<FilesSetRow> rowModels = new ArrayList<>();
         TreeMap<String, FilesSet> newFilesSetSnapshot;
         try {
-            newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+            newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME, InterestingItemDefsManager.LEGACY_FILES_SET_DEFS_FILE_NAME));
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_updateError());
             return;
