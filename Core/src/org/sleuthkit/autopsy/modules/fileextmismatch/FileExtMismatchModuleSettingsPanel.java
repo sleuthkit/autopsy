@@ -47,7 +47,7 @@ final class FileExtMismatchModuleSettingsPanel extends IngestModuleIngestJobSett
                 checkMediaExeRadioButton.setSelected(true);
                 break;
             default:
-                checkMediaExeRadioButton.setSelected(true);
+                checkNoTextRadioButton.setSelected(true);
                 break;
         }
         skipNoExtCheckBox.setSelected(settings.skipFilesWithNoExtension());
