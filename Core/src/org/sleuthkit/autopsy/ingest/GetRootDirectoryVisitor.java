@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -83,6 +84,13 @@ final class GetRootDirectoryVisitor extends GetFilesContentVisitor {
         //can have local files
         //TODO test this and overall scheduler with local files
         return getAllFromChildren(localFile);
+    }
+
+    @Override
+    public Collection<AbstractFile> visit(SlackFile slackFile) {
+        //can have slack files
+        //TODO test this and overall scheduler with local files
+        return getAllFromChildren(slackFile);
     }
 
 }
