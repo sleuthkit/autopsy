@@ -14,7 +14,7 @@
 @REM  See the License for the specific language governing permissions and
 @REM  limitations under the License.
 
-@echo off
+REM @echo off
 
 REM By default the script will use JAVA_HOME to determine which java
 REM to use, but you can set a specific path for Solr to use without
