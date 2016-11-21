@@ -33,6 +33,7 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
     private static final long serialVersionUID = 1L;
     private long versionNumber;
     private boolean skipFilesWithNoExtension;
+    @Deprecated
     private boolean skipFilesWithTextPlainMimeType; // No longer used, retained to maintain serialization compatibility.
     private boolean skipKnownFiles;
     private CHECK_TYPE checkType;
@@ -175,4 +176,5 @@ final class FileExtMismatchDetectorModuleSettings implements IngestModuleIngestJ
             versionNumber = 2;
         }
     }
+    
 }
