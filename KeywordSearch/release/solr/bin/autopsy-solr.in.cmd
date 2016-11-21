@@ -85,7 +85,7 @@ set SOLR_OPTS=%SOLR_OPTS% -Dbootstrap_confdir=../solr/configsets/AutopsyConfig/c
 
 REM Path to a directory for Solr to store cores and their data. By default, Solr will use server\solr
 REM If solr.xml is not stored in ZooKeeper, this directory needs to contain solr.xml
-set SOLR_HOME=
+REM set SOLR_HOME=
 
 REM Sets the port Solr binds to, default is 8983
 REM set SOLR_PORT=8983
