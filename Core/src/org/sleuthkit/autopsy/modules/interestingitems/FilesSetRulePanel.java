@@ -31,8 +31,6 @@ import java.util.regex.PatternSyntaxException;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MimeTypes;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
@@ -58,7 +56,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected)."
     })
 
-    private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
     private static final Logger logger = Logger.getLogger(FilesSetRulePanel.class.getName());
     private static final String SLEUTHKIT_PATH_SEPARATOR = "/"; // NON-NLS
     private static final List<String> ILLEGAL_FILE_NAME_CHARS = InterestingItemDefsManager.getIllegalFileNameChars();
@@ -106,8 +103,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     private void populateMimeTypesComboBox() {
         Set<String> fileTypesCollated = new HashSet<>();
-        for (MediaType mediaType : mediaTypes) {
-            fileTypesCollated.add(mediaType.toString());
+        for (String mediaType : FileTypeDetector.getDetectedTypes()) {
+            fileTypesCollated.add(mediaType);
         }
 
         FileTypeDetector fileTypeDetector;
@@ -321,7 +318,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         }
 
-        // The path condition, if specified, must either be a regular expression 
+        // The path condition, if specified, must either be a regular expression
         // that compiles or a string without illegal file path chars.
         if (this.pathCheck.isSelected()) {
             if (this.pathTextField.getText().isEmpty()) {
@@ -412,7 +409,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                 }
             } else {
                 logger.log(Level.SEVERE, "Attempt to get name condition with illegal chars"); // NON-NLS
-                throw new IllegalStateException("The files set rule panel name condition is not in a valid state"); // NON-NLS                    
+                throw new IllegalStateException("The files set rule panel name condition is not in a valid state"); // NON-NLS
             }
         }
         return condition;
@@ -498,7 +495,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     condition = new FilesSet.Rule.ParentPathCondition(path);
                 } else {
                     logger.log(Level.SEVERE, "Attempt to get path condition with illegal chars"); // NON-NLS
-                    throw new IllegalStateException("The files set rule panel path condition is not in a valid state"); // NON-NLS                    
+                    throw new IllegalStateException("The files set rule panel path condition is not in a valid state"); // NON-NLS
                 }
             }
         }

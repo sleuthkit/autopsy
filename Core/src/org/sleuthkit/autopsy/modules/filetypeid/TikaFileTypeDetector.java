@@ -24,9 +24,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
 
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * @deprecated Use org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector

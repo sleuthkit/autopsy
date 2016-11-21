@@ -34,7 +34,6 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MimeTypes;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -57,16 +56,15 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file."
     })
 
-    private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
     private final DefaultListModel<FilesSet> setsListModel = new DefaultListModel<>();
     private final DefaultListModel<FilesSet.Rule> rulesListModel = new DefaultListModel<>();
     private final Logger logger = Logger.getLogger(InterestingItemDefsPanel.class.getName());
-    private JButton okButton = new JButton("OK");
-    private JButton cancelButton = new JButton("Cancel");
+    private final JButton okButton = new JButton("OK");
+    private final JButton cancelButton = new JButton("Cancel");
 
-    // The following is a map of interesting files set names to interesting 
-    // files set definitions. It is a snapshot of the files set definitions 
-    // obtained from the interesting item definitions manager at the time the 
+    // The following is a map of interesting files set names to interesting
+    // files set definitions. It is a snapshot of the files set definitions
+    // obtained from the interesting item definitions manager at the time the
     // the panel is loaded. When the panel saves or stores its settings, these
     // definitions, possibly changed, are submitted back to the interesting item
     // definitions manager. Note that it is a tree map to aid in displaying
@@ -88,10 +86,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     @NbBundle.Messages({"InterestingItemDefsPanel.Title=Global Interesting Items Settings"})
     private void customInit() {
         setName(Bundle.InterestingItemDefsPanel_Title());
-        
+
         Set<String> fileTypesCollated = new HashSet<>();
-        for (MediaType mediaType : mediaTypes) {
-            fileTypesCollated.add(mediaType.toString());
+        for (String mediaType : FileTypeDetector.getDetectedTypes()) {
+            fileTypesCollated.add(mediaType);
         }
 
         FileTypeDetector fileTypeDetector;
@@ -119,7 +117,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.fileSizeUnitComboBox.setSelectedIndex(1);
         this.equalitySignComboBox.setSelectedIndex(2);
     }
-    
+
     /**
      * @inheritDoc
      */
@@ -156,14 +154,14 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.filesSets = new TreeMap<>();
         }
 
-        // Populate the list model for the interesting files sets list 
+        // Populate the list model for the interesting files sets list
         // component.
         for (FilesSet set : this.filesSets.values()) {
             this.setsListModel.addElement(set);
         }
 
         if (!this.filesSets.isEmpty()) {
-            // Select the first files set by default. The list selections 
+            // Select the first files set by default. The list selections
             // listeners will then populate the other components.
             EventQueue.invokeLater(() -> {
                 InterestingItemDefsPanel.this.setsList.setSelectedIndex(0);
@@ -222,7 +220,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // components.
             FilesSet selectedSet = InterestingItemDefsPanel.this.setsList.getSelectedValue();
             if (selectedSet != null) {
-                // Populate the components that display the properties of the 
+                // Populate the components that display the properties of the
                 // selected files set.
                 InterestingItemDefsPanel.this.setDescriptionTextArea.setText(selectedSet.getDescription());
                 InterestingItemDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
@@ -269,7 +267,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSet.Rule.MimeTypeCondition mimeTypeCondition = rule.getMimeTypeCondition();
                 FilesSet.Rule.FileSizeCondition fileSizeCondition = rule.getFileSizeCondition();
 
-                // Populate the components that display the properties of the 
+                // Populate the components that display the properties of the
                 // selected rule.
                 if (nameCondition != null) {
                     InterestingItemDefsPanel.this.fileNameTextField.setText(nameCondition.getTextToMatch());
@@ -345,7 +343,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             panel = new FilesSetPanel();
         }
 
-        // Do a dialog box with the files set panel until the user either enters 
+        // Do a dialog box with the files set panel until the user either enters
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
@@ -366,7 +364,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             Map<String, FilesSet.Rule> rules = new HashMap<>();
             if (selectedSet != null) {
                 // Interesting file sets are immutable for thread safety,
-                // so editing a files set definition is a replacement operation. 
+                // so editing a files set definition is a replacement operation.
                 // Preserve the existing rules from the set being edited.
                 rules.putAll(selectedSet.getRules());
             }
@@ -391,7 +389,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Creating a new rule definition.
             panel = new FilesSetRulePanel(okButton, cancelButton);
         }
-        // Do a dialog box with the files set panel until the user either enters 
+        // Do a dialog box with the files set panel until the user either enters
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
@@ -401,12 +399,12 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         if (option == JOptionPane.OK_OPTION) {
             // Interesting file sets are immutable for thread safety,
-            // so editing a files set rule definition is a replacement 
+            // so editing a files set rule definition is a replacement
             // operation. Preserve the existing rules from the set being edited.
             FilesSet selectedSet = this.setsList.getSelectedValue();
             Map<String, FilesSet.Rule> rules = new HashMap<>(selectedSet.getRules());
 
-            // Remove the "old" rule definition and add the new/edited 
+            // Remove the "old" rule definition and add the new/edited
             // definition.
             if (selectedRule != null) {
                 rules.remove(selectedRule.getUuid());
@@ -414,12 +412,12 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             FilesSet.Rule newRule = new FilesSet.Rule(panel.getRuleName(), panel.getFileNameCondition(), panel.getMetaTypeCondition(), panel.getPathCondition(), panel.getMimeTypeCondition(), panel.getFileSizeCondition());
             rules.put(newRule.getUuid(), newRule);
 
-            // Add the new/edited files set definition, replacing any previous 
+            // Add the new/edited files set definition, replacing any previous
             // definition with the same name and refreshing the display.
             this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), rules);
 
-            // Select the new/edited rule. Queue it up so it happens after the 
-            // selection listeners react to the selection of the "new" files 
+            // Select the new/edited rule. Queue it up so it happens after the
+            // selection listeners react to the selection of the "new" files
             // set.
             EventQueue.invokeLater(() -> {
                 this.rulesList.setSelectedValue(newRule, true);
@@ -459,8 +457,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.setsListModel.addElement(set);
         }
 
-        // Select the new/edited files set definition in the set definitions 
-        // list. This will cause the selection listeners to repopulate the 
+        // Select the new/edited files set definition in the set definitions
+        // list. This will cause the selection listeners to repopulate the
         // subordinate components.
         this.setsList.setSelectedValue(newSet, true);
     }
