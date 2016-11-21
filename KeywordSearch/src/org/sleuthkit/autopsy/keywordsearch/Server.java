@@ -33,6 +33,7 @@ import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -162,15 +163,13 @@ public class Server {
     @Deprecated
     public static final char ID_CHUNK_SEP = '_';
     public static final String CHUNK_ID_SEPARATOR = "_";
-    private String javaPath = "java"; //NON-NLS
+    private String javaHome = "";
     public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
-    private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     private Process curSolrProcess = null;
     static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
     static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort"; //NON-NLS
-//    private static final String KEY = "jjk#09s"; //NON-NLS
-    private static final String KEY = "solrrocks"; //NON-NLS
+    private static final String KEY = "jjk#09s"; //NON-NLS
     static final String DEFAULT_SOLR_SERVER_HOST = "localhost"; //NON-NLS
     static final int DEFAULT_SOLR_SERVER_PORT = 23232;
     static final int DEFAULT_SOLR_STOP_PORT = 34343;
@@ -199,6 +198,7 @@ public class Server {
 
     private final File solrFolder;
     private Path solrCmdPath;
+    private Path solrHome;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
 
@@ -213,13 +213,41 @@ public class Server {
         this.localSolrServer = this.builder.build();
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
-        javaPath = PlatformUtil.getJavaPath();
-        solrCmdPath = Paths.get(solrFolder.getAbsolutePath(), "bin", "solr.cmd");
 
+        // Figure out where Java is located. For installed versions of Autopsy
+        // it will be in the installation folder/jre. For development environments
+        // we expect the JAVA_HOME environment variable to be set.
+        // The Java home location will be passed as the SOLR_JAVA_HOME environment
+        // variable to the Solr script but it can be overridden by the user in
+        // either autopsy-solr.cmd or autopsy-solr-in.cmd.
+        File jrePath = new File(PlatformUtil.getInstallPath() + File.separator + "jre"); // NON-NLS
+        if (jrePath.exists() && jrePath.isDirectory()) {
+            javaHome = jrePath.getAbsolutePath();
+        } else {
+            javaHome = System.getenv("JAVA_HOME"); // NON-NLS
+        }
+
+        if (javaHome.isEmpty()) {
+            logger.log(Level.WARNING, "Java not found. Keyword search functionality may not work."); //NON-NLS
+        }
+
+        // This is our customized version of the Solr batch script to start/stop Solr.
+        solrCmdPath = Paths.get(solrFolder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
+
+        solrHome = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
+        if (!solrHome.toFile().exists()) {
+            try {
+                Files.createDirectory(solrHome);
+                Files.copy(Paths.get(solrFolder.getAbsolutePath(), "solr", "solr.xml"), solrHome.resolve("solr.xml")); //NON-NLS
+                Files.copy(Paths.get(solrFolder.getAbsolutePath(), "solr", "zoo.cfg"), solrHome.resolve("zoo.cfg")); //NON-NLS
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Failed to create Solr home folder:", ex); //NON-NLS
+            }
+        }
         currentCoreLock = new ReentrantReadWriteLock(true);
         uncPathUtilities = new UNCPathUtilities();
 
-        logger.log(Level.INFO, "Created Server instance"); //NON-NLS
+        logger.log(Level.INFO, "Created Server instance using Java at {0}", javaHome); //NON-NLS
     }
 
     private void initSettings() {
@@ -333,6 +361,7 @@ public class Server {
 
     /**
      * Run a Solr command with the given arguments.
+     *
      * @param solrArguments Command line arguments to pass to the Solr command.
      * @return
      * @throws IOException
@@ -351,6 +380,10 @@ public class Server {
 
         Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
         solrProcessBuilder.redirectError(solrStderrPath.toFile());
+
+        solrProcessBuilder.environment().put("SOLR_JAVA_HOME", javaHome); // NON-NLS
+        solrProcessBuilder.environment().put("SOLR_HOME", solrHome.toString()); // NON-NLS
+        solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS
 
         logger.log(Level.INFO, "Running Solr command: {0}", solrProcessBuilder.command()); //NON-NLS
         Process process = solrProcessBuilder.start();
@@ -563,7 +596,7 @@ public class Server {
      * request.
      *
      * @return false if the request failed with a connection error, otherwise
-     *         true
+     * true
      */
     synchronized boolean isRunning() throws KeywordSearchModuleException {
         try {
@@ -571,10 +604,6 @@ public class Server {
             if (isPortAvailable(currentSolrServerPort)) {
                 return false;
             }
-
-//            if (curSolrProcess != null && !curSolrProcess.isAlive()) {
-//                return false;
-//            }
 
             // making a status request here instead of just doing solrServer.ping(), because
             // that doesn't work when there are no cores
