@@ -25,7 +25,7 @@ REM Increase Java Min/Max Heap as needed to support your indexing / query needs
 set SOLR_JAVA_MEM=-Xms512m -Xmx512m
 
 REM Enable verbose GC logging
-set GC_LOG_OPTS=-verbose:gc -XX:+PrintHeapAtGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime
+REM set GC_LOG_OPTS=-verbose:gc -XX:+PrintHeapAtGC -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime
 
 REM These GC settings have shown to work well for a number of common Solr workloads
 set GC_TUNE=-XX:NewRatio=3 ^
@@ -85,7 +85,7 @@ set SOLR_OPTS=%SOLR_OPTS% -Dbootstrap_confdir=../solr/configsets/AutopsyConfig/c
 
 REM Path to a directory for Solr to store cores and their data. By default, Solr will use server\solr
 REM If solr.xml is not stored in ZooKeeper, this directory needs to contain solr.xml
-REM set SOLR_HOME=
+set SOLR_HOME=
 
 REM Sets the port Solr binds to, default is 8983
 REM set SOLR_PORT=8983
