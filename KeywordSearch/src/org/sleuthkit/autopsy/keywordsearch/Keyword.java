@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
@@ -119,6 +120,18 @@ class Keyword {
         return isWholeWord;
     }
 
+    String getSearchTermType() {
+        if (isLiteral) {
+            if (isWholeWord) {
+                return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.exactButton.text");
+            } else {
+                return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.substringButton.text");
+            }
+        } else {
+            return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.regexButton.text");
+        }
+    }
+
     /**
      * Sets the artifact attribute type associated with the keyword, if any.
      *
@@ -159,9 +172,9 @@ class Keyword {
             return false;
         }
         Keyword other = (Keyword) obj;
-        return (this.searchTerm.equals(other.searchTerm)
-                && this.isLiteral == other.isLiteral
-                && this.isWholeWord == other.isWholeWord);
+        return (this.searchTerm.equals(other.getSearchTerm())
+                && this.isLiteral == other.searchTermIsLiteral()
+                && this.isWholeWord == other.searchTermIsWholeWord());
     }
 
     @Override
