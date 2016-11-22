@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * A file ingest module that generates interesting files set hit artifacts for
@@ -102,6 +103,11 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     @Messages({"FilesIdentifierIngestModule.indexError.message=Failed to index interesting file hit artifact for keyword search."})
     public ProcessResult process(AbstractFile file) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
+        
+        // Skip slack space files.
+        if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+            return ProcessResult.OK;
+        }
 
         // See if the file belongs to any defined interesting files set.
         List<FilesSet> filesSets = FilesIdentifierIngestModule.interestingFileSetsByJob.get(this.context.getJobId());

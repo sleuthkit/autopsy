@@ -65,7 +65,6 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
         wiz.setTitleFormat(new MessageFormat("{0} {1}"));
         wiz.setTitle(NbBundle.getMessage(ReportWizardAction.class, "ReportWizardAction.reportWiz.title"));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
-            @SuppressWarnings("unchecked")
             ReportGenerator generator = new ReportGenerator(); //NON-NLS
             TableReportModule tableReport = (TableReportModule) wiz.getProperty("tableModule");
             GeneralReportModule generalReport = (GeneralReportModule) wiz.getProperty("generalModule");

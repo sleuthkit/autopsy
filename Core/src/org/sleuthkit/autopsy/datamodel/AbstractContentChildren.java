@@ -34,6 +34,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -107,6 +108,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         @Override
         public AbstractContentNode<? extends Content> visit(VirtualDirectory ld) {
             return new VirtualDirectoryNode(ld);
+        }
+        
+        @Override
+        public AbstractContentNode<? extends Content> visit(SlackFile sf) {
+            return new SlackFileNode(sf);
         }
 
         @Override

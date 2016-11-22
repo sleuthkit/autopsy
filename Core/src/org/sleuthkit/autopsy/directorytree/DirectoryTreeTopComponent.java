@@ -70,6 +70,7 @@ import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
 import org.sleuthkit.autopsy.datamodel.RootContentChildren;
+import org.sleuthkit.autopsy.datamodel.SlackFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
@@ -130,9 +131,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             public void preferenceChange(PreferenceChangeEvent evt) {
                 switch (evt.getKey()) {
                     case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE:
+                    case UserPreferences.HIDE_SLACK_FILES_IN_DATA_SOURCES_TREE:
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
+                    case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:   
                         // TODO: Need a way to refresh the Views subtree
                         break;
                 }
@@ -640,8 +643,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         //set node, wrap in filter node first to filter out children
                         Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
+                        Node sffn = new SlackFileFilterNode(kffn, SlackFileFilterNode.getSelectionContext(originNode));
+
 
                         // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
+
                         //Special case for when File Type Identification has not yet been run and 
                         //there are no mime types to populate Files by Mime Type Tree
                         if (originNode instanceof FileTypesByMimeType.FileTypesByMimeTypeNode
@@ -649,11 +655,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             EmptyNode emptyNode = new EmptyNode();
                             Node emptyDrfn = new DataResultFilterNode(emptyNode, DirectoryTreeTopComponent.this.em);
                             Node emptyKffn = new KnownFileFilterNode(emptyDrfn, KnownFileFilterNode.getSelectionContext(emptyNode));
-                            dataResult.setNode(new TableFilterNode(emptyKffn, true, "This Node Is Empty"));
+                            Node emptySffn = new SlackFileFilterNode(emptyKffn, SlackFileFilterNode.getSelectionContext(originNode));
+                            dataResult.setNode(new TableFilterNode(emptySffn, true, "This Node Is Empty"));
                         } else if (originNode instanceof DisplayableItemNode) {
-                            dataResult.setNode(new TableFilterNode(kffn, true, ((DisplayableItemNode) originNode).getItemType()));
+                            dataResult.setNode(new TableFilterNode(sffn, true, ((DisplayableItemNode) originNode).getItemType()));
                         } else {
-                            dataResult.setNode(new TableFilterNode(kffn, true));
+                            dataResult.setNode(new TableFilterNode(sffn, true));
                         }
 
                         String displayName = "";

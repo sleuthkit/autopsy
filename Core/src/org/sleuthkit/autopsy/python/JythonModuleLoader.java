@@ -74,7 +74,7 @@ public final class JythonModuleLoader {
 
         // add python modules from 'autospy/build/cluster/InternalPythonModules' folder
         // which are copied from 'autopsy/*/release/InternalPythonModules' folders.
-        for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", JythonModuleLoader.class.getPackage().getName(), false)) { //NON-NLS
+        for (File f : InstalledFileLocator.getDefault().locateAll("InternalPythonModules", "org.sleuthkit.autopsy.core", false)) { //NON-NLS
             Collections.addAll(pythonModuleDirs, f.listFiles());
         }
         // add python modules from 'testuserdir/python_modules' folder

@@ -46,6 +46,7 @@ import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
+import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -56,6 +57,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -201,6 +203,8 @@ public class DataResultFilterNode extends FilterNode {
             } else if ((c = ban.getLookup().lookup(LocalFile.class)) != null
                     || (c = ban.getLookup().lookup(DerivedFile.class)) != null) {
                 n = new LocalFileNode((AbstractFile) c);
+            } else if ((c = ban.getLookup().lookup(SlackFile.class)) != null) {
+                n = new SlackFileNode((SlackFile) c);
             }
             if (n != null) {
                 actions.add(null); // creates a menu separator

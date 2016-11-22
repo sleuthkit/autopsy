@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,8 +40,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private static final long serialVersionUID = 1L;
 
-    private Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
-    private KeywordListTableModel tableModel;
+    private final Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
+    private final KeywordListTableModel tableModel;
     private final org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel globalListSettingsPanel;
 
     GlobalListsManagementPanel(org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel gsp) {
@@ -345,7 +345,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
     private class KeywordListTableModel extends AbstractTableModel {
 
-        private XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
+        private final XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
 
         @Override
         public int getColumnCount() {
