@@ -86,7 +86,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setName(Bundle.InterestingItemDefsPanel_Title());
 
         Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getDetectedTypes()) {
+        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
             fileTypesCollated.add(mediaType);
         }
 

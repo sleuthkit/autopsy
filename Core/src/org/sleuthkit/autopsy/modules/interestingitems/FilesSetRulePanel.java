@@ -102,7 +102,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     private void populateMimeTypesComboBox() {
         Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getDetectedTypes()) {
+        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
             fileTypesCollated.add(mediaType);
         }
 

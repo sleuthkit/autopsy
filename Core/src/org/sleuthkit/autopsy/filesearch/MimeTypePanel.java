@@ -49,7 +49,7 @@ public class MimeTypePanel extends javax.swing.JPanel {
 
     private String[] getMimeTypeArray() {
         Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getDetectedTypes()) {
+        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
             fileTypesCollated.add(mediaType);
         }
 

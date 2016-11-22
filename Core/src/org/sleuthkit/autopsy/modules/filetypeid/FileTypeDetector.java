@@ -104,13 +104,13 @@ public class FileTypeDetector {
     }
 
     /**
-     * Returns an unmodifiable list of MIME types that does not contain types
-     * with optional parameters. The list has no duplicate types and is in
+     * Returns an unmodifiable list of standard MIME types that does not contain
+     * types with optional parameters. The list has no duplicate types and is in
      * alphabetical order.
      *
      * @return an unmodifiable view of a set of MIME types
      */
-    public static synchronized SortedSet<String> getDetectedTypes() {
+    public static synchronized SortedSet<String> getStandardDetectedTypes() {
         if (detectedTypes == null) {
             detectedTypes = org.apache.tika.mime.MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes()
                     .stream().filter(t -> !t.hasParameters()).map(s -> s.toString()).collect(Collectors.toCollection(TreeSet::new));
@@ -144,7 +144,7 @@ public class FileTypeDetector {
      * @return True or false.
      */
     private boolean isDetectableByTika(String mimeType) {
-        return this.getDetectedTypes().contains(removeOptionalParameter(mimeType));
+        return this.getStandardDetectedTypes().contains(removeOptionalParameter(mimeType));
     }
 
     /**
@@ -206,6 +206,9 @@ public class FileTypeDetector {
          */
         String mimeType = file.getMIMEType();
         if (null != mimeType) {
+            // We remove the optional parameter to allow this method to work
+            // with legacy databases that may contain MIME types with the
+            // optional parameter attached.
             return removeOptionalParameter(mimeType);
         }
 
@@ -258,6 +261,9 @@ public class FileTypeDetector {
                  * Remove the Tika suffix from the MIME type name.
                  */
                 mimeType = tikaType.replace("tika-", ""); //NON-NLS
+                /*
+                 * Remove the optional parameter from the MIME type.
+                 */
                 mimeType = removeOptionalParameter(mimeType);
 
             } catch (Exception ignored) {
