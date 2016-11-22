@@ -144,7 +144,7 @@ public class FileTypeDetector {
      * @return True or false.
      */
     private boolean isDetectableByTika(String mimeType) {
-        return this.getStandardDetectedTypes().contains(removeOptionalParameter(mimeType));
+        return FileTypeDetector.getStandardDetectedTypes().contains(removeOptionalParameter(mimeType));
     }
 
     /**
