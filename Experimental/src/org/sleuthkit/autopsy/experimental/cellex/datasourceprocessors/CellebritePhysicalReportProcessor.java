@@ -284,7 +284,7 @@ public class CellebritePhysicalReportProcessor implements AutomatedIngestDataSou
         //iii. Multiple image files - one per volume - need to handle each one separately
         //       e.g. blk0_mmcblk0.bin, mtd0_system.bin, mtd1_cache.bin, mtd2_userdata.bin
         String fNameNoExt = FilenameUtils.removeExtension(fileName);
-        return fNameNoExt.toLowerCase().matches("\\w+\\(\\d+\\)");
+        return (! fNameNoExt.toLowerCase().matches("\\w+\\(\\d+\\)"));
     }
     
     private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
