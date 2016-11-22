@@ -19,12 +19,9 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.EventQueue;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
@@ -85,33 +82,15 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void customInit() {
         setName(Bundle.InterestingItemDefsPanel_Title());
 
-        Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
-            fileTypesCollated.add(mediaType);
-        }
-
-        FileTypeDetector fileTypeDetector;
         try {
-            fileTypeDetector = new FileTypeDetector();
-            List<String> userDefinedFileTypes = fileTypeDetector.getUserDefinedTypes();
-            fileTypesCollated.addAll(userDefinedFileTypes);
-
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            List<String> mimeTypeList = FileTypeDetector.getDetectedTypes();
+            for (String type : mimeTypeList) {
+                mimeTypeComboBox.addItem(type);
+            }
+        } catch (FileTypeDetector.FileTypeDetectorGetTypesException ex) {
             logger.log(Level.SEVERE, "Unable to get user defined file types", ex);
         }
 
-        List<String> toSort = new ArrayList<>(fileTypesCollated);
-        toSort.sort((String string1, String string2) -> {
-            int result = String.CASE_INSENSITIVE_ORDER.compare(string1, string2);
-            if (result == 0) {
-                result = string1.compareTo(string2);
-            }
-            return result;
-        });
-
-        for (String file : toSort) {
-            mimeTypeComboBox.addItem(file);
-        }
         this.fileSizeUnitComboBox.setSelectedIndex(1);
         this.equalitySignComboBox.setSelectedIndex(2);
     }

@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeTypes;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
@@ -51,7 +52,7 @@ public class FileTypeDetector {
     private final byte buffer[] = new byte[BUFFER_SIZE];
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
-    private static SortedSet<String> detectedTypes;    //no optional parameters
+    private static SortedSet<String> standardDetectedTypes;    //no optional parameters
 
     /**
      * Constructs an object that detects the MIME type of a file by an
@@ -73,23 +74,6 @@ public class FileTypeDetector {
     }
 
     /**
-     * Gets the names of the custom file types defined by the user or by
-     * Autopsy.
-     *
-     * @return A list of the user-defined MIME types.
-     */
-    public List<String> getUserDefinedTypes() {
-        List<String> customFileTypes = new ArrayList<>();
-        for (FileType fileType : userDefinedFileTypes) {
-            customFileTypes.add(fileType.getMimeType());
-        }
-        for (FileType fileType : autopsyDefinedFileTypes) {
-            customFileTypes.add(fileType.getMimeType());
-        }
-        return customFileTypes;
-    }
-
-    /**
      * Determines whether or not a given MIME type is detectable by this
      * detector.
      *
@@ -104,20 +88,47 @@ public class FileTypeDetector {
     }
 
     /**
-     * Returns an unmodifiable list of standard MIME types that does not contain
-     * types with optional parameters. The list has no duplicate types and is in
-     * alphabetical order.
+     * Returns an unmodifiable list of standard, user, and custom MIME types.
+     * The standard types are stripped of optional parameters.
      *
-     * @return an unmodifiable view of a set of MIME types
+     * @return an unmodifiable view of a list of MIME types
+     * @throws FileTypeDetectorGetTypesException if an initialization error
+     *                                           occurs
      */
-    public static synchronized SortedSet<String> getStandardDetectedTypes() {
-        if (detectedTypes == null) {
-            detectedTypes = org.apache.tika.mime.MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes()
-                    .stream().filter(t -> !t.hasParameters()).map(s -> s.toString()).collect(Collectors.toCollection(TreeSet::new));
+    public static synchronized List<String> getDetectedTypes() throws FileTypeDetectorGetTypesException {
+        List<String> allMimeTypes = new ArrayList<>();
+        allMimeTypes.addAll(FileTypeDetector.getStandardDetectedTypes());
+        try {
+            for (FileType fileType : CustomFileTypesManager.getInstance().getUserDefinedFileTypes()) {
+                allMimeTypes.add(fileType.getMimeType());
+            }
+            for (FileType fileType : CustomFileTypesManager.getInstance().getAutopsyDefinedFileTypes()) {
+            allMimeTypes.add(fileType.getMimeType());
         }
-        return Collections.unmodifiableSortedSet(detectedTypes);
+        } catch (CustomFileTypesManager.CustomFileTypesException ex) {
+            throw new FileTypeDetectorGetTypesException("Error loading custom file types", ex);
+        }
+        allMimeTypes.sort((String string1, String string2) -> {
+            int result = String.CASE_INSENSITIVE_ORDER.compare(string1, string2);
+            if (result == 0) {
+                result = string1.compareTo(string2);
+            }
+            return result;
+        });
+        return Collections.unmodifiableList(allMimeTypes);
     }
 
+    /**
+     * @return the static set of the standard detected types. Creates the set
+     *         if it hasn't been created yet.
+     */
+    private static synchronized SortedSet<String> getStandardDetectedTypes() {
+        if (standardDetectedTypes == null) {
+            standardDetectedTypes = org.apache.tika.mime.MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes()
+                    .stream().filter(t -> !t.hasParameters()).map(s -> s.toString()).collect(Collectors.toCollection(TreeSet::new));
+        }
+        return Collections.unmodifiableSortedSet(standardDetectedTypes);
+    }
     /**
      * Determines whether or not a given MIME type is detectable as a
      * user-defined MIME type by this detector.
@@ -415,6 +426,22 @@ public class FileTypeDetector {
     }
 
     /**
+     * Exception thrown when the detector is unable to add user and custom
+     * file types to a returned list of file types.
+     */
+    public static class FileTypeDetectorGetTypesException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        FileTypeDetectorGetTypesException(String message) {
+            super(message);
+        }
+
+        FileTypeDetectorGetTypesException(String message, Throwable throwable) {
+            super(message, throwable);
+        }
+    }
+
+    /**
      * Gets the MIME type of a file, detecting it if it is not already known. If
      * detection is necessary, the result is added to the case database.
      *
@@ -432,4 +459,21 @@ public class FileTypeDetector {
         return getFileType(file);
     }
 
+    /**
+     * Gets the names of the custom file types defined by the user or by
+     * Autopsy.
+     *
+     * @return A list of the user-defined MIME types.
+     */
+    @Deprecated
+    public List<String> getUserDefinedTypes() {
+        List<String> customFileTypes = new ArrayList<>();
+        for (FileType fileType : userDefinedFileTypes) {
+            customFileTypes.add(fileType.getMimeType());
+        }
+        for (FileType fileType : autopsyDefinedFileTypes) {
+            customFileTypes.add(fileType.getMimeType());
+        }
+        return customFileTypes;
+    }
 }
