@@ -103,8 +103,8 @@ public class FileTypeDetector {
                 allMimeTypes.add(fileType.getMimeType());
             }
             for (FileType fileType : CustomFileTypesManager.getInstance().getAutopsyDefinedFileTypes()) {
-            allMimeTypes.add(fileType.getMimeType());
-        }
+                allMimeTypes.add(fileType.getMimeType());
+            }
         } catch (CustomFileTypesManager.CustomFileTypesException ex) {
             throw new FileTypeDetectorGetTypesException("Error loading custom file types", ex);
         }
