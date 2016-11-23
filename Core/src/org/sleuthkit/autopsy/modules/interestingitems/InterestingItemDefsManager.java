@@ -51,9 +51,9 @@ final class InterestingItemDefsManager extends Observable {
 
     private static final List<String> ILLEGAL_FILE_NAME_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", "/", ":", "*", "?", "\"", "<", ">")));
     private static final List<String> ILLEGAL_FILE_PATH_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", ":", "*", "?", "\"", "<", ">")));
-    static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
-    static final String INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME = "InterestingFileSets.settings";
-    static final String FILE_FILTER_SET_DEFS_SERIALIZATION_NAME = "FileFilterSets.settings";
+    private static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
+    private static final String INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME = "InterestingFileSets.settings";
+    private static final String FILE_FILTER_SET_DEFS_SERIALIZATION_NAME = "FileFilterSets.settings";
     private static final String INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH = PlatformUtil.getUserConfigDirectory() + File.separator;
     private static final String LEGACY_FILE_SET_DEFS_PATH = PlatformUtil.getUserConfigDirectory() + File.separator;
     private static InterestingItemDefsManager instance;
@@ -85,6 +85,27 @@ final class InterestingItemDefsManager extends Observable {
      */
     static List<String> getIllegalFilePathChars() {
         return InterestingItemDefsManager.ILLEGAL_FILE_PATH_CHARS;
+    }
+
+    /**
+     * @return the LEGACY_FILES_SET_DEFS_FILE_NAME
+     */
+    static String getLEGACY_FILES_SET_DEFS_FILE_NAME() {
+        return LEGACY_FILES_SET_DEFS_FILE_NAME;
+    }
+
+    /**
+     * @return the INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME
+     */
+    static String getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME() {
+        return INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME;
+    }
+
+    /**
+     * @return the FILE_FILTER_SET_DEFS_SERIALIZATION_NAME
+     */
+    static String getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME() {
+        return FILE_FILTER_SET_DEFS_SERIALIZATION_NAME;
     }
 
     /**

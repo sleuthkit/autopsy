@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -28,13 +31,13 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
-        categoryName = "#OptionsCategory_Name_InterestingItemDefinitions",
+        categoryName = "#OptionsCategory_Name_FileFilterDefinitions",
         iconBase = "org/sleuthkit/autopsy/images/interesting_item_32x32.png",
-        keywords = "#OptionsCategory_Keywords_InterestingItemDefinitions",
-        keywordsCategory = "InterestingItemDefinitions",
+        keywords = "#OptionsCategory_Keywords_FileFilterDefinitions",
+        keywordsCategory = "FileFilterDefinitions",
         position = 7
 )
-public final class InterestingItemDefsOptionsPanelController extends OptionsPanelController {
+public final class FileFilterDefsOptionsPanelController extends OptionsPanelController {
 
     private InterestingItemDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -47,6 +50,25 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
     public void update() {
         getPanel().load();
         changed = false;
+    }
+
+    /**
+     * Returns an array which will contain the names of all options which should
+     * exist in the "Run Ingest Modules On:" JCombobox
+     *
+     * @return -filterNames an array of all established filter names as well as
+     * a 'Create New...' option
+     */
+    public List<String> getComboBoxContents() {
+        List<String> nameSet = new ArrayList<>();
+        nameSet.add("All Files");
+        if (!(panel == null)) {
+            nameSet.addAll(panel.getKeys());
+            System.out.println("THIS IS THE SET, PANEL NOT NULL");
+            System.out.println(nameSet.toString());
+        }
+        nameSet.add("Create New...");
+        return nameSet;
     }
 
     /**
@@ -115,7 +137,7 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
 
     private InterestingItemDefsPanel getPanel() {
         if (panel == null) {
-            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME(), InterestingItemDefsManager.getLEGACY_FILES_SET_DEFS_FILE_NAME());
+            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "");
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {

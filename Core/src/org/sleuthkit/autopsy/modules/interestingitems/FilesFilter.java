@@ -20,13 +20,13 @@ public class FilesFilter {
 
     public static Set<String> getKeys() throws InterestingItemDefsManager.InterestingItemDefsManagerException {
         InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
-        return manager.getInterestingFilesSets(InterestingItemDefsManager.FILE_FILTER_SET_DEFS_SERIALIZATION_NAME, "").keySet();
+        return manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").keySet();
     }
 
     public FilesFilter() {
         InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
         try {
-            for (FilesSet fs : manager.getInterestingFilesSets(InterestingItemDefsManager.FILE_FILTER_SET_DEFS_SERIALIZATION_NAME, "").values()) {
+            for (FilesSet fs : manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").values()) {
                 currentRules = fs;
                 break;
             }
@@ -39,7 +39,7 @@ public class FilesFilter {
     public FilesFilter(String key) {
         InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
         try {
-            currentRules = manager.getInterestingFilesSets(InterestingItemDefsManager.FILE_FILTER_SET_DEFS_SERIALIZATION_NAME, "").get(key);
+            currentRules = manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").get(key);
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             Exceptions.printStackTrace(ex);
         }

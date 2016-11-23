@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
@@ -43,6 +44,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
+import org.sleuthkit.autopsy.modules.interestingitems.FileFilterDefsOptionsPanelController;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -63,7 +65,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private final List<IngestModuleModel> modules = new ArrayList<>();
     private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private IngestModuleModel selectedModule;
-    private static final Logger logger = Logger.getLogger(IngestJobSettingsPanel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(IngestJobSettingsPanel.class.getName());
+    private final FileFilterDefsOptionsPanelController controller;
 
     /**
      * Construct a panel to allow a user to make ingest job settings.
@@ -72,9 +75,12 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
+        this.controller = new FileFilterDefsOptionsPanelController();
+        controller.getComponent(controller.getLookup());
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             modules.add(new IngestModuleModel(moduleTemplate));
         }
+
         initComponents();
         customizeComponents();
     }
@@ -82,23 +88,26 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     /**
      * Construct a panel to allow a user to make ingest job settings.
      *
-     * @param settings    The initial settings for the ingest job.
+     * @param settings The initial settings for the ingest job.
      * @param dataSources The data sources ingest is being run on.
      */
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
         this.dataSources.addAll(dataSources);
+        this.controller = new FileFilterDefsOptionsPanelController();
+        controller.getComponent(controller.getLookup());
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
         } catch (IllegalStateException ex) {
-            logger.log(Level.SEVERE, "No open case", ex);
+            LOGGER.log(Level.SEVERE, "No open case", ex);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to load ingest job information", ex);
+            LOGGER.log(Level.SEVERE, "Failed to load ingest job information", ex);
         }
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             this.modules.add(new IngestModuleModel(moduleTemplate));
         }
+
         initComponents();
         customizeComponents();
     }
@@ -209,7 +218,12 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.jLabel1.text_1")); // NOI18N
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All Files and Unallocated Space", "All Files", "Create New...", "Filter 3242" }));
+        jComboBox1.setModel(new DefaultComboBoxModel(controller.getComboBoxContents().toArray()));
+        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jComboBox1ActionPerformed(evt);
+            }
+        });
 
         modulesScrollPane.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(160, 160, 160)));
         modulesScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
@@ -406,6 +420,25 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         dialog.pack();
         dialog.setVisible(true);
     }//GEN-LAST:event_pastJobsButtonActionPerformed
+
+    /**
+     * Perform the appropriate action when Jcombobox items are selected, most
+     * notably opening the File filter settings when Create New is chosen.
+     *
+     * @param evt
+     */
+    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+       
+        if (evt.toString().contains("Create New...")) {
+            final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
+            //   values.controller.getComboBoxContents().toArray();
+            dialog.addApplyButtonListener((ActionEvent e) -> {
+                controller.applyChanges();
+                dialog.close();
+            });
+            dialog.display((IngestModuleGlobalSettingsPanel)controller.getComponent(controller.getLookup()));
+        }
+    }//GEN-LAST:event_jComboBox1ActionPerformed
 
     private void SelectAllModules(boolean set) {
         for (IngestModuleModel module : modules) {

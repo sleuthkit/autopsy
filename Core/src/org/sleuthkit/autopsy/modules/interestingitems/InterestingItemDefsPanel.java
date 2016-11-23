@@ -57,13 +57,15 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file."
     })
 
-    private static final SortedSet<MediaType> mediaTypes = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
+    private static final SortedSet<MediaType> MEDIA_TYPES = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
     private final DefaultListModel<FilesSet> setsListModel = new DefaultListModel<>();
     private final DefaultListModel<FilesSet.Rule> rulesListModel = new DefaultListModel<>();
     private final Logger logger = Logger.getLogger(InterestingItemDefsPanel.class.getName());
-    private JButton okButton = new JButton("OK");
-    private JButton cancelButton = new JButton("Cancel");
-
+    private final JButton okButton = new JButton("OK");
+    private final JButton cancelButton = new JButton("Cancel");
+    private final String settingsFileName;
+    private final String settingsLegacyFileName;
+    
     // The following is a map of interesting files set names to interesting 
     // files set definitions. It is a snapshot of the files set definitions 
     // obtained from the interesting item definitions manager at the time the 
@@ -76,21 +78,28 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     /**
      * Constructs an interesting item definitions panel.
      */
-    InterestingItemDefsPanel() {
+    InterestingItemDefsPanel(String settingsName, String legacySettingsName) {
         this.initComponents();
         this.customInit();
         this.setsList.setModel(setsListModel);
         this.setsList.addListSelectionListener(new InterestingItemDefsPanel.SetsListSelectionListener());
         this.rulesList.setModel(rulesListModel);
         this.rulesList.addListSelectionListener(new InterestingItemDefsPanel.RulesListSelectionListener());
+        this.settingsFileName = settingsName;
+        this.settingsLegacyFileName = legacySettingsName;
     }
 
+    Set<String> getKeys(){
+        load();
+        return filesSets.keySet();
+    }
+    
     @NbBundle.Messages({"InterestingItemDefsPanel.Title=Global Interesting Items Settings"})
     private void customInit() {
         setName(Bundle.InterestingItemDefsPanel_Title());
         
         Set<String> fileTypesCollated = new HashSet<>();
-        for (MediaType mediaType : mediaTypes) {
+        for (MediaType mediaType : MEDIA_TYPES) {
             fileTypesCollated.add(mediaType.toString());
         }
 
@@ -126,7 +135,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     @Override
     public void saveSettings() {
         try {
-            InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets, InterestingItemDefsManager.INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME);
+            InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets, settingsFileName);
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_saveError());
         }
@@ -150,7 +159,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         try {
             // Get a working copy of the interesting files set definitions and sort
             // by set name.
-            this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME, InterestingItemDefsManager.LEGACY_FILES_SET_DEFS_FILE_NAME));
+            this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(settingsFileName, settingsLegacyFileName));
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_loadError());
             this.filesSets = new TreeMap<>();
