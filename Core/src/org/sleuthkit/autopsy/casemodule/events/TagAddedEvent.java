@@ -39,7 +39,7 @@ abstract class TagAddedEvent<T extends Tag> extends AutopsyEvent implements Seri
     private transient T tag;
 
     /**
-     * The id of the tag that was added. This will bu used to re-load the
+     * The id of the tag that was added. This will be used to re-load the
      * transient tag from the database.
      */
     private final Long tagID;
