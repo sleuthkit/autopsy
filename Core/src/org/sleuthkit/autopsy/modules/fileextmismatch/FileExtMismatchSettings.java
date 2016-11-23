@@ -110,6 +110,20 @@ class FileExtMismatchSettings implements Serializable {
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedFile))) {
                 FileExtMismatchSettings fileExtMismatchSettings = (FileExtMismatchSettings) in.readObject();
+                /*
+                 * If the settings version number is set to the Java field default value of
+                 * zero, then settingsVersionNumber is a new field. Upgrade from version 0 to version 1 of the settings.
+                 */
+                if (fileExtMismatchSettings.settingsVersionNumber == 0) {
+                    fileExtMismatchSettings.mimeTypeToExtsMap.putIfAbsent("application/x-msdownload", new HashSet<>());
+                    fileExtMismatchSettings.mimeTypeToExtsMap.putIfAbsent("application/x-dosexec", new HashSet<>());
+                    fileExtMismatchSettings.mimeTypeToExtsMap.get("application/x-msdownload").addAll(Arrays.asList("exe", "dll", "com"));
+                    fileExtMismatchSettings.mimeTypeToExtsMap.get("application/x-dosexec").addAll(Arrays.asList("exe", "dll", "com"));
+                    fileExtMismatchSettings.settingsVersionNumber = 1;
+                    // Then write new settings back out
+                    writeSettings(fileExtMismatchSettings);
+                }
+
                 return fileExtMismatchSettings;
             }
         } catch (IOException | ClassNotFoundException ex) {
@@ -179,33 +193,6 @@ class FileExtMismatchSettings implements Serializable {
         } catch (IOException ex) {
             throw new FileExtMismatchSettingsException(String.format("Failed to write settings to %s", DEFAULT_SERIALIZED_FILE_PATH), ex);
         }
-    }
-
-     /**
-     * Called by convention by the serialization infrastructure when
-     * deserializing a FileExtMismatchSettings object.
-     *
-     * @param in The object input stream provided by the serialization
-     *           infrastructure.
-     *
-     * @throws IOException            If there is a problem reading the
-     *                                serialized data.
-     * @throws ClassNotFoundException If the class definition for the serialized
-     *                                data cannot be found.
-     */
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        /*
-         * If the settings version number is set to the Java field default value of
-         * zero, then settingsVersionNumber is a new field. Upgrade from version 0 to version 1 of the settings.
-         */
-        if (0 == settingsVersionNumber) {
-            mimeTypeToExtsMap.putIfAbsent("application/x-msdownload", new HashSet<>());
-            mimeTypeToExtsMap.putIfAbsent("application/x-dosexec", new HashSet<>());
-            mimeTypeToExtsMap.get("application/x-msdownload").addAll(Arrays.asList("exe", "dll", "com"));
-            mimeTypeToExtsMap.get("application/x-dosexec").addAll(Arrays.asList("exe", "dll", "com"));
-        }
-        settingsVersionNumber = 1;
     }
 
     /**
