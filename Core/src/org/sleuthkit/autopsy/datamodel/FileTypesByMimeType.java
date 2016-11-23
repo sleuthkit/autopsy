@@ -119,7 +119,11 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
     private void populateHashMap() {
         StringBuilder allDistinctMimeTypesQuery = new StringBuilder();
         allDistinctMimeTypesQuery.append("SELECT DISTINCT mime_type from tsk_files where mime_type NOT null");  //NON-NLS
-        allDistinctMimeTypesQuery.append(" AND dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(";"); //NON-NLS
+        allDistinctMimeTypesQuery.append(" AND dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()); //NON-NLS
+        allDistinctMimeTypesQuery.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(","); //NON-NLS
+        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
+        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
+        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
         synchronized (existingMimeTypes) {
             existingMimeTypes.clear();
         }
@@ -155,6 +159,7 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
         IngestManager.getInstance().addIngestJobEventListener(pcl);
         IngestManager.getInstance().addIngestModuleEventListener(pcl);
         FileTypesByMimeType.skCase = skCase;
+        populateHashMap();
     }
 
     /**
@@ -417,6 +422,10 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
         private static String createQuery(String mime_type) {
             StringBuilder query = new StringBuilder();
             query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
+            query.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(",");  //NON-NLS
+            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
+            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
+            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
             if (UserPreferences.hideKnownFilesInViewsTree()) {
                 query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
             }
@@ -499,13 +508,33 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
 
         }
 
-        static class MessageNode extends AbstractNode {
+        /**
+         * MessageNode is is the info message that displays in the table view,
+         * by also extending a DisplayableItemNode type, rather than an
+         * AbstractNode type it doesn't throw an error when right clicked.
+         */
+        static class MessageNode extends DisplayableItemNode {
 
             MessageNode(String name) {
                 super(Children.LEAF);
                 super.setName(name);
                 setName(name);
                 setDisplayName(name);
+            }
+
+            @Override
+            public boolean isLeafTypeNode() {
+                return true;
+            }
+
+            @Override
+            public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+                return v.visit(this);
+            }
+
+            @Override
+            public String getItemType() {
+                return getClass().getName();
             }
         }
     }
