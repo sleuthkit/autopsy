@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,24 +18,20 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteContentTagAction;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -110,15 +106,6 @@ class ContentTagNode extends DisplayableItemNode {
                 "",
                 content.getSize()));
 
-        List<Tag> tags = new ArrayList<>();
-        try {
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content));
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
-        }
-        properties.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
-                "", tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
-
         return propertySheet;
     }
 
@@ -131,7 +118,7 @@ class ContentTagNode extends DisplayableItemNode {
         if (file != null) {
             actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
-        actions.add(null); // Adds a menu item separator. 
+        actions.add(null); // Adds a menu item separator.
         actions.add(DeleteContentTagAction.getInstance());
         return actions.toArray(new Action[actions.size()]);
     }

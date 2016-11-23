@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Tag;
+import org.sleuthkit.datamodel.ContentTag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -302,14 +302,15 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     /**
      * Used by subclasses of AbstractAbstractFileNode to add the tags property
      * to their sheets.
-     * @param ss 
+     * @param ss the modifiable Sheet.Set returned by Sheet.get(Sheet.PROPERTIES)
      */
     protected void addTagProperty(Sheet.Set ss) {
         final String NO_DESCR = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.desc");
-        List<Tag> tags = new ArrayList<>();
+        List<ContentTag> tags;
         try {
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content));
+            tags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
         } catch (TskCoreException ex) {
+            tags = new ArrayList<>();
             LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
         ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),

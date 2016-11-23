@@ -204,7 +204,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             displayName = associated.getName();
         }
 
-        // If this is a node for a keyword hit on an artifact, we set the 
+        // If this is a node for a keyword hit on an artifact, we set the
         // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
         if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
