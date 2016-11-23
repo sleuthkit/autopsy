@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
@@ -26,6 +27,7 @@ import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -41,6 +43,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
+import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
@@ -66,6 +69,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 //@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
+    private static final long serialVersionUID = 1L;
+
     private final String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
     /* The properties map maps
      * key: stored value of column index -> value: property at that index
@@ -76,6 +81,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final Map<Integer, Property<?>> propertiesMap = new TreeMap<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
+    private static final Color TAGGED_COLOR = new Color(230, 235, 240);
     private Node currentRoot;
     // When a column in the table is moved, these two variables keep track of where
     // the column started and where it ended up.
@@ -113,6 +119,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
 
+        // add a listener so that when columns are moved, the new order is stored
         ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
             @Override
             public void columnAdded(TableColumnModelEvent e) {
@@ -183,6 +190,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             }
         });
 
+        // add a listener to move columns back if user tries to move the first column out of place
         ov.getOutline().getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
@@ -387,7 +395,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         if (root.getChildren().getNodesCount() != 0) {
-
             final Graphics graphics = ov.getGraphics();
             if (graphics != null) {
                 final FontMetrics metrics = graphics.getFontMetrics();
@@ -397,7 +404,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
                 for (int column = 0; column < ov.getOutline().getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
-                    int columnWidthLimit = (column == 0) ? 250 : 350;
+                    int columnWidthLimit = (column == 0) ? 350 : 300;
                     int valuesWidth = 0;
 
                     // find the maximum width needed to fit the values for the first 100 rows, at most
@@ -421,6 +428,48 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             // if there's no content just auto resize all columns
             ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
+
+        /**
+         * This custom renderer extends the renderer that was already being
+         * used by the outline table. This renderer colors a row if the
+         * tags property of the node is not empty.
+         */
+        class ColorTagCustomRenderer extends DefaultOutlineCellRenderer {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public Component getTableCellRendererComponent(JTable table,
+                    Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                
+                Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                // only override the color if a node is not selected
+                if (!isSelected) {
+                    Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
+                    boolean tagFound = false;
+                    if (node != null) {
+                        Node.PropertySet[] propSets = node.getPropertySets();
+                        if (propSets.length != 0) {
+                            // currently, a node has only one property set, named Sheet.PROPERTIES ("properties")
+                            Node.Property<?>[] props = propSets[0].getProperties();
+                            for (Property<?> prop : props) {
+                                if (prop.getName().equals("Tags")) {
+                                    try {
+                                        tagFound = !prop.getValue().equals("");
+                                    } catch (IllegalAccessException | InvocationTargetException ignore) {
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    //if the node does have associated tags, set its background color
+                    if (tagFound) {
+                        component.setBackground(TAGGED_COLOR);
+                    }
+                }
+                return component;
+            }
+        }
+        ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
     }
 
     /**
@@ -547,11 +596,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTable(nme.getNode());
                 } else {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            setupTable(nme.getNode());
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        setupTable(nme.getNode());
                     });
                 }
             }

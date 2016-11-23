@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -38,13 +38,12 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
 /**
  * Add input wizard subpanel for adding local files / dirs to the case
  */
-class LocalFilesPanel extends JPanel {
+final class LocalFilesPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
+    private final Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;
-    public static final String FILES_SEP = ",";
     private static final Logger logger = Logger.getLogger(LocalFilesPanel.class.getName());
     private String displayName = "";
 
@@ -70,38 +69,24 @@ class LocalFilesPanel extends JPanel {
         this.displayNameLabel.setText(NbBundle.getMessage(this.getClass(), "LocalFilesPanel.displayNameLabel.text"));
     }
 
-    //@Override
-    public String getContentPaths() {
-        //TODO consider interface change to return list of paths instead
-
+    public List<String> getContentPaths() {
+        List<String> pathsList = new ArrayList<>();
         if (currentFiles == null) {
-            return "";
+            return pathsList;
         }
-        StringBuilder b = new StringBuilder();
         for (File f : currentFiles) {
-            b.append(f.getAbsolutePath());
-            b.append(FILES_SEP);
+            pathsList.add(f.getAbsolutePath());
         }
-        return b.toString();
+        return pathsList;
     }
 
-    //@Override
-    public void setContentPath(String s) {
-        //for the local file panel we don't need to restore the last paths used
-        //when the wizard restarts
-    }
-
-    //@Override
     public String getContentType() {
         return NbBundle.getMessage(this.getClass(), "LocalFilesPanel.contentType.text");
     }
 
-    //@Override
     public boolean validatePanel() {
-
         // display warning if there is one (but don't disable "next" button)
         warnIfPathIsInvalid(getContentPaths());
-
         return enableNext;
     }
 
@@ -109,13 +94,11 @@ class LocalFilesPanel extends JPanel {
      * Validates path to selected data source and displays warning if it is
      * invalid.
      *
-     * @param path Absolute path to the selected data source
+     * @param paths Absolute paths to the selected data source
      */
-    private void warnIfPathIsInvalid(String path) {
+    private void warnIfPathIsInvalid(List<String> pathsList) {
         errorLabel.setVisible(false);
 
-        // Path variable for "Local files" module is a coma separated string containg multiple paths
-        List<String> pathsList = Arrays.asList(path.split(","));
         CaseType currentCaseType = Case.getCurrentCase().getCaseType();
 
         for (String currentPath : pathsList) {
@@ -127,12 +110,10 @@ class LocalFilesPanel extends JPanel {
         }
     }
 
-    //@Override
     public void select() {
         reset();
     }
 
-    //@Override
     public void reset() {
         currentFiles.clear();
         selectedPaths.setText("");
@@ -278,14 +259,9 @@ class LocalFilesPanel extends JPanel {
             }
             this.selectedPaths.setText(allPaths.toString());
             this.selectedPaths.setToolTipText(allPaths.toString());
-
         }
 
-        if (!currentFiles.isEmpty()) {
-            enableNext = true;
-        } else {
-            enableNext = false;
-        }
+        enableNext = !currentFiles.isEmpty();
 
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
