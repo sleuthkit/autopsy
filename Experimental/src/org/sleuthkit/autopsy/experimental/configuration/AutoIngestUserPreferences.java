@@ -19,17 +19,13 @@
 package org.sleuthkit.autopsy.experimental.configuration;
 
 import java.util.Base64;
-import java.util.prefs.PreferenceChangeListener;
-import java.util.prefs.Preferences;
-import java.util.prefs.BackingStoreException;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
-import org.openide.util.NbBundle;
-import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Provides convenient access to a Preferences node for auto ingest user preferences
@@ -45,7 +41,7 @@ public final class AutoIngestUserPreferences {
         REVIEW
     };
 
-    private static final Preferences preferences = NbPreferences.forModule(AutoIngestUserPreferences.class);
+    private static final String SETTINGS_PROPERTIES = "AutoIngest";
     private static final String MODE = "AutopsyMode"; // NON-NLS
     private static final String JOIN_AUTO_MODE_CLUSTER = "JoinAutoModeCluster"; // NON-NLS
     private static final String AUTO_MODE_IMAGES_FOLDER = "AutoModeImageFolder"; // NON-NLS
@@ -71,52 +67,16 @@ public final class AutoIngestUserPreferences {
     }
 
     /**
-     * Reload all preferences from disk. This is only needed if the preferences
-     * file is being directly modified on disk while Autopsy is running.
-     *
-     * @throws BackingStoreException
-     */
-    public static void reloadFromStorage() throws BackingStoreException {
-        preferences.sync();
-    }
-
-    /**
-     * Saves the current preferences to storage. This is only needed if the
-     * preferences files are going to be copied to another location while Autopsy
-     * is running.
-     *
-     * @throws BackingStoreException
-     */
-    public static void saveToStorage() throws BackingStoreException {
-        preferences.flush();
-    }
-
-    /**
-     * Add change listener.
-     *
-     * @param listener Listener to be added.
-     */
-    public static void addChangeListener(PreferenceChangeListener listener) {
-        preferences.addPreferenceChangeListener(listener);
-    }
-
-    /**
-     * Remove change listener.
-     *
-     * @param listener Listener to be removed.
-     */
-    public static void removeChangeListener(PreferenceChangeListener listener) {
-        preferences.removePreferenceChangeListener(listener);
-    }
-
-    /**
      * Get mode from persistent storage.
      *
      * @return SelectedMode Selected mode.
      */
     public static SelectedMode getMode() {
-        int ordinal = preferences.getInt(MODE, SelectedMode.STANDALONE.ordinal());
-        return SelectedMode.values()[ordinal];
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, MODE)) {
+            int ordinal = Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, MODE));
+            return SelectedMode.values()[ordinal];
+        }
+        return SelectedMode.STANDALONE;
     }
 
     /**
@@ -125,7 +85,7 @@ public final class AutoIngestUserPreferences {
      * @param mode Selected mode.
      */
     public static void setMode(SelectedMode mode) {
-        preferences.putInt(MODE, mode.ordinal());
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, MODE, Integer.toString(mode.ordinal()));
     }
     
     /**
@@ -134,7 +94,10 @@ public final class AutoIngestUserPreferences {
      * @return SelectedMode Selected setting.
      */
     public static boolean getJoinAutoModeCluster() {
-        return preferences.getBoolean(JOIN_AUTO_MODE_CLUSTER, false);
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, JOIN_AUTO_MODE_CLUSTER)) {
+            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, JOIN_AUTO_MODE_CLUSTER));
+        }
+        return false;
     }
 
     /**
@@ -143,7 +106,7 @@ public final class AutoIngestUserPreferences {
      * @param join boolean value of whether to join auto ingest cluster or not
      */
     public static void setJoinAutoModeCluster(boolean join) {
-        preferences.putBoolean(JOIN_AUTO_MODE_CLUSTER, join);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, JOIN_AUTO_MODE_CLUSTER, Boolean.toString(join));
     }
     
     /**
@@ -152,7 +115,10 @@ public final class AutoIngestUserPreferences {
      * @return String Selected input folder.
      */
     public static String getAutoModeImageFolder() {
-        return preferences.get(AUTO_MODE_IMAGES_FOLDER, "");
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, AUTO_MODE_IMAGES_FOLDER)) {
+            return ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, AUTO_MODE_IMAGES_FOLDER);
+        }
+        return "";
     }
 
     /**
@@ -161,7 +127,7 @@ public final class AutoIngestUserPreferences {
      * @param folder Selected input folder.
      */
     public static void setAutoModeImageFolder(String folder) {
-        preferences.put(AUTO_MODE_IMAGES_FOLDER, folder);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, AUTO_MODE_IMAGES_FOLDER, folder);
     }
 
     /**
@@ -170,7 +136,10 @@ public final class AutoIngestUserPreferences {
      * @return String Selected output folder.
      */
     public static String getAutoModeResultsFolder() {
-        return preferences.get(AUTO_MODE_RESULTS_FOLDER, "");
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, AUTO_MODE_RESULTS_FOLDER)) {
+            return ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, AUTO_MODE_RESULTS_FOLDER);
+        }
+        return "";
     }
 
     /**
@@ -179,7 +148,7 @@ public final class AutoIngestUserPreferences {
      * @param folder Selected output folder.
      */
     public static void setAutoModeResultsFolder(String folder) {
-        preferences.put(AUTO_MODE_RESULTS_FOLDER, folder);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, AUTO_MODE_RESULTS_FOLDER, folder);
     }
 
     /**
@@ -189,7 +158,10 @@ public final class AutoIngestUserPreferences {
      * @return String Selected settings folder.
      */
     public static String getSharedConfigFolder() {
-        return preferences.get(SHARED_CONFIG_FOLDER, "");
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, SHARED_CONFIG_FOLDER)) {
+            return ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, SHARED_CONFIG_FOLDER);
+        }
+        return "";
     }
 
     /**
@@ -197,7 +169,7 @@ public final class AutoIngestUserPreferences {
      * storage.
      */
     public static void setSharedConfigFolder(String folder) {
-        preferences.put(SHARED_CONFIG_FOLDER, folder);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, SHARED_CONFIG_FOLDER, folder);
     }
 
     /**
@@ -207,7 +179,10 @@ public final class AutoIngestUserPreferences {
      * @return Boolean true if shared settings are enabled.
      */
     public static Boolean getSharedConfigEnabled() {
-        return preferences.getBoolean(SHARED_CONFIG_ENABLED, false);
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, SHARED_CONFIG_ENABLED)) {
+            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, SHARED_CONFIG_ENABLED));
+        }
+        return false;
     }
 
     /**
@@ -218,7 +193,7 @@ public final class AutoIngestUserPreferences {
      *                              mode
      */
     public static void setSharedConfigEnabled(boolean sharedSettingsEnabled) {
-        preferences.putBoolean(SHARED_CONFIG_ENABLED, sharedSettingsEnabled);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, SHARED_CONFIG_ENABLED, Boolean.toString(sharedSettingsEnabled));
     }
 
     /**
@@ -228,7 +203,10 @@ public final class AutoIngestUserPreferences {
      * @return true if this node is set as a shared configuration master
      */
     public static Boolean getSharedConfigMaster() {
-        return preferences.getBoolean(SHARED_CONFIG_MASTER, false);
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, SHARED_CONFIG_MASTER)) {
+            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, SHARED_CONFIG_MASTER));
+        }
+        return false;
     }
 
     /**
@@ -237,7 +215,7 @@ public final class AutoIngestUserPreferences {
      * @param sharedSettingsMaster true = this node can upload configuration
      */
     public static void setSharedConfigMaster(boolean sharedSettingsMaster) {
-        preferences.putBoolean(SHARED_CONFIG_MASTER, sharedSettingsMaster);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, SHARED_CONFIG_MASTER, Boolean.toString(sharedSettingsMaster));
     }
 
     /**
@@ -256,7 +234,7 @@ public final class AutoIngestUserPreferences {
      * @param showToolsWarning true = show warning dialog, false = don't show
      */
     public static void setShowToolsWarning(boolean showToolsWarning) {
-        preferences.putBoolean(SHOW_TOOLS_WARNING, showToolsWarning);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, SHOW_TOOLS_WARNING, Boolean.toString(showToolsWarning));
     }
 
     /**
@@ -265,7 +243,10 @@ public final class AutoIngestUserPreferences {
      * @return
      */
     public static boolean getShowToolsWarning() {
-        return preferences.getBoolean(SHOW_TOOLS_WARNING, true);
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, SHOW_TOOLS_WARNING)) {
+            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, SHOW_TOOLS_WARNING));
+        }
+        return true;
     }
 
     /**
@@ -275,8 +256,10 @@ public final class AutoIngestUserPreferences {
      * @return int the value in seconds, default is 30 seconds.
      */
     public static int getSecondsToSleepBetweenCases() {
-        int answer = Integer.parseInt(preferences.get(SLEEP_BETWEEN_CASES_TIME, "30"));
-        return answer;
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, SLEEP_BETWEEN_CASES_TIME)) {
+            return Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, SLEEP_BETWEEN_CASES_TIME));
+        }
+        return 30;
     }
 
     /**
@@ -285,10 +268,10 @@ public final class AutoIngestUserPreferences {
      * occur, e.g., network file system latency effects on the visibility of
      * newly created shared directories and files.
      *
-     * @param int value the number of seconds to sleep between cases
+     * @param value value the number of seconds to sleep between cases
      */
     public static void setSecondsToSleepBetweenCases(int value) {
-        preferences.put(SLEEP_BETWEEN_CASES_TIME, Integer.toString(value));
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, SLEEP_BETWEEN_CASES_TIME, Integer.toString(value));
     }
 
     /**
@@ -299,8 +282,10 @@ public final class AutoIngestUserPreferences {
      * @return int maximum number of attempts, default is 2.
      */
     public static int getMaxNumTimesToProcessImage() {
-        int answer = Integer.parseInt(preferences.get(MAX_NUM_TIMES_TO_PROCESS_IMAGE, "2"));
-        return answer;
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE)) {
+            return Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE));
+        }
+        return 2;
     }
 
     /**
@@ -311,7 +296,7 @@ public final class AutoIngestUserPreferences {
      * @param retries the number of retries to allow
      */
     public static void setMaxNumTimesToProcessImage(int retries) {
-        preferences.putInt(MAX_NUM_TIMES_TO_PROCESS_IMAGE, retries);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE, Integer.toString(retries));
     }
 
     /**
@@ -321,7 +306,10 @@ public final class AutoIngestUserPreferences {
      * @return maximum number of concurrent nodes for one case. Default is 3.
      */
     public static int getMaxConcurrentJobsForOneCase() {
-        return Integer.parseInt(preferences.get(MAX_CONCURRENT_NODES_FOR_ONE_CASE, "3"));
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE)) {
+            return Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE));
+        }
+        return 3;
     }
 
     /**
@@ -331,7 +319,7 @@ public final class AutoIngestUserPreferences {
      * @param numberOfNodes the number of concurrent nodes to allow for one case
      */
     public static void setMaxConcurrentIngestNodesForOneCase(int numberOfNodes) {
-        preferences.putInt(MAX_CONCURRENT_NODES_FOR_ONE_CASE, numberOfNodes);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, MAX_CONCURRENT_NODES_FOR_ONE_CASE, Integer.toString(numberOfNodes));
     }
 
     /**
@@ -341,7 +329,10 @@ public final class AutoIngestUserPreferences {
      * @return Boolean true if database logging is enabled.
      */
     public static Boolean getStatusDatabaseLoggingEnabled() {
-        return preferences.getBoolean(STATUS_DATABASE_LOGGING_ENABLED, false);
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, STATUS_DATABASE_LOGGING_ENABLED)) {
+            return Boolean.parseBoolean(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, STATUS_DATABASE_LOGGING_ENABLED));
+        }
+        return false;
     }
 
     /**
@@ -352,7 +343,7 @@ public final class AutoIngestUserPreferences {
      *                               mode
      */
     public static void setStatusDatabaseLoggingEnabled(boolean databaseLoggingEnabled) {
-        preferences.putBoolean(STATUS_DATABASE_LOGGING_ENABLED, databaseLoggingEnabled);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, STATUS_DATABASE_LOGGING_ENABLED, Boolean.toString(databaseLoggingEnabled));
     }
 
     /**
@@ -361,7 +352,10 @@ public final class AutoIngestUserPreferences {
      * @return Logging database hostname or IP
      */
     public static String getLoggingDatabaseHostnameOrIP() {
-        return preferences.get(LOGGING_DB_HOSTNAME_OR_IP, "");
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, LOGGING_DB_HOSTNAME_OR_IP)) {
+            return ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, LOGGING_DB_HOSTNAME_OR_IP);
+        }
+        return "";
     }
 
     /**
@@ -370,7 +364,7 @@ public final class AutoIngestUserPreferences {
      * @param hostname Logging database hostname or IP
      */
     public static void setLoggingDatabaseHostnameOrIP(String hostname) {
-        preferences.put(LOGGING_DB_HOSTNAME_OR_IP, hostname);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, LOGGING_DB_HOSTNAME_OR_IP, hostname);
     }
 
     /**
@@ -379,7 +373,10 @@ public final class AutoIngestUserPreferences {
      * @return logging database port
      */
     public static String getLoggingPort() {
-        return preferences.get(LOGGING_PORT, "");
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, LOGGING_PORT)) {
+            return ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, LOGGING_PORT);
+        }
+        return "";
     }
 
     /**
@@ -388,7 +385,7 @@ public final class AutoIngestUserPreferences {
      * @param port Logging database port
      */
     public static void setLoggingPort(String port) {
-        preferences.put(LOGGING_PORT, port);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, LOGGING_PORT, port);
     }
 
     /**
@@ -397,7 +394,10 @@ public final class AutoIngestUserPreferences {
      * @return logging database username
      */
     public static String getLoggingUsername() {
-        return preferences.get(LOGGING_USERNAME, "");
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, LOGGING_USERNAME)) {
+            return ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, LOGGING_USERNAME);
+        }
+        return "";
     }
 
     /**
@@ -406,7 +406,7 @@ public final class AutoIngestUserPreferences {
      * @param username Logging database username
      */
     public static void setLoggingUsername(String username) {
-        preferences.put(LOGGING_USERNAME, username);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, LOGGING_USERNAME, username);
     }
 
     /**
@@ -414,8 +414,11 @@ public final class AutoIngestUserPreferences {
      *
      * @return logging database password
      */
-    public static String getLoggingPassword() throws UserPreferencesException { 
-        return TextConverter.convertHexTextToText(preferences.get(LOGGING_PASSWORD, ""));
+    public static String getLoggingPassword() throws UserPreferencesException {
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, LOGGING_PASSWORD)) {
+            return TextConverter.convertHexTextToText(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, LOGGING_PASSWORD));
+        }
+        return "";
     }
 
     /**
@@ -424,7 +427,7 @@ public final class AutoIngestUserPreferences {
      * @param password Logging database password
      */
     public static void setLoggingPassword(String password) throws UserPreferencesException {
-        preferences.put(LOGGING_PASSWORD, TextConverter.convertTextToHexText(password));
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, LOGGING_PASSWORD, TextConverter.convertTextToHexText(password));
     }
 
     /**
@@ -433,7 +436,10 @@ public final class AutoIngestUserPreferences {
      * @return logging database name
      */
     public static String getLoggingDatabaseName() {
-        return preferences.get(LOGGING_DATABASE_NAME, "");
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, LOGGING_DATABASE_NAME)) {
+            return ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, LOGGING_DATABASE_NAME);
+        }
+        return "";
     }
 
     /**
@@ -442,7 +448,7 @@ public final class AutoIngestUserPreferences {
      * @param name Logging database name
      */
     public static void setLoggingDatabaseName(String name) {
-        preferences.put(LOGGING_DATABASE_NAME, name);
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, LOGGING_DATABASE_NAME, name);
     }
 
     /**
@@ -451,17 +457,19 @@ public final class AutoIngestUserPreferences {
      * @return int the value in minutes, default is 60 minutes.
      */
     public static int getMinutesOfInputScanInterval() {
-        int answer = Integer.parseInt(preferences.get(INPUT_SCAN_INTERVAL_TIME, "60"));
-        return answer;
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, INPUT_SCAN_INTERVAL_TIME)) {
+            return Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, INPUT_SCAN_INTERVAL_TIME));
+        }
+        return 60;
     }
 
     /**
      * Set the configured time for input scan interval
      *
-     * @param int value the number of minutes for input interval
+     * @param value the number of minutes for input interval
      */
     public static void setMinutesOfInputScanInterval(int value) {
-        preferences.put(INPUT_SCAN_INTERVAL_TIME, Integer.toString(value));
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, INPUT_SCAN_INTERVAL_TIME, Integer.toString(value));
     }
     
     /**

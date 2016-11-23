@@ -74,7 +74,7 @@ public class SharedConfiguration {
     private static final String FILE_EXT_MISMATCH_SETTINGS_LEGACY = "mismatch_config.xml"; //NON-NLS
     private static final String ANDROID_TRIAGE = "AndroidTriage_Options.properties"; //NON-NLS
     private static final String GENERAL_PROPERTIES = "core.properties"; //NON-NLS
-    private static final String AUTO_INGEST_PROPERTIES = "experimental.properties"; //NON-NLS
+    private static final String AUTO_INGEST_PROPERTIES = "AutoIngest.properties"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME_LEGACY = "hashsets.xml"; //NON-NLS
     public static final String FILE_EXPORTER_SETTINGS_FILE = "fileexporter.settings"; //NON-NLS
@@ -100,6 +100,8 @@ public class SharedConfiguration {
     private boolean displayLocalTime;
     private boolean hideKnownFilesInDataSource;
     private boolean hideKnownFilesInViews;
+    private boolean hideSlackFilesInDataSource;
+    private boolean hideSlackFilesInViews;
     private boolean keepPreferredViewer;
 
     /**
@@ -189,7 +191,6 @@ public class SharedConfiguration {
                 // Current testing suggests that we do not need to do this for the ingest settings
                 // because there is a longer delay between setting them and copying the files.
                 UserPreferences.saveToStorage();
-                AutoIngestUserPreferences.saveToStorage();
             } catch (BackingStoreException ex) {
                 throw new SharedConfigurationException("Failed to save shared configuration settings", ex);
             }
@@ -256,7 +257,6 @@ public class SharedConfiguration {
                  sticking around after shared configuration has seemingly been successfully 
                  updated. */
                 UserPreferences.saveToStorage();
-                AutoIngestUserPreferences.saveToStorage();
             } catch (BackingStoreException ex) {
                 throw new SharedConfigurationException("Failed to save shared configuration settings", ex);
             }
@@ -275,7 +275,6 @@ public class SharedConfiguration {
             downloadMultiUserAndGeneralSettings(remoteFolder);
             try {
                 UserPreferences.reloadFromStorage();
-                AutoIngestUserPreferences.reloadFromStorage();
             } catch (BackingStoreException ex) {
                 throw new SharedConfigurationException("Failed to read shared configuration settings", ex);
             }
@@ -339,12 +338,14 @@ public class SharedConfiguration {
     private void saveNonSharedSettings() {
         sharedConfigMaster = AutoIngestUserPreferences.getSharedConfigMaster();
         sharedConfigFolder = AutoIngestUserPreferences.getSharedConfigFolder();
-		showToolsWarning = AutoIngestUserPreferences.getShowToolsWarning();
+	showToolsWarning = AutoIngestUserPreferences.getShowToolsWarning();
         displayLocalTime = UserPreferences.displayTimesInLocalTime();
         hideKnownFilesInDataSource = UserPreferences.hideKnownFilesInDataSourcesTree();
         hideKnownFilesInViews = UserPreferences.hideKnownFilesInViewsTree();
         keepPreferredViewer = UserPreferences.keepPreferredContentViewer();
         fileIngestThreads = UserPreferences.numberOfFileIngestThreads();
+        hideSlackFilesInDataSource = UserPreferences.hideSlackFilesInDataSourcesTree();
+        hideSlackFilesInViews = UserPreferences.hideSlackFilesInViewsTree();
     }
 
     /**
@@ -353,12 +354,14 @@ public class SharedConfiguration {
     private void restoreNonSharedSettings() {
         AutoIngestUserPreferences.setSharedConfigFolder(sharedConfigFolder);
         AutoIngestUserPreferences.setSharedConfigMaster(sharedConfigMaster);
-		AutoIngestUserPreferences.setShowToolsWarning(showToolsWarning);
+	AutoIngestUserPreferences.setShowToolsWarning(showToolsWarning);
         UserPreferences.setDisplayTimesInLocalTime(displayLocalTime);
         UserPreferences.setHideKnownFilesInDataSourcesTree(hideKnownFilesInDataSource);
         UserPreferences.setHideKnownFilesInViewsTree(hideKnownFilesInViews);
         UserPreferences.setKeepPreferredContentViewer(keepPreferredViewer);
         UserPreferences.setNumberOfFileIngestThreads(fileIngestThreads);
+        UserPreferences.setHideSlackFilesInDataSourcesTree(hideSlackFilesInDataSource);
+        UserPreferences.setHideSlackFilesInViewsTree(hideSlackFilesInViews); 
     }
 
     /**
@@ -782,7 +785,7 @@ public class SharedConfiguration {
         publishTask("Uploading multi user configuration");
         File generalSettingsFolder = Paths.get(moduleDirPath, PREFERENCES_FOLDER, "org", "sleuthkit", "autopsy").toFile();
         copyToRemoteFolder(GENERAL_PROPERTIES, generalSettingsFolder.getAbsolutePath(), remoteFolder, false);
-        copyToRemoteFolder(AUTO_INGEST_PROPERTIES, generalSettingsFolder.getAbsolutePath(), remoteFolder, false);
+        copyToRemoteFolder(AUTO_INGEST_PROPERTIES, moduleDirPath, remoteFolder, false);
     }
 
     /**
@@ -796,7 +799,7 @@ public class SharedConfiguration {
         publishTask("Downloading multi user configuration");
         File generalSettingsFolder = Paths.get(moduleDirPath, PREFERENCES_FOLDER, "org", "sleuthkit", "autopsy").toFile();
         copyToLocalFolder(GENERAL_PROPERTIES, generalSettingsFolder.getAbsolutePath(), remoteFolder, false);
-        copyToLocalFolder(AUTO_INGEST_PROPERTIES, generalSettingsFolder.getAbsolutePath(), remoteFolder, false);
+        copyToLocalFolder(AUTO_INGEST_PROPERTIES, moduleDirPath, remoteFolder, false);
     }
 
     /**
