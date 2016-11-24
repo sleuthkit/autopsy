@@ -475,8 +475,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          */
         private boolean isTextExtractSupported(AbstractFile aFile, String detectedFormat) {
             for (TextExtractor extractor : textExtractors) {
-                if (extractor.isContentTypeSpecific() == true
-                        && extractor.isSupported(aFile, detectedFormat)) {
+                if (extractor.isContentTypeSpecific() == false
+                        || extractor.isSupported(aFile, detectedFormat)) {
                     return true;
                 }
             }

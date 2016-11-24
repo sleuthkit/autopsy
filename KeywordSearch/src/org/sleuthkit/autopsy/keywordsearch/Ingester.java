@@ -27,8 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.util.ContentStream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
@@ -134,8 +134,7 @@ class Ingester {
         Map<String, String> params = getContentFields(sourceContent);
 
         //overwrite id with the chunk id
-        params.put(Server.Schema.ID.toString(),
-                Server.getChunkIdString(sourceContent.getId(), fec.getChunkNumber()));
+        params.put(Server.Schema.ID.toString(), fec.getChunkId());
 
         ingest(bcs, params, size);
     }

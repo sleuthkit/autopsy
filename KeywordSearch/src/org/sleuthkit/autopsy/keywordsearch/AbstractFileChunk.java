@@ -42,23 +42,6 @@ final class AbstractFileChunk {
         this.chunkNumber = chunkNumber;
     }
 
-    /**
-     * Gets the TextExtractor for the source file of the text chunk.
-     *
-     * @return A reference to the TextExtractor.
-     */
-    TextExtractor getTextExtractor() {
-        return textExtractor;
-    }
-
-    /**
-     * Gets the sequence number of the text chunk.
-     *
-     * @return The chunk number.
-     */
-    int getChunkNumber() {
-        return chunkNumber;
-    }
 
     /**
      * Gets the id of the text chunk.
