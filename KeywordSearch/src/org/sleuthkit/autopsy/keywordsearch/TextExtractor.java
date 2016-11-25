@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,8 +40,14 @@ interface TextExtractor {
         EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
     };
 
-    //generally text extractors should ignore archives
-    //and let unpacking modules take case of them
+    static final List<String> BLOB_MIME_TYPES
+            = Arrays.asList(
+                    //ignore binary blob data, for which string extraction will be used
+                    "application/octet-stream", //NON-NLS
+                    "application/x-msdownload"); //NON-NLS
+
+    /** generally text extractors should ignore archives and let unpacking
+     * modules take care of them */
     static final List<String> ARCHIVE_MIME_TYPES
             = Arrays.asList(
                     //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
