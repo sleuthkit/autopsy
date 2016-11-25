@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -81,7 +81,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
     };
     private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    private final IngestServices services = IngestServices.getInstance();
+    private static final IngestServices services = IngestServices.getInstance();
     private Ingester ingester = null;
     private Indexer indexer;
     private FileTypeDetector fileTypeDetector;
@@ -96,7 +96,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     private long jobId;
     private long dataSourceId;
     private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
-    private int instanceNum = 0;
+    private final int instanceNum;
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private IngestJobContext context;
 
@@ -114,6 +114,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     /**
      * Records the ingest status for a given file for a given ingest job. Used
      * for final statistics at the end of the job.
+     *
      * @param ingestJobId id of ingest job
      * @param fileId      id of file
      * @param status      ingest status of the file
@@ -132,7 +133,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
     KeywordSearchIngestModule(KeywordSearchJobSettings settings) {
         this.settings = settings;
-        instanceNum = instanceCount.getAndIncrement();
+        this.instanceNum = instanceCount.getAndIncrement();
     }
 
     /**
@@ -415,24 +416,16 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            TextExtractor fileExtract = null;
-
             //go over available text extractors in order, and pick the first one (most specific one)
             for (TextExtractor fe : textExtractors) {
                 if (fe.isSupported(aFile, detectedFormat)) {
-                    fileExtract = fe;
-                    break;
+                    //divide into chunks and index
+                    return fe.index(aFile, context);
                 }
             }
 
-            if (fileExtract == null) {
-                logger.log(Level.INFO, "No text extractor found for file id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat}); //NON-NLS
-                return false;
-            }
-
-            //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
-            //divide into chunks and index
-            return fileExtract.index(aFile, context);
+            logger.log(Level.INFO, "No text extractor found for file id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat}); //NON-NLS
+            return false;
         }
 
         /**
@@ -448,7 +441,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                if (stringExtractor.index(aFile, KeywordSearchIngestModule.this.context)) {
+                if (stringExtractor.index(aFile, context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
@@ -464,26 +457,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         /**
-         * Check with every extractor if it supports the file with the detected
-         * format
-         *
-         * @param aFile          file to check for
-         * @param detectedFormat mime-type with detected format (such as
-         *                       text/plain) or null if not detected
-         *
-         * @return true if text extraction is supported
-         */
-        private boolean isTextExtractSupported(AbstractFile aFile, String detectedFormat) {
-            for (TextExtractor extractor : textExtractors) {
-                if (extractor.isContentTypeSpecific() == false
-                        || extractor.isSupported(aFile, detectedFormat)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /**
          * Adds the file to the index. Detects file type, calls extractors, etc.
          *
          * @param aFile        File to analyze
@@ -491,12 +464,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          *                     True if content and metadata should be index.
          */
         private void indexFile(AbstractFile aFile, boolean indexContent) {
-            //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
-
             TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
 
             // unallocated and unused blocks can only have strings extracted from them. 
-            if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
+            if ((aType == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
+                    || aType == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
                 if (context.fileIngestIsCancelled()) {
                     return;
                 }
@@ -504,10 +476,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 return;
             }
 
-            final long size = aFile.getSize();
             //if not to index content, or a dir, or 0 content, index meta data only
-
-            if ((indexContent == false || aFile.isDir() || size == 0)) {
+            if ((indexContent == false || aFile.isDir() || aFile.getSize() == 0)) {
                 try {
                     if (context.fileIngestIsCancelled()) {
                         return;
