@@ -65,10 +65,10 @@ public class FilesFilter {
     public boolean match(AbstractFile file) {
         boolean fileMatches = false;
         if (isProcessUnallocatedSpace() == false && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)){
-            return false;
+            fileMatches = false;
         }
-        if (rulesKey.equals(ALL_FILES_FILTER) || rulesKey.equals(ALL_FILES_AND_UNALLOCATED_FILTER) ) {
-                return true;
+        else if (rulesKey.equals(ALL_FILES_FILTER) || rulesKey.equals(ALL_FILES_AND_UNALLOCATED_FILTER) ) {
+                fileMatches = true;
         } else if (currentRules.fileIsMemberOf(file) != null) {
             fileMatches = true;
         }
