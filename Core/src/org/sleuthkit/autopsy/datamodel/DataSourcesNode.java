@@ -85,6 +85,7 @@ public class DataSourcesNode extends DisplayableItemNode {
                             || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
                             || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                     reloadKeys();
+                    refreshContentKeys();
                 }
             }
         };
