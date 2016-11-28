@@ -69,9 +69,15 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     /**
      * Constructs a files set rule panel in create rule mode.
      */
-    FilesSetRulePanel(JButton okButton, JButton cancelButton) {
+    FilesSetRulePanel(JButton okButton, JButton cancelButton, boolean isFileFilterPanel) {
         initComponents();
-        populateMimeTypesComboBox();
+        if (isFileFilterPanel==true){ //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
+            mimeTypeComboBox.setVisible(false);
+            mimeCheck.setVisible(false);
+        }
+        else {
+            populateMimeTypesComboBox();
+        }
         populateComponentsWithDefaultValues();
         this.setButtons(okButton, cancelButton);
     }

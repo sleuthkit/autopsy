@@ -311,7 +311,7 @@ final class InterestingItemDefsManager extends Observable {
             // Make the files set. Note that degenerate sets with no rules are
             // allowed to facilitate the separation of set definition and rule
             // definitions. A set without rules is simply the empty set.
-            FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, rules);
+            FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, rules, true);
             filesSets.put(set.getName(), set);
         }
 

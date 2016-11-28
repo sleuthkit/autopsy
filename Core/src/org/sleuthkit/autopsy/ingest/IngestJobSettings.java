@@ -37,6 +37,7 @@ import org.python.util.PythonObjectInputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesFilter;
 
 /**
  * Encapsulates the ingest job settings for a particular execution context.
@@ -48,12 +49,15 @@ public class IngestJobSettings {
 
     private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
-    private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS    
+    private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS 
+    private static final String RUN_ON_FILTER_KEY = "Run_Ingest_On";
     private static final String PROCESS_UNALLOC_SPACE_DEFAULT = "true"; //NON-NLS
+    private static final String RUN_ON_FILTER_DEFAULT = FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
-    private static final Logger logger = Logger.getLogger(IngestJobSettings.class.getName());
+    private String runIngestModulesOnFilter;
+    private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
     private final String executionContext;
     private final IngestType ingestType;
     private String moduleSettingsFolderPath;
@@ -61,6 +65,22 @@ public class IngestJobSettings {
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
+
+    /**
+     * @return the runIngestModulesOnFilter
+     */
+    String getRunIngestModulesOnFilter() {
+        return runIngestModulesOnFilter;
+    }
+
+    /**
+     * @param runIngestModulesOnFilter the runIngestModulesOnFilter to set
+     */
+    void setRunIngestModulesOnFilter(String runIngestModulesOnFilter) {
+        this.runIngestModulesOnFilter = runIngestModulesOnFilter;
+        this.processUnallocatedSpace = (new FilesFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
+        this.save();
+    }
 
     /**
      * The type of ingest modules to run.
@@ -94,6 +114,7 @@ public class IngestJobSettings {
         this.ingestType = IngestType.ALL_MODULES;
         this.moduleTemplates = new ArrayList<>();
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
+        this.runIngestModulesOnFilter = FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -105,7 +126,7 @@ public class IngestJobSettings {
      * modules dialog. Different execution conterxts may have different ingest
      * job settings.
      *
-     * @param context    The context identifier string.
+     * @param context The context identifier string.
      * @param ingestType The type of modules ingest is running.
      */
     public IngestJobSettings(String context, IngestType ingestType) {
@@ -118,7 +139,9 @@ public class IngestJobSettings {
         }
 
         this.moduleTemplates = new ArrayList<>();
+
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
+        this.runIngestModulesOnFilter = FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -201,15 +224,6 @@ public class IngestJobSettings {
     }
 
     /**
-     * Sets the process unallocated space flag for these ingest job settings.
-     *
-     * @param processUnallocatedSpace True or false.
-     */
-    void setProcessUnallocatedSpace(boolean processUnallocatedSpace) {
-        this.processUnallocatedSpace = processUnallocatedSpace;
-    }
-
-    /**
      * Returns the path to the ingest module settings folder.
      *
      * @return path to the module settings folder
@@ -228,7 +242,7 @@ public class IngestJobSettings {
             Files.createDirectories(folder);
             this.moduleSettingsFolderPath = folder.toAbsolutePath().toString();
         } catch (IOException | SecurityException ex) {
-            logger.log(Level.SEVERE, "Failed to create ingest module settings directory " + this.moduleSettingsFolderPath, ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to create ingest module settings directory " + this.moduleSettingsFolderPath, ex); //NON-NLS
             this.warnings.add(NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.createModuleSettingsFolder.warning")); //NON-NLS
         }
     }
@@ -285,7 +299,7 @@ public class IngestJobSettings {
             enabledModuleNames.remove(moduleName);
             disabledModuleNames.remove(moduleName);
             String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.missingModule.warning", moduleName); //NON-NLS
-            logger.log(Level.WARNING, warning);
+            LOGGER.log(Level.WARNING, warning);
             this.warnings.add(warning);
         }
 
@@ -317,18 +331,21 @@ public class IngestJobSettings {
         ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
         ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
 
-        // Get the process unallocated space flag setting. If the setting does
-        // not exist yet, default it to true.
-        if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.PARSE_UNALLOC_SPACE_KEY) == false) {
-            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.PARSE_UNALLOC_SPACE_KEY, IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
+        // Get the filter setting telling it which files to run modules on. If the setting does
+        // not exist yet, default it to All Files and Unallocated Space filter.
+        if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.RUN_ON_FILTER_KEY) == false) {
+            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.RUN_ON_FILTER_KEY, IngestJobSettings.RUN_ON_FILTER_DEFAULT);
         }
-        this.processUnallocatedSpace = Boolean.parseBoolean(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.PARSE_UNALLOC_SPACE_KEY));
+        this.runIngestModulesOnFilter = ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.RUN_ON_FILTER_KEY);
+        //set the process unallocated space setting based on the filter chosen.
+        this.processUnallocatedSpace = (new FilesFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
+
     }
 
     /**
      * Gets the module names for a given key within these ingest job settings.
      *
-     * @param key            The key string.
+     * @param key The key string.
      * @param defaultSetting The default list of module names.
      *
      * @return The list of module names associated with the key.
@@ -398,7 +415,7 @@ public class IngestJobSettings {
                     settings = (IngestModuleIngestJobSettings) in.readObject();
                 } catch (IOException | ClassNotFoundException ex) {
                     String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
-                    logger.log(Level.WARNING, warning, ex);
+                    LOGGER.log(Level.WARNING, warning, ex);
                     this.warnings.add(warning);
                 }
             } else {
@@ -406,7 +423,7 @@ public class IngestJobSettings {
                     settings = (IngestModuleIngestJobSettings) in.readObject();
                 } catch (IOException | ClassNotFoundException exception) {
                     String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsLoad.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
-                    logger.log(Level.WARNING, warning, exception);
+                    LOGGER.log(Level.WARNING, warning, exception);
                     this.warnings.add(warning);
                 }
             }
@@ -463,7 +480,7 @@ public class IngestJobSettings {
      * Serializes the ingest job settings for this context for a given ingest
      * module.
      *
-     * @param factory  The ingest module factory for the module.
+     * @param factory The ingest module factory for the module.
      * @param settings The ingest job settings for the ingest module
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
@@ -472,7 +489,7 @@ public class IngestJobSettings {
             out.writeObject(settings);
         } catch (IOException ex) {
             String warning = NbBundle.getMessage(IngestJobSettings.class, "IngestJobSettings.moduleSettingsSave.warning", factory.getModuleDisplayName(), this.executionContext); //NON-NLS
-            logger.log(Level.SEVERE, warning, ex);
+            LOGGER.log(Level.SEVERE, warning, ex);
             this.warnings.add(warning);
         }
     }
@@ -483,7 +500,7 @@ public class IngestJobSettings {
      * @param input A hash set of strings.
      *
      * @return The contents of the hash set as a single string of
-     *         comma-separated values.
+     * comma-separated values.
      */
     private static String makeCommaSeparatedValuesList(HashSet<String> input) {
         if (input == null || input.isEmpty()) {

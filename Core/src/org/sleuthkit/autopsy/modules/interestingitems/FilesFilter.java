@@ -8,6 +8,7 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 import java.util.Set;
 import org.openide.util.Exceptions;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  *
@@ -16,34 +17,33 @@ import org.sleuthkit.datamodel.AbstractFile;
 public class FilesFilter {
 
     FilesSet currentRules;
-    boolean processUnallocatedSpace;
+    String rulesKey;
+    private boolean processUnallocatedSpace;
+    public final static String ALL_FILES_FILTER = "<All Files>";
+    public final static String ALL_FILES_AND_UNALLOCATED_FILTER = "<All Files and Unallocated Space>";
 
     public static Set<String> getKeys() throws InterestingItemDefsManager.InterestingItemDefsManagerException {
         InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
         return manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").keySet();
     }
 
-    public FilesFilter() {
-        InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
-        try {
-            for (FilesSet fs : manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").values()) {
-                currentRules = fs;
-                break;
-            }
-        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-            Exceptions.printStackTrace(ex);
-        }
-        processUnallocatedSpace = true;
-    }
-
     public FilesFilter(String key) {
+        this.rulesKey = key;
         InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
-        try {
-            currentRules = manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").get(key);
-        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-            Exceptions.printStackTrace(ex);
+        if (key.equals(ALL_FILES_FILTER)) {
+            currentRules = null;
+            processUnallocatedSpace = false;
+        } else if (key.equals(ALL_FILES_AND_UNALLOCATED_FILTER)) {
+            currentRules = null;
+            processUnallocatedSpace = true;
+        } else {
+            try {
+                currentRules = manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").get(key);
+                processUnallocatedSpace = currentRules.processesUnallocatedSpace();
+            } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+                Exceptions.printStackTrace(ex);
+            }
         }
-        processUnallocatedSpace = true;
     }
 
     /**
@@ -64,10 +64,21 @@ public class FilesFilter {
      */
     public boolean match(AbstractFile file) {
         boolean fileMatches = false;
-
-        if (currentRules.fileIsMemberOf(file) != null) {
+        if (isProcessUnallocatedSpace() == false && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)){
+            return false;
+        }
+        if (rulesKey.equals(ALL_FILES_FILTER) || rulesKey.equals(ALL_FILES_AND_UNALLOCATED_FILTER) ) {
+                return true;
+        } else if (currentRules.fileIsMemberOf(file) != null) {
             fileMatches = true;
         }
         return fileMatches;
+    }
+
+    /**
+     * @return the processUnallocatedSpace
+     */
+    public boolean isProcessUnallocatedSpace() {
+        return processUnallocatedSpace;
     }
 }

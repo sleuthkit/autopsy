@@ -87,6 +87,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.rulesList.addListSelectionListener(new InterestingItemDefsPanel.RulesListSelectionListener());
         this.settingsFileName = settingsName;
         this.settingsLegacyFileName = legacySettingsName;
+        if (legacySettingsName.equals("")){  //Hide the mimetype settings when this is displaying FileSet rules instead of interesting item rules
+            this.mimeTypeComboBox.setVisible(false);
+            this.jLabel7.setVisible(false);
+        }
     }
 
     Set<String> getKeys(){
@@ -379,7 +383,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 // Preserve the existing rules from the set being edited.
                 rules.putAll(selectedSet.getRules());
             }
-            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), rules);
+            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), rules, panel.getProcessUnallocatedSpace());
         }
     }
 
@@ -398,7 +402,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             panel = new FilesSetRulePanel(selectedRule, okButton, cancelButton);
         } else {
             // Creating a new rule definition.
-            panel = new FilesSetRulePanel(okButton, cancelButton);
+            panel = new FilesSetRulePanel(okButton, cancelButton, (settingsLegacyFileName.equals("")));
         }
         // Do a dialog box with the files set panel until the user either enters 
         // a valid definition or cancels. Note that the panel gives the user
@@ -425,7 +429,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
             // Add the new/edited files set definition, replacing any previous 
             // definition with the same name and refreshing the display.
-            this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), rules);
+            this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), rules, selectedSet.processesUnallocatedSpace());
 
             // Select the new/edited rule. Queue it up so it happens after the 
             // selection listeners react to the selection of the "new" files 
@@ -449,7 +453,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      *                          files.
      * @param rules             The set membership rules for the set.
      */
-    void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, Map<String, FilesSet.Rule> rules) {
+    void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, Map<String, FilesSet.Rule> rules, boolean processesUnallocatedSpace) {
         if (oldSet != null) {
             // Remove the set to be replaced from the working copy if the files
             // set definitions.
@@ -458,7 +462,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // Make the new/edited set definition and add it to the working copy of
         // the files set definitions.
-        FilesSet newSet = new FilesSet(name, description, ignoresKnownFiles, rules);
+        FilesSet newSet = new FilesSet(name, description, ignoresKnownFiles, rules, processesUnallocatedSpace);
         this.filesSets.put(newSet.getName(), newSet);
 
         // Redo the list model for the files set list component, which will make
@@ -936,7 +940,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         Map<String, FilesSet.Rule> rules = new HashMap<>(oldSet.getRules());
         FilesSet.Rule selectedRule = this.rulesList.getSelectedValue();
         rules.remove(selectedRule.getUuid());
-        this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules);
+        this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules, oldSet.processesUnallocatedSpace());
         if (!this.rulesListModel.isEmpty()) {
             this.rulesList.setSelectedIndex(0);
         } else {

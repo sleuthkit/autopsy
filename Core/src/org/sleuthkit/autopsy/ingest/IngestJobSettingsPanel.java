@@ -77,12 +77,14 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         this.settings = settings;
         this.controller = new FileFilterDefsOptionsPanelController();
         controller.getComponent(controller.getLookup());
+
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             modules.add(new IngestModuleModel(moduleTemplate));
         }
 
         initComponents();
         customizeComponents();
+        jComboBox1.setSelectedItem(settings.getRunIngestModulesOnFilter());
     }
 
     /**
@@ -96,6 +98,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         this.dataSources.addAll(dataSources);
         this.controller = new FileFilterDefsOptionsPanelController();
         controller.getComponent(controller.getLookup());
+
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
@@ -110,6 +113,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         initComponents();
         customizeComponents();
+        jComboBox1.setSelectedItem(settings.getRunIngestModulesOnFilter());
     }
 
     /**
@@ -174,7 +178,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             }
         });
         modulesTable.setRowSelectionInterval(0, 0);
-        processUnallocCheckbox.setSelected(this.settings.getProcessUnallocatedSpace());
         this.modulesTable.getColumnModel().getColumn(0).setMaxWidth(22);
         this.modulesTable.getColumnModel().getColumn(1).setMaxWidth(20);
         this.modulesTable.getColumnModel().getColumn(1).setMinWidth(20);
@@ -209,7 +212,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         ingestSettingsPanel = new javax.swing.JPanel();
         jButtonSelectAll = new javax.swing.JButton();
         jButtonDeselectAll = new javax.swing.JButton();
-        processUnallocCheckbox = new javax.swing.JCheckBox();
         pastJobsButton = new javax.swing.JButton();
 
         setMaximumSize(new java.awt.Dimension(5750, 3000));
@@ -218,7 +220,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         jLabel1.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.jLabel1.text_1")); // NOI18N
 
-        jComboBox1.setModel(new DefaultComboBoxModel(controller.getComboBoxContents().toArray()));
+        jComboBox1.setModel(new DefaultComboBoxModel<>(controller.getComboBoxContents()));
         jComboBox1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jComboBox1ActionPerformed(evt);
@@ -272,7 +274,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(descriptionLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 326, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(globalSettingsButton)))
@@ -306,14 +308,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             }
         });
 
-        processUnallocCheckbox.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.text")); // NOI18N
-        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.toolTipText")); // NOI18N
-        processUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                processUnallocCheckboxActionPerformed(evt);
-            }
-        });
-
         pastJobsButton.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.pastJobsButton.text")); // NOI18N
         pastJobsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -327,27 +321,20 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jLabel1))
-                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 251, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(processUnallocCheckbox)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                                    .addComponent(jButtonSelectAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(pastJobsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                .addGap(5, 5, 5)
-                                .addComponent(jButtonDeselectAll)))
-                        .addGap(0, 34, Short.MAX_VALUE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 348, Short.MAX_VALUE)
+                    .addComponent(modulesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(jButtonSelectAll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(pastJobsButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(5, 5, 5)
+                        .addComponent(jButtonDeselectAll))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -367,8 +354,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                             .addComponent(jButtonDeselectAll))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(pastJobsButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(25, 25, 25))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 407, Short.MAX_VALUE)
                         .addContainerGap())))
@@ -402,10 +388,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private void jButtonDeselectAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButtonDeselectAllActionPerformed
         SelectAllModules(false);
     }//GEN-LAST:event_jButtonDeselectAllActionPerformed
-
-    private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
-        this.settings.setProcessUnallocatedSpace(processUnallocCheckbox.isSelected());
-    }//GEN-LAST:event_processUnallocCheckboxActionPerformed
     @Messages({"IngestJobSettingsPanel.pastJobsButton.action.frame.title=Ingest History"})
     private void pastJobsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pastJobsButtonActionPerformed
         JDialog topFrame = (JDialog) SwingUtilities.getWindowAncestor(this);
@@ -428,16 +410,25 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      * @param evt
      */
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-       
-        if (evt.toString().contains("Create New...")) {
+
+        if (jComboBox1.getSelectedItem().toString().equals("<Create New>")) {
             final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
             //   values.controller.getComboBoxContents().toArray();
             dialog.addApplyButtonListener((ActionEvent e) -> {
                 controller.applyChanges();
+                ((IngestModuleGlobalSettingsPanel) controller.getComponent(controller.getLookup())).saveSettings();
+                jComboBox1.setModel(new DefaultComboBoxModel<>(controller.getComboBoxContents()));
+                settings.setRunIngestModulesOnFilter(jComboBox1.getItemAt(jComboBox1.getItemCount()-1));
                 dialog.close();
             });
-            dialog.display((IngestModuleGlobalSettingsPanel)controller.getComponent(controller.getLookup()));
+            dialog.display((IngestModuleGlobalSettingsPanel) controller.getComponent(controller.getLookup()));
+
+        } else {
+            settings.setRunIngestModulesOnFilter(jComboBox1.getSelectedItem().toString());
+            settings.save();
         }
+        jComboBox1.setSelectedItem(settings.getRunIngestModulesOnFilter());
+
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
     private void SelectAllModules(boolean set) {
@@ -461,7 +452,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane modulesScrollPane;
     private javax.swing.JTable modulesTable;
     private javax.swing.JButton pastJobsButton;
-    private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.ButtonGroup timeGroup;
     // End of variables declaration//GEN-END:variables
 

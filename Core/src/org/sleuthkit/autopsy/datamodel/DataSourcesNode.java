@@ -67,7 +67,7 @@ public class DataSourcesNode extends DisplayableItemNode {
      */
     public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
 
-        private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
+        private static final Logger LOGGER = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
         List<Content> currentKeys;
 
@@ -111,7 +111,7 @@ public class DataSourcesNode extends DisplayableItemNode {
                 currentKeys = Case.getCurrentCase().getDataSources();
                 setKeys(currentKeys);
             } catch (TskCoreException | IllegalStateException ex) {
-                logger.severe("Error getting data sources: " + ex.getMessage()); // NON-NLS
+                LOGGER.severe("Error getting data sources: " + ex.getMessage()); // NON-NLS
                 setKeys(Collections.<Content>emptySet());
             }
         }

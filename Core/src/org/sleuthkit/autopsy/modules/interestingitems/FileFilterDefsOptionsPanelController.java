@@ -23,7 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -57,18 +56,19 @@ public final class FileFilterDefsOptionsPanelController extends OptionsPanelCont
      * exist in the "Run Ingest Modules On:" JCombobox
      *
      * @return -filterNames an array of all established filter names as well as
-     * a 'Create New...' option
+     * a Create New option
      */
-    public List<String> getComboBoxContents() {
-        List<String> nameSet = new ArrayList<>();
-        nameSet.add("All Files");
+    public String[] getComboBoxContents() {
+        ArrayList<String> nameList = new ArrayList<>();
+        nameList.add(FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER);
+        nameList.add(FilesFilter.ALL_FILES_FILTER);
+        nameList.add("<Create New>");
         if (!(panel == null)) {
-            nameSet.addAll(panel.getKeys());
-            System.out.println("THIS IS THE SET, PANEL NOT NULL");
-            System.out.println(nameSet.toString());
+            nameList.addAll(panel.getKeys());
         }
-        nameSet.add("Create New...");
-        return nameSet;
+        String[] returnArray = {};  
+        nameList.toArray(returnArray);
+        return nameList.toArray(returnArray);
     }
 
     /**

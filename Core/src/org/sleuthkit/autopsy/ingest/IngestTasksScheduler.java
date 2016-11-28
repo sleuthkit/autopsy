@@ -414,7 +414,7 @@ final class IngestTasksScheduler {
         
         if (file.isFile()){  //is this the criteria we want to be using(will unallocated space files show return true?)
           FilesFilter fileFilter;
-          fileFilter = new FilesFilter();         
+          fileFilter = new FilesFilter(task.getIngestJob().runIngestModulesOnFilter());         
             if (!fileFilter.match(file)){
                 return false; 
             }          

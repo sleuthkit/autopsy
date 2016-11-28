@@ -331,6 +331,16 @@ final class DataSourceIngestJob {
         return this.settings.getProcessUnallocatedSpace();
     }
 
+      /**
+     * Queries whether or not unallocated space should be processed as part of
+     * this job.
+     *
+     * @return True or false.
+     */
+    String runIngestModulesOnFilter() {
+        return this.settings.getRunIngestModulesOnFilter();
+    }
+
     /**
      * Checks to see if this job has at least one ingest pipeline.
      *
