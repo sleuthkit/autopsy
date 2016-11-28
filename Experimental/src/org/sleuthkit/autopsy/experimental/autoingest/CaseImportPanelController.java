@@ -30,11 +30,13 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Case_Import",
+// Commenting this out to remove from options display. Case import is currently broken
+// (needs update to the database queries) and will be moving to the tools menu
+/*@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Case_Import",
         iconBase = "org/sleuthkit/autopsy/experimental/images/import32.png",
         position = 4,
         keywords = "#OptionsCategory_Keywords_Case_Import",
-        keywordsCategory = "Case Import")
+        keywordsCategory = "Case Import")*/
 public final class CaseImportPanelController extends OptionsPanelController {
 
     private CaseImportPanel panel;
