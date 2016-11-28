@@ -46,7 +46,7 @@ abstract class KeywordSearchList {
     private static final String CCN_REGEX = ".*[3-6]([ -]?[0-9]){11,18}.*";  //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
 
     protected String filePath;
-    Map<String, KeywordList> theLists; //the keyword data 
+    Map<String, KeywordList> theLists; //the keyword data
 
     PropertyChangeSupport changeSupport;
     protected List<String> lockedLists;
@@ -320,7 +320,7 @@ abstract class KeywordSearchList {
     }
 
     boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages) {
-        //make sure that the list is readded as a locked/built in list 
+        //make sure that the list is readded as a locked/built in list
         boolean isLocked = this.lockedLists.contains(name);
         return addList(name, newList, useForIngest, ingestMessages, isLocked);
     }

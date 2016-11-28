@@ -148,6 +148,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
+            addTagProperty(ss);
         } else {
             ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),
@@ -226,10 +227,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
     @Override
     public String getItemType() {
-        if (!(this.content.isDataSource())) {
-            return getClass().getName() + "NotDataSource"; //NON-NLS
-        } else {
-            return getClass().getName() + "DataSource"; //NON-NLS
-        }
+        // use content.isDataSource if different column settings are desired
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
     }
 }

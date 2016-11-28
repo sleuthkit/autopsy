@@ -30,6 +30,7 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 
 /**
  * Extracts a File object to a temporary file in the case directory, and then
@@ -68,7 +69,8 @@ public class ExternalViewerAction extends AbstractAction {
         // no point opening a file if it's empty, and java doesn't know how to
         // find an application for files without an extension
         // or if file is executable (for security reasons)
-        if (!(size > 0) || extPos == -1 || isExecutable) {
+        // Also skip slack files since their extension is the original extension + "-slack"
+        if (!(size > 0) || extPos == -1 || isExecutable || (fileNode instanceof SlackFileNode)) {
             this.setEnabled(false);
         }
     }

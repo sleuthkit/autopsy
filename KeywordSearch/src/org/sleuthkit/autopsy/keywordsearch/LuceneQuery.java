@@ -32,11 +32,9 @@ import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -128,7 +126,7 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
+    public QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException {
         QueryResults results = new QueryResults(this, keywordList);
         //in case of single term literal query there is only 1 term
         boolean showSnippets = KeywordSearchSettings.getShowSnippets();
@@ -199,7 +197,7 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @throws NoOpenCoreException
      */
-    private List<KeywordHit> performLuceneQuery(boolean snippets) throws NoOpenCoreException {
+    private List<KeywordHit> performLuceneQuery(boolean snippets) throws KeywordSearchModuleException, NoOpenCoreException {
         List<KeywordHit> matches = new ArrayList<>();
         boolean allMatchesFetched = false;
         final Server solrServer = KeywordSearch.getServer();
@@ -210,21 +208,15 @@ class LuceneQuery implements KeywordSearchQuery {
         Map<String, Map<String, List<String>>> highlightResponse;
         Set<SolrDocument> uniqueSolrDocumentsWithHits;
 
-        try {
-            response = solrServer.query(q, METHOD.POST);
+        response = solrServer.query(q, METHOD.POST);
 
-            resultList = response.getResults();
+        resultList = response.getResults();
 
-            // objectId_chunk -> "text" -> List of previews
-            highlightResponse = response.getHighlighting();
+        // objectId_chunk -> "text" -> List of previews
+        highlightResponse = response.getHighlighting();
 
-            // get the unique set of files with hits
-            uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS            
-            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
-            return matches;
-        }
+        // get the unique set of files with hits
+        uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
 
         // cycle through results in sets of MAX_RESULTS
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {

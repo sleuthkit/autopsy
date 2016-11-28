@@ -140,7 +140,7 @@ public class FileTypeNode extends DisplayableItemNode {
      */
     @Override
     public String getItemType() {
-        return getClass().getName();
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
     }
 
     /**

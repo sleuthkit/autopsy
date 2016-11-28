@@ -261,10 +261,8 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      *
      * @throws NoOpenCoreException
      */
-    // TODO: Make it so this cannot cause NPEs; this method should throw 
-    // exceptions instead of logging them and returning null.
     @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
+    public QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException {
         /*
          * Do a query using the Solr terms component to find any terms in the
          * index that match the regex.
@@ -278,14 +276,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         termsQuery.setTimeAllowed(TERMS_SEARCH_TIMEOUT);
         termsQuery.setShowDebugInfo(DEBUG_FLAG);
         termsQuery.setTermsLimit(MAX_TERMS_QUERY_RESULTS);
-        List<Term> terms = null;
-        try {
-            terms = KeywordSearch.getServer().queryTerms(termsQuery).getTerms(SEARCH_FIELD);
-        } catch (KeywordSearchModuleException ex) {
-            LOGGER.log(Level.SEVERE, "Error executing the regex terms query: " + keyword.getSearchTerm(), ex); //NON-NLS
-            //TODO: this is almost certainly wrong and guaranteed to throw a NPE at some point!!!!
-        }
-
+        List<Term> terms = KeywordSearch.getServer().queryTerms(termsQuery).getTerms(SEARCH_FIELD);
         /*
          * Do a term query for each term that matched the regex.
          */

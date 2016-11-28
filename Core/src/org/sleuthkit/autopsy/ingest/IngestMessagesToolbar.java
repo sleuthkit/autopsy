@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,8 +145,9 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
         if (mode != null) {
             //TopComponent[] tcs = mode.getTopComponents();
             mode.dockInto(tc);
+            String something = mode.getName();
             tc.open();
-            //tc.requestActive();   
+            //tc.requestActive();
         }
     }
 
@@ -158,7 +159,7 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
 
     private static class IngestMessagesButton extends JButton {
 
-        private static final int fontSize = 9;
+        private static final int FONT_SIZE = 9;
         private int messages = 0;
 
         @Override
@@ -169,7 +170,7 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
                 return;
             }
             //paint text
-            Font messagesFont = g.getFont().deriveFont(Font.PLAIN, fontSize);
+            Font messagesFont = g.getFont().deriveFont(Font.PLAIN, FONT_SIZE);
             String messageStr = Integer.toString(messages);
             final int len = messageStr.length();
             g.setFont(messagesFont);
@@ -181,9 +182,9 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
             }
             g.setColor(Color.GRAY);
             //g.fillRect(x, 1, dx, fontSize);
-            g.fillRoundRect(x, 1, dx, fontSize, 2, 2);
+            g.fillRoundRect(x, 1, dx, FONT_SIZE, 2, 2);
             g.setColor(Color.WHITE);
-            g.drawString(messageStr, x + 2, fontSize);
+            g.drawString(messageStr, x + 2, FONT_SIZE);
         }
 
         void setMessages(int messages) {

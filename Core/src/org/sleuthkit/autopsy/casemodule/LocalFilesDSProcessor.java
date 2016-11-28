@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2016  Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -122,7 +122,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
-            localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
+            localFilePaths = configPanel.getContentPaths();
         }
         run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
     }
@@ -192,8 +192,11 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      */
     @Deprecated
     public void setDataSourceOptions(String paths) {
-        //LocalFilesPanel.FILES_SEP is currently ","
-        this.localFilePaths = Arrays.asList(paths.split(LocalFilesPanel.FILES_SEP));
+        // The LocalFilesPanel used to separate file paths with a comma and pass
+        // them as a string, but because file names are allowed to contain
+        // commas, this approach was buggy and replaced. We now pass a list of
+        // String paths.
+        this.localFilePaths = Arrays.asList(paths.split(","));
         setDataSourceOptionsCalled = true;
     }
 

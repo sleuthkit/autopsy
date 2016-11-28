@@ -46,9 +46,9 @@ final class IngestMessageTopComponent extends TopComponent {
     private static final Logger logger = Logger.getLogger(IngestMessageTopComponent.class.getName());
     private IngestMessageMainPanel messagePanel;
     private IngestManager manager;
-    private static String PREFERRED_ID = "IngestMessageTopComponent"; //NON-NLS
-    private ActionListener showIngestInboxAction;
-    private static final Pattern tagRemove = Pattern.compile("<.+?>");
+    private static final String PREFERRED_ID = "IngestMessageTopComponent"; //NON-NLS
+    private final ActionListener showIngestInboxAction;
+    private static final Pattern TAG_REMOVE = Pattern.compile("<.+?>");
 
     public IngestMessageTopComponent() {
         initComponents();
@@ -292,6 +292,7 @@ final class IngestMessageTopComponent extends TopComponent {
          */
     }
 
+    @Override
     public Action[] getActions() {
         //disable TC toolbar actions
         return new Action[0];
@@ -302,7 +303,7 @@ final class IngestMessageTopComponent extends TopComponent {
             return string;
         }
 
-        Matcher m = tagRemove.matcher(string);
+        Matcher m = TAG_REMOVE.matcher(string);
         return m.replaceAll("");
     }
 }
