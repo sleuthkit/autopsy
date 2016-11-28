@@ -24,6 +24,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * An action to prompt the user to pick an timestamp/event associated with the
@@ -38,6 +39,11 @@ public final class ViewFileInTimelineAction extends AbstractAction {
     private ViewFileInTimelineAction(AbstractFile file, String displayName) {
         super(displayName);
         this.file = file;
+        
+        if(file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) 
+                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)){
+            this.setEnabled(false);
+        }
     }
 
     @NbBundle.Messages({"ViewFileInTimelineAction.viewFile.displayName=View File in Timeline... "})

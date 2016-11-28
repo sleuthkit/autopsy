@@ -86,6 +86,9 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
             ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
 
+        // add tags property to the sheet
+        addTagProperty(ss);
+
         return s;
     }
 

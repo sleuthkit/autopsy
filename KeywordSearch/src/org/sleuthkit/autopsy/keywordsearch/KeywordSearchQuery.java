@@ -36,11 +36,12 @@ interface KeywordSearchQuery {
      * execute query and return results without publishing them return results
      * for all matching terms
      *
+     * @throws KeywordSearchModuleException error while executing Solr term query
      * @throws NoOpenCoreException if query failed due to server error, this
      *                             could be a notification to stop processing
      * @return
      */
-     QueryResults performQuery() throws NoOpenCoreException;
+     QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException;
 
     /**
      * Set an optional filter to narrow down the search Adding multiple filters

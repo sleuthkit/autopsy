@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,18 +42,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import static javax.swing.SwingConstants.CENTER;
-import javax.swing.table.DefaultTableCellRenderer;
-import org.openide.util.NbBundle.Messages;
 
 /**
  * GlobalEditListPanel widget to manage keywords in lists
@@ -90,7 +79,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 column.setPreferredWidth(((int) (width * 0.90)));
             } else {
                 column.setPreferredWidth(((int) (width * 0.10)));
-                column.setCellRenderer(new CheckBoxRenderer());
             }
         }
         keywordTable.setCellSelectionEnabled(false);
@@ -110,18 +98,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         setButtonStates();
 
-        setButtonStates();
-
         IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 Object source = evt.getSource();
                 if (source instanceof String && ((String) source).equals("LOCAL")) { //NON-NLS
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            setButtonStates();
-                        }
+                    EventQueue.invokeLater(() -> {
+                        setButtonStates();
                     });
                 }
             }
@@ -351,35 +334,26 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }// </editor-fold>//GEN-END:initComponents
 
     private void newWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newWordButtonActionPerformed
-        JCheckBox chRegex = new JCheckBox(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.chRegex.text"));
-        chRegex.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.kwReToolTip"));
-        JTextField addWordField = new JTextField(25);
-        addWordField.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.enterNewWordToolTip"));
+        NewKeywordPanel panel = new NewKeywordPanel();
 
-        JPanel addKeywordPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        addKeywordPanel.add(new JLabel(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addKeyword.message")));
-        addKeywordPanel.add(addWordField);
-        addKeywordPanel.add(chRegex);
-
-        addKeywordPanel.setPreferredSize(new Dimension(250, 80));
-
-        int result = JOptionPane.showConfirmDialog(null, addKeywordPanel,
+        int result = JOptionPane.showConfirmDialog(null, panel,
                 NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addKeyword.title"),
                 JOptionPane.OK_CANCEL_OPTION);
 
         if (result == JOptionPane.OK_OPTION) {
-            String newWord = addWordField.getText().trim();
-            boolean isLiteral = !chRegex.isSelected();
-            final Keyword keyword = new Keyword(newWord, isLiteral);
-
-            if (newWord.equals("")) {
+            String newWord = panel.getKeywordText();
+            if (newWord.isEmpty()) {
+                KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.newKwTitle"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.emptyKeyword.text"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 return;
-            } else if (currentKeywordList.hasKeyword(keyword)) {
+            }
+            final Keyword keyword = new Keyword(newWord, !panel.isKeywordRegex(), panel.isKeywordExact());
+            if (currentKeywordList.hasKeyword(keyword)) {
                 KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.newKwTitle"),
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addWordButtonAction.kwAlreadyExistsMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
                 return;
             }
-            
+
             //check if valid
             boolean valid = true;
             try {
@@ -394,15 +368,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.invalidKwMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
                 return;
             }
-            
+
             //add & reset checkbox
             tableModel.addKeyword(keyword);
             XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             setFocusOnKeywordTextBox();
             setButtonStates();
-        } else {
-            return;
         }
     }//GEN-LAST:event_newWordButtonActionPerformed
 
@@ -563,11 +535,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                     colName = NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.kwColName");
                     break;
                 case 1:
-                    colName = NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.regExColName");
+                    colName = NbBundle.getMessage(this.getClass(), "KeywordSearch.typeColLbl");
                     break;
                 default:
                     ;
-
             }
             return colName;
         }
@@ -581,10 +552,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             Keyword word = currentKeywordList.getKeywords().get(rowIndex);
             switch (columnIndex) {
                 case 0:
-                    ret = (Object) word.getSearchTerm();
+                    ret = word.getSearchTerm();
                     break;
                 case 1:
-                    ret = (Object) !word.searchTermIsLiteral();
+                    ret = word.getSearchTermType();
                     break;
                 default:
                     logger.log(Level.SEVERE, "Invalid table column index: {0}", columnIndex); //NON-NLS
@@ -626,36 +597,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 words.remove(selected[arrayi]);
             }
             resync();
-        }
-    }
-
-    /**
-     * A cell renderer for boolean cells that shows a center-aligned green check
-     * mark if true, nothing if false.
-     */
-    private class CheckBoxRenderer extends DefaultTableCellRenderer {
-
-        private static final long serialVersionUID = 1L;
-        final ImageIcon theCheck = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/checkmark.png")); // NON-NLS
-
-        CheckBoxRenderer() {
-            setHorizontalAlignment(CENTER);
-        }
-
-        @Override
-        @Messages("IsRegularExpression=Keyword is a regular expression")
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-
-            if ((value instanceof Boolean)) {
-                if ((Boolean) value) {
-                    setIcon(theCheck);
-                    setToolTipText(Bundle.IsRegularExpression());
-                } else {
-                    setIcon(null);
-                    setToolTipText(null);
-                }
-            }
-            return this;
         }
     }
 
