@@ -54,7 +54,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "InterestingItemDefsPanel.megaBytes=Megabytes",
         "InterestingItemDefsPanel.gigaBytes=Gigabytes",
         "InterestingItemsDefsPanel.loadError=Error loading interesting files sets from file.",
-        "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file."
+        "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file.",
+        "IngestFileFilter.title=Ingest File Set"
     })
 
     private static final SortedSet<MediaType> MEDIA_TYPES = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
@@ -65,6 +66,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private final JButton cancelButton = new JButton("Cancel");
     private final String settingsFileName;
     private final String settingsLegacyFileName;
+    private final String ruleDialogTitle;
     
     // The following is a map of interesting files set names to interesting 
     // files set definitions. It is a snapshot of the files set definitions 
@@ -79,18 +81,24 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * Constructs an interesting item definitions panel.
      */
     InterestingItemDefsPanel(String settingsName, String legacySettingsName) {
-        this.initComponents();
+        this.initComponents(); 
+        this.settingsLegacyFileName = legacySettingsName;
         this.customInit();
         this.setsList.setModel(setsListModel);
         this.setsList.addListSelectionListener(new InterestingItemDefsPanel.SetsListSelectionListener());
         this.rulesList.setModel(rulesListModel);
         this.rulesList.addListSelectionListener(new InterestingItemDefsPanel.RulesListSelectionListener());
         this.settingsFileName = settingsName;
-        this.settingsLegacyFileName = legacySettingsName;
+       
         if (legacySettingsName.equals("")){  //Hide the mimetype settings when this is displaying FileSet rules instead of interesting item rules
             this.mimeTypeComboBox.setVisible(false);
             this.jLabel7.setVisible(false);
+            this.ruleDialogTitle = "IngestFileFilter.title";
         }
+        else {
+            this.ruleDialogTitle = "FilesSetPanel.title";
+        }
+        
     }
 
     Set<String> getKeys(){
@@ -98,10 +106,15 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         return filesSets.keySet();
     }
     
-    @NbBundle.Messages({"InterestingItemDefsPanel.Title=Global Interesting Items Settings"})
+    @NbBundle.Messages({"InterestingItemDefsPanel.Title=Global Interesting Items Settings",
+                        "IngestFilterItemDefsPanel.Title=Global Ingest Filter Settings" })
     private void customInit() {
-        setName(Bundle.InterestingItemDefsPanel_Title());
-        
+        if (settingsLegacyFileName.equals("")){
+            setName(Bundle.IngestFilterItemDefsPanel_Title());
+        }
+        else {
+            setName(Bundle.InterestingItemDefsPanel_Title());
+        }
         Set<String> fileTypesCollated = new HashSet<>();
         for (MediaType mediaType : MEDIA_TYPES) {
             fileTypesCollated.add(mediaType.toString());
@@ -363,7 +376,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
@@ -409,7 +422,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showOptionDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
+            option = JOptionPane.showOptionDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidRuleDefinition());
 
         if (option == JOptionPane.OK_OPTION) {

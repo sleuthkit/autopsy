@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2015 Basis Technology Corp.
+ * Copyright 2012-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesFilter;
+import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
@@ -413,9 +413,9 @@ final class IngestTasksScheduler {
         }
         
         if (file.isFile()){  //is this the criteria we want to be using(will unallocated space files show return true?)
-          FilesFilter fileFilter;
-          fileFilter = new FilesFilter(task.getIngestJob().runIngestModulesOnFilter());         
-            if (!fileFilter.match(file)){
+          IngestSetFilter ingestSetFilter;
+          ingestSetFilter = new IngestSetFilter(task.getIngestJob().runIngestModulesOnFilter());         
+            if (!ingestSetFilter.match(file)){
                 return false; 
             }          
         }

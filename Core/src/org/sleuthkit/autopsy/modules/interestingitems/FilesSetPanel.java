@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2014-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
 /**
  * A panel that allows a user to create and edit interesting files set
@@ -146,8 +147,8 @@ public class FilesSetPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(processUnallocCheckbox, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.processUnallocCheckbox.text")); // NOI18N
-        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.processUnallocCheckbox.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(processUnallocCheckbox, org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.text")); // NOI18N
+        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.toolTipText")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);

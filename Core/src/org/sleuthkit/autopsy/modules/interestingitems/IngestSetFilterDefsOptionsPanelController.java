@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
-import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -30,18 +29,22 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
-        categoryName = "#OptionsCategory_Name_FileFilterDefinitions",
+        categoryName = "#OptionsCategory_Name_IngestSetFilterDefinitions",
         iconBase = "org/sleuthkit/autopsy/images/interesting_item_32x32.png",
-        keywords = "#OptionsCategory_Keywords_FileFilterDefinitions",
-        keywordsCategory = "FileFilterDefinitions",
+        keywords = "#OptionsCategory_Keywords_IngestSetFilterDefinitions",
+        keywordsCategory = "IngestSetFilterDefinitions",
         position = 7
 )
-public final class FileFilterDefsOptionsPanelController extends OptionsPanelController {
+
+/**
+ * Class for creating an InterestingItemDefsPanel which will be used for configuring the IngestSetFilter.  
+ */
+public final class IngestSetFilterDefsOptionsPanelController extends OptionsPanelController {
 
     private InterestingItemDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-
+    
     /**
      * Component should load its data here.
      */
@@ -60,9 +63,9 @@ public final class FileFilterDefsOptionsPanelController extends OptionsPanelCont
      */
     public String[] getComboBoxContents() {
         ArrayList<String> nameList = new ArrayList<>();
-        nameList.add(FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER);
-        nameList.add(FilesFilter.ALL_FILES_FILTER);
-        nameList.add("<Create New>");
+        nameList.add(IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER);
+        nameList.add(IngestSetFilter.ALL_FILES_FILTER);
+        nameList.add(IngestSetFilter.NEW_INGEST_FILTER);
         if (!(panel == null)) {
             nameList.addAll(panel.getKeys());
         }

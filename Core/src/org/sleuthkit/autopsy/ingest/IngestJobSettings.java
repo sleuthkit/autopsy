@@ -37,7 +37,7 @@ import org.python.util.PythonObjectInputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesFilter;
+import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilter;
 
 /**
  * Encapsulates the ingest job settings for a particular execution context.
@@ -52,7 +52,7 @@ public class IngestJobSettings {
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS 
     private static final String RUN_ON_FILTER_KEY = "Run_Ingest_On";
     private static final String PROCESS_UNALLOC_SPACE_DEFAULT = "true"; //NON-NLS
-    private static final String RUN_ON_FILTER_DEFAULT = FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
+    private static final String RUN_ON_FILTER_DEFAULT = IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
@@ -78,7 +78,7 @@ public class IngestJobSettings {
      */
     void setRunIngestModulesOnFilter(String runIngestModulesOnFilter) {
         this.runIngestModulesOnFilter = runIngestModulesOnFilter;
-        this.processUnallocatedSpace = (new FilesFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
+        this.processUnallocatedSpace = (new IngestSetFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
         this.save();
     }
 
@@ -114,7 +114,7 @@ public class IngestJobSettings {
         this.ingestType = IngestType.ALL_MODULES;
         this.moduleTemplates = new ArrayList<>();
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
-        this.runIngestModulesOnFilter = FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
+        this.runIngestModulesOnFilter = IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -141,7 +141,7 @@ public class IngestJobSettings {
         this.moduleTemplates = new ArrayList<>();
 
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
-        this.runIngestModulesOnFilter = FilesFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
+        this.runIngestModulesOnFilter = IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -338,7 +338,7 @@ public class IngestJobSettings {
         }
         this.runIngestModulesOnFilter = ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.RUN_ON_FILTER_KEY);
         //set the process unallocated space setting based on the filter chosen.
-        this.processUnallocatedSpace = (new FilesFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
+        this.processUnallocatedSpace = (new IngestSetFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
 
     }
 
