@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +46,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * factory built on top of the NetBeans Children.Keys class.
  */
 public class Tags implements AutopsyVisitableItem {
-    // Creation of a RootNode object corresponding to a Tags object is done 
-    // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren 
+    // Creation of a RootNode object corresponding to a Tags object is done
+    // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren
     // override of Children.Keys<T>.createNodes().
 
     private final TagResults tagResults = new TagResults();
@@ -325,7 +325,7 @@ public class Tags implements AutopsyVisitableItem {
     public class ContentTagTypeNode extends DisplayableItemNode implements Observer {
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
-        private TagName tagName;
+        private final TagName tagName;
 
         public ContentTagTypeNode(TagName tagName) {
             super(Children.create(new ContentTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + CONTENT_DISPLAY_NAME));
@@ -423,7 +423,7 @@ public class Tags implements AutopsyVisitableItem {
      */
     public class BlackboardArtifactTagTypeNode extends DisplayableItemNode implements Observer {
 
-        private TagName tagName;
+        private final TagName tagName;
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
         public BlackboardArtifactTagTypeNode(TagName tagName) {
@@ -505,7 +505,7 @@ public class Tags implements AutopsyVisitableItem {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
         }
-        
+
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);
