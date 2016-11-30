@@ -312,10 +312,11 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
      * Node which represents the media sub type in the By MIME type tree, the
      * media subtype is the portion of the MIME type following the /.
      */
-    class MediaSubTypeNode extends DisplayableItemNode {
+    class MediaSubTypeNode extends DisplayableItemNode implements Observer {
 
         private MediaSubTypeNode(String mimeType) {
             super(Children.create(new MediaSubTypeNodeChildren(mimeType), true));
+            addObserver(this);
             init(mimeType);
         }
 
@@ -333,7 +334,9 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
          * results
          */
         private void updateDisplayName(String mimeType) {
-            final long count = MediaSubTypeNodeChildren.calculateItems(getSleuthkitCase(), mimeType);
+
+            final long count = new MediaSubTypeNodeChildren(mimeType).calculateItems(getSleuthkitCase(), mimeType);
+
             super.setDisplayName(mimeType.split("/")[1] + " (" + count + ")");
         }
 
@@ -358,6 +361,10 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
             return getClass().getName();
         }
 
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName(getName());
+        }
     }
 
     /**
@@ -365,12 +372,13 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
      * files that match MimeType which is represented by this position in the
      * tree.
      */
-    private static class MediaSubTypeNodeChildren extends ChildFactory.Detachable<Content> {
+    private class MediaSubTypeNodeChildren extends ChildFactory.Detachable<Content> implements Observer {
 
         private final String mimeType;
 
         MediaSubTypeNodeChildren(String mimeType) {
             super();
+            addObserver(this);
             this.mimeType = mimeType;
         }
 
@@ -380,7 +388,7 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
          * @return count(*) - the number of items that will be shown in this
          * items Directory Listing
          */
-        private static long calculateItems(SleuthkitCase sleuthkitCase, String mime_type) {
+        private  long calculateItems(SleuthkitCase sleuthkitCase, String mime_type) {
             try {
                 return sleuthkitCase.countFilesWhere(createQuery(mime_type));
             } catch (TskCoreException ex) {
@@ -419,7 +427,7 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
          * @return query.toString - portion of SQL query which will follow a
          * WHERE clause.
          */
-        private static String createQuery(String mime_type) {
+        private String createQuery(String mime_type) {
             StringBuilder query = new StringBuilder();
             query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
             query.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(",");  //NON-NLS
@@ -432,7 +440,13 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
             query.append(" AND mime_type = '").append(mime_type).append("'");  //NON-NLS
             return query.toString();
         }
+        
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
+        }
 
+        
         /**
          * Creates the content to populate the Directory Listing Table view for
          * each file
@@ -474,7 +488,6 @@ public class FileTypesByMimeType extends Observable implements AutopsyVisitableI
                 }
             });
         }
-
     }
 
     /**
