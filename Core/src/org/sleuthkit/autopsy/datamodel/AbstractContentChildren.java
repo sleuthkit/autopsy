@@ -22,6 +22,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
@@ -137,7 +138,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(FileTypeExtensionFilters sf) {
-            return new FileTypesNode(sf.getSleuthkitCase(), null);
+            return new FileTypesByExtNode(sf.getSleuthkitCase(), null);
         }
 
         @Override
@@ -196,6 +197,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
+        public AbstractNode visit(FileTypes ft) {
+            return new FileTypesNode(ft.getSleuthkitCase());
+        }
+
+        @Override
         public AbstractNode visit(Reports reportsItem) {
             return new Reports.ReportsListNode();
         }
@@ -210,6 +216,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
             throw new UnsupportedOperationException(
                     NbBundle.getMessage(this.getClass(),
                             "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
+        }
+
+        @Override
+        public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
+            return ftByMimeTypeItem.new FileTypesByMimeTypeNode(ftByMimeTypeItem.getSleuthkitCase());
         }
     }
 }
