@@ -256,17 +256,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             }
         }
 
-        // add properties for tags
-        List<Tag> tags = new ArrayList<>();
-        try {
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
-            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(associated));
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
-        }
-        ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
-                    NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
-
         final int artifactTypeId = artifact.getArtifactTypeID();
 
         // If mismatch, add props for extension and file type
@@ -352,6 +341,17 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         dataSourceStr));
             }
         }
+
+        // add properties for tags
+        List<Tag> tags = new ArrayList<>();
+        try {
+            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(associated));
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
+        }
+        ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
+                    NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
 
         return s;
     }

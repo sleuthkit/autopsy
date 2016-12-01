@@ -81,7 +81,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final Map<Integer, Property<?>> propertiesMap = new TreeMap<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
-    private static final Color TAGGED_COLOR = new Color(230, 235, 240);
+    private static final Color TAGGED_COLOR = new Color(200, 210, 220);
     private Node currentRoot;
     // When a column in the table is moved, these two variables keep track of where
     // the column started and where it ended up.
