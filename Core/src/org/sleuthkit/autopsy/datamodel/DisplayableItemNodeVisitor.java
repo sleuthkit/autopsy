@@ -152,7 +152,8 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaSubType);
 
-    T visit(FileTypesByMimeType.EmptyNode.MessageNode aThis);
+    T visit(EmptyNode.MessageNode emptyNode);
+
 
 
     /**
@@ -233,7 +234,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(FileTypesByMimeType.EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
+        public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
         }
         

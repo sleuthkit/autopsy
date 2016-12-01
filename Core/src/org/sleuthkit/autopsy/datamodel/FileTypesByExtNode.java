@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 /**
  * Node for root of file types view. Children are nodes for specific types.
  */
-public class FileTypesByExtNode extends DisplayableItemNode {
+class FileTypesByExtNode extends DisplayableItemNode {
 
     private static final String FNAME = NbBundle.getMessage(FileTypesByExtNode.class, "FileTypesNode.fname.text");
     private final FileTypeExtensionFilters.RootFilter filter;
@@ -122,7 +122,7 @@ public class FileTypesByExtNode extends DisplayableItemNode {
     /**
      *
      */
-    static class FileTypesByExtChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
+    private static class FileTypesByExtChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
 
         private SleuthkitCase skCase;
         private FileTypeExtensionFilters.RootFilter filter;
@@ -135,7 +135,7 @@ public class FileTypesByExtNode extends DisplayableItemNode {
          * @param o      Observable that provides updates based on events being
          *               fired (or null if one needs to be created)
          */
-        public FileTypesByExtChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
+        private FileTypesByExtChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
             super();
             this.skCase = skCase;
             this.filter = filter;
@@ -152,7 +152,7 @@ public class FileTypesByExtNode extends DisplayableItemNode {
          */
         private final class FileTypesByExtChildrenObservable extends Observable {
 
-            FileTypesByExtChildrenObservable() {
+            private FileTypesByExtChildrenObservable() {
                 IngestManager.getInstance().addIngestJobEventListener(pcl);
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
                 Case.addPropertyChangeListener(pcl);

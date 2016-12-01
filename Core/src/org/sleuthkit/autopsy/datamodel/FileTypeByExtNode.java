@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskData;
  * Node for a specific file type / extension. Children of it will be the files
  * of that type.
  */
-public class FileTypeByExtNode extends DisplayableItemNode {
+class FileTypeByExtNode extends DisplayableItemNode {
 
     FileTypeExtensionFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;
@@ -146,7 +146,7 @@ public class FileTypeByExtNode extends DisplayableItemNode {
     /**
      * Child node factory for a specific file type - does the database query.
      */
-    public static class FileTypeChildFactory extends ChildFactory.Detachable<Content> {
+    private static class FileTypeChildFactory extends ChildFactory.Detachable<Content> {
 
         private final SleuthkitCase skCase;
         private final FileTypeExtensionFilters.SearchFilterInterface filter;
@@ -169,7 +169,7 @@ public class FileTypeByExtNode extends DisplayableItemNode {
          * @param o      Observable that will notify when there could be new
          *               data to display
          */
-        FileTypeChildFactory(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
+        private FileTypeChildFactory(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
             super();
             this.filter = filter;
             this.skCase = skCase;
@@ -205,7 +205,7 @@ public class FileTypeByExtNode extends DisplayableItemNode {
          *
          * @return
          */
-        static long calculateItems(SleuthkitCase sleuthkitCase, FileTypeExtensionFilters.SearchFilterInterface filter) {
+        private static long calculateItems(SleuthkitCase sleuthkitCase, FileTypeExtensionFilters.SearchFilterInterface filter) {
             try {
                 return sleuthkitCase.countFilesWhere(createQuery(filter));
             } catch (TskCoreException ex) {

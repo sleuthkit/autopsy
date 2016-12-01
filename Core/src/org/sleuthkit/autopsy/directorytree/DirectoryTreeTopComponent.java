@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
@@ -61,9 +62,7 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
-import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
@@ -603,7 +602,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         }
     }
-
+    
+    @NbBundle.Messages("DirectoryTree.emptyMimeNode.text=Data not available. Run file type identification module.")
     /**
      * Event handler to run when selection changed
      *
@@ -650,9 +650,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
                         //Special case for when File Type Identification has not yet been run and 
                         //there are no mime types to populate Files by Mime Type Tree
-                        if (originNode instanceof FileTypesByMimeType.FileTypesByMimeTypeNode
-                                && ((FileTypesByMimeType.FileTypesByMimeTypeNode) originNode).isEmpty()) {
-                            EmptyNode emptyNode = new EmptyNode();
+                        if (EmptyNode.isEmptyMimeTypeNode(originNode)) {
+                            EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTree_emptyMimeNode_text());
                             Node emptyDrfn = new DataResultFilterNode(emptyNode, DirectoryTreeTopComponent.this.em);
                             Node emptyKffn = new KnownFileFilterNode(emptyDrfn, KnownFileFilterNode.getSelectionContext(emptyNode));
                             Node emptySffn = new SlackFileFilterNode(emptyKffn, SlackFileFilterNode.getSelectionContext(originNode));
