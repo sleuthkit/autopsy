@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 public final class FileTypes implements AutopsyVisitableItem {
 
-    private SleuthkitCase skCase;
+    private final SleuthkitCase skCase;
 
     FileTypes(SleuthkitCase skCase) {
         this.skCase = skCase;

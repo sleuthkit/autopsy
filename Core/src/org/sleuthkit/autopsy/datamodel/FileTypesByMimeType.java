@@ -172,13 +172,13 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
  * children of each media type present in the database or no children when the
  * file detection module has not been run and MIME type is currently unknown.
  */
-class FileTypesByMimeTypeNode extends DisplayableItemNode {
+class ByMimeTypeNode extends DisplayableItemNode {
 
     @NbBundle.Messages("FileTypesByMimeType.name.text=By MIME Type")
     final String NAME = Bundle.FileTypesByMimeType_name_text();
 
-    FileTypesByMimeTypeNode() {
-        super(Children.create(new FileTypesByMimeTypeNodeChildren(), true));
+    ByMimeTypeNode() {
+        super(Children.create(new ByMimeTypeNodeChildren(), true));
         super.setName(NAME);
         super.setDisplayName(NAME);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
@@ -209,9 +209,9 @@ class FileTypesByMimeTypeNode extends DisplayableItemNode {
  * Creates the children for the "By MIME Type" node these children will each
  * represent a distinct media type present in the DB
  */
-private class FileTypesByMimeTypeNodeChildren extends ChildFactory<String> implements Observer {
+private class ByMimeTypeNodeChildren extends ChildFactory<String> implements Observer {
 
-    private FileTypesByMimeTypeNodeChildren() {
+    private ByMimeTypeNodeChildren() {
         super();
         addObserver(this);
     }
@@ -237,8 +237,8 @@ private class FileTypesByMimeTypeNodeChildren extends ChildFactory<String> imple
 }
 
 /**
- * The Media type node created by the FileTypesByMimeTypeNodeChildren and
- * contains one of the unique media types present in the database for this case.
+ * The Media type node created by the ByMimeTypeNodeChildren and
+ contains one of the unique media types present in the database for this case.
  */
 class MediaTypeNode extends DisplayableItemNode {
 

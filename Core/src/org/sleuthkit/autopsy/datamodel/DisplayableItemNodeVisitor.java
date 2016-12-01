@@ -146,7 +146,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileTypes.FileTypesNode fileTypes);
 
-    T visit(FileTypesByMimeType.FileTypesByMimeTypeNode ftByMimeTypeNode);
+    T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode);
 
     T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaType);
 
@@ -219,7 +219,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
         
         @Override
-        public T visit(FileTypesByMimeType.FileTypesByMimeTypeNode ftByMimeTypeNode) {
+        public T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode) {
             return defaultVisit(ftByMimeTypeNode);
         }
         

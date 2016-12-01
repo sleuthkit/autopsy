@@ -111,18 +111,18 @@ class FileTypeByExtNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.name"),
-                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.displayName"),
-                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.filterType.desc"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeByExtNode.createSheet.filterType.name"),
+                NbBundle.getMessage(this.getClass(), "FileTypeByExtNode.createSheet.filterType.displayName"),
+                NbBundle.getMessage(this.getClass(), "FileTypeByExtNode.createSheet.filterType.desc"),
                 filter.getDisplayName()));
         String extensions = "";
         for (String ext : filter.getFilter()) {
             extensions += "'" + ext + "', ";
         }
         extensions = extensions.substring(0, extensions.lastIndexOf(','));
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.name"),
-                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.displayName"),
-                NbBundle.getMessage(this.getClass(), "FileTypeNode.createSheet.fileExt.desc"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypeByExtNode.createSheet.fileExt.name"),
+                NbBundle.getMessage(this.getClass(), "FileTypeByExtNode.createSheet.fileExt.displayName"),
+                NbBundle.getMessage(this.getClass(), "FileTypeByExtNode.createSheet.fileExt.desc"),
                 extensions));
 
         return s;
@@ -150,8 +150,8 @@ class FileTypeByExtNode extends DisplayableItemNode {
 
         private final SleuthkitCase skCase;
         private final FileTypeExtensionFilters.SearchFilterInterface filter;
-        private final static Logger logger = Logger.getLogger(FileTypeChildFactory.class.getName());
-        private Observable notifier;
+        private final static Logger LOGGER = Logger.getLogger(FileTypeChildFactory.class.getName());
+        private final Observable notifier;
 
         // use the constructor that gets an observable passed in for updates
         @Deprecated
@@ -209,7 +209,7 @@ class FileTypeByExtNode extends DisplayableItemNode {
             try {
                 return sleuthkitCase.countFilesWhere(createQuery(filter));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
                 return 0;
             }
         }
@@ -220,7 +220,7 @@ class FileTypeByExtNode extends DisplayableItemNode {
                 List<AbstractFile> files = skCase.findAllFilesWhere(createQuery(filter));
                 list.addAll(files);
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
             }
             return true;
         }

@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
  */
 class FileTypesByExtNode extends DisplayableItemNode {
 
-    private static final String FNAME = NbBundle.getMessage(FileTypesByExtNode.class, "FileTypesNode.fname.text");
+    private static final String FNAME = NbBundle.getMessage(FileTypesByExtNode.class, "FileTypesByExtNode.fname.text");
     private final FileTypeExtensionFilters.RootFilter filter;
     /**
      *
@@ -98,9 +98,9 @@ class FileTypesByExtNode extends DisplayableItemNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.name"),
-                NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.displayName"),
-                NbBundle.getMessage(this.getClass(), "FileTypesNode.createSheet.name.desc"),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.desc"),
                 getName()));
         return s;
     }
@@ -124,9 +124,9 @@ class FileTypesByExtNode extends DisplayableItemNode {
      */
     private static class FileTypesByExtChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
 
-        private SleuthkitCase skCase;
-        private FileTypeExtensionFilters.RootFilter filter;
-        private Observable notifier;
+        private final SleuthkitCase skCase;
+        private final FileTypeExtensionFilters.RootFilter filter;
+        private final Observable notifier;
 
         /**
          *
