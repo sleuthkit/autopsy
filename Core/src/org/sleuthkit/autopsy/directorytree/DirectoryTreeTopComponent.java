@@ -603,7 +603,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
     }
     
-    @NbBundle.Messages("DirectoryTree.emptyMimeNode.text=Data not available. Run file type identification module.")
+    @NbBundle.Messages("DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.")
     /**
      * Event handler to run when selection changed
      *

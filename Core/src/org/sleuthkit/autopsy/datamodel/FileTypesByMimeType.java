@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
-    private static SleuthkitCase SKCASE;
+    private final SleuthkitCase SKCASE;
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
      * which exist in the database. This hashmap will store them with the media
@@ -158,7 +158,7 @@ class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
     FileTypesByMimeType(SleuthkitCase skCase) {
         IngestManager.getInstance().addIngestJobEventListener(pcl);
         IngestManager.getInstance().addIngestModuleEventListener(pcl);
-        SKCASE = skCase;
+        this.SKCASE = skCase;
         populateHashMap();
     }
 
