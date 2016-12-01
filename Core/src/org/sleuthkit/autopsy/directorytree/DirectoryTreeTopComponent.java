@@ -63,6 +63,7 @@ import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
@@ -134,7 +135,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
-                    case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:   
+                    case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:
                         // TODO: Need a way to refresh the Views subtree
                         break;
                 }
@@ -602,7 +603,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         }
     }
-    
+
     @NbBundle.Messages("DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.")
     /**
      * Event handler to run when selection changed
@@ -645,12 +646,10 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
                         Node sffn = new SlackFileFilterNode(kffn, SlackFileFilterNode.getSelectionContext(originNode));
 
-
                         // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
-
                         //Special case for when File Type Identification has not yet been run and 
                         //there are no mime types to populate Files by Mime Type Tree
-                        if (EmptyNode.isEmptyMimeTypeNode(originNode)) {
+                        if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
                             EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
                             Node emptyDrfn = new DataResultFilterNode(emptyNode, DirectoryTreeTopComponent.this.em);
                             Node emptyKffn = new KnownFileFilterNode(emptyDrfn, KnownFileFilterNode.getSelectionContext(emptyNode));

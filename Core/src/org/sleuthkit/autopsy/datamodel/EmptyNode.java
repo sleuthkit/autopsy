@@ -25,20 +25,6 @@ public final class EmptyNode extends AbstractNode {
 
     }
 
-    /**
-     * Method to check if the node in question is a ByMimeTypeNode which is empty. 
-     * 
-     * @param originNode the Node which you wish to check.  
-     * @return True if originNode is an instance of ByMimeTypeNode and is empty, false otherwise.
-     */
-    public static boolean isEmptyMimeTypeNode(Node originNode) {
-        boolean isEmptyMimeNode = false;
-        if (originNode instanceof FileTypesByMimeType.ByMimeTypeNode && ((FileTypesByMimeType.ByMimeTypeNode) originNode).isEmpty()) {
-            isEmptyMimeNode = true;
-        }
-        return isEmptyMimeNode;
-    }
-
     static class EmptyChildFactory extends ChildFactory<String> {
 
         String fileIdMsg; //NON-NLS
