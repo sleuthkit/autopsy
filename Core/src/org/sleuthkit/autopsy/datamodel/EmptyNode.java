@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.datamodel;
 
@@ -12,14 +25,17 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 
 /**
- * EmptyNode Class made for edge case where no mime exist in the database yet.
- * Creates a node to display information on why the tree is empty.
+ * EmptyNode Class made for when you need to display a node with with text in the table view
+ * but no children in the tree view.
  *
- * Swapped for the FileTypesByMimeType node in
- * DirectoryTreeTopComponent.respondSelection
  */
 public final class EmptyNode extends AbstractNode {
 
+    /**
+     * Creates an EmptyNode
+     * 
+     * @param displayedMessage the text you would like displayed in the table view, this will not appear as a child node. 
+     */
     public EmptyNode(String displayedMessage) {
         super(Children.create(new EmptyChildFactory(displayedMessage), true));
 
