@@ -22,7 +22,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.logging.Level;
-import com.sun.javafx.application.PlatformImpl;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.ActionEvent;
@@ -36,7 +36,6 @@ import javafx.scene.web.WebEngine;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector.FileTypeDetectorInitException;
@@ -45,13 +44,11 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 
-
-
 /**
  * HTML view of file contents. This viewer uses a JavaFX WebView to display HTML data.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 6)
-public class DataContentViewerHTML extends javax.swing.JPanel implements DataContentViewer {
+public final class DataContentViewerHTML extends javax.swing.JPanel implements DataContentViewer {
 
     private AbstractFile dataSource;
     private FileTypeDetector fileTypeDetector;
@@ -64,6 +61,8 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
     
     private final String enableJavaScriptTxt;
     private final String disableJavaScriptTxt;
+    private final String acceptedMIMEType = "text/html";
+    private final String[] validExtensions = new String[] {".html", ".htm"};
     
     private static final Logger logger = Logger.getLogger(DataContentViewerHTML.class.getName());
     
@@ -73,70 +72,20 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
         try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetectorInitException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.WARNING, "An error occured while initializing the file type "
+                    + "detector for the HTML content viewer.", ex);
         }
-        
-        initComponents();
-        resetComponents();
         
         enableJavaScriptTxt = NbBundle.getMessage(this.getClass(), 
                 "DataContentViewerHTML.enableJavaScriptBtnTxt");
         disableJavaScriptTxt = NbBundle.getMessage(this.getClass(), 
-                "DataContentViewerHTML.disableJavaScriptBtnTxt");        
+                "DataContentViewerHTML.disableJavaScriptBtnTxt");
         
+        jfxPanel = new JFXPanel();
+        setLayout(new BorderLayout());
+        add(jfxPanel, BorderLayout.CENTER);
         
-        logger.log(Level.INFO, "Created HTMLView instance: " + this); //NON-NLS
-    }
-    
-    private void initComponents() {     
-        
-       jfxPanel = new JFXPanel();
-       setLayout(new BorderLayout());
-       add(jfxPanel, BorderLayout.CENTER);
-       createWebViewScene();     
-    }
-    
-    private void resetComponents() {
-        
-        //Disable JavaScript 
-        PlatformImpl.runLater(()-> {
-            webEngine.setJavaScriptEnabled(false);
-            javaScriptButton.setText(enableJavaScriptTxt);
-        });
-        
-        //Load an empty "page"
-        loadWebEngineContent("");
-    }
-    
-    /**
-     * Loads HTML content into the webEngine as long as the engine is not null and the
-     * content is not null. 
-     * @param content Not null. The content to load into the web engine.
-     */
-    private void loadWebEngineContent(String content) {
-        if(content != null && webEngine != null) {
-            PlatformImpl.runLater(() -> {
-                webEngine.loadContent(content);
-            });
-        }
-    }
-    
-    /**
-     * Loads an HTML file into the webEngine as long as the engine is not null and the
-     * content is not null.
-     * @param localFilePath Not null. The  local file path to the HTML file to be loaded.
-     */
-    private void loadWebEngineFileURL(String localFilePath) {
-        
-        if(localFilePath != null && webEngine != null) {
-            PlatformImpl.runLater(() -> {
-                webEngine.load("file://" + localFilePath);
-            });
-        }
-    }
-    
-    private void createWebViewScene() {
-        PlatformImpl.startup(() -> {
+        Platform.runLater(() -> {
             
             stage = new Stage();
             stage.setResizable(true);
@@ -174,7 +123,50 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
             root.setTop(btnBox);
             root.setCenter(browser);
             jfxPanel.setScene(scene);
+        }); 
+        
+        resetComponents();    
+        
+        logger.log(Level.INFO, "Created HTMLView instance: " + this); //NON-NLS
+    }
+    
+    private void resetComponents() {
+        
+        //Disable JavaScript 
+        Platform.runLater(()-> {
+            webEngine.setJavaScriptEnabled(false);
+            javaScriptButton.setText(enableJavaScriptTxt);
         });
+        
+        //Load an empty "page"
+        loadWebEngineContent("");
+    }
+    
+    /**
+     * Loads HTML content into the webEngine as long as the engine is not null and the
+     * content is not null. 
+     * @param content Not null. The content to load into the web engine.
+     */
+    private void loadWebEngineContent(String content) {
+        if(content != null && webEngine != null) {
+            Platform.runLater(() -> {
+                webEngine.loadContent(content);
+            });
+        }
+    }
+    
+    /**
+     * Loads an HTML file into the webEngine as long as the engine is not null and the
+     * content is not null.
+     * @param localFilePath Not null. The  local file path to the HTML file to be loaded.
+     */
+    private void loadWebEngineFileURL(String localFilePath) {
+        
+        if(localFilePath != null && webEngine != null) {
+            Platform.runLater(() -> {
+                webEngine.load("file://" + localFilePath);
+            });
+        }
     }
     
     @Override
@@ -197,7 +189,7 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
 
         //Local files with .html extensions are loaded with a file URL
         if(dataSource.getType() == TSK_DB_FILES_TYPE_ENUM.LOCAL &&
-                dataSource.getLocalAbsPath().endsWith(".html")) {
+                hasValidPathExtension(dataSource.getLocalAbsPath())) {
             loadWebEngineFileURL(dataSource.getLocalAbsPath());
         }
         else { //Non-local files, or local files without a .html extension are loaded as a string
@@ -210,10 +202,18 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
                 loadWebEngineContent(HTML);
 
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "An error occurred while reading data from a "
+                        + "file in the HTML content viewer.", ex);
             }
         }
-        
+    }
+    
+    private boolean hasValidPathExtension(String localPath) {
+        for(String extension : validExtensions) {
+            if(localPath.endsWith(extension))
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -256,8 +256,7 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
         
         if (file != null && file.getSize() > 0 && file.isFile()) {
             
-            String acceptedMIMEType = NbBundle.getMessage(this.getClass(), 
-                        "DataContentViewerHTML.acceptedMIMEType");
+            
             
             //If the MIMEType has not already been detected, detect it.
             if(file.getMIMEType() == null) {
@@ -268,7 +267,8 @@ public class DataContentViewerHTML extends javax.swing.JPanel implements DataCon
                 try {
                     return fileTypeDetector.detect(file).equals(acceptedMIMEType);
                 } catch (TskCoreException ex) {
-                     Exceptions.printStackTrace(ex);
+                    logger.log(Level.WARNING, "An error occurred while detecting a file"
+                            + " type in the HTML content viewer.", ex);
                     return false;
                 }
             }
