@@ -42,7 +42,6 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
@@ -63,6 +62,22 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 })
 public final class KeywordSearchIngestModule implements FileIngestModule {
 
+    private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
+    private static final IngestServices services = IngestServices.getInstance();
+    private Ingester ingester = null;
+    private FileTypeDetector fileTypeDetector;
+    private boolean startedSearching = false;
+    private List<TextExtractor> textExtractors;
+    private StringsTextExtractor stringExtractor;
+    private final KeywordSearchJobSettings settings;
+    private boolean initialized = false;
+    private long jobId;
+    private long dataSourceId;
+    private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
+    private final int instanceNum;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private IngestJobContext context;
+
     enum UpdateFrequency {
 
         FAST(20),
@@ -81,24 +96,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return time;
         }
     };
-    private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    private static final IngestServices services = IngestServices.getInstance();
-    private Ingester ingester = null;
-    private FileTypeDetector fileTypeDetector;
-
-    //accessed read-only by searcher thread
-
-    private boolean startedSearching = false;
-    private List<TextExtractor> textExtractors;
-    private StringsTextExtractor stringExtractor;
-    private final KeywordSearchJobSettings settings;
-    private boolean initialized = false;
-    private long jobId;
-    private long dataSourceId;
-    private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
-    private final int instanceNum;
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private IngestJobContext context;
 
     private enum IngestStatus {
 
@@ -239,13 +236,13 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        final TskData.TSK_DB_FILES_TYPE_ENUM tskFileType = abstractFile.getType();
-
-        switch (tskFileType) {
-            case VIRTUAL_DIR: //skip indexing of virtual dirs (no content, no real name) - will index children files
-                return ProcessResult.OK;
+        switch (abstractFile.getType()) {
+            case VIRTUAL_DIR:
+                //skip indexing of virtual dirs (no content, no real name) - will index children files
+                break;
             case UNALLOC_BLOCKS:
-            case UNUSED_BLOCKS:  // unallocated and unused blocks can only have strings extracted from them.
+            case UNUSED_BLOCKS:
+                // unallocated and unused blocks can only have strings extracted from them.
                 extractStringsAndIndex(abstractFile);
                 break;
             default:
@@ -271,19 +268,29 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         return ProcessResult.OK;
     }
 
-    private void indexMetaDataOnly(AbstractFile aFile) {
+    /**
+     * Index the given file's metadata only.
+     *
+     * @param abstractFile
+     */
+    private void indexMetaDataOnly(AbstractFile abstractFile) {
+        if (context.fileIngestIsCancelled()) {
+            return;
+        }
         try {
-            if (context.fileIngestIsCancelled()) {
-                return;
-            }
-            ingester.ingest(aFile, false); //meta-data only
-            putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
+            ingester.ingest(abstractFile, false); //meta-data only
+            putIngestStatus(jobId, abstractFile.getId(), IngestStatus.METADATA_INGESTED);
         } catch (IngesterException ex) {
-            putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-            logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex); //NON-NLS
+            putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
+            logger.log(Level.WARNING, "Unable to index meta-data for file: " + abstractFile.getId(), ex); //NON-NLS
         }
     }
 
+    /**
+     * Index the content and metadata of the fiven file.
+     *
+     * @param abstractFile
+     */
     private void indexContent(AbstractFile abstractFile) {
         if (context.fileIngestIsCancelled()) {
             return;
@@ -306,24 +313,20 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                             + abstractFile.getName(), e1);
                     putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 }
-
             }
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", abstractFile), ex); //NON-NLS
             //TODO: why do we bail, shouldn't we at least run strings?
         }
-
     }
 
     /**
      * Extract text with Tika or other text extraction modules (by streaming)
      * from the file. Divide the file into chunks and index the chunks
      *
-     * @param aFile          file to extract strings from, divide into chunks
-     *                       and index
+     * @param aFile          file to extract text from, divide into chunks and
+     *                       index
      * @param detectedFormat mime-type detected, or null if none detected
-     *
-     * @return true if the file was text_ingested, false otherwise
      *
      * @throws IngesterException exception thrown if indexing failed
      */
@@ -332,9 +335,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         for (TextExtractor fe : textExtractors) {
             if (fe.isSupported(aFile, detectedFormat)) {
                 //divide into chunks and index
-                final boolean index = fe.index(aFile, context);
+                final boolean indexed = fe.index(aFile, context);
 
-                if (index) {
+                if (indexed) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
                     return;
                 }
@@ -348,14 +351,12 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * Extract strings using heuristics from the file and add to index.
      *
      * @param aFile file to extract strings from, divide into chunks and index
-     *
-     * @return true if the file was text_ingested, false otherwise
      */
     private void extractStringsAndIndex(AbstractFile aFile) {
+        if (context.fileIngestIsCancelled()) {
+            return;
+        }
         try {
-            if (context.fileIngestIsCancelled()) {
-                return;
-            }
             if (stringExtractor.index(aFile, context)) {
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
             } else {
