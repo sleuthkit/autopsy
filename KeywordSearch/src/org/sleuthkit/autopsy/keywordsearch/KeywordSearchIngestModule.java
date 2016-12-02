@@ -18,12 +18,15 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.base.MoreObjects;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -36,6 +39,7 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import static org.sleuthkit.autopsy.keywordsearch.Bundle.*;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -436,63 +440,67 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     /**
      * Posts inbox message with summary of text_ingested files
      */
+    @NbBundle.Messages({"KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl=Files with known types",
+        "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead=Files with general strings extracted",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle=Keyword Indexing Errors",
+        "KeywordSearchIngestModule.postIndexSummary.errTxtLbl=Error (text extraction)",
+        "KeywordSearchIngestModule.postIndexSummary.errIoLbl=Error (I/O)",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxWarnMsgTitle=Keyword Indexing Warning",
+        "KeywordSearchIngestModule.postIndexSummary.idxErrReadFilesMsg=Keyword index service had errors reading files and extracting text. Could have been from corrupt media or files.",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles=Keyword index service had errors ingesting {0} files.",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl=Keyword Indexing Results",
+        "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl=Metadata only was indexed",
+        "KeywordSearchIngestModule.postIndexSummary.idxErrLbl=Error (indexer)"})
     private void postIndexSummary() {
-        int text_ingested = 0;
-        int metadata_ingested = 0;
-        int strings_ingested = 0;
-        int error_text = 0;
-        int error_index = 0;
-        int error_io = 0;
 
+        Map<IngestStatus, Long> statusCounts;
         synchronized (ingestStatus) {
             Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(jobId);
             if (ingestStatusForJob == null) {
                 return;
             }
-            for (IngestStatus s : ingestStatusForJob.values()) {
-                switch (s) {
-                    case TEXT_INGESTED:
-                        text_ingested++;
-                        break;
-                    case METADATA_INGESTED:
-                        metadata_ingested++;
-                        break;
-                    case STRINGS_INGESTED:
-                        strings_ingested++;
-                        break;
-                    case SKIPPED_ERROR_TEXTEXTRACT:
-                        error_text++;
-                        break;
-                    case SKIPPED_ERROR_INDEXING:
-                        error_index++;
-                        break;
-                    case SKIPPED_ERROR_IO:
-                        error_io++;
-                        break;
-                    default:
-                       ;
-                }
-            }
+            statusCounts = ingestStatusForJob.values().stream().
+                    collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         }
+
+        final Long metadataIndexed = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.METADATA_INGESTED), 0L);
+        final Long stringsIndexed = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.STRINGS_INGESTED), 0L);
+        final Long textIndexed = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.TEXT_INGESTED), 0L);
+        final Long extractionErrors = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.SKIPPED_ERROR_TEXTEXTRACT), 0L);
+        final Long ioErrors = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.SKIPPED_ERROR_IO), 0L);
+        final Long indexingErrors = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.SKIPPED_ERROR_INDEXING), 0L);
 
         StringBuilder msg = new StringBuilder();
-        msg.append("<table border=0><tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl")).append("</td><td>").append(text_ingested).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead")).append("</td><td>").append(strings_ingested).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl")).append("</td><td>").append(metadata_ingested).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrLbl")).append("</td><td>").append(error_index).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errTxtLbl")).append("</td><td>").append(error_text).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errIoLbl")).append("</td><td>").append(error_io).append("</td></tr>"); //NON-NLS
+        msg.append("<table border=0><tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_knowFileHeaderLbl())
+                .append("</td><td>").append(textIndexed).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_fileGenStringsHead())
+                .append("</td><td>").append(stringsIndexed).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_mdOnlyLbl())
+                .append("</td><td>").append(metadataIndexed).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_idxErrLbl())
+                .append("</td><td>").append(indexingErrors).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_errTxtLbl())
+                .append("</td><td>").append(extractionErrors).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_errIoLbl())
+                .append("</td><td>").append(ioErrors).append("</td></tr>"); //NON-NLS
         msg.append("</table>"); //NON-NLS
+
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: {0}", indexStats); //NON-NLS
-        services.postMessage(IngestMessage.createMessage(MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
-        if (error_index > 0) {
-            MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles", error_index));
-        } else if (error_io + error_text > 0) {
-            MessageNotifyUtil.Notify.warn(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxWarnMsgTitle"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrReadFilesMsg"));
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, KeywordSearchModuleFactory.getModuleName(),
+                KeywordSearchIngestModule_postIndexSummary_kwIdxResultsLbl(), indexStats));
+        if (indexingErrors > 0) {
+            MessageNotifyUtil.Notify.error(KeywordSearchIngestModule_postIndexSummary_kwIdxErrsTitle(),
+                    KeywordSearchIngestModule_postIndexSummary_kwIdxErrMsgFiles(indexingErrors));
+        } else if (ioErrors + extractionErrors > 0) {
+            MessageNotifyUtil.Notify.warn(KeywordSearchIngestModule_postIndexSummary_kwIdxWarnMsgTitle(),
+                    KeywordSearchIngestModule_postIndexSummary_idxErrReadFilesMsg());
         }
     }
-
 }
