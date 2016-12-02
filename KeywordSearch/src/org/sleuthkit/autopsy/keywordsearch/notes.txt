@@ -1,5 +1,0 @@
-- Tika has a bug in the true type font parser included in fontbox. It should
-  be fixed in the next release of Tika (1.5, or a 1.4 point release). Until then
-  we bypass Tika when it detects a type of "application/x-font-ttf". See
-  AbstractFileTikaTextExtract::isSupported. This should be removed when we
-  update Tika.
