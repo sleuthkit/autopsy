@@ -2884,31 +2884,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         FULLY_DELETED
     }
 
-// Is this still needed ??????
-    /*
-    private static final class FileFilters {
-
-        private static final List<FileFilter> cellebriteLogicalReportFilters = CellebriteXMLProcessor.getFileFilterList();
-        private static final List<FileFilter> cellebritePhysicalReportFilters = CellebriteAndroidImageProcessor.getFileFilterList();
-        private static final GeneralFilter archiveFilter = new GeneralFilter(Arrays.asList(ArchiveUtil.getSupportedArchiveTypes()), "");
-        private static final List<FileFilter> archiveFilters = new ArrayList<>();
-        static {
-            archiveFilters.add(archiveFilter);
-        }
-
-        private static boolean isAcceptedByFilter(File file, List<FileFilter> filters) {
-            for (FileFilter filter : filters) {
-                if (filter.accept(file)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private FileFilters() {
-        }
-    }*/
-
     @ThreadSafe
     private static final class DataSource {
 
