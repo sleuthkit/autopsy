@@ -99,7 +99,7 @@ final class RegexQuery implements KeywordSearchQuery {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setShowDebugInfo(true); //debug
 
-        solrQuery.setQuery((field == null ? "content_str" : field) + ":/" + getQueryString() + "/");
+        solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR : field) + ":/.*" + getQueryString() + ".*/");
         solrQuery.setRows(MAX_RESULTS);
         if (KeywordSearchSettings.getShowSnippets()) {
             solrQuery.setFields("content_str", Server.Schema.ID.toString());
@@ -120,7 +120,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 final QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
                 resultList = response.getResults();
 
-                for (SolrDocument resultDoc : filterOneHitPerDocument(resultList)) {
+                for (SolrDocument resultDoc : resultList) {
 
                     try {
                         List<KeywordHit> keywordHits = createKeywordtHits(resultDoc);
@@ -237,7 +237,6 @@ final class RegexQuery implements KeywordSearchQuery {
             escapedQuery = KeywordSearchUtil.escapeLuceneQuery(keywordString);
             escaped = true;
         }
-
     }
 
     @Override
