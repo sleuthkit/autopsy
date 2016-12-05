@@ -59,7 +59,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
-    private final SleuthkitCase SKCASE;
+    private final SleuthkitCase skCase;
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
      * which exist in the database. This hashmap will store them with the media
@@ -128,11 +128,11 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             existingMimeTypes.clear();
         }
 
-        if (SKCASE == null) {
+        if (skCase == null) {
 
             return;
         }
-        try (SleuthkitCase.CaseDbQuery dbQuery = SKCASE.executeQuery(allDistinctMimeTypesQuery.toString())) {
+        try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(allDistinctMimeTypesQuery.toString())) {
             ResultSet resultSet = dbQuery.getResultSet();
             synchronized (existingMimeTypes) {
                 while (resultSet.next()) {
@@ -158,7 +158,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     FileTypesByMimeType(SleuthkitCase skCase) {
         IngestManager.getInstance().addIngestJobEventListener(pcl);
         IngestManager.getInstance().addIngestModuleEventListener(pcl);
-        this.SKCASE = skCase;
+        this.skCase = skCase;
         populateHashMap();
     }
 
@@ -343,7 +343,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          */
         private void updateDisplayName(String mimeType) {
 
-            final long count = new MediaSubTypeNodeChildren(mimeType).calculateItems(SKCASE, mimeType);
+            final long count = new MediaSubTypeNodeChildren(mimeType).calculateItems(skCase, mimeType);
 
             super.setDisplayName(mimeType.split("/")[1] + " (" + count + ")");
         }
@@ -417,7 +417,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         protected boolean createKeys(List<Content> list) {
             try {
-                List<AbstractFile> files = SKCASE.findAllFilesWhere(createQuery(mimeType));
+                List<AbstractFile> files = skCase.findAllFilesWhere(createQuery(mimeType));
                 list.addAll(files);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
