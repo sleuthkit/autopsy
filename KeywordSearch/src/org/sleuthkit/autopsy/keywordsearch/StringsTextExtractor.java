@@ -40,7 +40,7 @@ class StringsTextExtractor implements TextExtractor {
 
     private static Ingester ingester;
     private static final Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
-    private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
+    private static final long MAX_STRING_CHUNK_SIZE = 1 * 31 * 1024L;
     //private static final int BOM_LEN = 3; 
     private static final int BOM_LEN = 0;  //disabled prepending of BOM
     private static final Charset INDEX_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;

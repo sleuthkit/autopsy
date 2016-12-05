@@ -43,7 +43,7 @@ class HtmlTextExtractor implements TextExtractor {
     private static final Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private static Ingester ingester;
     static final Charset outCharset = Server.DEFAULT_INDEXED_TEXT_CHARSET;
-    static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
+    static final int MAX_EXTR_TEXT_CHARS = 31 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace    
     private static final int MAX_SIZE = 50000000;

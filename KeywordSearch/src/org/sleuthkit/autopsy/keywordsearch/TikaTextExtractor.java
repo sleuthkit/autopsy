@@ -62,7 +62,7 @@ class TikaTextExtractor implements TextExtractor {
     private static final Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private static Ingester ingester;
     private static final Charset OUTPUT_CHARSET = Server.DEFAULT_INDEXED_TEXT_CHARSET;
-    private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
+    private static final int MAX_EXTR_TEXT_CHARS = 16 * 1024;
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
     private final char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];

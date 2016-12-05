@@ -59,7 +59,7 @@ class Ingester {
 
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
-    private static final int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
+    private static final int MAX_DOC_CHUNK_SIZE = 32 * 1024;
     private static final String ENCODING = "UTF-8"; //NON-NLS
 
     private Ingester() {

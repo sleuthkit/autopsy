@@ -97,6 +97,12 @@ public class Server {
                 return "content"; //NON-NLS
             }
         },
+        CONTENT_STR {
+            @Override
+            public String toString() {
+                return "content_str"; //NON-NLS
+            }
+        },
         TEXT {
             @Override
             public String toString() {
@@ -153,7 +159,7 @@ public class Server {
 
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
     //max content size we can send to Solr
-    public static final long MAX_CONTENT_SIZE = 1L * 1024 * 1024 * 1024;
+    public static final long MAX_CONTENT_SIZE = 1L * 31 * 1024 * 1024;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private static final String DEFAULT_CORE_NAME = "coreCase"; //NON-NLS
     public static final String CORE_EVT = "CORE_EVT"; //NON-NLS
