@@ -42,21 +42,18 @@ import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilter;
 /**
  * Encapsulates the ingest job settings for a particular execution context.
  * Examples of execution contexts include the add data source wizard and the run
- * ingest modules dialog. Different execution conterxts may have different
- * ingest job settings.
+ * ingest modules dialog. Different execution contexts may have different ingest
+ * job settings.
  */
 public class IngestJobSettings {
 
     private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS 
-    private static final String RUN_ON_FILTER_KEY = "Run_Ingest_On";
     private static final String PROCESS_UNALLOC_SPACE_DEFAULT = "true"; //NON-NLS
-    private static final String RUN_ON_FILTER_DEFAULT = IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
-    private String runIngestModulesOnFilter;
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
     private final String executionContext;
     private final IngestType ingestType;
@@ -65,22 +62,6 @@ public class IngestJobSettings {
     private final List<IngestModuleTemplate> moduleTemplates;
     private boolean processUnallocatedSpace;
     private final List<String> warnings;
-
-    /**
-     * @return the runIngestModulesOnFilter
-     */
-    String getRunIngestModulesOnFilter() {
-        return runIngestModulesOnFilter;
-    }
-
-    /**
-     * @param runIngestModulesOnFilter the runIngestModulesOnFilter to set
-     */
-    void setRunIngestModulesOnFilter(String runIngestModulesOnFilter) {
-        this.runIngestModulesOnFilter = runIngestModulesOnFilter;
-        this.processUnallocatedSpace = (new IngestSetFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
-        this.save();
-    }
 
     /**
      * The type of ingest modules to run.
@@ -114,7 +95,6 @@ public class IngestJobSettings {
         this.ingestType = IngestType.ALL_MODULES;
         this.moduleTemplates = new ArrayList<>();
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
-        this.runIngestModulesOnFilter = IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -141,7 +121,6 @@ public class IngestJobSettings {
         this.moduleTemplates = new ArrayList<>();
 
         this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
-        this.runIngestModulesOnFilter = IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER;
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -331,14 +310,8 @@ public class IngestJobSettings {
         ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
         ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
 
-        // Get the filter setting telling it which files to run modules on. If the setting does
-        // not exist yet, default it to All Files and Unallocated Space filter.
-        if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.RUN_ON_FILTER_KEY) == false) {
-            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.RUN_ON_FILTER_KEY, IngestJobSettings.RUN_ON_FILTER_DEFAULT);
-        }
-        this.runIngestModulesOnFilter = ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.RUN_ON_FILTER_KEY);
         //set the process unallocated space setting based on the filter chosen.
-        this.processUnallocatedSpace = (new IngestSetFilter(runIngestModulesOnFilter)).isProcessUnallocatedSpace();
+        this.processUnallocatedSpace = (new IngestSetFilter()).isProcessUnallocatedSpace();
 
     }
 
@@ -474,6 +447,7 @@ public class IngestJobSettings {
          */
         String processUnalloc = Boolean.toString(this.processUnallocatedSpace);
         ModuleSettings.setConfigSetting(this.executionContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
+
     }
 
     /**

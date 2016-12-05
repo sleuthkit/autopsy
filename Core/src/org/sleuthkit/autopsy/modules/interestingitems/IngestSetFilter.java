@@ -20,48 +20,97 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.util.Set;
 import org.openide.util.Exceptions;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
 /**
- *
+ * Allows limiting which files ingest is run on by storing rules and allowing
+ * files to be compared to them.
  *
  */
-public class IngestSetFilter {
+public final class IngestSetFilter {
 
     FilesSet currentRules;
     String rulesKey;
     private boolean processUnallocatedSpace;
     public final static String ALL_FILES_FILTER = "<All Files>";
     public final static String ALL_FILES_AND_UNALLOCATED_FILTER = "<All Files and Unallocated Space>";
-    public final static String NEW_INGEST_FILTER= "<Create New>";
+    public final static String NEW_INGEST_FILTER = "<Create New>";
+    private String lastSelected;
+    private static final String LAST_INGEST_FILTER_FILE = "CurrentIngestFilter";
+    private static final String LAST_INGEST_FILTER_PROPERTY = "LastIngestFilter";
 
-    public static Set<String> getKeys() throws InterestingItemDefsManager.InterestingItemDefsManagerException {
-        InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
-        return manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").keySet();
-    }
-
+    /**
+     * Creates an IngestSetFilter for the filter specified by the key.
+     *
+     * @param key - The name of the filter you wish to create.
+     */
     public IngestSetFilter(String key) {
         this.rulesKey = key;
         InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
-        if (key.equals(ALL_FILES_FILTER)) {
-            currentRules = null;
-            processUnallocatedSpace = false;
-        } else if (key.equals(ALL_FILES_AND_UNALLOCATED_FILTER)) {
-            currentRules = null;
-            processUnallocatedSpace = true;
-        } else {
-            try {
-                currentRules = manager.getInterestingFilesSets(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "").get(key);
-                processUnallocatedSpace = currentRules.processesUnallocatedSpace();
-            } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
-                Exceptions.printStackTrace(ex);
-            }
+        switch (key) {
+            case ALL_FILES_FILTER:
+                currentRules = null;
+                processUnallocatedSpace = false;
+                break;
+            case ALL_FILES_AND_UNALLOCATED_FILTER:
+                currentRules = null;
+                processUnallocatedSpace = true;
+                break;
+            default:
+                try {
+                    currentRules = manager.getInterestingFilesSets(InterestingItemDefsManager.getIngestSetFilterDefsName(), "").get(key);
+                    processUnallocatedSpace = currentRules.processesUnallocatedSpace();
+                } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                break;
         }
     }
 
     /**
+     * No argument constructor for IngestSetFilter, creates a filter using the
+     * same filter that was selected previously.
+     */
+    public IngestSetFilter() {
+        InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
+        this.rulesKey = getLastSelected();
+        switch (rulesKey) {
+            case ALL_FILES_FILTER:
+                currentRules = null;
+                processUnallocatedSpace = false;
+                break;
+            case ALL_FILES_AND_UNALLOCATED_FILTER:
+                currentRules = null;
+                processUnallocatedSpace = true;
+                break;
+            default:
+                try {
+                    currentRules = manager.getInterestingFilesSets(InterestingItemDefsManager.getIngestSetFilterDefsName(), "").get(rulesKey);
+                    processUnallocatedSpace = currentRules.processesUnallocatedSpace();
+                } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
+                break;
+        }
+
+    }
+
+    /**
+     * Get the set of available Ingest Set Filters.
      *
+     * @return - the set of filter names
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.InterestingItemDefsManager.InterestingItemDefsManagerException
+     */
+    public static Set<String> getKeys() throws InterestingItemDefsManager.InterestingItemDefsManagerException {
+        InterestingItemDefsManager manager = InterestingItemDefsManager.getInstance();
+        return manager.getInterestingFilesSets(InterestingItemDefsManager.getIngestSetFilterDefsName(), "").keySet();
+    }
+
+    /**
+     * Returns access to the Rules currently being used by the Ingest Set Filter
      *
      * @return - the active file filter set from the InterestingItemsDefsManager
      */
@@ -78,11 +127,10 @@ public class IngestSetFilter {
      */
     public boolean match(AbstractFile file) {
         boolean fileMatches = false;
-        if (isProcessUnallocatedSpace() == false && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)){
+        if (isProcessUnallocatedSpace() == false && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
             fileMatches = false;
-        }
-        else if (rulesKey.equals(ALL_FILES_FILTER) || rulesKey.equals(ALL_FILES_AND_UNALLOCATED_FILTER) ) {
-                fileMatches = true;
+        } else if (rulesKey.equals(ALL_FILES_FILTER) || rulesKey.equals(ALL_FILES_AND_UNALLOCATED_FILTER)) {
+            fileMatches = true;
         } else if (currentRules.fileIsMemberOf(file) != null) {
             fileMatches = true;
         }
@@ -90,7 +138,39 @@ public class IngestSetFilter {
     }
 
     /**
-     * @return the processUnallocatedSpace
+     * Get the name of the Ingest Set Filter which was last used, so that when
+     * running on the same set of files you will not have to reselect that set.
+     *
+     * @return lastSelected - the string which represents the Ingest Set Filter
+     * which was last used.
+     */
+    public String getLastSelected() {
+        if (lastSelected == null) {
+            if (ModuleSettings.configExists(LAST_INGEST_FILTER_FILE)) {
+                lastSelected = ModuleSettings.getConfigSetting(LAST_INGEST_FILTER_FILE, LAST_INGEST_FILTER_PROPERTY);
+            } else {
+                lastSelected = ALL_FILES_AND_UNALLOCATED_FILTER;
+            }
+        }
+        return lastSelected;
+    }
+
+    /**
+     * Saves the last selected IngestSetFilter, to a file so that it can be
+     * loaded later.
+     *
+     * @return True if value was saved successfully, false if it was not.
+     */
+    public void setLastSelected(String lastSelectedFilter) {
+        lastSelected = lastSelectedFilter;
+        ModuleSettings.setConfigSetting(LAST_INGEST_FILTER_FILE, LAST_INGEST_FILTER_PROPERTY, lastSelected);
+    }
+
+    /**
+     * Get whether or not unallocated space should be processed as a boolean.
+     *
+     * @return the processUnallocatedSpace true if unallocated space should be
+     * processed false if unallocated space should not be processed
      */
     public boolean isProcessUnallocatedSpace() {
         return processUnallocatedSpace;

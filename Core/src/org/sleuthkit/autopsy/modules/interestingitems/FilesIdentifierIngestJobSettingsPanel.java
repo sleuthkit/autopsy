@@ -26,7 +26,6 @@ import java.util.TreeMap;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
@@ -36,6 +35,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
  * Ingest job settings panel for interesting files identifier ingest modules.
  */
 final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobSettingsPanel implements Observer {
+
     @Messages({
         "FilesIdentifierIngestJobSettingsPanel.updateError=Error updating interesting files sets settings file.",
         "FilesIdentifierIngestJobSettingsPanel.getError=Error getting interesting files sets from settings file."
@@ -53,7 +53,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
      * constructor.
      *
      * @return An instance of the ingest job settings panel interesting files
-     *         identifier ingest modules.
+     * identifier ingest modules.
      */
     static FilesIdentifierIngestJobSettingsPanel makePanel(FilesIdentifierIngestJobSettings settings) {
         FilesIdentifierIngestJobSettingsPanel panel = new FilesIdentifierIngestJobSettingsPanel(settings);
@@ -83,7 +83,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          */
         List<FilesSetRow> filesSetRows = new ArrayList<>();
         try {
-            this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME(), InterestingItemDefsManager.getLEGACY_FILES_SET_DEFS_FILE_NAME()));
+            this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getInterestingFilesSetDefsSerializationName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName()));
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_getError());
             this.filesSetSnapshot = new TreeMap<>();
@@ -138,7 +138,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         List<FilesSetRow> rowModels = new ArrayList<>();
         TreeMap<String, FilesSet> newFilesSetSnapshot;
         try {
-            newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME(), InterestingItemDefsManager.getLEGACY_FILES_SET_DEFS_FILE_NAME()));
+            newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getInterestingFilesSetDefsSerializationName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName()));
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_updateError());
             return;
@@ -172,7 +172,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * job.
          *
          * @param filesSetRows A collection of row objects that bundles an
-         *                     interesting files set with an enabled flag
+         * interesting files set with an enabled flag
          */
         FilesSetsTableModel(List<FilesSetRow> filesSetRows) {
             this.filesSetRows = filesSetRows;
@@ -182,7 +182,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * Refreshes the table with a new set of rows.
          *
          * @param filesSetRows A collection of row objects that bundles an
-         *                     interesting files set with an enabled flag
+         * interesting files set with an enabled flag
          */
         void resetTableData(List<FilesSetRow> filesSetRows) {
             this.filesSetRows = filesSetRows;

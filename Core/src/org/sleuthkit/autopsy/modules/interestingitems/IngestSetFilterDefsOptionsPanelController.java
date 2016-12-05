@@ -30,21 +30,23 @@ import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_IngestSetFilterDefinitions",
-        iconBase = "org/sleuthkit/autopsy/images/interesting_item_32x32.png",
+        iconBase = "org/sleuthkit/autopsy/images/ingest_set_filter32x32.png",
         keywords = "#OptionsCategory_Keywords_IngestSetFilterDefinitions",
         keywordsCategory = "IngestSetFilterDefinitions",
         position = 7
 )
 
 /**
- * Class for creating an InterestingItemDefsPanel which will be used for configuring the IngestSetFilter.  
+ * Class for creating an InterestingItemDefsPanel which will be used for
+ * configuring the IngestSetFilter.
  */
 public final class IngestSetFilterDefsOptionsPanelController extends OptionsPanelController {
 
     private InterestingItemDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    
+    private final IngestSetFilter filter = new IngestSetFilter();
+
     /**
      * Component should load its data here.
      */
@@ -69,9 +71,13 @@ public final class IngestSetFilterDefsOptionsPanelController extends OptionsPane
         if (!(panel == null)) {
             nameList.addAll(panel.getKeys());
         }
-        String[] returnArray = {};  
+        String[] returnArray = {};
         nameList.toArray(returnArray);
         return nameList.toArray(returnArray);
+    }
+
+    public IngestSetFilter getIngestSetFilter() {
+        return filter;
     }
 
     /**
@@ -138,9 +144,16 @@ public final class IngestSetFilterDefsOptionsPanelController extends OptionsPane
         pcs.removePropertyChangeListener(l);
     }
 
+    /**
+     * Creates an interestingItemsDefPanel that will be labeled to indicate it
+     * is for Ingest Set Filter settings
+     *
+     * @return an InterestingItemDefsPanel which has text and fields modified to
+     * indicate it is for Ingest Set Filtering.
+     */
     private InterestingItemDefsPanel getPanel() {
         if (panel == null) {
-            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME(), "");
+            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getIngestSetFilterDefsName(), "");
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {

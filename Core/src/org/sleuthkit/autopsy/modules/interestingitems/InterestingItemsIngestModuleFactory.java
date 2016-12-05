@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -70,7 +69,7 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
 
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        InterestingItemDefsPanel panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME(), InterestingItemDefsManager.getLEGACY_FILES_SET_DEFS_FILE_NAME());
+        InterestingItemDefsPanel panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getInterestingFilesSetDefsSerializationName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName());
         panel.load();
         return panel;
     }
@@ -84,7 +83,7 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
         // Doing so also keeps the serialization simple.
         List<String> enabledFilesSetNames = new ArrayList<>();
         try {
-            for (String name : InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME(), InterestingItemDefsManager.getLEGACY_FILES_SET_DEFS_FILE_NAME()).keySet()) {
+            for (String name : InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getInterestingFilesSetDefsSerializationName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName()).keySet()) {
                 enabledFilesSetNames.add(name);
             }
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {

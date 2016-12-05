@@ -52,9 +52,9 @@ final class InterestingItemDefsManager extends Observable {
     private static final List<String> ILLEGAL_FILE_NAME_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", "/", ":", "*", "?", "\"", "<", ">")));
     private static final List<String> ILLEGAL_FILE_PATH_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", ":", "*", "?", "\"", "<", ">")));
     private static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
-    private static final String INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME = "InterestingFileSets.settings";
-    private static final String FILE_FILTER_SET_DEFS_SERIALIZATION_NAME = "FileFilterSets.settings";
-    private static final String INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH = PlatformUtil.getUserConfigDirectory() + File.separator;
+    private static final String INTERESTING_FILES_SET_DEFS_NAME = "InterestingFileSets.settings";
+    private static final String INGEST_SET_FILTER_DEFS_NAME = "IngestSetFilterDefs.settings";
+    private static final String INTERESTING_FILES_SET_DEFS_PATH = PlatformUtil.getUserConfigDirectory() + File.separator;
     private static final String LEGACY_FILE_SET_DEFS_PATH = PlatformUtil.getUserConfigDirectory() + File.separator;
     private static InterestingItemDefsManager instance;
 
@@ -90,29 +90,29 @@ final class InterestingItemDefsManager extends Observable {
     /**
      * @return the LEGACY_FILES_SET_DEFS_FILE_NAME
      */
-    static String getLEGACY_FILES_SET_DEFS_FILE_NAME() {
+    static String getLegacyFilesSetDefsFileName() {
         return LEGACY_FILES_SET_DEFS_FILE_NAME;
     }
 
     /**
-     * @return the INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME
+     * @return the INTERESTING_FILES_SET_DEFS_NAME
      */
-    static String getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME() {
-        return INTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME;
+    static String getInterestingFilesSetDefsSerializationName() {
+        return INTERESTING_FILES_SET_DEFS_NAME;
     }
 
     /**
-     * @return the FILE_FILTER_SET_DEFS_SERIALIZATION_NAME
+     * @return the INGEST_SET_FILTER_DEFS_NAME
      */
-    static String getFILE_FILTER_SET_DEFS_SERIALIZATION_NAME() {
-        return FILE_FILTER_SET_DEFS_SERIALIZATION_NAME;
+    static String getIngestSetFilterDefsName() {
+        return INGEST_SET_FILTER_DEFS_NAME;
     }
 
     /**
      * Gets a copy of the current interesting files set definitions.
      *
      * @return A map of interesting files set names to interesting file sets,
-     *         possibly empty.
+     * possibly empty.
      */
     synchronized Map<String, FilesSet> getInterestingFilesSets(String serialFileName, String legacyFilePath) throws InterestingItemDefsManagerException {
         return FilesSetXML.readDefinitionsFile(serialFileName, LEGACY_FILE_SET_DEFS_PATH);
@@ -123,10 +123,10 @@ final class InterestingItemDefsManager extends Observable {
      * previous definitions.
      *
      * @param filesSets A mapping of interesting files set names to files sets,
-     *                  used to enforce unique files set names.
+     * used to enforce unique files set names.
      */
     synchronized void setInterestingFilesSets(Map<String, FilesSet> filesSets, String serialFileName) throws InterestingItemDefsManagerException {
-        FilesSetXML.writeDefinitionsFile(INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH+serialFileName, filesSets);
+        FilesSetXML.writeDefinitionsFile(INTERESTING_FILES_SET_DEFS_PATH + serialFileName, filesSets);
         this.setChanged();
         this.notifyObservers();
     }
@@ -179,8 +179,8 @@ final class InterestingItemDefsManager extends Observable {
                 return filesSets;
             }
             // Check if the legacy xml file exists.
-            if(!legacyFileName.isEmpty()){
-                File defsFile = new File(LEGACY_FILE_SET_DEFS_PATH+legacyFileName);
+            if (!legacyFileName.isEmpty()) {
+                File defsFile = new File(LEGACY_FILE_SET_DEFS_PATH + legacyFileName);
                 if (!defsFile.exists()) {
                     return filesSets;
                 }
@@ -218,12 +218,13 @@ final class InterestingItemDefsManager extends Observable {
          * Reads the definitions from the serialization file
          *
          * @return the map representing settings saved to serialization file,
-         *         empty set if the file does not exist.
+         * empty set if the file does not exist.
          *
          * @throws InterestingItemDefsManagerException if file could not be read
          */
         private static Map<String, FilesSet> readSerializedDefinitions(String serialFileName) throws InterestingItemDefsManagerException {
-            String filePath = INTERESTING_FILES_SET_DEFS_SERIALIZATION_PATH + serialFileName;
+            String filePath;
+            filePath = INTERESTING_FILES_SET_DEFS_PATH + serialFileName;
             System.out.println(filePath);
             File fileSetFile = new File(filePath);
             if (fileSetFile.exists()) {
@@ -236,16 +237,16 @@ final class InterestingItemDefsManager extends Observable {
                     throw new InterestingItemDefsManagerException(String.format("Failed to read settings from %s", filePath), ex);
                 }
             } else {
-                return new HashMap<String, FilesSet>();
+                return new HashMap<>();
             }
         }
 
         /**
          * Reads in an interesting files set.
          *
-         * @param setElem   An interesting files set XML element
+         * @param setElem An interesting files set XML element
          * @param filesSets A collection to which the set is to be added.
-         * @param filePath  The source file, used for error reporting.
+         * @param filePath The source file, used for error reporting.
          */
         private static void readFilesSet(Element setElem, Map<String, FilesSet> filesSets, String filePath) {
             // The file set must have a unique name.
@@ -319,10 +320,10 @@ final class InterestingItemDefsManager extends Observable {
          * Construct an interesting files set file name rule from the data in an
          * XML element.
          *
-         * @param elem     The file name rule XML element.
+         * @param elem The file name rule XML element.
          *
          * @return A file name rule, or null if there is an error (the error is
-         *         logged).
+         * logged).
          */
         private static FilesSet.Rule readFileNameRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -380,7 +381,7 @@ final class InterestingItemDefsManager extends Observable {
          * @param elem The file name extension rule XML element.
          *
          * @return A file name extension rule, or null if there is an error (the
-         *         error is logged).
+         * error is logged).
          */
         private static FilesSet.Rule readFileExtensionRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -473,7 +474,7 @@ final class InterestingItemDefsManager extends Observable {
          * @param ruleElement The XML element.
          *
          * @return The meta-type condition, or null if there is an error
-         *         (logged).
+         * (logged).
          */
         private static FilesSet.Rule.MetaTypeCondition readMetaTypeCondition(Element ruleElement) {
             FilesSet.Rule.MetaTypeCondition condition = null;

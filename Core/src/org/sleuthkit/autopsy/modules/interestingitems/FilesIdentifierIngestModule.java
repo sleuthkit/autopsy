@@ -83,7 +83,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                 // to disable the interesting files set definition UI during ingest.
                 List<FilesSet> filesSets = new ArrayList<>();
                 try {
-                    for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getINTERESTING_FILES_SET_DEFS_SERIALIZATION_NAME(), InterestingItemDefsManager.getLEGACY_FILES_SET_DEFS_FILE_NAME()).values()) {
+                    for (FilesSet set : InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getInterestingFilesSetDefsSerializationName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName()).values()) {
                         if (settings.interestingFilesSetIsEnabled(set.getName())) {
                             filesSets.add(set);
                         }
@@ -103,7 +103,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     @Messages({"FilesIdentifierIngestModule.indexError.message=Failed to index interesting file hit artifact for keyword search."})
     public ProcessResult process(AbstractFile file) {
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
-        
+
         // Skip slack space files.
         if (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
             return ProcessResult.OK;

@@ -85,7 +85,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         initComponents();
         customizeComponents();
-        jComboBox1.setSelectedItem(settings.getRunIngestModulesOnFilter());
+        jComboBox1.setSelectedItem(controller.getIngestSetFilter().getLastSelected());
     }
 
     /**
@@ -114,7 +114,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         initComponents();
         customizeComponents();
-        jComboBox1.setSelectedItem(settings.getRunIngestModulesOnFilter());
+        jComboBox1.setSelectedItem(controller.getIngestSetFilter().getLastSelected());
     }
 
     /**
@@ -422,12 +422,12 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                 dialog.close();
             });
             dialog.display((IngestModuleGlobalSettingsPanel) controller.getComponent(controller.getLookup()));
+            jComboBox1.setSelectedItem(controller.getIngestSetFilter().getLastSelected());
 
-        } else {
-            settings.setRunIngestModulesOnFilter(jComboBox1.getSelectedItem().toString());
-            settings.save();
+        } else if (evt.getActionCommand().equals("comboBoxChanged")) {
+            controller.getIngestSetFilter().setLastSelected(jComboBox1.getSelectedItem().toString());
         }
-        jComboBox1.setSelectedItem(settings.getRunIngestModulesOnFilter());
+
 
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
