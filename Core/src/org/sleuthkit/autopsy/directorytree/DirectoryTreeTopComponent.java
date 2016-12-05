@@ -61,7 +61,9 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
+import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.KnownFileFilterNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
@@ -364,7 +366,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     items.add(new Tags());
                     items.add(new Reports());
                     contentChildren = new RootContentChildren(items);
-                 
+
                     Node root = new AbstractNode(contentChildren) {
                         /**
                          * to override the right click action in the white blank
@@ -635,6 +637,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         if (origin == null) {
                             return;
                         }
+
                         Node originNode = origin.getNode();
 
                         //set node, wrap in filter node first to filter out children
@@ -644,7 +647,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
 
                         // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
-                        if (originNode instanceof DisplayableItemNode) {
+
+                        //Special case for when File Type Identification has not yet been run and 
+                        //there are no mime types to populate Files by Mime Type Tree
+                        if (originNode instanceof FileTypesByMimeType.FileTypesByMimeTypeNode
+                                && ((FileTypesByMimeType.FileTypesByMimeTypeNode) originNode).isEmpty()) {
+                            EmptyNode emptyNode = new EmptyNode();
+                            Node emptyDrfn = new DataResultFilterNode(emptyNode, DirectoryTreeTopComponent.this.em);
+                            Node emptyKffn = new KnownFileFilterNode(emptyDrfn, KnownFileFilterNode.getSelectionContext(emptyNode));
+                            Node emptySffn = new SlackFileFilterNode(emptyKffn, SlackFileFilterNode.getSelectionContext(originNode));
+                            dataResult.setNode(new TableFilterNode(emptySffn, true, "This Node Is Empty"));
+                        } else if (originNode instanceof DisplayableItemNode) {
                             dataResult.setNode(new TableFilterNode(sffn, true, ((DisplayableItemNode) originNode).getItemType()));
                         } else {
                             dataResult.setNode(new TableFilterNode(sffn, true));
@@ -788,8 +801,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Set the selected node using a path to a previously selected node.
      *
      * @param previouslySelectedNodePath Path to a previously selected node.
-     * @param rootNodeName               Name of the root node to match, may be
-     *                                   null.
+     * @param rootNodeName Name of the root node to match, may be null.
      */
     private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
         if (previouslySelectedNodePath == null) {

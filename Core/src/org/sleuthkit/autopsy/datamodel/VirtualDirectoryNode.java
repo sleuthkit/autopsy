@@ -148,6 +148,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
+            addTagProperty(ss);
         } else {
             ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),

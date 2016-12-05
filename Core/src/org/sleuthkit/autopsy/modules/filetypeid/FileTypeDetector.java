@@ -19,11 +19,13 @@
 package org.sleuthkit.autopsy.modules.filetypeid;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.tika.Tika;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypes;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -49,6 +51,7 @@ public class FileTypeDetector {
     private final byte buffer[] = new byte[BUFFER_SIZE];
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
+    private static SortedSet<String> detectedTypes;    //no optional parameters
 
     /**
      * Constructs an object that detects the MIME type of a file by an
@@ -101,6 +104,21 @@ public class FileTypeDetector {
     }
 
     /**
+     * Returns an unmodifiable list of standard MIME types that does not contain
+     * types with optional parameters. The list has no duplicate types and is in
+     * alphabetical order.
+     *
+     * @return an unmodifiable view of a set of MIME types
+     */
+    public static synchronized SortedSet<String> getStandardDetectedTypes() {
+        if (detectedTypes == null) {
+            detectedTypes = org.apache.tika.mime.MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes()
+                    .stream().filter(t -> !t.hasParameters()).map(s -> s.toString()).collect(Collectors.toCollection(TreeSet::new));
+        }
+        return Collections.unmodifiableSortedSet(detectedTypes);
+    }
+
+    /**
      * Determines whether or not a given MIME type is detectable as a
      * user-defined MIME type by this detector.
      *
@@ -126,15 +144,7 @@ public class FileTypeDetector {
      * @return True or false.
      */
     private boolean isDetectableByTika(String mimeType) {
-        String[] split = mimeType.split("/");
-        if (split.length == 2) {
-            String type = split[0];
-            String subtype = split[1];
-            MediaType mediaType = new MediaType(type, subtype);
-            SortedSet<MediaType> m = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
-            return m.contains(mediaType);
-        }
-        return false;
+        return FileTypeDetector.getStandardDetectedTypes().contains(removeOptionalParameter(mimeType));
     }
 
     /**
@@ -196,7 +206,10 @@ public class FileTypeDetector {
          */
         String mimeType = file.getMIMEType();
         if (null != mimeType) {
-            return mimeType;
+            // We remove the optional parameter to allow this method to work
+            // with legacy databases that may contain MIME types with the
+            // optional parameter attached.
+            return removeOptionalParameter(mimeType);
         }
 
         /*
@@ -248,6 +261,10 @@ public class FileTypeDetector {
                  * Remove the Tika suffix from the MIME type name.
                  */
                 mimeType = tikaType.replace("tika-", ""); //NON-NLS
+                /*
+                 * Remove the optional parameter from the MIME type.
+                 */
+                mimeType = removeOptionalParameter(mimeType);
 
             } catch (Exception ignored) {
                 /*
@@ -286,6 +303,20 @@ public class FileTypeDetector {
         }
 
         return mimeType;
+    }
+
+    /**
+     * Removes the optional parameter from a MIME type string
+     * @param  mimeType
+     * @return MIME type without the optional parameter
+     */
+    private String removeOptionalParameter(String mimeType) {
+        int indexOfSemicolon = mimeType.indexOf(";");
+        if (indexOfSemicolon != -1 ) {
+            return mimeType.substring(0, indexOfSemicolon).trim();
+        } else {
+            return mimeType;
+        }
     }
 
     /**

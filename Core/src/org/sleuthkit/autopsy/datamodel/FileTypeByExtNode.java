@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,14 +48,14 @@ import org.sleuthkit.datamodel.TskData;
  * Node for a specific file type / extension. Children of it will be the files
  * of that type.
  */
-public class FileTypeNode extends DisplayableItemNode {
+public class FileTypeByExtNode extends DisplayableItemNode {
 
     FileTypeExtensionFilters.SearchFilterInterface filter;
     SleuthkitCase skCase;
 
     // deprecated in favor of the version that takes an observable to provide refresh updates
     @Deprecated
-    FileTypeNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
+    FileTypeByExtNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
         super(Children.create(new FileTypeChildFactory(filter, skCase), true), Lookups.singleton(filter.getDisplayName()));
         this.filter = filter;
         this.skCase = skCase;
@@ -69,7 +69,7 @@ public class FileTypeNode extends DisplayableItemNode {
      * @param o      Observable that sends updates when the child factories
      *               should refresh
      */
-    FileTypeNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
+    FileTypeByExtNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
         super(Children.create(new FileTypeChildFactory(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
         this.filter = filter;
         this.skCase = skCase;
