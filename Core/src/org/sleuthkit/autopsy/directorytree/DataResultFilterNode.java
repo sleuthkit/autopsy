@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
@@ -235,7 +236,13 @@ public class DataResultFilterNode extends FilterNode {
             // The base class Action is "Collapse All", inappropriate.
             return null;
         }
-
+        
+        @Override
+        public List<Action> visit(FileTypesNode fileTypes) {
+          return defaultVisit(fileTypes);
+        }
+        
+        
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
@@ -275,6 +282,7 @@ public class DataResultFilterNode extends FilterNode {
             }
             return c;
         }
+
     }
 
     /*
@@ -326,7 +334,14 @@ public class DataResultFilterNode extends FilterNode {
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return openChild(c);
         }
+        
+        @Override
+        public AbstractAction visit(FileTypesNode fileTypes) {
+            return openChild(fileTypes);
+        }
+        
 
+        
         /**
          * Tell the originating ExplorerManager to display the given
          * dataModelNode.
