@@ -186,7 +186,7 @@ final class RegexQuery implements KeywordSearchQuery {
         for (Object value : fieldValues) {
             String content = value.toString();
 
-            Matcher hitMatcher = Pattern.compile(keywordString).matcher(content);
+            Matcher hitMatcher = Pattern.compile(keywordString, Pattern.CASE_INSENSITIVE).matcher(content);
 
             while (hitMatcher.find()) {
                 String snippet = "";
