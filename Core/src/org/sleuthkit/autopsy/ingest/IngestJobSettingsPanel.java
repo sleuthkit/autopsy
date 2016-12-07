@@ -219,7 +219,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         setMinimumSize(new java.awt.Dimension(0, 0));
         setPreferredSize(new java.awt.Dimension(625, 450));
 
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.jLabel1.text_1")); // NOI18N
+        jLabel1.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.jLabel1.text")); // NOI18N
 
         jComboBox1.setModel(new DefaultComboBoxModel<>(controller.getComboBoxContents()));
         jComboBox1.addActionListener(new java.awt.event.ActionListener() {

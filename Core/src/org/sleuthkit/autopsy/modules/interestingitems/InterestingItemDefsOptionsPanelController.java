@@ -115,7 +115,7 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
 
     private InterestingItemDefsPanel getPanel() {
         if (panel == null) {
-            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getInterestingFilesSetDefsSerializationName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName());
+            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getInterestingFilesSetDefsName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName());
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {
