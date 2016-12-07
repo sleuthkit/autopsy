@@ -216,7 +216,7 @@ class LuceneQuery implements KeywordSearchQuery {
         highlightResponse = response.getHighlighting();
 
         // get the unique set of files with hits
-        uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
+//        uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
 
         // cycle through results in sets of MAX_RESULTS
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
@@ -232,7 +232,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 return matches;
             }
 
-            for (SolrDocument resultDoc : uniqueSolrDocumentsWithHits) {
+            for (SolrDocument resultDoc : resultList) {
                 KeywordHit contentHit;
                 try {
                     contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
@@ -306,6 +306,22 @@ class LuceneQuery implements KeywordSearchQuery {
      * @return
      */
     private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
+        /**
+         * Filtering down to one hit per document is being performed so that we
+         * only create a single keyword hit blackboard artifact per file. This
+         * only makes sense for the case where we are performing an exact match
+         * query. It does not make sense for (a) the TermsComponentQuery which 
+         * creates blackboard artifacts for the individual terms that are matched
+         * by the regular expression or (b) HighlightedText.loadPageInfo() which
+         * (i) doesn't create blackboard artifacts and (ii) needs to know about
+         * all hits so that it can correctly set up the paging infrastructure.
+         * Additionally, keyword hit artifact is being performed by 
+         * writeSingleFileHitsToBlackboard() above which is being called by
+         * QueryResults.writeAllHitsToBlackboard() which appears to be taking care
+         * of filtering results down to a single hit per document in the
+         * QueryResults.getOneHitPerObject() method.
+         */
+
         // sort the list so that we consistently pick the same chunk each time.
         // note this sort is doing a string comparison and not an integer comparison, so 
         // chunk 10 will be smaller than chunk 9. 
