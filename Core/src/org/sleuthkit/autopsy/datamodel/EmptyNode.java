@@ -37,15 +37,15 @@ public final class EmptyNode extends AbstractNode {
      * @param displayedMessage the text you would like displayed in the table view, this will not appear as a child node. 
      */
     public EmptyNode(String displayedMessage) {
-        super(Children.create(new EmptyChildFactory(displayedMessage), true));
+        super(Children.create(new EmptyNodeChildren(displayedMessage), true));
 
     }
 
-    static class EmptyChildFactory extends ChildFactory<String> {
+    static class EmptyNodeChildren extends ChildFactory<String> {
 
         String fileIdMsg; //NON-NLS
 
-        private EmptyChildFactory(String displayedMessage) {
+        private EmptyNodeChildren(String displayedMessage) {
             fileIdMsg = displayedMessage;
         }
 
