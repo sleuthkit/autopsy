@@ -29,7 +29,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -68,7 +67,7 @@ public class DataSourcesNode extends DisplayableItemNode {
      */
     public static class DataSourcesNodeChildren extends AbstractContentChildren<Content> {
 
-        private static final Logger LOGGER = Logger.getLogger(DataSourcesNodeChildren.class.getName());
+        private static final Logger logger = Logger.getLogger(DataSourcesNodeChildren.class.getName());
 
         List<Content> currentKeys;
 
@@ -81,12 +80,8 @@ public class DataSourcesNode extends DisplayableItemNode {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 String eventType = evt.getPropertyName();
-                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                        || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                if (eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                     reloadKeys();
-                    refreshContentKeys();
                 }
             }
         };
@@ -94,16 +89,12 @@ public class DataSourcesNode extends DisplayableItemNode {
         @Override
         protected void addNotify() {
             Case.addPropertyChangeListener(pcl);
-            IngestManager.getInstance().addIngestJobEventListener(pcl);
-            IngestManager.getInstance().addIngestModuleEventListener(pcl);
             reloadKeys();
         }
 
         @Override
         protected void removeNotify() {
             Case.removePropertyChangeListener(pcl);
-            IngestManager.getInstance().removeIngestJobEventListener(pcl);
-            IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             currentKeys.clear();
             setKeys(Collections.<Content>emptySet());
         }
@@ -113,7 +104,7 @@ public class DataSourcesNode extends DisplayableItemNode {
                 currentKeys = Case.getCurrentCase().getDataSources();
                 setKeys(currentKeys);
             } catch (TskCoreException | IllegalStateException ex) {
-                LOGGER.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
+                logger.log(Level.SEVERE, "Error getting data sources: {0}", ex.getMessage()); // NON-NLS
                 setKeys(Collections.<Content>emptySet());
             }
         }
