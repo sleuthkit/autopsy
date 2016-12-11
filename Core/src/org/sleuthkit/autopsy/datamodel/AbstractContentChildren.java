@@ -220,7 +220,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
-            return ftByMimeTypeItem.new FileTypesByMimeTypeNode(ftByMimeTypeItem.getSleuthkitCase());
+            return ftByMimeTypeItem.new ByMimeTypeNode();
         }
     }
 }

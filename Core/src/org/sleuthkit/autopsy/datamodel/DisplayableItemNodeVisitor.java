@@ -49,16 +49,16 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VolumeNode vn);
-    
+
     T visit(SlackFileNode sfn);
-    
+
 
     /*
      * Views Area
      */
     T visit(ViewsNode vn);
 
-    T visit(FileTypeByExtNode fsfn);
+    T visit(FileTypesByExtNode.ByExtNode fsfn);
 
     T visit(DeletedContentNode dcn);
 
@@ -146,14 +146,13 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileTypes.FileTypesNode fileTypes);
 
-    T visit(FileTypesByMimeType.FileTypesByMimeTypeNode ftByMimeTypeNode);
+    T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode);
 
     T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaType);
 
     T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaSubType);
 
-    T visit(FileTypesByMimeType.EmptyNode.MessageNode aThis);
-
+    T visit(EmptyNode.MessageNode emptyNode);
 
     /**
      * Visitor with an implementable default behavior for all types. Override
@@ -213,30 +212,30 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypeByExtNode fsfn) {
+        public T visit(FileTypesByExtNode.ByExtNode fsfn) {
             return defaultVisit(fsfn);
         }
-        
+
         @Override
-        public T visit(FileTypesByMimeType.FileTypesByMimeTypeNode ftByMimeTypeNode) {
+        public T visit(FileTypesByMimeType.ByMimeTypeNode ftByMimeTypeNode) {
             return defaultVisit(ftByMimeTypeNode);
         }
-        
+
         @Override
         public T visit(FileTypesByMimeType.MediaTypeNode ftByMimeTypeMediaTypeNode) {
             return defaultVisit(ftByMimeTypeMediaTypeNode);
         }
-        
+
         @Override
         public T visit(FileTypesByMimeType.MediaSubTypeNode ftByMimeTypeMediaTypeNode) {
             return defaultVisit(ftByMimeTypeMediaTypeNode);
         }
-        
+
         @Override
-        public T visit(FileTypesByMimeType.EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
+        public T visit(EmptyNode.MessageNode ftByMimeTypeEmptyNode) {
             return defaultVisit(ftByMimeTypeEmptyNode);
         }
-        
+
         @Override
         public T visit(DeletedContentNode dcn) {
             return defaultVisit(dcn);
@@ -296,11 +295,12 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(ResultsNode rn) {
             return defaultVisit(rn);
         }
-        
+
         @Override
         public T visit(FileTypesNode ft) {
             return defaultVisit(ft);
         }
+
         @Override
         public T visit(DataSourcesNode in) {
             return defaultVisit(in);
@@ -425,6 +425,7 @@ public interface DisplayableItemNodeVisitor<T> {
         public T visit(Accounts.BINNode node) {
             return defaultVisit(node);
         }
+
         @Override
         public T visit(Accounts.DefaultAccountTypeNode node) {
             return defaultVisit(node);
