@@ -72,28 +72,25 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * The pcl is in the class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
      */
-    private final PropertyChangeListener pcl = new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                    //             || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
-                    || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+        String eventType = evt.getPropertyName();
+        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                //             || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
+                || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            /**
+             * Checking for a current case is a stop gap measure until a
+             * different way of handling the closing of cases is worked out.
+             * Currently, remote events may be received for a case that is
+             * already closed.
+             */
+            try {
+                Case.getCurrentCase();
+                populateHashMap();
+            } catch (IllegalStateException notUsed) {
                 /**
-                 * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked out.
-                 * Currently, remote events may be received for a case that is
-                 * already closed.
+                 * Case is closed, do nothing.
                  */
-                try {
-                    Case.getCurrentCase();
-                    populateHashMap();
-                } catch (IllegalStateException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
             }
         }
     };
@@ -171,13 +168,13 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * Method to check if the node in question is a ByMimeTypeNode which is
      * empty.
      *
-     * @param originNode the Node which you wish to check.
+     * @param node the Node which you wish to check.
      * @return True if originNode is an instance of ByMimeTypeNode and is empty,
      * false otherwise.
      */
-    public static boolean isEmptyMimeTypeNode(Node originNode) {
+    public static boolean isEmptyMimeTypeNode(Node node) {
         boolean isEmptyMimeNode = false;
-        if (originNode instanceof FileTypesByMimeType.ByMimeTypeNode && ((FileTypesByMimeType.ByMimeTypeNode) originNode).isEmpty()) {
+        if (node instanceof FileTypesByMimeType.ByMimeTypeNode && ((FileTypesByMimeType.ByMimeTypeNode) node).isEmpty()) {
             isEmptyMimeNode = true;
         }
         return isEmptyMimeNode;

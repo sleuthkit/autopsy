@@ -58,7 +58,7 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
-    T visit(FileTypesByExtNode.ByExtNode fsfn);
+    T visit(FileTypesByExtNode.FileExtensionNode fsfn);
 
     T visit(DeletedContentNode dcn);
 
@@ -212,7 +212,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypesByExtNode.ByExtNode fsfn) {
+        public T visit(FileTypesByExtNode.FileExtensionNode fsfn) {
             return defaultVisit(fsfn);
         }
 

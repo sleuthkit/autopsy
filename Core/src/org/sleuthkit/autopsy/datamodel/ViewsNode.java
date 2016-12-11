@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import java.util.Arrays;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;

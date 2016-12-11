@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskData;
 class FileTypesByExtNode extends DisplayableItemNode {
 
     private static final String FNAME = NbBundle.getMessage(FileTypesByExtNode.class, "FileTypesByExtNode.fname.text");
-    private final FileTypeExtensionFilters.RootFilter filter;
+    private final FileTypesByExtension.RootFilter filter;
 
     /**
      *
@@ -63,8 +62,8 @@ class FileTypesByExtNode extends DisplayableItemNode {
      * @param filter null to display root node of file type tree, pass in
      * something to provide a sub-node.
      */
-    FileTypesByExtNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter) {
-        super(Children.create(new ByExtChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+    FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter) {
+        super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
         this.filter = filter;
         init();
     }
@@ -76,8 +75,8 @@ class FileTypesByExtNode extends DisplayableItemNode {
      * @param o Observable that was created by a higher-level node that provides
      * updates on events
      */
-    private FileTypesByExtNode(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
-        super(Children.create(new ByExtChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+    private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, Observable o) {
+        super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
         this.filter = filter;
         init();
     }
@@ -130,8 +129,8 @@ class FileTypesByExtNode extends DisplayableItemNode {
         if (filter == null) {
             return getClass().getName();
         }
-        if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER)
-                || filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER)) {
+        if (filter.equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER)
+                || filter.equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER)) {
             return getClass().getName() + filter.getName();
         }
         return getClass().getName();
@@ -140,10 +139,10 @@ class FileTypesByExtNode extends DisplayableItemNode {
     /**
      *
      */
-    private static class ByExtChildren extends ChildFactory<FileTypeExtensionFilters.SearchFilterInterface> {
+    private static class FileTypesByExtNodeChildren extends ChildFactory<FileTypesByExtension.SearchFilterInterface> {
 
         private final SleuthkitCase skCase;
-        private final FileTypeExtensionFilters.RootFilter filter;
+        private final FileTypesByExtension.RootFilter filter;
         private final Observable notifier;
 
         /**
@@ -153,12 +152,12 @@ class FileTypesByExtNode extends DisplayableItemNode {
          * @param o Observable that provides updates based on events being fired
          * (or null if one needs to be created)
          */
-        private ByExtChildren(SleuthkitCase skCase, FileTypeExtensionFilters.RootFilter filter, Observable o) {
+        private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, Observable o) {
             super();
             this.skCase = skCase;
             this.filter = filter;
             if (o == null) {
-                this.notifier = new ByExtChildrenObservable();
+                this.notifier = new FileTypesByExtObservable();
             } else {
                 this.notifier = o;
             }
@@ -168,9 +167,9 @@ class FileTypesByExtNode extends DisplayableItemNode {
          * Listens for case and ingest invest. Updates observers when events are
          * fired. FileType and FileTypes nodes are all listening to this.
          */
-        private final class ByExtChildrenObservable extends Observable {
+        private final class FileTypesByExtObservable extends Observable {
 
-            private ByExtChildrenObservable() {
+            private FileTypesByExtObservable() {
                 IngestManager.getInstance().addIngestJobEventListener(pcl);
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
                 Case.addPropertyChangeListener(pcl);
@@ -183,33 +182,30 @@ class FileTypesByExtNode extends DisplayableItemNode {
                 Case.removePropertyChangeListener(pcl);
             }
 
-            private final PropertyChangeListener pcl = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    String eventType = evt.getPropertyName();
-                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+            private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                        || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure
+                     * until a different way of handling the closing of
+                     * cases is worked out. Currently, remote events may be
+                     * received for a case that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        update();
+                    } catch (IllegalStateException notUsed) {
                         /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
+                         * Case is closed, do nothing.
                          */
-                        try {
-                            Case.getCurrentCase();
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
-                    } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                        // case was closed. Remove listeners so that we don't get called with a stale case handle
-                        if (evt.getNewValue() == null) {
-                            removeListeners();
-                        }
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeListeners();
                     }
                 }
             };
@@ -221,28 +217,28 @@ class FileTypesByExtNode extends DisplayableItemNode {
         }
 
         @Override
-        protected boolean createKeys(List<FileTypeExtensionFilters.SearchFilterInterface> list) {
+        protected boolean createKeys(List<FileTypesByExtension.SearchFilterInterface> list) {
             // root node
             if (filter == null) {
-                list.addAll(Arrays.asList(FileTypeExtensionFilters.RootFilter.values()));
+                list.addAll(Arrays.asList(FileTypesByExtension.RootFilter.values()));
             } // document and executable has another level of nodes
-            else if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER)) {
-                list.addAll(Arrays.asList(FileTypeExtensionFilters.DocumentFilter.values()));
-            } else if (filter.equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER)) {
-                list.addAll(Arrays.asList(FileTypeExtensionFilters.ExecutableFilter.values()));
+            else if (filter.equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER)) {
+                list.addAll(Arrays.asList(FileTypesByExtension.DocumentFilter.values()));
+            } else if (filter.equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER)) {
+                list.addAll(Arrays.asList(FileTypesByExtension.ExecutableFilter.values()));
             }
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(FileTypeExtensionFilters.SearchFilterInterface key) {
+        protected Node createNodeForKey(FileTypesByExtension.SearchFilterInterface key) {
             // make new nodes for the sub-nodes
-            if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_DOCUMENT_FILTER, notifier);
-            } else if (key.getName().equals(FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
-                return new FileTypesByExtNode(skCase, FileTypeExtensionFilters.RootFilter.TSK_EXECUTABLE_FILTER, notifier);
+            if (key.getName().equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER.getName())) {
+                return new FileTypesByExtNode(skCase, FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER, notifier);
+            } else if (key.getName().equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER.getName())) {
+                return new FileTypesByExtNode(skCase, FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER, notifier);
             } else {
-                return new ByExtNode(key, skCase, notifier);
+                return new FileExtensionNode(key, skCase, notifier);
             }
         }
     }
@@ -251,9 +247,9 @@ class FileTypesByExtNode extends DisplayableItemNode {
      * Node for a specific file type / extension. Children of it will be the
      * files of that type.
      */
-    static class ByExtNode extends DisplayableItemNode {
+    static class FileExtensionNode extends DisplayableItemNode {
 
-        FileTypeExtensionFilters.SearchFilterInterface filter;
+        FileTypesByExtension.SearchFilterInterface filter;
         SleuthkitCase skCase;
 
         /**
@@ -263,8 +259,8 @@ class FileTypesByExtNode extends DisplayableItemNode {
          * @param o Observable that sends updates when the child factories
          * should refresh
          */
-        ByExtNode(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
-            super(Children.create(new ByExtChildFactory(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
+        FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
+            super(Children.create(new FileExtensionNodeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
             this.filter = filter;
             this.skCase = skCase;
             init();
@@ -287,7 +283,7 @@ class FileTypesByExtNode extends DisplayableItemNode {
         }
 
         private void updateDisplayName() {
-            final long count = ByExtChildFactory.calculateItems(skCase, filter);
+            final long count = FileExtensionNodeChildren.calculateItems(skCase, filter);
             super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
         }
 
@@ -341,21 +337,12 @@ class FileTypesByExtNode extends DisplayableItemNode {
          * Child node factory for a specific file type - does the database
          * query.
          */
-        private static class ByExtChildFactory extends ChildFactory.Detachable<Content> {
+        private static class FileExtensionNodeChildren extends ChildFactory.Detachable<Content> {
 
             private final SleuthkitCase skCase;
-            private final FileTypeExtensionFilters.SearchFilterInterface filter;
-            private final static Logger LOGGER = Logger.getLogger(ByExtChildFactory.class.getName());
+            private final FileTypesByExtension.SearchFilterInterface filter;
+            private final static Logger LOGGER = Logger.getLogger(FileExtensionNodeChildren.class.getName());
             private final Observable notifier;
-
-            // use the constructor that gets an observable passed in for updates
-            @Deprecated
-            ByExtChildFactory(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase) {
-                super();
-                this.filter = filter;
-                this.skCase = skCase;
-                notifier = null;
-            }
 
             /**
              *
@@ -364,7 +351,7 @@ class FileTypesByExtNode extends DisplayableItemNode {
              * @param o Observable that will notify when there could be new data
              * to display
              */
-            private ByExtChildFactory(FileTypeExtensionFilters.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
+            private FileExtensionNodeChildren(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
                 super();
                 this.filter = filter;
                 this.skCase = skCase;
@@ -400,7 +387,7 @@ class FileTypesByExtNode extends DisplayableItemNode {
              *
              * @return
              */
-            private static long calculateItems(SleuthkitCase sleuthkitCase, FileTypeExtensionFilters.SearchFilterInterface filter) {
+            private static long calculateItems(SleuthkitCase sleuthkitCase, FileTypesByExtension.SearchFilterInterface filter) {
                 try {
                     return sleuthkitCase.countFilesWhere(createQuery(filter));
                 } catch (TskCoreException ex) {
@@ -420,7 +407,7 @@ class FileTypesByExtNode extends DisplayableItemNode {
                 return true;
             }
 
-            private static String createQuery(FileTypeExtensionFilters.SearchFilterInterface filter) {
+            private static String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
                 StringBuilder query = new StringBuilder();
                 query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
                 if (UserPreferences.hideKnownFilesInViewsTree()) {

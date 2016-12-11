@@ -22,7 +22,6 @@ import java.util.Arrays;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -55,7 +54,7 @@ public final class FileTypes implements AutopsyVisitableItem {
 
         FileTypesNode(SleuthkitCase sleuthkitCase) {
             super(new RootContentChildren(Arrays.asList(
-                    new FileTypeExtensionFilters(sleuthkitCase),
+                    new FileTypesByExtension(sleuthkitCase),
                     new FileTypesByMimeType(sleuthkitCase)
             )), Lookups.singleton(NAME));
             setName(NAME);
