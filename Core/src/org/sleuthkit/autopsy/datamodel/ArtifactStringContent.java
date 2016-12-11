@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
@@ -42,7 +41,7 @@ public class ArtifactStringContent implements StringContent {
     BlackboardArtifact artifact;
     private String stringContent = "";
     static final Logger logger = Logger.getLogger(ArtifactStringContent.class.getName());
-    private static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     public ArtifactStringContent(BlackboardArtifact art) {
         artifact = art;
@@ -74,7 +73,7 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append("<tr><td>"); //NON-NLS
                     buffer.append(attr.getAttributeType().getDisplayName());
                     buffer.append("</td>"); //NON-NLS
-                    
+
                     // value column
                     buffer.append("<td>"); //NON-NLS
                     switch (attr.getAttributeType().getValueType()) {

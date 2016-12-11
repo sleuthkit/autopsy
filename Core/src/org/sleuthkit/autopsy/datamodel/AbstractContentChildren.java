@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -107,7 +107,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         public AbstractContentNode<? extends Content> visit(VirtualDirectory ld) {
             return new VirtualDirectoryNode(ld);
         }
-        
+
         @Override
         public AbstractContentNode<? extends Content> visit(SlackFile sf) {
             return new SlackFileNode(sf);
@@ -136,7 +136,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
-            return new FileTypesByExtNode(sf.getSleuthkitCase(), null);
+            return new org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode(sf.getSleuthkitCase(), null);
         }
 
         @Override

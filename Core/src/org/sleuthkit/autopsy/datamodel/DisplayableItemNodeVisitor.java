@@ -58,7 +58,7 @@ public interface DisplayableItemNodeVisitor<T> {
      */
     T visit(ViewsNode vn);
 
-    T visit(FileTypesByExtNode.FileExtensionNode fsfn);
+    T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn);
 
     T visit(DeletedContentNode dcn);
 
@@ -68,7 +68,7 @@ public interface DisplayableItemNodeVisitor<T> {
 
     T visit(FileSizeNode fsn);
 
-    T visit(FileTypesByExtNode sfn);
+    T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode sfn);
 
     T visit(RecentFilesNode rfn);
 
@@ -212,7 +212,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypesByExtNode.FileExtensionNode fsfn) {
+        public T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileExtensionNode fsfn) {
             return defaultVisit(fsfn);
         }
 
@@ -257,7 +257,7 @@ public interface DisplayableItemNodeVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypesByExtNode sfn) {
+        public T visit(org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode sfn) {
             return defaultVisit(sfn);
         }
 
