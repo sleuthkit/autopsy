@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2016 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,33 +25,37 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 
 /**
- * EmptyNode Class made for when you need to display a node with with text in the table view
- * but no children in the tree view.
- *
+ * Provides a root node for the results views with a single child node that
+ * displays a message as the sole item in its property sheet, useful for
+ * displaying explanatory text in the result views when there is a node with no
+ * children in the tree view.
  */
 public final class EmptyNode extends AbstractNode {
 
     /**
-     * Creates an EmptyNode
-     * 
-     * @param displayedMessage the text you would like displayed in the table view, this will not appear as a child node. 
+     * Provides a root node for the results views with a single child node that
+     * displays a message as the sole item in its property sheet, useful for
+     * displaying explanatory text in the result views when there is a node with
+     * no children in the tree view.
+     *
+     * @param displayedMessage The text for the property sheet of the child
+     *                         node.
      */
     public EmptyNode(String displayedMessage) {
         super(Children.create(new EmptyNodeChildren(displayedMessage), true));
-
     }
 
     static class EmptyNodeChildren extends ChildFactory<String> {
 
-        String fileIdMsg; //NON-NLS
+        String displayedMessage;
 
         private EmptyNodeChildren(String displayedMessage) {
-            fileIdMsg = displayedMessage;
+            this.displayedMessage = displayedMessage;
         }
 
         @Override
-        protected boolean createKeys(List<String> list) {
-            list.add(fileIdMsg);
+        protected boolean createKeys(List<String> keys) {
+            keys.add(displayedMessage);
             return true;
         }
 
@@ -63,9 +67,8 @@ public final class EmptyNode extends AbstractNode {
     }
 
     /**
-     * MessageNode is is the info message that displays in the table view, by
-     * also extending a DisplayableItemNode type, rather than an AbstractNode
-     * type it doesn't throw an error when right clicked.
+     * The single child node of an EmptyNode, responsible for displaying a
+     * message as the sole item in its property sheet.
      */
     static class MessageNode extends DisplayableItemNode {
 
