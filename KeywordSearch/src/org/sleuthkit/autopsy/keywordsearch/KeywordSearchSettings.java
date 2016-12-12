@@ -211,14 +211,14 @@ class KeywordSearchSettings {
             KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
         }
         //setting default Extract UTF8
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
             logger.log(Level.INFO, "No configuration for UTF8 found, generating default..."); //NON-NLS
-            KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+            KeywordSearchSettings.setStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
         }
         //setting default Extract UTF16
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, TextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
             logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults..."); //NON-NLS
-            KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+            KeywordSearchSettings.setStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
         }
         //setting default Latin-1 Script
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {

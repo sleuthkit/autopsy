@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
-class HtmlTextExtractor extends TextExtractor<Void> {
+class HtmlTextExtractor extends FileTextExtractor<Void> {
 
     private static final Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
 

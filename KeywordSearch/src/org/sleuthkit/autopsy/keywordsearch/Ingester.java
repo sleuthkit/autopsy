@@ -36,14 +36,16 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SlackFile;
+import org.sleuthkit.datamodel.SleuthkitItemVisitor;
+import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -99,6 +101,11 @@ class Ingester {
         indexContentStream(new NullContentStream(file), getContentFields(file), 0);
     }
 
+    void indexMetaDataOnly(BlackboardArtifact artifact) throws IngesterException {
+
+//        indexContentStream(new NullContentStream(artifact), getContentFields(file), 0);
+    }
+
     /**
      * Sends a TextExtractor to Solr to have its content extracted and added to
      * the index. commit() should be called once you're done ingesting files.
@@ -117,6 +124,12 @@ class Ingester {
         indexContentStream(new NullContentStream(file), params, 0);
     }
 
+    private void recordNumberOfChunks(BlackboardArtifact artifact, int numChunks) throws IngesterException {
+        Map<String, String> params = getContentFields(artifact);
+        params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
+        indexContentStream(new NullArtifactStream(artifact), params, 0);
+    }
+
     /**
      * Creates a field map from FsContent, that is later sent to Solr
      *
@@ -124,19 +137,14 @@ class Ingester {
      *
      * @return the map
      */
-    Map<String, String> getContentFields(AbstractContent fsc) {
+    Map<String, String> getContentFields(SleuthkitVisitableItem fsc) {
         return fsc.accept(getContentFieldsV);
     }
 
     /**
      * Visitor used to create param list to send to SOLR index.
      */
-    static private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
-
-        @Override
-        protected Map<String, String> defaultVisit(Content cntnt) {
-            return new HashMap<>();
-        }
+    static private class GetContentFieldsV extends SleuthkitItemVisitor.Default<Map<String, String>> {
 
         @Override
         public Map<String, String> visit(File f) {
@@ -201,21 +209,46 @@ class Ingester {
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
             return params;
         }
+
+        @Override
+        public Map<String, String> visit(BlackboardArtifact artifact) {
+
+            Map<String, String> params = new HashMap<>();
+            params.put(Server.Schema.ID.toString(), Long.toString(artifact.getArtifactID()));
+            try {
+                Content dataSource = ArtifactExtractor.getDataSource(artifact);
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the artifact {0}", artifact.getArtifactID()); //NON-NLS
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
+            }
+
+            return params;
+        }
+
+        @Override
+        protected Map<String, String> defaultVisit(SleuthkitVisitableItem svi) {
+            return new HashMap<>();
+        }
     }
 
     private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024; //chars
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
 
-    public <T> boolean indexText(TextExtractor<T> extractor, AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException {
+    public <A, T extends SleuthkitVisitableItem> boolean indexText(TextExtractor<A, T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
         int numChunks = 0; //unknown until chunking is done
 
         if (extractor.noExtractionOptionsAreEnabled()) {
             return true;
         }
-        T appendix = extractor.newAppendixProvider();
-        try (final InputStream stream = extractor.getInputStream(sourceFile);
-                Reader reader = extractor.getReader(stream, sourceFile, appendix);) {
+        final long sourceID = extractor.getID(source);
+        final String sourceName = extractor.getName(source);
+        Map<String, String> fields = getContentFields(source);
+
+        A appendix = extractor.newAppendixProvider();
+        try (final InputStream stream = extractor.getInputStream(source);
+                Reader reader = extractor.getReader(stream, source, appendix);) {
 
             //we read max 1024 chars at time, this seems to max what this Reader would return
             char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
@@ -265,10 +298,10 @@ class Ingester {
 
                 //encode to bytes as UTF-8 to index as byte stream
                 byte[] encodedBytes = chunkString.getBytes(Server.DEFAULT_INDEXED_TEXT_CHARSET);
-                String chunkId = Server.getChunkIdString(sourceFile.getId(), numChunks + 1);
+
+                String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 try {
-                    ByteContentStream bcs = new ByteContentStream(encodedBytes, encodedBytes.length, sourceFile);
-                    Map<String, String> fields = getContentFields(sourceFile);
+                    ContentStream bcs = extractor.getContentStream(encodedBytes, encodedBytes.length, source);
                     try {
                         indexContentStream(bcs, fields, encodedBytes.length);
                     } catch (Exception ex) {
@@ -277,20 +310,21 @@ class Ingester {
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
                     extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
-                            + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);//NON-NLS
+                            + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
 
                     throw ingEx; //need to rethrow to signal error and move on
                 }
             }
         } catch (IOException ex) {
-            extractor.logWarning("Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);//NON-NLS
+            extractor.logWarning("Unable to read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } catch (Exception ex) {
-            extractor.logWarning("Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);//NON-NLS
+            extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
             //after all chunks, ingest the parent file without content itself, and store numChunks
-            recordNumberOfChunks(sourceFile, numChunks);
+            fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
+            indexContentStream(extractor.getNullStream(source), fields, 0);
         }
         return true;
     }
@@ -442,7 +476,7 @@ class Ingester {
     /**
      * ContentStream associated with FsContent, but forced with no content
      */
-    private static class NullContentStream implements ContentStream {
+    static class NullContentStream implements ContentStream {
 
         AbstractContent aContent;
 
@@ -458,6 +492,50 @@ class Ingester {
         @Override
         public String getSourceInfo() {
             return NbBundle.getMessage(this.getClass(), "Ingester.NullContentStream.getSrcInfo.text", aContent.getId());
+        }
+
+        @Override
+        public String getContentType() {
+            return null;
+        }
+
+        @Override
+        public Long getSize() {
+            return 0L;
+        }
+
+        @Override
+        public InputStream getStream() throws IOException {
+            return new ByteArrayInputStream(new byte[0]);
+        }
+
+        @Override
+        public Reader getReader() throws IOException {
+            throw new UnsupportedOperationException(
+                    NbBundle.getMessage(this.getClass(), "Ingester.NullContentStream.getReader"));
+        }
+    }
+
+    /**
+     * ContentStream associated with Artifact, but forced with no content
+     */
+    static class NullArtifactStream implements ContentStream {
+
+        BlackboardArtifact aContent;
+
+        NullArtifactStream(BlackboardArtifact aContent) {
+            this.aContent = aContent;
+        }
+
+        @Override
+        public String getName() {
+            return aContent.getDisplayName();
+        }
+
+        @NbBundle.Messages("Ingester.NullArtifactStream.getSrcInfo.text=File:{0})\n")
+        @Override
+        public String getSourceInfo() {
+            return Bundle.Ingester_NullArtifactStream_getSrcInfo_text(aContent.getArtifactID());
         }
 
         @Override

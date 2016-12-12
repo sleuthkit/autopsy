@@ -89,7 +89,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private List<TextExtractor<?>> textExtractors;
+    private List<FileTextExtractor<?>> textExtractors;
     private StringsTextExtractor stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
@@ -415,10 +415,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            TextExtractor extractor = null;
+            FileTextExtractor extractor = null;
 
             //go over available text extractors in order, and pick the first one (most specific one)
-            for (TextExtractor fe : textExtractors) {
+            for (FileTextExtractor fe : textExtractors) {
                 if (fe.isSupported(aFile, detectedFormat)) {
                     extractor = fe;
                     break;
@@ -514,7 +514,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             // we skip archive formats that are opened by the archive module. 
             // @@@ We could have a check here to see if the archive module was enabled though...
-            if (TextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
+            if (FileTextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
                 try {
                     if (context.fileIngestIsCancelled()) {
                         return;

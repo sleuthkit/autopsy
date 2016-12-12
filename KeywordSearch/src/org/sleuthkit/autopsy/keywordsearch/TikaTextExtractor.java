@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * parsers-supported content type.
  *
  */
-class TikaTextExtractor extends TextExtractor<Metadata> {
+class TikaTextExtractor extends FileTextExtractor<Metadata> {
 
     private static final Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private static final int MAX_EXTR_TEXT_CHARS = 16 * 1024;
@@ -110,8 +110,8 @@ class TikaTextExtractor extends TextExtractor<Metadata> {
     @Override
     public boolean isSupported(AbstractFile file, String detectedFormat) {
         if (detectedFormat == null
-                || TextExtractor.BLOB_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
-                || TextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
+                || FileTextExtractor.BLOB_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
+                || FileTextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
                 || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
                 || detectedFormat.equals("application/x-font-ttf")) {   // Tika currently has a bug in the ttf parser in fontbox; It will throw an out of memory exception//NON-NLS
 
@@ -123,6 +123,7 @@ class TikaTextExtractor extends TextExtractor<Metadata> {
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
 
+    @Override
     InputStream getInputStream(AbstractFile sourceFile1) {
         return new ReadContentInputStream(sourceFile1);
     }
@@ -131,4 +132,5 @@ class TikaTextExtractor extends TextExtractor<Metadata> {
     boolean noExtractionOptionsAreEnabled() {
         return false;
     }
+
 }
