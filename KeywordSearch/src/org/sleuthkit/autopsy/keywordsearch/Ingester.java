@@ -328,7 +328,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    private void indexContentStream(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+    void indexContentStream(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
             String msg = NbBundle.getMessage(this.getClass(),
