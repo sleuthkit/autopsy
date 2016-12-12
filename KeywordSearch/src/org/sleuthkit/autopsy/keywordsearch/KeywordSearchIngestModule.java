@@ -432,7 +432,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
             //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
             //divide into chunks and index
-            return Ingester.getDefault().chunkText(extractor, aFile, context);
+            return Ingester.getDefault().indexText(extractor, aFile, context);
         }
 
         /**
@@ -448,7 +448,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                if (Ingester.getDefault().chunkText(stringExtractor, aFile, KeywordSearchIngestModule.this.context)) {
+                if (Ingester.getDefault().indexText(stringExtractor, aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {

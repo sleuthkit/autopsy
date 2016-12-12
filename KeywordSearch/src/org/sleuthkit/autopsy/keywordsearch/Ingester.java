@@ -83,25 +83,6 @@ class Ingester {
     }
 
     /**
-     * Indexes the text chunk.
-     *
-     * @param ingester   An Ingester to do the indexing.
-     * @param chunkBytes The raw bytes of the text chunk.
-     * @param chunkSize  The size of the text chunk in bytes.
-     *
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
-     */
-    void indexChunk(AbstractFile chunkSource, byte[] chunkBytes, long chunkSize, String chunkID) throws IngesterException {
-        ByteContentStream bcs = new ByteContentStream(chunkBytes, chunkSize, chunkSource);
-        Map<String, String> fields = getContentFields(chunkSource);
-        try {
-            indexContentStream(bcs, fields, chunkBytes.length);
-        } catch (Exception ex) {
-            throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkID), ex);
-        }
-    }
-
-    /**
      * Sends a file to Solr to have its content extracted and added to the
      * index. commit() should be called once you're done ingesting files. If the
      * file is a directory or ingestContent is set to false, the file name is
@@ -130,7 +111,7 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      *                           file, but the Solr server is probably fine.
      */
-    void recordNumberOfChunks(AbstractFile file, int numChunks) throws IngesterException {
+    private void recordNumberOfChunks(AbstractFile file, int numChunks) throws IngesterException {
         Map<String, String> params = getContentFields(file);
         params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
         indexContentStream(new NullContentStream(file), params, 0);
@@ -226,8 +207,8 @@ class Ingester {
     private static final int SINGLE_READ_CHARS = 1024;
     private static final int EXTRA_CHARS = 128; //for whitespace
 
-    public <T> boolean chunkText(TextExtractor<T> extractor, AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException {
-        int numChunks = 0; //unknown until indexing is done
+    public <T> boolean indexText(TextExtractor<T> extractor, AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException {
+        int numChunks = 0; //unknown until chunking is done
 
         if (extractor.noExtractionOptionsAreEnabled()) {
             return true;
@@ -286,7 +267,13 @@ class Ingester {
                 byte[] encodedBytes = chunkString.getBytes(Server.DEFAULT_INDEXED_TEXT_CHARSET);
                 String chunkId = Server.getChunkIdString(sourceFile.getId(), numChunks + 1);
                 try {
-                    indexChunk(sourceFile, encodedBytes, encodedBytes.length, chunkId);
+                    ByteContentStream bcs = new ByteContentStream(encodedBytes, encodedBytes.length, sourceFile);
+                    Map<String, String> fields = getContentFields(sourceFile);
+                    try {
+                        indexContentStream(bcs, fields, encodedBytes.length);
+                    } catch (Exception ex) {
+                        throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
+                    }
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
                     extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
@@ -314,7 +301,7 @@ class Ingester {
      * @param totalRead    the number of chars in textChunkBuf
      * @param textChunkBuf the characters to sanitize
      */
-    static void sanitizeToUTF8(StringBuilder sb) {
+    private static void sanitizeToUTF8(StringBuilder sb) {
         final int length = sb.length();
 
         // Sanitize by replacing non-UTF-8 characters with caret '^'
@@ -341,7 +328,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    void indexContentStream(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+    private void indexContentStream(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
             String msg = NbBundle.getMessage(this.getClass(),
