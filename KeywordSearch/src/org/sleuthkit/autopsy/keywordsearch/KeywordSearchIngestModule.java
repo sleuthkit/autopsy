@@ -512,7 +512,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     if (context.fileIngestIsCancelled()) {
                         return;
                     }
-                    ingester.ingest(aFile, false); //meta-data only
+                    ingester.indexMetaDataOnly(aFile);
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
                 } catch (IngesterException ex) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
@@ -539,7 +539,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     if (context.fileIngestIsCancelled()) {
                         return;
                     }
-                    ingester.ingest(aFile, false); //meta-data only
+                    ingester.indexMetaDataOnly(aFile);
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
                 } catch (IngesterException ex) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);

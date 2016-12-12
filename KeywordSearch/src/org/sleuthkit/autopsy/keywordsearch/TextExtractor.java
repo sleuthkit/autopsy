@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,8 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 
@@ -30,6 +28,10 @@ import org.sleuthkit.datamodel.AbstractFile;
  * chunks
  */
 interface TextExtractor {
+
+    default Ingester getIngester() {
+        return Server.getIngester();
+    }
 
     /**
      * Common options that can be used by some extractors
@@ -40,8 +42,14 @@ interface TextExtractor {
         EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
     };
 
-    //generally text extractors should ignore archives
-    //and let unpacking modules take case of them
+    static final List<String> BLOB_MIME_TYPES
+            = Arrays.asList(
+                    //ignore binary blob data, for which string extraction will be used
+                    "application/octet-stream", //NON-NLS
+                    "application/x-msdownload"); //NON-NLS
+
+    /** generally text extractors should ignore archives and let unpacking
+     * modules take care of them */
     static final List<String> ARCHIVE_MIME_TYPES
             = Arrays.asList(
                     //ignore unstructured binary and compressed data, for which string extraction or unzipper works better
@@ -77,19 +85,6 @@ interface TextExtractor {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
-    /**
-     * Get number of chunks resulted from extracting this AbstractFile
-     *
-     * @return the number of chunks produced
-     */
-    int getNumChunks();
-
-    /**
-     * Get the source file associated with this extraction
-     *
-     * @return the source AbstractFile
-     */
-    AbstractFile getSourceFile();
 
     /**
      * Index the Abstract File
@@ -101,38 +96,6 @@ interface TextExtractor {
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
     boolean index(AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException;
-
-    /**
-     * Sets the scripts to use for the extraction
-     *
-     * @param extractScripts scripts to use
-     *
-     * @return true if extractor supports script - specific extraction, false
-     *         otherwise
-     */
-    boolean setScripts(List<SCRIPT> extractScript);
-
-    /**
-     * Get the currently used scripts for extraction
-     *
-     * @return scripts currently used or null if not supported
-     */
-    List<SCRIPT> getScripts();
-
-    /**
-     * Get current options
-     *
-     * @return currently used, extractor specific options, or null of not
-     *         supported
-     */
-    Map<String, String> getOptions();
-
-    /**
-     * Set extractor specific options
-     *
-     * @param options options to use
-     */
-    void setOptions(Map<String, String> options);
 
     /**
      * Determines if the extractor works only for specified types is

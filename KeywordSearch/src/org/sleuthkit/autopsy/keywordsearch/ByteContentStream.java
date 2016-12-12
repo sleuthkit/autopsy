@@ -23,11 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.Charset;
-
+import org.apache.solr.common.util.ContentStream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.AbstractContent;
 
 /**
@@ -37,19 +35,17 @@ import org.sleuthkit.datamodel.AbstractContent;
 class ByteContentStream implements ContentStream {
 
     //input
-    private byte[] content; //extracted subcontent
+    private final byte[] content; //extracted subcontent
     private long contentSize;
-    private AbstractContent aContent; //origin
-    private Charset charset; //output byte stream charset of encoded strings
+    private final AbstractContent aContent; //origin
 
-    private InputStream stream;
+    private final InputStream stream;
 
-    private static Logger logger = Logger.getLogger(ByteContentStream.class.getName());
+    private static final Logger logger = Logger.getLogger(ByteContentStream.class.getName());
 
-    public ByteContentStream(byte[] content, long contentSize, AbstractContent aContent, Charset charset) {
+    public ByteContentStream(byte[] content, long contentSize, AbstractContent aContent) {
         this.content = content;
         this.aContent = aContent;
-        this.charset = charset;
         stream = new ByteArrayInputStream(content, 0, (int) contentSize);
     }
 
@@ -63,7 +59,7 @@ class ByteContentStream implements ContentStream {
 
     @Override
     public String getContentType() {
-        return "text/plain;charset=" + charset.name(); //NON-NLS
+        return "text/plain;charset=" + Server.DEFAULT_INDEXED_TEXT_CHARSET.name(); //NON-NLS
     }
 
     @Override
