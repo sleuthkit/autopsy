@@ -5,6 +5,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -12,8 +14,11 @@ import java.util.HashMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.common.util.ContentStream;
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import static org.sleuthkit.autopsy.keywordsearch.Bundle.ByteArtifactStream_getSrcInfo_text;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -163,4 +168,68 @@ public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
         return source.getDisplayName();
     }
 
+    static private class ByteArtifactStream implements ContentStream {
+
+        //input
+        private final byte[] content; //extracted subcontent
+        private long contentSize;
+        private final BlackboardArtifact aContent; //origin
+
+        private final InputStream stream;
+
+        private static final Logger logger = Logger.getLogger(ByteArtifactStream.class.getName());
+
+        public ByteArtifactStream(byte[] content, long contentSize, BlackboardArtifact aContent) {
+            this.content = content;
+            this.aContent = aContent;
+            stream = new ByteArrayInputStream(content, 0, (int) contentSize);
+        }
+
+        public byte[] getByteContent() {
+            return content;
+        }
+
+        public BlackboardArtifact getSourceContent() {
+            return aContent;
+        }
+
+        @Override
+        public String getContentType() {
+            return "text/plain;charset=" + Server.DEFAULT_INDEXED_TEXT_CHARSET.name(); //NON-NLS
+        }
+
+        @Override
+        public String getName() {
+            return aContent.getDisplayName();
+        }
+
+        @Override
+        public Reader getReader() throws IOException {
+            return new InputStreamReader(stream);
+
+        }
+
+        @Override
+        public Long getSize() {
+            return contentSize;
+        }
+
+        @Override
+        @NbBundle.Messages("ByteArtifactStream.getSrcInfo.text=Artifact:{0}")
+        public String getSourceInfo() {
+            return ByteArtifactStream_getSrcInfo_text(aContent.getArtifactID());
+        }
+
+        @Override
+        public InputStream getStream() throws IOException {
+            return stream;
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            super.finalize();
+
+            stream.close();
+        }
+    }
 }
