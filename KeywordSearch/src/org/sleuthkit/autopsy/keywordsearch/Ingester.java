@@ -22,13 +22,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.util.ContentStream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
@@ -42,7 +42,6 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
-import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -54,13 +53,12 @@ class Ingester {
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     private volatile boolean uncommitedIngests = false;
     private final Server solrServer = KeywordSearch.getServer();
-    private final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
+    private static final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
     private static Ingester instance;
 
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
     private static final int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
-    private static final String ENCODING = "UTF-8"; //NON-NLS
 
     private Ingester() {
     }
@@ -84,60 +82,22 @@ class Ingester {
     }
 
     /**
-     * Sends a stream to Solr to have its content extracted and added to the
-     * index. commit() should be called once you're done ingesting files.
+     * Indexes the text chunk.
      *
-     * @param afscs File AbstractFileStringContentStream to ingest
+     * @param ingester   An Ingester to do the indexing.
+     * @param chunkBytes The raw bytes of the text chunk.
+     * @param chunkSize  The size of the text chunk in bytes.
      *
-     * @throws IngesterException if there was an error processing a specific
-     *                           file, but the Solr server is probably fine.
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    void ingest(AbstractFileStringContentStream afscs) throws IngesterException {
-        Map<String, String> params = getContentFields(afscs.getSourceContent());
-        ingest(afscs, params, afscs.getSourceContent().getSize());
-    }
-
-    /**
-     * Sends a TextExtractor to Solr to have its content extracted and added to
-     * the index. commit() should be called once you're done ingesting files.
-     * FileExtract represents a parent of extracted file with actual content.
-     * The parent itself has no content, only meta data and is used to associate
-     * the extracted AbstractFileChunk
-     *
-     * @param fe TextExtractor to ingest
-     *
-     * @throws IngesterException if there was an error processing a specific
-     *                           file, but the Solr server is probably fine.
-     */
-    void ingest(TextExtractor fe) throws IngesterException {
-        Map<String, String> params = getContentFields(fe.getSourceFile());
-
-        params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(fe.getNumChunks()));
-
-        ingest(new NullContentStream(fe.getSourceFile()), params, 0);
-    }
-
-    /**
-     * Sends a AbstractFileChunk to Solr and its extracted content stream to be
-     * added to the index. commit() should be called once you're done ingesting
-     * files. AbstractFileChunk represents a file chunk and its chunk content.
-     *
-     * @param fec  AbstractFileChunk to ingest
-     * @param size approx. size of the stream in bytes, used for timeout
-     *             estimation
-     *
-     * @throws IngesterException if there was an error processing a specific
-     *                           file, but the Solr server is probably fine.
-     */
-    void ingest(AbstractFileChunk fec, ByteContentStream bcs, int size) throws IngesterException {
-        AbstractContent sourceContent = bcs.getSourceContent();
-        Map<String, String> params = getContentFields(sourceContent);
-
-        //overwrite id with the chunk id
-        params.put(Server.Schema.ID.toString(),
-                Server.getChunkIdString(sourceContent.getId(), fec.getChunkNumber()));
-
-        ingest(bcs, params, size);
+    void indexChunk(AbstractFile chunkSource, byte[] chunkBytes, long chunkSize, String chunkID) throws IngesterException {
+        ByteContentStream bcs = new ByteContentStream(chunkBytes, chunkSize, chunkSource);
+        Map<String, String> fields = getContentFields(chunkSource);
+        try {
+            ingest(bcs, fields, chunkBytes.length);
+        } catch (Exception ex) {
+            throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkID), ex);
+        }
     }
 
     /**
@@ -153,12 +113,25 @@ class Ingester {
      * @throws IngesterException if there was an error processing a specific
      *                           file, but the Solr server is probably fine.
      */
-    void ingest(AbstractFile file, boolean ingestContent) throws IngesterException {
-        if (ingestContent == false || file.isDir()) {
-            ingest(new NullContentStream(file), getContentFields(file), 0);
-        } else {
-            ingest(new FscContentStream(file), getContentFields(file), file.getSize());
-        }
+    void indexMetaDataOnly(AbstractFile file) throws IngesterException {
+        ingest(new NullContentStream(file), getContentFields(file), 0);
+    }
+    /**
+     * Sends a TextExtractor to Solr to have its content extracted and added to
+     * the index. commit() should be called once you're done ingesting files.
+     * FileExtract represents a parent of extracted file with actual content.
+     * The parent itself has no content, only meta data and is used to associate
+     * the extracted AbstractFileChunk
+     *
+     * @param fe TextExtractor to ingest
+     *
+     * @throws IngesterException if there was an error processing a specific
+     *                           file, but the Solr server is probably fine.
+     */
+    void recordNumberOfChunks(AbstractFile file, int numChunks) throws IngesterException {
+        Map<String, String> params = getContentFields(file);
+        params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
+        ingest(new NullContentStream(file), params, 0);
     }
 
     /**
@@ -168,14 +141,14 @@ class Ingester {
      *
      * @return the map
      */
-    private Map<String, String> getContentFields(AbstractContent fsc) {
+    Map<String, String> getContentFields(AbstractContent fsc) {
         return fsc.accept(getContentFieldsV);
     }
 
     /**
      * Visitor used to create param list to send to SOLR index.
      */
-    private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
+    static private class GetContentFieldsV extends ContentVisitor.Default<Map<String, String>> {
 
         @Override
         protected Map<String, String> defaultVisit(Content cntnt) {
@@ -304,25 +277,19 @@ class Ingester {
 
             if (read != 0) {
                 String s = "";
-                try {
-                    s = new String(docChunkContentBuf, 0, read, ENCODING);
-                    // Sanitize by replacing non-UTF-8 characters with caret '^' before adding to index
-                    char[] chars = null;
-                    for (int i = 0; i < s.length(); i++) {
-                        if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
-                            // only convert string to char[] if there is a non-UTF8 character
-                            if (chars == null) {
-                                chars = s.toCharArray();
-                            }
-                            chars[i] = '^';
+                s = new String(docChunkContentBuf, 0, read, StandardCharsets.UTF_8);
+                char[] chars = null;
+                for (int i = 0; i < s.length(); i++) {
+                    if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
+                        // only convert string to char[] if there is a non-UTF8 character
+                        if (chars == null) {
+                            chars = s.toCharArray();
                         }
+                        chars[i] = '^';
                     }
-                    // check if the string was modified (i.e. there was a non-UTF8 character found)
-                    if (chars != null) {
-                        s = new String(chars);
-                    }
-                } catch (UnsupportedEncodingException ex) {
-                    logger.log(Level.SEVERE, "Unsupported encoding", ex); //NON-NLS
+                }
+                if (chars != null) {
+                    s = new String(chars);
                 }
                 updateDoc.addField(Server.Schema.CONTENT.toString(), s);
             } else {
@@ -380,48 +347,6 @@ class Ingester {
         }
     }
 
-    /**
-     * ContentStream to read() the data from a FsContent object
-     */
-    private static class FscContentStream implements ContentStream {
-
-        private AbstractFile f;
-
-        FscContentStream(AbstractFile f) {
-            this.f = f;
-        }
-
-        @Override
-        public String getName() {
-            return f.getName();
-        }
-
-        @Override
-        public String getSourceInfo() {
-            return NbBundle.getMessage(this.getClass(), "Ingester.FscContentStream.getSrcInfo", f.getId());
-        }
-
-        @Override
-        public String getContentType() {
-            return null;
-        }
-
-        @Override
-        public Long getSize() {
-            return f.getSize();
-        }
-
-        @Override
-        public InputStream getStream() throws IOException {
-            return new ReadContentInputStream(f);
-        }
-
-        @Override
-        public Reader getReader() throws IOException {
-            throw new UnsupportedOperationException(
-                    NbBundle.getMessage(this.getClass(), "Ingester.FscContentStream.getReader"));
-        }
-    }
 
     /**
      * ContentStream associated with FsContent, but forced with no content
