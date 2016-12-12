@@ -33,6 +33,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -94,7 +95,7 @@ class Ingester {
         ByteContentStream bcs = new ByteContentStream(chunkBytes, chunkSize, chunkSource);
         Map<String, String> fields = getContentFields(chunkSource);
         try {
-            ingest(bcs, fields, chunkBytes.length);
+            indexContentStream(bcs, fields, chunkBytes.length);
         } catch (Exception ex) {
             throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkID), ex);
         }
@@ -114,8 +115,9 @@ class Ingester {
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        ingest(new NullContentStream(file), getContentFields(file), 0);
+        indexContentStream(new NullContentStream(file), getContentFields(file), 0);
     }
+
     /**
      * Sends a TextExtractor to Solr to have its content extracted and added to
      * the index. commit() should be called once you're done ingesting files.
@@ -131,7 +133,7 @@ class Ingester {
     void recordNumberOfChunks(AbstractFile file, int numChunks) throws IngesterException {
         Map<String, String> params = getContentFields(file);
         params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-        ingest(new NullContentStream(file), params, 0);
+        indexContentStream(new NullContentStream(file), params, 0);
     }
 
     /**
@@ -220,6 +222,109 @@ class Ingester {
         }
     }
 
+    private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024; //chars
+    private static final int SINGLE_READ_CHARS = 1024;
+    private static final int EXTRA_CHARS = 128; //for whitespace
+
+    public <T> boolean chunkText(TextExtractor<T> extractor, AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException {
+        int numChunks = 0; //unknown until indexing is done
+
+        if (extractor.noExtractionOptionsAreEnabled()) {
+            return true;
+        }
+        T appendix = extractor.newAppendixProvider();
+        try (final InputStream stream = extractor.getInputStream(sourceFile);
+                Reader reader = extractor.getReader(stream, sourceFile, appendix);) {
+
+            //we read max 1024 chars at time, this seems to max what this Reader would return
+            char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
+            long readSize;
+            boolean eof = false;
+            while (!eof) {
+                int totalRead = 0;
+                if (context.fileIngestIsCancelled()) {
+                    return true;
+                }
+                if ((readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS)) == -1) {
+                    eof = true;
+                } else {
+                    totalRead += readSize;
+                }
+
+                //consume more bytes to fill entire chunk (leave EXTRA_CHARS to end the word)
+                while ((totalRead < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
+                        && (readSize = reader.read(textChunkBuf, totalRead, SINGLE_READ_CHARS)) != -1) {
+                    totalRead += readSize;
+                }
+                if (readSize == -1) {
+                    //this is the last chunk
+                    eof = true;
+                } else {
+                    //try to read char-by-char until whitespace to not break words
+                    while ((totalRead < MAX_EXTR_TEXT_CHARS - 1)
+                            && !Character.isWhitespace(textChunkBuf[totalRead - 1])
+                            && (readSize = reader.read(textChunkBuf, totalRead, 1)) != -1) {
+                        totalRead += readSize;
+                    }
+                    if (readSize == -1) {
+                        //this is the last chunk
+                        eof = true;
+                    }
+                }
+
+                StringBuilder sb = new StringBuilder(totalRead + 1000)
+                        .append(textChunkBuf, 0, totalRead);
+
+                if (eof) {
+                    extractor.appendDataToFinalChunk(sb, appendix);
+                }
+                sanitizeToUTF8(sb);
+
+                final String chunkString = sb.toString();
+
+                //encode to bytes as UTF-8 to index as byte stream
+                byte[] encodedBytes = chunkString.getBytes(Server.DEFAULT_INDEXED_TEXT_CHARSET);
+                String chunkId = Server.getChunkIdString(sourceFile.getId(), numChunks + 1);
+                try {
+                    indexChunk(sourceFile, encodedBytes, encodedBytes.length, chunkId);
+                    numChunks++;
+                } catch (Ingester.IngesterException ingEx) {
+                    extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
+                            + sourceFile.getName() + "' (id: " + sourceFile.getId() + ").", ingEx);//NON-NLS
+
+                    throw ingEx; //need to rethrow to signal error and move on
+                }
+            }
+        } catch (IOException ex) {
+            extractor.logWarning("Unable to read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);//NON-NLS
+            return false;
+        } catch (Exception ex) {
+            extractor.logWarning("Unexpected error, can't read content stream from " + sourceFile.getId() + ": " + sourceFile.getName(), ex);//NON-NLS
+            return false;
+        } finally {
+            //after all chunks, ingest the parent file without content itself, and store numChunks
+            recordNumberOfChunks(sourceFile, numChunks);
+        }
+        return true;
+    }
+
+    /**
+     * Sanitize the given chars by replacing non-UTF-8 characters with caret '^'
+     *
+     * @param totalRead    the number of chars in textChunkBuf
+     * @param textChunkBuf the characters to sanitize
+     */
+    static void sanitizeToUTF8(StringBuilder sb) {
+        final int length = sb.length();
+
+        // Sanitize by replacing non-UTF-8 characters with caret '^'
+        for (int i = 0; i < length; i++) {
+            if (!TextUtil.isValidSolrUTF8(sb.charAt(i))) {
+                sb.replace(i, i + 1, "^'");
+            }
+        }
+    }
+
     /**
      * Indexing method that bypasses Tika, assumes pure text It reads and
      * converts the entire content stream to string, assuming UTF8 since we
@@ -236,7 +341,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    void ingest(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+    void indexContentStream(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
             String msg = NbBundle.getMessage(this.getClass(),
@@ -346,7 +451,6 @@ class Ingester {
             logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
         }
     }
-
 
     /**
      * ContentStream associated with FsContent, but forced with no content
