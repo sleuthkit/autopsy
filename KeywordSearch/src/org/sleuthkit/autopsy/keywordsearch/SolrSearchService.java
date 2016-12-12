@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,24 +19,24 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.MissingResourceException;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.apache.solr.common.util.ContentStreamBase.StringStream;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.openide.util.NbBundle;
-import java.net.InetAddress;
-import java.util.MissingResourceException;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An implementation of the KeywordSearchService interface that uses Solr for

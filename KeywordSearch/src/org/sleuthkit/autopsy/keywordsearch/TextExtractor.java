@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.InputStream;
-import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -28,11 +26,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Common methods for utilities that extract text and content and divide into
  * chunks
  */
-abstract class TextExtractor<AppendixProvider> {
-
-    Ingester getIngester() {
-        return Server.getIngester();
-    }
+abstract class TextExtractor<AppendixProvider> extends TextProvider<AppendixProvider, AbstractFile> {
 
     /**
      * Common options that can be used by some extractors
@@ -86,16 +80,6 @@ abstract class TextExtractor<AppendixProvider> {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
-//    /**
-//     * Index the Abstract File
-//     *
-//     * @param sourceFile file to index
-//     *
-//     * @return true if indexed successfully, false otherwise
-//     *
-//     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
-//     */
-//    boolean chunkText(AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException;
     /**
      * Determines if the extractor works only for specified types is
      * supportedTypes() or whether is a generic content extractor (such as
@@ -117,17 +101,6 @@ abstract class TextExtractor<AppendixProvider> {
      */
     abstract boolean isSupported(AbstractFile file, String detectedFormat);
 
-    abstract boolean noExtractionOptionsAreEnabled();
 
-    abstract void logWarning(final String msg, Exception ex);
 
-    void appendDataToFinalChunk(StringBuilder sb, AppendixProvider dataProvider) {
-        //no-op
-    }
-
-    abstract AppendixProvider newAppendixProvider();
-
-    abstract InputStream getInputStream(AbstractFile sourceFile1);
-
-    abstract Reader getReader(InputStream stream, AbstractFile sourceFile, AppendixProvider appendix) throws Ingester.IngesterException;
 }
