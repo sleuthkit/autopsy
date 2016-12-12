@@ -103,12 +103,12 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
     private void reloadScriptsCheckBoxes() {
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
 
         final List<SCRIPT> serviceScripts = KeywordSearchSettings.getStringExtractScripts();
@@ -127,12 +127,12 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
         reloadScriptsCheckBoxes();
 
         boolean utf16
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         enableUTF16Checkbox.setSelected(utf16);
 
         boolean utf8
-                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+                = Boolean.parseBoolean(KeywordSearchSettings.getStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
         enableUTF8Checkbox.setSelected(utf8);
         final boolean extractEnabled = utf16 || utf8;
 
@@ -257,9 +257,9 @@ class KeywordSearchGlobalLanguageSettingsPanel extends javax.swing.JPanel implem
 
     @Override
     public void store() {
-        KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString(),
+        KeywordSearchSettings.setStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString(),
                 Boolean.toString(enableUTF8Checkbox.isSelected()));
-        KeywordSearchSettings.setStringExtractOption(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
+        KeywordSearchSettings.setStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString(),
                 Boolean.toString(enableUTF16Checkbox.isSelected()));
 
         if (toUpdate != null) {

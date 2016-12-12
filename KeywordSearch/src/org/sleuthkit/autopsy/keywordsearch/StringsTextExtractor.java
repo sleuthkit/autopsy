@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskException;
  * with the original source file) up to 1MB then and indexes chunks as text with
  * Solr.
  */
-class StringsTextExtractor extends TextExtractor<Void> {
+class StringsTextExtractor extends FileTextExtractor<Void> {
 
     private static final Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
     private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
@@ -94,8 +94,8 @@ class StringsTextExtractor extends TextExtractor<Void> {
 
     @Override
     boolean noExtractionOptionsAreEnabled() {
-        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
-        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         return extractUTF8 == false && extractUTF16 == false;
     }
@@ -120,8 +120,8 @@ class StringsTextExtractor extends TextExtractor<Void> {
      */
     @Override
     InputStream getInputStream(AbstractFile sourceFile) {
-        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
-        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(TextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
+        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
 
         //check which extract stream to use
         InputStream stringStream = extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)
