@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
-class HtmlTextExtractor extends TextExtractorBase<Void> {
+class HtmlTextExtractor extends TextExtractor<Void> {
 
     private static final Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
 
@@ -64,12 +64,12 @@ class HtmlTextExtractor extends TextExtractorBase<Void> {
     }
 
     @Override
-    public boolean isContentTypeSpecific() {
+    boolean isContentTypeSpecific() {
         return true;
     }
 
     @Override
-    public boolean isSupported(AbstractFile file, String detectedFormat) {
+    boolean isSupported(AbstractFile file, String detectedFormat) {
         return detectedFormat != null
                 && WEB_MIME_TYPES.contains(detectedFormat)
                 && file.getSize() <= MAX_SIZE;

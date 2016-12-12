@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,7 +89,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     //accessed read-only by searcher thread
 
     private boolean startedSearching = false;
-    private List<TextExtractor> textExtractors;
+    private List<TextExtractor<?>> textExtractors;
     private StringsTextExtractor stringExtractor;
     private final KeywordSearchJobSettings settings;
     private boolean initialized = false;
@@ -415,24 +415,24 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
          * @throws IngesterException exception thrown if indexing failed
          */
         private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            TextExtractor fileExtract = null;
+            TextExtractor extractor = null;
 
             //go over available text extractors in order, and pick the first one (most specific one)
             for (TextExtractor fe : textExtractors) {
                 if (fe.isSupported(aFile, detectedFormat)) {
-                    fileExtract = fe;
+                    extractor = fe;
                     break;
                 }
             }
 
-            if (fileExtract == null) {
+            if (extractor == null) {
                 logger.log(Level.INFO, "No text extractor found for file id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat}); //NON-NLS
                 return false;
             }
 
             //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
             //divide into chunks and index
-            return fileExtract.index(aFile, context);
+            return Ingester.getDefault().chunkText(extractor, aFile, context);
         }
 
         /**
@@ -448,7 +448,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 if (context.fileIngestIsCancelled()) {
                     return true;
                 }
-                if (stringExtractor.index(aFile, KeywordSearchIngestModule.this.context)) {
+                if (Ingester.getDefault().chunkText(stringExtractor, aFile, KeywordSearchIngestModule.this.context)) {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
                     return true;
                 } else {
@@ -461,26 +461,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                 putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
                 return false;
             }
-        }
-
-        /**
-         * Check with every extractor if it supports the file with the detected
-         * format
-         *
-         * @param aFile          file to check for
-         * @param detectedFormat mime-type with detected format (such as
-         *                       text/plain) or null if not detected
-         *
-         * @return true if text extraction is supported
-         */
-        private boolean isTextExtractSupported(AbstractFile aFile, String detectedFormat) {
-            for (TextExtractor extractor : textExtractors) {
-                if (extractor.isContentTypeSpecific() == true
-                        && extractor.isSupported(aFile, detectedFormat)) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         /**

@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * parsers-supported content type.
  *
  */
-class TikaTextExtractor extends TextExtractorBase<Metadata> {
+class TikaTextExtractor extends TextExtractor<Metadata> {
 
     private static final Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private static final int MAX_EXTR_TEXT_CHARS = 16 * 1024;

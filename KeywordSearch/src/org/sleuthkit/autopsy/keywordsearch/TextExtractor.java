@@ -18,18 +18,19 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.InputStream;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
-import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
  * Common methods for utilities that extract text and content and divide into
  * chunks
  */
-interface TextExtractor {
+abstract class TextExtractor<AppendixProvider> {
 
-    default Ingester getIngester() {
+    Ingester getIngester() {
         return Server.getIngester();
     }
 
@@ -85,18 +86,16 @@ interface TextExtractor {
                     "application/x-z", //NON-NLS
                     "application/x-compress"); //NON-NLS
 
-
-    /**
-     * Index the Abstract File
-     *
-     * @param sourceFile file to index
-     *
-     * @return true if indexed successfully, false otherwise
-     *
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
-     */
-    boolean index(AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException;
-
+//    /**
+//     * Index the Abstract File
+//     *
+//     * @param sourceFile file to index
+//     *
+//     * @return true if indexed successfully, false otherwise
+//     *
+//     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+//     */
+//    boolean chunkText(AbstractFile sourceFile, IngestJobContext context) throws Ingester.IngesterException;
     /**
      * Determines if the extractor works only for specified types is
      * supportedTypes() or whether is a generic content extractor (such as
@@ -104,7 +103,7 @@ interface TextExtractor {
      *
      * @return
      */
-    boolean isContentTypeSpecific();
+    abstract boolean isContentTypeSpecific();
 
     /**
      * Determines if the file content is supported by the extractor if
@@ -116,5 +115,19 @@ interface TextExtractor {
      *
      * @return true if the file content is supported, false otherwise
      */
-    boolean isSupported(AbstractFile file, String detectedFormat);
+    abstract boolean isSupported(AbstractFile file, String detectedFormat);
+
+    abstract boolean noExtractionOptionsAreEnabled();
+
+    abstract void logWarning(final String msg, Exception ex);
+
+    void appendDataToFinalChunk(StringBuilder sb, AppendixProvider dataProvider) {
+        //no-op
+    }
+
+    abstract AppendixProvider newAppendixProvider();
+
+    abstract InputStream getInputStream(AbstractFile sourceFile1);
+
+    abstract Reader getReader(InputStream stream, AbstractFile sourceFile, AppendixProvider appendix) throws Ingester.IngesterException;
 }

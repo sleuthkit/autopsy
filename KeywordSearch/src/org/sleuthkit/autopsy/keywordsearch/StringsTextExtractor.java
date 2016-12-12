@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskException;
  * with the original source file) up to 1MB then and indexes chunks as text with
  * Solr.
  */
-class StringsTextExtractor extends TextExtractorBase<Void> {
+class StringsTextExtractor extends TextExtractor<Void> {
 
     private static final Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
     private static final long MAX_STRING_CHUNK_SIZE = 1 * 31 * 1024L;

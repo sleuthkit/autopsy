@@ -143,7 +143,7 @@ public class SolrSearchService implements KeywordSearchService {
         solrFields.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
 
         try {
-            Ingester.getDefault().ingest(new StringStream(""), solrFields, 0);
+            Ingester.getDefault().indexContentStream(new StringStream(""), solrFields, 0);
         } catch (Ingester.IngesterException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
@@ -159,7 +159,7 @@ public class SolrSearchService implements KeywordSearchService {
         StringStream contentStream = new StringStream(artifactContents.toString());
 
         try {
-            Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
+            Ingester.getDefault().indexContentStream(contentStream, solrFields, contentStream.getSize());
         } catch (Ingester.IngesterException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
