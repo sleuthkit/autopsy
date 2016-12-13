@@ -50,10 +50,6 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
     def findTangoMessagesInDB(self, databasePath, abstractFile):
-        connection = None
-        resultSet = None
-        statement = None
-
         if not databasePath:
             return
 

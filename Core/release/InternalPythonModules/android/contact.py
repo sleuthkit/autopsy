@@ -55,11 +55,6 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
     The fileId will be the abstract file associated with the artifacts
     """
     def findContactsInDB(self, databasePath, abstractFile):
-        connection = None
-        resultSet = None
-        statement = None
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
-
         if not databasePath:
             return
 

@@ -51,10 +51,6 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
     def findGeoLocationsInDB(self, databasePath, abstractFile):
-        connection = None
-        resultSet = None
-        statement = None
-
         if not databasePath:
             return
 

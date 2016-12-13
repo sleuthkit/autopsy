@@ -68,7 +68,7 @@ class AndroidIngestModule(DataSourceIngestModule):
 
         errors = []
         fileManager = Case.getCurrentCase().getServices().getFileManager()
-        analyzers = [contact.ContactAnalyzer(), calllog.CallLogAnalyzer(), textmessage.TextMessageAnalyzer(), tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(), googlemap.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(), cachelocation.CacheLocationAnalyzer()]
+        analyzers = [contact.ContactAnalyzer(), calllog.CallLogAnalyzer(), textmessage.TextMessageAnalyzer(), tangomessage.TangoMessageAnalyzer(), wwfmessage.WWFMessageAnalyzer(), googlemaplocation.GoogleMapLocationAnalyzer(), browserlocation.BrowserLocationAnalyzer(), cachelocation.CacheLocationAnalyzer()]
         self.log(Level.INFO, "running " + str(len(analyzers)) + " analyzers")
         progressBar.switchToDeterminate(len(analyzers))
 
