@@ -109,7 +109,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
         result = ""
         decoded = Base64.decodeBase64(message)
         try:
-            Z = String(decoded, "UTF-8") # NOTE CHECK THIS
+            Z = String(decoded, "UTF-8")
             result = Z.split(wrapper)[1]
         except Exception as ex:
             self._logger.log(Level.SEVERE, "Error decoding a Tango message", ex)
