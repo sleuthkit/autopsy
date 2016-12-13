@@ -23,12 +23,9 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,6 +51,20 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
+/**
+ * The RegexQuery class supports issuing regular expression queries
+ * against a Lucene index. It relies on the fact that content is
+ * stored in it's original form in a "string" field (Server.Schema.CONTENT_STR).
+ * To indicate to Lucene that these are regular expression queries, the query
+ * string must be surrounded by '/' characters. Additionally, the characters
+ * ".*" need to be added both before and after the search term to get hits
+ * in the middle of text.
+ *
+ * Regular expression syntax supported by Lucene is not the same as Java
+ * regular expression syntax. The Lucene syntax is documented here:
+ *
+ * https://lucene.apache.org/core/5_0_0/core/org/apache/lucene/util/automaton/RegExp.html
+ */
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
@@ -61,7 +72,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
     private final KeywordList keywordList;
     private final Keyword keyword;
-    private String field = "content_str";
+    private String field = Server.Schema.CONTENT_STR.toString();
     private final String keywordString;
     static final private int MAX_RESULTS = 20000;
     private boolean escaped;
@@ -99,10 +110,12 @@ final class RegexQuery implements KeywordSearchQuery {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setShowDebugInfo(true); //debug
 
-        solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR : field) + ":/.*" + getQueryString() + ".*/");
+        solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/.*" + getQueryString() + ".*/");
         solrQuery.setRows(MAX_RESULTS);
+
+        // Set the fields we want to have returned by the query.
         if (KeywordSearchSettings.getShowSnippets()) {
-            solrQuery.setFields("content_str", Server.Schema.ID.toString());
+            solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString());
         } else {
             solrQuery.setFields(Server.Schema.ID.toString());
         }
@@ -123,7 +136,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 for (SolrDocument resultDoc : resultList) {
 
                     try {
-                        List<KeywordHit> keywordHits = createKeywordtHits(resultDoc);
+                        List<KeywordHit> keywordHits = createKeywordHits(resultDoc);
                         for (KeywordHit hit : keywordHits) {
                             hitsMultMap.put(new Keyword(hit.getHit(), true), hit);
                         }
@@ -145,74 +158,43 @@ final class RegexQuery implements KeywordSearchQuery {
         return results;
     }
 
-    /**
-     * Create the minimum set of documents. Ignores chunk IDs. Only one hit per
-     * file in results.
-     *
-     * @param resultList
-     *
-     * @return
-     */
-    private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
-        // sort the list so that we consistently pick the same chunk each time.
-        // note this sort is doing a string comparison and not an integer comparison, so
-        // chunk 10 will be smaller than chunk 9.
-        Collections.sort(resultList, (SolrDocument left, SolrDocument right) -> {
-            // ID is in the form of ObjectId_Chunk
-            String leftID = left.getFieldValue(Server.Schema.ID.toString()).toString();
-            String rightID = right.getFieldValue(Server.Schema.ID.toString()).toString();
-            return leftID.compareTo(rightID);
-        });
-
-        // NOTE: We could probably just iterate through the list and compare each ID with the
-        // previous ID to get the unique documents faster than using this set now that the list
-        // is sorted.
-        Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new LuceneQuery.SolrDocumentComparatorIgnoresChunkId());
-        solrDocumentsWithMatches.addAll(resultList);
-        return solrDocumentsWithMatches;
-    }
-
-    private List<KeywordHit> createKeywordtHits(SolrDocument solrDoc) throws TskException {
+    private List<KeywordHit> createKeywordHits(SolrDocument solrDoc) throws TskException {
 
         List<KeywordHit> hits = new ArrayList<>();
-        /**
-         * Get the first snippet from the document if keyword search is
-         * configured to use snippets.
-         */
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
 
-        Collection<Object> fieldValues = solrDoc.getFieldValues("content_str");
+        String content = solrDoc.getOrDefault(Server.Schema.CONTENT_STR.toString(), "").toString();
 
-        for (Object value : fieldValues) {
-            String content = value.toString();
+        Matcher hitMatcher = Pattern.compile(keywordString).matcher(content);
 
-            Matcher hitMatcher = Pattern.compile(keywordString, Pattern.CASE_INSENSITIVE).matcher(content);
-
-            while (hitMatcher.find()) {
-                String snippet = "";
-                final String hit = hitMatcher.group();
-                /*
-                 * If searching for credit card account numbers, do a Luhn check
-                 * on the term and discard it if it does not pass.
-                 */
-                if (keyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-                    Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-                    ccnMatcher.find();
-                    final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
-                    if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
-                        continue;
-                    }
+        while (hitMatcher.find()) {
+            String snippet = "";
+            final String hit = hitMatcher.group();
+            /*
+             * If searching for credit card account numbers, do a Luhn check
+             * on the term and discard it if it does not pass.
+             */
+            if (keyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+                Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
+                ccnMatcher.find();
+                final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
+                if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                    continue;
                 }
-
-                if (KeywordSearchSettings.getShowSnippets()) {
-                    int maxIndex = content.length() - 1;
-                    snippet = content.substring(Integer.max(0, hitMatcher.start() - 30), Integer.max(0, hitMatcher.start() - 1));
-                    snippet += "<<" + hit + "<<";
-                    snippet += content.substring(Integer.min(maxIndex, hitMatcher.end() + 1), Integer.min(maxIndex, hitMatcher.end() + 30));
-                }
-
-                hits.add(new KeywordHit(docId, snippet, hit));
             }
+
+            /**
+             * Get the snippet from the document if keyword search is configured
+             * to use snippets.
+             */
+            if (KeywordSearchSettings.getShowSnippets()) {
+                int maxIndex = content.length() - 1;
+                snippet = content.substring(Integer.max(0, hitMatcher.start() - 30), Integer.max(0, hitMatcher.start() - 1));
+                snippet += "<<" + hit + "<<";
+                snippet += content.substring(Integer.min(maxIndex, hitMatcher.end() + 1), Integer.min(maxIndex, hitMatcher.end() + 30));
+            }
+
+            hits.add(new KeywordHit(docId, snippet, hit));
         }
         return hits;
     }
