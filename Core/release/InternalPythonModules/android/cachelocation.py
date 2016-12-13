@@ -1,3 +1,22 @@
+"""
+Autopsy Forensic Browser
+
+Copyright 2016 Basis Technology Corp.
+Contact: carrier <at> sleuthkit <dot> org
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 from java.io import File
 from java.io import FileInputStream
 from java.io import InputStream
@@ -44,7 +63,7 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.findGeoLocationsInFile(jFile, abstractFile)
+                    self.__findGeoLocationsInFile(jFile, abstractFile)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing cached Location files", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -52,7 +71,7 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error finding cached Location files", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
-    def findGeoLocationsInFile(self, file, abstractFile):
+    def __findGeoLocationsInFile(self, file, abstractFile):
 
         tempBytes = bytearray([0] * 2) # will temporarily hold bytes to be converted into the correct data types
 

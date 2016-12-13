@@ -1,3 +1,22 @@
+"""
+Autopsy Forensic Browser
+
+Copyright 2016 Basis Technology Corp.
+Contact: carrier <at> sleuthkit <dot> org
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 from java.io import File
 from java.lang import Class
 from java.lang import ClassNotFoundException
@@ -42,7 +61,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     jFile = File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
-                    self.findGeoLocationsInDB(jFile.toString(), abstractFile)
+                    self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
                 except Exception as ex:
                     self._logger.log(Level.SEVERE, "Error parsing Google map locations", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -50,7 +69,7 @@ class GoogleMapLocationAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error finding Google map locations", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
-    def findGeoLocationsInDB(self, databasePath, abstractFile):
+    def __findGeoLocationsInDB(self, databasePath, abstractFile):
         if not databasePath:
             return
 

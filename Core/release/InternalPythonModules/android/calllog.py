@@ -1,3 +1,22 @@
+"""
+Autopsy Forensic Browser
+
+Copyright 2016 Basis Technology Corp.
+Contact: carrier <at> sleuthkit <dot> org
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
 from java.io import File
 from java.io import IOException
 from java.lang import Class
@@ -67,7 +86,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                 try:
                     file = File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, file, context.dataSourceIngestIsCancelled)
-                    self.findCallLogsInDB(file.toString(), abstractFile)
+                    self.__findCallLogsInDB(file.toString(), abstractFile)
                 except IOException as ex:
                     self._logger.log(Level.SEVERE, "Error writing temporary call log db to disk", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
@@ -75,7 +94,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error finding call logs", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
-    def findCallLogsInDB(self, databasePath, abstractFile):
+    def __findCallLogsInDB(self, databasePath, abstractFile):
         if not databasePath:
             return
 
