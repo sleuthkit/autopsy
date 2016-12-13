@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
+import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
@@ -61,7 +62,6 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.KeywordHits;
@@ -96,7 +96,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private final LinkedList<String[]> backList;
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
-    private static final Logger logger = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DirectoryTreeTopComponent.class.getName());
     private RootContentChildren contentChildren;
 
     /**
@@ -135,7 +135,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         refreshContentTreeSafe();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:
-                    case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:   
+                    case UserPreferences.HIDE_SLACK_FILES_IN_VIEWS_TREE:
                         // TODO: Need a way to refresh the Views subtree
                         break;
                 }
@@ -313,14 +313,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         WindowManager winManager = WindowManager.getDefault();
         TopComponent win = winManager.findTopComponent(PREFERRED_ID);
         if (win == null) {
-            logger.warning(
+            LOGGER.warning(
                     "Cannot find " + PREFERRED_ID + " component. It will not be located properly in the window system."); //NON-NLS
             return getDefault();
         }
         if (win instanceof DirectoryTreeTopComponent) {
             return (DirectoryTreeTopComponent) win;
         }
-        logger.warning(
+        LOGGER.warning(
                 "There seem to be multiple components with the '" + PREFERRED_ID //NON-NLS
                 + "' ID. That is a potential source of errors and unexpected behavior."); //NON-NLS
         return getDefault();
@@ -435,7 +435,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         try {
                             em.setSelectedNodes(new Node[]{childNodes.getNodeAt(0)});
                         } catch (Exception ex) {
-                            logger.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
+                            LOGGER.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
                         }
                     }
 
@@ -604,6 +604,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
     }
 
+    @NbBundle.Messages("DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.")
     /**
      * Event handler to run when selection changed
      *
@@ -645,18 +646,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         Node kffn = new KnownFileFilterNode(drfn, KnownFileFilterNode.getSelectionContext(originNode));
                         Node sffn = new SlackFileFilterNode(kffn, SlackFileFilterNode.getSelectionContext(originNode));
 
-
                         // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
-
                         //Special case for when File Type Identification has not yet been run and 
                         //there are no mime types to populate Files by Mime Type Tree
-                        if (originNode instanceof FileTypesByMimeType.FileTypesByMimeTypeNode
-                                && ((FileTypesByMimeType.FileTypesByMimeTypeNode) originNode).isEmpty()) {
-                            EmptyNode emptyNode = new EmptyNode();
+                        if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
+                            EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
                             Node emptyDrfn = new DataResultFilterNode(emptyNode, DirectoryTreeTopComponent.this.em);
                             Node emptyKffn = new KnownFileFilterNode(emptyDrfn, KnownFileFilterNode.getSelectionContext(emptyNode));
                             Node emptySffn = new SlackFileFilterNode(emptyKffn, SlackFileFilterNode.getSelectionContext(originNode));
-                            dataResult.setNode(new TableFilterNode(emptySffn, true, "This Node Is Empty"));
+                            dataResult.setNode(new TableFilterNode(emptySffn, true, "This Node Is Empty")); //NON-NLS
                         } else if (originNode instanceof DisplayableItemNode) {
                             dataResult.setNode(new TableFilterNode(sffn, true, ((DisplayableItemNode) originNode).getItemType()));
                         } else {
@@ -669,7 +667,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             try {
                                 displayName = content.getUniquePath();
                             } catch (TskCoreException ex) {
-                                logger.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode); //NON-NLS
+                                LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode); //NON-NLS
                             }
                         } else if (originNode.getLookup().lookup(String.class) != null) {
                             displayName = originNode.getLookup().lookup(String.class);
@@ -776,13 +774,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         Children rootChildren = em.getRootContext().getChildren();
         Node dataSourcesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
         if (dataSourcesFilterNode == null) {
-            logger.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
             return;
         }
         DirectoryTreeFilterNode.OriginalNode imagesNodeOrig = dataSourcesFilterNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
 
         if (imagesNodeOrig == null) {
-            logger.log(Level.SEVERE, "Cannot find data sources node, won't refresh the content tree"); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Cannot find data sources node, won't refresh the content tree"); //NON-NLS
             return;
         }
 
@@ -825,7 +823,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                                 for (int i = 0; i < previouslySelectedNodePath.length; ++i) {
                                     nodePath.append(previouslySelectedNodePath[i]).append("/");
                                 }
-                                logger.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex); //NON-NLS
+                                LOGGER.log(Level.WARNING, "Failed to find any nodes to select on path " + nodePath.toString(), ex); //NON-NLS
                                 break;
                             }
                         }
@@ -840,7 +838,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         try {
                             em.setExploredContextAndSelection(selectedNode, new Node[]{selectedNode});
                         } catch (PropertyVetoException ex) {
-                            logger.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex); //NON-NLS
+                            LOGGER.log(Level.WARNING, "Property veto from ExplorerManager setting selection to " + selectedNode.getName(), ex); //NON-NLS
                         }
                     }
                 }
@@ -880,7 +878,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
                 treeNode = hashsetRootChilds.findChild(setName);
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+                LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
             Node keywordRootNode = resultsChilds.findChild(typeName);
@@ -907,7 +905,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
                 treeNode = listChildren.findChild(keywordName);
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+                LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                 || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
@@ -924,7 +922,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
                 treeNode = interestingItemsRootChildren.findChild(setName);
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+                LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else {
             Node extractedContent = resultsChilds.findChild(ExtractedContent.NAME);
@@ -942,7 +940,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         try {
             em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
         } catch (PropertyVetoException ex) {
-            logger.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
+            LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
         }
 
         // Another thread is needed because we have to wait for dataResult to populate
@@ -977,7 +975,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         try {
             firePropertyChange(BlackboardResultViewer.FINISHED_DISPLAY_EVT, 0, 1);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "DirectoryTreeTopComponent listener threw exception", e); //NON-NLS
             MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.moduleErr"),
                     NbBundle.getMessage(this.getClass(),
                             "DirectoryTreeTopComponent.moduleErr.msg"),

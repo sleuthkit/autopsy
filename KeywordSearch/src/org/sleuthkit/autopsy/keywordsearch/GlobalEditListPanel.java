@@ -42,7 +42,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import javax.swing.JOptionPane;
 
 /**
  * GlobalEditListPanel widget to manage keywords in lists
@@ -64,7 +63,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }
 
     private void customizeComponents() {
-        newWordButton.setToolTipText((NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.addWordToolTip")));
+        newKeywordsButton.setToolTipText((NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.addWordToolTip")));
         exportButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.exportToFile"));
         saveListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
         deleteWordButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.removeSelectedMsg"));
@@ -125,7 +124,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         // items that need an unlocked list w/out ingest running
         boolean isListLocked = ((isListSelected == false) || (currentKeywordList.isEditable()));
         boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
-        newWordButton.setEnabled(canAddWord);
+        newKeywordsButton.setEnabled(canAddWord);
         keywordOptionsLabel.setEnabled(canAddWord);
         keywordOptionsSeparator.setEnabled(canAddWord);
         deleteListButton.setEnabled(canAddWord);
@@ -155,8 +154,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         jScrollPane1 = new javax.swing.JScrollPane();
         keywordTable = new javax.swing.JTable();
         addKeywordPanel = new javax.swing.JPanel();
-        newWordButton = new javax.swing.JButton();
         deleteWordButton = new javax.swing.JButton();
+        newKeywordsButton = new javax.swing.JButton();
         ingestMessagesCheckbox = new javax.swing.JCheckBox();
         keywordsLabel = new javax.swing.JLabel();
         keywordOptionsLabel = new javax.swing.JLabel();
@@ -180,14 +179,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         keywordTable.getTableHeader().setReorderingAllowed(false);
         jScrollPane1.setViewportView(keywordTable);
 
-        newWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
-        newWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.addWordButton.text")); // NOI18N
-        newWordButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                newWordButtonActionPerformed(evt);
-            }
-        });
-
         deleteWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
         deleteWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.deleteWordButton.text")); // NOI18N
         deleteWordButton.addActionListener(new java.awt.event.ActionListener() {
@@ -196,12 +187,20 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             }
         });
 
+        newKeywordsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newKeywordsButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.newKeywordsButton.text")); // NOI18N
+        newKeywordsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newKeywordsButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout addKeywordPanelLayout = new javax.swing.GroupLayout(addKeywordPanel);
         addKeywordPanel.setLayout(addKeywordPanelLayout);
         addKeywordPanelLayout.setHorizontalGroup(
             addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(addKeywordPanelLayout.createSequentialGroup()
-                .addComponent(newWordButton)
+                .addComponent(newKeywordsButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deleteWordButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -211,8 +210,8 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             .addGroup(addKeywordPanelLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
                 .addGroup(addKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(newWordButton)
-                    .addComponent(deleteWordButton))
+                    .addComponent(deleteWordButton)
+                    .addComponent(newKeywordsButton))
                 .addGap(72, 72, 72))
         );
 
@@ -333,51 +332,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void newWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newWordButtonActionPerformed
-        NewKeywordPanel panel = new NewKeywordPanel();
-
-        int result = JOptionPane.showConfirmDialog(null, panel,
-                NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addKeyword.title"),
-                JOptionPane.OK_CANCEL_OPTION);
-
-        if (result == JOptionPane.OK_OPTION) {
-            String newWord = panel.getKeywordText();
-            if (newWord.isEmpty()) {
-                KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.newKwTitle"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.emptyKeyword.text"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-                return;
-            }
-            final Keyword keyword = new Keyword(newWord, !panel.isKeywordRegex(), panel.isKeywordExact());
-            if (currentKeywordList.hasKeyword(keyword)) {
-                KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.newKwTitle"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.addWordButtonAction.kwAlreadyExistsMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-                return;
-            }
-
-            //check if valid
-            boolean valid = true;
-            try {
-                Pattern.compile(newWord);
-            } catch (PatternSyntaxException ex1) {
-                valid = false;
-            } catch (IllegalArgumentException ex2) {
-                valid = false;
-            }
-            if (!valid) {
-                KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.newKwTitle"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.invalidKwMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
-                return;
-            }
-
-            //add & reset checkbox
-            tableModel.addKeyword(keyword);
-            XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            setFocusOnKeywordTextBox();
-            setButtonStates();
-        }
-    }//GEN-LAST:event_newWordButtonActionPerformed
-
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
         if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"), NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
 
@@ -450,6 +404,100 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteListButtonActionPerformed
 
+    private void newKeywordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newKeywordsButtonActionPerformed
+        String keywordsToRedisplay = "";
+        AddKeywordsDialog dialog = new AddKeywordsDialog();
+        
+        int goodCount;
+        int dupeCount;
+        int badCount = 1;  // Default to 1 so we enter the loop the first time
+
+        while(badCount > 0){
+            dialog.setInitialKeywordList(keywordsToRedisplay);
+            dialog.display();
+            
+            goodCount = 0;
+            dupeCount = 0;
+            badCount = 0;
+            keywordsToRedisplay = "";
+            
+            if(!dialog.getKeywords().isEmpty()){
+
+
+                for(String newWord:dialog.getKeywords()){
+                    if (newWord.isEmpty()) {
+                        continue;
+                    }
+
+                    final Keyword keyword = new Keyword(newWord, !dialog.isKeywordRegex(), dialog.isKeywordExact());
+                    if (currentKeywordList.hasKeyword(keyword)) {
+                        dupeCount++;
+                        continue;
+                    }
+
+                    //check if valid
+                    boolean valid = true;
+                    try {
+                        Pattern.compile(newWord);
+                    } catch (PatternSyntaxException ex1) {
+                        valid = false;
+                    } catch (IllegalArgumentException ex2) {
+                        valid = false;
+                    }
+                    if (!valid) {
+
+                        // Invalid keywords will reappear in the UI
+                        keywordsToRedisplay += newWord + "\n";
+                        badCount++;
+                        continue;
+                    }
+
+                    // Add the new keyword
+                    tableModel.addKeyword(keyword);
+                    goodCount++;
+                }
+                XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+
+                if((badCount > 0) || (dupeCount > 0)){
+                    // Display the error counts to the user
+                    // The add keywords dialog will pop up again if any were invalid with any 
+                    // invalid entries (valid entries and dupes will disappear)
+                    
+                    String summary = "";
+                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO;
+                    if(goodCount > 0){
+                        if(goodCount > 1){
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAddedPlural.text", goodCount) + "\n";
+                        } else {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAdded.text", goodCount) + "\n";
+                        }
+                    }
+                    if(dupeCount > 0){
+                        if(dupeCount > 1){
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkippedPlural.text", dupeCount) + "\n";
+                        } else {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkipped.text", dupeCount) + "\n";
+                        }
+                        level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN;
+                    }
+                    if(badCount > 0){
+                        if(badCount > 1){
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrorsPlural.text", badCount) + "\n";
+                        } else {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrors.text", badCount) + "\n";
+                        }
+                        level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR;
+                    }
+                    KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "GlobalEditListPanel.addKeywordResults.text"),
+                            summary, level);
+                }
+            }
+        }
+        setFocusOnKeywordTextBox();
+        setButtonStates();
+    }//GEN-LAST:event_newKeywordsButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel addKeywordPanel;
     private javax.swing.JButton deleteListButton;
@@ -464,7 +512,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private javax.swing.JPanel listEditorPanel;
     private javax.swing.JLabel listOptionsLabel;
     private javax.swing.JSeparator listOptionsSeparator;
-    private javax.swing.JButton newWordButton;
+    private javax.swing.JButton newKeywordsButton;
     private javax.swing.JButton saveListButton;
     // End of variables declaration//GEN-END:variables
 
@@ -604,6 +652,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
      * Set the keyboard focus to new keyword textbox.
      */
     void setFocusOnKeywordTextBox() {
-        newWordButton.requestFocus();
+        newKeywordsButton.requestFocus();
     }
 }
