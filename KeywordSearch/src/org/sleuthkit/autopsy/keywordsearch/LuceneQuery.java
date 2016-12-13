@@ -206,7 +206,6 @@ class LuceneQuery implements KeywordSearchQuery {
         QueryResponse response;
         SolrDocumentList resultList;
         Map<String, Map<String, List<String>>> highlightResponse;
-        Set<SolrDocument> uniqueSolrDocumentsWithHits;
 
         response = solrServer.query(q, METHOD.POST);
 
@@ -214,9 +213,6 @@ class LuceneQuery implements KeywordSearchQuery {
 
         // objectId_chunk -> "text" -> List of previews
         highlightResponse = response.getHighlighting();
-
-        // get the unique set of files with hits
-        uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
 
         // cycle through results in sets of MAX_RESULTS
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
@@ -232,7 +228,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 return matches;
             }
 
-            for (SolrDocument resultDoc : uniqueSolrDocumentsWithHits) {
+            for (SolrDocument resultDoc : resultList) {
                 KeywordHit contentHit;
                 try {
                     contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
@@ -295,36 +291,6 @@ class LuceneQuery implements KeywordSearchQuery {
         }
 
         return q;
-    }
-
-    /**
-     * Create the minimum set of documents. Ignores chunk IDs. Only one hit per
-     * file in results.
-     *
-     * @param resultList
-     *
-     * @return
-     */
-    private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
-        // sort the list so that we consistently pick the same chunk each time.
-        // note this sort is doing a string comparison and not an integer comparison, so 
-        // chunk 10 will be smaller than chunk 9. 
-        Collections.sort(resultList, new Comparator<SolrDocument>() {
-            @Override
-            public int compare(SolrDocument left, SolrDocument right) {
-                // ID is in the form of ObjectId_Chunk
-                String leftID = left.getFieldValue(Server.Schema.ID.toString()).toString();
-                String rightID = right.getFieldValue(Server.Schema.ID.toString()).toString();
-                return leftID.compareTo(rightID);
-            }
-        });
-
-        // NOTE: We could probably just iterate through the list and compare each ID with the
-        // previous ID to get the unique documents faster than using this set now that the list
-        // is sorted.
-        Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparatorIgnoresChunkId());
-        solrDocumentsWithMatches.addAll(resultList);
-        return solrDocumentsWithMatches;
     }
 
     private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SleuthkitCase caseDb) throws TskException {

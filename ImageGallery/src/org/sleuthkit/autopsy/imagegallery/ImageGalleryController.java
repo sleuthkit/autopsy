@@ -717,7 +717,7 @@ public final class ImageGalleryController implements Executor {
         }
     }
 
-    @NbBundle.Messages({"BulkTask.committingDb.status=commiting image/video database",
+    @NbBundle.Messages({"BulkTask.committingDb.status=committing image/video database",
         "BulkTask.stopCopy.status=Stopping copy to drawable db task.",
         "BulkTask.errPopulating.errMsg=There was an error populating Image Gallery database."})
     abstract static private class BulkTransferTask extends BackgroundTask {
@@ -821,7 +821,7 @@ public final class ImageGalleryController implements Executor {
      * adds them to the Drawable DB. Uses the presence of a mimetype as an
      * approximation to 'analyzed'.
      */
-    @NbBundle.Messages({"CopyAnalyzedFiles.committingDb.status=commiting image/video database",
+    @NbBundle.Messages({"CopyAnalyzedFiles.committingDb.status=committing image/video database",
         "CopyAnalyzedFiles.stopCopy.status=Stopping copy to drawable db task.",
         "CopyAnalyzedFiles.errPopulating.errMsg=There was an error populating Image Gallery database."})
     static private class CopyAnalyzedFiles extends BulkTransferTask {
@@ -875,7 +875,7 @@ public final class ImageGalleryController implements Executor {
      * TODO: create methods to simplify progress value/text updates to both
      * netbeans and ImageGallery progress/status
      */
-    @NbBundle.Messages({"PrePopulateDataSourceFiles.committingDb.status=commiting image/video database"})
+    @NbBundle.Messages({"PrePopulateDataSourceFiles.committingDb.status=committing image/video database"})
     static private class PrePopulateDataSourceFiles extends BulkTransferTask {
 
         private static final Logger LOGGER = Logger.getLogger(PrePopulateDataSourceFiles.class.getName());

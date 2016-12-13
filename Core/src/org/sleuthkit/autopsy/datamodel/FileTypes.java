@@ -22,15 +22,14 @@ import java.util.Arrays;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
  * File Types node support
  */
-public class FileTypes implements AutopsyVisitableItem {
+public final class FileTypes implements AutopsyVisitableItem {
 
-    private SleuthkitCase skCase;
+    private final SleuthkitCase skCase;
 
     FileTypes(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -48,14 +47,14 @@ public class FileTypes implements AutopsyVisitableItem {
     /**
      * Node which will contain By Mime Type and By Extension nodes.
      */
-    public static class FileTypesNode extends DisplayableItemNode {
+    public static final class FileTypesNode extends DisplayableItemNode {
 
-        @NbBundle.Messages("FileTypesNew.name.text=File Types")
-        private static final String NAME = Bundle.FileTypesNew_name_text();
+        @NbBundle.Messages("FileTypes.name.text=File Types")
+        private static final String NAME = Bundle.FileTypes_name_text();
 
-        public FileTypesNode(SleuthkitCase sleuthkitCase) {
+        FileTypesNode(SleuthkitCase sleuthkitCase) {
             super(new RootContentChildren(Arrays.asList(
-                    new FileTypeExtensionFilters(sleuthkitCase),
+                    new FileTypesByExtension(sleuthkitCase),
                     new FileTypesByMimeType(sleuthkitCase)
             )), Lookups.singleton(NAME));
             setName(NAME);
@@ -75,9 +74,9 @@ public class FileTypes implements AutopsyVisitableItem {
 
         @Override
         @NbBundle.Messages({
-            "FileTypesNew.createSheet.name.name=Name",
-            "FileTypesNew.createSheet.name.displayName=Name",
-            "FileTypesNew.createSheet.name.desc=no description"})
+            "FileTypes.createSheet.name.name=Name",
+            "FileTypes.createSheet.name.displayName=Name",
+            "FileTypes.createSheet.name.desc=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -86,9 +85,9 @@ public class FileTypes implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>(Bundle.FileTypesNew_createSheet_name_name(),
-                    Bundle.FileTypesNew_createSheet_name_displayName(),
-                    Bundle.FileTypesNew_createSheet_name_desc(),
+            ss.put(new NodeProperty<>(Bundle.FileTypes_createSheet_name_name(),
+                    Bundle.FileTypes_createSheet_name_displayName(),
+                    Bundle.FileTypes_createSheet_name_desc(),
                     NAME
             ));
             return s;
