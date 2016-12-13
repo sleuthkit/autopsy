@@ -228,15 +228,6 @@ class LuceneQuery implements KeywordSearchQuery {
                 return matches;
             }
             
-            Collections.sort(resultList, new Comparator<SolrDocument>() {
-                @Override
-                public int compare(SolrDocument left, SolrDocument right) {
-                    // ID is in the form of ObjectId_Chunk
-                    String leftID = left.getFieldValue(Server.Schema.ID.toString()).toString();
-                    String rightID = right.getFieldValue(Server.Schema.ID.toString()).toString();
-                    return leftID.compareTo(rightID);
-                }
-            });
             
             for (SolrDocument resultDoc : resultList) {
                 KeywordHit contentHit;
