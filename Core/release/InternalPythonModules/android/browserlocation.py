@@ -88,7 +88,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                     MessageNotifyUtil.Notify.error("Failed to index GPS trackpoint artifact for keyword search.", artifact.getDisplayName())
 
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error Putting artifacts to Blackboard", ex)
+            self._logger.log(Level.SEVERE, "Error putting artifacts to Blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:
