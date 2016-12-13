@@ -3,8 +3,6 @@ import inspect
 import traceback
 
 from java.util.logging import Level
-from org.openide.util.lookup import ServiceProvider
-from org.openide.util import NbBundle
 from org.sleuthkit.autopsy.coreutils import Version
 from org.sleuthkit.autopsy.ingest import IngestModuleFactory
 from org.sleuthkit.autopsy.ingest import DataSourceIngestModule
@@ -25,7 +23,7 @@ import browserlocation
 import cachelocation
 import calllog
 import contact
-import googlemap
+import googlemaplocation
 import tangomessage
 import textmessage
 import wwfmessage
