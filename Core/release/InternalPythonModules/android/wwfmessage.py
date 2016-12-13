@@ -48,7 +48,7 @@ Analyzes messages from Words With Friends
 class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
-        self._logger = Logger.getLogger("WWFMessageAnalyzer")
+        self._logger = Logger.getLogger(self.__class__.__name__)
 
     def analyze(self, dataSource, fileManager, context):
         try:
@@ -105,7 +105,7 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                     MessageNotifyUtil.Notify.error("Failed to index WWF message artifact for keyword search.", artifact.getDisplayName())
 
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error parsing WWF messages to the Blackboard", ex)
+            self._logger.log(Level.SEVERE, "Error parsing WWF messages to the blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:

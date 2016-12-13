@@ -63,10 +63,10 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
                 except Exception as ex:
-                    self._logger.log(Level.SEVERE, "Error parsing Browser Location files", ex)
+                    self._logger.log(Level.SEVERE, "Error parsing browser location files", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding Browser Location files", ex)
+            self._logger.log(Level.SEVERE, "Error finding browser location files", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
     def __findGeoLocationsInDB(self, databasePath, abstractFile):
@@ -78,7 +78,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
         except (ClassNotFoundException, SQLException) as ex:
-            self._logger.log(Level.SEVERE, "Error connecting to sql database", ex)
+            self._logger.log(Level.SEVERE, "Error connecting to SQL database", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
             return
 
@@ -107,7 +107,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                     MessageNotifyUtil.Notify.error("Failed to index GPS trackpoint artifact for keyword search.", artifact.getDisplayName())
 
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error putting artifacts to Blackboard", ex)
+            self._logger.log(Level.SEVERE, "Error putting artifacts to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:

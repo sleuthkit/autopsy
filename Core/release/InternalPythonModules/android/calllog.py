@@ -51,7 +51,7 @@ Locates a variety of different call log databases, parses them, and populates th
 class CallLogAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
-        self._logger = Logger.getLogger("CallLogAnalyzer")
+        self._logger = Logger.getLogger(self.__class__.__name__)
 
     # the names of tables that potentially hold call logs in the dbs
     _tableNames = ["calls", "logs"]
@@ -136,7 +136,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                                 MessageNotifyUtil.Notify.error("Failed to index call log artifact for keyword search.", artifact.getDisplayName())
 
                         except TskCoreException as ex:
-                            self._logger.log(Level.SEVERE, "Error posting call log record to the Blackboard", ex)
+                            self._logger.log(Level.SEVERE, "Error posting call log record to the blackboard", ex)
                             self._logger.log(Level.SEVERE, traceback.format_exc())
                 except SQLException as ex:
                     self._logger.log(Level.WARNING, String.format("Could not read table %s in db %s", tableName, databasePath), ex)

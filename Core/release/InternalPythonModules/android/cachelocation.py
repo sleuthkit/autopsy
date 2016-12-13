@@ -47,7 +47,7 @@ Parses cache files that Android maintains for Wifi and cell towers. Adds GPS poi
 class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
-        self._logger = Logger.getLogger("CacheLocationAnalyzer")
+        self._logger = Logger.getLogger(self.__class__.__name__)
 
     """
     cache.cell stores mobile tower GPS locations and cache.wifi stores GPS
@@ -65,10 +65,10 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findGeoLocationsInFile(jFile, abstractFile)
                 except Exception as ex:
-                    self._logger.log(Level.SEVERE, "Error parsing cached Location files", ex)
+                    self._logger.log(Level.SEVERE, "Error parsing cached location files", ex)
                     self._logger.log(Level.SEVERE, traceback.format_exc())
         except TskCoreException as ex:
-            self._logger.log(Level.SEVERE, "Error finding cached Location files", ex)
+            self._logger.log(Level.SEVERE, "Error finding cached location files", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
     def __findGeoLocationsInFile(self, file, abstractFile):
@@ -140,7 +140,7 @@ class CacheLocationAnalyzer(general.AndroidComponentAnalyzer):
                     MessageNotifyUtil.Notify.error("Failed to index GPS trackpoint artifact for keyword search.", artifact.getDisplayName())
 
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error parsing Cached GPS locations to Blackboard", ex)
+            self._logger.log(Level.SEVERE, "Error parsing Cached GPS locations to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
 
     def toDouble(byteArray):

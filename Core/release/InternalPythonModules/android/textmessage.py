@@ -50,7 +50,7 @@ Finds database with SMS/MMS messages and adds them to blackboard.
 class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
-        self._logger = Logger.getLogger("TextMessageAnalyzer")
+        self._logger = Logger.getLogger(self.__class__.__name__)
 
     def analyze(self, dataSource, fileManager, context):
         try:
@@ -112,7 +112,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                     MessageNotifyUtil.Notify.error("Failed to index text message artifact for keyword search.", artifact.getDisplayName())
 
         except Exception as ex:
-            self._logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", ex)
+            self._logger.log(Level.SEVERE, "Error parsing text messages to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:

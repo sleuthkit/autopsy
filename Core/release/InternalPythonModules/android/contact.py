@@ -49,7 +49,7 @@ Locates a variety of different contacts databases, parses them, and populates th
 class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
-        self._logger = Logger.getLogger("ContactAnalyzer")
+        self._logger = Logger.getLogger(self.__class__.__name__)
 
     def analyze(self, dataSource, fileManager, context):
         try:

@@ -100,7 +100,7 @@ class AndroidIngestModule(DataSourceIngestModule):
                 n += 1
                 progressBar.progress(n)
             except Exception as ex:
-                errors.append("Error getting Contacts")
+                errors.append("Error running " + analyzer.__class__.__name__)
                 self.log(Level.SEVERE, traceback.format_exc())
         errorMessage = [] # NOTE: this isn't used?
         errorMessageSubject = "" # NOTE: this isn't used?

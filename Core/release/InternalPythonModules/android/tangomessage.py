@@ -51,7 +51,7 @@ Locates database for the Tango app and adds info to blackboard.
 class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def __init__(self):
-        self._logger = Logger.getLogger("TangoMessageAnalyzer")
+        self._logger = Logger.getLogger(self.__class__.__name__)
 
     def analyze(self, dataSource, fileManager, context):
         try:
@@ -110,7 +110,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
                     MessageNotifyUtil.Notify.error("Failed to index Tango message artifact for keyword search.", artifact.getDisplayName())
 
         except Exception as ex:
-           self._logger.log(Level.SEVERE, "Error parsing Tango messages to the Blackboard", ex)
+           self._logger.log(Level.SEVERE, "Error parsing Tango messages to the blackboard", ex)
            self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
             try:
