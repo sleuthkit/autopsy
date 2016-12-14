@@ -34,7 +34,6 @@ import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -51,9 +50,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 class TikaTextExtractor extends FileTextExtractor<Metadata> {
 
-    private static final Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private static final int MAX_EXTR_TEXT_CHARS = 16 * 1024;
-
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
 
     private static final List<String> TIKA_SUPPORTED_TYPES
@@ -65,7 +62,7 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
     @Override
     void logWarning(final String msg, Exception ex) {
         KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
-        logger.log(Level.WARNING, msg, ex);
+        super.logWarning(msg, ex);
     }
 
     @Override

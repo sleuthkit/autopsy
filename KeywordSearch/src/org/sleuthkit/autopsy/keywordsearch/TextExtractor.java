@@ -20,13 +20,18 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 abstract class TextExtractor<AppendixProvider, TextSource extends SleuthkitVisitableItem> {
 
+    static final private Logger logger = Logger.getLogger(TextExtractor.class.getName());
     abstract boolean noExtractionOptionsAreEnabled();
 
-    abstract void logWarning(final String msg, Exception ex);
+    void logWarning(String msg, Exception ex) {
+        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
+    }
 
     void appendDataToFinalChunk(StringBuilder sb, AppendixProvider dataProvider) {
         //no-op
