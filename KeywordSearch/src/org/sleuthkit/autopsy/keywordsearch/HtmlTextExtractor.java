@@ -24,13 +24,11 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -40,8 +38,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * chunks are indexed with Solr.
  */
 class HtmlTextExtractor extends FileTextExtractor<Void> {
-
-    private static final Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
 
     static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private static final int MAX_SIZE = 50000000;
@@ -58,10 +54,6 @@ class HtmlTextExtractor extends FileTextExtractor<Void> {
     HtmlTextExtractor() {
     }
 
-    @Override
-    void logWarning(final String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS
-    }
 
     @Override
     boolean isContentTypeSpecific() {

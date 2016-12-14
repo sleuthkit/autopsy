@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -40,7 +39,6 @@ import org.sleuthkit.datamodel.TskException;
  */
 class StringsTextExtractor extends FileTextExtractor<Void> {
 
-    private static final Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
     private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
     private final List<SCRIPT> extractScripts = new ArrayList<>();
     private Map<String, String> extractOptions = new HashMap<>();
@@ -141,10 +139,6 @@ class StringsTextExtractor extends FileTextExtractor<Void> {
         return true;
     }
 
-    @Override
-    void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS
-    }
 
     @Override
     Void newAppendixProvider() {
