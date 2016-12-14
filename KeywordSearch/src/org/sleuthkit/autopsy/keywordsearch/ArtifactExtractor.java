@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
@@ -10,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.HashMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.solr.common.util.ContentStream;
 import org.openide.util.Exceptions;
@@ -88,24 +100,16 @@ public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 artifactContents.append(attribute.getAttributeType().getDisplayName());
                 artifactContents.append(" : ");
-
-                // This is ugly since it will need to updated any time a new
-                // TSK_DATETIME_* attribute is added. A slightly less ugly
-                // alternative would be to assume that all date time attributes
-                // will have a name of the form "TSK_DATETIME*" and check
-                // attribute.getAttributeTypeName().startsWith("TSK_DATETIME*".
-                // The major problem with that approach is that it would require
-                // a round trip to the database to get the type name string.
                 // We have also discussed modifying BlackboardAttribute.getDisplayString()
                 // to magically format datetime attributes but that is complicated by
                 // the fact that BlackboardAttribute exists in Sleuthkit data model
                 // while the utility to determine the timezone to use is in ContentUtils
                 // in the Autopsy datamodel.
-                if (attribute.getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-
-                    artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
-                } else {
-                    artifactContents.append(attribute.getDisplayString());
+                switch (attribute.getValueType()) {
+                    case DATETIME:
+                        artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
+                    default:
+                        artifactContents.append(attribute.getDisplayString());
                 }
                 artifactContents.append(System.lineSeparator());
             }
@@ -117,27 +121,6 @@ public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
             return null;
         }
 
-        // To play by the rules of the existing text markup implementations,
-        // we need to (a) index the artifact contents in a "chunk" and
-        // (b) create a separate index entry for the base artifact.
-        // We distinguish artifact content from file content by applying a
-        // mask to the artifact id to make its value > 0x8000000000000000 (i.e. negative).
-        // First, create an index entry for the base artifact.
-        HashMap<String, String> solrFields = new HashMap<>();
-        String documentId = Long.toString(artifact.getArtifactID());
-
-        solrFields.put(Server.Schema.ID.toString(), documentId);
-
-        // Set the IMAGE_ID field.
-        solrFields.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
-
-        // Next create the index entry for the document content.
-        // The content gets added to a single chunk. We may need to add chunking
-        // support later.
-        long chunkId = 1;
-
-        documentId += "_" + Long.toString(chunkId);
-        solrFields.replace(Server.Schema.ID.toString(), documentId);
 
         return IOUtils.toInputStream(artifactContents);
 
