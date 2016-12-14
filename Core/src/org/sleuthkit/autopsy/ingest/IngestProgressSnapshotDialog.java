@@ -60,11 +60,12 @@ public final class IngestProgressSnapshotDialog extends JDialog {
         super((Window) owner, TITLE, ModalityType.MODELESS);
         if (shouldBeModal && owner instanceof JDialog) { // if called from a modal dialog, manipulate the parent be just under this in z order, and not modal.
             final JDialog pseudoOwner = (JDialog) owner;
+            final ModalityType originalModality = pseudoOwner.getModalityType();
             addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosed(WindowEvent e) { // Put it back to how it was before we manipulated it.
                     pseudoOwner.setVisible(false);
-                    pseudoOwner.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+                    pseudoOwner.setModalityType(originalModality);
                     pseudoOwner.toFront();
                     pseudoOwner.setVisible(true);
                 }

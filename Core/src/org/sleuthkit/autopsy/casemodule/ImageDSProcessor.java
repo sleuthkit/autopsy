@@ -18,6 +18,9 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -26,9 +29,12 @@ import java.util.UUID;
 import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor
@@ -36,8 +42,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * wizard. It also provides a run method overload to allow it to be used
  * independently of the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
-public class ImageDSProcessor implements DataSourceProcessor {
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
+)
+public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
 
     private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.dsType.text");
     private static final List<String> allExt = new ArrayList<>();
@@ -231,4 +240,45 @@ public class ImageDSProcessor implements DataSourceProcessor {
         setDataSourceOptionsCalled = true;
     }
 
+    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
+        for (FileFilter filter : filters) {
+            if (filter.accept(file)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
+        
+        // check file extension for supported types
+        if (!isAcceptedByFiler(dataSourcePath.toFile(), filtersList)) {
+            return 0;
+        }
+        
+        try {
+            // verify that the image has a file system that TSK can process
+            Case currentCase = Case.getCurrentCase();
+            if (!DataSourceUtils.imageHasFileSystem(dataSourcePath)) {
+                // image does not have a file system that TSK can process
+                return 0;
+            }
+        } catch (Exception ex) {
+            throw new AutomatedIngestDataSourceProcessorException("Exception inside canProcess() method", ex);
+        }
+        
+        // able to process the data source
+        return 100;
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
+        this.deviceId = deviceId;
+        this.imagePath = dataSourcePath.toString();
+        this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.ignoreFatOrphanFiles = false;
+        setDataSourceOptionsCalled = true;
+        run(deviceId, dataSourcePath.toString(), timeZone, ignoreFatOrphanFiles, progressMonitor, callBack);
+    }
 }

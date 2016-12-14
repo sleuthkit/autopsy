@@ -56,7 +56,7 @@ public class DriveUtils {
     }
 
     /**
-     * Determines whether or not a drive exists by eading the first byte and
+     * Determines whether or not a drive exists by reading the first byte and
      * checking if it is a -1.
      *
      * @param path The path to test.
