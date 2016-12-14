@@ -59,7 +59,7 @@ class BrowserLocationAnalyzer(general.AndroidComponentAnalyzer):
                 if abstractFile.getSize() == 0:
                     continue
                 try:
-                    jFile = File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName())
+                    jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findGeoLocationsInDB(jFile.toString(), abstractFile)
                 except Exception as ex:

@@ -58,7 +58,7 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             absFiles = fileManager.findFiles(dataSource, "tc.db")
             for abstractFile in absFiles:
                 try:
-                    jFile = File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName())
+                    jFile = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, jFile, context.dataSourceIngestIsCancelled)
                     self.__findTangoMessagesInDB(jFile.toString(), abstractFile)
                 except Exception as ex:

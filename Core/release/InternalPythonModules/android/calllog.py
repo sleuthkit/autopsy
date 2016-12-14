@@ -84,7 +84,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))
             for abstractFile in absFiles:
                 try:
-                    file = File(Case.getCurrentCase().getTempDirectory(), abstractFile.getName())
+                    file = File(Case.getCurrentCase().getTempDirectory(), str(abstractFile.getId()) + abstractFile.getName())
                     ContentUtils.writeToFile(abstractFile, file, context.dataSourceIngestIsCancelled)
                     self.__findCallLogsInDB(file.toString(), abstractFile)
                 except IOException as ex:
