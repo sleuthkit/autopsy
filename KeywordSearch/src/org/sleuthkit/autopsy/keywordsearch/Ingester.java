@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -98,7 +97,7 @@ class Ingester {
     }
 
     void indexMetaDataOnly(BlackboardArtifact artifact) throws IngesterException {
-        indexChunk(null, artifact.getDisplayName() + "_" + artifact.getArtifactID(), getContentFields(artifact), 0);
+        indexChunk(null, new ArtifactExtractor().getName(artifact), getContentFields(artifact), 0);
     }
 
     /**
@@ -166,10 +165,9 @@ class Ingester {
             Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
             try {
-                long dataSourceId = af.getDataSource().getId();
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSourceId));
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(af.getDataSource().getId()));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get data source id to properly index the file {0}", af.getId()); //NON-NLS
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
@@ -181,10 +179,9 @@ class Ingester {
             Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(artifact.getArtifactID()));
             try {
-                Content dataSource = ArtifactExtractor.getDataSource(artifact);
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(ArtifactExtractor.getDataSource(artifact).getId()));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get data source id to properly index the artifact {0}", artifact.getArtifactID()); //NON-NLS
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the artifact " + artifact.getArtifactID(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
 
@@ -343,7 +340,7 @@ class Ingester {
         updateDoc.addField(Server.Schema.CONTENT.toString(), (size > 0) ? chunk : "");
 
         try {
-            //TODO consider timeout thread, or vary socket timeout based on size of indexed content
+            //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
             solrServer.addDocument(updateDoc);
             uncommitedIngests = true;
         } catch (KeywordSearchModuleException ex) {

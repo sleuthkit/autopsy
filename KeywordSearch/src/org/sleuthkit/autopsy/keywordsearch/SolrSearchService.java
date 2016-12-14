@@ -54,17 +54,15 @@ public class SolrSearchService implements KeywordSearchService {
         if (artifact.getArtifactID() > 0) {
             return;
         }
+        final Ingester ingester = Ingester.getDefault();
 
         try {
-            Ingester.getDefault().indexMetaDataOnly(artifact);
+            ingester.indexMetaDataOnly(artifact);
+            ingester.indexText(extractor, artifact, null);
         } catch (Ingester.IngesterException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
-        }
-
-        try {
-            Ingester.getDefault().indexText(extractor, artifact, null);
-        } catch (Ingester.IngesterException ex) {
-            throw new TskCoreException(ex.getCause().getMessage(), ex);
+        } finally {
+            ingester.commit();
         }
     }
 

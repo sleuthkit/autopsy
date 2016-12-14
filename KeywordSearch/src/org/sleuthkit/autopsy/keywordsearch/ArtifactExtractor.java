@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.logging.Level;
 import org.apache.commons.io.IOUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -71,10 +70,6 @@ public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
         return false;
     }
 
-    @Override
-    void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
-    }
     @Override
     Void newAppendixProvider() {
         return null;
