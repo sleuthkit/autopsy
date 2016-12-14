@@ -101,8 +101,8 @@ public final class KeywordSearchJobSettingsPanel extends IngestModuleIngestJobSe
     }
 
     private void displayEncodings() {
-        String utf8 = KeywordSearchSettings.getStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString());
-        String utf16 = KeywordSearchSettings.getStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString());
+        String utf8 = KeywordSearchSettings.getStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString());
+        String utf16 = KeywordSearchSettings.getStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF16.toString());
         ArrayList<String> encodingsList = new ArrayList<>();
         if (utf8 == null || Boolean.parseBoolean(utf8)) {
             encodingsList.add("UTF8");

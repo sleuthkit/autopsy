@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -211,14 +210,14 @@ class KeywordSearchSettings {
             KeywordSearchSettings.setUpdateFrequency(UpdateFrequency.DEFAULT);
         }
         //setting default Extract UTF8
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString())) {
             logger.log(Level.INFO, "No configuration for UTF8 found, generating default..."); //NON-NLS
-            KeywordSearchSettings.setStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
+            KeywordSearchSettings.setStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF8.toString(), Boolean.TRUE.toString());
         }
         //setting default Extract UTF16
-        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
+        if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_OPTIONS, StringsTextExtractor.ExtractOptions.EXTRACT_UTF16.toString())) {
             logger.log(Level.INFO, "No configuration for UTF16 found, generating defaults..."); //NON-NLS
-            KeywordSearchSettings.setStringExtractOption(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
+            KeywordSearchSettings.setStringExtractOption(StringsTextExtractor.ExtractOptions.EXTRACT_UTF16.toString(), Boolean.TRUE.toString());
         }
         //setting default Latin-1 Script
         if (!ModuleSettings.settingExists(KeywordSearchSettings.PROPERTIES_SCRIPTS, SCRIPT.LATIN_1.name())) {
