@@ -97,7 +97,17 @@ final class RegexQuery implements KeywordSearchQuery {
 
     @Override
     public boolean validate() {
-        return true;
+        // For now, we are performing Java regex validation even though Lucene
+        // regex syntax is a small subset 
+        if (keywordString.isEmpty()) {
+            return false;
+        }
+        try {
+            Pattern.compile(keywordString);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     @Override
