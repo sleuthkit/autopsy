@@ -74,6 +74,7 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
     public void appendDataToFinalChunk(StringBuilder sb, Metadata meta) {
 
         //TODO: How do we account for this in chunking algorithm...
+        //JM: what if we always append it as a separate chunk?
         sb.append("\n\n------------------------------METADATA------------------------------\n\n"); //NON-NLS
         Stream.of(meta.names()).sorted().forEach(key -> {
             sb.append(key).append(": ").append(meta.get(key)).append("\n");
@@ -85,7 +86,7 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
         //Parse the file in a task
         final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, meta));
         try {
-            return future.get(Ingester.getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+            return future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
@@ -129,5 +130,26 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
     boolean noExtractionOptionsAreEnabled() {
         return false;
     }
+    /**
+     * return timeout that should be used to index the content
+     *
+     * @param size size of the content
+     *
+     * @return time in seconds to use a timeout
+     */
+    static int getTimeout(long size) {
+        if (size < 1024 * 1024L) //1MB
+        {
+            return 60;
+        } else if (size < 10 * 1024 * 1024L) //10MB
+        {
+            return 1200;
+        } else if (size < 100 * 1024 * 1024L) //100MB
+        {
+            return 3600;
+        } else {
+            return 3 * 3600;
+        }
 
+    }
 }

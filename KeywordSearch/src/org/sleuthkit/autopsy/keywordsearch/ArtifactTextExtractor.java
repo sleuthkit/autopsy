@@ -33,8 +33,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
-    static final private Logger logger = Logger.getLogger(ArtifactExtractor.class.getName());
+public class ArtifactTextExtractor extends TextExtractor<Void, BlackboardArtifact> {
+    static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
     static Content getDataSource(BlackboardArtifact artifact) throws TskCoreException {
         Content dataSource;
