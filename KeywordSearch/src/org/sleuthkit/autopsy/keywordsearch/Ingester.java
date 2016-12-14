@@ -92,42 +92,17 @@ class Ingester {
      *
      * @param file          File to ingest
      * @param ingestContent if true, index the file and the content, otherwise
-     *                      indesx metadata only
+     *                      index metadata only
      *
      * @throws IngesterException if there was an error processing a specific
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        indexContentStream(new NullContentStream(file), getContentFields(file), 0);
+        indexChunk(null, file.getName(), getContentFields(file), 0);
     }
 
     void indexMetaDataOnly(BlackboardArtifact artifact) throws IngesterException {
-
-//        indexContentStream(new NullContentStream(artifact), getContentFields(file), 0);
-    }
-
-    /**
-     * Sends a TextExtractor to Solr to have its content extracted and added to
-     * the index. commit() should be called once you're done ingesting files.
-     * FileExtract represents a parent of extracted file with actual content.
-     * The parent itself has no content, only meta data and is used to associate
-     * the extracted AbstractFileChunk
-     *
-     * @param fe TextExtractor to ingest
-     *
-     * @throws IngesterException if there was an error processing a specific
-     *                           file, but the Solr server is probably fine.
-     */
-    private void recordNumberOfChunks(AbstractFile file, int numChunks) throws IngesterException {
-        Map<String, String> params = getContentFields(file);
-        params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-        indexContentStream(new NullContentStream(file), params, 0);
-    }
-
-    private void recordNumberOfChunks(BlackboardArtifact artifact, int numChunks) throws IngesterException {
-        Map<String, String> params = getContentFields(artifact);
-        params.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-        indexContentStream(new NullArtifactStream(artifact), params, 0);
+        indexChunk(null, artifact.getDisplayName() + "_" + artifact.getArtifactID(), getContentFields(artifact), 0);
     }
 
     /**
@@ -147,24 +122,23 @@ class Ingester {
     static private class GetContentFieldsV extends SleuthkitItemVisitor.Default<Map<String, String>> {
 
         @Override
+        protected Map<String, String> defaultVisit(SleuthkitVisitableItem svi) {
+            return new HashMap<>();
+        }
+
+        @Override
         public Map<String, String> visit(File f) {
-            Map<String, String> params = getCommonFields(f);
-            getCommonFileContentFields(params, f);
-            return params;
+            return getCommonFileContentFields(f);
         }
 
         @Override
         public Map<String, String> visit(DerivedFile df) {
-            Map<String, String> params = getCommonFields(df);
-            getCommonFileContentFields(params, df);
-            return params;
+            return getCommonFileContentFields(df);
         }
 
         @Override
         public Map<String, String> visit(Directory d) {
-            Map<String, String> params = getCommonFields(d);
-            getCommonFileContentFields(params, d);
-            return params;
+            return getCommonFileContentFields(d);
         }
 
         @Override
@@ -175,19 +149,16 @@ class Ingester {
 
         @Override
         public Map<String, String> visit(LocalFile lf) {
-            Map<String, String> params = getCommonFields(lf);
-            getCommonFileContentFields(params, lf);
-            return params;
+            return getCommonFileContentFields(lf);
         }
 
         @Override
         public Map<String, String> visit(SlackFile f) {
-            Map<String, String> params = getCommonFields(f);
-            getCommonFileContentFields(params, f);
-            return params;
+            return getCommonFileContentFields(f);
         }
 
-        private Map<String, String> getCommonFileContentFields(Map<String, String> params, AbstractFile file) {
+        private Map<String, String> getCommonFileContentFields(AbstractFile file) {
+            Map<String, String> params = getCommonFields(file);
             params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
             params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
             params.put(Server.Schema.MTIME.toString(), ContentUtils.getStringTimeISO8601(file.getMtime(), file));
@@ -205,14 +176,12 @@ class Ingester {
                 logger.log(Level.SEVERE, "Could not get data source id to properly index the file {0}", af.getId()); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
-
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
             return params;
         }
 
         @Override
         public Map<String, String> visit(BlackboardArtifact artifact) {
-
             Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(artifact.getArtifactID()));
             try {
@@ -224,11 +193,6 @@ class Ingester {
             }
 
             return params;
-        }
-
-        @Override
-        protected Map<String, String> defaultVisit(SleuthkitVisitableItem svi) {
-            return new HashMap<>();
         }
     }
 
@@ -300,10 +264,11 @@ class Ingester {
                 byte[] encodedBytes = chunkString.getBytes(Server.DEFAULT_INDEXED_TEXT_CHARSET);
 
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
+                fields.put(Server.Schema.ID.toString(), chunkId);
                 try {
                     ContentStream bcs = extractor.getContentStream(encodedBytes, encodedBytes.length, source);
                     try {
-                        indexContentStream(bcs, fields, encodedBytes.length);
+                        indexChunk(encodedBytes, sourceName, fields, encodedBytes.length);
                     } catch (Exception ex) {
                         throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
                     }
@@ -324,7 +289,8 @@ class Ingester {
         } finally {
             //after all chunks, ingest the parent file without content itself, and store numChunks
             fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-            indexContentStream(extractor.getNullStream(source), fields, 0);
+            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
+            indexChunk(null, sourceName, fields, 0);
         }
         return true;
     }
@@ -362,16 +328,15 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    void indexContentStream(ContentStream cs, Map<String, String> fields, final long size) throws IngesterException {
+    void indexChunk(byte[] docChunkContentBuf, String name, Map<String, String> fields, int size) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
             String msg = NbBundle.getMessage(this.getClass(),
-                    "Ingester.ingest.exception.unknownImgId.msg", cs.getName());
+                    "Ingester.ingest.exception.unknownImgId.msg", name);
             logger.log(Level.SEVERE, msg);
             throw new IngesterException(msg);
         }
 
-        final byte[] docChunkContentBuf = new byte[MAX_DOC_CHUNK_SIZE];
         SolrInputDocument updateDoc = new SolrInputDocument();
 
         for (String key : fields.keySet()) {
@@ -381,46 +346,22 @@ class Ingester {
         //using size here, but we are no longer ingesting entire files
         //size is normally a chunk size, up to 1MB
         if (size > 0) {
-            // TODO (RC): Use try with resources, adjust exception messages
-            InputStream is = null;
-            int read = 0;
-            try {
-                is = cs.getStream();
-                read = is.read(docChunkContentBuf);
-            } catch (IOException ex) {
-                throw new IngesterException(
-                        NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.cantReadStream.msg",
-                                cs.getName()));
-            } finally {
-                if (null != is) {
-                    try {
-                        is.close();
-                    } catch (IOException ex) {
-                        logger.log(Level.WARNING, "Could not close input stream after reading content, " + cs.getName(), ex); //NON-NLS
-                    }
-                }
-            }
-
-            if (read != 0) {
-                String s = "";
-                s = new String(docChunkContentBuf, 0, read, StandardCharsets.UTF_8);
-                char[] chars = null;
-                for (int i = 0; i < s.length(); i++) {
-                    if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
-                        // only convert string to char[] if there is a non-UTF8 character
-                        if (chars == null) {
-                            chars = s.toCharArray();
-                        }
-                        chars[i] = '^';
-                    }
-                }
-                if (chars != null) {
-                    s = new String(chars);
-                }
+            String s = new String(docChunkContentBuf, 0, size, StandardCharsets.UTF_8);
+//                char[] chars = null;
+//                for (int i = 0; i < s.length(); i++) {
+//                    if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
+//                        // only convert string to char[] if there is a non-UTF8 character
+//                        if (chars == null) {
+//                            chars = s.toCharArray();
+//                        }
+//                        chars[i] = '^';
+//                    }
+//                }
+//                if (chars != null) {
+//                    s = new String(chars);
+//                }
                 updateDoc.addField(Server.Schema.CONTENT.toString(), s);
-            } else {
-                updateDoc.addField(Server.Schema.CONTENT.toString(), "");
-            }
+
         } else {
             //no content, such as case when 0th chunk indexed
             updateDoc.addField(Server.Schema.CONTENT.toString(), "");
@@ -432,9 +373,8 @@ class Ingester {
             uncommitedIngests = true;
         } catch (KeywordSearchModuleException ex) {
             throw new IngesterException(
-                    NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.err.msg", cs.getName()), ex);
+                    NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.err.msg", name), ex);
         }
-
     }
 
     /**
@@ -529,7 +469,7 @@ class Ingester {
 
         @Override
         public String getName() {
-            return aContent.getDisplayName();
+            return aContent.getDisplayName() + "_" + aContent.getArtifactID();
         }
 
         @NbBundle.Messages("Ingester.NullArtifactStream.getSrcInfo.text=File:{0})\n")
