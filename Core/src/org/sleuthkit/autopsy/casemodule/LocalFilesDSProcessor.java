@@ -44,7 +44,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
-    private static final String AUTO_INGEST_VIRTUAL_DIR_NAME = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.DefaultAutoIngestVirtualDirName");
     private final LocalFilesPanel configPanel;
     /*
      * TODO: Remove the setDataSourceOptionsCalled flag and the settings fields
@@ -218,7 +217,7 @@ public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor
     @Override
     public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
         this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
-        run(deviceId, AUTO_INGEST_VIRTUAL_DIR_NAME, this.localFilePaths, progressMonitor, callBack);
+        run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
     }
 
 }

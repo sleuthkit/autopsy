@@ -38,7 +38,7 @@ public class RuntimeProperties {
      *
      * @param coreComponentsActive True or false.
      */
-    public static void setCoreComponentsActive(boolean coreComponentsActive) {
+    public synchronized static void setCoreComponentsActive(boolean coreComponentsActive) {
         if (!coreComponentsActiveSet) {
             RuntimeProperties.coreComponentsActive = coreComponentsActive;
             coreComponentsActiveSet = true;
@@ -56,7 +56,7 @@ public class RuntimeProperties {
      *
      * @return True or false.
      */
-    public static boolean coreComponentsAreActive() {
+    public synchronized static boolean coreComponentsAreActive() {
         return coreComponentsActive;
     }
     

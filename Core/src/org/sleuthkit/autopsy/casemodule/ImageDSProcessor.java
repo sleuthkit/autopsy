@@ -265,7 +265,7 @@ public class ImageDSProcessor implements AutomatedIngestDataSourceProcessor {
                 return 0;
             }
         } catch (Exception ex) {
-            throw new AutomatedIngestDataSourceProcessorException(NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.canProcess.exception.text"), ex);
+            throw new AutomatedIngestDataSourceProcessorException("Exception inside canProcess() method", ex);
         }
         
         // able to process the data source

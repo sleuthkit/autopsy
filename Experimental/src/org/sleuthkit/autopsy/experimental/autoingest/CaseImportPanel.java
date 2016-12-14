@@ -30,6 +30,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JTextField;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -107,7 +108,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
             tbOops.setText(MULTI_USER_SETTINGS_MUST_BE_ENABLED);
             return;
-        } else if (AutoIngestUserPreferences.getMode() != AUTOMATED) {
+        } else if (RuntimeProperties.coreComponentsAreActive()) {
             tbOops.setText(AIM_MUST_BE_ENABLED);
             return;
         } else {
@@ -673,7 +674,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     private void enableStartButton() {
         if (UserPreferences.getIsMultiUserModeEnabled()
                 && AutoIngestUserPreferences.getJoinAutoModeCluster()
-                && (AutoIngestUserPreferences.getMode() == AUTOMATED)
+                && (! RuntimeProperties.coreComponentsAreActive())
                 && !tbCaseSource.getText().isEmpty()
                 && !tbCaseDestination.getText().isEmpty()
                 && canTalkToDb == true
