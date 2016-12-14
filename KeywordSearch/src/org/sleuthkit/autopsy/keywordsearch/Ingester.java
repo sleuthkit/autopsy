@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -253,18 +252,15 @@ class Ingester {
                 if (eof) {
                     extractor.appendDataToFinalChunk(sb, appendix);
                 }
+
                 sanitizeToUTF8(sb);
 
                 final String chunkString = sb.toString();
-
-                //encode to bytes as UTF-8 to index as byte stream
-                byte[] encodedBytes = chunkString.getBytes(Server.DEFAULT_INDEXED_TEXT_CHARSET);
-
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 try {
                     try {
-                        indexChunk(encodedBytes, sourceName, fields, encodedBytes.length);
+                        indexChunk(chunkString, sourceName, fields, chunkString.length());
                     } catch (Exception ex) {
                         throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
                     }
@@ -296,6 +292,9 @@ class Ingester {
      *
      * @param totalRead    the number of chars in textChunkBuf
      * @param textChunkBuf the characters to sanitize
+     *
+     * //JMTODO: use Charsequence.chars() or codePoints() and then a mapping
+     * function?
      */
     private static void sanitizeToUTF8(StringBuilder sb) {
         final int length = sb.length();
@@ -324,11 +323,11 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    void indexChunk(byte[] docChunkContentBuf, String name, Map<String, String> fields, int size) throws IngesterException {
+    void indexChunk(String chunk, String sourceName, Map<String, String> fields, int size) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //skip the file, image id unknown
-            String msg = NbBundle.getMessage(this.getClass(),
-                    "Ingester.ingest.exception.unknownImgId.msg", name);
+            String msg = NbBundle.getMessage(Ingester.class,
+                    "Ingester.ingest.exception.unknownImgId.msg", sourceName);
             logger.log(Level.SEVERE, msg);
             throw new IngesterException(msg);
         }
@@ -341,27 +340,7 @@ class Ingester {
 
         //using size here, but we are no longer ingesting entire files
         //size is normally a chunk size, up to 1MB
-        if (size > 0) {
-            String s = new String(docChunkContentBuf, 0, size, StandardCharsets.UTF_8);
-//                char[] chars = null;
-//                for (int i = 0; i < s.length(); i++) {
-//                    if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
-//                        // only convert string to char[] if there is a non-UTF8 character
-//                        if (chars == null) {
-//                            chars = s.toCharArray();
-//                        }
-//                        chars[i] = '^';
-//                    }
-//                }
-//                if (chars != null) {
-//                    s = new String(chars);
-//                }
-                updateDoc.addField(Server.Schema.CONTENT.toString(), s);
-
-        } else {
-            //no content, such as case when 0th chunk indexed
-            updateDoc.addField(Server.Schema.CONTENT.toString(), "");
-        }
+        updateDoc.addField(Server.Schema.CONTENT.toString(), (size > 0) ? chunk : "");
 
         try {
             //TODO consider timeout thread, or vary socket timeout based on size of indexed content
@@ -369,7 +348,7 @@ class Ingester {
             uncommitedIngests = true;
         } catch (KeywordSearchModuleException ex) {
             throw new IngesterException(
-                    NbBundle.getMessage(this.getClass(), "Ingester.ingest.exception.err.msg", name), ex);
+                    NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
         }
     }
 
@@ -408,7 +387,6 @@ class Ingester {
             logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
         }
     }
-
 
     /**
      * Indicates that there was an error with the specific ingest operation, but
