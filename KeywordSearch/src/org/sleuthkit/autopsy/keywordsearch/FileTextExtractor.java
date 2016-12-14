@@ -192,7 +192,5 @@ abstract class FileTextExtractor<AppendixProvider> extends TextExtractor<Appendi
 
             stream.close();
         }
-
     }
-
 }

@@ -256,7 +256,7 @@ class Ingester {
             boolean eof = false;
             while (!eof) {
                 int totalRead = 0;
-                if (context.fileIngestIsCancelled()) {
+                if (context != null && context.fileIngestIsCancelled()) {
                     return true;
                 }
                 if ((readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS)) == -1) {
