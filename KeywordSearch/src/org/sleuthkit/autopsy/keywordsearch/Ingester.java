@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -28,13 +27,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
-import org.apache.solr.common.util.ContentStream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
-import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
@@ -266,7 +263,6 @@ class Ingester {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 try {
-                    ContentStream bcs = extractor.getContentStream(encodedBytes, encodedBytes.length, source);
                     try {
                         indexChunk(encodedBytes, sourceName, fields, encodedBytes.length);
                     } catch (Exception ex) {
@@ -413,92 +409,6 @@ class Ingester {
         }
     }
 
-    /**
-     * ContentStream associated with FsContent, but forced with no content
-     */
-    static class NullContentStream implements ContentStream {
-
-        AbstractContent aContent;
-
-        NullContentStream(AbstractContent aContent) {
-            this.aContent = aContent;
-        }
-
-        @Override
-        public String getName() {
-            return aContent.getName();
-        }
-
-        @Override
-        public String getSourceInfo() {
-            return NbBundle.getMessage(this.getClass(), "Ingester.NullContentStream.getSrcInfo.text", aContent.getId());
-        }
-
-        @Override
-        public String getContentType() {
-            return null;
-        }
-
-        @Override
-        public Long getSize() {
-            return 0L;
-        }
-
-        @Override
-        public InputStream getStream() throws IOException {
-            return new ByteArrayInputStream(new byte[0]);
-        }
-
-        @Override
-        public Reader getReader() throws IOException {
-            throw new UnsupportedOperationException(
-                    NbBundle.getMessage(this.getClass(), "Ingester.NullContentStream.getReader"));
-        }
-    }
-
-    /**
-     * ContentStream associated with Artifact, but forced with no content
-     */
-    static class NullArtifactStream implements ContentStream {
-
-        BlackboardArtifact aContent;
-
-        NullArtifactStream(BlackboardArtifact aContent) {
-            this.aContent = aContent;
-        }
-
-        @Override
-        public String getName() {
-            return aContent.getDisplayName() + "_" + aContent.getArtifactID();
-        }
-
-        @NbBundle.Messages("Ingester.NullArtifactStream.getSrcInfo.text=File:{0})\n")
-        @Override
-        public String getSourceInfo() {
-            return Bundle.Ingester_NullArtifactStream_getSrcInfo_text(aContent.getArtifactID());
-        }
-
-        @Override
-        public String getContentType() {
-            return null;
-        }
-
-        @Override
-        public Long getSize() {
-            return 0L;
-        }
-
-        @Override
-        public InputStream getStream() throws IOException {
-            return new ByteArrayInputStream(new byte[0]);
-        }
-
-        @Override
-        public Reader getReader() throws IOException {
-            throw new UnsupportedOperationException(
-                    NbBundle.getMessage(this.getClass(), "Ingester.NullContentStream.getReader"));
-        }
-    }
 
     /**
      * Indicates that there was an error with the specific ingest operation, but

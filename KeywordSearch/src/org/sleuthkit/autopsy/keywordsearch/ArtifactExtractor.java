@@ -108,6 +108,7 @@ public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
                 switch (attribute.getValueType()) {
                     case DATETIME:
                         artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
+                        break;
                     default:
                         artifactContents.append(attribute.getDisplayString());
                 }
@@ -136,15 +137,7 @@ public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
         return source.getArtifactID();
     }
 
-    @Override
-    ContentStream getContentStream(byte[] encodedBytes, int length, BlackboardArtifact source) {
-        return new ByteArtifactStream(encodedBytes, length, source);
-    }
 
-    @Override
-    ContentStream getNullStream(BlackboardArtifact source) {
-        return new Ingester.NullArtifactStream(source);
-    }
 
     @Override
     String getName(BlackboardArtifact source) {

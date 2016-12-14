@@ -115,15 +115,6 @@ abstract class FileTextExtractor<AppendixProvider> extends TextExtractor<Appendi
         return source.getId();
     }
 
-    @Override
-    ContentStream getContentStream(byte[] encodedBytes, int length, AbstractFile source) {
-        return new ByteContentStream(encodedBytes, length, source);
-    }
-
-    @Override
-    ContentStream getNullStream(AbstractFile source) {
-        return new Ingester.NullContentStream(source);
-    }
 
     @Override
     String getName(AbstractFile source) {

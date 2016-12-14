@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.InputStream;
 import java.io.Reader;
-import org.apache.solr.common.util.ContentStream;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 abstract class TextExtractor<AppendixProvider, TextSource extends SleuthkitVisitableItem> {
@@ -41,7 +40,5 @@ abstract class TextExtractor<AppendixProvider, TextSource extends SleuthkitVisit
 
     abstract long getID(TextSource source);
 
-    abstract ContentStream getContentStream(byte[] encodedBytes, int length, TextSource source);
     abstract String getName(TextSource source);
-    abstract ContentStream getNullStream(TextSource source);
 }
