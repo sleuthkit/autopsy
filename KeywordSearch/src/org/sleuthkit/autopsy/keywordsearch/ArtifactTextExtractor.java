@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.logging.Level;
 import org.apache.commons.io.IOUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -34,8 +33,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
-    static final private Logger logger = Logger.getLogger(ArtifactExtractor.class.getName());
+public class ArtifactTextExtractor extends TextExtractor<Void, BlackboardArtifact> {
+    static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
     static Content getDataSource(BlackboardArtifact artifact) throws TskCoreException {
         Content dataSource;
@@ -71,10 +70,6 @@ public class ArtifactExtractor extends TextExtractor<Void, BlackboardArtifact> {
         return false;
     }
 
-    @Override
-    void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
-    }
     @Override
     Void newAppendixProvider() {
         return null;

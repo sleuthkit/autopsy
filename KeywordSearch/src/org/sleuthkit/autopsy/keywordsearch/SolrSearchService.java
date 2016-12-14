@@ -41,7 +41,7 @@ public class SolrSearchService implements KeywordSearchService {
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
 
-    ArtifactExtractor extractor = new ArtifactExtractor();
+    ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
@@ -54,17 +54,15 @@ public class SolrSearchService implements KeywordSearchService {
         if (artifact.getArtifactID() > 0) {
             return;
         }
+        final Ingester ingester = Ingester.getDefault();
 
         try {
-            Ingester.getDefault().indexMetaDataOnly(artifact);
+            ingester.indexMetaDataOnly(artifact);
+            ingester.indexText(extractor, artifact, null);
         } catch (Ingester.IngesterException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
-        }
-
-        try {
-            Ingester.getDefault().indexText(extractor, artifact, null);
-        } catch (Ingester.IngesterException ex) {
-            throw new TskCoreException(ex.getCause().getMessage(), ex);
+        } finally {
+            ingester.commit();
         }
     }
 

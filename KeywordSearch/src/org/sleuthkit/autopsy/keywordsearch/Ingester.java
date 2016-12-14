@@ -33,7 +33,6 @@ import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -47,16 +46,17 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Handles indexing files on a Solr core.
  */
+//JMTODO: Should this class really be a singleton?
 class Ingester {
 
     private static final Logger logger = Logger.getLogger(Ingester.class.getName());
     private volatile boolean uncommitedIngests = false;
     private final Server solrServer = KeywordSearch.getServer();
-    private static final GetContentFieldsV getContentFieldsV = new GetContentFieldsV();
+    private static final SolrFieldsVisitor SOLR_FIELDS_VISITOR = new SolrFieldsVisitor();
     private static Ingester instance;
 
-    //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
-    //TODO use a streaming way to add content to /update handler
+    private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024; //chars
+    private static final int SINGLE_READ_CHARS = 1024;
     private static final int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
 
     private Ingester() {
@@ -69,6 +69,7 @@ class Ingester {
         return instance;
     }
 
+    //JMTODO: this is probably useless
     @Override
     @SuppressWarnings("FinalizeDeclaration")
     protected void finalize() throws Throwable {
@@ -81,14 +82,11 @@ class Ingester {
     }
 
     /**
-     * Sends a file to Solr to have its content extracted and added to the
-     * index. commit() should be called once you're done ingesting files. If the
-     * file is a directory or ingestContent is set to false, the file name is
-     * indexed only.
+     * Sends the metadata (name, MAC times, image id, etc) for the given file to
+     * Solr to be added to the index. commit() should be called once you're done
+     * indexing.
      *
-     * @param file          File to ingest
-     * @param ingestContent if true, index the file and the content, otherwise
-     *                      index metadata only
+     * @param file File to index.
      *
      * @throws IngesterException if there was an error processing a specific
      *                           file, but the Solr server is probably fine.
@@ -97,25 +95,35 @@ class Ingester {
         indexChunk(null, file.getName(), getContentFields(file), 0);
     }
 
+    /**
+     * Sends the metadata (artifact id, image id, etc) for the given artifact to
+     * Solr to be added to the index. commit() should be called once you're done
+     * indexing.
+     *
+     * @param artifact The artifact to index.
+     *
+     * @throws IngesterException if there was an error processing a specific
+     *                           artifact, but the Solr server is probably fine.
+     */
     void indexMetaDataOnly(BlackboardArtifact artifact) throws IngesterException {
-        indexChunk(null, artifact.getDisplayName() + "_" + artifact.getArtifactID(), getContentFields(artifact), 0);
+        indexChunk(null, new ArtifactTextExtractor().getName(artifact), getContentFields(artifact), 0);
     }
 
     /**
      * Creates a field map from FsContent, that is later sent to Solr
      *
-     * @param fsc FsContent to get fields from
+     * @param item SleuthkitVisitableItem to get fields from
      *
      * @return the map
      */
-    Map<String, String> getContentFields(SleuthkitVisitableItem fsc) {
-        return fsc.accept(getContentFieldsV);
+    Map<String, String> getContentFields(SleuthkitVisitableItem item) {
+        return item.accept(SOLR_FIELDS_VISITOR);
     }
 
     /**
-     * Visitor used to create param list to send to SOLR index.
+     * Visitor used to create fields to send to SOLR index.
      */
-    static private class GetContentFieldsV extends SleuthkitItemVisitor.Default<Map<String, String>> {
+    static private class SolrFieldsVisitor extends SleuthkitItemVisitor.Default<Map<String, String>> {
 
         @Override
         protected Map<String, String> defaultVisit(SleuthkitVisitableItem svi) {
@@ -124,17 +132,17 @@ class Ingester {
 
         @Override
         public Map<String, String> visit(File f) {
-            return getCommonFileContentFields(f);
+            return getFileFields(f);
         }
 
         @Override
         public Map<String, String> visit(DerivedFile df) {
-            return getCommonFileContentFields(df);
+            return getFileFields(df);
         }
 
         @Override
         public Map<String, String> visit(Directory d) {
-            return getCommonFileContentFields(d);
+            return getFileFields(d);
         }
 
         @Override
@@ -145,15 +153,15 @@ class Ingester {
 
         @Override
         public Map<String, String> visit(LocalFile lf) {
-            return getCommonFileContentFields(lf);
+            return getFileFields(lf);
         }
 
         @Override
         public Map<String, String> visit(SlackFile f) {
-            return getCommonFileContentFields(f);
+            return getFileFields(f);
         }
 
-        private Map<String, String> getCommonFileContentFields(AbstractFile file) {
+        private Map<String, String> getFileFields(AbstractFile file) {
             Map<String, String> params = getCommonFields(file);
             params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
             params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
@@ -166,10 +174,9 @@ class Ingester {
             Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
             try {
-                long dataSourceId = af.getDataSource().getId();
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSourceId));
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(af.getDataSource().getId()));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get data source id to properly index the file {0}", af.getId()); //NON-NLS
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
             params.put(Server.Schema.FILE_NAME.toString(), af.getName());
@@ -181,29 +188,26 @@ class Ingester {
             Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(artifact.getArtifactID()));
             try {
-                Content dataSource = ArtifactExtractor.getDataSource(artifact);
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(ArtifactTextExtractor.getDataSource(artifact).getId()));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get data source id to properly index the artifact {0}", artifact.getArtifactID()); //NON-NLS
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the artifact " + artifact.getArtifactID(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
-
             return params;
         }
     }
 
-    private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024; //chars
-    private static final int SINGLE_READ_CHARS = 1024;
-    private static final int EXTRA_CHARS = 128; //for whitespace
 
     public <A, T extends SleuthkitVisitableItem> boolean indexText(TextExtractor<A, T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
+        final long sourceID = extractor.getID(source);
+        final String sourceName = extractor.getName(source);
+
         int numChunks = 0; //unknown until chunking is done
 
         if (extractor.noExtractionOptionsAreEnabled()) {
             return true;
         }
-        final long sourceID = extractor.getID(source);
-        final String sourceName = extractor.getName(source);
+
         Map<String, String> fields = getContentFields(source);
 
         A appendix = extractor.newAppendixProvider();
@@ -212,64 +216,64 @@ class Ingester {
 
             //we read max 1024 chars at time, this seems to max what this Reader would return
             char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-            long readSize;
+
             boolean eof = false;
             while (!eof) {
-                int totalRead = 0;
+                int chunkSizeInChars = 0;
                 if (context != null && context.fileIngestIsCancelled()) {
                     return true;
                 }
-                if ((readSize = reader.read(textChunkBuf, 0, SINGLE_READ_CHARS)) == -1) {
-                    eof = true;
-                } else {
-                    totalRead += readSize;
+                long charsRead = 0;
+                //consume bytes to fill entire chunk (but leave EXTRA_CHARS to end the word)
+                while ((chunkSizeInChars < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
+                        && (charsRead = reader.read(textChunkBuf, chunkSizeInChars, SINGLE_READ_CHARS)) != -1) {
+                    chunkSizeInChars += charsRead;
                 }
 
-                //consume more bytes to fill entire chunk (leave EXTRA_CHARS to end the word)
-                while ((totalRead < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
-                        && (readSize = reader.read(textChunkBuf, totalRead, SINGLE_READ_CHARS)) != -1) {
-                    totalRead += readSize;
-                }
-                if (readSize == -1) {
+                if (charsRead == -1) {
                     //this is the last chunk
                     eof = true;
                 } else {
+                    chunkSizeInChars += charsRead;
+
                     //try to read char-by-char until whitespace to not break words
-                    while ((totalRead < MAX_EXTR_TEXT_CHARS - 1)
-                            && !Character.isWhitespace(textChunkBuf[totalRead - 1])
-                            && (readSize = reader.read(textChunkBuf, totalRead, 1)) != -1) {
-                        totalRead += readSize;
+                    while ((chunkSizeInChars < MAX_EXTR_TEXT_CHARS - 1)
+                            && (Character.isWhitespace(textChunkBuf[chunkSizeInChars - 1]) == false)
+                            && (charsRead = reader.read(textChunkBuf, chunkSizeInChars, 1)) != -1) {
+                        chunkSizeInChars += charsRead;
                     }
-                    if (readSize == -1) {
+                    if (charsRead == -1) {
                         //this is the last chunk
                         eof = true;
                     }
                 }
 
-                StringBuilder sb = new StringBuilder(totalRead + 1000)
-                        .append(textChunkBuf, 0, totalRead);
-
+                StringBuilder sb;
                 if (eof) {
+                    //1000 char buffer is to allow for appendix data with out needing to resize the string builder.
+                    sb = new StringBuilder(chunkSizeInChars + 1000)
+                            .append(textChunkBuf, 0, chunkSizeInChars);
                     extractor.appendDataToFinalChunk(sb, appendix);
+                } else {
+                    sb = new StringBuilder(chunkSizeInChars)
+                            .append(textChunkBuf, 0, chunkSizeInChars);
+
                 }
 
                 sanitizeToUTF8(sb);
 
-                final String chunkString = sb.toString();
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 try {
-                    try {
-                        indexChunk(chunkString, sourceName, fields, chunkString.length());
-                    } catch (Exception ex) {
-                        throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
-                    }
+                    indexChunk(sb.toString(), sourceName, fields, sb.length());
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
                     extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
                             + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
 
                     throw ingEx; //need to rethrow to signal error and move on
+                } catch (Exception ex) {
+                    throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
                 }
             }
         } catch (IOException ex) {
@@ -325,15 +329,18 @@ class Ingester {
      */
     void indexChunk(String chunk, String sourceName, Map<String, String> fields, int size) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
+            //JMTODO: actually if the we couldn't get the image id it is set to -1,
+            // but does this really mean we don't want to index it?
+
             //skip the file, image id unknown
+            //JMTODO: does this need to ne internationalized?
             String msg = NbBundle.getMessage(Ingester.class,
-                    "Ingester.ingest.exception.unknownImgId.msg", sourceName);
+                    "Ingester.ingest.exception.unknownImgId.msg", sourceName); //JMTODO: does this need to ne internationalized?
             logger.log(Level.SEVERE, msg);
             throw new IngesterException(msg);
         }
 
         SolrInputDocument updateDoc = new SolrInputDocument();
-
         for (String key : fields.keySet()) {
             updateDoc.addField(key, fields.get(key));
         }
@@ -343,36 +350,14 @@ class Ingester {
         updateDoc.addField(Server.Schema.CONTENT.toString(), (size > 0) ? chunk : "");
 
         try {
-            //TODO consider timeout thread, or vary socket timeout based on size of indexed content
+            //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
             solrServer.addDocument(updateDoc);
             uncommitedIngests = true;
         } catch (KeywordSearchModuleException ex) {
+            //JMTODO: does this need to ne internationalized?
             throw new IngesterException(
                     NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
         }
-    }
-
-    /**
-     * return timeout that should be used to index the content
-     *
-     * @param size size of the content
-     *
-     * @return time in seconds to use a timeout
-     */
-    static int getTimeout(long size) {
-        if (size < 1024 * 1024L) //1MB
-        {
-            return 60;
-        } else if (size < 10 * 1024 * 1024L) //10MB
-        {
-            return 1200;
-        } else if (size < 100 * 1024 * 1024L) //100MB
-        {
-            return 3600;
-        } else {
-            return 3 * 3600;
-        }
-
     }
 
     /**
