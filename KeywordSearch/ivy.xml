@@ -7,8 +7,6 @@
         
         <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
-        <!--<conf name="solr-war"/>-->
-        <conf name="start-solr"/>
         <conf name="jetty-libs"/>
         <conf name="slf4j-libs"/>
         <conf name="servlet"/>
@@ -16,7 +14,6 @@
     <dependencies>
         <!-- Solr -->
         <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="6.2.1"/>
-        <!--<dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="6.2.1" transitive="false" />-->
 
         <!-- Autopsy -->
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="6.2.1"/>
@@ -32,7 +29,6 @@
         <dependency conf="autopsy->*" org="net.htmlparser.jericho" name="jericho-html" rev="3.3"/>
         
         <!-- Jetty -->
-        <dependency conf="start-solr->default" org="org.eclipse.jetty" name="jetty-start" rev="8.1.16.v20140903"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-server" rev="8.1.16.v20140903"/>
         <dependency conf="jetty-libs->default" org="org.eclipse.jetty" name="jetty-deploy" rev="8.1.16.v20140903"/>
         <dependency conf="servlet->default" org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"/>
