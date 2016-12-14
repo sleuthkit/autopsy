@@ -38,8 +38,14 @@ import org.sleuthkit.datamodel.TskException;
  * Solr.
  */
 class StringsTextExtractor extends FileTextExtractor<Void> {
+    /**
+     * Common options that can be used by some extractors
+     */
+    enum ExtractOptions {
 
-    private static final long MAX_STRING_CHUNK_SIZE = 1 * 1024 * 1024L;
+        EXTRACT_UTF16, ///< extract UTF16 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
+        EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
+    };
     private final List<SCRIPT> extractScripts = new ArrayList<>();
     private Map<String, String> extractOptions = new HashMap<>();
 
@@ -92,8 +98,8 @@ class StringsTextExtractor extends FileTextExtractor<Void> {
 
     @Override
     boolean noExtractionOptionsAreEnabled() {
-        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
-        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
+        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
 
         return extractUTF8 == false && extractUTF16 == false;
     }
@@ -118,8 +124,8 @@ class StringsTextExtractor extends FileTextExtractor<Void> {
      */
     @Override
     InputStream getInputStream(AbstractFile sourceFile) {
-        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF8.toString()));
-        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(FileTextExtractor.ExtractOptions.EXTRACT_UTF16.toString()));
+        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
+        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
 
         //check which extract stream to use
         InputStream stringStream = extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)

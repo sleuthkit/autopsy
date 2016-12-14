@@ -28,14 +28,6 @@ import org.sleuthkit.datamodel.AbstractFile;
  */
 abstract class FileTextExtractor<AppendixProvider> extends TextExtractor<AppendixProvider, AbstractFile> {
 
-    /**
-     * Common options that can be used by some extractors
-     */
-    enum ExtractOptions {
-
-        EXTRACT_UTF16, ///< extract UTF16 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
-        EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
-    };
 
     static final List<String> BLOB_MIME_TYPES
             = Arrays.asList(
