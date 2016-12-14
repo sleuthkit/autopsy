@@ -227,7 +227,6 @@ class LuceneQuery implements KeywordSearchQuery {
                 //no case open, must be just closed
                 return matches;
             }
-
             for (SolrDocument resultDoc : resultList) {
                 KeywordHit contentHit;
                 try {
@@ -264,7 +263,7 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setRows(MAX_RESULTS);
 
         q.setFields(Server.Schema.ID.toString());
-
+        q.addSort(Server.Schema.ID.toString(), SolrQuery.ORDER.asc);
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
         }
