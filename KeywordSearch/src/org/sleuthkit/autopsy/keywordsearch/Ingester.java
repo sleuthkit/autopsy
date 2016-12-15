@@ -92,7 +92,7 @@ class Ingester {
      *                           file, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(AbstractFile file) throws IngesterException {
-        indexChunk(null, file.getName(), getContentFields(file), 0);
+        indexChunk("", file.getName(), getContentFields(file));
     }
 
     /**
@@ -106,17 +106,18 @@ class Ingester {
      *                           artifact, but the Solr server is probably fine.
      */
     void indexMetaDataOnly(BlackboardArtifact artifact) throws IngesterException {
-        indexChunk(null, new ArtifactTextExtractor().getName(artifact), getContentFields(artifact), 0);
+        indexChunk("", new ArtifactTextExtractor().getName(artifact), getContentFields(artifact));
     }
 
     /**
-     * Creates a field map from FsContent, that is later sent to Solr
+     * Creates a field map from a SleuthkitVisitableItem, that is later sent to
+     * Solr.
      *
      * @param item SleuthkitVisitableItem to get fields from
      *
-     * @return the map
+     * @return the map from field name to value (as a string)
      */
-    Map<String, String> getContentFields(SleuthkitVisitableItem item) {
+    private Map<String, String> getContentFields(SleuthkitVisitableItem item) {
         return item.accept(SOLR_FIELDS_VISITOR);
     }
 
@@ -132,17 +133,17 @@ class Ingester {
 
         @Override
         public Map<String, String> visit(File f) {
-            return getFileFields(f);
+            return getCommonAndMACTimeFields(f);
         }
 
         @Override
         public Map<String, String> visit(DerivedFile df) {
-            return getFileFields(df);
+            return getCommonAndMACTimeFields(df);
         }
 
         @Override
         public Map<String, String> visit(Directory d) {
-            return getFileFields(d);
+            return getCommonAndMACTimeFields(d);
         }
 
         @Override
@@ -153,15 +154,24 @@ class Ingester {
 
         @Override
         public Map<String, String> visit(LocalFile lf) {
-            return getFileFields(lf);
+            return getCommonAndMACTimeFields(lf);
         }
 
         @Override
         public Map<String, String> visit(SlackFile f) {
-            return getFileFields(f);
+            return getCommonAndMACTimeFields(f);
         }
 
-        private Map<String, String> getFileFields(AbstractFile file) {
+        /**
+         * Get the field map for AbstractFiles that includes MAC times and the
+         * fields that are common to all file classes.
+         *
+         * @param file The file to get fields for
+         *
+         * @return The field map, including MAC times and common fields, for the
+         *         give file.
+         */
+        private Map<String, String> getCommonAndMACTimeFields(AbstractFile file) {
             Map<String, String> params = getCommonFields(file);
             params.put(Server.Schema.CTIME.toString(), ContentUtils.getStringTimeISO8601(file.getCtime(), file));
             params.put(Server.Schema.ATIME.toString(), ContentUtils.getStringTimeISO8601(file.getAtime(), file));
@@ -170,6 +180,14 @@ class Ingester {
             return params;
         }
 
+        /**
+         * Get the field map for AbstractFiles that is common to all file
+         * classes
+         *
+         * @param file The file to get fields for
+         *
+         * @return The field map of fields that are common to all file classes.
+         */
         private Map<String, String> getCommonFields(AbstractFile af) {
             Map<String, String> params = new HashMap<>();
             params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
@@ -183,6 +201,13 @@ class Ingester {
             return params;
         }
 
+        /**
+         * Get the field map for artifacts.
+         *
+         * @param artifact The artifact to get fields for.
+         *
+         * @return The field map for the given artifact.
+         */
         @Override
         public Map<String, String> visit(BlackboardArtifact artifact) {
             Map<String, String> params = new HashMap<>();
@@ -197,33 +222,62 @@ class Ingester {
         }
     }
 
-
-    public <A, T extends SleuthkitVisitableItem> boolean indexText(TextExtractor<A, T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
+    /**
+     * Use the given TextExtractor to extract text from the given source. The
+     * text will be chunked and each chunk passed to Solr to add to the index.
+     *
+     *
+     * @param <A>       The type of the Appendix provider that provides
+     *                  additional text to append to the final chunk.
+     * @param <T>       A subclass of SleuthkitVisibleItem.
+     * @param extractor The TextExtractor that will be used to extract text from
+     *                  the given source.
+     * @param source    The source from which text will be extracted, chunked,
+     *                  and indexed.
+     * @param context   The ingest job context that can be used to cancel this
+     *                  process.
+     *
+     * @return True if this method executed normally. or False if there was an
+     *         unexpected exception. //JMTODO: This policy needs to be reviewed.
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    <A, T extends SleuthkitVisitableItem> boolean indexText(TextExtractor<A, T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
         final long sourceID = extractor.getID(source);
         final String sourceName = extractor.getName(source);
 
         int numChunks = 0; //unknown until chunking is done
 
         if (extractor.noExtractionOptionsAreEnabled()) {
+            /* some Extrctors, notable the strings extractor, have options which
+             * can be configured such that no extraction should be done */
             return true;
         }
 
         Map<String, String> fields = getContentFields(source);
+        // the appendix will be used to add "meta data" to the end of the last chunk
+        /* JMTODO: we need to figure out how to account for this so the last
+         * chunk doesn't go past 32K
+         *
+         * JM: one idea: push the appendix into the stream that the text
+         * extractor provides so it is automatically chunked with the rest of
+         * the content JMTODO: should this really be in the index at all?
+         */ A appendix = extractor.newAppendixProvider();
 
-        A appendix = extractor.newAppendixProvider();
+        //Get a stream and a reader for that stream
         try (final InputStream stream = extractor.getInputStream(source);
                 Reader reader = extractor.getReader(stream, source, appendix);) {
 
-            //we read max 1024 chars at time, this seems to max what this Reader would return
+            //we read max 1024 chars at time, this seems to max what some Readers would return
             char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
 
-            boolean eof = false;
+            boolean eof = false;  //have we read until the end of the file yet
             while (!eof) {
-                int chunkSizeInChars = 0;
+                int chunkSizeInChars = 0;  // the size in chars of the chunk (so far)
                 if (context != null && context.fileIngestIsCancelled()) {
                     return true;
                 }
-                long charsRead = 0;
+                long charsRead = 0;  // number of chars read in the most recent read operation
                 //consume bytes to fill entire chunk (but leave EXTRA_CHARS to end the word)
                 while ((chunkSizeInChars < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
                         && (charsRead = reader.read(textChunkBuf, chunkSizeInChars, SINGLE_READ_CHARS)) != -1) {
@@ -236,6 +290,7 @@ class Ingester {
                 } else {
                     chunkSizeInChars += charsRead;
 
+                    //if we haven't reached the end of the file,
                     //try to read char-by-char until whitespace to not break words
                     while ((chunkSizeInChars < MAX_EXTR_TEXT_CHARS - 1)
                             && (Character.isWhitespace(textChunkBuf[chunkSizeInChars - 1]) == false)
@@ -257,14 +312,14 @@ class Ingester {
                 } else {
                     sb = new StringBuilder(chunkSizeInChars)
                             .append(textChunkBuf, 0, chunkSizeInChars);
-
                 }
 
-                sanitizeToUTF8(sb);
+                sanitizeToUTF8(sb);   //replace non UTF8 chars with '^'
 
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 try {
+                    //pass the chunk to method that adds it to Solr index
                     indexChunk(sb.toString(), sourceName, fields, sb.length());
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
@@ -283,19 +338,19 @@ class Ingester {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
-            //after all chunks, ingest the parent file without content itself, and store numChunks
+            //after all chunks, index just the meta data, including the  numChunks, of the parent file
             fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
+            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID)); //reset id field to base document id
             indexChunk(null, sourceName, fields, 0);
         }
         return true;
     }
 
     /**
-     * Sanitize the given chars by replacing non-UTF-8 characters with caret '^'
+     * Sanitize the given StringBuilder by replacing non-UTF-8 characters with
+     * caret '^'
      *
-     * @param totalRead    the number of chars in textChunkBuf
-     * @param textChunkBuf the characters to sanitize
+     * @param sb the StringBuilder to sanitize
      *
      * //JMTODO: use Charsequence.chars() or codePoints() and then a mapping
      * function?
@@ -305,29 +360,26 @@ class Ingester {
 
         // Sanitize by replacing non-UTF-8 characters with caret '^'
         for (int i = 0; i < length; i++) {
-            if (!TextUtil.isValidSolrUTF8(sb.charAt(i))) {
-                sb.replace(i, i + 1, "^'");
+            if (TextUtil.isValidSolrUTF8(sb.charAt(i)) == false) {
+                sb.replace(i, i + 1, '^');
             }
         }
     }
 
     /**
-     * Indexing method that bypasses Tika, assumes pure text It reads and
-     * converts the entire content stream to string, assuming UTF8 since we
-     * can't use streaming approach for Solr /update handler. This should be
-     * safe, since all content is now in max 1MB chunks.
+     * Add one chunk as to the Solr index as a seperate sold document.
      *
      * TODO see if can use a byte or string streaming way to add content to
      * /update handler e.g. with XMLUpdateRequestHandler (deprecated in SOlr
      * 4.0.0), see if possible to stream with UpdateRequestHandler
      *
-     * @param cs
+     * @param chunk  The chunk content as a string
      * @param fields
      * @param size
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    void indexChunk(String chunk, String sourceName, Map<String, String> fields, int size) throws IngesterException {
+    private void indexChunk(String chunk, String sourceName, Map<String, String> fields) throws IngesterException {
         if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
             //JMTODO: actually if the we couldn't get the image id it is set to -1,
             // but does this really mean we don't want to index it?
@@ -340,14 +392,14 @@ class Ingester {
             throw new IngesterException(msg);
         }
 
+        //Make a SolrInputDocument out of the field map
         SolrInputDocument updateDoc = new SolrInputDocument();
         for (String key : fields.keySet()) {
             updateDoc.addField(key, fields.get(key));
         }
-
-        //using size here, but we are no longer ingesting entire files
-        //size is normally a chunk size, up to 1MB
-        updateDoc.addField(Server.Schema.CONTENT.toString(), (size > 0) ? chunk : "");
+        //add the content to the SolrInputDocument
+        //JMTODO: can we just add it to the field map before passing that in?
+        updateDoc.addField(Server.Schema.CONTENT.toString(), chunk);
 
         try {
             //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
