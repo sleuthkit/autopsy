@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+AutoUpdate-Show-In-Client: true
+OpenIDE-Module: org.sleuthkit.autopsy.experimental
+OpenIDE-Module-Layer: org/sleuthkit/autopsy/experimental/autoingest/layer.xml
+OpenIDE-Module-Localizing-Bundle: org/sleuthkit/autopsy/experimental/autoingest/Bundle.properties
+OpenIDE-Module-Specification-Version: 1.0
+

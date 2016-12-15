@@ -37,16 +37,19 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.logging.Level;
+import org.openide.util.HelpCtx;
+import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action that opens an existing case.
  */
 @ServiceProvider(service = CaseOpenAction.class)
-public final class CaseOpenAction implements ActionListener {
+public final class CaseOpenAction extends CallableSystemAction implements ActionListener {
 
     private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
     private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
+    private static final long serialVersionUID = 1L;
     private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter caseMetadataFileFilter;
 
@@ -139,5 +142,19 @@ public final class CaseOpenAction implements ActionListener {
                 }
             }).start();
         }
+    }
+
+    @Override
+    public void performAction() {
+    }
+
+    @Override
+    public String getName() {
+        return NbBundle.getMessage(CaseOpenAction.class, "CTL_OpenAction");
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
     }
 }

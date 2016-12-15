@@ -68,6 +68,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     private final HashMap<String, List<String>> existingMimeTypes = new HashMap<>();
     private static final Logger LOGGER = Logger.getLogger(FileTypesByMimeType.class.getName());
 
+    private void removeListeners() {
+        deleteObservers();
+        IngestManager.getInstance().removeIngestJobEventListener(pcl);
+        Case.removePropertyChangeListener(pcl);
+    }
+
     /*
          * The pcl is in the class because it has the easiest mechanisms to add
          * and remove itself during its life cycles.
@@ -75,9 +81,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
         if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                //             || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())
-                || eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+
             /**
              * Checking for a current case is a stop gap measure until a
              * different way of handling the closing of cases is worked out.
@@ -91,6 +96,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 /**
                  * Case is closed, do nothing.
                  */
+            }
+        } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+            if (evt.getNewValue() == null) {
+                removeListeners();
             }
         }
     };
@@ -123,15 +132,13 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
         synchronized (existingMimeTypes) {
             existingMimeTypes.clear();
-        }
 
-        if (skCase == null) {
+            if (skCase == null) {
 
-            return;
-        }
-        try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(allDistinctMimeTypesQuery.toString())) {
-            ResultSet resultSet = dbQuery.getResultSet();
-            synchronized (existingMimeTypes) {
+                return;
+            }
+            try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(allDistinctMimeTypesQuery.toString())) {
+                ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
                     final String mime_type = resultSet.getString("mime_type"); //NON-NLS
                     if (!mime_type.isEmpty()) {
@@ -144,17 +151,19 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                         }
                     }
                 }
+            } catch (TskCoreException | SQLException ex) {
+                LOGGER.log(Level.SEVERE, "Unable to populate File Types by MIME Type tree view from DB: ", ex); //NON-NLS
             }
-        } catch (TskCoreException | SQLException ex) {
-            LOGGER.log(Level.WARNING, "Unable to populate File Types by MIME Type tree view from DB: ", ex); //NON-NLS
         }
+
         setChanged();
+
         notifyObservers();
     }
 
     FileTypesByMimeType(SleuthkitCase skCase) {
         IngestManager.getInstance().addIngestJobEventListener(pcl);
-        IngestManager.getInstance().addIngestModuleEventListener(pcl);
+        Case.addPropertyChangeListener(pcl);
         this.skCase = skCase;
         populateHashMap();
     }
@@ -178,6 +187,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             isEmptyMimeNode = true;
         }
         return isEmptyMimeNode;
+
     }
 
     /**
