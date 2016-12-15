@@ -320,7 +320,7 @@ class Ingester {
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 try {
                     //pass the chunk to method that adds it to Solr index
-                    indexChunk(sb.toString(), sourceName, fields, sb.length());
+                    indexChunk(sb.toString(), sourceName, fields);
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
                     extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
@@ -341,7 +341,7 @@ class Ingester {
             //after all chunks, index just the meta data, including the  numChunks, of the parent file
             fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
             fields.put(Server.Schema.ID.toString(), Long.toString(sourceID)); //reset id field to base document id
-            indexChunk(null, sourceName, fields, 0);
+            indexChunk(null, sourceName, fields);
         }
         return true;
     }
@@ -361,7 +361,7 @@ class Ingester {
         // Sanitize by replacing non-UTF-8 characters with caret '^'
         for (int i = 0; i < length; i++) {
             if (TextUtil.isValidSolrUTF8(sb.charAt(i)) == false) {
-                sb.replace(i, i + 1, '^');
+                sb.replace(i, i + 1, "^");
             }
         }
     }
