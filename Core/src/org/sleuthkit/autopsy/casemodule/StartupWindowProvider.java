@@ -59,12 +59,10 @@ public class StartupWindowProvider implements StartupWindowInterface {
                     = Lookup.getDefault().lookupAll(StartupWindowInterface.class);
 
             int windowsCount = startupWindows.size();
-            if (windowsCount > 2) {
-                logger.log(Level.WARNING, "More than 2 (" + windowsCount + ") start up windows discovered, will use the first custom one"); //NON-NLS
-            } else if (windowsCount == 1) {
+            if (windowsCount == 1) {
                 startupWindowToUse = startupWindows.iterator().next();
                 logger.log(Level.INFO, "Will use the default startup window: " + startupWindowToUse.toString()); //NON-NLS
-            } else {
+            } else if (windowsCount == 2) {
                 //pick the non default one
                 Iterator<? extends StartupWindowInterface> it = startupWindows.iterator();
                 while (it.hasNext()) {
@@ -73,17 +71,25 @@ public class StartupWindowProvider implements StartupWindowInterface {
                         startupWindowToUse = window;
                         logger.log(Level.INFO, "Will use the custom startup window: " + startupWindowToUse.toString()); //NON-NLS
                         break;
-
                     }
                 }
-
-                if (startupWindowToUse == null) {
-                    logger.log(Level.SEVERE, "Unexpected error, no custom startup window found, using the default"); //NON-NLS
-                    startupWindowToUse = new org.sleuthkit.autopsy.casemodule.StartupWindow();
+            } else {
+                // select first non-Autopsy start up window
+                Iterator<? extends StartupWindowInterface> it = startupWindows.iterator();
+                while (it.hasNext()) {
+                    StartupWindowInterface window = it.next();
+                    if (!window.getClass().getCanonicalName().startsWith("org.sleuthkit.autopsy")) {
+                        startupWindowToUse = window;
+                        logger.log(Level.INFO, "Will use the custom startup window: " + startupWindowToUse.toString()); //NON-NLS
+                        break;
+                    }
                 }
-
             }
 
+            if (startupWindowToUse == null) {
+                logger.log(Level.SEVERE, "Unexpected error, no startup window chosen, using the default"); //NON-NLS
+                startupWindowToUse = new org.sleuthkit.autopsy.casemodule.StartupWindow();
+            }
         }
     }
 
