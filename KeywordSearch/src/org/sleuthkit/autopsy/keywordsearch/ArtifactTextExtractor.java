@@ -33,7 +33,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
-public class ArtifactTextExtractor extends TextExtractor<Void, BlackboardArtifact> {
+public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
     static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
     static Content getDataSource(BlackboardArtifact artifact) throws TskCoreException {
@@ -70,10 +70,6 @@ public class ArtifactTextExtractor extends TextExtractor<Void, BlackboardArtifac
         return false;
     }
 
-    @Override
-    Void newAppendixProvider() {
-        return null;
-    }
 
     @Override
     InputStream getInputStream(BlackboardArtifact artifact) {
@@ -118,7 +114,7 @@ public class ArtifactTextExtractor extends TextExtractor<Void, BlackboardArtifac
     }
 
     @Override
-    Reader getReader(InputStream stream, BlackboardArtifact source, Void appendix) throws Ingester.IngesterException {
+    Reader getReader(InputStream stream, BlackboardArtifact source) throws Ingester.IngesterException {
         return new InputStreamReader(stream);
     }
 

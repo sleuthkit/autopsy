@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.TskException;
  * with the original source file) up to 1MB then and indexes chunks as text with
  * Solr.
  */
-class StringsTextExtractor extends FileTextExtractor<Void> {
+class StringsTextExtractor extends FileTextExtractor {
     /**
      * Common options that can be used by some extractors
      */
@@ -105,7 +105,7 @@ class StringsTextExtractor extends FileTextExtractor<Void> {
     }
 
     @Override
-    InputStreamReader getReader(final InputStream stringStream, AbstractFile sourceFile, Void appendix) throws Ingester.IngesterException {
+    InputStreamReader getReader(final InputStream stringStream, AbstractFile sourceFile) throws Ingester.IngesterException {
         return new InputStreamReader(stringStream, Server.DEFAULT_INDEXED_TEXT_CHARSET);
     }
 
@@ -143,12 +143,6 @@ class StringsTextExtractor extends FileTextExtractor<Void> {
     public boolean isSupported(AbstractFile file, String detectedFormat) {
         // strings can be run on anything. 
         return true;
-    }
-
-
-    @Override
-    Void newAppendixProvider() {
-        return null;
     }
 
     /**

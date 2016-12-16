@@ -24,7 +24,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
-abstract class TextExtractor<AppendixProvider, TextSource extends SleuthkitVisitableItem> {
+abstract class TextExtractor< TextSource extends SleuthkitVisitableItem> {
 
     static final private Logger logger = Logger.getLogger(TextExtractor.class.getName());
     abstract boolean noExtractionOptionsAreEnabled();
@@ -33,15 +33,9 @@ abstract class TextExtractor<AppendixProvider, TextSource extends SleuthkitVisit
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
-    void appendDataToFinalChunk(StringBuilder sb, AppendixProvider dataProvider) {
-        //no-op
-    }
-
-    abstract AppendixProvider newAppendixProvider();
-
     abstract InputStream getInputStream(TextSource source);
 
-    abstract Reader getReader(InputStream stream, TextSource source, AppendixProvider appendix) throws Ingester.IngesterException;
+    abstract Reader getReader(InputStream stream, TextSource source) throws Ingester.IngesterException;
 
     abstract long getID(TextSource source);
 

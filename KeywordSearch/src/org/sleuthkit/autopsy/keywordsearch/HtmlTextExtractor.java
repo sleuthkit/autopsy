@@ -37,7 +37,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
-class HtmlTextExtractor extends FileTextExtractor<Void> {
+class HtmlTextExtractor extends FileTextExtractor {
 
     static final int MAX_EXTR_TEXT_CHARS = 31 * 1024;
     private static final int MAX_SIZE = 50000000;
@@ -53,7 +53,6 @@ class HtmlTextExtractor extends FileTextExtractor<Void> {
 
     HtmlTextExtractor() {
     }
-
 
     @Override
     boolean isContentTypeSpecific() {
@@ -76,7 +75,7 @@ class HtmlTextExtractor extends FileTextExtractor<Void> {
      * @throws IOException if There is an IOException parsing the input stream.
      */
     @Override
-    Reader getReader(InputStream in, AbstractFile sourceFile, Void v) throws Ingester.IngesterException {
+    Reader getReader(InputStream in, AbstractFile sourceFile) throws Ingester.IngesterException {
         try {
             StringBuilder scripts = new StringBuilder();
             StringBuilder links = new StringBuilder();
@@ -172,10 +171,6 @@ class HtmlTextExtractor extends FileTextExtractor<Void> {
     }
 
     @Override
-    Void newAppendixProvider() {
-        return null;
-    }
-
     InputStream getInputStream(AbstractFile sourceFile1) {
         return new ReadContentInputStream(sourceFile1);
     }

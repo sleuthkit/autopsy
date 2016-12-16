@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.InputStream;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -26,7 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
  * Common methods for utilities that extract text and content and divide into
  * chunks
  */
-abstract class FileTextExtractor<AppendixProvider> extends TextExtractor<AppendixProvider, AbstractFile> {
+abstract class FileTextExtractor extends TextExtractor< AbstractFile> {
 
 
     static final List<String> BLOB_MIME_TYPES
@@ -94,6 +96,9 @@ abstract class FileTextExtractor<AppendixProvider> extends TextExtractor<Appendi
     abstract boolean isSupported(AbstractFile file, String detectedFormat);
 
     @Override
+    abstract Reader getReader(InputStream stream, AbstractFile source) throws Ingester.IngesterException;
+
+    @Override
     long getID(AbstractFile source) {
         return source.getId();
     }
@@ -103,4 +108,5 @@ abstract class FileTextExtractor<AppendixProvider> extends TextExtractor<Appendi
     String getName(AbstractFile source) {
         return source.getName();
     }
+
 }

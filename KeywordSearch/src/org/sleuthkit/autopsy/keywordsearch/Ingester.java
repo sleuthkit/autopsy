@@ -242,7 +242,7 @@ class Ingester {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    <A, T extends SleuthkitVisitableItem> boolean indexText(TextExtractor<A, T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
+    < T extends SleuthkitVisitableItem> boolean indexText(TextExtractor< T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
         final long sourceID = extractor.getID(source);
         final String sourceName = extractor.getName(source);
 
@@ -255,18 +255,9 @@ class Ingester {
         }
 
         Map<String, String> fields = getContentFields(source);
-        // the appendix will be used to add "meta data" to the end of the last chunk
-        /* JMTODO: we need to figure out how to account for this so the last
-         * chunk doesn't go past 32K
-         *
-         * JM: one idea: push the appendix into the stream that the text
-         * extractor provides so it is automatically chunked with the rest of
-         * the content JMTODO: should this really be in the index at all?
-         */ A appendix = extractor.newAppendixProvider();
-
         //Get a stream and a reader for that stream
         try (final InputStream stream = extractor.getInputStream(source);
-                Reader reader = extractor.getReader(stream, source, appendix);) {
+                Reader reader = extractor.getReader(stream, source);) {
 
             //we read max 1024 chars at time, this seems to max what some Readers would return
             char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
@@ -303,16 +294,8 @@ class Ingester {
                     }
                 }
 
-                StringBuilder sb;
-                if (eof) {
-                    //1000 char buffer is to allow for appendix data with out needing to resize the string builder.
-                    sb = new StringBuilder(chunkSizeInChars + 1000)
-                            .append(textChunkBuf, 0, chunkSizeInChars);
-                    extractor.appendDataToFinalChunk(sb, appendix);
-                } else {
-                    sb = new StringBuilder(chunkSizeInChars)
-                            .append(textChunkBuf, 0, chunkSizeInChars);
-                }
+                StringBuilder sb = new StringBuilder(chunkSizeInChars)
+                        .append(textChunkBuf, 0, chunkSizeInChars);
 
                 sanitizeToUTF8(sb);   //replace non UTF8 chars with '^'
 

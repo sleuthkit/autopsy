@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.io.CharSource;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
@@ -39,18 +41,16 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extractor of text from TIKA supported AbstractFile content. Extracted text is
- * divided into chunks and indexed with Solr. Protects against Tika parser hangs
- * (for unexpected/corrupt content) using a timeout mechanism. If Tika
- * extraction succeeds, chunks are indexed with Solr.
+ * Extractor of text from TIKA supported AbstractFile content. Extracted text
+ * will be divided into chunks and indexed with Solr. Protects against Tika
+ * parser hangs (for unexpected/corrupt content) using a timeout mechanism. If
+ * Tika extraction succeeds, chunks are indexed with Solr.
  *
  * This Tika extraction/chunking utility is useful for large files of Tika
  * parsers-supported content type.
- *
  */
-class TikaTextExtractor extends FileTextExtractor<Metadata> {
+class TikaTextExtractor extends FileTextExtractor {
 
-    private static final int MAX_EXTR_TEXT_CHARS = 16 * 1024;
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
 
     private static final List<String> TIKA_SUPPORTED_TYPES
@@ -66,27 +66,15 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
     }
 
     @Override
-    Metadata newAppendixProvider() {
-        return new Metadata();
-    }
-
-    @Override
-    public void appendDataToFinalChunk(StringBuilder sb, Metadata meta) {
-
-        //TODO: How do we account for this in chunking algorithm...
-        //JM: what if we always append it as a separate chunk?
-        sb.append("\n\n------------------------------METADATA------------------------------\n\n"); //NON-NLS
-        Stream.of(meta.names()).sorted().forEach(key -> {
-            sb.append(key).append(": ").append(meta.get(key)).append("\n");
-        });
-    }
-
-    @Override
-    Reader getReader(final InputStream stream, AbstractFile sourceFile, Metadata meta) throws IngesterException, MissingResourceException {
-        //Parse the file in a task
-        final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, meta));
+    Reader getReader(final InputStream stream, AbstractFile sourceFile) throws IngesterException, MissingResourceException {
+        Metadata metadata = new Metadata();
+        //Parse the file in a task, a convenient way to have a timeout...
+        final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, metadata));
         try {
-            return future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+            final Reader tikaReader = future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
+            //concatenate parsed content and meta data into a single reader.
+            return CharSource.concat(new ReaderCharSource(tikaReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
@@ -99,8 +87,24 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
         }
     }
 
-    @Override
+    /**
+     * Get a CharSource that wraps a formated representation of the given
+     * Metadata.
+     *
+     * @param metadata The Metadata to wrap as a CharSource
+     *
+     * @returna CharSource for the given MetaData
+     */
+    static private CharSource getMetaDataCharSource(Metadata metadata) {
+        return CharSource.wrap(
+                new StringBuilder("\n\n------------------------------METADATA------------------------------\n\n")
+                .append(Stream.of(metadata.names()).sorted()
+                        .map(key -> key + ": " + metadata.get(key))
+                        .collect(Collectors.joining("\n"))
+                ));
+    }
 
+    @Override
     public boolean isContentTypeSpecific() {
         return true;
     }
@@ -130,8 +134,9 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
     boolean noExtractionOptionsAreEnabled() {
         return false;
     }
+
     /**
-     * return timeout that should be used to index the content
+     * Return timeout that should be used to index the content.
      *
      * @param size size of the content
      *
@@ -151,5 +156,23 @@ class TikaTextExtractor extends FileTextExtractor<Metadata> {
             return 3 * 3600;
         }
 
+    }
+
+    /**
+     * An implementation of CharSource that just wraps an existing reader and
+     * returns it in openStream().
+     */
+    private static class ReaderCharSource extends CharSource {
+
+        private final Reader reader;
+
+        public ReaderCharSource(Reader reader) {
+            this.reader = reader;
+        }
+
+        @Override
+        public Reader openStream() throws IOException {
+            return reader;
+        }
     }
 }
