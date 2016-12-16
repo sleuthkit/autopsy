@@ -18,22 +18,34 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.io.File;
 import java.text.NumberFormat;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.report.ReportBranding;
 
 /**
  * Options panel that allow users to set application preferences.
  */
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
+    private final JFileChooser fc;
+
     AutopsyOptionsPanel() {
         initComponents();
+        fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setMultiSelectionEnabled(false);
+        fc.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
+
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         Integer fileIngestThreadCountChoices[];
         int recommendedFileIngestThreadCount;
@@ -92,7 +104,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         };
         this.jFormattedTextFieldProcTimeOutHrs.getDocument().addDocumentListener(docListener);
-        
+
     }
 
     void load() {
@@ -120,6 +132,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             int timeOutHrs = UserPreferences.getProcessTimeOutHrs();
             jFormattedTextFieldProcTimeOutHrs.setValue((long) timeOutHrs);
         }
+        agencyLogoPathField.setText(ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP));
     }
 
     void store() {
@@ -137,8 +150,14 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             long timeOutHrs = (long) jFormattedTextFieldProcTimeOutHrs.getValue();
             UserPreferences.setProcessTimeOutHrs((int) timeOutHrs);
         }
+        if (!agencyLogoPathField.getText().isEmpty()) {
+            File image = new File(agencyLogoPathField.getText());
+            if (image.exists()) {
+                ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, agencyLogoPathField.getText());
+            }
+        }
     }
-    
+
     boolean valid() {
         return true;
     }
@@ -174,6 +193,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         dataSourcesHideSlackCB = new javax.swing.JCheckBox();
         viewsHideSlackCB = new javax.swing.JCheckBox();
         jLabelHideSlackFiles = new javax.swing.JLabel();
+        agencyLogoImageLabel = new javax.swing.JLabel();
+        agencyLogoPathField = new javax.swing.JTextField();
+        browseLogosButton = new javax.swing.JButton();
 
         jScrollPane1.setBorder(null);
 
@@ -276,6 +298,18 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelHideSlackFiles, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelHideSlackFiles.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(agencyLogoImageLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoImageLabel.text")); // NOI18N
+        agencyLogoImageLabel.setToolTipText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoImageLabel.toolTipText")); // NOI18N
+
+        agencyLogoPathField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPathField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(browseLogosButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.browseLogosButton.text")); // NOI18N
+        browseLogosButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                browseLogosButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -321,13 +355,17 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                                     .addComponent(viewsHideKnownCB))))
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jLabelHideSlackFiles)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(dataSourcesHideSlackCB)
-                                    .addComponent(viewsHideSlackCB))))
+                                    .addComponent(viewsHideSlackCB)))
+                            .addComponent(agencyLogoImageLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(agencyLogoPathField))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(browseLogosButton)
                         .addGap(0, 0, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
@@ -371,7 +409,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabelProcessTimeOutUnits)))
-                .addContainerGap(49, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(agencyLogoImageLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(agencyLogoPathField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(browseLogosButton))
+                .addContainerGap(52, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel1);
@@ -384,56 +428,69 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 471, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
+
+    private void viewsHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewsHideSlackCBActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_viewsHideSlackCBActionPerformed
+
+    private void dataSourcesHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourcesHideSlackCBActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_dataSourcesHideSlackCBActionPerformed
+
+    private void jFormattedTextFieldProcTimeOutHrsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
 
     private void jCheckBoxEnableProcTimeoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxEnableProcTimeoutActionPerformed
         jFormattedTextFieldProcTimeOutHrs.setEditable(jCheckBoxEnableProcTimeout.isSelected());
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_jCheckBoxEnableProcTimeoutActionPerformed
 
-    private void useBestViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useBestViewerRBActionPerformed
+    private void numberOfFileIngestThreadsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numberOfFileIngestThreadsComboBoxActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_useBestViewerRBActionPerformed
-
-    private void keepCurrentViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keepCurrentViewerRBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_keepCurrentViewerRBActionPerformed
-
-    private void dataSourcesHideKnownCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourcesHideKnownCBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_dataSourcesHideKnownCBActionPerformed
+    }//GEN-LAST:event_numberOfFileIngestThreadsComboBoxActionPerformed
 
     private void viewsHideKnownCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewsHideKnownCBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_viewsHideKnownCBActionPerformed
 
-    private void useLocalTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useLocalTimeRBActionPerformed
+    private void dataSourcesHideKnownCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourcesHideKnownCBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_useLocalTimeRBActionPerformed
+    }//GEN-LAST:event_dataSourcesHideKnownCBActionPerformed
 
     private void useGMTTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useGMTTimeRBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_useGMTTimeRBActionPerformed
 
-    private void numberOfFileIngestThreadsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numberOfFileIngestThreadsComboBoxActionPerformed
+    private void useLocalTimeRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useLocalTimeRBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_numberOfFileIngestThreadsComboBoxActionPerformed
+    }//GEN-LAST:event_useLocalTimeRBActionPerformed
 
-    private void jFormattedTextFieldProcTimeOutHrsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
+    private void keepCurrentViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keepCurrentViewerRBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
+    }//GEN-LAST:event_keepCurrentViewerRBActionPerformed
 
-    private void dataSourcesHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourcesHideSlackCBActionPerformed
+    private void useBestViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useBestViewerRBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_dataSourcesHideSlackCBActionPerformed
+    }//GEN-LAST:event_useBestViewerRBActionPerformed
 
-    private void viewsHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewsHideSlackCBActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_viewsHideSlackCBActionPerformed
+    private void browseLogosButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseLogosButtonActionPerformed
+        int returnState = fc.showOpenDialog(this);
+        if (returnState == JFileChooser.APPROVE_OPTION) {
+            String path = fc.getSelectedFile().getPath();
+            agencyLogoPathField.setText(path);
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
+
+    }//GEN-LAST:event_browseLogosButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel agencyLogoImageLabel;
+    private javax.swing.JTextField agencyLogoPathField;
+    private javax.swing.JButton browseLogosButton;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup3;
     private javax.swing.JCheckBox dataSourcesHideKnownCB;
