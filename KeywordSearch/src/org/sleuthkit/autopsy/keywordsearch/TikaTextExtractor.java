@@ -142,7 +142,7 @@ class TikaTextExtractor extends FileTextExtractor {
      *
      * @return time in seconds to use a timeout
      */
-    static int getTimeout(long size) {
+    private static int getTimeout(long size) {
         if (size < 1024 * 1024L) //1MB
         {
             return 60;
