@@ -57,7 +57,7 @@ class Ingester {
 
     private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024; //chars
     private static final int SINGLE_READ_CHARS = 1024;
-    private static final int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
+    private static final int EXTRA_CHARS = 128;
 
     private Ingester() {
     }
@@ -248,7 +248,7 @@ class Ingester {
 
         int numChunks = 0; //unknown until chunking is done
 
-        if (extractor.noExtractionOptionsAreEnabled()) {
+        if (extractor.isDisabled()) {
             /* some Extrctors, notable the strings extractor, have options which
              * can be configured such that no extraction should be done */
             return true;

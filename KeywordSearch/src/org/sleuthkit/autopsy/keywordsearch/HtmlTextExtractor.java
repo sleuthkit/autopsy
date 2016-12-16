@@ -33,14 +33,13 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extractor of text from HTML supported AbstractFile content. Extracted text is
- * divided into chunks and indexed with Solr. If HTML extraction succeeds,
+ * Extractor of text from HTML supported AbstractFile content. Extracted text
+ * will be * divided into chunks and indexed with Solr. If HTML extraction succeeds,
  * chunks are indexed with Solr.
  */
 class HtmlTextExtractor extends FileTextExtractor {
 
-    static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
-    private static final int MAX_SIZE = 50000000;
+    private static final int MAX_SIZE = 50_000_000; //50MB
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
             "application/javascript", //NON-NLS
@@ -51,8 +50,6 @@ class HtmlTextExtractor extends FileTextExtractor {
             "text/javascript" //NON-NLS
     );
 
-    HtmlTextExtractor() {
-    }
 
     @Override
     boolean isContentTypeSpecific() {
@@ -66,16 +63,9 @@ class HtmlTextExtractor extends FileTextExtractor {
                 && file.getSize() <= MAX_SIZE;
     }
 
-    /** Parse the stream with Jericho and put the results in a Reader
-     *
-     * @param in an input stream for the content to be parsed by Jericho
-     *
-     * @return a Reader for the parsed content.
-     *
-     * @throws IOException if There is an IOException parsing the input stream.
-     */
     @Override
     Reader getReader(InputStream in, AbstractFile sourceFile) throws Ingester.IngesterException {
+        //Parse the stream with Jericho and put the results in a Reader
         try {
             StringBuilder scripts = new StringBuilder();
             StringBuilder links = new StringBuilder();
@@ -176,7 +166,7 @@ class HtmlTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    boolean noExtractionOptionsAreEnabled() {
+    boolean isDisabled() {
         return false;
     }
 }

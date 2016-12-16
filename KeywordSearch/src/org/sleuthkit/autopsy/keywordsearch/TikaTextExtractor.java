@@ -51,7 +51,6 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 class TikaTextExtractor extends FileTextExtractor {
 
-    private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024;
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
 
     private static final List<String> TIKA_SUPPORTED_TYPES
@@ -132,7 +131,7 @@ class TikaTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    boolean noExtractionOptionsAreEnabled() {
+    boolean isDisabled() {
         return false;
     }
 
@@ -143,7 +142,7 @@ class TikaTextExtractor extends FileTextExtractor {
      *
      * @return time in seconds to use a timeout
      */
-    static int getTimeout(long size) {
+    private static int getTimeout(long size) {
         if (size < 1024 * 1024L) //1MB
         {
             return 60;

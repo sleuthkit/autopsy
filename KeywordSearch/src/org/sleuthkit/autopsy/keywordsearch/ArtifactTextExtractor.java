@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.logging.Level;
 import org.apache.commons.io.IOUtils;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -33,11 +33,26 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
+/**
+ * Extracts text from artifacts by concatenating the values of all of the
+ * artifact's attributes.
+ */
 public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
     static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
+    /**
+     * Get the Content that is the data source for the given artifact. //JMTODO:
+     * is there a prexisting method to do this?
+     *
+     * @param artifact
+     *
+     * @return The data source for the given artifact as a Content object, or
+     *         null if it could not be found.
+     *
+     * @throws TskCoreException if there is a problem accessing the case db.
+     */
     static Content getDataSource(BlackboardArtifact artifact) throws TskCoreException {
-        Content dataSource;
+
         Case currentCase;
         try {
             currentCase = Case.getCurrentCase();
@@ -49,11 +64,11 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
         SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
         if (sleuthkitCase == null) {
             return null;
-        }
 
+        }
+        Content dataSource;
         AbstractFile abstractFile = sleuthkitCase.getAbstractFileById(artifact.getObjectID());
         if (abstractFile != null) {
-
             dataSource = abstractFile.getDataSource();
         } else {
             dataSource = sleuthkitCase.getContentById(artifact.getObjectID());
@@ -66,20 +81,19 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
     }
 
     @Override
-    boolean noExtractionOptionsAreEnabled() {
+    boolean isDisabled() {
         return false;
     }
 
 
     @Override
     InputStream getInputStream(BlackboardArtifact artifact) {
-
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
-        Content dataSource;
+
         try {
-            dataSource = getDataSource(artifact);
+            Content dataSource = getDataSource(artifact);
             if (dataSource == null) {
                 return null;
             }
@@ -102,7 +116,7 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
                 artifactContents.append(System.lineSeparator());
             }
         } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+            logger.log(Level.SEVERE, "There was a problem getting the atributes for artifact " + artifact.getArtifactID(), ex);
             return null;
         }
         if (artifactContents.length() == 0) {
@@ -110,7 +124,6 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
         }
 
         return IOUtils.toInputStream(artifactContents);
-
     }
 
     @Override

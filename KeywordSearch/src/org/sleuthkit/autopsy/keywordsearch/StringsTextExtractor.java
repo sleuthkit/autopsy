@@ -33,18 +33,16 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * Takes an AbstractFile, extracts strings, converts into chunks (associated
- * with the original source file) up to 1MB then and indexes chunks as text with
- * Solr.
+ * TextExtractor that extracts raw strings from an AbstractFile.
  */
 class StringsTextExtractor extends FileTextExtractor {
+
     /**
-     * Common options that can be used by some extractors
+     * Options for this extractor
      */
     enum ExtractOptions {
-
-        EXTRACT_UTF16, ///< extract UTF16 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
-        EXTRACT_UTF8, ///< extract UTF8 text, possible values Boolean.TRUE.toString(), Boolean.FALSE.toString()
+        EXTRACT_UTF16, ///< extract UTF16 text, true/false
+        EXTRACT_UTF8, ///< extract UTF8 text, true/false
     };
     private final List<SCRIPT> extractScripts = new ArrayList<>();
     private Map<String, String> extractOptions = new HashMap<>();
@@ -58,14 +56,10 @@ class StringsTextExtractor extends FileTextExtractor {
      * Sets the scripts to use for the extraction
      *
      * @param extractScripts scripts to use
-     *
-     * @return true if extractor supports script - specific extraction, false
-     *         otherwise
      */
-    public boolean setScripts(List<SCRIPT> extractScripts) {
+    public void setScripts(List<SCRIPT> extractScripts) {
         this.extractScripts.clear();
         this.extractScripts.addAll(extractScripts);
-        return true;
     }
 
     /**
@@ -97,7 +91,7 @@ class StringsTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    boolean noExtractionOptionsAreEnabled() {
+    boolean isDisabled() {
         boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
         boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
 
@@ -109,29 +103,17 @@ class StringsTextExtractor extends FileTextExtractor {
         return new InputStreamReader(stringStream, Server.DEFAULT_INDEXED_TEXT_CHARSET);
     }
 
-    /**
-     * Get the appropriate input stream to read the content of the given
-     * AbstractFile.
-     *
-     * @return an appropriate input stream to read the content of the given
-     *         AbstractFile
-     *
-     * @param sourceFile   The AbstractFile to create an input stream for
-     * @param extractUTF8  Should the the stream extract UTF8
-     * @param extractUTF16 Should the the stream extract UTF16
-     *
-     * @return An InputStream for reading the contents of the AbstractFile
-     */
     @Override
     InputStream getInputStream(AbstractFile sourceFile) {
-        boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
-        boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
-
         //check which extract stream to use
-        InputStream stringStream = extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)
-                ? new AbstractFileStringStream(sourceFile)//optimal for english, english only
-                : new AbstractFileStringIntStream(sourceFile, extractScripts, extractUTF8, extractUTF16);
-        return stringStream;
+        if (extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)) {
+            return new EnglishOnlyStream(sourceFile);//optimal for english, english only
+        } else {
+            boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
+            boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
+
+            return new InternationalStream(sourceFile, extractScripts, extractUTF8, extractUTF16);
+        }
     }
 
     @Override
@@ -157,9 +139,9 @@ class StringsTextExtractor extends FileTextExtractor {
      * AbstractFileStringIntStream streaming class, which wraps around
      * StringExtract extractor.
      */
-    private static class AbstractFileStringStream extends InputStream {
+    private static class EnglishOnlyStream extends InputStream {
 
-        private static final Logger logger = Logger.getLogger(AbstractFileStringStream.class.getName());
+        private static final Logger logger = Logger.getLogger(EnglishOnlyStream.class.getName());
         private static final String NLS = Character.toString((char) 10); //new line
         private static final int READ_BUF_SIZE = 256;
         private static final int MIN_PRINTABLE_CHARS = 4; //num. of chars needed to qualify as a char string
@@ -191,7 +173,7 @@ class StringsTextExtractor extends FileTextExtractor {
          *                      as, e.g. UTF-8
          *
          */
-        private AbstractFileStringStream(AbstractFile content) {
+        private EnglishOnlyStream(AbstractFile content) {
             this.content = content;
         }
 
@@ -380,9 +362,9 @@ class StringsTextExtractor extends FileTextExtractor {
      * stream of UTF-8 strings as encoded bytes.
      *
      */
-    private static class AbstractFileStringIntStream extends InputStream {
+    private static class InternationalStream extends InputStream {
 
-        private static final Logger logger = Logger.getLogger(AbstractFileStringIntStream.class.getName());
+        private static final Logger logger = Logger.getLogger(InternationalStream.class.getName());
         private static final int FILE_BUF_SIZE = 1024 * 1024;
         private final AbstractFile content;
         private final byte[] oneCharBuf = new byte[1];
@@ -410,7 +392,7 @@ class StringsTextExtractor extends FileTextExtractor {
          * @param extractUTF8  whether to extract utf8 encoding
          * @param extractUTF16 whether to extract utf16 encoding
          */
-        private AbstractFileStringIntStream(AbstractFile content, List<SCRIPT> scripts, boolean extractUTF8, boolean extractUTF16) {
+        private InternationalStream(AbstractFile content, List<SCRIPT> scripts, boolean extractUTF8, boolean extractUTF16) {
             this.content = content;
             this.stringExtractor = new StringExtract();
             this.stringExtractor.setEnabledScripts(scripts);
