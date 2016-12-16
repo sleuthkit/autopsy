@@ -248,7 +248,7 @@ class Ingester {
 
         int numChunks = 0; //unknown until chunking is done
 
-        if (extractor.noExtractionOptionsAreEnabled()) {
+        if (extractor.isDisabled()) {
             /* some Extrctors, notable the strings extractor, have options which
              * can be configured such that no extraction should be done */
             return true;

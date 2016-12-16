@@ -24,20 +24,70 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
+/**
+ * Extracts text out of a SleuthkitVisitableItem, and exposes it is a Reader.
+ * This Reader is given to the Ingester to chunk and index in Solr.
+ *
+ * @param <TextSource> The subtype of SleuthkitVisitableItem an implementation
+ *                     is able to process.
+ */
 abstract class TextExtractor< TextSource extends SleuthkitVisitableItem> {
 
     static final private Logger logger = Logger.getLogger(TextExtractor.class.getName());
-    abstract boolean noExtractionOptionsAreEnabled();
 
+    /**
+     * Is this extractor configured such that no extraction will/should be done?
+     *
+     * @return True if this extractor will/should not perform any extraction.
+     */
+    abstract boolean isDisabled();
+
+    /**
+     * Log the given message and exception as a warning.
+     *
+     * @param msg
+     * @param ex
+     */
     void logWarning(String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
+    /**
+     * Get an input stream over the content of the given source.
+     *
+     * @param source
+     *
+     * @return
+     */
     abstract InputStream getInputStream(TextSource source);
 
+    /**
+     * Get a reader that over the text extracted from the given source.
+     *
+     * @param stream
+     * @param source
+     *
+     * @return
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
     abstract Reader getReader(InputStream stream, TextSource source) throws Ingester.IngesterException;
 
+    /**
+     * Get the 'object' id of the given source.
+     *
+     * @param source
+     *
+     * @return
+     */
     abstract long getID(TextSource source);
 
+    /**
+     * Get a human readable name for the given source.
+     *
+     * @param source
+     *
+     * @return
+     */
     abstract String getName(TextSource source);
 }

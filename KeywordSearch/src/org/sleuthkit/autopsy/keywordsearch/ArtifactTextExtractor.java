@@ -66,7 +66,7 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
     }
 
     @Override
-    boolean noExtractionOptionsAreEnabled() {
+    boolean isDisabled() {
         return false;
     }
 

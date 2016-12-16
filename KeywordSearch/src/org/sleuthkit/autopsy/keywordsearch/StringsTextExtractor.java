@@ -97,7 +97,7 @@ class StringsTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    boolean noExtractionOptionsAreEnabled() {
+    boolean isDisabled() {
         boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
         boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
 

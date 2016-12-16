@@ -131,7 +131,7 @@ class TikaTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    boolean noExtractionOptionsAreEnabled() {
+    boolean isDisabled() {
         return false;
     }
 
