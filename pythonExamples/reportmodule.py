@@ -71,7 +71,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
     # The 'progressBar' object is of type ReportProgressPanel.
     #   See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1report_1_1_report_progress_panel.html
     def generateReport(self, baseReportDir, progressBar):
-        
+
         # For an example, we write a file with the number of files created in the past 2 weeks
         # Configure progress bar for 2 tasks
         progressBar.setIndeterminate(False)
@@ -101,7 +101,7 @@ class SampleGeneralReportModule(GeneralReportModuleAdapter):
         report.close()
 
         # Add the report to the Case, so it is shown in the tree
-        Case.getCurrentCase().addReport(fileName, self.moduleName, "File Count Report");
+        Case.getCurrentCase().addReport(fileName, self.moduleName, "File Count Report")
 
         progressBar.increment()
 

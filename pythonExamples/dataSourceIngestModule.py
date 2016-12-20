@@ -169,4 +169,4 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
         IngestServices.getInstance().postMessage(message)
 
-        return IngestModule.ProcessResult.OK;
+        return IngestModule.ProcessResult.OK
