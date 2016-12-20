@@ -58,6 +58,7 @@ class Ingester {
     private static final SolrFieldsVisitor SOLR_FIELDS_VISITOR = new SolrFieldsVisitor();
     private static Ingester instance;
 
+    private static final int SINGLE_READ_CHARS = 512;
     private Ingester() {
     }
 
