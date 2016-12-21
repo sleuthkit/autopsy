@@ -223,7 +223,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                             JOptionPane.WARNING_MESSAGE);
                 });
             }
-            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
             return;
         } 
             
