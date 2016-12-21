@@ -208,16 +208,21 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
         
         if (AutoIngestUserPreferences.getJoinAutoModeCluster() != cbJoinAutoIngestCluster.isSelected()) {
-            SwingUtilities.invokeLater(() -> {
-                JOptionPane.showMessageDialog(null,
-                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
-                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
-                        JOptionPane.WARNING_MESSAGE);
-            });
+            needsRestart = true;
         }
         
         AutoIngestUserPreferences.setJoinAutoModeCluster(cbJoinAutoIngestCluster.isSelected());
         if (!cbJoinAutoIngestCluster.isSelected()) {
+            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
+            //before return popup the message
+            if (needsRestart) {
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(null,
+                            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
+                            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
+                            JOptionPane.WARNING_MESSAGE);
+                });
+            }
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
             return;
         } 
