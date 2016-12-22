@@ -204,29 +204,39 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * Save mode to persistent storage.
      */
     void store() {
+        boolean needsRestart = false;
+        AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
+        
+        if (AutoIngestUserPreferences.getJoinAutoModeCluster() != cbJoinAutoIngestCluster.isSelected()) {
+            needsRestart = true;
+        }
+        
         AutoIngestUserPreferences.setJoinAutoModeCluster(cbJoinAutoIngestCluster.isSelected());
         if (!cbJoinAutoIngestCluster.isSelected()) {
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
-            return;
-        } 
-            
-        if (jRadioButtonAutomated.isSelected()) {
-            boolean needsSaving = false;
-            String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
-            if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
-                needsSaving = true;
-            }
-            thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
-            if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
-                needsSaving = true;
-            }
-            if (needsSaving) {
+            //before return popup the message
+            if (needsRestart) {
                 SwingUtilities.invokeLater(() -> {
                     JOptionPane.showMessageDialog(null,
                             NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
                             NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
                             JOptionPane.WARNING_MESSAGE);
                 });
+            }
+            return;
+        } 
+            
+        if (jRadioButtonAutomated.isSelected()) {
+            if (storedMode != AutoIngestUserPreferences.SelectedMode.AUTOMATED) {
+                needsRestart = true;
+            }
+            String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
+            if (thePath != null && 0 != inputPathTextField.getText().compareTo(thePath)) {
+                needsRestart = true;
+            }
+            thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
+            if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
+                needsRestart = true;
             }
 
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.AUTOMATED);
@@ -241,20 +251,27 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
         } else if (jRadioButtonReview.isSelected()) {
+            if (storedMode != AutoIngestUserPreferences.SelectedMode.REVIEW) {
+                needsRestart = true;
+            }
             String thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
             if (thePath != null && 0 != outputPathTextField.getText().compareTo(thePath)) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
-                            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
-                            JOptionPane.WARNING_MESSAGE);
-                });
+                needsRestart = true;
             }
 
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.REVIEW);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
+            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);            
         }
+        if (needsRestart) {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(null,
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.MustRestart"),
+                        NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.restartRequiredLabel.text"),
+                        JOptionPane.WARNING_MESSAGE);
+            });
+        }
+
     }
 
     void validateSettings() {
