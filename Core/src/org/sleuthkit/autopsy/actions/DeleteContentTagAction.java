@@ -73,6 +73,7 @@ public class DeleteContentTagAction extends AbstractAction {
                                 NbBundle.getMessage(this.getClass(), "DeleteContentTagAction.tagDelErr"),
                                 JOptionPane.ERROR_MESSAGE);
                     });
+                    break;
                 }
             }
         }).start();

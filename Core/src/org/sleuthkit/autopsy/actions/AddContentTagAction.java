@@ -141,6 +141,7 @@ public class AddContentTagAction extends AddTagAction {
                                 NbBundle.getMessage(this.getClass(), "AddContentTagAction.taggingErr"),
                                 JOptionPane.ERROR_MESSAGE);
                     });
+                    break;
                 }
             }
         }).start();
