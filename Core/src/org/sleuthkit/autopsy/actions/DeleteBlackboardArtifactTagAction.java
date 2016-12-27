@@ -75,6 +75,7 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
                                         "DeleteBlackboardArtifactTagAction.tagDelErr"),
                                 JOptionPane.ERROR_MESSAGE);
                     });
+                    break;
                 }
             }
         }).start();
