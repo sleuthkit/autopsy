@@ -328,7 +328,7 @@ public class GroupManager {
      */
     @SuppressWarnings({"unchecked"})
     public <A extends Comparable<A>> List<A> findValuesForAttribute(DrawableAttribute<A> groupBy) {
-        List<A> values = Collections.emptyList();;
+        List<A> values = Collections.emptyList();
         try {
             switch (groupBy.attrName) {
                 //these cases get special treatment
@@ -529,7 +529,7 @@ public class GroupManager {
                 groupByTask.cancel(true);
             }
 
-            groupByTask = new ReGroupTask<A>(groupBy, sortBy, sortOrder);
+            groupByTask = new ReGroupTask<>(groupBy, sortBy, sortOrder);
             Platform.runLater(() -> {
                 regroupProgress.bind(groupByTask.progressProperty());
             });
@@ -559,14 +559,14 @@ public class GroupManager {
         GroupKey<?> newGroupKey = null;
         final long fileID = evt.getAddedTag().getContent().getId();
         if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(evt.getAddedTag().getName())) {
-            newGroupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()));
+            newGroupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(evt.getAddedTag().getName()));
             for (GroupKey<?> oldGroupKey : groupMap.keySet()) {
                 if (oldGroupKey.equals(newGroupKey) == false) {
                     removeFromGroup(oldGroupKey, fileID);
                 }
             }
         } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(evt.getAddedTag().getName())) {
-            newGroupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
+            newGroupKey = new GroupKey<>(DrawableAttribute.TAGS, evt.getAddedTag().getName());
         }
         if (newGroupKey != null) {
             DrawableGroup g = getGroupForKey(newGroupKey);
@@ -596,9 +596,9 @@ public class GroupManager {
         final ContentTagDeletedEvent.DeletedContentTagInfo deletedTagInfo = evt.getDeletedTagInfo();
         final TagName tagName = deletedTagInfo.getName();
         if (groupBy == DrawableAttribute.CATEGORY && CategoryManager.isCategoryTagName(tagName)) {
-            groupKey = new GroupKey<Category>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(tagName));
+            groupKey = new GroupKey<>(DrawableAttribute.CATEGORY, CategoryManager.categoryFromTagName(tagName));
         } else if (groupBy == DrawableAttribute.TAGS && CategoryManager.isNotCategoryTagName(tagName)) {
-            groupKey = new GroupKey<TagName>(DrawableAttribute.TAGS, tagName);
+            groupKey = new GroupKey<>(DrawableAttribute.TAGS, tagName);
         }
         if (groupKey != null) {
             final long fileID = deletedTagInfo.getContentID();
@@ -794,7 +794,7 @@ public class GroupManager {
                 updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val));
                 updateProgress(p, vals.size());
                 groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
-                popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
+                popuplateIfAnalyzed(new GroupKey<>(groupBy, val), this);
             }
             Platform.runLater(() -> FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy)));
 
