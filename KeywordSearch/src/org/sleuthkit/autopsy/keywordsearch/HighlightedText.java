@@ -425,13 +425,13 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         StringBuilder highlightedText = new StringBuilder("");
 
-        int textOffset = 0;
         // Remove quotes from around the keyword.
         String unquotedKeyword = StringUtils.strip(keywordHitQuery, "\"");
-        // Find the first (if any) hit.
-        int hitOffset = text.indexOf(unquotedKeyword, textOffset);
 
-        while (hitOffset != -1) {
+        int textOffset = 0;
+        int hitOffset;
+
+        while ((hitOffset = text.indexOf(unquotedKeyword, textOffset)) != -1) {
             // Append the portion of text up to (but not including) the hit.
             highlightedText.append(text.substring(textOffset, hitOffset));
             // Add in the highlighting around the keyword.
@@ -441,8 +441,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
             // Advance the text offset past the keyword.
             textOffset = hitOffset + unquotedKeyword.length() + 1;
-            // Search for the next keyword hit in the text.
-            hitOffset = text.indexOf(unquotedKeyword, textOffset);
         }
 
         if (highlightedText.length() > 0) {
