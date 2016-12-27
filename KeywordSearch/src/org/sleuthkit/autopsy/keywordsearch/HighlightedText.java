@@ -25,12 +25,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -82,9 +85,23 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     }
 
-    //when the results are not known and need to requery to get hits
-    HighlightedText(long objectId, String solrQuery, boolean isRegex, String originalQuery) {
-        this(objectId, KeywordSearchUtil.quoteQuery(solrQuery), isRegex);
+    /**
+     * This constructor is used when keyword hits are accessed from the
+     * "Keyword Hits" node in the directory tree in Autopsy.
+     * In that case we only have the keyword for which a hit had
+     * previously been found so we will need to re-query to find hits
+     * for the keyword.
+     *
+     * @param objectId
+     * @param keyword The keyword that was found previously (e.g. during ingest)
+     * @param isRegex true if the keyword was found via a regular expression search
+     * @param originalQuery The original query string that produced the hit. If
+     * isRegex is true, this will be the regular expression that produced the hit.
+     */
+    HighlightedText(long objectId, String keyword, boolean isRegex, String originalQuery) {
+        // The keyword can be treated as a literal hit at this point so we
+        // surround it in quotes.
+        this(objectId, KeywordSearchUtil.quoteQuery(keyword), isRegex);
         this.originalQuery = originalQuery;
     }
 
@@ -123,25 +140,15 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             hasChunks = true;
         }
 
-        //if has chunks, get pages with hits
+        // if the file has chunks, get pages with hits, sorted
         if (hasChunks) {
-            //extract pages of interest, sorted
-
             /*
              * If this is being called from the artifacts / dir tree, then we
              * need to perform the search to get the highlights.
              */
             if (hits == null) {
-                // I don't undertand how we could get into this code with a regex query.
-                // Won't all regex queries have been resolved to actual literal keyword hits
-                // by the time we attempt to load page content? EGS.
-//                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
-//                if (isRegex) {
-//                    //use white-space sep. field to get exact matches only of regex query result
-//                    queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
-//                }
+                Keyword keywordQuery = new Keyword(keywordHitQuery, !isRegex);
 
-                Keyword keywordQuery = new Keyword(this.keywordHitQuery, !isRegex);
                 List<Keyword> keywords = new ArrayList<>();
                 keywords.add(keywordQuery);
                 KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);
@@ -303,14 +310,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     public String getText() {
         loadPageInfo(); //inits once
 
-        String highLightField = null;
-
-        if (isRegex) {
-            highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
-        } else {
-            highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
-        }
-
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
 
@@ -324,10 +323,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
         q.addFilterQuery(filterQuery);
-        q.addHighlightField(highLightField); //for exact highlighting, try content_ws field (with stored="true" in Solr schema)
+        q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
 
-        //q.setHighlightSimplePre(HIGHLIGHT_PRE); //original highlighter only
-        //q.setHighlightSimplePost(HIGHLIGHT_POST); //original highlighter only
         q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
         //tune the highlighter
@@ -341,22 +338,33 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
+
+            // There should never be more than one document since there will 
+            // either be a single chunk containing hits or we narrow our
+            // query down to the current page/chunk.
+            if (response.getResults().size() > 1) {
+                logger.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", keywordHitQuery); //NON-NLS
+            }
+
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
 
             Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
-            if (responseHighlightID == null) {
-                return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
-            }
-            List<String> contentHighlights = responseHighlightID.get(highLightField);
-            if (contentHighlights == null) {
-                return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
-            } else {
-                // extracted content (minus highlight tags) is HTML-escaped
-                String highlightedContent = contentHighlights.get(0).trim();
-                highlightedContent = insertAnchors(highlightedContent);
+            String highlightedContent;
 
-                return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
+            if (responseHighlightID == null) {
+                highlightedContent = attemptManualHighlighting(response.getResults());
+            } else {
+                List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
+                if (contentHighlights == null) {
+                    highlightedContent = attemptManualHighlighting(response.getResults());
+                } else {
+                    // extracted content (minus highlight tags) is HTML-escaped
+                    highlightedContent = contentHighlights.get(0).trim();
+                }
             }
+            highlightedContent = insertAnchors(highlightedContent);
+
+            return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
             logger.log(Level.WARNING, "Error executing Solr highlighting query: " + keywordHitQuery, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
@@ -386,6 +394,73 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         return this.hitsPages.get(this.currentPage);
     }
 
+    /**
+     * If the Solr query does not produce valid highlighting, we attempt to
+     * add the highlighting ourselves. We do this by taking the text returned
+     * from the document that contains a hit and searching that text for the
+     * keyword that produced the hit.
+     *
+     * @param solrDocumentList The list of Solr documents returned in response
+     * to a Solr query. We expect there to only ever be a single document.
+     *
+     * @return Either a string with the keyword highlighted or a string
+     * indicating that we did not find a hit in the document.
+     */
+    private String attemptManualHighlighting(SolrDocumentList solrDocumentList) {
+        if (solrDocumentList.isEmpty()) {
+            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
+        }
+
+        // It doesn't make sense for there to be more than a single document in
+        // the list since this class presents a single page (document) of highlighted
+        // content at a time.
+        String text = solrDocumentList.get(0).getOrDefault(Server.Schema.TEXT.toString(), "").toString();
+
+        // Escape any HTML content that may be in the text. This is needed in
+        // order to correctly display the text in the content viewer.
+        // Must be done before highlighting tags are added. If we were to 
+        // perform HTML escaping after adding the highlighting tags we would
+        // not see highlighted text in the content viewer.
+        text = StringEscapeUtils.escapeHtml(text);
+
+        StringBuilder highlightedText = new StringBuilder("");
+
+        int textOffset = 0;
+        // Remove quotes from around the keyword.
+        String unquotedKeyword = StringUtils.strip(keywordHitQuery, "\"");
+        // Find the first (if any) hit.
+        int hitOffset = text.indexOf(unquotedKeyword, textOffset);
+
+        while (hitOffset != -1) {
+            // Append the portion of text up to (but not including) the hit.
+            highlightedText.append(text.substring(textOffset, hitOffset));
+            // Add in the highlighting around the keyword.
+            highlightedText.append(HIGHLIGHT_PRE);
+            highlightedText.append(unquotedKeyword);
+            highlightedText.append(HIGHLIGHT_POST);
+
+            // Advance the text offset past the keyword.
+            textOffset = hitOffset + unquotedKeyword.length() + 1;
+            // Search for the next keyword hit in the text.
+            hitOffset = text.indexOf(unquotedKeyword, textOffset);
+        }
+
+        if (highlightedText.length() > 0) {
+            // Append the remainder of text field and return.
+            highlightedText.append(text.substring(textOffset, text.length()));
+            return highlightedText.toString();
+        } else {
+            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
+        }
+    }
+
+    /**
+     * Anchors are used to navigate back and forth between hits on the same
+     * page and to navigate to hits on the next/previous page.
+     *
+     * @param searchableContent
+     * @return
+     */
     private String insertAnchors(String searchableContent) {
         int searchOffset = 0;
         int index = -1;
