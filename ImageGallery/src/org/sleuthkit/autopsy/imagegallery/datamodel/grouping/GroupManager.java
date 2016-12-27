@@ -188,7 +188,7 @@ public class GroupManager {
      * the groups the given file is a part of
      *
      * @return a a set of {@link GroupKey}s representing the group(s) the given
-     *         file is a part of
+     * file is a part of
      */
     synchronized public Set<GroupKey<?>> getGroupKeysForFileID(Long fileID) {
         try {
@@ -208,7 +208,7 @@ public class GroupManager {
      * @param groupKey
      *
      * @return return the DrawableGroup (if it exists) for the given GroupKey,
-     *         or null if no group exists for that key.
+     * or null if no group exists for that key.
      */
     @Nullable
     public DrawableGroup getGroupForKey(@Nonnull GroupKey<?> groupKey) {
@@ -266,15 +266,16 @@ public class GroupManager {
      */
     @ThreadConfined(type = ThreadType.JFX)
     public void markGroupSeen(DrawableGroup group, boolean seen) {
-
-        db.markGroupSeen(group.getGroupKey(), seen);
-        group.setSeen(seen);
-        if (seen) {
-            unSeenGroups.removeAll(group);
-        } else if (unSeenGroups.contains(group) == false) {
-            unSeenGroups.add(group);
+        if (!Objects.isNull(db)) {
+            db.markGroupSeen(group.getGroupKey(), seen);
+            group.setSeen(seen);
+            if (seen) {
+                unSeenGroups.removeAll(group);
+            } else if (unSeenGroups.contains(group) == false) {
+                unSeenGroups.add(group);
+            }
+            FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
         }
-        FXCollections.sort(unSeenGroups, applySortOrder(sortOrder, sortBy));
     }
 
     /**
@@ -283,7 +284,7 @@ public class GroupManager {
      * no-op
      *
      * @param groupKey the value of groupKey
-     * @param fileID   the value of file
+     * @param fileID the value of file
      */
     public synchronized DrawableGroup removeFromGroup(GroupKey<?> groupKey, final Long fileID) {
         //get grouping this file would be in
@@ -496,7 +497,7 @@ public class GroupManager {
      * @param groupBy
      * @param sortBy
      * @param sortOrder
-     * @param force     true to force a full db query regroup
+     * @param force true to force a full db query regroup
      */
     public synchronized <A extends Comparable<A>> void regroup(final DrawableAttribute<A> groupBy, final GroupSortBy sortBy, final SortOrder sortOrder, Boolean force) {
 
@@ -644,8 +645,8 @@ public class GroupManager {
              * task was still running)
              */
 
-        } else {         // no task or un-cancelled task
-            if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
+        } else // no task or un-cancelled task
+         if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
                 /*
                  * for attributes other than path we can't be sure a group is
                  * fully analyzed because we don't know all the files that will
@@ -681,12 +682,12 @@ public class GroupManager {
                             markGroupSeen(group, groupSeen);
                         });
                         return group;
+
                     }
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
                 }
             }
-        }
         return null;
     }
 
@@ -776,7 +777,9 @@ public class GroupManager {
                 updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val));
                 updateProgress(p, vals.size());
                 groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
+
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
+
             }
             Platform.runLater(() -> FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy)));
 
