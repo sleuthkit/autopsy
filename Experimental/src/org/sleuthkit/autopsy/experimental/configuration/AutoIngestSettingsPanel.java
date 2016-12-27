@@ -335,9 +335,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 break;
         }     
         
-        jLabelInvalidImageFolder.setVisible(false);
-        jLabelInvalidResultsFolder.setVisible(false);
-
         if (jRadioButtonAutomated.isSelected()) {
             if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected() && !validSharedConfigSettings()) {
                 isValidNodePanel = false;
@@ -498,7 +495,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             return false;
         }
 
-        jLabelInvalidImageFolder.setText("");
+        jLabelInvalidImageFolder.setVisible(false);
         return true;
     }
 
@@ -529,7 +526,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
             return false;
         }
 
-        jLabelInvalidResultsFolder.setText("");
+        jLabelInvalidResultsFolder.setVisible(false);
         return true;
     }
 
