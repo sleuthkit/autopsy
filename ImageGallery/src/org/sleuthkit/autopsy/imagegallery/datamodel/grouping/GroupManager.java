@@ -646,7 +646,8 @@ public class GroupManager {
              */
 
         } else // no task or un-cancelled task
-         if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
+        {
+            if ((groupKey.getAttribute() != DrawableAttribute.PATH) || db.isGroupAnalyzed(groupKey)) {
                 /*
                  * for attributes other than path we can't be sure a group is
                  * fully analyzed because we don't know all the files that will
@@ -688,6 +689,7 @@ public class GroupManager {
                     LOGGER.log(Level.SEVERE, "failed to get files for group: " + groupKey.getAttribute().attrName.toString() + " = " + groupKey.getValue(), ex); //NON-NLS
                 }
             }
+        }
         return null;
     }
 
@@ -777,9 +779,7 @@ public class GroupManager {
                 updateMessage(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val));
                 updateProgress(p, vals.size());
                 groupProgress.progress(Bundle.ReGroupTask_progressUpdate(groupBy.attrName.toString(), val), p);
-
                 popuplateIfAnalyzed(new GroupKey<A>(groupBy, val), this);
-
             }
             Platform.runLater(() -> FXCollections.sort(analyzedGroups, applySortOrder(sortOrder, sortBy)));
 
