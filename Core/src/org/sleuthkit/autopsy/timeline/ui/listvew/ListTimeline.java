@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -47,6 +48,7 @@ import javafx.beans.binding.StringBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -687,7 +689,12 @@ class ListTimeline extends BorderPane {
     private class ScrollToFirst extends org.controlsfx.control.action.Action {
 
         ScrollToFirst() {
-            super("", actionEvent -> scrollToAndFocus(0));
+            super("", new Consumer<ActionEvent>() { //do not make this a lambda function see issue 2147 
+                @Override
+                public void accept(ActionEvent actionEvent) {
+                    scrollToAndFocus(0);
+                }
+            });
             setGraphic(new ImageView(FIRST));
             disabledProperty().bind(table.getFocusModel().focusedIndexProperty().lessThan(1));
         }
@@ -696,7 +703,12 @@ class ListTimeline extends BorderPane {
     private class ScrollToLast extends org.controlsfx.control.action.Action {
 
         ScrollToLast() {
-            super("", actionEvent -> scrollToAndFocus(table.getItems().size() - 1));
+            super("", new Consumer<ActionEvent>() {  //do not make this a lambda function see issue 2147 
+                @Override
+                public void accept(ActionEvent actionEvent) {
+                    scrollToAndFocus(table.getItems().size() - 1);
+                }
+            });
             setGraphic(new ImageView(LAST));
             IntegerBinding size = Bindings.size(table.getItems());
             disabledProperty().bind(size.isEqualTo(0).or(
@@ -707,36 +719,38 @@ class ListTimeline extends BorderPane {
     private class ScrollToNext extends org.controlsfx.control.action.Action {
 
         ScrollToNext() {
-            super("", actionEvent -> {
-
-                ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
-                ZoneId timeZoneID = TimeLineController.getTimeZoneID();
-                TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
-
-                int focusedIndex = table.getFocusModel().getFocusedIndex();
-                CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
-                if (-1 == focusedIndex || null == focusedItem) {
-                    focusedItem = visibleEvents.first();
-                    focusedIndex = table.getItems().indexOf(focusedItem);
-                }
-
-                ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
-                ZonedDateTime nextDateTime = focusedDateTime.plus(1, selectedUnit);//
-                for (ChronoField field : SCROLL_BY_UNITS) {
-                    if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
-                        nextDateTime = nextDateTime.with(field, field.rangeRefinedBy(nextDateTime).getMinimum());//
+            super("", new Consumer<ActionEvent>() { //do not make this a lambda function see issue 2147 
+                @Override
+                public void accept(ActionEvent actionEvent) {
+                    ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
+                    ZoneId timeZoneID = TimeLineController.getTimeZoneID();
+                    TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
+                    
+                    int focusedIndex = table.getFocusModel().getFocusedIndex();
+                    CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
+                    if (-1 == focusedIndex || null == focusedItem) {
+                        focusedItem = visibleEvents.first();
+                        focusedIndex = table.getItems().indexOf(focusedItem);
                     }
-                }
-                long nextMillis = nextDateTime.toInstant().toEpochMilli();
-
-                int nextIndex = table.getItems().size() - 1;
-                for (int i = focusedIndex; i < table.getItems().size(); i++) {
-                    if (table.getItems().get(i).getStartMillis() >= nextMillis) {
-                        nextIndex = i;
-                        break;
+                    
+                    ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
+                    ZonedDateTime nextDateTime = focusedDateTime.plus(1, selectedUnit);//
+                    for (ChronoField field : SCROLL_BY_UNITS) {
+                        if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
+                            nextDateTime = nextDateTime.with(field, field.rangeRefinedBy(nextDateTime).getMinimum());//
+                        }
                     }
+                    long nextMillis = nextDateTime.toInstant().toEpochMilli();
+                    
+                    int nextIndex = table.getItems().size() - 1;
+                    for (int i = focusedIndex; i < table.getItems().size(); i++) {
+                        if (table.getItems().get(i).getStartMillis() >= nextMillis) {
+                            nextIndex = i;
+                            break;
+                        }
+                    }
+                    scrollToAndFocus(nextIndex);
                 }
-                scrollToAndFocus(nextIndex);
             });
             setGraphic(new ImageView(NEXT));
             IntegerBinding size = Bindings.size(table.getItems());
@@ -749,37 +763,40 @@ class ListTimeline extends BorderPane {
     private class ScrollToPrevious extends org.controlsfx.control.action.Action {
 
         ScrollToPrevious() {
-            super("", actionEvent -> {
-                ZoneId timeZoneID = TimeLineController.getTimeZoneID();
-                ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
-                TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
-
-                int focusedIndex = table.getFocusModel().getFocusedIndex();
-                CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
-                if (-1 == focusedIndex || null == focusedItem) {
-                    focusedItem = visibleEvents.last();
-                    focusedIndex = table.getItems().indexOf(focusedItem);
-                }
-
-                ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
-                ZonedDateTime previousDateTime = focusedDateTime.minus(1, selectedUnit);//
-
-                for (ChronoField field : SCROLL_BY_UNITS) {
-                    if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
-                        previousDateTime = previousDateTime.with(field, field.rangeRefinedBy(previousDateTime).getMaximum());//
+            super("", new Consumer<ActionEvent>() { //do not make this a lambda function see issue 2147 
+                @Override
+                public void accept(ActionEvent actionEvent) {
+                    ZoneId timeZoneID = TimeLineController.getTimeZoneID();
+                    ChronoField selectedChronoField = scrollInrementComboBox.getSelectionModel().getSelectedItem();
+                    TemporalUnit selectedUnit = selectedChronoField.getBaseUnit();
+                    
+                    int focusedIndex = table.getFocusModel().getFocusedIndex();
+                    CombinedEvent focusedItem = table.getFocusModel().getFocusedItem();
+                    if (-1 == focusedIndex || null == focusedItem) {
+                        focusedItem = visibleEvents.last();
+                        focusedIndex = table.getItems().indexOf(focusedItem);
                     }
-                }
-                long previousMillis = previousDateTime.toInstant().toEpochMilli();
-
-                int previousIndex = 0;
-                for (int i = focusedIndex; i > 0; i--) {
-                    if (table.getItems().get(i).getStartMillis() <= previousMillis) {
-                        previousIndex = i;
-                        break;
+                    
+                    ZonedDateTime focusedDateTime = Instant.ofEpochMilli(focusedItem.getStartMillis()).atZone(timeZoneID);
+                    ZonedDateTime previousDateTime = focusedDateTime.minus(1, selectedUnit);//
+                    
+                    for (ChronoField field : SCROLL_BY_UNITS) {
+                        if (field.getBaseUnit().getDuration().compareTo(selectedUnit.getDuration()) < 0) {
+                            previousDateTime = previousDateTime.with(field, field.rangeRefinedBy(previousDateTime).getMaximum());//
+                        }
                     }
+                    long previousMillis = previousDateTime.toInstant().toEpochMilli();
+                    
+                    int previousIndex = 0;
+                    for (int i = focusedIndex; i > 0; i--) {
+                        if (table.getItems().get(i).getStartMillis() <= previousMillis) {
+                            previousIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    scrollToAndFocus(previousIndex);
                 }
-
-                scrollToAndFocus(previousIndex);
             });
             setGraphic(new ImageView(PREVIOUS));
             disabledProperty().bind(table.getFocusModel().focusedIndexProperty().lessThan(1));
