@@ -1,13 +1,13 @@
 /*! \page ds_page Data Sources
 
 
-A data source the thing you want to analyze. It can be a disk image, some logical files, a local drive, etc. You must open a case prior to adding a data source to Autopsy. 
+A data source is the thing you want to analyze. It can be a disk image, some logical files, a local disk, etc. You must open a case prior to adding a data source to Autopsy. 
 
-Autopsy supports three types of data sources:
-- Disk Image: A file (or set of files) that is a byte-for-byte copy of a hard drive or media card.  (see \ref ds_img)
-- Local Drive: Local storage device (local drive, USB-attached drive, etc.).  (see \ref ds_local)
+Autopsy supports four types of data sources:
+- Disk Image or VM File: A file (or set of files) that is a byte-for-byte copy of a hard drive or media card, or a virtual machine image.  (see \ref ds_img)
+- Local Disk: Local storage device (local drive, USB-attached drive, etc.).  (see \ref ds_local)
 - Logical Files: Local files or folders. (see \ref ds_log)
-
+- Unallocated Space Image Files: Any type of file that does not contain a file system but you want to run through ingest (see \ref ds_unalloc)
 
 
 \section ds_add Adding a Data Source
@@ -52,7 +52,7 @@ Autopsy supports disk images in the following formats:
 
 To add a disk image:
 
--# Choose "Image File" from the pull down.
+-# Choose "Disk Image or VM File" from the pull down.
 -# Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  
 -# Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
 -# Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  
@@ -89,5 +89,14 @@ To add logical files:
 -# Continue to press "Add" until all files and folders have been selected.
 
 All of the files that you added in the panel will be grouped together into a single data source, called "LogicalFileSet" in the main UI. 
+
+\section ds_unalloc Adding an Unallocated Space Image File
+
+\image html unallocated_space_options.PNG
+
+To add unallocated space image files:
+-# Choose "Unallocated Space Image File" from the pull down
+-# Browse to the file
+-# Choose whether to break the image up into chunks. Breaking the image up will give better performance since the chunks can be processed in parallel,  but there is a chance that keywords or carved files that span chunk boundaries will be missed.
 
 */
