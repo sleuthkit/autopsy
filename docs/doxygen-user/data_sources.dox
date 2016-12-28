@@ -52,7 +52,7 @@ Autopsy supports disk images in the following formats:
 
 To add a disk image:
 
--# Choose "Image File" from the pull down.
+-# Choose "Disk Image or VM File" from the pull down.
 -# Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  
 -# Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
 -# Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  

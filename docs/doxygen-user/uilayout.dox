@@ -74,7 +74,7 @@ The Result Viewer windows are in the upper right area of the interface and displ
 \subsection right_click_functions Right Click Functions
 Viewers in Result Viewers have certain right-click functions built-in into them that can be accessed when a node a certain type is selected (a file, directory or a result).
 Here are some examples that you may see:
-\li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS. For example, HTML files may be opened by IE or Firefox, depending on what the local system is configured to use.
+\li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS or through the External Viewer tab on the Options menu. For example, HTML files may be opened by IE or Firefox, depending on what the local system is configured to use.
 \li View in New Window: Opens the content in a new internal Content Viewer (instead of in the default location in the lower right).
 \li Extract: Make a local copy of the file or directory for further analysis.
 \li Search for files with the same MD5 Hash: Searches the entire file-system for any files with the same MD5 Hash as the one selected.
