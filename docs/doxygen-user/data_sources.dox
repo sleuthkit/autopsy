@@ -1,9 +1,9 @@
 /*! \page ds_page Data Sources
 
 
-A data source the thing you want to analyze. It can be a disk image, some logical files, a local disk, etc. You must open a case prior to adding a data source to Autopsy. 
+A data source is the thing you want to analyze. It can be a disk image, some logical files, a local disk, etc. You must open a case prior to adding a data source to Autopsy. 
 
-Autopsy supports three types of data sources:
+Autopsy supports four types of data sources:
 - Disk Image or VM File: A file (or set of files) that is a byte-for-byte copy of a hard drive or media card, or a virtual machine image.  (see \ref ds_img)
 - Local Disk: Local storage device (local drive, USB-attached drive, etc.).  (see \ref ds_local)
 - Logical Files: Local files or folders. (see \ref ds_log)
@@ -97,6 +97,6 @@ All of the files that you added in the panel will be grouped together into a sin
 To add unallocated space image files:
 -# Choose "Unallocated Space Image File" from the pull down
 -# Browse to the file
--# Choose whether to break the image up into chunks. Breaking the image up will give better performance since the chunks can be processed in parallel, but there is a chance that potential keyword matches or carved images that occur right on the chunk boundary will be missed.
+-# Choose whether to break the image up into chunks. Breaking the image up will give better performance since the chunks can be processed in parallel,  but there is a chance that keywords or carved files that span chunk boundaries will be missed.
 
 */

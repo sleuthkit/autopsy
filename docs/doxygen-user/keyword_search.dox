@@ -36,7 +36,7 @@ The Lists tab is used to create/import and add content to keyword lists. Once a 
 <br>
 \image html keyword-search-configuration-new-keywords.PNG
 
-New entries can be typed into the dialog or pasted from the clipboard. All entries added at once must be the same type of match (exact, substring, or regex) but the dialog can be used multiple times to add keywords to the keyword list.
+New entries can be typed into the dialog or pasted from the clipboard. All entries added at once must be the same type of match (exact, substring, or regex), but the dialog can be used multiple times to add keywords to the keyword list.
 
 <br>
 <b>String extraction setting</b> \n
