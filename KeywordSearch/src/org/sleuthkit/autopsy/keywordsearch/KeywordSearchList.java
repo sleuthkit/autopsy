@@ -45,14 +45,15 @@ abstract class KeywordSearchList {
     private static final String URL_REGEX = "((((ht|f)tp(s?))\\:\\/\\/)|www\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(\\/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*";  //NON-NLS
 
     /**
-     * 12-19 digits, with possible single spaces or dashes in between.
+     * 12-19 digits, with possible single spaces or dashes in between, optionally
+     * preceded by % (start sentinel) and a B (format code).
      * Note that this regular expression is intentionally more broad than the
      * regular expression used by the code that validates credit card account 
      * numbers. This regex used to attempt to limit hits to numbers starting
      * with the digits 3 through 6 but this resulted in an error when we
      * moved to Solr 6.
      */
-    private static final String CCN_REGEX = "([0-9][ \\-]*?){12,19}";  //NON-NLS
+    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";  //NON-NLS
 
     protected String filePath;
     Map<String, KeywordList> theLists; //the keyword data

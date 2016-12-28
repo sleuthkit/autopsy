@@ -81,12 +81,12 @@ final class RegexQuery implements KeywordSearchQuery {
     // These are the valid characters that can appear immediately before a
     // keyword hit. e.g. for an IP address regex we support finding the string
     // ",10.0.0.0" but not "?10.0.0.0".
-    private static final String BOUNDARY_PREFIX_CHARS = "(\\s|\\[|\\(|,|\\:)"; //NON-NLS
+    private static final String BOUNDARY_PREFIX_CHARS = "(\\s|\\[|\\(|,|\\:|;|=|\\<|\\>|\\^)"; //NON-NLS
 
     // These are the valid characters that can appear immediately after a
     // keyword hit. e.g. for an IP address regex we support finding the string
     // "10.0.0.0?]" but not "10.0.0.0&".
-    private static final String BOUNDARY_SUFFIX_CHARS = "(\\s|\\]|\\)|,|!|\\?|\\:)"; //NON-NLS
+    private static final String BOUNDARY_SUFFIX_CHARS = "(\\s|\\]|\\)|,|!|\\?|\\:|;|=|\\<|\\>|\\^)"; //NON-NLS
 
     private boolean queryStringContainsWildcardPrefix = false;
     private boolean queryStringContainsWildcardSuffix = false;
