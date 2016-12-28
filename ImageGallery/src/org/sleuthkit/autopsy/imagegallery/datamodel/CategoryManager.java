@@ -261,6 +261,7 @@ public class CategoryManager {
                             tagsManager.deleteContentTag(ct);
                         } catch (TskCoreException tskException) {
                             LOGGER.log(Level.SEVERE, "Failed to delete content tag. Unable to maintain categories in a consistent state.", tskException); //NON-NLS
+                            break;
                         }
                     }
                 }
