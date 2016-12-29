@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
  */
 final class LocalFilesPanel extends JPanel {
 
+    private static final long serialVersionUID = 1L;
     private final Set<File> currentFiles = new TreeSet<>(); //keep currents in a set to disallow duplicates per add
     private boolean enableNext = false;
     private static LocalFilesPanel instance;

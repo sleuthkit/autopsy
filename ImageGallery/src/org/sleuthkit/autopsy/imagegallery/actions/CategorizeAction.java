@@ -173,6 +173,7 @@ public class CategorizeAction extends Action {
                             Bundle.CategorizeTask_errorUnable_msg(fileID),
                             Bundle.CategorizeTask_errorUnable_title(),
                             JOptionPane.ERROR_MESSAGE);
+                    break;
                 }
             }
 

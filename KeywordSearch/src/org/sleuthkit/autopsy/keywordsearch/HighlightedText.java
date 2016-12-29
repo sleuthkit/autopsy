@@ -84,7 +84,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     //when the results are not known and need to requery to get hits
     HighlightedText(long objectId, String solrQuery, boolean isRegex, String originalQuery) {
-        this(objectId, solrQuery, isRegex);
+        this(objectId, KeywordSearchUtil.quoteQuery(solrQuery), isRegex);
         this.originalQuery = originalQuery;
     }
 
