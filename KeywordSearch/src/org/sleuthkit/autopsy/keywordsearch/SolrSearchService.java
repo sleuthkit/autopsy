@@ -61,8 +61,6 @@ public class SolrSearchService implements KeywordSearchService {
             ingester.indexText(extractor, artifact, null);
         } catch (Ingester.IngesterException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
-        } finally {
-            ingester.commit();
         }
     }
 
