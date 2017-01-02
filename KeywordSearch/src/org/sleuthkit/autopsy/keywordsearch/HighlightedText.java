@@ -132,13 +132,16 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
              * need to perform the search to get the highlights.
              */
             if (hits == null) {
-                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
-                if (isRegex) {
-                    //use white-space sep. field to get exact matches only of regex query result
-                    queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
-                }
+                // I don't undertand how we could get into this code with a regex query.
+                // Won't all regex queries have been resolved to actual literal keyword hits
+                // by the time we attempt to load page content? EGS.
+//                String queryStr = KeywordSearchUtil.escapeLuceneQuery(this.keywordHitQuery);
+//                if (isRegex) {
+//                    //use white-space sep. field to get exact matches only of regex query result
+//                    queryStr = Server.Schema.CONTENT_WS + ":" + "\"" + queryStr + "\"";
+//                }
 
-                Keyword keywordQuery = new Keyword(queryStr, !isRegex);
+                Keyword keywordQuery = new Keyword(this.keywordHitQuery, !isRegex);
                 List<Keyword> keywords = new ArrayList<>();
                 keywords.add(keywordQuery);
                 KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);

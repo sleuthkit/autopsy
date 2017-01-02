@@ -438,7 +438,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * Compares SolrDocuments based on their ID's. Two SolrDocuments with
      * different chunk numbers are considered equal.
      */
-    private class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
+    static class SolrDocumentComparatorIgnoresChunkId implements Comparator<SolrDocument> {
 
         @Override
         public int compare(SolrDocument left, SolrDocument right) {
