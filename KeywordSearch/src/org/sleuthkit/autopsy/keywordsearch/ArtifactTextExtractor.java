@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import org.apache.commons.io.IOUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -122,13 +123,12 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
         if (artifactContents.length() == 0) {
             return null;
         }
-
-        return IOUtils.toInputStream(artifactContents);
+        return IOUtils.toInputStream(artifactContents, StandardCharsets.UTF_8);
     }
 
     @Override
     Reader getReader(InputStream stream, BlackboardArtifact source) throws Ingester.IngesterException {
-        return new InputStreamReader(stream);
+        return new InputStreamReader(stream, StandardCharsets.UTF_8);
     }
 
     @Override
