@@ -26,10 +26,10 @@ import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutoIngestDataSourceProcessor;
 
 /**
  * A local/logical files and/or directories data source processor that
@@ -39,9 +39,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  */
 @ServiceProviders(value={
     @ServiceProvider(service=DataSourceProcessor.class),
-    @ServiceProvider(service=AutomatedIngestDataSourceProcessor.class)}
+    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
 )
-public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor {
+public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     private final LocalFilesPanel configPanel;
@@ -185,6 +185,20 @@ public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor
         setDataSourceOptionsCalled = false;
     }
 
+    @Override
+    public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        // Local files DSP can process any file by simply adding it as a logical file.
+        // It should return lowest possible non-zero confidence level and be treated 
+        // as the "option of last resort" for auto ingest purposes
+        return 1;
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+        this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
+        run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
+    }
+
     /**
      * Sets the configuration of the data source processor without using the
      * configuration panel. The data source processor will assign a UUID to the
@@ -205,19 +219,5 @@ public class LocalFilesDSProcessor implements AutomatedIngestDataSourceProcessor
         this.localFilePaths = Arrays.asList(paths.split(","));
         setDataSourceOptionsCalled = true;
     }
-
-    @Override
-    public int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException {
-        // Local files DSP can process any file by simply adding it as a logical file.
-        // It should return lowest possible non-zero confidence level and be treated 
-        // as the "option of last resort" for auto ingest purposes
-        return 1;
-    }
-
-    @Override
-    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException {
-        this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
-        run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
-    }
-
+    
 }

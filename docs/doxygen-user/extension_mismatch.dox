@@ -21,7 +21,7 @@ Note that you can get a lot of false positives with this module. You can add you
 Ingest Settings
 ------
 
-In the ingest settings, the user can choose if the module should skip files without extensions and skip text files. Both of these options are enabled by default.
+In the ingest settings, the user can choose whether to run on all files, all files except text files, or only multimedia or executable files. Additionally, the user can choose to skip all files without an extension, and to skip any known files identified by the hash lookup module, if it is enabled.
 
 \image html extension-mismatch-detected-ingest-settings.PNG
 

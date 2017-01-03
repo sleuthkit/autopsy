@@ -43,7 +43,7 @@ An example of the single file extraction option is shown below.
 \subsection ui_tree_views Views
 
 Views filter all the files in the case by some external property of the file, not by any internal analysis of the file. 
-- <b>File Type</b>  Sorts files by file extension, and shows them in the appropriate group. For example, .mp3 and .wav both end up in the "Audio" group. 
+- <b>File Type</b>  Sorts files by file extension or MIME type, and shows them in the appropriate group. For example, .mp3 and .wav both end up in the "Audio" group. 
 - <b>Recent Files</b>  Displays files that are accessed within the last seven days the user had the device.
 - <b>Deleted Files</b>  Displays files that have been deleted but the names have been recovered.
 - <b>File Size</b>  Sorts files based upon size. This can give you an idea where to look for files you are interested in.
@@ -55,6 +55,7 @@ Views filter all the files in the case by some external property of the file, no
 - <b>Hashset Hits:</b> Hashset hits show up here 
 - <b>E-Mail Messages:</b> Email messages show up here
 - <b>Interesting Items:</b> Things deemed interesting show up here
+- <b>Accounts:</b> Credit card accounts show up here
 - <b>Tags:</b> Any item you tag shows up here so you can find it again easily
 
 \subsection ui_tree_reports Reports
@@ -73,7 +74,7 @@ The Result Viewer windows are in the upper right area of the interface and displ
 \subsection right_click_functions Right Click Functions
 Viewers in Result Viewers have certain right-click functions built-in into them that can be accessed when a node a certain type is selected (a file, directory or a result).
 Here are some examples that you may see:
-\li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS. For example, HTML files may be opened by IE or Firefox, depending on what the local system is configured to use.
+\li Open File in External Viewer: Opens the selected file in an "external" application as defined by the local OS or through the External Viewer tab on the Options menu. For example, HTML files may be opened by IE or Firefox, depending on what the local system is configured to use.
 \li View in New Window: Opens the content in a new internal Content Viewer (instead of in the default location in the lower right).
 \li Extract: Make a local copy of the file or directory for further analysis.
 \li Search for files with the same MD5 Hash: Searches the entire file-system for any files with the same MD5 Hash as the one selected.
