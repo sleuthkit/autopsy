@@ -397,8 +397,8 @@ class Chunk {
  */
 class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
-    private static final int INITIAL_CHUNK_SIZE = 31 * 1024; //bytes
-    private static final int SINGLE_READ_CHARS = 512;
+    private static final int INITIAL_CHUNK_SIZE = 32 * 1024; //bytes
+    private static final int SINGLE_READ_CHARS = 1024;
 
     private int chunkSizeBytes = 0;  // the size in bytes of chunk (so far)
     private int charsRead = 0;  // number of chars read in the most recent read operation
