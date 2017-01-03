@@ -76,7 +76,7 @@ final class RegexQuery implements KeywordSearchQuery {
     private final Keyword keyword;
     private String field = Server.Schema.CONTENT_STR.toString();
     private final String keywordString;
-    static final private int MAX_RESULTS = 5;
+    static final private int MAX_RESULTS = 512;
     private boolean escaped;
     private String escapedQuery;
 
