@@ -31,10 +31,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrQuery.SortClause;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.CursorMarkParams;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -74,7 +76,7 @@ final class RegexQuery implements KeywordSearchQuery {
     private final Keyword keyword;
     private String field = Server.Schema.CONTENT_STR.toString();
     private final String keywordString;
-    static final private int MAX_RESULTS = 20000;
+    static final private int MAX_RESULTS = 5;
     private boolean escaped;
     private String escapedQuery;
 
@@ -163,8 +165,6 @@ final class RegexQuery implements KeywordSearchQuery {
                 + (queryStringContainsWildcardPrefix ? "" : ".*") + getQueryString()
                 + (queryStringContainsWildcardSuffix ? "" : ".*") + "/");
 
-        solrQuery.setRows(MAX_RESULTS);
-
         // Set the fields we want to have returned by the query.
         if (KeywordSearchSettings.getShowSnippets()) {
             solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString());
@@ -175,18 +175,21 @@ final class RegexQuery implements KeywordSearchQuery {
                 .map(KeywordQueryFilter::toString)
                 .forEach(solrQuery::addFilterQuery);
 
-        int start = 0;
+        solrQuery.setRows(MAX_RESULTS);
+        // Setting the sort order is necessary for cursor based paging to work.
+        solrQuery.setSort(SortClause.asc(Server.Schema.ID.toString()));
+        
+        String cursorMark = CursorMarkParams.CURSOR_MARK_START;
         SolrDocumentList resultList = null;
-        // cycle through results in sets of MAX_RESULTS
-        while (resultList == null || start < resultList.getNumFound()) {
-            solrQuery.setStart(start);
+        boolean allResultsProcessed = false;
 
+        while (!allResultsProcessed) {
             try {
-                final QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
+                solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, cursorMark);
+                QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
                 resultList = response.getResults();
 
                 for (SolrDocument resultDoc : resultList) {
-
                     try {
                         List<KeywordHit> keywordHits = createKeywordHits(resultDoc);
                         for (KeywordHit hit : keywordHits) {
@@ -196,13 +199,18 @@ final class RegexQuery implements KeywordSearchQuery {
                         //
                     }
                 }
+                
+                String nextCursorMark = response.getNextCursorMark();
+                if (cursorMark.equals(nextCursorMark)) {
+                    allResultsProcessed = true;
+                }
+                cursorMark = nextCursorMark;
             } catch (KeywordSearchModuleException ex) {
                 LOGGER.log(Level.SEVERE, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             }
-
-            start = start + MAX_RESULTS;
         }
+        
         for (Keyword k : hitsMultMap.keySet()) {
             results.addResult(k, hitsMultMap.get(k));
         }
