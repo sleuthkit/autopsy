@@ -526,7 +526,6 @@
    <!-- file chunk-specific fields (optional for others) -->
    <!-- for a parent file with no content, number of chunks are specified -->
    <field name="num_chunks" type="int" indexed="true" stored="true" required="false" />
-   <field name="chunk_size" type="int" indexed="true" stored="true" required="false" />
    
    <!-- Common metadata fields, named specifically to match up with
      SolrCell metadata when parsing rich documents such as Word, PDF.
