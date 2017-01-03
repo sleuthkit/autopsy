@@ -5,7 +5,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this folder except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -69,6 +70,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.datamodel.Content;
+//ELTODO import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
 
 /**
  * Handles management of a either a local or centralized Solr server and its
@@ -185,6 +187,10 @@ public class Server {
     private UNCPathUtilities uncPathUtilities = null;
     private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
+    private static final String MODULE_OUTPUT = "ModuleOutput"; // ELTODO get "ModuleOutput" somehow...
+    private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
+    private static final String KWS_DATA_FOLDER_NAME = "data";
+    private static final String INDEX_FOLDER_NAME = "index";
 
     public enum CORE_EVT_STATES {
 
@@ -380,7 +386,7 @@ public class Server {
         ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
         solrProcessBuilder.directory(solrFolder);
 
-        // Redirect stdout and stderr to files to prevent blocking.
+        // Redirect stdout and stderr to folders to prevent blocking.
         Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
         solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
 
@@ -724,6 +730,99 @@ public class Server {
         }
         return indexDir;
     }
+    
+    
+    /**
+     * Find index dir location for the case. This is done by doing a subdirectory
+     * search of all existing "ModuleOutput/node_name/keywordsearch/data/" folders.
+     *
+     * @param theCase the case to get index dir for
+     *
+     * @return absolute path to index dir
+     */
+    String findIndexDataDir(Case theCase) {
+        String indexDir = "";
+        // look for existing index folder
+        if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
+            // multi user cases contain a subfolder for each node that participated in case ingest or review.
+            // Any one (but only one!) of those subfolders may contain the actual index.
+
+            // create a list of all sub-directories
+            List<String> subfolders = getAllSubfoldersInFolder(theCase.getCaseDirectory());
+
+            // scan all topLevelOutputDir subfolders for presense of non-empty "keywordsearch/data/index" folder
+            for (String folderName : subfolders) {
+                String path = Paths.get(folderName, MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
+                if (containsValidIndexFolder(path)) {
+                    indexDir = path;
+                    // ELTODO analyze possibilities of multiple indexes
+                    break; // there should only be one index
+                }
+            }
+        } else {
+            String path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
+            if (containsValidIndexFolder(path)) {
+                indexDir = path;
+            }
+        }
+        
+        // if we still did not find index then it is a new case
+        if (indexDir.isEmpty()) {
+            indexDir = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
+        }
+        
+        // ELTODO do we still need this?
+        if (uncPathUtilities != null) {
+            // if we can check for UNC paths, do so, otherwise just return the indexDir
+            String result = uncPathUtilities.mappedDriveToUNC(indexDir);
+            if (result == null) {
+                uncPathUtilities.rescanDrives();
+                result = uncPathUtilities.mappedDriveToUNC(indexDir);
+            }
+            if (result == null) {
+                return indexDir;
+            }
+            return result;
+        }
+        return indexDir;
+    }
+    
+     /**
+     * Returns a list of all folder names in the folder of interest. Files
+     * are excluded.
+     *
+     * @param path Absolute path of the folder of interest
+     *
+     * @return List of all sub-folder names in the folder of interest
+     */
+    private static List<String> getAllSubfoldersInFolder(String path) {
+        // only returns folders, skips folders
+        File folder = new File(path);
+        String[] folders = folder.list((File current, String name) -> new File(current, name).isDirectory());
+        if (folders == null) {
+            // null is returned when folder doesn't exist. need to check this condition, otherwise there is NullPointerException when converting to List
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(Arrays.asList(folders));
+    }
+    
+    boolean containsValidIndexFolder(String path) {
+        // create a list of all sub-directories
+        List<String> subfolders = getAllSubfoldersInFolder(path);
+        if (subfolders.isEmpty()) {
+            return false;
+        }
+
+        // scan all the folder for presense of non-empty "index" folder
+        for (String folderName : subfolders) {
+            if (!folderName.equals(INDEX_FOLDER_NAME)) {
+                continue;
+            }
+            // ELTODO check that the folder is not empty
+        }
+
+        return false;
+    }
 
     /**
      * ** end single-case specific methods ***
@@ -788,11 +887,11 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr files indexed without
-     * actually returning the files. The result does not include chunks, only
-     * number of actual files.
+     * Execute query that gets only number of all Solr folders indexed without
+ actually returning the folders. The result does not include chunks, only
+ number of actual folders.
      *
-     * @return int representing number of indexed files
+     * @return int representing number of indexed folders
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -814,8 +913,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr file chunks (not logical
-     * files) indexed without actually returning the content.
+     * Execute query that gets only number of all Solr folder chunks (not logical
+ folders) indexed without actually returning the content.
      *
      * @return int representing number of indexed chunks
      *
@@ -839,10 +938,10 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr documents indexed (files
-     * and chunks) without actually returning the documents
+     * Execute query that gets only number of all Solr documents indexed (folders
+ and chunks) without actually returning the documents
      *
-     * @return int representing number of indexed files (files and chunks)
+     * @return int representing number of indexed folders (folders and chunks)
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -864,7 +963,7 @@ public class Server {
     }
 
     /**
-     * Return true if the file is indexed (either as a whole as a chunk)
+     * Return true if the folder is indexed (either as a whole as a chunk)
      *
      * @param contentID
      *
@@ -891,12 +990,12 @@ public class Server {
     }
 
     /**
-     * Execute query that gets number of indexed file chunks for a file
+     * Execute query that gets number of indexed folder chunks for a folder
      *
-     * @param fileID file id of the original file broken into chunks and indexed
+     * @param fileID folder id of the original folder broken into chunks and indexed
      *
-     * @return int representing number of indexed file chunks, 0 if there is no
-     *         chunks
+     * @return int representing number of indexed folder chunks, 0 if there is no
+         chunks
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -997,7 +1096,7 @@ public class Server {
     }
 
     /**
-     * Get the text contents of the given file as stored in SOLR.
+     * Get the text contents of the given folder as stored in SOLR.
      *
      * @param content to get the text for
      *
@@ -1018,8 +1117,8 @@ public class Server {
     }
 
     /**
-     * Get the text contents of a single chunk for the given file as stored in
-     * SOLR.
+     * Get the text contents of a single chunk for the given folder as stored in
+ SOLR.
      *
      * @param content to get the text for
      * @param chunkID chunk number to query (starting at 1), or 0 if there is no
@@ -1094,10 +1193,10 @@ public class Server {
     }
 
     /**
-     * Given file parent id and child chunk ID, return the ID string of the
-     * chunk as stored in Solr, e.g. FILEID_CHUNKID
+     * Given folder parent id and child chunk ID, return the ID string of the
+ chunk as stored in Solr, e.g. FILEID_CHUNKID
      *
-     * @param parentID the parent file id (id of the source content)
+     * @param parentID the parent folder id (id of the source content)
      * @param childID  the child chunk id
      *
      * @return formatted string id
@@ -1138,7 +1237,7 @@ public class Server {
                  * exist or loaded if it already exists.
                  */
 
-                // In single user mode, if there is a core.properties file already,
+                // In single user mode, if there is a core.properties folder already,
                 // we've hit a solr bug. Compensate by deleting it.
                 if (caseType == CaseType.SINGLE_USER_CASE) {
                     Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
@@ -1202,7 +1301,7 @@ public class Server {
     }
 
     /**
-     * Determines whether or not the index files folder for a Solr core exists.
+     * Determines whether or not the index folders folder for a Solr core exists.
      *
      * @param coreName the name of the core.
      *
@@ -1240,7 +1339,7 @@ public class Server {
             this.solrCore = new Builder(currentSolrServer.getBaseURL() + "/" + name).build(); //NON-NLS
 
             //TODO test these settings
-            //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
+            //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger folders
             //solrCore.setConnectionTimeout(1000);
             solrCore.setDefaultMaxConnectionsPerHost(2);
             solrCore.setMaxTotalConnections(5);
@@ -1310,7 +1409,7 @@ public class Server {
         }
 
         /**
-         * get the text from the content field for the given file
+         * get the text from the content field for the given folder
          *
          * @param contentID
          * @param chunkID
@@ -1337,8 +1436,8 @@ public class Server {
                         if (fieldValues.size() == 1) // The indexed text field for artifacts will only have a single value.
                         {
                             return fieldValues.toArray(new String[0])[0];
-                        } else // The indexed text for files has 2 values, the file name and the file content.
-                        // We return the file content value.
+                        } else // The indexed text for folders has 2 values, the folder name and the folder content.
+                        // We return the folder content value.
                         {
                             return fieldValues.toArray(new String[0])[1];
                         }
@@ -1370,11 +1469,11 @@ public class Server {
         }
 
         /**
-         * Execute query that gets only number of all Solr files (not chunks)
-         * indexed without actually returning the files
+         * Execute query that gets only number of all Solr folders (not chunks)
+ indexed without actually returning the folders
          *
-         * @return int representing number of indexed files (entire files, not
-         *         chunks)
+         * @return int representing number of indexed folders (entire folders, not
+         chunks)
          *
          * @throws SolrServerException
          */
@@ -1383,8 +1482,8 @@ public class Server {
         }
 
         /**
-         * Execute query that gets only number of all chunks (not logical files,
-         * or all documents) indexed without actually returning the content
+         * Execute query that gets only number of all chunks (not logical folders,
+ or all documents) indexed without actually returning the content
          *
          * @return int representing number of indexed chunks
          *
@@ -1400,10 +1499,10 @@ public class Server {
         /**
          * Execute query that gets only number of all Solr documents indexed
          * without actually returning the documents. Documents include entire
-         * indexed files as well as chunks, which are treated as documents.
+ indexed folders as well as chunks, which are treated as documents.
          *
-         * @return int representing number of indexed documents (entire files
-         *         and chunks)
+         * @return int representing number of indexed documents (entire folders
+         and chunks)
          *
          * @throws SolrServerException
          */
@@ -1414,7 +1513,7 @@ public class Server {
         }
 
         /**
-         * Return true if the file is indexed (either as a whole as a chunk)
+         * Return true if the folder is indexed (either as a whole as a chunk)
          *
          * @param contentID
          *
@@ -1432,13 +1531,13 @@ public class Server {
         }
 
         /**
-         * Execute query that gets number of indexed file chunks for a file
+         * Execute query that gets number of indexed folder chunks for a folder
          *
-         * @param contentID file id of the original file broken into chunks and
-         *                  indexed
+         * @param contentID folder id of the original folder broken into chunks and
+                  indexed
          *
-         * @return int representing number of indexed file chunks, 0 if there is
-         *         no chunks
+         * @return int representing number of indexed folder chunks, 0 if there is
+         no chunks
          *
          * @throws SolrServerException
          */
