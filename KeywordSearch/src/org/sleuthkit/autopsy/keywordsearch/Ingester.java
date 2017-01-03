@@ -23,7 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
@@ -157,13 +159,12 @@ class Ingester {
                 Reader reader = extractor.getReader(stream, source);) {
 
             Chunker chunker = new Chunker(reader);
-            while (chunker.hasNextChunk()) {
-                Chunk chunk = chunker.nextChunk();
 
+            for (Chunk chunk : chunker) {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 try {
-                    //pass the chunk to method that adds it to Solr index
+                    //add the chunk text to Solr index
                     indexChunk(chunk.getText().toString(), sourceName, fields);
                     numChunks++;
                 } catch (Ingester.IngesterException ingEx) {
@@ -376,21 +377,25 @@ class Chunk {
     private final StringBuilder sb;
     private final int chunksize;
 
-    public Chunk(StringBuilder sb, int chunksize) {
+    Chunk(StringBuilder sb, int chunksize) {
         this.sb = sb;
         this.chunksize = chunksize;
     }
 
-    public StringBuilder getText() {
+    StringBuilder getText() {
         return sb;
     }
 
-    public int getSize() {
+    int getSize() {
         return chunksize;
     }
 }
 
-class Chunker {
+/**
+ * Encapsulates the content chunking algorithm in implementation of the Iterator
+ * interface.
+ */
+class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
     private static final int INITIAL_CHUNK_SIZE = 31 * 1024; //bytes
     private static final int SINGLE_READ_CHARS = 512;
@@ -400,11 +405,90 @@ class Chunker {
     private boolean whitespace = false;
     private char[] tempChunkBuf;
     private StringBuilder chunkText;
-    private boolean eof = false;
+    private boolean endOfContent = false;
     private final Reader reader;
 
+    /**
+     * Create a Chunker that will chunk the content of the given Reader.
+     *
+     * @param reader The content to chunk.
+     */
     Chunker(Reader reader) {
         this.reader = reader;
+    }
+
+    @Override
+    public Iterator<Chunk> iterator() {
+        return this;
+    }
+
+    /**
+     * Are there any more chunks available from this chunker?
+     *
+     *
+     * @return true if there are more chunks available.
+     */
+    @Override
+    public boolean hasNext() {
+        return endOfContent == false;
+    }
+
+    @Override
+    public Chunk next() {
+        if (hasNext()) {
+            chunkText = new StringBuilder();
+            tempChunkBuf = new char[SINGLE_READ_CHARS];
+            chunkSizeBytes = 0;
+            //read chars up to initial chunk size
+            while (chunkSizeBytes < INITIAL_CHUNK_SIZE && endOfContent == false) {
+                try {
+                    charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
+                } catch (IOException ex) {
+                    throw new RuntimeException("IOException while attempting to read chunk.", ex);
+                }
+                    if (-1 == charsRead) {
+                        //this is the last chunk
+                        endOfContent = true;
+                    } else {
+                        String chunkSegment = new String(tempChunkBuf, 0, charsRead);
+                        chunkSizeBytes += Utf8.encodedLength(chunkSegment);
+                        chunkText.append(chunkSegment);
+                    }
+
+            }
+            if (false == endOfContent) {
+                endOfContent = readChunkUntilWhiteSpace();
+            }
+            return new Chunk(sanitizeToUTF8(chunkText), chunkSizeBytes);
+        } else {
+            throw new NoSuchElementException("There are no more chunks.");
+        }
+    }
+
+
+    private boolean readChunkUntilWhiteSpace() {
+        charsRead = 0;
+        whitespace = false;
+        //if we haven't reached the end of the file,
+        //try to read char-by-char until whitespace to not break words
+        while ((chunkSizeBytes < INITIAL_CHUNK_SIZE)
+                && (false == whitespace)) {
+            try {
+                charsRead = reader.read(tempChunkBuf, 0, 1);
+            } catch (IOException ex) {
+                throw new RuntimeException("IOException while attempting to read chunk until whitespace.", ex);
+            }
+            if (-1 == charsRead) {
+                //this is the last chunk
+                return true;
+            } else {
+                whitespace = Character.isWhitespace(tempChunkBuf[0]);
+                String chunkSegment = new String(tempChunkBuf, 0, 1);
+                chunkSizeBytes += Utf8.encodedLength(chunkSegment);
+                chunkText.append(chunkSegment);
+            }
+        }
+        return false;
     }
 
     /**
@@ -427,57 +511,5 @@ class Chunker {
             }
         }
         return sb;
-    }
-
-    boolean hasNextChunk() {
-        return eof == false;
-    }
-
-    Chunk nextChunk() throws IOException {
-        if (hasNextChunk()) {
-            chunkText = new StringBuilder();
-            tempChunkBuf = new char[SINGLE_READ_CHARS];
-            chunkSizeBytes = 0;
-            //read chars up to initial chunk size
-            while (chunkSizeBytes < INITIAL_CHUNK_SIZE && eof == false) {
-                charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
-                if (-1 == charsRead) {
-                    //this is the last chunk
-                    eof = true;
-                } else {
-                    String chunkSegment = new String(tempChunkBuf, 0, charsRead);
-                    chunkSizeBytes += Utf8.encodedLength(chunkSegment);
-                    chunkText.append(chunkSegment);
-                }
-            }
-            if (false == eof) {
-                eof = readChunkUntilWhiteSpace();
-            }
-            return new Chunk(sanitizeToUTF8(chunkText), chunkSizeBytes);
-        } else {
-            return null;
-        }
-    }
-
-
-    private boolean readChunkUntilWhiteSpace() throws IOException {
-        charsRead = 0;
-        whitespace = false;
-        //if we haven't reached the end of the file,
-        //try to read char-by-char until whitespace to not break words
-        while ((chunkSizeBytes < INITIAL_CHUNK_SIZE)
-                && (false == whitespace)) {
-            charsRead = reader.read(tempChunkBuf, 0, 1);
-            if (-1 == charsRead) {
-                //this is the last chunk
-                return true;
-            } else {
-                whitespace = Character.isWhitespace(tempChunkBuf[0]);
-                String chunkSegment = new String(tempChunkBuf, 0, 1);
-                chunkSizeBytes += Utf8.encodedLength(chunkSegment);
-                chunkText.append(chunkSegment);
-            }
-        }
-        return false;
     }
 }
