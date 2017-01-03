@@ -56,10 +56,6 @@ class Ingester {
     private static final SolrFieldsVisitor SOLR_FIELDS_VISITOR = new SolrFieldsVisitor();
     private static Ingester instance;
 
-    private static final int INITIAL_CHUNK_SIZE = 30 * 1024; //bytes
-    private static final int WHITE_SPACE_BUFFER_SIZE = 900; //bytes
-    private static final int MAX_WINDOW_SIZE = 1024; //bytes
-    private static final int SINGLE_READ_CHARS = 512;
 
     private Ingester() {
     }
@@ -164,10 +160,8 @@ class Ingester {
             while (chunker.hasNextChunk()) {
                 Chunk chunk = chunker.nextChunk();
 
-//                sanitizeToUTF8(chunk.getText());   //replace non UTF8 chars with '^'
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
-                fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunker.chunkSizeBytes));
                 try {
                     //pass the chunk to method that adds it to Solr index
                     indexChunk(chunk.getText().toString(), sourceName, fields);
@@ -376,152 +370,114 @@ class Ingester {
         }
     }
 
-    private static class Chunk {
+}
 
-        private final StringBuilder sb;
-        private final int chunksize;
+class Chunk {
+    private final StringBuilder sb;
+    private final int chunksize;
 
-        public Chunk(StringBuilder sb, int chunksize) {
-            this.sb = sb;
-            this.chunksize = chunksize;
-        }
-
-        public StringBuilder getText() {
-            return sb;
-        }
-
-        public int getSize() {
-            return chunksize;
-        }
+    public Chunk(StringBuilder sb, int chunksize) {
+        this.sb = sb;
+        this.chunksize = chunksize;
     }
 
-    static private class Chunker {
+    public StringBuilder getText() {
+        return sb;
+    }
 
-        private int windowSizeBytes = 0;
-        private int chunkSizeBytes = 0;  // the size in bytes of the base chunk (so far)
-        private int charsRead = 0;  // number of chars read in the most recent read operation
-        private boolean whitespace = false;
-        private char[] tempChunkBuf;
-        private StringBuilder chunk;
-        private boolean eof = false;
-        private final Reader reader;
+    public int getSize() {
+        return chunksize;
+    }
+}
 
-        private Chunker(Reader reader) {
-            this.reader = reader;
-        }
+class Chunker {
 
-        /**
-         * Sanitize the given StringBuilder by replacing non-UTF-8 characters
-         * with caret '^'
-         *
-         * @param sb the StringBuilder to sanitize
-         *
-         * //JMTODO: use Charsequence.chars() or codePoints() and then a
-         * mapping function?
-         */
-        private static StringBuilder sanitizeToUTF8(StringBuilder sb) {
-            final int length = sb.length();
+    private static final int INITIAL_CHUNK_SIZE = 31 * 1024; //bytes
+    private static final int SINGLE_READ_CHARS = 512;
 
-            // Sanitize by replacing non-UTF-8 characters with caret '^'
-            for (int i = 0; i < length; i++) {
-                if (TextUtil.isValidSolrUTF8(sb.charAt(i)) == false) {
-                    sb.replace(i, i + 1, "^");
+    private int chunkSizeBytes = 0;  // the size in bytes of chunk (so far)
+    private int charsRead = 0;  // number of chars read in the most recent read operation
+    private boolean whitespace = false;
+    private char[] tempChunkBuf;
+    private StringBuilder chunkText;
+    private boolean eof = false;
+    private final Reader reader;
 
-                }
-            }
-            return sb;
-        }
+    Chunker(Reader reader) {
+        this.reader = reader;
+    }
 
-        private boolean hasNextChunk() {
-            return eof == false;
-        }
+    /**
+     * Sanitize the given StringBuilder by replacing non-UTF-8 characters with
+     * caret '^'
+     *
+     * @param sb the StringBuilder to sanitize
+     *
+     * //JMTODO: use Charsequence.chars() or codePoints() and then a mapping
+     * function?
+     */
+    private static StringBuilder sanitizeToUTF8(StringBuilder sb) {
+        final int length = sb.length();
 
-        private Chunk nextChunk() throws IOException {
-            if (hasNextChunk()) {
-                chunk = new StringBuilder();
-                tempChunkBuf = new char[SINGLE_READ_CHARS];
-                chunkSizeBytes = 0;
-                windowSizeBytes = 0;
-                //read chars up to initial chunk size
-                while (chunkSizeBytes < INITIAL_CHUNK_SIZE && eof == false) {
-                    charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
-                    if (-1 == charsRead) {
-                        //this is the last chunk
-                        eof = true;
-                    } else {
-                        String chunkSegment = new String(tempChunkBuf, 0, charsRead);
-                        chunkSizeBytes += Utf8.encodedLength(chunkSegment);
-                        chunk.append(chunkSegment);
-                    }
-                }
-                if (false == eof) {
-                    eof = readChunkUntilWhiteSpace();
-                }
-                return new Chunk(sanitizeToUTF8(chunk), chunkSizeBytes);
-            } else {
-                return null;
+        // Sanitize by replacing non-UTF-8 characters with caret '^'
+        for (int i = 0; i < length; i++) {
+            if (TextUtil.isValidSolrUTF8(sb.charAt(i)) == false) {
+                sb.replace(i, i + 1, "^");
+
             }
         }
+        return sb;
+    }
 
-        private boolean readWindow() throws IOException {
-            tempChunkBuf = new char[MAX_WINDOW_SIZE];
-            charsRead = 0;
-            while (windowSizeBytes < MAX_WINDOW_SIZE) {
+    boolean hasNextChunk() {
+        return eof == false;
+    }
+
+    Chunk nextChunk() throws IOException {
+        if (hasNextChunk()) {
+            chunkText = new StringBuilder();
+            tempChunkBuf = new char[SINGLE_READ_CHARS];
+            chunkSizeBytes = 0;
+            //read chars up to initial chunk size
+            while (chunkSizeBytes < INITIAL_CHUNK_SIZE && eof == false) {
                 charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
                 if (-1 == charsRead) {
                     //this is the last chunk
-                    return true;
+                    eof = true;
                 } else {
-                    String windowSegment = new String(tempChunkBuf, 0, charsRead);
-                    windowSizeBytes += Utf8.encodedLength(windowSegment);
-                    chunk.append(windowSegment);
-                }
-            }
-            return readWindowUntilWhiteSpace();
-        }
-
-        private boolean readChunkUntilWhiteSpace() throws IOException {
-            charsRead = 0;
-            whitespace = false;
-            //if we haven't reached the end of the file,
-            //try to read char-by-char until whitespace to not break words
-            while ((chunkSizeBytes < INITIAL_CHUNK_SIZE + WHITE_SPACE_BUFFER_SIZE)
-                    && (false == whitespace)) {
-
-                charsRead = reader.read(tempChunkBuf, 0, 1);
-                if (-1 == charsRead) {
-                    //this is the last chunk
-                    return true;
-                } else {
-                    whitespace = Character.isWhitespace(tempChunkBuf[0]);
-                    String chunkSegment = new String(tempChunkBuf, 0, 1);
+                    String chunkSegment = new String(tempChunkBuf, 0, charsRead);
                     chunkSizeBytes += Utf8.encodedLength(chunkSegment);
-                    chunk.append(chunkSegment);
+                    chunkText.append(chunkSegment);
                 }
             }
-            return readWindow();
+            if (false == eof) {
+                eof = readChunkUntilWhiteSpace();
+            }
+            return new Chunk(sanitizeToUTF8(chunkText), chunkSizeBytes);
+        } else {
+            return null;
         }
+    }
 
-        private boolean readWindowUntilWhiteSpace() throws IOException {
-            tempChunkBuf = new char[1];
-            charsRead = 0;
-            whitespace = false;
-            //if we haven't reached the end of the file,
-            //try to read char-by-char until whitespace to not break words
-            while ((windowSizeBytes < MAX_WINDOW_SIZE)
-                    && (false == whitespace)) {
-                charsRead = reader.read(tempChunkBuf, 0, 1);
-                if (-1 == charsRead) {
-                    //this is the last chunk
-                    return true;
-                } else {
-                    whitespace = Character.isWhitespace(tempChunkBuf[0]);
-                    String windowSegment = new String(tempChunkBuf, 0, 1);
-                    windowSizeBytes += Utf8.encodedLength(windowSegment);
-                    chunk.append(windowSegment);
-                }
+
+    private boolean readChunkUntilWhiteSpace() throws IOException {
+        charsRead = 0;
+        whitespace = false;
+        //if we haven't reached the end of the file,
+        //try to read char-by-char until whitespace to not break words
+        while ((chunkSizeBytes < INITIAL_CHUNK_SIZE)
+                && (false == whitespace)) {
+            charsRead = reader.read(tempChunkBuf, 0, 1);
+            if (-1 == charsRead) {
+                //this is the last chunk
+                return true;
+            } else {
+                whitespace = Character.isWhitespace(tempChunkBuf[0]);
+                String chunkSegment = new String(tempChunkBuf, 0, 1);
+                chunkSizeBytes += Utf8.encodedLength(chunkSegment);
+                chunkText.append(chunkSegment);
             }
-            return false;
         }
+        return false;
     }
 }
