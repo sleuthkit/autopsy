@@ -4,20 +4,19 @@ Improvements:
 space.
 - A preloader in an Android device image does not prevent adding the image as 
 a data source (reading of secondary GPT tables supported).
-- Ability to add data sources with no file systems or unsupported file systems 
+- User can add data sources with no file systems or unsupported file systems 
 as "unallocated space image files" for carving, keyword search, etc.
 - File extension mismatch analysis can be configured to check all file types, 
 all file types except text files, or only multimedia and executable files.
 - Column order changes in table views are "sticky" for each type of tree view 
 item.
 - Tree view has new file types by MIME type sub tree.
-- Bulk adding list of keywords to a keyword list.
-- Highlighting of tagged items in table views.
+- User can bulk add list of keywords to a keyword list.
+- Tagged items are highlighted in table views.
 - Toolbar button for Image/Video Gallery
 - New "Experimental" module (activate via Tools, Plugins) with auto ingest 
 feature.
 - Assorted bug fixes and minor enhancements. 
-
 
 ---------------- VERSION 4.2.0  --------------
 Improvements:
