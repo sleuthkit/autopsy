@@ -22,7 +22,6 @@ import com.google.common.base.Utf8;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -60,6 +59,7 @@ class Ingester {
     private static Ingester instance;
 
     private static final int SINGLE_READ_CHARS = 512;
+
     private Ingester() {
     }
 
@@ -157,10 +157,9 @@ class Ingester {
         Map<String, String> fields = getContentFields(source);
         //Get a stream and a reader for that stream
         try (final InputStream stream = extractor.getInputStream(source);
-                Reader reader = new BufferedReader(extractor.getReader(stream, source));) {
-
+                BufferedReader reader = new BufferedReader(extractor.getReader(stream, source));) {
+            reader.mark(1024);
             Chunker chunker = new Chunker(reader);
-
             for (Chunk chunk : chunker) {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
@@ -379,6 +378,7 @@ class Ingester {
  * interface.
  */
 class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
+
     private static final int MAX_CHUNK_SIZE = 32766; //bytes
     private static final int INITIAL_BASE_CHUNK_SIZE = 30 * 1024; //bytes
     private static final int MAXIMUM_BASE_CHUNK_SIZE = 31 * 1024; //bytes
@@ -391,7 +391,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     private char[] tempChunkBuf;
     private StringBuilder chunk;
     private boolean endOfContent = false;
-    private final Reader reader;
+    private final BufferedReader reader;
     private int chunkSizeChars;
 
     /**
@@ -399,7 +399,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      *
      * @param reader The content to chunk.
      */
-    Chunker(Reader reader) {
+    Chunker(BufferedReader reader) {
         this.reader = reader;
     }
 
@@ -441,45 +441,54 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return sb;
     }
 
-
     @Override
     public Chunk next() {
-        if (hasNext()) {
+        try {
+            if (hasNext()) {
+                chunk = new StringBuilder();
+                tempChunkBuf = new char[SINGLE_READ_CHARS];
+                chunkSizeBytes = 0;
+
+                //read chars up to initial chunk size
+                while (chunkSizeBytes < INITIAL_BASE_CHUNK_SIZE && endOfContent == false) {
+                    try {
+                        charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
+                    } catch (IOException ex) {
+                        throw new RuntimeException("IOException while attempting to read chunk.", ex);
+                    }
+                    if (-1 == charsRead) {
+                        //this is the last chunk
+                        endOfContent = true;
+                    } else {
+                        String chunkSegment = new String(tempChunkBuf, 0, charsRead);
+                        chunkSizeBytes += Utf8.encodedLength(chunkSegment);
+                        chunk.append(chunkSegment);
+                    }
+                }
+
+                if (false == endOfContent) {
+                    try {
+                        endOfContent = readChunkUntilWhiteSpace();
+                    } catch (IOException ex) {
+                        throw new RuntimeException("IOException while attempting to read chunk to white space.", ex);
+                    }
+                }
+                if (false == endOfContent) {
+                    //if the window hits the end of content, don't make another overlapping chunk.
+                    chunkSizeChars = chunk.length();
+                }
+                return new Chunk(sanitizeToUTF8(chunk), chunkSizeChars);
+            } else {
+                throw new NoSuchElementException("There are no more chunks.");
+            }
+
+        } finally {
             try {
                 reader.reset();
             } catch (IOException ex) {
                 throw new RuntimeException("IOException while attempting to reset chunk reader.", ex);
-            }
-            chunk = new StringBuilder();
-            tempChunkBuf = new char[SINGLE_READ_CHARS];
-            chunkSizeBytes = 0;
 
-            //read chars up to initial chunk size
-            while (chunkSizeBytes < INITIAL_BASE_CHUNK_SIZE && endOfContent == false) {
-                try {
-                    charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
-                } catch (IOException ex) {
-                    throw new RuntimeException("IOException while attempting to read chunk.", ex);
-                }
-                if (-1 == charsRead) {
-                    //this is the last chunk
-                    endOfContent = true;
-                } else {
-                    String chunkSegment = new String(tempChunkBuf, 0, charsRead);
-                    chunkSizeBytes += Utf8.encodedLength(chunkSegment);
-                    chunk.append(chunkSegment);
-                }
             }
-            if (false == endOfContent) {
-                try {
-                    endOfContent = readChunkUntilWhiteSpace();
-                } catch (IOException ex) {
-                    throw new RuntimeException("IOException while attempting to read chunk to white space.", ex);
-                }
-            }
-            return new Chunk(sanitizeToUTF8(chunk), chunkSizeChars);
-        } else {
-            throw new NoSuchElementException("There are no more chunks.");
         }
     }
 
