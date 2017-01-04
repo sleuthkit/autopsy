@@ -150,7 +150,7 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
      */
     private InterestingItemDefsPanel getPanel() {
         if (panel == null) {
-            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getFileIngestFilterDefsName(), "");
+            panel = new InterestingItemDefsPanel(FilesSetsManager.getFileIngestFilterDefsName(), "");
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {

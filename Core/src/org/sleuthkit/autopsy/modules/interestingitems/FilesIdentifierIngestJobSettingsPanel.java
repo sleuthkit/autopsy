@@ -62,7 +62,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         // interesting file set definitions. This is used to keep this panel in
         // synch with changes made using the global settings/option panel for 
         // this module.
-        InterestingItemDefsManager.getInstance().addObserver(panel);
+        FilesSetsManager.getInstance().addObserver(panel);
 
         return panel;
     }
@@ -83,8 +83,8 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          */
         List<FilesSetRow> filesSetRows = new ArrayList<>();
         try {
-            this.filesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getInterestingFilesSetDefsName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName()));
-        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            this.filesSetSnapshot = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets(FilesSetsManager.getInterestingFilesSetDefsName(), FilesSetsManager.getLegacyFilesSetDefsFileName()));
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_getError());
             this.filesSetSnapshot = new TreeMap<>();
         }
@@ -138,8 +138,8 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         List<FilesSetRow> rowModels = new ArrayList<>();
         TreeMap<String, FilesSet> newFilesSetSnapshot;
         try {
-            newFilesSetSnapshot = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(InterestingItemDefsManager.getInterestingFilesSetDefsName(), InterestingItemDefsManager.getLegacyFilesSetDefsFileName()));
-        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            newFilesSetSnapshot = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets(FilesSetsManager.getInterestingFilesSetDefsName(), FilesSetsManager.getLegacyFilesSetDefsFileName()));
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_updateError());
             return;
         }

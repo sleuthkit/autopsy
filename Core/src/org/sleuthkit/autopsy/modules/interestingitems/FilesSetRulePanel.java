@@ -57,8 +57,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     private static final Logger logger = Logger.getLogger(FilesSetRulePanel.class.getName());
     private static final String SLEUTHKIT_PATH_SEPARATOR = "/"; // NON-NLS
-    private static final List<String> ILLEGAL_FILE_NAME_CHARS = InterestingItemDefsManager.getIllegalFileNameChars();
-    private static final List<String> ILLEGAL_FILE_PATH_CHARS = InterestingItemDefsManager.getIllegalFilePathChars();
+    private static final List<String> ILLEGAL_FILE_NAME_CHARS = FilesSetsManager.getIllegalFileNameChars();
+    private static final List<String> ILLEGAL_FILE_PATH_CHARS = FilesSetsManager.getIllegalFilePathChars();
     private JButton okButton;
     private JButton cancelButton;
 

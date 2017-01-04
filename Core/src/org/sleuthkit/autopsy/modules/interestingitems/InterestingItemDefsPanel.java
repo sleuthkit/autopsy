@@ -153,8 +153,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     @Override
     public void saveSettings() {
         try {
-            InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets, settingsFileName);
-        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            FilesSetsManager.getInstance().setInterestingFilesSets(this.filesSets, settingsFileName);
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_saveError());
         }
     }
@@ -177,8 +177,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         try {
             // Get a working copy of the interesting files set definitions and sort
             // by set name.
-            this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(settingsFileName, settingsLegacyFileName));
-        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+            this.filesSets = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets(settingsFileName, settingsLegacyFileName));
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_loadError());
             this.filesSets = new TreeMap<>();
         }

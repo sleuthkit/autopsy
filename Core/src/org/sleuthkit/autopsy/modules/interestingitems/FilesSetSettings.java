@@ -22,13 +22,14 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- *
+ * A map of FilesSets for saving all the settings in FilesSetsManager in one item.
+ * 
  * @author oliver
  */
-class InterestingItemsFilesSetSettings implements Serializable {
+class FilesSetSettings implements Serializable {
     private static final long serialVersionUID = 1L;
     private Map<String, FilesSet> filesSets;
-    InterestingItemsFilesSetSettings(Map<String, FilesSet> filesSets) {
+    FilesSetSettings(Map<String, FilesSet> filesSets) {
         this.filesSets = filesSets;
     }
 

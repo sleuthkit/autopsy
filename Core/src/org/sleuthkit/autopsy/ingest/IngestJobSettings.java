@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
-import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemDefsManager;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
 /**
  * Encapsulates the ingest job settings for a particular execution context.
@@ -355,7 +355,7 @@ public class IngestJobSettings {
         if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY) == false) {
             ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, IngestJobSettings.ALL_AND_UNALLOC_FILES_INGEST_FILTER.getName());
         }
-        this.fileIngestFilter = InterestingItemDefsManager.getInstance()
+        this.fileIngestFilter = FilesSetsManager.getInstance()
                 .getFileIngestFilters()
                 .get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
     }

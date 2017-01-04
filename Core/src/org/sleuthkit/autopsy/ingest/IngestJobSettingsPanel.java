@@ -45,7 +45,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.modules.interestingitems.FileIngestFilterDefsOptionsPanelController;
-import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemDefsManager;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -425,7 +425,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         } else if (evt.getActionCommand().equals("comboBoxChanged")) {
 
-            settings.setFileIngestFilter(InterestingItemDefsManager.getInstance()
+            settings.setFileIngestFilter(FilesSetsManager.getInstance()
                     .getFileIngestFilters()
                     .get(jComboBox1.getSelectedItem().toString()));
         }
