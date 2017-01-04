@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,8 +22,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children.Keys;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
-import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts.AccountsRootNode;
 import org.sleuthkit.datamodel.Content;
@@ -33,6 +32,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -109,6 +109,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
+        public AbstractContentNode<? extends Content> visit(SlackFile sf) {
+            return new SlackFileNode(sf);
+        }
+
+        @Override
         protected AbstractContentNode<? extends Content> defaultVisit(SleuthkitVisitableItem di) {
             throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
                     "AbstractContentChildren.CreateTSKNodeVisitor.exception.noNodeMsg"));
@@ -130,8 +135,8 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
-        public AbstractNode visit(FileTypeExtensionFilters sf) {
-            return new FileTypesNode(sf.getSleuthkitCase(), null);
+        public AbstractNode visit(FileTypesByExtension sf) {
+            return new org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode(sf.getSleuthkitCase(), null);
         }
 
         @Override
@@ -190,6 +195,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
         }
 
         @Override
+        public AbstractNode visit(FileTypes ft) {
+            return new FileTypesNode(ft.getSleuthkitCase());
+        }
+
+        @Override
         public AbstractNode visit(Reports reportsItem) {
             return new Reports.ReportsListNode();
         }
@@ -204,6 +214,11 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
             throw new UnsupportedOperationException(
                     NbBundle.getMessage(this.getClass(),
                             "AbstractContentChildren.createAutopsyNodeVisitor.exception.noNodeMsg"));
+        }
+
+        @Override
+        public AbstractNode visit(FileTypesByMimeType ftByMimeTypeItem) {
+            return ftByMimeTypeItem.new ByMimeTypeNode();
         }
     }
 }

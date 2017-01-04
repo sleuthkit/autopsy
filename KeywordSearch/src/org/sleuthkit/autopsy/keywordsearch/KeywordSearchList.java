@@ -46,7 +46,7 @@ abstract class KeywordSearchList {
     private static final String CCN_REGEX = ".*[3456]([ -]?\\d){11,18}.*";  //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
 
     protected String filePath;
-    Map<String, KeywordList> theLists; //the keyword data 
+    Map<String, KeywordList> theLists; //the keyword data
 
     PropertyChangeSupport changeSupport;
     protected List<String> lockedLists;
@@ -141,7 +141,7 @@ abstract class KeywordSearchList {
         //we want to preserve state of locked lists
         List<String> toClear = new ArrayList<>();
         for (String list : theLists.keySet()) {
-            if (theLists.get(list).isLocked() == false) {
+            if (theLists.get(list).isEditable() == false) {
                 toClear.add(list);
             }
         }
@@ -173,7 +173,7 @@ abstract class KeywordSearchList {
     public List<KeywordList> getListsL(boolean locked) {
         List<KeywordList> ret = new ArrayList<>();
         for (KeywordList list : theLists.values()) {
-            if (list.isLocked().equals(locked)) {
+            if (list.isEditable().equals(locked)) {
                 ret.add(list);
             }
         }
@@ -200,7 +200,7 @@ abstract class KeywordSearchList {
         ArrayList<String> lists = new ArrayList<>();
         for (String listName : theLists.keySet()) {
             KeywordList list = theLists.get(listName);
-            if (locked == list.isLocked()) {
+            if (locked == list.isEditable()) {
                 lists.add(listName);
             }
         }
@@ -218,7 +218,7 @@ abstract class KeywordSearchList {
     public KeywordList getListWithKeyword(String keyword) {
         KeywordList found = null;
         for (KeywordList list : theLists.values()) {
-            if (list.hasKeyword(keyword)) {
+            if (list.hasSearchTerm(keyword)) {
                 found = list;
                 break;
             }
@@ -246,7 +246,7 @@ abstract class KeywordSearchList {
         int numLists = 0;
         for (String listName : theLists.keySet()) {
             KeywordList list = theLists.get(listName);
-            if (locked == list.isLocked()) {
+            if (locked == list.isEditable()) {
                 ++numLists;
             }
         }
@@ -320,7 +320,7 @@ abstract class KeywordSearchList {
     }
 
     boolean addList(String name, List<Keyword> newList, boolean useForIngest, boolean ingestMessages) {
-        //make sure that the list is readded as a locked/built in list 
+        //make sure that the list is readded as a locked/built in list
         boolean isLocked = this.lockedLists.contains(name);
         return addList(name, newList, useForIngest, ingestMessages, isLocked);
     }
@@ -330,7 +330,7 @@ abstract class KeywordSearchList {
     }
 
     boolean addList(KeywordList list) {
-        return addList(list.getName(), list.getKeywords(), list.getUseForIngest(), list.getIngestMessages(), list.isLocked());
+        return addList(list.getName(), list.getKeywords(), list.getUseForIngest(), list.getIngestMessages(), list.isEditable());
     }
 
     /**
@@ -437,7 +437,7 @@ abstract class KeywordSearchList {
      */
     boolean deleteList(String name) {
         KeywordList delList = getList(name);
-        if (delList != null && !delList.isLocked()) {
+        if (delList != null && !delList.isEditable()) {
             theLists.remove(name);
         }
 

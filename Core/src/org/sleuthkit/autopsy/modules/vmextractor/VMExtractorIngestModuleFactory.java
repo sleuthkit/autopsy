@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.modules.vmextractor;
 
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.DataSourceIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -53,7 +54,7 @@ public final class VMExtractorIngestModuleFactory extends IngestModuleFactoryAda
 
     @Override
     public String getModuleVersionNumber() {
-        return NbBundle.getMessage(this.getClass(), "VMExtractorIngestModuleFactory.version");
+        return Version.getVersion();
     }
 
     @Override

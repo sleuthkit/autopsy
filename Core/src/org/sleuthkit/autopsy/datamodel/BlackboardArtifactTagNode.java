@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -145,13 +145,8 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
         return true;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "BlackboardArtifactTag"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
 }

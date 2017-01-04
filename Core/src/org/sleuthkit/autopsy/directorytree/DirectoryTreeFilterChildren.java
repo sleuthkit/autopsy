@@ -29,8 +29,10 @@ import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -225,6 +227,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         public Boolean visit(LayoutFileNode fn) {
             return visitDeep(fn);
         }
+        
+        @Override
+        public Boolean visit(SlackFileNode sfn) {
+            return visitDeep(sfn);
+        }
 
         @Override
         public Boolean visit(VolumeNode vn) {
@@ -236,6 +243,12 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
             return visitDeep(vdn);
             //return ! vdn.hasContentChildren();
         }
+
+        @Override
+        public Boolean visit(FileTypesNode ft) {
+            return defaultVisit(ft);
+        }
+
     }
 
     private static class ShowItemVisitor extends DisplayableItemNodeVisitor.Default<Boolean> {
@@ -267,11 +280,22 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         public Boolean visit(LayoutFileNode ln) {
             return ln.hasContentChildren();
         }
+        
+        @Override
+        public Boolean visit(SlackFileNode sfn) {
+            return sfn.hasContentChildren();
+        }
 
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
             return true;
             //return vdn.hasContentChildren();
         }
+
+        @Override
+        public Boolean visit(FileTypesNode fileTypes) {
+           return defaultVisit(fileTypes);
+        }
+
     }
 }

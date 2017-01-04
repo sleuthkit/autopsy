@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,47 +19,73 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.nio.charset.Charset;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 
 /**
- * Represents each string chunk to be indexed, a derivative of TextExtractor
- * file
+ * A representation of a chunk of text from a file that can be used, when
+ * supplied with an Ingester, to index the chunk for search.
  */
-class AbstractFileChunk {
+final class AbstractFileChunk {
 
-    private int chunkID;
-    private TextExtractor parent;
+    private final int chunkNumber;
+    private final TextExtractor textExtractor;
 
-    AbstractFileChunk(TextExtractor parent, int chunkID) {
-        this.parent = parent;
-        this.chunkID = chunkID;
-    }
-
-    public TextExtractor getParent() {
-        return parent;
-    }
-
-    public int getChunkId() {
-        return chunkID;
+    /**
+     * Constructs a representation of a chunk of text from a file that can be
+     * used, when supplied with an Ingester, to index the chunk for search.
+     *
+     * @param textExtractor A TextExtractor for the file.
+     * @param chunkNumber   A sequence number for the chunk.
+     */
+    AbstractFileChunk(TextExtractor textExtractor, int chunkNumber) {
+        this.textExtractor = textExtractor;
+        this.chunkNumber = chunkNumber;
     }
 
     /**
-     * return String representation of the absolute id (parent and child)
+     * Gets the TextExtractor for the source file of the text chunk.
      *
-     * @return
+     * @return A reference to the TextExtractor.
      */
-    String getIdString() {
-        return Server.getChunkIdString(this.parent.getSourceFile().getId(), this.chunkID);
+    TextExtractor getTextExtractor() {
+        return textExtractor;
     }
 
-    void index(Ingester ingester, byte[] content, long contentSize, Charset indexCharset) throws IngesterException {
-        ByteContentStream bcs = new ByteContentStream(content, contentSize, parent.getSourceFile(), indexCharset);
+    /**
+     * Gets the sequence number of the text chunk.
+     *
+     * @return The chunk number.
+     */
+    int getChunkNumber() {
+        return chunkNumber;
+    }
+
+    /**
+     * Gets the id of the text chunk.
+     *
+     * @return An id of the form [source file object id]_[chunk number]
+     */
+    String getChunkId() {
+        return Server.getChunkIdString(this.textExtractor.getSourceFile().getId(), this.chunkNumber);
+    }
+
+    /**
+     * Indexes the text chunk.
+     *
+     * @param ingester   An Ingester to do the indexing.
+     * @param chunkBytes The raw bytes of the text chunk.
+     * @param chunkSize  The size of the text chunk in bytes.
+     * @param charSet    The char set to use during indexing.
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    void index(Ingester ingester, byte[] chunkBytes, long chunkSize, Charset charSet) throws IngesterException {
+        ByteContentStream bcs = new ByteContentStream(chunkBytes, chunkSize, textExtractor.getSourceFile(), charSet);
         try {
-            ingester.ingest(this, bcs, content.length);
-        } catch (Exception ingEx) {
-            throw new IngesterException(NbBundle.getMessage(this.getClass(), "AbstractFileChunk.index.exception.msg",
-                    parent.getSourceFile().getId(), chunkID), ingEx);
+            ingester.ingest(this, bcs, chunkBytes.length);
+        } catch (Exception ex) {
+            throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", getChunkId()), ex);
         }
     }
+
 }

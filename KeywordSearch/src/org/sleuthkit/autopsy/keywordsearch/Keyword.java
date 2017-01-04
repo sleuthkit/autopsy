@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,77 +22,145 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 
 /**
- * Representation of single keyword to search for
+ * A representation of a keyword for which to search. The search term for the
+ * keyword may be either a literal term, to be treated as either a whole word or
+ * a substring, or a regex.
+ *
+ * It is currently possible to optionally associate an artifact attribute type
+ * with a keyword. This feature was added to support an initial implementation
+ * of account number search and may be removed in the future.
  */
 class Keyword {
 
-    private String keywordString;   // keyword to search for
-    private boolean isLiteral;  // false if reg exp
-    private boolean isWholeword; // false if match a substring
-    private BlackboardAttribute.ATTRIBUTE_TYPE keywordType = null;
+    private String searchTerm;
+    private boolean isLiteral;
+    private boolean isWholeWord;
+    private BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType;
 
     /**
+     * Constructs a representation of a keyword for which to search. The search
+     * term for the keyword may be either a literal term that will be treated as
+     * a whole word, or a regex.
      *
-     * @param query     Keyword to search for
-     * @param isLiteral false if reg exp
+     * @param searchTerm The search term for the keyword.
+     * @param isLiteral  Whether or not the search term is a literal term that
+     *                   will be treated as a whole word, instead of a regex.
      */
-    Keyword(String query, boolean isLiteral) {
-        this.keywordString = query;
+    Keyword(String searchTerm, boolean isLiteral) {
+        this.searchTerm = searchTerm;
         this.isLiteral = isLiteral;
-        this.isWholeword = true;
+        this.isWholeWord = true;
     }
 
     /**
+     * Constructs a representation of a keyword for which to search. The search
+     * term may be either a literal term, to be treated as either a whole word
+     * or as a substring, or a regex.
      *
-     * @param query       Keyword to search for
-     * @param isLiteral   false if reg exp
-     * @param isWholeword false to match substring (undefined behavior if regexp
-     *                    is true)
+     * @param searchTerm  The search term.
+     * @param isLiteral   Whether or not the search term is a literal term,
+     *                    instead of a regex.
+     * @param isWholeWord Whether or not the search term, if it is a literal
+     *                    search term, should be treated as a whole word rather
+     *                    than a substring.
      */
-    Keyword(String query, boolean isLiteral, boolean isWholeword) {
-        this.keywordString = query;
+    Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord) {
+        this.searchTerm = searchTerm;
         this.isLiteral = isLiteral;
-        this.isWholeword = isWholeword;
+        this.isWholeWord = isWholeWord;
     }
 
     /**
+     * Constructs a representation of a keyword for which to search, for the
+     * purpose of finding a specific artifact attribute. The search term may be
+     * either a literal term, to be treated as a whole word, or a regex.
      *
-     * @param query       Keyword to search for
-     * @param isLiteral   false if reg exp
-     * @param keywordType
+     * The association of an artifact attribute type with a keyword was added to
+     * support an initial implementation of account number search and may be
+     * removed in the future.
+     *
+     * @param searchTerm  The search term.
+     * @param isLiteral   Whether or not the search term is a literal term, to
+     *                    be treated as a whole word, instead of a regex.
+     * @param keywordType The artifact attribute type.
      */
-    Keyword(String query, boolean isLiteral, BlackboardAttribute.ATTRIBUTE_TYPE keywordType) {
-        this(query, isLiteral);
-        this.keywordType = keywordType;
-    }
-
-    void setType(BlackboardAttribute.ATTRIBUTE_TYPE keywordType) {
-        this.keywordType = keywordType;
-    }
-
-    BlackboardAttribute.ATTRIBUTE_TYPE getType() {
-        return this.keywordType;
+    Keyword(String searchTerm, boolean isLiteral, BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType) {
+        this(searchTerm, isLiteral);
+        this.artifactAtrributeType = artifactAtrributeType;
     }
 
     /**
+     * Gets the search term for the keyword, which may be either a literal term
+     * or a regex.
      *
-     * @return Keyword to search for
+     * @return The search term.
      */
-    String getQuery() {
-        return keywordString;
+    String getSearchTerm() {
+        return searchTerm;
     }
 
-    boolean isLiteral() {
+    /**
+     * Indicates whether the search term for the keyword is a literal term or a
+     * regex.
+     *
+     * @return True or false.
+     */
+    boolean searchTermIsLiteral() {
         return isLiteral;
     }
 
-    boolean isWholeword() {
-        return isWholeword;
+    /**
+     * Indicates whether or not the search term for the keyword, if it is a
+     * literal term and not a regex, will be treated as a whole word or as a
+     * substring.
+     *
+     * @return True or false.
+     */
+    boolean searchTermIsWholeWord() {
+        return isWholeWord;
+    }
+
+    String getSearchTermType() {
+        if (isLiteral) {
+            if (isWholeWord) {
+                return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.exactButton.text");
+            } else {
+                return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.substringButton.text");
+            }
+        } else {
+            return NbBundle.getMessage(NewKeywordPanel.class, "NewKeywordPanel.regexButton.text");
+        }
+    }
+
+    /**
+     * Sets the artifact attribute type associated with the keyword, if any.
+     *
+     * The association of an artifact attribute type with the keyword was added
+     * to support an initial implementation of account number search and may be
+     * removed in the future.
+     *
+     * @param artifactAtrributeType
+     */
+    void setArtifactAttributeType(BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType) {
+        this.artifactAtrributeType = artifactAtrributeType;
+    }
+
+    /**
+     * Gets the artifact attribute type associated with the keyword, if any.
+     *
+     * The association of an artifact attribute type with the keyword was added
+     * to support an initial implementation of account number search and may be
+     * removed in the future.
+     *
+     * @return A attribute type object or null.
+     */
+    BlackboardAttribute.ATTRIBUTE_TYPE getArtifactAttributeType() {
+        return this.artifactAtrributeType;
     }
 
     @Override
     public String toString() {
-        return NbBundle.getMessage(this.getClass(), "Keyword.toString.text", keywordString, isLiteral, keywordType);
+        return String.format("Keyword{searchTerm='%s', isLiteral=%s, isWholeWord=%s}", searchTerm, isLiteral, isWholeWord);
     }
 
     @Override
@@ -103,21 +171,19 @@ class Keyword {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final Keyword other = (Keyword) obj;
-        if ((this.keywordString == null) ? (other.keywordString != null) : !this.keywordString.equals(other.keywordString)) {
-            return false;
-        }
-        if (this.isLiteral != other.isLiteral) {
-            return false;
-        }
-        return true;
+        Keyword other = (Keyword) obj;
+        return (this.searchTerm.equals(other.getSearchTerm())
+                && this.isLiteral == other.searchTermIsLiteral()
+                && this.isWholeWord == other.searchTermIsWholeWord());
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 17 * hash + (this.keywordString != null ? this.keywordString.hashCode() : 0);
+        hash = 17 * hash + this.searchTerm.hashCode();
         hash = 17 * hash + (this.isLiteral ? 1 : 0);
+        hash = 17 * hash + (this.isWholeWord ? 1 : 0);
         return hash;
     }
+
 }

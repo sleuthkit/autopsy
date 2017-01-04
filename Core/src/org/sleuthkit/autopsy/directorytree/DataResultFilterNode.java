@@ -42,9 +42,11 @@ import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
 import org.sleuthkit.autopsy.datamodel.FileNode;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
 import org.sleuthkit.autopsy.datamodel.Reports;
+import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -55,6 +57,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -200,6 +203,8 @@ public class DataResultFilterNode extends FilterNode {
             } else if ((c = ban.getLookup().lookup(LocalFile.class)) != null
                     || (c = ban.getLookup().lookup(DerivedFile.class)) != null) {
                 n = new LocalFileNode((AbstractFile) c);
+            } else if ((c = ban.getLookup().lookup(SlackFile.class)) != null) {
+                n = new SlackFileNode((SlackFile) c);
             }
             if (n != null) {
                 actions.add(null); // creates a menu separator
@@ -231,7 +236,13 @@ public class DataResultFilterNode extends FilterNode {
             // The base class Action is "Collapse All", inappropriate.
             return null;
         }
-
+        
+        @Override
+        public List<Action> visit(FileTypesNode fileTypes) {
+          return defaultVisit(fileTypes);
+        }
+        
+        
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
@@ -271,6 +282,7 @@ public class DataResultFilterNode extends FilterNode {
             }
             return c;
         }
+
     }
 
     /*
@@ -322,7 +334,14 @@ public class DataResultFilterNode extends FilterNode {
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return openChild(c);
         }
+        
+        @Override
+        public AbstractAction visit(FileTypesNode fileTypes) {
+            return openChild(fileTypes);
+        }
+        
 
+        
         /**
          * Tell the originating ExplorerManager to display the given
          * dataModelNode.

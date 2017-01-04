@@ -44,6 +44,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -90,15 +91,10 @@ public final class Reports implements AutopsyVisitableItem {
             return visitor.visit(this);
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "ReportsList"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -218,15 +214,11 @@ public final class Reports implements AutopsyVisitableItem {
             return new OpenReportAction();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "Reports"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
+
         private static class DeleteReportAction extends AbstractAction {
 
             private static final long serialVersionUID = 1L;
@@ -292,30 +284,16 @@ public final class Reports implements AutopsyVisitableItem {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                File file = new File(ReportNode.this.report.getPath());
-                try {
-                    Desktop.getDesktop().open(file);
-                } catch (IOException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.NoAssociatedEditorMessage"),
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
-                            JOptionPane.ERROR_MESSAGE);
-                } catch (UnsupportedOperationException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.NoOpenInEditorSupportMessage"),
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
-                            JOptionPane.ERROR_MESSAGE);
-                } catch (IllegalArgumentException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MissingReportFileMessage"),
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
-                            JOptionPane.ERROR_MESSAGE);
-                } catch (SecurityException ex) {
-                    JOptionPane.showMessageDialog(null,
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.ReportFileOpenPermissionDeniedMessage"),
-                            NbBundle.getMessage(OpenReportAction.class, "OpenReportAction.actionPerformed.MessageBoxTitle"),
-                            JOptionPane.ERROR_MESSAGE);
+                String reportPath = ReportNode.this.report.getPath();
+                String extension = "";
+                int extPosition = reportPath.lastIndexOf('.');
+
+                if (extPosition != -1) {
+                    extension = reportPath.substring(extPosition, reportPath.length()).toLowerCase();
                 }
+
+                File file = new File(reportPath);
+                ExternalViewerAction.openFile("", extension, file);
             }
         }
     }

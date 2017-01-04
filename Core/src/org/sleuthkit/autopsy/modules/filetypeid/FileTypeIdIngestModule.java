@@ -84,7 +84,6 @@ public class FileTypeIdIngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile file) {
-
         /**
          * Attempt to detect the file type. Do it within an exception firewall,
          * so that any issues with reading file content or complaints from tika

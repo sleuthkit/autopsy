@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -27,11 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
-
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * A simple UI for finding text after ingest
+ * A dropdown panel that provides GUI components that allow a user to do three
+ * types of ad hoc single keyword searches. The first option is a standard
+ * Lucene query for one or more terms, with or without wildcards and explicit
+ * Boolean operators, or a phrase. The second option is a Lucene query for a
+ * substring of a single term. The third option is a regex query using first the
+ * terms component, followed by standard Lucene queries for any terms found.
  *
  * The toolbar uses a different font from the rest of the application,
  * Monospaced 14, due to the necessity to find a font that displays both Arabic
@@ -41,46 +44,61 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
 
-    private static final Logger logger = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
-    private static DropdownSingleTermSearchPanel instance = null;
+    private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = Logger.getLogger(DropdownSingleTermSearchPanel.class.getName());
+    private static DropdownSingleTermSearchPanel defaultInstance = null;
 
     /**
-     * Creates new form DropdownSingleTermSearchPanel
+     * Gets the default instance of a dropdown panel that provides GUI
+     * components that allow a user to do three types of ad hoc single keyword
+     * searches.
+     * @return the default instance of DropdownSingleKeywordSearchPanel
+     */
+    public static synchronized DropdownSingleTermSearchPanel getDefault() {
+        if (null == defaultInstance) {
+            defaultInstance = new DropdownSingleTermSearchPanel();
+        }
+        return defaultInstance;
+    }
+
+    /**
+     * Constructs a dropdown panel that provides GUI components that allow a
+     * user to do three types of ad hoc single keyword searches.
      */
     public DropdownSingleTermSearchPanel() {
         initComponents();
         customizeComponents();
     }
 
+    /**
+     * Does additional initialization of the GUI components created by the
+     * initComponents method.
+     */
     private void customizeComponents() {
         keywordTextField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
-                //do nothing
             }
 
             @Override
             public void focusLost(FocusEvent e) {
                 if (keywordTextField.getText().equals("")) {
-                    resetSearchBox();
+                    clearSearchBox();
                 }
             }
         });
 
         keywordTextField.setComponentPopupMenu(rightClickMenu);
-        ActionListener actList = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JMenuItem jmi = (JMenuItem) e.getSource();
-                if (jmi.equals(cutMenuItem)) {
-                    keywordTextField.cut();
-                } else if (jmi.equals(copyMenuItem)) {
-                    keywordTextField.copy();
-                } else if (jmi.equals(pasteMenuItem)) {
-                    keywordTextField.paste();
-                } else if (jmi.equals(selectAllMenuItem)) {
-                    keywordTextField.selectAll();
-                }
+        ActionListener actList = (ActionEvent e) -> {
+            JMenuItem jmi = (JMenuItem) e.getSource();
+            if (jmi.equals(cutMenuItem)) {
+                keywordTextField.cut();
+            } else if (jmi.equals(copyMenuItem)) {
+                keywordTextField.copy();
+            } else if (jmi.equals(pasteMenuItem)) {
+                keywordTextField.paste();
+            } else if (jmi.equals(selectAllMenuItem)) {
+                keywordTextField.selectAll();
             }
         };
         cutMenuItem.addActionListener(actList);
@@ -89,36 +107,43 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         selectAllMenuItem.addActionListener(actList);
     }
 
-    public static synchronized DropdownSingleTermSearchPanel getDefault() {
-        if (instance == null) {
-            instance = new DropdownSingleTermSearchPanel();
-        }
-        return instance;
-    }
-
+    /**
+     * Add an action listener to the Search buttom component of the panel.
+     *
+     * @param actionListener The actin listener.
+     */
     void addSearchButtonActionListener(ActionListener actionListener) {
         searchButton.addActionListener(actionListener);
     }
 
-    void resetSearchBox() {
+    /**
+     * Clears the text in the query text field, i.e., sets it to the emtpy
+     * string.
+     */
+    void clearSearchBox() {
         keywordTextField.setText("");
     }
 
+    /**
+     * Gets a single keyword list consisting of a single keyword encapsulating
+     * the input term(s)/phrase/substring/regex.
+     *
+     * @return The keyword list.
+     */
     @Override
     List<KeywordList> getKeywordLists() {
         List<Keyword> keywords = new ArrayList<>();
-        keywords.add(new Keyword(keywordTextField.getText(),
-                !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
-
+        keywords.add(new Keyword(keywordTextField.getText(), !regexRadioButton.isSelected(), exactRadioButton.isSelected()));
         List<KeywordList> keywordLists = new ArrayList<>();
         keywordLists.add(new KeywordList(keywords));
-
         return keywordLists;
     }
 
+    /**
+     * Not implemented.
+     */
     @Override
     protected void postFilesIndexedChange() {
-        //nothing to update
     }
 
     /**
@@ -154,7 +179,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         org.openide.awt.Mnemonics.setLocalizedText(selectAllMenuItem, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.selectAllMenuItem.text")); // NOI18N
         rightClickMenu.add(selectAllMenuItem);
 
-        keywordTextField.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N NON-NLS
+        keywordTextField.setFont(new java.awt.Font("Monospaced", 0, 14)); // NOI18N
         keywordTextField.setText(org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.keywordTextField.text")); // NOI18N
         keywordTextField.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(192, 192, 192), 1, true));
         keywordTextField.setMinimumSize(new java.awt.Dimension(2, 25));
@@ -170,7 +195,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
             }
         });
 
-        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N NON-NLS
+        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/search-icon.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(searchButton, org.openide.util.NbBundle.getMessage(DropdownSingleTermSearchPanel.class, "DropdownSearchPanel.searchButton.text")); // NOI18N
         searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -224,18 +249,33 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    /**
+     * Action performed by the action listener for the search button.
+     *
+     * @param evt The action event.
+     */
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         keywordTextFieldActionPerformed(evt);
     }//GEN-LAST:event_searchButtonActionPerformed
 
+    /**
+     * Action performed by the action listener for the keyword text field.
+     *
+     * @param evt The action event.
+     */
     private void keywordTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_keywordTextFieldActionPerformed
         try {
             search();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "search() threw exception", e); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error performing ad hoc single keyword search", e); //NON-NLS
         }
     }//GEN-LAST:event_keywordTextFieldActionPerformed
 
+    /**
+     * Mouse event handler for the keyword text field.
+     *
+     * @param evt The mouse event.
+     */
     private void keywordTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_keywordTextFieldMouseClicked
         if (evt.isPopupTrigger()) {
             rightClickMenu.show(evt.getComponent(), evt.getX(), evt.getY());

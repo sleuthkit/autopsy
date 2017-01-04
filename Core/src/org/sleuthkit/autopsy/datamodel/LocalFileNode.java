@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +75,9 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
-        // @@@ add more properties here...
+
+        // add tags property to the sheet
+        addTagProperty(ss);
 
         return s;
     }
@@ -82,9 +85,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
-        for (Action a : super.getActions(true)) {
-            actionsList.add(a);
-        }
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
         actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "LocalFileNode.viewFileInDir.text"), this.content));
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(
@@ -119,13 +120,8 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         return true; //!this.hasContentChildren();
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "LocalFile"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
 }

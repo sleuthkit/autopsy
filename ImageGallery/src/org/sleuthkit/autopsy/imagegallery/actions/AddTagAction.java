@@ -111,6 +111,7 @@ public class AddTagAction extends Action {
                         Platform.runLater(() ->
                                 new Alert(Alert.AlertType.ERROR, Bundle.AddDrawableTagAction_addTagsToFiles_alert(fileID)).show()
                         );
+                        break;
                     }
                 }
                 return null;

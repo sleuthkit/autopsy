@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,9 +39,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.SystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import javax.swing.ImageIcon;
-import static javax.swing.SwingConstants.CENTER;
-import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  * Viewer panel widget for keyword lists that is used in the ingest config and
@@ -93,10 +90,9 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         for (int i = 0; i < keywordsTable.getColumnCount(); i++) {
             column = keywordsTable.getColumnModel().getColumn(i);
             if (i == 0) {
-                column.setPreferredWidth(((int) (rightWidth * 0.78)));
+                column.setPreferredWidth(((int) (rightWidth * 0.60)));
             } else {
-                column.setPreferredWidth(((int) (rightWidth * 0.20)));
-                column.setCellRenderer(new CheckBoxRenderer());
+                column.setPreferredWidth(((int) (rightWidth * 0.38)));
             }
         }
 
@@ -123,12 +119,9 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
             public void propertyChange(PropertyChangeEvent evt) {
                 Object source = evt.getSource();
                 if (source instanceof String && ((String) source).equals("LOCAL")) { //NON-NLS
-                    EventQueue.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            ingestRunning = IngestManager.getInstance().isIngestRunning();
-                            updateComponents();
-                        }
+                    EventQueue.invokeLater(() -> {
+                        ingestRunning = IngestManager.getInstance().isIngestRunning();
+                        updateComponents();
                     });
                 }
             }
@@ -320,8 +313,8 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
     private class KeywordListsTableModel extends AbstractTableModel {
         //data
 
-        private XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
-        private List<ListTableEntry> listData = new ArrayList<>();
+        private final XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
+        private final List<ListTableEntry> listData = new ArrayList<>();
 
         @Override
         public int getColumnCount() {
@@ -496,7 +489,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
                     ret = NbBundle.getMessage(this.getClass(), "KeywordSearch.nameColLbl");
                     break;
                 case 1:
-                    ret = NbBundle.getMessage(this.getClass(), "KeywordSearch.regExColLbl");
+                    ret = NbBundle.getMessage(this.getClass(), "KeywordSearch.typeColLbl");
                     break;
                 default:
                     break;
@@ -519,7 +512,7 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
                         ret = (Object) entry.name;
                         break;
                     case 1:
-                        ret = (Object) entry.regex;
+                        ret = (Object) entry.keywordType;
                         break;
                     default:
                         break;
@@ -559,11 +552,11 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
         private class KeywordTableEntry implements Comparable<KeywordTableEntry> {
 
             String name;
-            Boolean regex;
+            String keywordType;
 
             KeywordTableEntry(Keyword keyword) {
-                this.name = keyword.getQuery();
-                this.regex = !keyword.isLiteral();
+                this.name = keyword.getSearchTerm();
+                this.keywordType = keyword.getSearchTermType();
             }
 
             @Override
@@ -595,35 +588,6 @@ class DropdownListSearchPanel extends KeywordSearchPanel {
                 setBackground(listsTable.getBackground());
             }
 
-            return this;
-        }
-    }
-
-    /**
-     * A cell renderer for boolean cells that shows a center-aligned green check
-     * mark if true, nothing if false.
-     */
-    private class CheckBoxRenderer extends DefaultTableCellRenderer {
-
-        private static final long serialVersionUID = 1L;
-        final ImageIcon theCheck = new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/checkmark.png")); // NON-NLS
-
-        CheckBoxRenderer() {
-            setHorizontalAlignment(CENTER);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-
-            if ((value instanceof Boolean)) {
-                if ((Boolean) value) {
-                    setIcon(theCheck);
-                    setToolTipText(Bundle.IsRegularExpression());
-                } else {
-                    setIcon(null);
-                    setToolTipText(null);
-                }
-            }
             return this;
         }
     }

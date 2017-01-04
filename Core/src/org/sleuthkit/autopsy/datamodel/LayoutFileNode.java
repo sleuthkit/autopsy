@@ -38,15 +38,6 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "LayoutFile"; //NON-NLS
-//    }
     public static enum LayoutContentPropertyType {
 
         PARTS {
@@ -95,6 +86,9 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
             ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
 
+        // add tags property to the sheet
+        addTagProperty(ss);
+
         return s;
     }
 
@@ -135,4 +129,10 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         AbstractAbstractFileNode.fillPropertyMap(map, content);
         map.put(LayoutContentPropertyType.PARTS.toString(), content.getNumParts());
     }
+
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
+
 }

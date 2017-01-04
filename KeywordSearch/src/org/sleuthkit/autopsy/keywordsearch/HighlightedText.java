@@ -31,6 +31,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
@@ -82,7 +84,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     //when the results are not known and need to requery to get hits
     HighlightedText(long objectId, String solrQuery, boolean isRegex, String originalQuery) {
-        this(objectId, solrQuery, isRegex);
+        this(objectId, KeywordSearchUtil.quoteQuery(solrQuery), isRegex);
         this.originalQuery = originalQuery;
     }
 
@@ -100,6 +102,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
      * The main goal of this method is to figure out which pages / chunks have
      * hits.
      */
+    @Messages({"HighlightedText.query.exception.msg=Could not perform the query to get chunk info and get highlights:"})
     private void loadPageInfo() {
         if (isPageInfoLoaded) {
             return;
@@ -143,8 +146,9 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
                 try {
                     hits = chunksQuery.performQuery();
-                } catch (NoOpenCoreException ex) {
-                    logger.log(Level.INFO, "Could not get chunk info and get highlights", ex); //NON-NLS
+                } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                    logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights:" + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                    MessageNotifyUtil.Notify.error(Bundle.HighlightedText_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
                     return;
                 }
             }

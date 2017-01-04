@@ -165,8 +165,9 @@ class FileSearchPanel extends javax.swing.JPanel {
                     contentList = Collections.<AbstractFile>emptyList();
                 }
 
+                SearchNode sn = new SearchNode(contentList);
                 final TopComponent searchResultWin = DataResultTopComponent.createInstance(title, pathText,
-                        new TableFilterNode(new SearchNode(contentList), true), contentList.size());
+                        new TableFilterNode(sn, true, sn.getName()), contentList.size());
 
                 searchResultWin.requestActive(); // make it the active top component
 

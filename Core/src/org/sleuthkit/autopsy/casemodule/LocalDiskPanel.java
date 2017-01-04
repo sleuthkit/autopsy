@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +53,7 @@ final class LocalDiskPanel extends JPanel {
 
     private static final Logger logger = Logger.getLogger(LocalDiskPanel.class.getName());
     private static LocalDiskPanel instance;
+    private static final long serialVersionUID = 1L;
     private List<LocalDisk> disks;
     private LocalDiskModel model;
     private boolean enableNext = false;
@@ -66,7 +67,6 @@ final class LocalDiskPanel extends JPanel {
         customInit();
 
         createTimeZoneList();
-
     }
 
     /**
@@ -185,7 +185,6 @@ final class LocalDiskPanel extends JPanel {
      *
      * @return String selected disk path
      */
-    //@Override
     public String getContentPaths() {
         if (disks.size() > 0) {
             LocalDisk selected = (LocalDisk) diskComboBox.getSelectedItem();
@@ -198,7 +197,6 @@ final class LocalDiskPanel extends JPanel {
     /**
      * Set the selected disk.
      */
-    // @Override
     public void setContentPath(String s) {
         for (int i = 0; i < disks.size(); i++) {
             if (disks.get(i).getPath().equals(s)) {
@@ -223,25 +221,20 @@ final class LocalDiskPanel extends JPanel {
      *
      * @return true
      */
-    //@Override
     public boolean validatePanel() {
         return enableNext;
     }
 
-    //@Override
     public void reset() {
         //nothing to reset
-
     }
 
     /**
      * Set the focus to the diskComboBox and refreshes the list of disks.
      */
-    // @Override
     public void select() {
         diskComboBox.requestFocusInWindow();
         model.loadDisks();
-
     }
 
     /**
@@ -293,8 +286,8 @@ final class LocalDiskPanel extends JPanel {
         List<LocalDisk> partitions = new ArrayList<>();
 
         //private String SELECT = "Select a local disk:";
-        private String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.loading.msg");
-        private String NO_DRIVES = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.nodrives.msg");
+        private final String LOADING = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.loading.msg");
+        private final String NO_DRIVES = NbBundle.getMessage(this.getClass(), "LocalDiskPanel.localDiskModel.nodrives.msg");
 
         LocalDiskThread worker = null;
 
@@ -415,7 +408,7 @@ final class LocalDiskPanel extends JPanel {
 
         class LocalDiskThread extends SwingWorker<Object, Void> {
 
-            private Logger logger = Logger.getLogger(LocalDiskThread.class.getName());
+            private final Logger logger = Logger.getLogger(LocalDiskThread.class.getName());
 
             @Override
             protected Object doInBackground() throws Exception {

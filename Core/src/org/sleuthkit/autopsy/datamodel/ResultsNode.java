@@ -33,6 +33,8 @@ public class ResultsNode extends DisplayableItemNode {
     @NbBundle.Messages("ResultsNode.name.text=Results")
     public static final String NAME = Bundle.ResultsNode_name_text();
 
+    
+    
     public ResultsNode(SleuthkitCase sleuthkitCase) {
         super(new RootContentChildren(Arrays.asList(
                 new ExtractedContent(sleuthkitCase),
@@ -78,13 +80,8 @@ public class ResultsNode extends DisplayableItemNode {
         return s;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "Results"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
 }

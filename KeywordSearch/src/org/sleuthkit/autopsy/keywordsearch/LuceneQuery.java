@@ -32,11 +32,9 @@ import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
@@ -55,7 +53,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private final String keywordString; //original unescaped query
     private String keywordStringEscaped;
     private boolean isEscaped;
-    private Keyword keywordQuery = null;
+    private Keyword keyword = null;
     private KeywordList keywordList = null;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
@@ -72,15 +70,15 @@ class LuceneQuery implements KeywordSearchQuery {
     /**
      * Constructor with query to process.
      *
-     * @param keywordQuery
+     * @param keyword
      */
-    public LuceneQuery(KeywordList keywordList, Keyword keywordQuery) {
+    public LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
-        this.keywordQuery = keywordQuery;
+        this.keyword = keyword;
 
         // @@@ BC: Long-term, we should try to get rid of this string and use only the
         // keyword object.  Refactoring did not make its way through this yet.
-        this.keywordString = keywordQuery.getQuery();
+        this.keywordString = keyword.getSearchTerm();
         this.keywordStringEscaped = this.keywordString;
     }
 
@@ -128,7 +126,7 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public QueryResults performQuery() throws NoOpenCoreException {
+    public QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException {
         QueryResults results = new QueryResults(this, keywordList);
         //in case of single term literal query there is only 1 term
         boolean showSnippets = KeywordSearchSettings.getShowSnippets();
@@ -168,8 +166,8 @@ class LuceneQuery implements KeywordSearchQuery {
         //bogus - workaround the dir tree table issue
         //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
         //selector
-        if (keywordQuery != null) {
-            BlackboardAttribute.ATTRIBUTE_TYPE selType = keywordQuery.getType();
+        if (keyword != null) {
+            BlackboardAttribute.ATTRIBUTE_TYPE selType = keyword.getArtifactAttributeType();
             if (selType != null) {
                 attributes.add(new BlackboardAttribute(selType, MODULE_NAME, termHit));
             }
@@ -199,7 +197,7 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @throws NoOpenCoreException
      */
-    private List<KeywordHit> performLuceneQuery(boolean snippets) throws NoOpenCoreException {
+    private List<KeywordHit> performLuceneQuery(boolean snippets) throws KeywordSearchModuleException, NoOpenCoreException {
         List<KeywordHit> matches = new ArrayList<>();
         boolean allMatchesFetched = false;
         final Server solrServer = KeywordSearch.getServer();
@@ -208,23 +206,13 @@ class LuceneQuery implements KeywordSearchQuery {
         QueryResponse response;
         SolrDocumentList resultList;
         Map<String, Map<String, List<String>>> highlightResponse;
-        Set<SolrDocument> uniqueSolrDocumentsWithHits;
 
-        try {
-            response = solrServer.query(q, METHOD.POST);
+        response = solrServer.query(q, METHOD.POST);
 
-            resultList = response.getResults();
+        resultList = response.getResults();
 
-            // objectId_chunk -> "text" -> List of previews
-            highlightResponse = response.getHighlighting();
-
-            // get the unique set of files with hits
-            uniqueSolrDocumentsWithHits = filterOneHitPerDocument(resultList);
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS            
-            MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
-            return matches;
-        }
+        // objectId_chunk -> "text" -> List of previews
+        highlightResponse = response.getHighlighting();
 
         // cycle through results in sets of MAX_RESULTS
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
@@ -239,8 +227,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 //no case open, must be just closed
                 return matches;
             }
-
-            for (SolrDocument resultDoc : uniqueSolrDocumentsWithHits) {
+            for (SolrDocument resultDoc : resultList) {
                 KeywordHit contentHit;
                 try {
                     contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
@@ -276,7 +263,7 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setRows(MAX_RESULTS);
 
         q.setFields(Server.Schema.ID.toString());
-
+        q.addSort(Server.Schema.ID.toString(), SolrQuery.ORDER.asc);
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
         }
@@ -303,36 +290,6 @@ class LuceneQuery implements KeywordSearchQuery {
         }
 
         return q;
-    }
-
-    /**
-     * Create the minimum set of documents. Ignores chunk IDs. Only one hit per
-     * file in results.
-     *
-     * @param resultList
-     *
-     * @return
-     */
-    private Set<SolrDocument> filterOneHitPerDocument(SolrDocumentList resultList) {
-        // sort the list so that we consistently pick the same chunk each time.
-        // note this sort is doing a string comparison and not an integer comparison, so 
-        // chunk 10 will be smaller than chunk 9. 
-        Collections.sort(resultList, new Comparator<SolrDocument>() {
-            @Override
-            public int compare(SolrDocument left, SolrDocument right) {
-                // ID is in the form of ObjectId_Chunk
-                String leftID = left.getFieldValue(Server.Schema.ID.toString()).toString();
-                String rightID = right.getFieldValue(Server.Schema.ID.toString()).toString();
-                return leftID.compareTo(rightID);
-            }
-        });
-
-        // NOTE: We could probably just iterate through the list and compare each ID with the
-        // previous ID to get the unique documents faster than using this set now that the list
-        // is sorted.
-        Set<SolrDocument> solrDocumentsWithMatches = new TreeSet<>(new SolrDocumentComparatorIgnoresChunkId());
-        solrDocumentsWithMatches.addAll(resultList);
-        return solrDocumentsWithMatches;
     }
 
     private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SleuthkitCase caseDb) throws TskException {

@@ -37,7 +37,9 @@ import org.netbeans.api.progress.aggregate.AggregateProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
@@ -383,6 +385,7 @@ public final class SearchRunner {
         }
 
         @Override
+        @Messages("SearchRunner.query.exception.msg=Error performing query:")
         protected Object doInBackground() throws Exception {
             final String displayName = NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.displayName")
                     + (finalRun ? (" - " + NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.doInBackGround.finalizeMsg")) : "");
@@ -403,7 +406,7 @@ public final class SearchRunner {
             ProgressContributor[] subProgresses = new ProgressContributor[keywords.size()];
             int i = 0;
             for (Keyword keywordQuery : keywords) {
-                subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getQuery());
+                subProgresses[i] = AggregateProgressFactory.createProgressContributor(keywordQuery.getSearchTerm());
                 progressGroup.addContributor(subProgresses[i]);
                 i++;
             }
@@ -419,11 +422,11 @@ public final class SearchRunner {
 
                 for (Keyword keywordQuery : keywords) {
                     if (this.isCancelled()) {
-                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keywordQuery.getQuery()); //NON-NLS
+                        logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keywordQuery.getSearchTerm()); //NON-NLS
                         return null;
                     }
 
-                    final String queryStr = keywordQuery.getQuery();
+                    final String queryStr = keywordQuery.getSearchTerm();
                     final KeywordList list = keywordToList.get(queryStr);
 
                     //new subProgress will be active after the initial query
@@ -434,9 +437,9 @@ public final class SearchRunner {
 
                     KeywordSearchQuery keywordSearchQuery = null;
 
-                    boolean isRegex = !keywordQuery.isLiteral();
+                    boolean isRegex = !keywordQuery.searchTermIsLiteral();
                     if (isRegex) {
-                        keywordSearchQuery = new TermComponentQuery(list, keywordQuery);
+                        keywordSearchQuery = new TermsComponentQuery(list, keywordQuery);
                     } else {
                         keywordSearchQuery = new LuceneQuery(list, keywordQuery);
                         keywordSearchQuery.escape();
@@ -453,18 +456,16 @@ public final class SearchRunner {
                     // Do the actual search
                     try {
                         queryResults = keywordSearchQuery.performQuery();
-                    } catch (NoOpenCoreException ex) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), ex); //NON-NLS
+                    } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                        logger.log(Level.SEVERE, "Error performing query: " + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                        MessageNotifyUtil.Notify.error(Bundle.SearchRunner_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
                         //no reason to continue with next query if recovery failed
                         //or wait for recovery to kick in and run again later
                         //likely case has closed and threads are being interrupted
                         return null;
                     } catch (CancellationException e) {
-                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keywordQuery.getQuery()); //NON-NLS
+                        logger.log(Level.INFO, "Cancel detected, bailing during keyword query: {0}", keywordQuery.getSearchTerm()); //NON-NLS
                         return null;
-                    } catch (Exception e) {
-                        logger.log(Level.WARNING, "Error performing query: " + keywordQuery.getQuery(), e); //NON-NLS
-                        continue;
                     }
 
                     // calculate new results by substracting results already obtained in this ingest
@@ -481,7 +482,7 @@ public final class SearchRunner {
                         int totalUnits = newResults.getKeywords().size();
                         subProgresses[keywordsSearched].start(totalUnits);
                         int unitProgress = 0;
-                        String queryDisplayStr = keywordQuery.getQuery();
+                        String queryDisplayStr = keywordQuery.getSearchTerm();
                         if (queryDisplayStr.length() > 50) {
                             queryDisplayStr = queryDisplayStr.substring(0, 49) + "...";
                         }
@@ -547,7 +548,7 @@ public final class SearchRunner {
                 keywordLists.add(list);
                 for (Keyword k : list.getKeywords()) {
                     keywords.add(k);
-                    keywordToList.put(k.getQuery(), list);
+                    keywordToList.put(k.getSearchTerm(), list);
                 }
             }
         }

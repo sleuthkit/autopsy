@@ -40,11 +40,13 @@ import org.sleuthkit.datamodel.TskData.DbType;
  */
 public final class UserPreferences {
 
-    private static final boolean isWindowsOS = PlatformUtil.isWindowsOS();
+    private static final boolean IS_WINDOWS_OS = PlatformUtil.isWindowsOS();
     private static final Preferences preferences = NbPreferences.forModule(UserPreferences.class);
     public static final String KEEP_PREFERRED_VIEWER = "KeepPreferredViewer"; // NON-NLS    
-    public static final String HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
+    public static final String HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE = "HideKnownFilesInDataSourcesTree"; //NON-NLS 
     public static final String HIDE_KNOWN_FILES_IN_VIEWS_TREE = "HideKnownFilesInViewsTree"; //NON-NLS 
+    public static final String HIDE_SLACK_FILES_IN_DATA_SRCS_TREE = "HideSlackFilesInDataSourcesTree"; //NON-NLS 
+    public static final String HIDE_SLACK_FILES_IN_VIEWS_TREE = "HideSlackFilesInViewsTree"; //NON-NLS 
     public static final String DISPLAY_TIMES_IN_LOCAL_TIME = "DisplayTimesInLocalTime"; //NON-NLS
     public static final String NUMBER_OF_FILE_INGEST_THREADS = "NumberOfFileIngestThreads"; //NON-NLS
     public static final String IS_MULTI_USER_MODE_ENABLED = "IsMultiUserModeEnabled"; //NON-NLS
@@ -109,11 +111,11 @@ public final class UserPreferences {
     }
 
     public static boolean hideKnownFilesInDataSourcesTree() {
-        return preferences.getBoolean(HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE, false);
+        return preferences.getBoolean(HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE, false);
     }
 
     public static void setHideKnownFilesInDataSourcesTree(boolean value) {
-        preferences.putBoolean(HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE, value);
+        preferences.putBoolean(HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE, value);
     }
 
     public static boolean hideKnownFilesInViewsTree() {
@@ -122,6 +124,22 @@ public final class UserPreferences {
 
     public static void setHideKnownFilesInViewsTree(boolean value) {
         preferences.putBoolean(HIDE_KNOWN_FILES_IN_VIEWS_TREE, value);
+    }
+
+    public static boolean hideSlackFilesInDataSourcesTree() {
+        return preferences.getBoolean(HIDE_SLACK_FILES_IN_DATA_SRCS_TREE, true);
+    }
+
+    public static void setHideSlackFilesInDataSourcesTree(boolean value) {
+        preferences.putBoolean(HIDE_SLACK_FILES_IN_DATA_SRCS_TREE, value);
+    }
+
+    public static boolean hideSlackFilesInViewsTree() {
+        return preferences.getBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, true);
+    }
+
+    public static void setHideSlackFilesInViewsTree(boolean value) {
+        preferences.putBoolean(HIDE_SLACK_FILES_IN_VIEWS_TREE, value);
     }
 
     public static boolean displayTimesInLocalTime() {
@@ -180,7 +198,7 @@ public final class UserPreferences {
     }
 
     public static boolean getIsMultiUserModeEnabled() {
-        if (!isWindowsOS) {
+        if (!IS_WINDOWS_OS) {
             return false;
         }
         return preferences.getBoolean(IS_MULTI_USER_MODE_ENABLED, false);

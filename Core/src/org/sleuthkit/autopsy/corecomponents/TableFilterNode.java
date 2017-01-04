@@ -25,10 +25,13 @@ import org.openide.util.NbBundle;
 /**
  * A filter node that creates at most one layer of child nodes for the node it
  * wraps. It is designed to be used for nodes displayed in Autopsy table views.
+ * This ensures that the table view for the node will not recursively display
+ * child nodes and display only the first layer of child nodes.
  */
 public class TableFilterNode extends FilterNode {
 
     private final boolean createChildren;
+    private String columnOrderKey = "NONE";
 
     /**
      * Constructs a filter node that creates at most one layer of child nodes
@@ -38,10 +41,27 @@ public class TableFilterNode extends FilterNode {
      * @param wrappedNode    The node to wrap in the filter node.
      * @param createChildren True if a children (child factory) object should be
      *                       created for the wrapped node.
+     * The constructor should include column order key. (See getColumnOrderKey)
      */
     public TableFilterNode(Node wrappedNode, boolean createChildren) {
         super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
         this.createChildren = createChildren;
+    }
+
+    /**
+     * Constructs a filter node that has information about the node's type.
+     * 
+     * @param wrappedNode    The node to wrap in the filter node.
+     * @param createChildren True if a children (child factory) object should be
+     *                       created for the wrapped node.
+     * @param columnOrderKey A key that represents the type of the original
+     *                       wrapped node and what is being displayed under that
+     *                       node.
+     */
+    public TableFilterNode(Node wrappedNode, boolean createChildren, String columnOrderKey) {
+        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
+        this.createChildren = createChildren;
+        this.columnOrderKey = columnOrderKey;
     }
 
     /**
@@ -59,4 +79,14 @@ public class TableFilterNode extends FilterNode {
         }
     }
 
+    /**
+     * @return the column order key, which allows custom column ordering to be
+     *         written into a properties file and be reloaded for future use in
+     *         a table with the same root node or for different cases. This is
+     *         done by DataResultViewerTable. The key should represent what
+     *         kinds of items the table is showing.
+     */
+    String getColumnOrderKey() {
+        return columnOrderKey;
+    }
 }

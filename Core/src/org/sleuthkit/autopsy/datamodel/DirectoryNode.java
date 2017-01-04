@@ -105,13 +105,8 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         return false;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "Directory"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
+    }
 }

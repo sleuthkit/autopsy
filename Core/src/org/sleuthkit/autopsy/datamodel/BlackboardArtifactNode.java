@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
@@ -35,6 +38,10 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -43,6 +50,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -70,6 +78,39 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private static final Integer[] SHOW_FILE_METADATA = new Integer[]{
         BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),};
 
+    private final PropertyChangeListener pcl = new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString())) {
+                BlackBoardArtifactTagAddedEvent event = (BlackBoardArtifactTagAddedEvent) evt;
+                if (event.getAddedTag().getArtifact().equals(artifact)) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString())) {
+                BlackBoardArtifactTagDeletedEvent event = (BlackBoardArtifactTagDeletedEvent) evt;
+                if (event.getDeletedTagInfo().getArtifactID() == artifact.getArtifactID()) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CONTENT_TAG_ADDED.toString())) {
+                ContentTagAddedEvent event = (ContentTagAddedEvent) evt;
+                if (event.getAddedTag().getContent().equals(associated)) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
+                ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
+                if (event.getDeletedTagInfo().getContentID()== associated.getId()) {
+                    updateSheet();
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                if (evt.getNewValue() == null) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    removeListeners();
+                }
+            }
+        }
+    };
+
     /**
      * Construct blackboard artifact node from an artifact and using provided
      * icon
@@ -86,6 +127,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
+        Case.addPropertyChangeListener(pcl);
     }
 
     /**
@@ -103,6 +145,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
+        Case.addPropertyChangeListener(pcl);
+    }
+
+    private void removeListeners() {
+        Case.removePropertyChangeListener(pcl);
     }
 
     @Override
@@ -157,7 +204,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             displayName = associated.getName();
         }
 
-        // If this is a node for a keyword hit on an artifact, we set the 
+        // If this is a node for a keyword hit on an artifact, we set the
         // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
         if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
@@ -208,6 +255,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 ss.put(np);
             }
         }
+
         final int artifactTypeId = artifact.getArtifactTypeID();
 
         // If mismatch, add props for extension and file type
@@ -294,7 +342,22 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             }
         }
 
+        // add properties for tags
+        List<Tag> tags = new ArrayList<>();
+        try {
+            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact));
+            tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(associated));
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
+        }
+        ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
+                    NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+
         return s;
+    }
+
+    private void updateSheet() {
+        this.setSheet(createSheet());
     }
 
     private String getRootParentName() {
@@ -448,13 +511,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         return true;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "BlackboardArtifact"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
 }

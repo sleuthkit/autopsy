@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -136,8 +135,7 @@ public class KeywordSearch {
                         Thread.sleep(2000);
                         server.closeCore();
                     } catch (Exception ex) {
-                        String caseId = Paths.get(closedCase.getCaseDirectory(), closedCase.getName()).toString();
-                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", caseId), ex); //NON-NLS
+                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", closedCase.getCaseDirectory()), ex); //NON-NLS
                         if (RuntimeProperties.coreComponentsAreActive()) {
                             MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
                         }
@@ -152,8 +150,7 @@ public class KeywordSearch {
                     try {
                         server.openCoreForCase(openedCase);
                     } catch (Exception ex) {
-                        String caseId = Paths.get(openedCase.getCaseDirectory(), openedCase.getName()).toString();
-                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", caseId), ex); //NON-NLS
+                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", openedCase.getCaseDirectory()), ex); //NON-NLS
                         if (RuntimeProperties.coreComponentsAreActive()) {
                             MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
                         }

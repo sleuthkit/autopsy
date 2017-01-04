@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,19 +25,19 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Cancellable;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
@@ -80,13 +80,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                     }
                 },
     }
-    private Collection<QueryRequest> queryRequests;
-    private final DataResultTopComponent viewer; //viewer driving this child node factory
+    private final Collection<QueryRequest> queryRequests;
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
     KeywordSearchResultFactory(Collection<QueryRequest> queryRequests, DataResultTopComponent viewer) {
         this.queryRequests = queryRequests;
-        this.viewer = viewer;
     }
 
     /**
@@ -142,6 +140,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      *
      * @return
      */
+    @NbBundle.Messages({"KeywordSearchResultFactory.query.exception.msg=Could not perform the query "})
     private boolean createFlatKeys(QueryRequest queryRequest, List<KeyValueQueryContent> toPopulate) {
         /**
          * Check the validity of the requested query.
@@ -158,10 +157,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         QueryResults queryResults;
         try {
             queryResults = keywordSearchQuery.performQuery();
-        } catch (NoOpenCoreException ex) {
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Could not perform the query " + keywordSearchQuery.getQueryString(), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + keywordSearchQuery.getQueryString(), ex.getCause().getMessage());
             return false;
-        }
+        } 
 
         int id = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
@@ -194,7 +194,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             if (hit.isArtifactHit()) {
                 name = hit.getArtifact().getDisplayName() + " Artifact"; // NON-NLS
             }
-            tempList.add(new KeyValueQueryContent(name, properties, ++id, hit.getSolrObjectId(), content, highlightQueryEscaped, keywordSearchQuery, queryResults));
+            ++id;
+            tempList.add(new KeyValueQueryContent(name, properties, id, hit.getSolrObjectId(), content, highlightQueryEscaped, keywordSearchQuery, queryResults));
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
@@ -220,7 +221,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @return A consistent collection of keyword hits
      */
     Collection<KeywordHit> getOneHitPerObject(QueryResults queryResults) {
-        HashMap<Long, KeywordHit> hits = new HashMap<Long, KeywordHit>();
+        HashMap<Long, KeywordHit> hits = new HashMap<>();
         for (Keyword keyWord : queryResults.getKeywords()) {
             for (KeywordHit hit : queryResults.getResults(keyWord)) {
                 // add hit with lowest SolrObjectID-Chunk-ID combination.
@@ -255,8 +256,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             //the query is executed later on demand
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
-                Keyword term = queryResults.getKeywords().iterator().next();
-                return constructEscapedSolrQuery(term.getQuery(), literal_query);
+                Keyword keyword = queryResults.getKeywords().iterator().next();
+                return constructEscapedSolrQuery(keyword.getSearchTerm(), literal_query);
             } else {
                 //find terms for this content hit
                 List<Keyword> hitTerms = new ArrayList<>();
@@ -274,7 +275,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 int curTerm = 0;
                 for (Keyword term : hitTerms) {
                     //escape subqueries, MAKE SURE they are not escaped again later
-                    highlightQuery.append(constructEscapedSolrQuery(term.getQuery(), literal_query));
+                    highlightQuery.append(constructEscapedSolrQuery(term.getSearchTerm(), literal_query));
                     if (lastTerm != curTerm) {
                         highlightQuery.append(" "); //acts as OR ||
                     }
@@ -308,7 +309,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     @Override
     protected Node createNodeForKey(KeyValueQueryContent key) {
         final Content content = key.getContent();
-        final String queryStr = key.getQueryStr();;
+        final String queryStr = key.getQueryStr();
         QueryResults hits = key.getHits();
 
         Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.singleton(content));
@@ -326,10 +327,10 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     class KeyValueQueryContent extends KeyValue {
 
         private long solrObjectId;
-        private Content content;
-        private String queryStr;
-        private QueryResults hits;
-        private KeywordSearchQuery query;
+        private final Content content;
+        private final String queryStr;
+        private final QueryResults hits;
+        private final KeywordSearchQuery query;
 
         /**
          * NOTE Parameters are defined based on how they are currently used in
@@ -378,32 +379,21 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      */
     static class BlackboardResultWriter extends SwingWorker<Object, Void> {
 
-        private static List<BlackboardResultWriter> writers = new ArrayList<>();
-        //lock utilized to enqueue writers and limit execution to 1 at a time
-        private static final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock(true); //use fairness policy
-        //private static final Lock writerLock = rwLock.writeLock();
+        private static final List<BlackboardResultWriter> writers = new ArrayList<>();
         private ProgressHandle progress;
-        private KeywordSearchQuery query;
-        private String listName;
-        private QueryResults hits;
+        private final KeywordSearchQuery query;
+        private final QueryResults hits;
         private Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
         private static final int QUERY_DISPLAY_LEN = 40;
 
         BlackboardResultWriter(QueryResults hits, String listName) {
             this.hits = hits;
             this.query = hits.getQuery();
-            this.listName = listName;
         }
 
         protected void finalizeWorker() {
             deregisterWriter(this);
-
-            EventQueue.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    progress.finish();
-                }
-            });
+            EventQueue.invokeLater(progress::finish);
         }
 
         @Override
@@ -411,35 +401,24 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
             final String queryStr = query.getQueryString();
             final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
-            //block until previous writer is done
-            //writerLock.lock();
-
             try {
-                progress = ProgressHandle.createHandle(
-                        NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), new Cancellable() {
-                            @Override
-                            public boolean cancel() {
-                                return BlackboardResultWriter.this.cancel(true);
-                            }
-                        });
-
-                // Create blackboard artifacts
+                progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), () -> BlackboardResultWriter.this.cancel(true));
                 newArtifacts = hits.writeAllHitsToBlackBoard(progress, null, this, false);
             } finally {
                 finalizeWorker();
             }
-
             return null;
         }
 
         @Override
         protected void done() {
             try {
-                // test if any exceptions were thrown
                 get();
-            } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.SEVERE, "Error querying ", ex); //NON-NLS
-            }
+            } catch (InterruptedException | CancellationException ex) {
+                logger.log(Level.WARNING, "User cancelled writing of ad hoc search query results for '{0}' to the blackboard", query.getQueryString()); //NON-NLS
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, "Error writing of ad hoc search query results for " + query.getQueryString() + " to the blackboard", ex); //NON-NLS
+            } 
         }
 
         private static synchronized void registerWriter(BlackboardResultWriter writer) {

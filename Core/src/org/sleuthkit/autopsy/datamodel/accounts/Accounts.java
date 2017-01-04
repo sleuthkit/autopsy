@@ -148,6 +148,14 @@ final public class Accounts implements AutopsyVisitableItem {
     private abstract class ObservingChildren<X> extends Children.Keys<X> {
 
         /**
+         * Override of default constructor to force lazy creation of nodes, by
+         * concrete instances of ObservingChildren
+         */
+        ObservingChildren() {
+            super(true);
+        }
+
+        /**
          * Create of keys used by this Children object to represent the child
          * nodes.
          */
@@ -335,6 +343,11 @@ final public class Accounts implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -412,6 +425,11 @@ final public class Accounts implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -478,6 +496,11 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
         }
     }
 
@@ -612,6 +635,11 @@ final public class Accounts implements AutopsyVisitableItem {
             return v.visit(this);
         }
 
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
+
         @Subscribe
         void handleReviewStatusChange(ReviewStatusChangeEvent event) {
             updateDisplayName();
@@ -735,6 +763,11 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
         }
 
         @Subscribe
@@ -922,6 +955,11 @@ final public class Accounts implements AutopsyVisitableItem {
         }
 
         @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
+
+        @Override
         @NbBundle.Messages({
             "Accounts.FileWithCCNNode.nameProperty.displayName=File",
             "Accounts.FileWithCCNNode.accountsProperty.displayName=Accounts",
@@ -1036,8 +1074,8 @@ final public class Accounts implements AutopsyVisitableItem {
 
         private BINNode(BinResult bin) {
             super(Children.LEAF);
-            setChildren(Children.createLazy(CreditCardNumberFactory::new));
             this.bin = bin;
+            setChildren(Children.createLazy(CreditCardNumberFactory::new));
             setName(getBinRangeString());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
@@ -1091,6 +1129,11 @@ final public class Accounts implements AutopsyVisitableItem {
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
         }
 
         private Sheet.Set getPropertySet(Sheet s) {
@@ -1356,18 +1399,27 @@ final public class Accounts implements AutopsyVisitableItem {
                          */
                         if (newStatus == BlackboardArtifact.ReviewStatus.REJECTED && showRejected == false) {
                             List<Node> siblings = Arrays.asList(node.getParentNode().getChildren().getNodes());
-                            int indexOf = siblings.indexOf(node);
-                            //there is no previous for the first node, so instead we select the next one
-                            Node sibling = indexOf > 0
-                                    ? siblings.get(indexOf - 1)
-                                    : siblings.get(indexOf + 1);
-                            createPath = NodeOp.createPath(sibling, null);
+                            if (siblings.size() > 1) {
+                                int indexOf = siblings.indexOf(node);
+                                //there is no previous for the first node, so instead we select the next one
+                                Node sibling = indexOf > 0
+                                        ? siblings.get(indexOf - 1)
+                                        : siblings.get(Integer.max(indexOf + 1, siblings.size() - 1));
+                                createPath = NodeOp.createPath(sibling, null);
+                            } else {
+                                /* if there are no other siblings to select,
+                                 * just return null, but note we need to filter
+                                 * this out of stream below */
+                                return null;
+                            }
                         } else {
                             createPath = NodeOp.createPath(node, null);
                         }
                         //for the reselect to work we need to strip off the first part of the path.
                         return Arrays.copyOfRange(createPath, 1, createPath.length);
-                    }).collect(Collectors.toList());
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
 
             //change status of selected artifacts
             final Collection<? extends BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);

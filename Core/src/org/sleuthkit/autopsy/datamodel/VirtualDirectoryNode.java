@@ -148,6 +148,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
+            addTagProperty(ss);
         } else {
             ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
                     Bundle.VirtualDirectoryNode_createSheet_type_displayName(),
@@ -224,13 +225,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         return result;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "VirtualDirectory"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        // use content.isDataSource if different column settings are desired
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
+    }
 }

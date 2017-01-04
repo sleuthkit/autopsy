@@ -55,6 +55,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
     private static final String LIST_INGEST_MSGS = "ingest_messages"; //NON-NLS
     private static final String KEYWORD_EL = "keyword"; //NON-NLS
     private static final String KEYWORD_LITERAL_ATTR = "literal"; //NON-NLS
+    private static final String KEYWORD_WHOLE_ATTR = "whole"; //NON-NLS
     private static final String KEYWORD_SELECTOR_ATTR = "selector"; //NON-NLS
     private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss"; //NON-NLS
     private static final String ENCODING = "UTF-8"; //NON-NLS
@@ -99,7 +100,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
             doc.appendChild(rootEl);
 
             for (String listName : theLists.keySet()) {
-                if (theLists.get(listName).isLocked() == true) {
+                if (theLists.get(listName).isEditable() == true) {
                     continue;
                 }
                 KeywordList list = theLists.get(listName);
@@ -123,13 +124,15 @@ final class XmlKeywordSearchList extends KeywordSearchList {
 
                 for (Keyword keyword : keywords) {
                     Element keywordEl = doc.createElement(KEYWORD_EL);
-                    String literal = keyword.isLiteral() ? "true" : "false"; //NON-NLS
+                    String literal = keyword.searchTermIsLiteral() ? "true" : "false"; //NON-NLS
                     keywordEl.setAttribute(KEYWORD_LITERAL_ATTR, literal);
-                    BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getType();
+                    String whole = keyword.searchTermIsWholeWord() ? "true" : "false"; //NON-NLS
+                    keywordEl.setAttribute(KEYWORD_WHOLE_ATTR, whole);
+                    BlackboardAttribute.ATTRIBUTE_TYPE selectorType = keyword.getArtifactAttributeType();
                     if (selectorType != null) {
                         keywordEl.setAttribute(KEYWORD_SELECTOR_ATTR, selectorType.getLabel());
                     }
-                    keywordEl.setTextContent(keyword.getQuery());
+                    keywordEl.setTextContent(keyword.getSearchTerm());
                     listEl.appendChild(keywordEl);
                 }
                 rootEl.appendChild(listEl);
@@ -195,14 +198,20 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                     Element wordEl = (Element) wordsNList.item(j);
                     String literal = wordEl.getAttribute(KEYWORD_LITERAL_ATTR);
                     boolean isLiteral = literal.equals("true"); //NON-NLS
-                    Keyword keyword = new Keyword(wordEl.getTextContent(), isLiteral);
+                    Keyword keyword;
+                    String whole = wordEl.getAttribute(KEYWORD_WHOLE_ATTR);
+                    if (whole.equals("")) {
+                        keyword = new Keyword(wordEl.getTextContent(), isLiteral);
+                    } else {
+                        boolean isWhole = whole.equals("true");
+                        keyword = new Keyword(wordEl.getTextContent(), isLiteral, isWhole);
+                    }
                     String selector = wordEl.getAttribute(KEYWORD_SELECTOR_ATTR);
                     if (!selector.equals("")) {
                         BlackboardAttribute.ATTRIBUTE_TYPE selectorType = BlackboardAttribute.ATTRIBUTE_TYPE.fromLabel(selector);
-                        keyword.setType(selectorType);
+                        keyword.setArtifactAttributeType(selectorType);
                     }
                     words.add(keyword);
-
                 }
                 theLists.put(name, list);
             }

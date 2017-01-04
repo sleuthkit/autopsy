@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,8 +46,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * factory built on top of the NetBeans Children.Keys class.
  */
 public class Tags implements AutopsyVisitableItem {
-    // Creation of a RootNode object corresponding to a Tags object is done 
-    // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren 
+    // Creation of a RootNode object corresponding to a Tags object is done
+    // by a CreateAutopsyNodeVisitor dispatched from the AbstractContentChildren
     // override of Children.Keys<T>.createNodes().
 
     private final TagResults tagResults = new TagResults();
@@ -105,19 +105,15 @@ public class Tags implements AutopsyVisitableItem {
                 properties = Sheet.createPropertiesSet();
                 propertySheet.put(properties);
             }
-            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.displayName"), "", getName()));
+            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "TagsNode.createSheet.name.displayName"), "", getName()));
             return propertySheet;
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "TagsRoots"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
@@ -255,7 +251,8 @@ public class Tags implements AutopsyVisitableItem {
                 properties = Sheet.createPropertiesSet();
                 propertySheet.put(properties);
             }
-            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.displayName"), tagName.getDescription(), getName()));
+            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "TagNameNode.createSheet.name.displayName"), tagName.getDescription(), getName()));
             return propertySheet;
         }
 
@@ -276,15 +273,10 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "TagsName"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     /**
@@ -333,7 +325,7 @@ public class Tags implements AutopsyVisitableItem {
     public class ContentTagTypeNode extends DisplayableItemNode implements Observer {
 
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
-        private TagName tagName;
+        private final TagName tagName;
 
         public ContentTagTypeNode(TagName tagName) {
             super(Children.create(new ContentTagNodeFactory(tagName), true), Lookups.singleton(tagName.getDisplayName() + " " + CONTENT_DISPLAY_NAME));
@@ -362,7 +354,8 @@ public class Tags implements AutopsyVisitableItem {
                 properties = Sheet.createPropertiesSet();
                 propertySheet.put(properties);
             }
-            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.displayName"), "", getName()));
+            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "ContentTagTypeNode.createSheet.name.displayName"), "", getName()));
             return propertySheet;
         }
 
@@ -381,15 +374,10 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "TagsContentType"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class ContentTagNodeFactory extends ChildFactory<ContentTag> implements Observer {
@@ -435,7 +423,7 @@ public class Tags implements AutopsyVisitableItem {
      */
     public class BlackboardArtifactTagTypeNode extends DisplayableItemNode implements Observer {
 
-        private TagName tagName;
+        private final TagName tagName;
         private final String ICON_PATH = "org/sleuthkit/autopsy/images/tag-folder-blue-icon-16.png"; //NON-NLS
 
         public BlackboardArtifactTagTypeNode(TagName tagName) {
@@ -465,7 +453,8 @@ public class Tags implements AutopsyVisitableItem {
                 properties = Sheet.createPropertiesSet();
                 propertySheet.put(properties);
             }
-            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagTypeNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagTypeNode.createSheet.name.displayName"), "", getName()));
+            properties.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagTypeNode.createSheet.name.name"),
+                    NbBundle.getMessage(this.getClass(), "BlackboardArtifactTagTypeNode.createSheet.name.displayName"), "", getName()));
             return propertySheet;
         }
 
@@ -484,15 +473,10 @@ public class Tags implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "TagsBlackboardArtifact"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class BlackboardArtifactTagNodeFactory extends ChildFactory<BlackboardArtifactTag> implements Observer {
@@ -521,7 +505,7 @@ public class Tags implements AutopsyVisitableItem {
             // The blackboard artifact tags to be wrapped are used as the keys.
             return new BlackboardArtifactTagNode(key);
         }
-        
+
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);

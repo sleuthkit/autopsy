@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2012 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,10 +45,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
-    private JFileChooser fc = new JFileChooser();
+    private final JFileChooser fc = new JFileChooser();
 
     // Externally supplied name is used to store settings 
-    private String contextName;
+    private final String contextName;
 
     /**
      * Creates new form ImageFilePanel
@@ -78,17 +78,17 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
         this.contextName = context;
 
-        createTimeZoneList();
     }
 
     /**
      * Creates and returns an instance of a ImageFilePanel.
+     * @return instance of the ImageFilePanel
      */
     public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
 
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
-
         instance.postInit();
+        instance.createTimeZoneList();
 
         return instance;
     }
@@ -234,6 +234,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     /**
      * Set the path of the image file.
+     * @param s path of the image file
      */
     public void setContentPath(String s) {
         pathTextField.setText(s);
@@ -242,7 +243,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     public String getTimeZone() {
         String tz = timeZoneComboBox.getSelectedItem().toString();
         return tz.substring(tz.indexOf(")") + 2).trim();
-
     }
 
     public boolean getNoFatOrphans() {

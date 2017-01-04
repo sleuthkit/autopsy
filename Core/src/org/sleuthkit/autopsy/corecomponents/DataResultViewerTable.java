@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- *
- * Copyright 2013-2014 Basis Technology Corp.
+ * 
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,22 +18,32 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import javax.swing.Action;
+import java.util.TreeMap;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.table.TableCellRenderer;
+import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
@@ -46,28 +56,43 @@ import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
-import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 
 /**
  * DataResult sortable table viewer
  */
-// @@@ Restore implementation of DataResultViewerTable as a DataResultViewer 
-// service provider when DataResultViewers can be made compatible with node 
+// @@@ Restore implementation of DataResultViewerTable as a DataResultViewer
+// service provider when DataResultViewers can be made compatible with node
 // multiple selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
-    private String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
-    private Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
+    private static final long serialVersionUID = 1L;
+
+    private final String firstColumnLabel = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.firstColLbl");
+    /* The properties map maps
+     * key: stored value of column index -> value: property at that index
+     * We move around stored values instead of directly using the column indices
+     * in order to not override settings for a column that may not appear in the
+     * current table view due to its collection of its children's properties.
+     */
+    private final Map<Integer, Property<?>> propertiesMap = new TreeMap<>();
     private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
     private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
+    private static final Color TAGGED_COLOR = new Color(200, 210, 220);
     private Node currentRoot;
+    // When a column in the table is moved, these two variables keep track of where
+    // the column started and where it ended up.
+    private int startColumnIndex = -1;
+    private int endColumnIndex = -1;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
      * multiple selection actions.
+     *
+     * @param explorerManager allow for explorer manager sharing
      */
     public DataResultViewerTable(ExplorerManager explorerManager) {
         super(explorerManager);
@@ -94,34 +119,97 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.getOutline().setRootVisible(false);
         ov.getOutline().setDragEnabled(false);
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * The following lines of code were added for this feature.
-         */
-//        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
-//            @Override
-//            public void columnAdded(TableColumnModelEvent e) {}
-//            @Override
-//            public void columnRemoved(TableColumnModelEvent e) {}
-//            @Override
-//            public void columnMarginChanged(ChangeEvent e) {}
-//            @Override
-//            public void columnSelectionChanged(ListSelectionEvent e) {}
-//
-//            @Override
-//            public void columnMoved(TableColumnModelEvent e) {
-//                // change the order of the column in the array/hashset
-//                List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-//                Node.Property<?> prop = props.remove(e.getFromIndex());
-//                props.add(e.getToIndex(), prop);
-//                
-//                propertiesAcc.clear();
-//                for (int j = 0; j < props.size(); ++j) {
-//                    propertiesAcc.add(props.get(j));
-//                }
-//            }
-//        });
+        // add a listener so that when columns are moved, the new order is stored
+        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {
+            }
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {
+            }
+            @Override
+            public void columnMarginChanged(ChangeEvent e) {
+            }
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {
+            }
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+                int fromIndex = e.getFromIndex();
+                int toIndex = e.getToIndex();
+                if (fromIndex == toIndex) {
+                    return;
+                }
+
+                /* Because a column may be dragged to several different positions before
+                 * the mouse is released (thus causing multiple TableColumnModelEvents to
+                 * be fired), we want to keep track of the starting column index in this
+                 * potential series of movements. Therefore we only keep track of the
+                 * original fromIndex in startColumnIndex, but we always update
+                 * endColumnIndex to know the final position of the moved column.
+                 * See the MouseListener mouseReleased method.
+                */
+                if (startColumnIndex == -1) {
+                    startColumnIndex = fromIndex;
+                }
+                endColumnIndex = toIndex;
+
+                // This array contains the keys of propertiesMap in order
+                int[] indicesList = new int[propertiesMap.size()];
+                int pos = 0;
+                for (int key : propertiesMap.keySet()) {
+                    indicesList[pos++] = key;
+                }
+                int leftIndex = Math.min(fromIndex, toIndex);
+                int rightIndex = Math.max(fromIndex, toIndex);
+                // Now we can copy the range of keys that have been affected by
+                // the column movement
+                int[] range = Arrays.copyOfRange(indicesList, leftIndex, rightIndex + 1);
+                int rangeSize = range.length;
+
+                // column moved right, shift all properties left, put in moved
+                // property at the rightmost index
+                if (fromIndex < toIndex) {
+                    Property<?> movedProp = propertiesMap.get(range[0]);
+                    for (int i = 0; i < rangeSize - 1; i++) {
+                        propertiesMap.put(range[i], propertiesMap.get(range[i + 1]));
+                    }
+                    propertiesMap.put(range[rangeSize - 1], movedProp);
+                }
+                // column moved left, shift all properties right, put in moved
+                // property at the leftmost index
+                else {
+                    Property<?> movedProp = propertiesMap.get(range[rangeSize - 1]);
+                    for (int i = rangeSize - 1; i > 0; i--) {
+                        propertiesMap.put(range[i], propertiesMap.get(range[i - 1]));
+                    }
+                    propertiesMap.put(range[0], movedProp);
+                }
+
+                storeState();
+            }
+        });
+
+        // add a listener to move columns back if user tries to move the first column out of place
+        ov.getOutline().getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                /* If the startColumnIndex is not -1 (which is the reset value), that
+                 * means columns have been moved around. We then check to see if either
+                 * the starting or end position is 0 (the first column), and then swap
+                 * them back if that is the case because we don't want to allow movement
+                 * of the first column. We then reset startColumnIndex to -1, the reset
+                 * value.
+                 * We check if startColumnIndex is at reset or not because it is
+                 * possible for the mouse to be released and a MouseEvent to be fired
+                 * without having moved any columns.
+                 */
+                if (startColumnIndex != -1 && (startColumnIndex == 0 || endColumnIndex == 0)) {
+                    ov.getOutline().moveColumn(endColumnIndex, startColumnIndex);
+                }
+                startColumnIndex = -1;
+            }
+        });
     }
 
     /**
@@ -176,68 +264,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Gets regular Bean property set properties from first child of Node.
-     *
-     * @param parent Node with at least one child to get properties from
-     *
-     * @return Properties,
-     */
-    private Node.Property<?>[] getChildPropertyHeaders(Node parent) {
-        Node firstChild = parent.getChildren().getNodeAt(0);
-
-        if (firstChild == null) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
-        } else {
-            for (PropertySet ps : firstChild.getPropertySets()) {
-                if (ps.getName().equals(Sheet.PROPERTIES)) {
-                    return ps.getProperties();
-                }
-            }
-
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.childWithoutPropertySet"));
-        }
-    }
-
-    /**
-     * Gets regular Bean property set properties from all first children and,
-     * recursively, subchildren of Node. Note: won't work out the box for lazy
-     * load - you need to set all children props for the parent by hand
-     *
-     * @param parent Node with at least one child to get properties from
-     *
-     * @return Properties,
-     */
-    @SuppressWarnings("rawtypes")
-    private Node.Property[] getAllChildPropertyHeaders(Node parent) {
-        Node firstChild = parent.getChildren().getNodeAt(0);
-
-        Property[] properties = null;
-
-        if (firstChild == null) {
-            throw new IllegalArgumentException(
-                    NbBundle.getMessage(this.getClass(), "DataResultViewerTable.illegalArgExc.noChildFromParent"));
-        } else {
-            Set<Property> allProperties = new LinkedHashSet<>();
-            while (firstChild != null) {
-                for (PropertySet ps : firstChild.getPropertySets()) {
-                    final Property[] props = ps.getProperties();
-                    final int propsNum = props.length;
-                    for (int i = 0; i < propsNum; ++i) {
-                        allProperties.add(props[i]);
-                    }
-                }
-                firstChild = firstChild.getChildren().getNodeAt(0);
-            }
-
-            properties = allProperties.toArray(new Property<?>[0]);
-        }
-        return properties;
-
-    }
-
-    /**
      * Gets regular Bean property set properties from all children and,
      * recursively, subchildren of Node. Note: won't work out the box for lazy
      * load - you need to set all children props for the parent by hand
@@ -246,7 +272,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param rows   max number of rows to retrieve properties for (can be used
      *               for memory optimization)
      */
-    private void getAllChildPropertyHeadersRec(Node parent, int rows) {
+    private void getAllChildPropertyHeadersRec(Node parent, int rows, Set<Property<?>> propertiesAcc) {
         Children children = parent.getChildren();
         int childCount = 0;
         for (Node child : children.getNodes()) {
@@ -260,7 +286,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     propertiesAcc.add(props[j]);
                 }
             }
-            getAllChildPropertyHeadersRec(child, rows);
+            getAllChildPropertyHeadersRec(child, rows, propertiesAcc);
         }
     }
 
@@ -277,11 +303,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     @Override
     public void setNode(Node selectedNode) {
+        final OutlineView ov = ((OutlineView) this.tableScrollPanel);
+        /* The quick filter must be reset because when determining column width,
+         * ETable.getRowCount is called, and the documentation states that quick
+         * filters must be unset for the method to work
+         * "If the quick-filter is applied the number of rows do not match the number of rows in the model."
+         */
+        ov.getOutline().unsetQuickFilter();
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             boolean hasChildren = false;
-
             if (selectedNode != null) {
                 // @@@ This just did a DB round trip to get the count and the results were not saved...
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
@@ -299,7 +331,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 root.addNodeListener(dummyNodeListener);
                 setupTable(root);
             } else {
-                final OutlineView ov = ((OutlineView) this.tableScrollPanel);
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
                 ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -319,37 +350,24 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void setupTable(final Node root) {
 
         em.setRootContext(root);
-
         final OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
         if (ov == null) {
             return;
         }
+        currentRoot = root;
+        List<Node.Property<?>> props = loadState();
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * The next three lines of code replaced the three lines of code that
-         * follow
-         */
-//        storeState();        
-        // set the new root as current
-//        currentRoot = root;
-//        List<Node.Property<?>> props = loadState();
-        propertiesAcc.clear();
-        DataResultViewerTable.this.getAllChildPropertyHeadersRec(root, 100);
-        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-
-        /*
+        /**
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
          * which is the file name, etc. So, pop that property off the list, but
          * use its display name as the header for the column so that the header
          * can change depending on the type of data being displayed.
          *
-         * NOTE: This assumes that the first property is always the one tha
-         * duplicates getDisplayName(). This seems like a big assumption and
-         * could be made more robust.
+         * NOTE: This assumes that the first property is always the one that
+         * duplicates getDisplayName(). The current implementation does not
+         * allow the first property column to be moved.
          */
         if (props.size() > 0) {
             Node.Property<?> prop = props.remove(0);
@@ -372,142 +390,176 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         ov.setPropertyColumns(propStrings);
 
         // show the horizontal scroll panel and show all the content & header
-        int totalColumns = props.size();
-
-        //int scrollWidth = ttv.getWidth();
-        int margin = 4;
-        int startColumn = 1;
-
         // If there is only one column (which was removed from props above)
         // Just let the table resize itself.
         ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        // get first 100 rows values for the table
-        Object[][] content;
-        content = getRowValues(root, 100);
-
-        if (content != null) {
-            // get the fontmetrics
+        if (root.getChildren().getNodesCount() != 0) {
             final Graphics graphics = ov.getGraphics();
             if (graphics != null) {
                 final FontMetrics metrics = graphics.getFontMetrics();
 
-                // for the "Name" column
-                int nodeColWidth = Math.min(getMaxColumnWidth(0, metrics, margin, 40, firstColumnLabel, content), 250); // Note: 40 is the width of the icon + node lines. Change this value if those values change!
-                ov.getOutline().getColumnModel().getColumn(0).setPreferredWidth(nodeColWidth);
+                int margin = 4;
+                int padding = 8;
 
-                // get the max for each other column
-                for (int colIndex = startColumn; colIndex <= totalColumns; colIndex++) {
-                    int colWidth = Math.min(getMaxColumnWidth(colIndex, metrics, margin, 8, props, content), 350);
-                    ov.getOutline().getColumnModel().getColumn(colIndex).setPreferredWidth(colWidth);
+                for (int column = 0; column < ov.getOutline().getModel().getColumnCount(); column++) {
+                    int firstColumnPadding = (column == 0) ? 32 : 0;
+                    int columnWidthLimit = (column == 0) ? 350 : 300;
+                    int valuesWidth = 0;
+
+                    // find the maximum width needed to fit the values for the first 100 rows, at most
+                    for (int row = 0; row < Math.min(100, ov.getOutline().getRowCount()); row++) {
+                        TableCellRenderer renderer = ov.getOutline().getCellRenderer(row, column);
+                        Component comp = ov.getOutline().prepareRenderer(renderer, row, column);
+                        valuesWidth = Math.max(comp.getPreferredSize().width, valuesWidth);
+                    }
+
+                    int headerWidth = metrics.stringWidth(ov.getOutline().getColumnName(column));
+                    valuesWidth += firstColumnPadding; // add extra padding for first column
+
+                    int columnWidth = Math.max(valuesWidth, headerWidth);
+                    columnWidth += 2 * margin + padding; // add margin and regular padding
+                    columnWidth = Math.min(columnWidth, columnWidthLimit);
+
+                    ov.getOutline().getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }
             }
-
+        } else {
             // if there's no content just auto resize all columns
-            if (content.length <= 0) {
-                // turn on the auto resize
-                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        }
+
+        /**
+         * This custom renderer extends the renderer that was already being
+         * used by the outline table. This renderer colors a row if the
+         * tags property of the node is not empty.
+         */
+        class ColorTagCustomRenderer extends DefaultOutlineCellRenderer {
+            private static final long serialVersionUID = 1L;
+            @Override
+            public Component getTableCellRendererComponent(JTable table,
+                    Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                
+                Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                // only override the color if a node is not selected
+                if (!isSelected) {
+                    Node node = currentRoot.getChildren().getNodeAt(table.convertRowIndexToModel(row));
+                    boolean tagFound = false;
+                    if (node != null) {
+                        Node.PropertySet[] propSets = node.getPropertySets();
+                        if (propSets.length != 0) {
+                            // currently, a node has only one property set, named Sheet.PROPERTIES ("properties")
+                            Node.Property<?>[] props = propSets[0].getProperties();
+                            for (Property<?> prop : props) {
+                                if (prop.getName().equals("Tags")) {
+                                    try {
+                                        tagFound = !prop.getValue().equals("");
+                                    } catch (IllegalAccessException | InvocationTargetException ignore) {
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    //if the node does have associated tags, set its background color
+                    if (tagFound) {
+                        component.setBackground(TAGGED_COLOR);
+                    }
+                }
+                return component;
             }
+        }
+        ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
+    }
+
+    /**
+     * Store the current column order into a preference file.
+     */
+    private synchronized void storeState() {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
+            return;
+        }
+
+        TableFilterNode tfn;
+        if (currentRoot instanceof TableFilterNode) {
+            tfn = (TableFilterNode) currentRoot;
+        } else {
+            return;
+        }
+
+        // Store the current order of the columns into settings
+        for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
+            Property<?> prop = entry.getValue();
+            int storeValue = entry.getKey();
+            NbPreferences.forModule(this.getClass()).put(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), String.valueOf(storeValue));
         }
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     * 
-     * The following three methods were added for this feature
+    /**
+     * Loads the stored column order from the preference file.
+     *
+     * @return a List<Node.Property<?>> of the preferences in order
      */
-    // Store the state of current root Node.
-//    private void storeState() {
-//        if(currentRoot == null || propertiesAcc.isEmpty())
-//            return;
-//        
-//        TableFilterNode tfn;
-//        if(currentRoot instanceof TableFilterNode)
-//            tfn = (TableFilterNode) currentRoot;
-//        else
-//            return;
-//        
-//        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-//        for (int i = 0; i < props.size(); i++) {
-//            Property<?> prop = props.get(i);
-//            NbPreferences.forModule(this.getClass()).put(getUniqueColName(prop, tfn.getItemType()), String.valueOf(i));
-//        }
-//    }
-    // Load the state of current root Node if exists. 
-//    private List<Node.Property<?>> loadState() {
-//        propertiesAcc.clear();
-//        this.getAllChildPropertyHeadersRec(currentRoot, 100);
-//        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
-//
-//        // If node is not table filter node, use default order for columns
-//        TableFilterNode tfn;
-//        if (currentRoot instanceof TableFilterNode) {
-//            tfn = (TableFilterNode) currentRoot;
-//        } else {
-//            Logger.getLogger(DataResultViewerTable.class.getName()).log(Level.INFO,
-//                    "Node {0} is not TableFilterNode, columns are going to be in default order", currentRoot.getName());
-//            return props;
-//        }
-//
-//        List<Node.Property<?>> orderedProps = new ArrayList<>(propertiesAcc);
-//        for (Property<?> prop : props) {
-//            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getUniqueColName(prop, tfn.getItemType()), "-1"));
-//            if (value >= 0) {
-//                /**
-//                 * The original contents of orderedProps do not matter when
-//                 * setting the new ordered values. The reason we copy
-//                 * propertiesAcc into it first is to give it the currect size so
-//                 * we can set() in any index.
-//                 */
-//                orderedProps.set(value, prop);
-//            }
-//        }
-//        propertiesAcc.clear();
-//        for (Property<?> prop : orderedProps) {
-//            propertiesAcc.add(prop);
-//        }
-//        return orderedProps;
-//    }
-//
-//    // Get unique name for node and it's property.
-//    private String getUniqueColName(Property<?> prop, String type) {
-//        return Case.getCurrentCase().getName() + "." + type + "."
-//                + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".columnOrder";
-//    }
+    private synchronized List<Node.Property<?>> loadState() {
+        // This is a set because we add properties of up to 100 child nodes, and we want unique properties
+        Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
+        this.getAllChildPropertyHeadersRec(currentRoot, 100, propertiesAcc);
 
-    // Populate a two-dimensional array with rows of property values for up 
-    // to maxRows children of the node passed in. 
-    private static Object[][] getRowValues(Node node, int maxRows) {
-        int numRows = Math.min(maxRows, node.getChildren().getNodesCount());
-        Object[][] rowValues = new Object[numRows][];
-        int rowCount = 0;
-        for (Node child : node.getChildren().getNodes()) {
-            if (rowCount >= maxRows) {
-                break;
-            }
-            // BC: I got this once, I think it was because the table
-            // refreshed while we were in this method 
-            // could be better synchronized.  Or it was from 
-            // the lazy nodes updating...  Didn't have time 
-            // to fully debug it. 
-            if (rowCount > numRows) {
-                break;
-            }
-            PropertySet[] propertySets = child.getPropertySets();
-            if (propertySets.length > 0) {
-                Property<?>[] properties = propertySets[0].getProperties();
-                rowValues[rowCount] = new Object[properties.length];
-                for (int j = 0; j < properties.length; ++j) {
-                    try {
-                        rowValues[rowCount][j] = properties[j].getValue();
-                    } catch (IllegalAccessException | InvocationTargetException ignore) {
-                        rowValues[rowCount][j] = "n/a"; //NON-NLS
-                    }
-                }
-            }
-            ++rowCount;
+        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+
+        // If node is not table filter node, use default order for columns
+        TableFilterNode tfn;
+        if (currentRoot instanceof TableFilterNode) {
+            tfn = (TableFilterNode) currentRoot;
+        } else {
+            // The node is not a TableFilterNode, columns are going to be in default order
+            return props;
         }
-        return rowValues;
+
+        propertiesMap.clear();
+        /*
+         * We load column index values into the properties map. If a property's
+         * index is outside the range of the number of properties or the index
+         * has already appeared as the position of another property, we put that
+         * property at the end.
+         */
+        int offset = props.size();
+        boolean noPreviousSettings = true;
+        for (Property<?> prop : props) {
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), "-1"));
+            if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
+                propertiesMap.put(value, prop);
+                noPreviousSettings = false;
+            } else {
+                propertiesMap.put(offset, prop);
+                offset++;
+            }
+        }
+
+        // If none of the properties had previous settings, we should decrement
+        // each value by the number of properties to make the values 0-indexed.
+        if (noPreviousSettings) {
+            Integer[] keys = propertiesMap.keySet().toArray(new Integer[propertiesMap.keySet().size()]);
+            for (int key : keys) {
+                propertiesMap.put(key - props.size(), propertiesMap.get(key));
+                propertiesMap.remove(key);
+            }
+        }
+
+        return new ArrayList<>(propertiesMap.values());
+    }
+
+    /**
+     * Gets a key for the current node and a property of its child nodes to
+     * store the column position into a preference file.
+     *
+     * @param prop Property of the column
+     * @param type The type of the current node
+     * @return     A generated key for the preference file
+     */
+    private String getColumnPreferenceKey(Property<?> prop, String type) {
+        return type.replaceAll("[^a-zA-Z0-9_]", "") + "."
+                + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".column";
     }
 
     @Override
@@ -518,63 +570,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     public DataResultViewer createInstance() {
         return new DataResultViewerTable();
-    }
-
-    /**
-     * Gets the max width of the column from the given index, header, and table.
-     *
-     * @param index   the index of the column on the table / header
-     * @param metrics the font metrics that this component use
-     * @param margin  the left/right margin of the column
-     * @param padding the left/right padding of the column
-     * @param header  the property headers of the table
-     * @param table   the object table
-     *
-     * @return max the maximum width of the column
-     */
-    @SuppressWarnings("rawtypes")
-    private int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, List<Node.Property<?>> header, Object[][] table) {
-        // set the tree (the node / names column) width
-        String headerName = header.get(index - 1).getDisplayName();
-
-        return getMaxColumnWidth(index, metrics, margin, padding, headerName, table);
-    }
-
-    /**
-     * Gets the max width of the column from the given index, header, and table.
-     *
-     * @param index   the index of the column on the table / header
-     * @param metrics the font metrics that this component use
-     * @param margin  the left/right margin of the column
-     * @param padding the left/right padding of the column
-     * @param header  the column header for the comparison
-     * @param table   the object table
-     *
-     * @return max the maximum width of the column
-     */
-    private synchronized int getMaxColumnWidth(int index, FontMetrics metrics, int margin, int padding, String header, Object[][] table) {
-        // set the tree (the node / names column) width
-        String headerName = header;
-        int headerWidth = metrics.stringWidth(headerName); // length of the header
-        int colWidth = 0;
-
-        // Get maximum width of column data
-        for (int i = 0; i < table.length; i++) {
-            if (table[i] == null || index >= table[i].length) {
-                continue;
-            }
-            String test = table[i][index].toString();
-            colWidth = Math.max(colWidth, metrics.stringWidth(test));
-        }
-
-        colWidth += padding; // add the padding on the most left gap
-        headerWidth += 8; // add the padding to the header (change this value if the header padding value is changed)
-
-        // Set the width
-        int width = Math.max(headerWidth, colWidth);
-        width += 2 * margin; // Add margin
-
-        return width;
     }
 
     @Override
@@ -601,11 +596,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTable(nme.getNode());
                 } else {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            setupTable(nme.getNode());
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        setupTable(nme.getNode());
                     });
                 }
             }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2016  Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,15 +18,18 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutoIngestDataSourceProcessor;
 
 /**
  * A local/logical files and/or directories data source processor that
@@ -34,8 +37,11 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * integration with the add data source wizard. It also provides a run method
  * overload to allow it to be used independently of the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
-public class LocalFilesDSProcessor implements DataSourceProcessor {
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
+)
+public class LocalFilesDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private static final String DATA_SOURCE_TYPE = NbBundle.getMessage(LocalFilesDSProcessor.class, "LocalFilesDSProcessor.dsType");
     private final LocalFilesPanel configPanel;
@@ -122,7 +128,7 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
     @Override
     public void run(DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         if (!setDataSourceOptionsCalled) {
-            localFilePaths = Arrays.asList(configPanel.getContentPaths().split(LocalFilesPanel.FILES_SEP));
+            localFilePaths = configPanel.getContentPaths();
         }
         run(UUID.randomUUID().toString(), configPanel.getFileSetName(), localFilePaths, progressMonitor, callback);
     }
@@ -179,6 +185,20 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
         setDataSourceOptionsCalled = false;
     }
 
+    @Override
+    public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        // Local files DSP can process any file by simply adding it as a logical file.
+        // It should return lowest possible non-zero confidence level and be treated 
+        // as the "option of last resort" for auto ingest purposes
+        return 1;
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+        this.localFilePaths = Arrays.asList(new String[]{dataSourcePath.toString()});
+        run(deviceId, deviceId, this.localFilePaths, progressMonitor, callBack);
+    }
+
     /**
      * Sets the configuration of the data source processor without using the
      * configuration panel. The data source processor will assign a UUID to the
@@ -192,9 +212,12 @@ public class LocalFilesDSProcessor implements DataSourceProcessor {
      */
     @Deprecated
     public void setDataSourceOptions(String paths) {
-        //LocalFilesPanel.FILES_SEP is currently ","
-        this.localFilePaths = Arrays.asList(paths.split(LocalFilesPanel.FILES_SEP));
+        // The LocalFilesPanel used to separate file paths with a comma and pass
+        // them as a string, but because file names are allowed to contain
+        // commas, this approach was buggy and replaced. We now pass a list of
+        // String paths.
+        this.localFilePaths = Arrays.asList(paths.split(","));
         setDataSourceOptionsCalled = true;
     }
-
+    
 }

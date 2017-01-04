@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import org.sleuthkit.datamodel.AbstractFile;
-
 /**
- * Interface for a search query. Implemented by various engines or methods of
- * using the same engine. One of these is created for each query.
+ * Interface for kewyord search queries. 
  */
 interface KeywordSearchQuery {
 
@@ -33,17 +30,18 @@ interface KeywordSearchQuery {
      *
      * @return true if the query passed validation
      */
-    public boolean validate();
+     boolean validate();
 
     /**
      * execute query and return results without publishing them return results
      * for all matching terms
      *
+     * @throws KeywordSearchModuleException error while executing Solr term query
      * @throws NoOpenCoreException if query failed due to server error, this
      *                             could be a notification to stop processing
      * @return
      */
-    public QueryResults performQuery() throws NoOpenCoreException;
+     QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException;
 
     /**
      * Set an optional filter to narrow down the search Adding multiple filters
@@ -51,14 +49,14 @@ interface KeywordSearchQuery {
      *
      * @param filter filter to set on the query
      */
-    public void addFilter(KeywordQueryFilter filter);
+     void addFilter(KeywordQueryFilter filter);
 
     /**
      * Set an optional SOLR field to narrow down the search
      *
      * @param field field to set on the query
      */
-    public void setField(String field);
+     void setField(String field);
 
     /**
      * Modify the query string to be searched as a substring instead of a whole
@@ -66,39 +64,39 @@ interface KeywordSearchQuery {
      *
      * @param isSubstring
      */
-    public void setSubstringQuery();
+     void setSubstringQuery();
 
     /**
      * escape the query string and use the escaped string in the query
      */
-    public void escape();
+     void escape();
 
     /**
      *
      * @return true if query was escaped
      */
-    public boolean isEscaped();
+     boolean isEscaped();
 
     /**
      *
      * @return true if query is a literal query (non regex)
      */
-    public boolean isLiteral();
+     boolean isLiteral();
 
     /**
      * return original keyword/query string
      *
      * @return the query String supplied originally
      */
-    public String getQueryString();
+     String getQueryString();
 
     /**
      * return escaped keyword/query string if escaping was done
      *
      * @return the escaped query string, or original string if no escaping done
      */
-    public String getEscapedQueryString();
+     String getEscapedQueryString();
 
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName);
+     KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName);
 
 }

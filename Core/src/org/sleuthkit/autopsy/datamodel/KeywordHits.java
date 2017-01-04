@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -248,15 +248,10 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "KeywordRoot"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class ListFactory extends ChildFactory.Detachable<String> implements Observer {
@@ -351,7 +346,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     public class ListNode extends DisplayableItemNode implements Observer {
 
-        private String listName;
+        private final String listName;
 
         public ListNode(String listName) {
             super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName));
@@ -408,20 +403,15 @@ public class KeywordHits implements AutopsyVisitableItem {
             updateDisplayName();
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "KeywordList"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
 
-        private String setName;
+        private final String setName;
 
         private TermFactory(String setName) {
             super();
@@ -457,8 +447,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     public class TermNode extends DisplayableItemNode implements Observer {
 
-        private String setName;
-        private String keyword;
+        private final String setName;
+        private final String keyword;
 
         public TermNode(String setName, String keyword) {
             super(Children.create(new HitsFactory(setName, keyword), true), Lookups.singleton(keyword));
@@ -511,21 +501,16 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        /*
-         * TODO (AUT-1849): Correct or remove peristent column reordering code
-         *
-         * Added to support this feature.
-         */
-//        @Override
-//        public String getItemType() {
-//            return "KeywordTerm"; //NON-NLS
-//        }
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
     }
 
     public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {
 
-        private String keyword;
-        private String setName;
+        private final String keyword;
+        private final String setName;
 
         public HitsFactory(String setName, String keyword) {
             super();

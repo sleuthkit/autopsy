@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles.RecentFilesFilter;
+import org.sleuthkit.autopsy.datamodel.RecentFiles.RecentFilesFilter;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -83,13 +83,12 @@ public class RecentFilesFilterNode extends DisplayableItemNode {
         return true;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "RecentFilesFilter"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        if (filter == null) {
+            return getClass().getName();
+        } else {
+            return getClass().getName() + filter.getName();
+        }
+    }
 }

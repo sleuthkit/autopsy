@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2013-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,6 +42,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 class ContentTagNode extends DisplayableItemNode {
 
+    private static final Logger LOGGER = Logger.getLogger(ContentTagNode.class.getName());
+
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/blue-tag-icon-16.png"; //NON-NLS
     private final ContentTag tag;
 
@@ -60,7 +62,7 @@ class ContentTagNode extends DisplayableItemNode {
         try {
             contentPath = content.getUniquePath();
         } catch (TskCoreException ex) {
-            Logger.getLogger(ContentTagNode.class.getName()).log(Level.SEVERE, "Failed to get path for content (id = " + content.getId() + ")", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to get path for content (id = " + content.getId() + ")", ex); //NON-NLS
             contentPath = NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.unavail.path");
         }
         AbstractFile file = content instanceof AbstractFile ? (AbstractFile) content : null;
@@ -103,6 +105,7 @@ class ContentTagNode extends DisplayableItemNode {
                 NbBundle.getMessage(this.getClass(), "ContentTagNode.createSheet.fileSize.displayName"),
                 "",
                 content.getSize()));
+
         return propertySheet;
     }
 
@@ -115,7 +118,7 @@ class ContentTagNode extends DisplayableItemNode {
         if (file != null) {
             actions.add(ViewFileInTimelineAction.createViewFileAction(file));
         }
-        actions.add(null); // Adds a menu item separator. 
+        actions.add(null); // Adds a menu item separator.
         actions.add(DeleteContentTagAction.getInstance());
         return actions.toArray(new Action[actions.size()]);
     }
@@ -130,13 +133,8 @@ class ContentTagNode extends DisplayableItemNode {
         return true;
     }
 
-    /*
-     * TODO (AUT-1849): Correct or remove peristent column reordering code
-     *
-     * Added to support this feature.
-     */
-//    @Override
-//    public String getItemType() {
-//        return "ContentTag"; //NON-NLS
-//    }
+    @Override
+    public String getItemType() {
+        return getClass().getName();
+    }
 }

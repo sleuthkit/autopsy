@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
-import org.sleuthkit.autopsy.datamodel.accounts.FileTypeExtensionFilters;
-import org.sleuthkit.autopsy.datamodel.accounts.RecentFiles;
 
 /**
  * This visitor goes over the AutopsyVisitableItems, which are currently the
@@ -33,13 +31,13 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(Views v);
 
-    T visit(FileTypeExtensionFilters sf);
+    T visit(FileTypesByExtension sf);
 
-    T visit(FileTypeExtensionFilters.RootFilter fsf);
+    T visit(FileTypesByExtension.RootFilter fsf);
 
-    T visit(FileTypeExtensionFilters.DocumentFilter df);
+    T visit(FileTypesByExtension.DocumentFilter df);
 
-    T visit(FileTypeExtensionFilters.ExecutableFilter ef);
+    T visit(FileTypesByExtension.ExecutableFilter ef);
 
     T visit(RecentFiles rf);
 
@@ -71,6 +69,11 @@ public interface AutopsyItemVisitor<T> {
 
     T visit(Accounts accountsItem);
 
+    T visit(FileTypes fileTypesItem);
+
+    T visit(FileTypesByMimeType aThis);
+
+
     static abstract public class Default<T> implements AutopsyItemVisitor<T> {
 
         protected abstract T defaultVisit(AutopsyVisitableItem ec);
@@ -81,25 +84,30 @@ public interface AutopsyItemVisitor<T> {
         }
 
         @Override
-        public T visit(FileTypeExtensionFilters sf) {
+        public T visit(FileTypesByExtension sf) {
             return defaultVisit(sf);
         }
 
         @Override
-        public T visit(FileTypeExtensionFilters.RootFilter fsf) {
+        public T visit(FileTypesByExtension.RootFilter fsf) {
             return defaultVisit(fsf);
         }
 
         @Override
-        public T visit(FileTypeExtensionFilters.DocumentFilter df) {
+        public T visit(FileTypesByExtension.DocumentFilter df) {
             return defaultVisit(df);
         }
 
         @Override
-        public T visit(FileTypeExtensionFilters.ExecutableFilter ef) {
+        public T visit(FileTypesByExtension.ExecutableFilter ef) {
             return defaultVisit(ef);
         }
-
+        
+        @Override
+        public T visit(FileTypesByMimeType ftByMimeType) {
+            return defaultVisit(ftByMimeType);
+        }
+        
         @Override
         public T visit(DeletedContent dc) {
             return defaultVisit(dc);
@@ -170,6 +178,12 @@ public interface AutopsyItemVisitor<T> {
             return defaultVisit(r);
         }
 
+        
+        @Override
+        public T visit(FileTypes ft) {
+            return defaultVisit(ft);
+        }
+        
         @Override
         public T visit(Reports reportsItem) {
             return defaultVisit(reportsItem);

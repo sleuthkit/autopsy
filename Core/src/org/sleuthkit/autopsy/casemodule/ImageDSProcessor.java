@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.io.File;
+import java.nio.file.Path;
 import javax.swing.JPanel;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -26,9 +28,12 @@ import java.util.UUID;
 import javax.swing.filechooser.FileFilter;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutoIngestDataSourceProcessor;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor
@@ -36,16 +41,19 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
  * wizard. It also provides a run method overload to allow it to be used
  * independently of the wizard.
  */
-@ServiceProvider(service = DataSourceProcessor.class)
-public class ImageDSProcessor implements DataSourceProcessor {
+@ServiceProviders(value={
+    @ServiceProvider(service=DataSourceProcessor.class),
+    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
+)
+public class ImageDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
     private final static String DATA_SOURCE_TYPE = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.dsType.text");
     private static final List<String> allExt = new ArrayList<>();
     private static final GeneralFilter rawFilter = new GeneralFilter(GeneralFilter.RAW_IMAGE_EXTS, GeneralFilter.RAW_IMAGE_DESC);
     private static final GeneralFilter encaseFilter = new GeneralFilter(GeneralFilter.ENCASE_IMAGE_EXTS, GeneralFilter.ENCASE_IMAGE_DESC);
     private static final GeneralFilter virtualMachineFilter = new GeneralFilter(GeneralFilter.VIRTUAL_MACHINE_EXTS, GeneralFilter.VIRTUAL_MACHINE_DESC);
-    private static final String allDesc = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
-    private static final GeneralFilter allFilter = new GeneralFilter(allExt, allDesc);
+    private static final String ALL_DESC = NbBundle.getMessage(ImageDSProcessor.class, "ImageDSProcessor.allDesc.text");
+    private static final GeneralFilter allFilter = new GeneralFilter(allExt, ALL_DESC);
     private static final List<FileFilter> filtersList = new ArrayList<>();
     private final ImageFilePanel configPanel;
     private AddImageTask addImageTask;
@@ -209,6 +217,48 @@ public class ImageDSProcessor implements DataSourceProcessor {
         setDataSourceOptionsCalled = false;
     }
 
+    private static boolean isAcceptedByFiler(File file, List<FileFilter> filters) {
+        for (FileFilter filter : filters) {
+            if (filter.accept(file)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
+        
+        // check file extension for supported types
+        if (!isAcceptedByFiler(dataSourcePath.toFile(), filtersList)) {
+            return 0;
+        }
+        
+        try {
+            // verify that the image has a file system that TSK can process
+            Case currentCase = Case.getCurrentCase();
+            if (!DataSourceUtils.imageHasFileSystem(dataSourcePath)) {
+                // image does not have a file system that TSK can process
+                return 0;
+            }
+        } catch (Exception ex) {
+            throw new AutoIngestDataSourceProcessorException("Exception inside canProcess() method", ex);
+        }
+        
+        // able to process the data source
+        return 100;
+    }
+
+    @Override
+    public void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException {
+        this.deviceId = deviceId;
+        this.imagePath = dataSourcePath.toString();
+        this.timeZone = Calendar.getInstance().getTimeZone().getID();
+        this.ignoreFatOrphanFiles = false;
+        setDataSourceOptionsCalled = true;
+        run(deviceId, dataSourcePath.toString(), timeZone, ignoreFatOrphanFiles, progressMonitor, callBack);
+    }
+    
     /**
      * Sets the configuration of the data source processor without using the
      * selection and configuration panel.
@@ -230,5 +280,5 @@ public class ImageDSProcessor implements DataSourceProcessor {
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         setDataSourceOptionsCalled = true;
     }
-
+    
 }

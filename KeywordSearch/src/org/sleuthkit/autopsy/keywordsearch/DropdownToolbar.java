@@ -1,25 +1,20 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011 Basis Technology Corp.
+ *
+ * Copyright 2003-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * DropdownToolbar
- *
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
@@ -37,22 +32,26 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 
 /**
- * Keyword search tool bar (in upper right, by default) with drop down panels
- * for ad hoc searches by list or expression.
+ * A panel that provides a toolbar button for the dropdown keyword list search
+ * panel and dropdown single keyword search panel. Displayed in the upper right
+ * hand corner of the application by default.
  */
 class DropdownToolbar extends javax.swing.JPanel {
 
-    private static final Logger logger = Logger.getLogger(DropdownToolbar.class.getName());
-    private KeywordPropertyChangeListener listener;
-    private boolean active = false;
+    private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = Logger.getLogger(DropdownToolbar.class.getName());
     private static DropdownToolbar instance;
+    private SearchSettingsChangeListener searchSettingsChangeListener;
+    private boolean active = false;
     private DropdownSingleTermSearchPanel dropPanel = null;
 
-    private DropdownToolbar() {
-        initComponents();
-        customizeComponents();
-    }
-
+    /**
+     * Gets the singleton panel that provides a toolbar button for the dropdown
+     * keyword list search panel and dropdown single keyword search panel.
+     * Displayed in the upper right hand corner of the application by default.
+     *
+     * @return The panel.
+     */
     public synchronized static DropdownToolbar getDefault() {
         if (instance == null) {
             instance = new DropdownToolbar();
@@ -60,18 +59,30 @@ class DropdownToolbar extends javax.swing.JPanel {
         return instance;
     }
 
+    /**
+     * Constructs a panel that provides a toolbar button for the dropdown
+     * keyword list search panel and dropdown single keyword search panel.
+     * Displayed in the upper right hand corner of the application by default.
+     */
+    private DropdownToolbar() {
+        initComponents();
+        customizeComponents();
+    }
+
+    /**
+     * Does additional initialization of the GUI components created by the
+     * initComponents method.
+     */
     private void customizeComponents() {
-        listener = new KeywordPropertyChangeListener();
-        KeywordSearch.getServer().addServerActionListener(listener);
-        Case.addPropertyChangeListener(listener);
+        searchSettingsChangeListener = new SearchSettingsChangeListener();
+        KeywordSearch.getServer().addServerActionListener(searchSettingsChangeListener);
+        Case.addPropertyChangeListener(searchSettingsChangeListener);
 
         DropdownListSearchPanel listsPanel = DropdownListSearchPanel.getDefault();
-        listsPanel.addSearchButtonActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                listsMenu.setVisible(false);
-            }
+        listsPanel.addSearchButtonActionListener((ActionEvent e) -> {
+            listsMenu.setVisible(false);
         });
+        
         // Adding border of six to account for menu border
         listsMenu.setSize(listsPanel.getPreferredSize().width + 6, listsPanel.getPreferredSize().height + 6);
         listsMenu.add(listsPanel);
@@ -120,6 +131,27 @@ class DropdownToolbar extends javax.swing.JPanel {
 
     }
 
+    private void maybeShowListsPopup(MouseEvent evt) {
+        if (!active) {
+            return;
+        }
+        if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
+            return;
+        }
+        listsMenu.show(listsButton, listsButton.getWidth() - listsMenu.getWidth(), listsButton.getHeight() - 1);
+    }
+
+    private void maybeShowSearchPopup(MouseEvent evt) {
+        if (!active) {
+            return;
+        }
+        if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
+            return;
+        }
+        searchMenu.show(searchDropButton, searchDropButton.getWidth() - searchMenu.getWidth(), searchDropButton.getHeight() - 1);
+    }
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -216,13 +248,13 @@ class DropdownToolbar extends javax.swing.JPanel {
     private javax.swing.JPopupMenu searchMenu;
     // End of variables declaration//GEN-END:variables
 
-    private class KeywordPropertyChangeListener implements PropertyChangeListener {
+    private class SearchSettingsChangeListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
             String changed = evt.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                dropPanel.resetSearchBox();
+                dropPanel.clearSearchBox();
                 setFields(null != evt.getNewValue() && RuntimeProperties.coreComponentsAreActive());
             } else if (changed.equals(Server.CORE_EVT)) {
                 final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
@@ -232,9 +264,9 @@ class DropdownToolbar extends javax.swing.JPanel {
                             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
                             KeywordSearch.fireNumIndexedFilesChange(null, numIndexedFiles);
                         } catch (NoOpenCoreException ex) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, {0}", ex); //NON-NLS
+                            LOGGER.log(Level.SEVERE, "Error executing Solr query, {0}", ex); //NON-NLS
                         } catch (KeywordSearchModuleException se) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, {0}", se.getMessage()); //NON-NLS
+                            LOGGER.log(Level.SEVERE, "Error executing Solr query, {0}", se.getMessage()); //NON-NLS
                         }
                         break;
                     case STOPPED:
@@ -251,23 +283,4 @@ class DropdownToolbar extends javax.swing.JPanel {
         }
     }
 
-    private void maybeShowListsPopup(MouseEvent evt) {
-        if (!active) {
-            return;
-        }
-        if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
-            return;
-        }
-        listsMenu.show(listsButton, listsButton.getWidth() - listsMenu.getWidth(), listsButton.getHeight() - 1);
-    }
-
-    private void maybeShowSearchPopup(MouseEvent evt) {
-        if (!active) {
-            return;
-        }
-        if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
-            return;
-        }
-        searchMenu.show(searchDropButton, searchDropButton.getWidth() - searchMenu.getWidth(), searchDropButton.getHeight() - 1);
-    }
 }
