@@ -80,15 +80,11 @@ final class RegexQuery implements KeywordSearchQuery {
     private boolean escaped;
     private String escapedQuery;
 
-    // These are the valid characters that can appear immediately before a
-    // keyword hit. e.g. for an IP address regex we support finding the string
-    // ",10.0.0.0" but not "?10.0.0.0".
-    private static final String BOUNDARY_PREFIX_CHARS = "(\\s|\\[|\\(|,|\\:|;|=|\\<|\\>|\\^)"; //NON-NLS
-
-    // These are the valid characters that can appear immediately after a
-    // keyword hit. e.g. for an IP address regex we support finding the string
-    // "10.0.0.0?]" but not "10.0.0.0&".
-    private static final String BOUNDARY_SUFFIX_CHARS = "(\\s|\\]|\\)|,|!|\\?|\\:|;|=|\\<|\\>|\\^)"; //NON-NLS
+    // These are the valid characters that can appear either before or after a
+    // keyword hit. We use these characters to try to turn the hit into a
+    // token that can be more readily matched when it comes to highlighting
+    // against the Schema.TEXT field later.
+    private static final String BOUNDARY_CHARS = "(\\s|\\[|\\]|\\(|\\)|\\,|\\!|\\?|\\:|;|=|\\<|\\>|\\^|\\{|\\})"; //NON-NLS
 
     private boolean queryStringContainsWildcardPrefix = false;
     private boolean queryStringContainsWildcardSuffix = false;
@@ -235,11 +231,11 @@ final class RegexQuery implements KeywordSearchQuery {
         String keywordTokenRegex =
                 // If the given search string starts with .*, we ignore our default
                 // boundary prefix characters
-                (queryStringContainsWildcardPrefix ? "" : BOUNDARY_PREFIX_CHARS) //NON-NLS
+                (queryStringContainsWildcardPrefix ? "" : BOUNDARY_CHARS) //NON-NLS
                 + keywordString
                 // If the given search string ends with .*, we ignore our default
                 // boundary suffix characters
-                + (queryStringContainsWildcardSuffix ? "" : BOUNDARY_SUFFIX_CHARS); //NON-NLS
+                + (queryStringContainsWildcardSuffix ? "" : BOUNDARY_CHARS); //NON-NLS
 
         Matcher hitMatcher = Pattern.compile(keywordTokenRegex).matcher(content);
 
@@ -249,10 +245,10 @@ final class RegexQuery implements KeywordSearchQuery {
 
             // Remove leading and trailing boundary characters.
             if (!queryStringContainsWildcardPrefix) {
-                hit = hit.replaceAll("^" + BOUNDARY_PREFIX_CHARS, ""); //NON-NLS
+                hit = hit.replaceAll("^" + BOUNDARY_CHARS, ""); //NON-NLS
             }
             if (!queryStringContainsWildcardSuffix) {
-                hit = hit.replaceAll(BOUNDARY_SUFFIX_CHARS + "$", ""); //NON-NLS
+                hit = hit.replaceAll(BOUNDARY_CHARS + "$", ""); //NON-NLS
             }
 
             /*
