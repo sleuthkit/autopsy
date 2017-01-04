@@ -52,7 +52,6 @@ public class IngestJobSettings {
 
     private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
-    private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS 
     private static final String LAST_FILE_INGEST_FILTER_KEY = "Last File Ingest Filter Used";
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
@@ -486,12 +485,6 @@ public class IngestJobSettings {
         }
         ModuleSettings.setConfigSetting(this.executionContext, ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
         ModuleSettings.setConfigSetting(this.executionContext, DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
-
-        /**
-         * Save the process unallocated space setting.
-         */
-        String processUnalloc = Boolean.toString(getProcessUnallocatedSpace());
-        ModuleSettings.setConfigSetting(this.executionContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
 
         /**
          * Save the last used File Ingest Filter setting for this context.

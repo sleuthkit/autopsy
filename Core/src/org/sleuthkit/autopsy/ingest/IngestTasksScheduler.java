@@ -397,13 +397,6 @@ final class IngestTasksScheduler {
     private static boolean shouldEnqueueFileTask(final FileIngestTask task) {
         final AbstractFile file = task.getFile();
 
-        // Skip the task if the file is an unallocated space file and the
-        // process unallocated space flag is not set for this job.
-        if (!task.getIngestJob().shouldProcessUnallocatedSpace()
-                && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return false;
-        }
-
         // Skip the task if the file is actually the pseudo-file for the parent
         // or current directory.
         String fileName = file.getName();
@@ -411,6 +404,11 @@ final class IngestTasksScheduler {
             return false;
         }
 
+        /**
+         * Check if the file is a member of the file ingest filter that is being 
+         * applied to the current run of ingest, checks if unallocated space 
+         * should be processed inside call to fileIsMemberOf
+         */
         if ((task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file)) == null) {
             return false;
         }

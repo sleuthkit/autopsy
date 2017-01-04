@@ -213,6 +213,15 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         fileIngestFilterLabel = new javax.swing.JLabel();
         fileIngestFilterComboBox = new javax.swing.JComboBox<>();
 
+        fileIngestFilterLabel.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.fileIngestFilterLabel.text")); // NOI18N
+        fileIngestFilterComboBox.setModel(new DefaultComboBoxModel<>(controller.getComboBoxContents()));
+        fileIngestFilterComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                fileIngestFilterComboBoxActionPerformed(evt);
+            }
+        });
+
+		
         setMaximumSize(new java.awt.Dimension(5750, 3000));
         setMinimumSize(new java.awt.Dimension(0, 0));
         setPreferredSize(new java.awt.Dimension(625, 450));
@@ -397,7 +406,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         dialog.pack();
         dialog.setVisible(true);
     }//GEN-LAST:event_pastJobsButtonActionPerformed
-	
+
     /**
      * Perform the appropriate action when Jcombobox items are selected, most
      * notably opening the File filter settings when Create New is chosen.
@@ -425,7 +434,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_jComboBox1ActionPerformed
 
-	
     private void SelectAllModules(boolean set) {
         for (IngestModuleModel module : modules) {
             module.setEnabled(set);
