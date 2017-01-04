@@ -248,7 +248,7 @@ public class TagsManager implements Closeable {
         try {
             Case.getCurrentCase().notifyContentTagAdded(tag);
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Added a tag to a closed case", ex);
+            throw new TskCoreException("Added a tag to a closed case", ex);
         }
         return tag;
     }
@@ -266,7 +266,7 @@ public class TagsManager implements Closeable {
         try {
             Case.getCurrentCase().notifyContentTagDeleted(tag);
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Deleted a tag from a closed case", ex);
+            throw new TskCoreException("Deleted a tag from a closed case", ex);
         }
     }
 
@@ -378,7 +378,7 @@ public class TagsManager implements Closeable {
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(tag);
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Added a tag to a closed case", ex);
+            throw new TskCoreException("Added a tag to a closed case", ex);
         }
         return tag;
     }
@@ -396,7 +396,7 @@ public class TagsManager implements Closeable {
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "Deleted a tag from a closed case", ex);
+            throw new TskCoreException("Deleted a tag from a closed case", ex);
         }
     }
 

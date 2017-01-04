@@ -31,6 +31,13 @@ Autopsy supports importing Encase tab-delimited lists as well as lists created p
 <b>Lists tab</b> \n
 \image html keyword-search-configuration-dialog.PNG
 
+The Lists tab is used to create/import and add content to keyword lists. Once a keyword list is selected, the "New Keywords" button can be used to add one or more entries to the list. 
+
+<br>
+\image html keyword-search-configuration-new-keywords.PNG
+
+New entries can be typed into the dialog or pasted from the clipboard. All entries added at once must be the same type of match (exact, substring, or regex), but the dialog can be used multiple times to add keywords to the keyword list.
+
 <br>
 <b>String extraction setting</b> \n
 The string extraction setting defines how strings are extracted from files from which text cannot be extracted because their file formats are not supported. This is the case with arbitrary binary files (such as the page file) and chunks of unallocated space that represent deleted files.

@@ -1,14 +1,37 @@
+---------------- VERSION 4.3.0  --------------
+Improvements:
+- Creation and analysis (e.g., keyword search) of virtual files for slack 
+space.
+- A preloader in an Android device image does not prevent adding the image as 
+a data source (reading of secondary GPT tables supported).
+- Ability to add data sources with no file systems or unsupported file systems 
+as "unallocated space image files" for carving, keyword search, etc.
+- File extension mismatch analysis can be configured to check all file types, 
+all file types except text files, or only multimedia and executable files.
+- Column order changes in table views are "sticky" for each type of tree view 
+item.
+- Tree view has new file types by MIME type sub tree.
+- Bulk adding list of keywords to a keyword list.
+- Highlighting of tagged items in table views.
+- Toolbar button for Image/Video Gallery
+- New "Experimental" module (activate via Tools, Plugins) with auto ingest 
+feature.
+- Assorted bug fixes and minor enhancements. 
+
+
 ---------------- VERSION 4.2.0  --------------
 Improvements:
 - Credit card account search.
 - Encoding/decoding of extracted files to avoid anti-virus alerts/quarantine.
-- Ingest history (start time, end time, status, which versions of which ingest modules were run). 
+- Ingest history (start time, end time, status, which versions of which ingest 
+modules were run). 
 - Ingest history used to warn before doing redundant analysis. 
 - Options panel for managing custom tag names.
 - Options panel for setting external viewer associations.
 - Keyboard shortcut for applying Bookmark tags.
 - Improved PhotoRec carver ingest module cancellation responsiveness.
-- Results content viewer formats dates.
+- Results content viewer formats dates instead of showing raw seconds since 
+epoch.
 - Update to PostgreSQL 9.5.
 - Assorted bug fixes and minor enhancements. 
 

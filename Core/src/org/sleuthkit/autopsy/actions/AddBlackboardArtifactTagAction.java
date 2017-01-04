@@ -87,6 +87,7 @@ public class AddBlackboardArtifactTagAction extends AddTagAction {
                                         "AddBlackboardArtifactTagAction.taggingErr"),
                                 JOptionPane.ERROR_MESSAGE);
                     });
+                    break;
                 }
             }
         }).start();

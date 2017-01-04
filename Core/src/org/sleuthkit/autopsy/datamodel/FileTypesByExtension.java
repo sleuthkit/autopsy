@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Filters database results by file extension.
  */
- final class FileTypesByExtension implements AutopsyVisitableItem {
+ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     private final SleuthkitCase skCase;
 
@@ -463,7 +463,7 @@ import org.sleuthkit.datamodel.TskData;
     }
 
     // root node filters
-    enum RootFilter implements AutopsyVisitableItem, SearchFilterInterface {
+    public static enum RootFilter implements AutopsyVisitableItem, SearchFilterInterface {
 
         TSK_IMAGE_FILTER(0, "TSK_IMAGE_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskImgFilter.text"),
@@ -523,7 +523,7 @@ import org.sleuthkit.datamodel.TskData;
     }
 
     // document sub-node filters
-    enum DocumentFilter implements AutopsyVisitableItem, SearchFilterInterface {
+    public static enum DocumentFilter implements AutopsyVisitableItem, SearchFilterInterface {
 
         AUT_DOC_HTML(0, "AUT_DOC_HTML", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"),
@@ -580,7 +580,7 @@ import org.sleuthkit.datamodel.TskData;
     }
 
     // executable sub-node filters
-    enum ExecutableFilter implements AutopsyVisitableItem, SearchFilterInterface {
+    public static enum ExecutableFilter implements AutopsyVisitableItem, SearchFilterInterface {
 
         ExecutableFilter_EXE(0, "ExecutableFilter_EXE", ".exe", Arrays.asList(".exe")), //NON-NLS
         ExecutableFilter_DLL(1, "ExecutableFilter_DLL", ".dll", Arrays.asList(".dll")), //NON-NLS
