@@ -33,7 +33,6 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
@@ -412,15 +411,12 @@ final class IngestTasksScheduler {
             return false;
         }
 
-        if (file.isFile()) {  //is this the criteria we want to be using(will unallocated space files show return true?)
-            IngestSetFilter ingestSetFilter;
-            ingestSetFilter = new IngestSetFilter();
-            if (!ingestSetFilter.match(file)) {
-                return false;
-            }
+        if ((task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file)) == null) {
+            return false;
         }
-        // Skip the task if the file is one of a select group of special, large
-        // NTFS or FAT file system files.
+
+// Skip the task if the file is one of a select group of special, large
+// NTFS or FAT file system files.
         if (file instanceof org.sleuthkit.datamodel.File) {
             final org.sleuthkit.datamodel.File f = (org.sleuthkit.datamodel.File) file;
 
@@ -530,6 +526,7 @@ final class IngestTasksScheduler {
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {
         return new IngestJobTasksSnapshot(jobId);
+
     }
 
     /**

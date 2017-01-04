@@ -32,11 +32,13 @@ import java.util.Observable;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import org.openide.util.Exceptions;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -47,21 +49,20 @@ import org.w3c.dom.NodeList;
  * synchronized methods, allowing the definitions to be safely published to
  * multiple threads.
  */
-final class InterestingItemDefsManager extends Observable {
+public final class InterestingItemDefsManager extends Observable {
 
     private static final List<String> ILLEGAL_FILE_NAME_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", "/", ":", "*", "?", "\"", "<", ">")));
     private static final List<String> ILLEGAL_FILE_PATH_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", ":", "*", "?", "\"", "<", ">")));
     private static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
     private static final String INTERESTING_FILES_SET_DEFS_NAME = "InterestingFileSets.settings";
-    private static final String INGEST_SET_FILTER_DEFS_NAME = "IngestSetFilterDefs.settings";
-    private static final String INTERESTING_FILES_SET_DEFS_PATH = PlatformUtil.getUserConfigDirectory() + File.separator;
-    private static final String LEGACY_FILE_SET_DEFS_PATH = PlatformUtil.getUserConfigDirectory() + File.separator;
+    private static final String FILE_INGEST_FILTER_DEFS_NAME = "FileIngestFilterDefs.settings";
     private static InterestingItemDefsManager instance;
 
     /**
      * Gets the interesting item definitions manager singleton.
      */
-    synchronized static InterestingItemDefsManager getInstance() {
+
+    public synchronized static InterestingItemDefsManager getInstance() {
         if (instance == null) {
             instance = new InterestingItemDefsManager();
         }
@@ -102,10 +103,10 @@ final class InterestingItemDefsManager extends Observable {
     }
 
     /**
-     * @return the INGEST_SET_FILTER_DEFS_NAME
+     * @return the FILE_INGEST_FILTER_DEFS_NAME
      */
-    static String getIngestSetFilterDefsName() {
-        return INGEST_SET_FILTER_DEFS_NAME;
+    public static String getFileIngestFilterDefsName() {
+        return FILE_INGEST_FILTER_DEFS_NAME;
     }
 
     /**
@@ -114,10 +115,32 @@ final class InterestingItemDefsManager extends Observable {
      * @return A map of interesting files set names to interesting file sets,
      * possibly empty.
      */
-    synchronized Map<String, FilesSet> getInterestingFilesSets(String fileName, String legacyFilePath) throws InterestingItemDefsManagerException {
-        return FilesSetXML.readDefinitionsFile(fileName, LEGACY_FILE_SET_DEFS_PATH);
+    synchronized Map<String, FilesSet> getInterestingFilesSets(String fileName, String legacyFileName) throws InterestingItemDefsManagerException {
+        return FilesSetXML.readDefinitionsFile(fileName, legacyFileName);
     }
 
+    
+    /**
+     * Gets a copy of the current ingest file set definitions.
+     *
+     * @return A map of FilesSet names to file ingest sets,
+     * possibly empty.
+     */
+    public synchronized Map<String, FilesSet> getFileIngestFilters() {
+        Map<String, FilesSet> returnMap = new HashMap<>();
+        try {
+           returnMap.putAll(FilesSetXML.readDefinitionsFile(getFileIngestFilterDefsName(), ""));
+        } catch (InterestingItemDefsManagerException ex) {
+            Exceptions.printStackTrace(ex);  //WJS-TODO change manager to not use file names, if this function is still needed fix error handling to be done properly.
+           
+        } 
+        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()){
+            returnMap.put(fSet.getName(), fSet);
+        }
+        return returnMap; 
+    }
+
+    
     /**
      * Sets the current interesting file sets definitions, replacing any
      * previous definitions.
@@ -126,7 +149,7 @@ final class InterestingItemDefsManager extends Observable {
      * used to enforce unique files set names.
      */
     synchronized void setInterestingFilesSets(Map<String, FilesSet> filesSets, String fileName) throws InterestingItemDefsManagerException {
-        FilesSetXML.writeDefinitionsFile(INTERESTING_FILES_SET_DEFS_PATH + fileName, filesSets);
+        FilesSetXML.writeDefinitionsFile(fileName, filesSets);
         this.setChanged();
         this.notifyObservers();
     }
@@ -151,6 +174,7 @@ final class InterestingItemDefsManager extends Observable {
         private static final String RULE_UUID_ATTR = "ruleUUID"; //NON-NLS
         private static final String DESC_ATTR = "description"; //NON-NLS 
         private static final String IGNORE_KNOWN_FILES_ATTR = "ignoreKnown"; //NON-NLS
+        private static final String SKIP_UNALLOCATED_SPACE = "skipUnallocated"; //NON-NLS
         private static final String TYPE_FILTER_ATTR = "typeFilter"; //NON-NLS
         private static final String PATH_FILTER_ATTR = "pathFilter"; //NON-NLS
         private static final String TYPE_FILTER_VALUE_FILES = "file"; //NON-NLS
@@ -174,43 +198,43 @@ final class InterestingItemDefsManager extends Observable {
         // Note: This method takes a file path to support the possibility of 
         // multiple intersting files set definition files, e.g., one for 
         // definitions that ship with Autopsy and one for user definitions.
-        static Map<String, FilesSet> readDefinitionsFile(String fileName, String legacyFilePath) throws InterestingItemDefsManagerException {
+        static Map<String, FilesSet> readDefinitionsFile(String fileName, String legacyFileName) throws InterestingItemDefsManagerException {
             Map<String, FilesSet> filesSets = readSerializedDefinitions(fileName);
 
             if (!filesSets.isEmpty()) {
                 return filesSets;
             }
             // Check if the legacy xml file exists.
-            if (!legacyFilePath.isEmpty()) {
-                File defsFile = new File(legacyFilePath);
+            if (!legacyFileName.isEmpty()) {
+                File defsFile = new File(PlatformUtil.getUserConfigDirectory() + File.separator + legacyFileName);
                 if (!defsFile.exists()) {
                     return filesSets;
                 }
 
                 // Check if the file can be read.
                 if (!defsFile.canRead()) {
-                    logger.log(Level.SEVERE, "Interesting file sets definition file at {0} exists, but cannot be read", legacyFilePath); // NON-NLS
+                    logger.log(Level.SEVERE, "Interesting file sets definition file at {0} exists, but cannot be read", defsFile.getPath()); // NON-NLS
                     return filesSets;
                 }
 
                 // Parse the XML in the file.
-                Document doc = XMLUtil.loadDoc(FilesSetXML.class, legacyFilePath);
+                Document doc = XMLUtil.loadDoc(FilesSetXML.class, defsFile.getPath());
                 if (doc == null) {
-                    logger.log(Level.SEVERE, "Failed to parse interesting file sets definition file at {0}", legacyFilePath); // NON-NLS
+                    logger.log(Level.SEVERE, "Failed to parse interesting file sets definition file at {0}", defsFile.getPath()); // NON-NLS
                     return filesSets;
                 }
 
                 // Get the root element.
                 Element root = doc.getDocumentElement();
                 if (root == null) {
-                    logger.log(Level.SEVERE, "Failed to get root {0} element tag of interesting file sets definition file at {1}", new Object[]{FilesSetXML.FILE_SETS_ROOT_TAG, legacyFilePath}); // NON-NLS
+                    logger.log(Level.SEVERE, "Failed to get root {0} element tag of interesting file sets definition file at {1}", new Object[]{FilesSetXML.FILE_SETS_ROOT_TAG, defsFile.getPath()}); // NON-NLS
                     return filesSets;
                 }
 
                 // Read in the files set definitions.
                 NodeList setElems = root.getElementsByTagName(FILE_SET_TAG);
                 for (int i = 0; i < setElems.getLength(); ++i) {
-                    readFilesSet((Element) setElems.item(i), filesSets, legacyFilePath);
+                    readFilesSet((Element) setElems.item(i), filesSets, defsFile.getPath());
                 }
             }
             return filesSets;
@@ -226,7 +250,7 @@ final class InterestingItemDefsManager extends Observable {
          */
         private static Map<String, FilesSet> readSerializedDefinitions(String serialFileName) throws InterestingItemDefsManagerException {
             String filePath;
-            filePath = INTERESTING_FILES_SET_DEFS_PATH + serialFileName;
+            filePath = PlatformUtil.getUserConfigDirectory() + File.separator + serialFileName;
             System.out.println(filePath);
             File fileSetFile = new File(filePath);
             if (fileSetFile.exists()) {
@@ -273,6 +297,13 @@ final class InterestingItemDefsManager extends Observable {
                 ignoreKnownFiles = Boolean.parseBoolean(ignoreKnown);
             }
 
+            // The file set may or may not skip unallocated space. The default behavior
+            // is not to skip it.
+            String skipUnallocated = setElem.getAttribute(FilesSetXML.SKIP_UNALLOCATED_SPACE);
+            boolean skipsUnallocatedSpace = false;
+            if (!skipUnallocated.isEmpty()) {
+                skipsUnallocatedSpace = Boolean.parseBoolean(skipUnallocated);
+            }
             // Read file name set membership rules, if any.
             FilesSetXML.unnamedLegacyRuleCounter = 1;
             Map<String, FilesSet.Rule> rules = new HashMap<>();
@@ -314,7 +345,7 @@ final class InterestingItemDefsManager extends Observable {
             // Make the files set. Note that degenerate sets with no rules are
             // allowed to facilitate the separation of set definition and rule
             // definitions. A set without rules is simply the empty set.
-            FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, rules, true);
+            FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, skipsUnallocatedSpace, rules);
             filesSets.put(set.getName(), set);
         }
 
@@ -533,7 +564,7 @@ final class InterestingItemDefsManager extends Observable {
          * Writes interesting files set definitions to disk as an XML file,
          * logging any errors.
          *
-         * @param filePath Path of the set definitions file as a string.
+         * @param fileName Name of the set definitions file as a string.
          *
          * @returns True if the definitions are written to disk, false
          * otherwise.
@@ -541,17 +572,17 @@ final class InterestingItemDefsManager extends Observable {
         // Note: This method takes a file path to support the possibility of 
         // multiple intersting files set definition files, e.g., one for 
         // definitions that ship with Autopsy and one for user definitions.
-        static boolean writeDefinitionsFile(String filePath, Map<String, FilesSet> interestingFilesSets) throws InterestingItemDefsManagerException {
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(filePath))) {
+        static boolean writeDefinitionsFile(String fileName, Map<String, FilesSet> interestingFilesSets) throws InterestingItemDefsManagerException {
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(PlatformUtil.getUserConfigDirectory() + File.separator + fileName))) {
                 out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
             } catch (IOException ex) {
-                throw new InterestingItemDefsManagerException(String.format("Failed to write settings to %s", filePath), ex);
+                throw new InterestingItemDefsManagerException(String.format("Failed to write settings to %s", fileName), ex);
             }
             return true;
         }
     }
 
-    static class InterestingItemDefsManagerException extends Exception {
+    public static class InterestingItemDefsManagerException extends Exception {
 
         InterestingItemDefsManagerException() {
 

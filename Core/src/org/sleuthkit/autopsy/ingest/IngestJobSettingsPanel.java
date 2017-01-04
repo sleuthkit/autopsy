@@ -44,8 +44,8 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
-import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilterDefsOptionsPanelController;
-import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilter;
+import org.sleuthkit.autopsy.modules.interestingitems.FileIngestFilterDefsOptionsPanelController;
+import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemDefsManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -67,7 +67,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private IngestModuleModel selectedModule;
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettingsPanel.class.getName());
-    private final IngestSetFilterDefsOptionsPanelController controller;
+    private final FileIngestFilterDefsOptionsPanelController controller;
 
     /**
      * Construct a panel to allow a user to make ingest job settings.
@@ -76,7 +76,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
-        this.controller = new IngestSetFilterDefsOptionsPanelController();
+        this.controller = new FileIngestFilterDefsOptionsPanelController();
         controller.getComponent(controller.getLookup());
 
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
@@ -85,7 +85,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         initComponents();
         customizeComponents();
-        jComboBox1.setSelectedItem(controller.getIngestSetFilter().getLastSelected());
+        jComboBox1.setSelectedItem(settings.getFileIngestFilter().getName());
     }
 
     /**
@@ -97,7 +97,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
         this.dataSources.addAll(dataSources);
-        this.controller = new IngestSetFilterDefsOptionsPanelController();
+        this.controller = new FileIngestFilterDefsOptionsPanelController();
         controller.getComponent(controller.getLookup());
 
         try {
@@ -114,7 +114,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         initComponents();
         customizeComponents();
-        jComboBox1.setSelectedItem(controller.getIngestSetFilter().getLastSelected());
+        jComboBox1.setSelectedItem(settings.getFileIngestFilter().getName());
     }
 
     /**
@@ -335,7 +335,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 244, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 148, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -412,9 +412,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
 
-        if (jComboBox1.getSelectedItem().toString().equals(IngestSetFilter.NEW_INGEST_FILTER)) {
+        if (jComboBox1.getSelectedItem().toString().equals(FileIngestFilterDefsOptionsPanelController.NEW_INGEST_FILTER)) {
             final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
-            //   values.controller.getComboBoxContents().toArray();
             dialog.addApplyButtonListener((ActionEvent e) -> {
                 controller.applyChanges();
                 ((IngestModuleGlobalSettingsPanel) controller.getComponent(controller.getLookup())).saveSettings();
@@ -422,10 +421,13 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                 dialog.close();
             });
             dialog.display((IngestModuleGlobalSettingsPanel) controller.getComponent(controller.getLookup()));
-            jComboBox1.setSelectedItem(controller.getIngestSetFilter().getLastSelected());
+            jComboBox1.setSelectedItem(settings.getFileIngestFilter().getName());
 
         } else if (evt.getActionCommand().equals("comboBoxChanged")) {
-            controller.getIngestSetFilter().setLastSelected(jComboBox1.getSelectedItem().toString());
+
+            settings.setFileIngestFilter(InterestingItemDefsManager.getInstance()
+                    .getFileIngestFilters()
+                    .get(jComboBox1.getSelectedItem().toString()));
         }
 
 

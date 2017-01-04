@@ -52,7 +52,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "InterestingItemDefsPanel.gigaBytes=Gigabytes",
         "InterestingItemsDefsPanel.loadError=Error loading interesting files sets from file.",
         "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file.",
-        "IngestFileFilter.title=Ingest File Set"
+        "FileIngestFilter.title=Ingest File Set"
     })
 
     private final DefaultListModel<FilesSet> setsListModel = new DefaultListModel<>();
@@ -89,13 +89,18 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         if (legacySettingsName.equals("")) {  //Hide the mimetype settings when this is displaying FileSet rules instead of interesting item rules
             this.mimeTypeComboBox.setVisible(false);
             this.jLabel7.setVisible(false);
-            this.ruleDialogTitle = "IngestFileFilter.title";
+            this.ruleDialogTitle = "FileIngestFilter.title";
         } else {
             this.ruleDialogTitle = "FilesSetPanel.title";
         }
 
     }
-
+    
+    FilesSet getFilesSetByKey(String name) {
+        load();
+        return filesSets.get(name);
+    }
+    
     Set<String> getKeys() {
         load();
         return filesSets.keySet();
@@ -201,7 +206,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setsListModel.clear();
         this.setDescriptionTextArea.setText("");
         this.ignoreKnownFilesCheckbox.setSelected(true);
-        this.processUnallocCheckbox.setSelected(true);
+        this.skipsUnallocCheckbox.setSelected(true);
         this.newSetButton.setEnabled(true);
         this.editSetButton.setEnabled(false);
         this.deleteSetButton.setEnabled(false);
@@ -249,7 +254,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 // selected files set.
                 InterestingItemDefsPanel.this.setDescriptionTextArea.setText(selectedSet.getDescription());
                 InterestingItemDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
-                InterestingItemDefsPanel.this.processUnallocCheckbox.setSelected(selectedSet.processesUnallocatedSpace());
+                InterestingItemDefsPanel.this.skipsUnallocCheckbox.setSelected(selectedSet.getSkipUnallocatedSpace());
                 // Enable the new, edit and delete set buttons.
                 InterestingItemDefsPanel.this.newSetButton.setEnabled(true);
                 InterestingItemDefsPanel.this.editSetButton.setEnabled(true);
@@ -392,7 +397,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 // Preserve the existing rules from the set being edited.
                 rules.putAll(selectedSet.getRules());
             }
-            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), rules, panel.getProcessUnallocatedSpace());
+            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getSkipUnallocatedSpace(), rules);  //WJS-TODO add support for skipUnallocatedSpaceFlag
         }
     }
 
@@ -438,7 +443,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
             // Add the new/edited files set definition, replacing any previous
             // definition with the same name and refreshing the display.
-            this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), rules, selectedSet.processesUnallocatedSpace());
+            this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), selectedSet.getSkipUnallocatedSpace(), rules);
 
             // Select the new/edited rule. Queue it up so it happens after the
             // selection listeners react to the selection of the "new" files
@@ -463,7 +468,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * @param processesUnallocatedSpace Whether or not this set of rules
      * processes unallocated space
      */
-    void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, Map<String, FilesSet.Rule> rules, boolean processesUnallocatedSpace) {
+    void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, boolean skipsUnallocatedSpace, Map<String, FilesSet.Rule> rules) {
         if (oldSet != null) {
             // Remove the set to be replaced from the working copy if the files
             // set definitions.
@@ -472,7 +477,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // Make the new/edited set definition and add it to the working copy of
         // the files set definitions.
-        FilesSet newSet = new FilesSet(name, description, ignoresKnownFiles, rules, processesUnallocatedSpace);
+        FilesSet newSet = new FilesSet(name, description, ignoresKnownFiles, skipsUnallocatedSpace, rules);
         this.filesSets.put(newSet.getName(), newSet);
 
         // Redo the list model for the files set list component, which will make
@@ -540,7 +545,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         equalitySignComboBox = new javax.swing.JComboBox<String>();
         fileSizeSpinner = new javax.swing.JSpinner();
         fileSizeUnitComboBox = new javax.swing.JComboBox<String>();
-        processUnallocCheckbox = new javax.swing.JCheckBox();
+        skipsUnallocCheckbox = new javax.swing.JCheckBox();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -748,12 +753,11 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         fileSizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.InterestingItemDefsPanel_bytes(), Bundle.InterestingItemDefsPanel_kiloBytes(), Bundle.InterestingItemDefsPanel_megaBytes(), Bundle.InterestingItemDefsPanel_gigaBytes() }));
         fileSizeUnitComboBox.setEnabled(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(processUnallocCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.processUnallocCheckbox.text")); // NOI18N
-        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.processUnallocCheckbox.toolTipText")); // NOI18N
-	processUnallocCheckbox.setEnabled(false);
-        processUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(skipsUnallocCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.skipsUnallocCheckbox.text")); // NOI18N
+        skipsUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.skipsUnallocCheckbox.toolTipText")); // NOI18N
+        skipsUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                processUnallocCheckboxActionPerformed(evt);
+                skipsUnallocCheckboxActionPerformed(evt);
             }
         });
 
@@ -770,7 +774,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(ignoreKnownFilesCheckbox)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(skipsUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
@@ -882,7 +886,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(ignoreKnownFilesCheckbox)
-                                    .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(skipsUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(rulesListLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -963,7 +967,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         Map<String, FilesSet.Rule> rules = new HashMap<>(oldSet.getRules());
         FilesSet.Rule selectedRule = this.rulesList.getSelectedValue();
         rules.remove(selectedRule.getUuid());
-        this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules, oldSet.processesUnallocatedSpace());
+        this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), oldSet.getSkipUnallocatedSpace(), rules); 
         if (!this.rulesListModel.isEmpty()) {
             this.rulesList.setSelectedIndex(0);
         } else {
@@ -1010,9 +1014,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // TODO add your handling code here:
     }//GEN-LAST:event_fileNameTextFieldActionPerformed
 
-    private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
+    private void skipsUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipsUnallocCheckboxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_processUnallocCheckboxActionPerformed
+    }//GEN-LAST:event_skipsUnallocCheckboxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton bothRadioButton;
@@ -1046,7 +1050,6 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JComboBox<String> mimeTypeComboBox;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newSetButton;
-    private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.JCheckBox rulePathConditionRegexCheckBox;
     private javax.swing.JTextField rulePathConditionTextField;
     private javax.swing.JList<FilesSet.Rule> rulesList;
@@ -1058,6 +1061,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JList<FilesSet> setsList;
     private javax.swing.JLabel setsListLabel;
     private javax.swing.JScrollPane setsListScrollPane;
+    private javax.swing.JCheckBox skipsUnallocCheckbox;
     private javax.swing.ButtonGroup typeButtonGroup;
     // End of variables declaration//GEN-END:variables
 

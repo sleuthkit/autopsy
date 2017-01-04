@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
 /**
  * A panel that allows a user to create and edit interesting files set
@@ -46,7 +45,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
         this.nameTextField.setText(filesSet.getName());
         this.descTextArea.setText(filesSet.getDescription());
         this.ignoreKnownFilesCheckbox.setSelected(filesSet.ignoresKnownFiles());
-        this.processUnallocCheckbox.setSelected(filesSet.processesUnallocatedSpace());
+        this.skipsUnallocCheckbox.setSelected(filesSet.getSkipUnallocatedSpace());
     }
 
     /**
@@ -99,8 +98,8 @@ public class FilesSetPanel extends javax.swing.JPanel {
     /**
      * 
      */
-    boolean getProcessUnallocatedSpace() {
-        return processUnallocCheckbox.isSelected();
+    boolean getSkipUnallocatedSpace() {
+        return skipsUnallocCheckbox.isSelected();
     }
     
     /**
@@ -118,7 +117,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
         descScrollPanel = new javax.swing.JScrollPane();
         descTextArea = new javax.swing.JTextArea();
         ignoreKnownFilesCheckbox = new javax.swing.JCheckBox();
-        processUnallocCheckbox = new javax.swing.JCheckBox();
+        skipsUnallocCheckbox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.nameLabel.text")); // NOI18N
 
@@ -147,8 +146,8 @@ public class FilesSetPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(processUnallocCheckbox, org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.text")); // NOI18N
-        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.processUnallocCheckbox.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(skipsUnallocCheckbox, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.skipsUnallocCheckbox.text")); // NOI18N
+        skipsUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.skipsUnallocCheckbox.toolTipText")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -167,7 +166,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
                         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                             .addComponent(ignoreKnownFilesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(processUnallocCheckbox))))
+                            .addComponent(skipsUnallocCheckbox))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -182,7 +181,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ignoreKnownFilesCheckbox)
-                    .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(skipsUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -196,6 +195,6 @@ public class FilesSetPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox ignoreKnownFilesCheckbox;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameTextField;
-    private javax.swing.JCheckBox processUnallocCheckbox;
+    private javax.swing.JCheckBox skipsUnallocCheckbox;
     // End of variables declaration//GEN-END:variables
 }

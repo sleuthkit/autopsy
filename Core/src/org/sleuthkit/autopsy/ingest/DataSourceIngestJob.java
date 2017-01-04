@@ -43,6 +43,7 @@ import org.sleuthkit.datamodel.IngestModuleInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo.IngestModuleType;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 
 /**
  * Encapsulates a data source and the ingest module pipelines used to process
@@ -329,6 +330,15 @@ final class DataSourceIngestJob {
      */
     boolean shouldProcessUnallocatedSpace() {
         return this.settings.getProcessUnallocatedSpace();
+    }
+
+    /**
+     * Gets the Selected File Ingest Filter from settings.
+     *
+     * @return True or false.
+     */
+    FilesSet getFileIngestFilter() {
+        return this.settings.getFileIngestFilter();
     }
 
     /**

@@ -27,26 +27,26 @@ import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 
 @OptionsPanelController.TopLevelRegistration(
-        categoryName = "#OptionsCategory_Name_IngestSetFilterDefinitions",
-        iconBase = "org/sleuthkit/autopsy/images/ingest_set_filter32x32.png",
-        keywords = "#OptionsCategory_Keywords_IngestSetFilterDefinitions",
-        keywordsCategory = "IngestSetFilterDefinitions",
+        categoryName = "#OptionsCategory_Name_FileIngestFilterDefinitions",
+        iconBase = "org/sleuthkit/autopsy/images/file_ingest_filter32x32.png",
+        keywords = "#OptionsCategory_Keywords_FileIngestFilterDefinitions",
+        keywordsCategory = "FileIngestFilterDefinitions",
         position = 7
 )
 
 /**
  * Class for creating an InterestingItemDefsPanel which will be used for
- * configuring the IngestSetFilter.
+ * configuring the FileIngestFilter.
  */
-public final class IngestSetFilterDefsOptionsPanelController extends OptionsPanelController {
+public final class FileIngestFilterDefsOptionsPanelController extends OptionsPanelController {
 
     private InterestingItemDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    private final IngestSetFilter filter = new IngestSetFilter();
-
+    public final static String NEW_INGEST_FILTER = "<Create New>";
     /**
      * Component should load its data here.
      */
@@ -64,20 +64,17 @@ public final class IngestSetFilterDefsOptionsPanelController extends OptionsPane
      * a Create New option
      */
     public String[] getComboBoxContents() {
-        ArrayList<String> nameList = new ArrayList<>();
-        nameList.add(IngestSetFilter.ALL_FILES_AND_UNALLOCATED_FILTER);
-        nameList.add(IngestSetFilter.ALL_FILES_FILTER);
-        nameList.add(IngestSetFilter.NEW_INGEST_FILTER);
+        ArrayList<String> nameList = new ArrayList<>(); 
+        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
+            nameList.add(fSet.getName());
+        }  
+        nameList.add(NEW_INGEST_FILTER);
         if (!(panel == null)) {
             nameList.addAll(panel.getKeys());
         }
         String[] returnArray = {};
         nameList.toArray(returnArray);
         return nameList.toArray(returnArray);
-    }
-
-    public IngestSetFilter getIngestSetFilter() {
-        return filter;
     }
 
     /**
@@ -146,14 +143,14 @@ public final class IngestSetFilterDefsOptionsPanelController extends OptionsPane
 
     /**
      * Creates an interestingItemsDefPanel that will be labeled to indicate it
-     * is for Ingest Set Filter settings
+     * is for File Ingest Filter settings
      *
      * @return an InterestingItemDefsPanel which has text and fields modified to
-     * indicate it is for Ingest Set Filtering.
+     * indicate it is for File Ingest Filtering.
      */
     private InterestingItemDefsPanel getPanel() {
         if (panel == null) {
-            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getIngestSetFilterDefsName(), "");
+            panel = new InterestingItemDefsPanel(InterestingItemDefsManager.getFileIngestFilterDefsName(), "");
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {

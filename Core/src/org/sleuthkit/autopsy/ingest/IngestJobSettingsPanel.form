@@ -50,7 +50,7 @@
                   </Group>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jPanel1" pref="237" max="32767" attributes="0"/>
+              <Component id="jPanel1" pref="148" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>

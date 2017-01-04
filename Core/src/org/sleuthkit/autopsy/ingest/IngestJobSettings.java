@@ -26,9 +26,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
@@ -37,7 +39,8 @@ import org.python.util.PythonObjectInputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilter;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
+import org.sleuthkit.autopsy.modules.interestingitems.InterestingItemDefsManager;
 
 /**
  * Encapsulates the ingest job settings for a particular execution context.
@@ -50,18 +53,49 @@ public class IngestJobSettings {
     private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
     private static final String PARSE_UNALLOC_SPACE_KEY = "Process_Unallocated_Space"; //NON-NLS 
-    private static final String PROCESS_UNALLOC_SPACE_DEFAULT = "true"; //NON-NLS
+    private static final String LAST_FILE_INGEST_FILTER_KEY = "Last File Ingest Filter Used";
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
+    private static FilesSet ALL_FILES_INGEST_FILTER = new FilesSet("All Files", "All Files", false, true, Collections.emptyMap()); //NON-NLS
+    private static FilesSet ALL_AND_UNALLOC_FILES_INGEST_FILTER = new FilesSet("All Files and Unallocated Space", "All Files and Unallocated Space", false, false, Collections.emptyMap());  //NON-NLS
+    private FilesSet fileIngestFilter;
     private final String executionContext;
     private final IngestType ingestType;
     private String moduleSettingsFolderPath;
     private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1); //NON-NLS
     private final List<IngestModuleTemplate> moduleTemplates;
-    private boolean processUnallocatedSpace;
     private final List<String> warnings;
+
+    /**
+     * Gets the current FileIngestFilter saved in settings which is represented
+     * by a FilesSet
+     *
+     * @return FilesSet which represents the FileIngestFilter
+     */
+    protected FilesSet getFileIngestFilter() {
+        return fileIngestFilter;
+    }
+
+    /**
+     * Sets the FileIngestFilter which is currently being used by ingest.
+     *
+     * @param fileIngestFilter the FilesSet which represents the
+     * FileIngestFilter
+     */
+    protected void setFileIngestFilter(FilesSet fileIngestFilter) {
+        this.fileIngestFilter = fileIngestFilter;
+    }
+
+    /**
+     * Get a list of default FileIngestFilters.
+     *
+     * @return a list of FilesSets which cover default options.
+     */
+    public static List<FilesSet> getStandardFileIngestFilters() {
+        return Arrays.asList(ALL_AND_UNALLOC_FILES_INGEST_FILTER, ALL_FILES_INGEST_FILTER);
+    }
 
     /**
      * The type of ingest modules to run.
@@ -94,7 +128,6 @@ public class IngestJobSettings {
         this.executionContext = executionContext;
         this.ingestType = IngestType.ALL_MODULES;
         this.moduleTemplates = new ArrayList<>();
-        this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -120,7 +153,6 @@ public class IngestJobSettings {
 
         this.moduleTemplates = new ArrayList<>();
 
-        this.processUnallocatedSpace = Boolean.parseBoolean(IngestJobSettings.PROCESS_UNALLOC_SPACE_DEFAULT);
         this.warnings = new ArrayList<>();
         this.createSavedModuleSettingsFolder();
         this.load();
@@ -193,13 +225,20 @@ public class IngestJobSettings {
     }
 
     /**
-     * Gets the process unallocated space flag part of these ingest job
-     * settings.
+     * If unallocated space should be processed Gets the the opposite of the
+     * File Ingest Filter's skip unallocated space flag. So that the existing
+     * logic in PhotoRec Carver and any other modules that may use this will
+     * continue to work without modification.
      *
-     * @return True or false.
+     * @return True for process unallocated space or false for skip unallocated
+     * space.
      */
     boolean getProcessUnallocatedSpace() {
-        return this.processUnallocatedSpace;
+        boolean processUnallocated = true;
+        if (!Objects.isNull(this.fileIngestFilter)) {
+            processUnallocated = (this.fileIngestFilter.getSkipUnallocatedSpace() == false);
+        }
+        return processUnallocated;
     }
 
     /**
@@ -310,9 +349,15 @@ public class IngestJobSettings {
         ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
         ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
 
-        //set the process unallocated space setting based on the filter chosen.
-        this.processUnallocatedSpace = (new IngestSetFilter()).isProcessUnallocatedSpace();
-
+        /**
+         * Restore the last used File Ingest Filter
+         */
+        if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY) == false) {
+            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, IngestJobSettings.ALL_AND_UNALLOC_FILES_INGEST_FILTER.getName());
+        }
+        this.fileIngestFilter = InterestingItemDefsManager.getInstance()
+                .getFileIngestFilters()
+                .get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
     }
 
     /**
@@ -445,9 +490,13 @@ public class IngestJobSettings {
         /**
          * Save the process unallocated space setting.
          */
-        String processUnalloc = Boolean.toString(this.processUnallocatedSpace);
+        String processUnalloc = Boolean.toString(getProcessUnallocatedSpace());
         ModuleSettings.setConfigSetting(this.executionContext, PARSE_UNALLOC_SPACE_KEY, processUnalloc);
 
+        /**
+         * Save the last used File Ingest Filter setting for this context.
+         */
+        ModuleSettings.setConfigSetting(this.executionContext, LAST_FILE_INGEST_FILTER_KEY, fileIngestFilter.getName());
     }
 
     /**
