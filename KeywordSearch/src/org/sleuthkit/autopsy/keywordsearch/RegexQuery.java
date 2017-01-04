@@ -277,11 +277,11 @@ final class RegexQuery implements KeywordSearchQuery {
              */
             if (KeywordSearchSettings.getShowSnippets()) {
                 int maxIndex = content.length() - 1;
-                snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 30), Integer.max(0, hitMatcher.start() - 1)));
+                snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start() + 1)));
                 snippet.appendCodePoint(171);
                 snippet.append(hit);
                 snippet.appendCodePoint(171);
-                snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end() + 1), Integer.min(maxIndex, hitMatcher.end() + 30)));
+                snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end() - 1), Integer.min(maxIndex, hitMatcher.end() + 20)));
             }
 
             hits.add(new KeywordHit(docId, snippet.toString(), hit));
