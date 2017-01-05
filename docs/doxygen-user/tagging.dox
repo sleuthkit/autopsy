@@ -22,12 +22,19 @@ You can create arbitrary tag names. Autopsy remembers your tag names from previo
 
 \image html tagging-3.PNG
 
-You can apply tags to groups of items at once. Select multiple items in the Blackboard, right click, and add the appropriate tag.
+If you just want to tag the item with the default "Bookmark" tag, you can also use the keyboard shortcut control+B instead of going through the menus. 
+
+You can also apply tags to groups of items at once. Select multiple items in the Blackboard, right click, and add the appropriate tag.
 Items may have more than one tag.
 
-Tagged results are shown in the "Results" portion of the tree under "Tags".
+Tagged results are shown in the "Results" portion of the tree under "Tags". Tagged items are also highlighted in the Results Viewer.
 
 <br>
 \image html tagging-4.PNG
+<br>
+
+The list of tags can be edited through the Tags tab on the Options menu. 
+<br>
+\image html tagging-5.PNG
 <br>
 */
