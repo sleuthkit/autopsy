@@ -69,7 +69,7 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
 
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        InterestingItemDefsPanel panel = new InterestingItemDefsPanel(FilesSetsManager.getInterestingFilesSetDefsName(), FilesSetsManager.getLegacyFilesSetDefsFileName());
+        FilesSetDefsPanel panel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.INTERESTING_FILE_SETS);
         panel.load();
         return panel;
     }
@@ -83,7 +83,7 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
         // Doing so also keeps the serialization simple.
         List<String> enabledFilesSetNames = new ArrayList<>();
         try {
-            for (String name : FilesSetsManager.getInstance().getInterestingFilesSets(FilesSetsManager.getInterestingFilesSetDefsName(), FilesSetsManager.getLegacyFilesSetDefsFileName()).keySet()) {
+            for (String name : FilesSetsManager.getInstance().getInterestingFilesSets().keySet()) {
                 enabledFilesSetNames.add(name);
             }
         } catch (FilesSetsManager.FilesSetsManagerException ex) {

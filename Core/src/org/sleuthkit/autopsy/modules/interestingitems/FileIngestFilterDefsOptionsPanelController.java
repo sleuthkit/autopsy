@@ -22,11 +22,15 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.TreeMap;
+import java.util.logging.Level;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.Exceptions;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 
 @OptionsPanelController.TopLevelRegistration(
@@ -38,15 +42,17 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 )
 
 /**
- * Class for creating an InterestingItemDefsPanel which will be used for
+ * Class for creating an FilesSetDefsPanel which will be used for
  * configuring the FileIngestFilter.
  */
 public final class FileIngestFilterDefsOptionsPanelController extends OptionsPanelController {
 
-    private InterestingItemDefsPanel panel;
+    private FilesSetDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     public final static String NEW_INGEST_FILTER = "<Create New>";
+      private static final Logger LOGGER = Logger.getLogger(FileIngestFilterDefsOptionsPanelController.class.getName());
+    
     /**
      * Component should load its data here.
      */
@@ -65,15 +71,15 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
      */
     public String[] getComboBoxContents() {
         ArrayList<String> nameList = new ArrayList<>(); 
-        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
-            nameList.add(fSet.getName());
-        }  
-        nameList.add(NEW_INGEST_FILTER);
         if (!(panel == null)) {
-            nameList.addAll(panel.getKeys());
-        }
+            try {
+                nameList.addAll(FilesSetsManager.getInstance().getFileIngestFiltersWithDefaults().keySet());
+            } catch (FilesSetsManager.FilesSetsManagerException ex) {
+                 LOGGER.log(Level.SEVERE, "Failed to get File Ingest Filters for population of of combo box.", ex); //NON-NLS
+            }
+        }        
+        nameList.add(NEW_INGEST_FILTER);
         String[] returnArray = {};
-        nameList.toArray(returnArray);
         return nameList.toArray(returnArray);
     }
 
@@ -145,12 +151,12 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
      * Creates an interestingItemsDefPanel that will be labeled to indicate it
      * is for File Ingest Filter settings
      *
-     * @return an InterestingItemDefsPanel which has text and fields modified to
-     * indicate it is for File Ingest Filtering.
+     * @return an FilesSetDefsPanel which has text and fields modified to
+ indicate it is for File Ingest Filtering.
      */
-    private InterestingItemDefsPanel getPanel() {
+    private FilesSetDefsPanel getPanel() {
         if (panel == null) {
-            panel = new InterestingItemDefsPanel(FilesSetsManager.getFileIngestFilterDefsName(), "");
+            panel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS);
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {

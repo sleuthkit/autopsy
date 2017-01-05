@@ -36,6 +36,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TYPE;
 
 /**
  * A panel that allows a user to create and edit interesting files set
@@ -65,11 +66,15 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     /**
      * Constructs a files set rule panel in create rule mode.
      */
-    FilesSetRulePanel(JButton okButton, JButton cancelButton, boolean isFileFilterPanel) {
+    FilesSetRulePanel(JButton okButton, JButton cancelButton, PANEL_TYPE panelType) {
         initComponents();
-        if (isFileFilterPanel==true){ //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
+        if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS){ //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
             mimeCheck.setVisible(false);
+            fileSizeComboBox.setVisible(false);
+            fileSizeCheck.setVisible(false);
+            equalitySymbolComboBox.setVisible(false);
+            fileSizeSpinner.setVisible(false);
         }
         else {
             populateMimeTypesComboBox();

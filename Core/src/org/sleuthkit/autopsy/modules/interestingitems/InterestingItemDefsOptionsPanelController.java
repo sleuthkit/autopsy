@@ -36,7 +36,7 @@ import org.openide.util.Lookup;
 )
 public final class InterestingItemDefsOptionsPanelController extends OptionsPanelController {
 
-    private InterestingItemDefsPanel panel;
+    private FilesSetDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
@@ -113,9 +113,9 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
         pcs.removePropertyChangeListener(l);
     }
 
-    private InterestingItemDefsPanel getPanel() {
+    private FilesSetDefsPanel getPanel() {
         if (panel == null) {
-            panel = new InterestingItemDefsPanel(FilesSetsManager.getInterestingFilesSetDefsName(), FilesSetsManager.getLegacyFilesSetDefsFileName());
+            panel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.INTERESTING_FILE_SETS);
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {

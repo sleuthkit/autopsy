@@ -40,6 +40,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
@@ -428,9 +429,13 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         } else if (evt.getActionCommand().equals("comboBoxChanged")) {
 
-            settings.setFileIngestFilter(FilesSetsManager.getInstance()
-                    .getFileIngestFilters()
-                    .get(fileIngestFilterComboBox.getSelectedItem().toString()));
+            try {
+                settings.setFileIngestFilter(FilesSetsManager.getInstance()
+                        .getFileIngestFiltersWithDefaults()
+                        .get(fileIngestFilterComboBox.getSelectedItem().toString()));
+            } catch (FilesSetsManager.FilesSetsManagerException ex) {
+                logger.log(Level.SEVERE, "Failed to get File Ingest Filters", ex); //NON-NLS
+            }
         }
     }//GEN-LAST:event_jComboBox1ActionPerformed
 

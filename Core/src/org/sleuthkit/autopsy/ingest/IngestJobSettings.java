@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
@@ -354,9 +355,13 @@ public class IngestJobSettings {
         if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY) == false) {
             ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, IngestJobSettings.ALL_AND_UNALLOC_FILES_INGEST_FILTER.getName());
         }
-        this.fileIngestFilter = FilesSetsManager.getInstance()
-                .getFileIngestFilters()
-                .get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
+        try {
+            this.fileIngestFilter = FilesSetsManager.getInstance()
+                    .getFileIngestFiltersWithDefaults()
+                    .get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to get File Ingest Filters", ex); //NON-NLS
+        }
     }
 
     /**

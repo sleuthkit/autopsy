@@ -44,10 +44,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
- * Provides access to collections of FilesSet definitions persisted to disk. Clients
- * receive copies of the most recent FilesSet definitions for Interesting Items or 
- * File Ingest Filters via synchronized methods, allowing the definitions to be 
- * safely published to multiple threads.
+ * Provides access to collections of FilesSet definitions persisted to disk.
+ * Clients receive copies of the most recent FilesSet definitions for
+ * Interesting Items or File Ingest Filters via synchronized methods, allowing
+ * the definitions to be safely published to multiple threads.
  */
 public final class FilesSetsManager extends Observable {
 
@@ -56,12 +56,13 @@ public final class FilesSetsManager extends Observable {
     private static final String LEGACY_FILES_SET_DEFS_FILE_NAME = "InterestingFilesSetDefs.xml"; //NON-NLS
     private static final String INTERESTING_FILES_SET_DEFS_NAME = "InterestingFileSets.settings";
     private static final String FILE_INGEST_FILTER_DEFS_NAME = "FileIngestFilterDefs.settings";
+    private static final Object FILE_INGEST_FILTER_LOCK = new Object();
+    private static final Object INTERESTING_FILES_SET_LOCK = new Object();
     private static FilesSetsManager instance;
 
     /**
      * Gets the interesting item definitions manager singleton.
      */
-
     public synchronized static FilesSetsManager getInstance() {
         if (instance == null) {
             instance = new FilesSetsManager();
@@ -115,32 +116,39 @@ public final class FilesSetsManager extends Observable {
      * @return A map of interesting files set names to interesting file sets,
      * possibly empty.
      */
-    synchronized Map<String, FilesSet> getInterestingFilesSets(String fileName, String legacyFileName) throws FilesSetsManagerException {
-        return FilesSetXML.readDefinitionsFile(fileName, legacyFileName);
+    Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
+        synchronized (INTERESTING_FILES_SET_LOCK) {
+            return FilesSetXML.readDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, LEGACY_FILES_SET_DEFS_FILE_NAME);
+        }
     }
 
+    /**
+     * Gets a copy of the current ingest file set definitions with the default values.
+     *
+     * @return A map of FilesSet names to file ingest sets, possibly empty.
+     */
+    public Map<String, FilesSet> getFileIngestFiltersWithDefaults() throws FilesSetsManagerException {
+        synchronized (FILE_INGEST_FILTER_LOCK) {
+            Map<String, FilesSet> returnMap = new HashMap<>();
+            returnMap.putAll(getFileIngestFilters());
+            for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
+                returnMap.put(fSet.getName(), fSet);
+            }
+            return returnMap;
+        }
+    }
     
     /**
      * Gets a copy of the current ingest file set definitions.
+     * 
+     * The defaults are not included so that they will not show up in the editor.
      *
-     * @return A map of FilesSet names to file ingest sets,
-     * possibly empty.
+     * @return A map of FilesSet names to file ingest sets, possibly empty.
      */
-    public synchronized Map<String, FilesSet> getFileIngestFilters() {
-        Map<String, FilesSet> returnMap = new HashMap<>();
-        try {
-           returnMap.putAll(FilesSetXML.readDefinitionsFile(getFileIngestFilterDefsName(), ""));
-        } catch (FilesSetsManagerException ex) {
-            Exceptions.printStackTrace(ex);  //WJS-TODO change manager to not use file names, if this function is still needed fix error handling to be done properly.
-           
-        } 
-        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()){
-            returnMap.put(fSet.getName(), fSet);
-        }
-        return returnMap; 
+    Map<String, FilesSet> getFileIngestFilters() throws FilesSetsManagerException {
+        return FilesSetXML.readDefinitionsFile(getFileIngestFilterDefsName(), "");
     }
-
-    
+   
     /**
      * Sets the current interesting file sets definitions, replacing any
      * previous definitions.
@@ -148,10 +156,25 @@ public final class FilesSetsManager extends Observable {
      * @param filesSets A mapping of interesting files set names to files sets,
      * used to enforce unique files set names.
      */
-    synchronized void setInterestingFilesSets(Map<String, FilesSet> filesSets, String fileName) throws FilesSetsManagerException {
-        FilesSetXML.writeDefinitionsFile(fileName, filesSets);
-        this.setChanged();
-        this.notifyObservers();
+    void setInterestingFilesSets(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
+        synchronized (INTERESTING_FILES_SET_LOCK) {
+            FilesSetXML.writeDefinitionsFile(INTERESTING_FILES_SET_DEFS_NAME, filesSets);
+            this.setChanged();
+            this.notifyObservers();
+        }
+    }
+
+    /**
+     * Sets the current interesting file sets definitions, replacing any
+     * previous definitions.
+     *
+     * @param filesSets A mapping of interesting files set names to files sets,
+     * used to enforce unique files set names.
+     */
+    void setFileIngestFilter(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
+        synchronized (FILE_INGEST_FILTER_LOCK) {
+            FilesSetXML.writeDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, filesSets);
+        }
     }
 
     /**

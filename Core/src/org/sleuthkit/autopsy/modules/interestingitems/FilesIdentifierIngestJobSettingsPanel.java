@@ -83,7 +83,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          */
         List<FilesSetRow> filesSetRows = new ArrayList<>();
         try {
-            this.filesSetSnapshot = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets(FilesSetsManager.getInterestingFilesSetDefsName(), FilesSetsManager.getLegacyFilesSetDefsFileName()));
+            this.filesSetSnapshot = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets());
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_getError());
             this.filesSetSnapshot = new TreeMap<>();
@@ -138,7 +138,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
         List<FilesSetRow> rowModels = new ArrayList<>();
         TreeMap<String, FilesSet> newFilesSetSnapshot;
         try {
-            newFilesSetSnapshot = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets(FilesSetsManager.getInterestingFilesSetDefsName(), FilesSetsManager.getLegacyFilesSetDefsFileName()));
+            newFilesSetSnapshot = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets());
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesIdentifierIngestJobSettingsPanel_updateError());
             return;
