@@ -37,8 +37,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseNewAction;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 
 /**
  * Handles opening, locking, and unlocking cases in review mode. Instances of
