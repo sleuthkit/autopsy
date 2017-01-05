@@ -158,7 +158,7 @@ class Ingester {
         //Get a stream and a reader for that stream
         try (final InputStream stream = extractor.getInputStream(source);
                 BufferedReader reader = new BufferedReader(extractor.getReader(stream, source));) {
-            reader.mark(1024);
+            reader.mark(2048);
             Chunker chunker = new Chunker(reader);
             for (Chunk chunk : chunker) {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
@@ -443,53 +443,50 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
     @Override
     public Chunk next() {
-        try {
-            if (hasNext()) {
-                chunk = new StringBuilder();
-                tempChunkBuf = new char[SINGLE_READ_CHARS];
-                chunkSizeBytes = 0;
-
-                //read chars up to initial chunk size
-                while (chunkSizeBytes < INITIAL_BASE_CHUNK_SIZE && endOfContent == false) {
-                    try {
-                        charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
-                    } catch (IOException ex) {
-                        throw new RuntimeException("IOException while attempting to read chunk.", ex);
-                    }
-                    if (-1 == charsRead) {
-                        //this is the last chunk
-                        endOfContent = true;
-                    } else {
-                        String chunkSegment = new String(tempChunkBuf, 0, charsRead);
-                        chunkSizeBytes += Utf8.encodedLength(chunkSegment);
-                        chunk.append(chunkSegment);
-                    }
-                }
-
-                if (false == endOfContent) {
-                    try {
-                        endOfContent = readChunkUntilWhiteSpace();
-                    } catch (IOException ex) {
-                        throw new RuntimeException("IOException while attempting to read chunk to white space.", ex);
-                    }
-                }
-                if (false == endOfContent) {
-                    //if the window hits the end of content, don't make another overlapping chunk.
-                    chunkSizeChars = chunk.length();
-                }
-                return new Chunk(sanitizeToUTF8(chunk), chunkSizeChars);
-            } else {
-                throw new NoSuchElementException("There are no more chunks.");
-            }
-
-        } finally {
+        if (false == endOfContent) {
             try {
                 reader.reset();
             } catch (IOException ex) {
                 throw new RuntimeException("IOException while attempting to reset chunk reader.", ex);
 
             }
+            chunk = new StringBuilder();
+            tempChunkBuf = new char[SINGLE_READ_CHARS];
+            chunkSizeBytes = 0;
+
+            //read chars up to initial chunk size
+            while (chunkSizeBytes < INITIAL_BASE_CHUNK_SIZE && endOfContent == false) {
+                try {
+                    charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
+                } catch (IOException ex) {
+                    throw new RuntimeException("IOException while attempting to read chunk.", ex);
+                }
+                if (-1 == charsRead) {
+                    //this is the last chunk
+                    endOfContent = true;
+                } else {
+                    String chunkSegment = new String(tempChunkBuf, 0, charsRead);
+                    chunkSizeBytes += Utf8.encodedLength(chunkSegment);
+                    chunk.append(chunkSegment);
+                }
+            }
+
+            if (false == endOfContent) {
+                try {
+                    endOfContent = readChunkUntilWhiteSpace();
+                } catch (IOException ex) {
+                    throw new RuntimeException("IOException while attempting to read chunk to white space.", ex);
+                }
+            }
+            if (endOfContent) {
+                //if the window hits the end of content, don't make another overlapping chunk.
+                chunkSizeChars = chunk.length();
+            }
+            return new Chunk(sanitizeToUTF8(chunk), chunkSizeChars);
+        } else {
+            throw new NoSuchElementException("There are no more chunks.");
         }
+
     }
 
     private boolean readWindow() throws IOException {
@@ -529,7 +526,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 chunkSizeChars = chunkSegment.length();
             }
         }
-        reader.mark(1024);
+        reader.mark(2048);
         return readWindow();
     }
 
