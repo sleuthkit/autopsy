@@ -29,7 +29,7 @@ import org.openide.util.NbBundle;
 public class FilesSetPanel extends javax.swing.JPanel {
 
     
-    @NbBundle.Messages("FilesSetPanel.ingest.title=Ingest File Set")
+    @NbBundle.Messages("FilesSetPanel.ingest.title=File Ingest Filter")
     /**
      * Construct a files set panel in create mode.
      */
