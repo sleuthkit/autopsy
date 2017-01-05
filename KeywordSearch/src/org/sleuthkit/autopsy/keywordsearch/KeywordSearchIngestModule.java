@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,16 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.base.MoreObjects;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -35,13 +39,13 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestMessage.MessageType;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
+import static org.sleuthkit.autopsy.keywordsearch.Bundle.*;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
@@ -62,6 +66,22 @@ import org.sleuthkit.datamodel.TskData.FileKnown;
 })
 public final class KeywordSearchIngestModule implements FileIngestModule {
 
+    private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
+    private static final IngestServices services = IngestServices.getInstance();
+    private Ingester ingester = null;
+    private FileTypeDetector fileTypeDetector;
+    private boolean startedSearching = false;
+    private List<TextExtractor> textExtractors;
+    private StringsTextExtractor stringExtractor;
+    private final KeywordSearchJobSettings settings;
+    private boolean initialized = false;
+    private long jobId;
+    private long dataSourceId;
+    private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
+    private final int instanceNum;
+    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private IngestJobContext context;
+
     enum UpdateFrequency {
 
         FAST(20),
@@ -80,25 +100,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             return time;
         }
     };
-    private static final Logger logger = Logger.getLogger(KeywordSearchIngestModule.class.getName());
-    private final IngestServices services = IngestServices.getInstance();
-    private Ingester ingester = null;
-    private Indexer indexer;
-    private FileTypeDetector fileTypeDetector;
-//only search images from current ingest, not images previously ingested/indexed
-    //accessed read-only by searcher thread
-
-    private boolean startedSearching = false;
-    private List<TextExtractor> textExtractors;
-    private StringsTextExtractor stringExtractor;
-    private final KeywordSearchJobSettings settings;
-    private boolean initialized = false;
-    private long jobId;
-    private long dataSourceId;
-    private static final AtomicInteger instanceCount = new AtomicInteger(0); //just used for logging
-    private int instanceNum = 0;
-    private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
-    private IngestJobContext context;
 
     private enum IngestStatus {
 
@@ -109,11 +110,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         SKIPPED_ERROR_TEXTEXTRACT, ///< File was skipped because of text extraction issues
         SKIPPED_ERROR_IO    ///< File was skipped because of IO issues reading it
     };
+
+    @GuardedBy("ingestStatus")
     private static final Map<Long, Map<Long, IngestStatus>> ingestStatus = new HashMap<>(); //guarded by itself
 
     /**
      * Records the ingest status for a given file for a given ingest job. Used
      * for final statistics at the end of the job.
+     *
      * @param ingestJobId id of ingest job
      * @param fileId      id of file
      * @param status      ingest status of the file
@@ -132,7 +136,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
     KeywordSearchIngestModule(KeywordSearchJobSettings settings) {
         this.settings = settings;
-        instanceNum = instanceCount.getAndIncrement();
+        this.instanceNum = instanceCount.getAndIncrement();
     }
 
     /**
@@ -221,50 +225,152 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         textExtractors.add(new HtmlTextExtractor());
         textExtractors.add(new TikaTextExtractor());
 
-        indexer = new Indexer();
         initialized = true;
     }
 
     @Override
     public ProcessResult process(AbstractFile abstractFile) {
-        if (initialized == false) //error initializing indexing/Solr
-        {
+        if (initialized == false) {//error initializing indexing/Solr
             logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());  //NON-NLS
             putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-            return ProcessResult.OK;
+            return ProcessResult.ERROR;
         }
 
-        if (abstractFile.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.VIRTUAL_DIR)) {
-            //skip indexing of virtual dirs (no content, no real name) - will index children files
-            return ProcessResult.OK;
-        }
-
-        if (KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown().equals(FileKnown.KNOWN)) {
-            //index meta-data only
-            if (context.fileIngestIsCancelled()) {
-                return ProcessResult.OK;
-            }
-            indexer.indexFile(abstractFile, false);
-            return ProcessResult.OK;
-        }
-
-        //index the file and content (if the content is supported)
         if (context.fileIngestIsCancelled()) {
             return ProcessResult.OK;
         }
-        indexer.indexFile(abstractFile, true);
 
+        switch (abstractFile.getType()) {
+            case VIRTUAL_DIR:
+                //skip indexing of virtual dirs (no content, no real name) - will index children files
+                break;
+            case UNALLOC_BLOCKS:
+            case UNUSED_BLOCKS:
+                // unallocated and unused blocks can only have strings extracted from them.
+                extractStringsAndIndex(abstractFile);
+                break;
+            default:
+                if ((KeywordSearchSettings.getSkipKnown() && abstractFile.getKnown() == FileKnown.KNOWN)
+                        || abstractFile.isDir()
+                        || abstractFile.getSize() == 0) {
+                    indexMetaDataOnly(abstractFile);
+                } else {
+                    indexContent(abstractFile);
+                }
+        }
+
+        if (context.fileIngestIsCancelled()) {
+            return ProcessResult.OK;
+        }
         // Start searching if it hasn't started already
         if (!startedSearching) {
-            if (context.fileIngestIsCancelled()) {
-                return ProcessResult.OK;
-            }
             List<String> keywordListNames = settings.getNamesOfEnabledKeyWordLists();
             SearchRunner.getInstance().startJob(jobId, dataSourceId, keywordListNames);
             startedSearching = true;
         }
 
         return ProcessResult.OK;
+    }
+
+    /**
+     * Index the given file's metadata only.
+     *
+     * @param abstractFile
+     */
+    private void indexMetaDataOnly(AbstractFile abstractFile) {
+        if (context.fileIngestIsCancelled()) {
+            return;
+        }
+        try {
+            ingester.ingest(abstractFile, false); //meta-data only
+            putIngestStatus(jobId, abstractFile.getId(), IngestStatus.METADATA_INGESTED);
+        } catch (IngesterException ex) {
+            putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
+            logger.log(Level.WARNING, "Unable to index meta-data for file: " + abstractFile.getId(), ex); //NON-NLS
+        }
+    }
+
+    /**
+     * Index the content and metadata of the fiven file.
+     *
+     * @param abstractFile
+     */
+    private void indexContent(AbstractFile abstractFile) {
+        if (context.fileIngestIsCancelled()) {
+            return;
+        }
+        try {
+            String fileType = fileTypeDetector.getFileType(abstractFile);
+            // we skip archive formats that are opened by the archive module.
+            // @@@ We could have a check here to see if the archive module was enabled though...
+            if (TextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
+                indexMetaDataOnly(abstractFile);
+            } else {
+                try {
+                    extractTextAndIndex(abstractFile, fileType);
+                } catch (IngesterException e) {
+                    logger.log(Level.INFO, "Could not extract text, " + abstractFile.getId() + ", " //NON-NLS
+                            + abstractFile.getName(), e);
+                    putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
+                } catch (Exception e1) {
+                    logger.log(Level.WARNING, "Error extracting text, " + abstractFile.getId() + ", " //NON-NLS
+                            + abstractFile.getName(), e1);
+                    putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
+                }
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", abstractFile), ex); //NON-NLS
+            //TODO: why do we bail, shouldn't we at least run strings?
+        }
+    }
+
+    /**
+     * Extract text with Tika or other text extraction modules (by streaming)
+     * from the file. Divide the file into chunks and index the chunks
+     *
+     * @param aFile          file to extract text from, divide into chunks and
+     *                       index
+     * @param detectedFormat mime-type detected, or null if none detected
+     *
+     * @throws IngesterException exception thrown if indexing failed
+     */
+    private void extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
+        //go over available text extractors in order, and pick the first one (most specific one)
+        for (TextExtractor fe : textExtractors) {
+            if (fe.isSupported(aFile, detectedFormat)) {
+                //divide into chunks and index
+                final boolean indexed = fe.index(aFile, context);
+
+                if (indexed) {
+                    putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
+                    return;
+                }
+            }
+        }
+        logger.log(Level.INFO, "No text extractor found for file. Extracting strings only. File id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat}); //NON-NLS
+        extractStringsAndIndex(aFile);
+    }
+
+    /**
+     * Extract strings using heuristics from the file and add to index.
+     *
+     * @param aFile file to extract strings from, divide into chunks and index
+     */
+    private void extractStringsAndIndex(AbstractFile aFile) {
+        if (context.fileIngestIsCancelled()) {
+            return;
+        }
+        try {
+            if (stringExtractor.index(aFile, context)) {
+                putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
+            } else {
+                logger.log(Level.WARNING, "Failed to extract strings and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()});  //NON-NLS
+                putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
+            }
+        } catch (IngesterException ex) {
+            logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);  //NON-NLS
+            putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
+        }
     }
 
     /**
@@ -334,254 +440,67 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     /**
      * Posts inbox message with summary of text_ingested files
      */
+    @NbBundle.Messages({"KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl=Files with known types",
+        "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead=Files with general strings extracted",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle=Keyword Indexing Errors",
+        "KeywordSearchIngestModule.postIndexSummary.errTxtLbl=Error (text extraction)",
+        "KeywordSearchIngestModule.postIndexSummary.errIoLbl=Error (I/O)",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxWarnMsgTitle=Keyword Indexing Warning",
+        "KeywordSearchIngestModule.postIndexSummary.idxErrReadFilesMsg=Keyword index service had errors reading files and extracting text. Could have been from corrupt media or files.",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles=Keyword index service had errors ingesting {0} files.",
+        "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl=Keyword Indexing Results",
+        "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl=Metadata only was indexed",
+        "KeywordSearchIngestModule.postIndexSummary.idxErrLbl=Error (indexer)"})
     private void postIndexSummary() {
-        int text_ingested = 0;
-        int metadata_ingested = 0;
-        int strings_ingested = 0;
-        int error_text = 0;
-        int error_index = 0;
-        int error_io = 0;
 
+        Map<IngestStatus, Long> statusCounts;
         synchronized (ingestStatus) {
             Map<Long, IngestStatus> ingestStatusForJob = ingestStatus.get(jobId);
             if (ingestStatusForJob == null) {
                 return;
             }
-            for (IngestStatus s : ingestStatusForJob.values()) {
-                switch (s) {
-                    case TEXT_INGESTED:
-                        text_ingested++;
-                        break;
-                    case METADATA_INGESTED:
-                        metadata_ingested++;
-                        break;
-                    case STRINGS_INGESTED:
-                        strings_ingested++;
-                        break;
-                    case SKIPPED_ERROR_TEXTEXTRACT:
-                        error_text++;
-                        break;
-                    case SKIPPED_ERROR_INDEXING:
-                        error_index++;
-                        break;
-                    case SKIPPED_ERROR_IO:
-                        error_io++;
-                        break;
-                    default:
-                       ;
-                }
-            }
+            statusCounts = ingestStatusForJob.values().stream().
+                    collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         }
+
+        final Long metadataIndexed = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.METADATA_INGESTED), 0L);
+        final Long stringsIndexed = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.STRINGS_INGESTED), 0L);
+        final Long textIndexed = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.TEXT_INGESTED), 0L);
+        final Long extractionErrors = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.SKIPPED_ERROR_TEXTEXTRACT), 0L);
+        final Long ioErrors = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.SKIPPED_ERROR_IO), 0L);
+        final Long indexingErrors = MoreObjects.firstNonNull(statusCounts.get(IngestStatus.SKIPPED_ERROR_INDEXING), 0L);
 
         StringBuilder msg = new StringBuilder();
-        msg.append("<table border=0><tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.knowFileHeaderLbl")).append("</td><td>").append(text_ingested).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.fileGenStringsHead")).append("</td><td>").append(strings_ingested).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.mdOnlyLbl")).append("</td><td>").append(metadata_ingested).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrLbl")).append("</td><td>").append(error_index).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errTxtLbl")).append("</td><td>").append(error_text).append("</td></tr>"); //NON-NLS
-        msg.append("<tr><td>").append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.errIoLbl")).append("</td><td>").append(error_io).append("</td></tr>"); //NON-NLS
+        msg.append("<table border=0><tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_knowFileHeaderLbl())
+                .append("</td><td>").append(textIndexed).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_fileGenStringsHead())
+                .append("</td><td>").append(stringsIndexed).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_mdOnlyLbl())
+                .append("</td><td>").append(metadataIndexed).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_idxErrLbl())
+                .append("</td><td>").append(indexingErrors).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_errTxtLbl())
+                .append("</td><td>").append(extractionErrors).append("</td></tr>"); //NON-NLS
+        msg.append("<tr><td>")//NON-NLS
+                .append(KeywordSearchIngestModule_postIndexSummary_errIoLbl())
+                .append("</td><td>").append(ioErrors).append("</td></tr>"); //NON-NLS
         msg.append("</table>"); //NON-NLS
+
         String indexStats = msg.toString();
         logger.log(Level.INFO, "Keyword Indexing Completed: {0}", indexStats); //NON-NLS
-        services.postMessage(IngestMessage.createMessage(MessageType.INFO, KeywordSearchModuleFactory.getModuleName(), NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxResultsLbl"), indexStats));
-        if (error_index > 0) {
-            MessageNotifyUtil.Notify.error(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrsTitle"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxErrMsgFiles", error_index));
-        } else if (error_io + error_text > 0) {
-            MessageNotifyUtil.Notify.warn(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.kwIdxWarnMsgTitle"),
-                    NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.postIndexSummary.idxErrReadFilesMsg"));
-        }
-    }
-
-    /**
-     * File indexer, processes and indexes known/allocated files,
-     * unknown/unallocated files and directories accordingly
-     */
-    private class Indexer {
-
-        private final Logger logger = Logger.getLogger(Indexer.class.getName());
-
-        /**
-         * Extract text with Tika or other text extraction modules (by
-         * streaming) from the file Divide the file into chunks and index the
-         * chunks
-         *
-         * @param aFile          file to extract strings from, divide into
-         *                       chunks and index
-         * @param detectedFormat mime-type detected, or null if none detected
-         *
-         * @return true if the file was text_ingested, false otherwise
-         *
-         * @throws IngesterException exception thrown if indexing failed
-         */
-        private boolean extractTextAndIndex(AbstractFile aFile, String detectedFormat) throws IngesterException {
-            TextExtractor fileExtract = null;
-
-            //go over available text extractors in order, and pick the first one (most specific one)
-            for (TextExtractor fe : textExtractors) {
-                if (fe.isSupported(aFile, detectedFormat)) {
-                    fileExtract = fe;
-                    break;
-                }
-            }
-
-            if (fileExtract == null) {
-                logger.log(Level.INFO, "No text extractor found for file id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat}); //NON-NLS
-                return false;
-            }
-
-            //logger.log(Level.INFO, "Extractor: " + fileExtract + ", file: " + aFile.getName());
-            //divide into chunks and index
-            return fileExtract.index(aFile, context);
-        }
-
-        /**
-         * Extract strings using heuristics from the file and add to index.
-         *
-         * @param aFile file to extract strings from, divide into chunks and
-         *              index
-         *
-         * @return true if the file was text_ingested, false otherwise
-         */
-        private boolean extractStringsAndIndex(AbstractFile aFile) {
-            try {
-                if (context.fileIngestIsCancelled()) {
-                    return true;
-                }
-                if (stringExtractor.index(aFile, KeywordSearchIngestModule.this.context)) {
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.STRINGS_INGESTED);
-                    return true;
-                } else {
-                    logger.log(Level.WARNING, "Failed to extract strings and ingest, file ''{0}'' (id: {1}).", new Object[]{aFile.getName(), aFile.getId()});  //NON-NLS
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
-                    return false;
-                }
-            } catch (IngesterException ex) {
-                logger.log(Level.WARNING, "Failed to extract strings and ingest, file '" + aFile.getName() + "' (id: " + aFile.getId() + ").", ex);  //NON-NLS
-                putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-                return false;
-            }
-        }
-
-        /**
-         * Check with every extractor if it supports the file with the detected
-         * format
-         *
-         * @param aFile          file to check for
-         * @param detectedFormat mime-type with detected format (such as
-         *                       text/plain) or null if not detected
-         *
-         * @return true if text extraction is supported
-         */
-        private boolean isTextExtractSupported(AbstractFile aFile, String detectedFormat) {
-            for (TextExtractor extractor : textExtractors) {
-                if (extractor.isContentTypeSpecific() == true
-                        && extractor.isSupported(aFile, detectedFormat)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /**
-         * Adds the file to the index. Detects file type, calls extractors, etc.
-         *
-         * @param aFile        File to analyze
-         * @param indexContent False if only metadata should be text_ingested.
-         *                     True if content and metadata should be index.
-         */
-        private void indexFile(AbstractFile aFile, boolean indexContent) {
-            //logger.log(Level.INFO, "Processing AbstractFile: " + abstractFile.getName());
-
-            TskData.TSK_DB_FILES_TYPE_ENUM aType = aFile.getType();
-
-            // unallocated and unused blocks can only have strings extracted from them. 
-            if ((aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) || aType.equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
-                if (context.fileIngestIsCancelled()) {
-                    return;
-                }
-                extractStringsAndIndex(aFile);
-                return;
-            }
-
-            final long size = aFile.getSize();
-            //if not to index content, or a dir, or 0 content, index meta data only
-
-            if ((indexContent == false || aFile.isDir() || size == 0)) {
-                try {
-                    if (context.fileIngestIsCancelled()) {
-                        return;
-                    }
-                    ingester.ingest(aFile, false); //meta-data only
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
-                } catch (IngesterException ex) {
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex); //NON-NLS
-                }
-                return;
-            }
-
-            String fileType;
-            try {
-                if (context.fileIngestIsCancelled()) {
-                    return;
-                }
-                fileType = fileTypeDetector.getFileType(aFile);
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, String.format("Could not detect format using fileTypeDetector for file: %s", aFile), ex); //NON-NLS
-                return;
-            }
-
-            // we skip archive formats that are opened by the archive module. 
-            // @@@ We could have a check here to see if the archive module was enabled though...
-            if (TextExtractor.ARCHIVE_MIME_TYPES.contains(fileType)) {
-                try {
-                    if (context.fileIngestIsCancelled()) {
-                        return;
-                    }
-                    ingester.ingest(aFile, false); //meta-data only
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.METADATA_INGESTED);
-                } catch (IngesterException ex) {
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-                    logger.log(Level.WARNING, "Unable to index meta-data for file: " + aFile.getId(), ex); //NON-NLS
-                }
-                return;
-            }
-
-            boolean wasTextAdded = false;
-
-            //extract text with one of the extractors, divide into chunks and index with Solr
-            try {
-                //logger.log(Level.INFO, "indexing: " + aFile.getName());
-                if (context.fileIngestIsCancelled()) {
-                    return;
-                }
-                if (fileType.equals("application/octet-stream")) {
-                    extractStringsAndIndex(aFile);
-                    return;
-                }
-                if (!extractTextAndIndex(aFile, fileType)) {
-                    logger.log(Level.WARNING, "Text extractor not found for file. Extracting strings only. File: ''{0}'' (id:{1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
-                } else {
-                    putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);
-                    wasTextAdded = true;
-                }
-
-            } catch (IngesterException e) {
-                logger.log(Level.INFO, "Could not extract text with Tika, " + aFile.getId() + ", " //NON-NLS
-                        + aFile.getName(), e);
-                putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error extracting text with Tika, " + aFile.getId() + ", " //NON-NLS
-                        + aFile.getName(), e);
-                putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
-            }
-
-            // if it wasn't supported or had an error, default to strings
-            if (wasTextAdded == false) {
-                extractStringsAndIndex(aFile);
-            }
+        services.postMessage(IngestMessage.createMessage(MessageType.INFO, KeywordSearchModuleFactory.getModuleName(),
+                KeywordSearchIngestModule_postIndexSummary_kwIdxResultsLbl(), indexStats));
+        if (indexingErrors > 0) {
+            MessageNotifyUtil.Notify.error(KeywordSearchIngestModule_postIndexSummary_kwIdxErrsTitle(),
+                    KeywordSearchIngestModule_postIndexSummary_kwIdxErrMsgFiles(indexingErrors));
+        } else if (ioErrors + extractionErrors > 0) {
+            MessageNotifyUtil.Notify.warn(KeywordSearchIngestModule_postIndexSummary_kwIdxWarnMsgTitle(),
+                    KeywordSearchIngestModule_postIndexSummary_idxErrReadFilesMsg());
         }
     }
 }

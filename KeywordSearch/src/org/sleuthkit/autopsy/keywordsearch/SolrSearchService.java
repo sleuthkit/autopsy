@@ -49,6 +49,7 @@ public class SolrSearchService implements KeywordSearchService {
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
 
+    //TODO: should this throw KewywordSearchServiceException, or IngesterException in addition/instead? -JM
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
         if (artifact == null) {

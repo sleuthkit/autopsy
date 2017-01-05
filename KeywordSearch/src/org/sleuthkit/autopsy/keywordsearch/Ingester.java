@@ -22,13 +22,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.common.util.ContentStream;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.common.util.ContentStream;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
@@ -60,7 +60,6 @@ class Ingester {
     //for ingesting chunk as SolrInputDocument (non-content-streaming, by-pass tika)
     //TODO use a streaming way to add content to /update handler
     private static final int MAX_DOC_CHUNK_SIZE = 1024 * 1024;
-    private static final String ENCODING = "UTF-8"; //NON-NLS
 
     private Ingester() {
     }
@@ -134,8 +133,7 @@ class Ingester {
         Map<String, String> params = getContentFields(sourceContent);
 
         //overwrite id with the chunk id
-        params.put(Server.Schema.ID.toString(),
-                Server.getChunkIdString(sourceContent.getId(), fec.getChunkNumber()));
+        params.put(Server.Schema.ID.toString(), fec.getChunkId());
 
         ingest(bcs, params, size);
     }
@@ -304,25 +302,19 @@ class Ingester {
 
             if (read != 0) {
                 String s = "";
-                try {
-                    s = new String(docChunkContentBuf, 0, read, ENCODING);
-                    // Sanitize by replacing non-UTF-8 characters with caret '^' before adding to index
-                    char[] chars = null;
-                    for (int i = 0; i < s.length(); i++) {
-                        if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
-                            // only convert string to char[] if there is a non-UTF8 character
-                            if (chars == null) {
-                                chars = s.toCharArray();
-                            }
-                            chars[i] = '^';
+                s = new String(docChunkContentBuf, 0, read, StandardCharsets.UTF_8);
+                char[] chars = null;
+                for (int i = 0; i < s.length(); i++) {
+                    if (!TextUtil.isValidSolrUTF8(s.charAt(i))) {
+                        // only convert string to char[] if there is a non-UTF8 character
+                        if (chars == null) {
+                            chars = s.toCharArray();
                         }
+                        chars[i] = '^';
                     }
-                    // check if the string was modified (i.e. there was a non-UTF8 character found)
-                    if (chars != null) {
-                        s = new String(chars);
-                    }
-                } catch (UnsupportedEncodingException ex) {
-                    logger.log(Level.SEVERE, "Unsupported encoding", ex); //NON-NLS
+                }
+                if (chars != null) {
+                    s = new String(chars);
                 }
                 updateDoc.addField(Server.Schema.CONTENT.toString(), s);
             } else {
