@@ -748,11 +748,15 @@ public class Server {
             // Any one (but only one!) of those subfolders may contain the actual index.
 
             // create a list of all sub-directories
-            List<String> subfolders = getAllSubfoldersInFolder(theCase.getCaseDirectory());
+            List<File> contents = getAllContentsInFolder(theCase.getCaseDirectory());
 
             // scan all topLevelOutputDir subfolders for presense of non-empty "keywordsearch/data/index" folder
-            for (String folderName : subfolders) {
-                String path = Paths.get(folderName, MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
+            for (File item : contents) {
+                if (!item.isDirectory()) {
+                    continue;
+                }
+                // ELTODO is it possible that index is in a different location? what about new solr6 index?
+                String path = Paths.get(item.getAbsolutePath(), MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
                 if (containsValidIndexFolder(path)) {
                     indexDir = path;
                     // ELTODO analyze possibilities of multiple indexes
@@ -788,39 +792,47 @@ public class Server {
     }
     
      /**
-     * Returns a list of all folder names in the folder of interest. Files
-     * are excluded.
+     * Returns a list of all contents in the folder of interest. 
      *
      * @param path Absolute path of the folder of interest
      *
-     * @return List of all sub-folder names in the folder of interest
+     * @return List of all contents in the folder of interest
      */
-    private static List<String> getAllSubfoldersInFolder(String path) {
-        // only returns folders, skips folders
-        File folder = new File(path);
-        String[] folders = folder.list((File current, String name) -> new File(current, name).isDirectory());
-        if (folders == null) {
-            // null is returned when folder doesn't exist. need to check this condition, otherwise there is NullPointerException when converting to List
+    private static List<File> getAllContentsInFolder(String path) {
+        File directory = new File(path);
+        File[] contents = directory.listFiles();
+        // the directory file is not really a directory..
+        if (contents == null) {
             return Collections.emptyList();
         }
-        return new ArrayList<>(Arrays.asList(folders));
+        // Folder is empty
+        else if (contents.length == 0) {
+            return Collections.emptyList();
+        }
+        // Folder has contents
+        else {
+            return new ArrayList<>(Arrays.asList(contents));
+        }
     }
     
     boolean containsValidIndexFolder(String path) {
-        // create a list of all sub-directories
-        List<String> subfolders = getAllSubfoldersInFolder(path);
-        if (subfolders.isEmpty()) {
-            return false;
-        }
-
-        // scan all the folder for presense of non-empty "index" folder
-        for (String folderName : subfolders) {
-            if (!folderName.equals(INDEX_FOLDER_NAME)) {
+        List<File> contents = getAllContentsInFolder(path);
+        // scan the folder for presense of non-empty "index" folder
+        for (File item : contents) {
+            if (!item.isDirectory()) {
                 continue;
             }
-            // ELTODO check that the folder is not empty
+            // scan all the folder for presense of non-empty "index" folder
+            if (!item.getName().equals(INDEX_FOLDER_NAME)) {
+                continue;
+            }
+            // check that the folder is not empty
+            if (item.listFiles().length > 0) {
+                // ELTODO does this cover "index" folder that contains no files but some sub-folders?
+                // ELTODO is there more evaluation that's needed? look for a specific file perhaps?
+                return true;
+            }
         }
-
         return false;
     }
 
@@ -852,6 +864,7 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
         }
 
+        //String indexDir = findIndexDataDir(theCase); // ELTODO
         String dataDir = geCoreDataDirPath(theCase);
         String coreName = theCase.getTextIndexName();
         return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());
