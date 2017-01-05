@@ -191,6 +191,8 @@ public class Server {
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
+    private static final String CURRENT_SOLR_VERSION = "6";
+    private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
 
     public enum CORE_EVT_STATES {
 
@@ -305,6 +307,14 @@ public class Server {
 
     int getCurrentSolrStopPort() {
         return currentSolrStopPort;
+    }
+         
+    String getCurrentSolrVersion() {
+        return CURRENT_SOLR_VERSION;
+    }
+    
+    String getCurrentSchemaVersion() {
+        return CURRENT_SOLR_SCHEMA_VERSION;
     }
 
     /**
@@ -731,17 +741,25 @@ public class Server {
         return indexDir;
     }
     
+    String findLatestIndexDataDir(Case theCase) {
+        String dataFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
+        return findIndexDataDir(theCase, dataFolderName);
+    }
+    
+    String findOldIndexDataDir(Case theCase) {
+        return findIndexDataDir(theCase, "");
+    }    
     
     /**
-     * Find index dir location for the case. This is done by doing a subdirectory
+     * Find index directory location for the case. This is done via subdirectory
      * search of all existing "ModuleOutput/node_name/keywordsearch/data/" folders.
      *
      * @param theCase the case to get index dir for
      *
      * @return absolute path to index dir
      */
-    String findIndexDataDir(Case theCase) {
-        String indexDir = "";
+    private List<String> findIndexDataDir(Case theCase, String dataFolderName) {
+        ArrayList<String> indexDirs = new ArrayList<>();
         // look for existing index folder
         if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
             // multi user cases contain a subfolder for each node that participated in case ingest or review.
@@ -756,26 +774,28 @@ public class Server {
                     continue;
                 }
                 // ELTODO is it possible that index is in a different location? what about new solr6 index?
-                String path = Paths.get(item.getAbsolutePath(), MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
+                String path = Paths.get(item.getAbsolutePath(), MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, dataFolderName).toString(); //NON-NLS
                 if (containsValidIndexFolder(path)) {
-                    indexDir = path;
-                    // ELTODO analyze possibilities of multiple indexes
-                    break; // there should only be one index
+                    indexDirs.add(path);
+                    // there can be multiple index folders (e.g. current version and "old" version) so keep looking
                 }
             }
         } else {
-            String path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
+            // single user case
+            String path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, dataFolderName).toString(); //NON-NLS
             if (containsValidIndexFolder(path)) {
-                indexDir = path;
+                indexDirs.add(path);
             }
         }
         
-        // if we still did not find index then it is a new case
+        // did we find an index that requires an upgrade?
         if (indexDir.isEmpty()) {
-            indexDir = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
+            return indexDir;
+            // ELTODO if we still did not find index then it is a new case
+            // ELTODO indexDir = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
         }
         
-        // ELTODO do we still need this?
+        // ELTODO do we need to do this when searching for old index?
         if (uncPathUtilities != null) {
             // if we can check for UNC paths, do so, otherwise just return the indexDir
             String result = uncPathUtilities.mappedDriveToUNC(indexDir);
@@ -864,7 +884,6 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
         }
 
-        //String indexDir = findIndexDataDir(theCase); // ELTODO
         String dataDir = geCoreDataDirPath(theCase);
         String coreName = theCase.getTextIndexName();
         return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());

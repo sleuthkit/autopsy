@@ -36,6 +36,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.openide.util.NbBundle;
 import java.net.InetAddress;
 import java.util.MissingResourceException;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 
 /**
@@ -43,7 +45,7 @@ import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
  * text indexing and search.
  */
 @ServiceProvider(service = KeywordSearchService.class)
-public class SolrSearchService implements KeywordSearchService {
+public class SolrSearchService implements KeywordSearchService, AutopsyServiceProvider  {
 
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
@@ -229,5 +231,77 @@ public class SolrSearchService implements KeywordSearchService {
 
     @Override
     public void close() throws IOException {
+    }
+    
+     /**
+     *
+     * @param context
+     *
+     * @throws
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     */
+    @Override
+    public void openCaseResources(Context context) throws AutopsyServiceProviderException {
+        /*
+         * Autopsy service providers may not have case-level resources.
+         */
+        Server server = KeywordSearch.getServer();
+        if (server.coreIsOpen() == false) {
+            throw new AutopsyServiceProviderException("ELTODO");
+        }
+        
+        // do a case subdirectory search to check if latest index exists
+        
+        // do a case subdirectory search to check for the existence and upgrade status of cores
+        String indexDir = server.findLatestIndexDataDir(Case.getCurrentCase()); // ELTODO
+        
+        // check if index needs upgrade
+        boolean needsUpgrade = true;
+        
+        if (needsUpgrade && RuntimeProperties.coreComponentsAreActive()) {
+            //pop up a message box to indicate the restrictions on adding additional 
+            //text and performing regex searches and give the user the option to decline the upgrade
+            boolean upgradeDeclined = true;
+            if (upgradeDeclined) {
+                throw new AutopsyServiceProviderException("ELTODO");
+            }
+        }
+        
+        if (needsUpgrade) {            
+            // ELTODO Check for cancellation at whatever points are feasible
+            
+            // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            
+            // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+            
+            // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            
+            // Open the upgraded index
+            
+            // execute a test query
+            boolean success = true;
+            
+            if (!success) {
+                // delete the new directories
+                
+                // close the upgraded index?
+                
+                throw new AutopsyServiceProviderException("ELTODO");
+            }
+        }
+    }
+
+    /**
+     *
+     * @param context
+     *
+     * @throws
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     */
+    @Override
+    public void closeCaseResources(Context context) throws AutopsyServiceProviderException {
+        /*
+         * Autopsy service providers may not have case-level resources.
+         */
     }
 }
