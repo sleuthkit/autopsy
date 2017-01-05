@@ -123,32 +123,34 @@ public final class FilesSetsManager extends Observable {
     }
 
     /**
-     * Gets a copy of the current ingest file set definitions with the default values.
+     * Gets a copy of the current ingest file set definitions with the default
+     * values.
      *
      * @return A map of FilesSet names to file ingest sets, possibly empty.
      */
     public Map<String, FilesSet> getFileIngestFiltersWithDefaults() throws FilesSetsManagerException {
-        synchronized (FILE_INGEST_FILTER_LOCK) {
-            Map<String, FilesSet> returnMap = new HashMap<>();
-            returnMap.putAll(getFileIngestFilters());
+            Map<String, FilesSet> returnMap = new HashMap<>();         
             for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
                 returnMap.put(fSet.getName(), fSet);
             }
+            returnMap.putAll(getFileIngestFilters());  
             return returnMap;
-        }
     }
-    
+
     /**
      * Gets a copy of the current ingest file set definitions.
-     * 
-     * The defaults are not included so that they will not show up in the editor.
+     *
+     * The defaults are not included so that they will not show up in the
+     * editor.
      *
      * @return A map of FilesSet names to file ingest sets, possibly empty.
      */
     Map<String, FilesSet> getFileIngestFilters() throws FilesSetsManagerException {
-        return FilesSetXML.readDefinitionsFile(getFileIngestFilterDefsName(), "");
+        synchronized (FILE_INGEST_FILTER_LOCK) {
+            return FilesSetXML.readDefinitionsFile(getFileIngestFilterDefsName(), "");
+        }
     }
-   
+
     /**
      * Sets the current interesting file sets definitions, replacing any
      * previous definitions.

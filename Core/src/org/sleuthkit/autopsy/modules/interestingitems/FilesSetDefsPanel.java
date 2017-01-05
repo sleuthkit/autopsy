@@ -100,11 +100,15 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
             this.ruleDialogTitle = "FilesSetPanel.interesting.title";
             this.jTextArea1.setText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.jTextArea1.text")); // NOI18N
         }
-
     }
 
+    Set<String> getKeys() {
+        load();
+        return filesSets.keySet();
+     }
+
     @NbBundle.Messages({"FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings",
-        "FilesSetDefsPanel.Ingest.Title=Global Ingest Filter Settings"})
+        "FilesSetDefsPanel.Ingest.Title=File Ingest Filter Settings"})
     private void customInit() {
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
             setName(Bundle.FilesSetDefsPanel_Ingest_Title());

@@ -65,22 +65,23 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
     /**
      * Returns an array which will contain the names of all options which should
      * exist in the "Run Ingest Modules On:" JCombobox
+     * 
+     * Keeping the default File Ingest Filters and the saved one seperate allows
+     * the default to always be first elements in 
      *
      * @return -filterNames an array of all established filter names as well as
      * a Create New option
      */
     public String[] getComboBoxContents() {
-        ArrayList<String> nameList = new ArrayList<>(); 
-        if (!(panel == null)) {
-            try {
-                nameList.addAll(FilesSetsManager.getInstance().getFileIngestFiltersWithDefaults().keySet());
-            } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                 LOGGER.log(Level.SEVERE, "Failed to get File Ingest Filters for population of of combo box.", ex); //NON-NLS
-            }
-        }        
+        ArrayList<String> nameList = new ArrayList<>();
+        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
+            nameList.add(fSet.getName());
+        }
         nameList.add(NEW_INGEST_FILTER);
-        String[] returnArray = {};
-        return nameList.toArray(returnArray);
+        if (!(panel == null)) {            
+            nameList.addAll(panel.getKeys());
+        }             
+        return nameList.toArray(new String[nameList.size()]);
     }
 
     /**

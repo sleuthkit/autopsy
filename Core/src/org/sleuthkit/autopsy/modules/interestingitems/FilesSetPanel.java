@@ -74,7 +74,8 @@ public class FilesSetPanel extends javax.swing.JPanel {
      * @return A name string.
      */
     String getFilesSetName() {
-        return this.nameTextField.getText();
+        String returnValue = this.nameTextField.getText();
+        return returnValue;
     }
 
     /**
