@@ -1391,7 +1391,7 @@ public class Server {
     }
 
     /**
-     * Determines whether or not the index folder for a Solr core
+     * Determines whether or not the index files folder for a Solr core
      * exists.
      *
      * @param coreName the name of the core.
@@ -1430,7 +1430,7 @@ public class Server {
             this.solrCore = new Builder(currentSolrServer.getBaseURL() + "/" + name).build(); //NON-NLS
 
             //TODO test these settings
-            //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger folders
+            //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
             //solrCore.setConnectionTimeout(1000);
             solrCore.setDefaultMaxConnectionsPerHost(2);
             solrCore.setMaxTotalConnections(5);
@@ -1500,7 +1500,7 @@ public class Server {
         }
 
         /**
-         * get the text from the content field for the given folder
+         * get the text from the content field for the given file
          *
          * @param contentID
          * @param chunkID
@@ -1527,8 +1527,8 @@ public class Server {
                         if (fieldValues.size() == 1) // The indexed text field for artifacts will only have a single value.
                         {
                             return fieldValues.toArray(new String[0])[0];
-                        } else // The indexed text for folders has 2 values, the folder name and the folder content.
-                        // We return the folder content value.
+                        } else // The indexed text for files has 2 values, the file name and the file content.
+                        // We return the file content value.
                         {
                             return fieldValues.toArray(new String[0])[1];
                         }
@@ -1560,10 +1560,10 @@ public class Server {
         }
 
         /**
-         * Execute query that gets only number of all Solr folders (not chunks)
-         * indexed without actually returning the folders
+         * Execute query that gets only number of all Solr files (not chunks)
+         * indexed without actually returning the files
          *
-         * @return int representing number of indexed folders (entire folders,
+         * @return int representing number of indexed files (entire files,
          *         not chunks)
          *
          * @throws SolrServerException
@@ -1593,7 +1593,7 @@ public class Server {
          * without actually returning the documents. Documents include entire
          * indexed folders as well as chunks, which are treated as documents.
          *
-         * @return int representing number of indexed documents (entire folders
+         * @return int representing number of indexed documents (entire files
          *         and chunks)
          *
          * @throws SolrServerException
@@ -1605,7 +1605,7 @@ public class Server {
         }
 
         /**
-         * Return true if the folder is indexed (either as a whole as a chunk)
+         * Return true if the file is indexed (either as a whole as a chunk)
          *
          * @param contentID
          *
@@ -1623,12 +1623,12 @@ public class Server {
         }
 
         /**
-         * Execute query that gets number of indexed folder chunks for a folder
+         * Execute query that gets number of indexed file chunks for a file
          *
-         * @param contentID folder id of the original folder broken into chunks
+         * @param contentID file id of the original file broken into chunks
          *                  and indexed
          *
-         * @return int representing number of indexed folder chunks, 0 if there
+         * @return int representing number of indexed file chunks, 0 if there
          *         is no chunks
          *
          * @throws SolrServerException
