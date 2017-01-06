@@ -1591,7 +1591,7 @@ public class Server {
         /**
          * Execute query that gets only number of all Solr documents indexed
          * without actually returning the documents. Documents include entire
-         * indexed folders as well as chunks, which are treated as documents.
+         * indexed files as well as chunks, which are treated as documents.
          *
          * @return int representing number of indexed documents (entire files
          *         and chunks)
