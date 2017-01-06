@@ -247,13 +247,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
          * Autopsy service providers may not have case-level resources.
          */
         Server server = KeywordSearch.getServer();
-        if (server.coreIsOpen() == false) {
-            throw new AutopsyServiceProviderException("ELTODO");
-        }
         
-        // do a case subdirectory search to check if latest index exists
-        
-        // do a case subdirectory search to check for the existence and upgrade status of cores
+        // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
         List<String> indexDirs = server.findAllIndexDirs(Case.getCurrentCase());
         
         // check if index needs upgrade
