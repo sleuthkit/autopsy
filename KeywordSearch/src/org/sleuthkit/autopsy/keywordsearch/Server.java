@@ -43,6 +43,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -193,6 +195,7 @@ public class Server {
     private static final String INDEX_FOLDER_NAME = "index";
     private static final String CURRENT_SOLR_VERSION = "6";
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
+    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr\\d{1,2}_schema_\\d{1,2}.\\d{1,2}$");
 
     public enum CORE_EVT_STATES {
 
@@ -308,11 +311,11 @@ public class Server {
     int getCurrentSolrStopPort() {
         return currentSolrStopPort;
     }
-         
+
     String getCurrentSolrVersion() {
         return CURRENT_SOLR_VERSION;
     }
-    
+
     String getCurrentSchemaVersion() {
         return CURRENT_SOLR_SCHEMA_VERSION;
     }
@@ -385,7 +388,9 @@ public class Server {
      * Run a Solr command with the given arguments.
      *
      * @param solrArguments Command line arguments to pass to the Solr command.
+     *
      * @return
+     *
      * @throws IOException
      */
     private Process runSolrCommand(List<String> solrArguments) throws IOException {
@@ -618,7 +623,7 @@ public class Server {
      * request.
      *
      * @return false if the request failed with a connection error, otherwise
-     * true
+     *         true
      */
     synchronized boolean isRunning() throws KeywordSearchModuleException {
         try {
@@ -740,79 +745,97 @@ public class Server {
         }
         return indexDir;
     }
-    
+
     String findLatestIndexDataDir(Case theCase) {
-        String dataFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
-        return findIndexDataDir(theCase, dataFolderName);
+        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
+        List<String> allIndexes = findAllIndexDirs(theCase);
+        for (String path : allIndexes) {
+            if (path.contains(indexFolderName)) {
+                return path;
+            }
+        }
+        return "";
     }
-    
-    String findOldIndexDataDir(Case theCase) {
-        return findIndexDataDir(theCase, "");
-    }    
-    
+
     /**
      * Find index directory location for the case. This is done via subdirectory
-     * search of all existing "ModuleOutput/node_name/keywordsearch/data/" folders.
+     * search of all existing "ModuleOutput/node_name/keywordsearch/data/"
+     * folders.
      *
      * @param theCase the case to get index dir for
      *
      * @return absolute path to index dir
      */
-    private List<String> findIndexDataDir(Case theCase, String dataFolderName) {
-        ArrayList<String> indexDirs = new ArrayList<>();
-        // look for existing index folder
+    private List<String> findAllIndexDirs(Case theCase) {
+        ArrayList<String> candidateIndexDirs = new ArrayList<>();
+        // first find all existing "/ModuleOutput/keywordsearch/data/" folders
         if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
             // multi user cases contain a subfolder for each node that participated in case ingest or review.
             // Any one (but only one!) of those subfolders may contain the actual index.
+            /* NOTE: All of the following paths are valid multi-user index paths:
+            X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+             */
 
             // create a list of all sub-directories
             List<File> contents = getAllContentsInFolder(theCase.getCaseDirectory());
 
-            // scan all topLevelOutputDir subfolders for presense of non-empty "keywordsearch/data/index" folder
+            // scan all topLevelOutputDir subfolders for presense of non-empty "/ModuleOutput/keywordsearch/data/" folder
             for (File item : contents) {
-                if (!item.isDirectory()) {
-                    continue;
-                }
-                // ELTODO is it possible that index is in a different location? what about new solr6 index?
-                String path = Paths.get(item.getAbsolutePath(), MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, dataFolderName).toString(); //NON-NLS
-                if (containsValidIndexFolder(path)) {
-                    indexDirs.add(path);
-                    // there can be multiple index folders (e.g. current version and "old" version) so keep looking
+                File path = Paths.get(item.getAbsolutePath(), MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
+                // must be a non-empty directory
+                if (path.exists() && path.isDirectory()) {
+                    candidateIndexDirs.add(path.toString());
                 }
             }
         } else {
             // single user case
-            String path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, dataFolderName).toString(); //NON-NLS
-            if (containsValidIndexFolder(path)) {
-                indexDirs.add(path);
+            /* NOTE: All of the following paths are valid single user index paths:
+            X:\Case\ModuleOutput\keywordsearch\data\index
+            X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+            X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+            X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+             */
+            File path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
+            // must be a non-empty directory
+            if (path.exists() && path.isDirectory()) {
+                candidateIndexDirs.add(path.toString());
             }
         }
         
-        // did we find an index that requires an upgrade?
-        if (indexDir.isEmpty()) {
-            return indexDir;
-            // ELTODO if we still did not find index then it is a new case
-            // ELTODO indexDir = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toString(); //NON-NLS
-        }
-        
-        // ELTODO do we need to do this when searching for old index?
-        if (uncPathUtilities != null) {
-            // if we can check for UNC paths, do so, otherwise just return the indexDir
-            String result = uncPathUtilities.mappedDriveToUNC(indexDir);
-            if (result == null) {
-                uncPathUtilities.rescanDrives();
-                result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        // analyze possible index folders
+        ArrayList<String> indexDirs = new ArrayList<>();
+        for (String path : candidateIndexDirs) {
+            List<String> validIndexPaths = containsValidIndexFolder(path);
+            for (String validPath : validIndexPaths) {
+                indexDirs.add(convertPathToUNC(validPath));
+                // there can be multiple index folders (e.g. current version and "old" version) so keep looking
             }
-            if (result == null) {
-                return indexDir;
-            }
-            return result;
         }
-        return indexDir;
+        return indexDirs;
     }
     
-     /**
-     * Returns a list of all contents in the folder of interest. 
+    String convertPathToUNC(String indexDir) {
+        // ELTODO do we need to do this when searching for old index?
+        if (uncPathUtilities == null) {
+            return indexDir;
+        }
+        // if we can check for UNC paths, do so, otherwise just return the indexDir
+        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        if (result == null) {
+            uncPathUtilities.rescanDrives();
+            result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        }
+        if (result == null) {
+            return indexDir;
+        }
+        return result;
+    }
+
+    /**
+     * Returns a list of all contents in the folder of interest.
      *
      * @param path Absolute path of the folder of interest
      *
@@ -824,36 +847,68 @@ public class Server {
         // the directory file is not really a directory..
         if (contents == null) {
             return Collections.emptyList();
-        }
-        // Folder is empty
+        } // Folder is empty
         else if (contents.length == 0) {
             return Collections.emptyList();
-        }
-        // Folder has contents
+        } // Folder has contents
         else {
             return new ArrayList<>(Arrays.asList(contents));
         }
     }
-    
-    boolean containsValidIndexFolder(String path) {
+
+    private List<String> containsValidIndexFolder(String path) {
+        /* NOTE: All of the following paths are valid index paths:
+        X:\Case\ModuleOutput\keywordsearch\data\index
+        X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+        X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+        X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+        X:\Case\ingest4\ModuleOutput\keywordsearch\data\index
+        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         */
+
+        List<String> indexFolders = new ArrayList<>();
         List<File> contents = getAllContentsInFolder(path);
         // scan the folder for presense of non-empty "index" folder
         for (File item : contents) {
-            if (!item.isDirectory()) {
+            // scan all subfolders for presense of non-empty "index" folder
+            if (isNonEmptyIndexFolder(item)) {
+                indexFolders.add(item.getAbsolutePath());
+                // keep looking as there may be more index folders
                 continue;
             }
-            // scan all the folder for presense of non-empty "index" folder
-            if (!item.getName().equals(INDEX_FOLDER_NAME)) {
-                continue;
-            }
-            // check that the folder is not empty
-            if (item.listFiles().length > 0) {
-                // ELTODO does this cover "index" folder that contains no files but some sub-folders?
-                // ELTODO is there more evaluation that's needed? look for a specific file perhaps?
-                return true;
+            
+            // check if the folder matches "solrX_schema_Y" patern
+            if (matchesIndexFolderNameStandard(item.getName())) {
+                File nextLevelIndexFolder = Paths.get(item.getAbsolutePath(), INDEX_FOLDER_NAME).toFile();
+                // look for "index" sub-folder one level deeper
+                if (isNonEmptyIndexFolder(nextLevelIndexFolder)) {
+                    indexFolders.add(nextLevelIndexFolder.getAbsolutePath());
+                    // keep looking as there may be more index folders
+                }
             }
         }
+        return indexFolders;
+    }
+    
+    private boolean isNonEmptyIndexFolder(File path) {
+        if (path.exists() && path.isDirectory() && path.getName().equals(INDEX_FOLDER_NAME) && path.listFiles().length > 0) {
+            return true;
+        }
         return false;
+    }
+    
+     /**
+     * Checks whether a name matches index folder name standard
+     *
+     * @param inputString The string to check.
+     *
+     * @return True or false.
+     */
+    public static boolean matchesIndexFolderNameStandard(String inputString) {
+        Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
+        return m.find();
     }
 
     /**
@@ -870,6 +925,9 @@ public class Server {
      *                                      creating/opening the core.
      */
     private Core openCore(Case theCase) throws KeywordSearchModuleException {
+        
+        String indexDir = findLatestIndexDataDir(Case.getCurrentCase()); // ELTODO
+        
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
@@ -920,8 +978,8 @@ public class Server {
 
     /**
      * Execute query that gets only number of all Solr folders indexed without
- actually returning the folders. The result does not include chunks, only
- number of actual folders.
+     * actually returning the folders. The result does not include chunks, only
+     * number of actual folders.
      *
      * @return int representing number of indexed folders
      *
@@ -945,8 +1003,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr folder chunks (not logical
- folders) indexed without actually returning the content.
+     * Execute query that gets only number of all Solr folder chunks (not
+     * logical folders) indexed without actually returning the content.
      *
      * @return int representing number of indexed chunks
      *
@@ -970,8 +1028,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr documents indexed (folders
- and chunks) without actually returning the documents
+     * Execute query that gets only number of all Solr documents indexed
+     * (folders and chunks) without actually returning the documents
      *
      * @return int representing number of indexed folders (folders and chunks)
      *
@@ -1024,10 +1082,11 @@ public class Server {
     /**
      * Execute query that gets number of indexed folder chunks for a folder
      *
-     * @param fileID folder id of the original folder broken into chunks and indexed
+     * @param fileID folder id of the original folder broken into chunks and
+     *               indexed
      *
-     * @return int representing number of indexed folder chunks, 0 if there is no
-         chunks
+     * @return int representing number of indexed folder chunks, 0 if there is
+     *         no chunks
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -1150,7 +1209,7 @@ public class Server {
 
     /**
      * Get the text contents of a single chunk for the given folder as stored in
- SOLR.
+     * SOLR.
      *
      * @param content to get the text for
      * @param chunkID chunk number to query (starting at 1), or 0 if there is no
@@ -1226,7 +1285,7 @@ public class Server {
 
     /**
      * Given folder parent id and child chunk ID, return the ID string of the
- chunk as stored in Solr, e.g. FILEID_CHUNKID
+     * chunk as stored in Solr, e.g. FILEID_CHUNKID
      *
      * @param parentID the parent folder id (id of the source content)
      * @param childID  the child chunk id
@@ -1333,7 +1392,8 @@ public class Server {
     }
 
     /**
-     * Determines whether or not the index folders folder for a Solr core exists.
+     * Determines whether or not the index folders folder for a Solr core
+     * exists.
      *
      * @param coreName the name of the core.
      *
@@ -1502,10 +1562,10 @@ public class Server {
 
         /**
          * Execute query that gets only number of all Solr folders (not chunks)
- indexed without actually returning the folders
+         * indexed without actually returning the folders
          *
-         * @return int representing number of indexed folders (entire folders, not
-         chunks)
+         * @return int representing number of indexed folders (entire folders,
+         *         not chunks)
          *
          * @throws SolrServerException
          */
@@ -1514,8 +1574,9 @@ public class Server {
         }
 
         /**
-         * Execute query that gets only number of all chunks (not logical folders,
- or all documents) indexed without actually returning the content
+         * Execute query that gets only number of all chunks (not logical
+         * folders, or all documents) indexed without actually returning the
+         * content
          *
          * @return int representing number of indexed chunks
          *
@@ -1531,10 +1592,10 @@ public class Server {
         /**
          * Execute query that gets only number of all Solr documents indexed
          * without actually returning the documents. Documents include entire
- indexed folders as well as chunks, which are treated as documents.
+         * indexed folders as well as chunks, which are treated as documents.
          *
          * @return int representing number of indexed documents (entire folders
-         and chunks)
+         *         and chunks)
          *
          * @throws SolrServerException
          */
@@ -1565,11 +1626,11 @@ public class Server {
         /**
          * Execute query that gets number of indexed folder chunks for a folder
          *
-         * @param contentID folder id of the original folder broken into chunks and
-                  indexed
+         * @param contentID folder id of the original folder broken into chunks
+         *                  and indexed
          *
-         * @return int representing number of indexed folder chunks, 0 if there is
-         no chunks
+         * @return int representing number of indexed folder chunks, 0 if there
+         *         is no chunks
          *
          * @throws SolrServerException
          */
