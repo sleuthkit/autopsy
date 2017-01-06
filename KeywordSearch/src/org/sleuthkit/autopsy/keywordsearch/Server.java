@@ -5,7 +5,7 @@
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this folder except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -401,7 +401,7 @@ public class Server {
         ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
         solrProcessBuilder.directory(solrFolder);
 
-        // Redirect stdout and stderr to folders to prevent blocking.
+        // Redirect stdout and stderr to files to prevent blocking.
         Path solrStdoutPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stdout"); //NON-NLS
         solrProcessBuilder.redirectOutput(solrStdoutPath.toFile());
 
@@ -976,11 +976,11 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr folders indexed without
-     * actually returning the folders. The result does not include chunks, only
-     * number of actual folders.
+     * Execute query that gets only number of all Solr files indexed without
+     * actually returning the files. The result does not include chunks, only
+     * number of actual files.
      *
-     * @return int representing number of indexed folders
+     * @return int representing number of indexed files
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -1002,8 +1002,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr folder chunks (not
-     * logical folders) indexed without actually returning the content.
+     * Execute query that gets only number of all Solr file chunks (not
+     * logical files) indexed without actually returning the content.
      *
      * @return int representing number of indexed chunks
      *
@@ -1028,9 +1028,9 @@ public class Server {
 
     /**
      * Execute query that gets only number of all Solr documents indexed
-     * (folders and chunks) without actually returning the documents
+     * (files and chunks) without actually returning the documents
      *
-     * @return int representing number of indexed folders (folders and chunks)
+     * @return int representing number of indexed files (files and chunks)
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -1052,7 +1052,7 @@ public class Server {
     }
 
     /**
-     * Return true if the folder is indexed (either as a whole as a chunk)
+     * Return true if the file is indexed (either as a whole as a chunk)
      *
      * @param contentID
      *
@@ -1079,12 +1079,12 @@ public class Server {
     }
 
     /**
-     * Execute query that gets number of indexed folder chunks for a folder
+     * Execute query that gets number of indexed file chunks for a file
      *
-     * @param fileID folder id of the original folder broken into chunks and
+     * @param fileID file id of the original file broken into chunks and
      *               indexed
      *
-     * @return int representing number of indexed folder chunks, 0 if there is
+     * @return int representing number of indexed file chunks, 0 if there is
      *         no chunks
      *
      * @throws KeywordSearchModuleException
@@ -1186,7 +1186,7 @@ public class Server {
     }
 
     /**
-     * Get the text contents of the given folder as stored in SOLR.
+     * Get the text contents of the given file as stored in SOLR.
      *
      * @param content to get the text for
      *
@@ -1207,7 +1207,7 @@ public class Server {
     }
 
     /**
-     * Get the text contents of a single chunk for the given folder as stored in
+     * Get the text contents of a single chunk for the given file as stored in
      * SOLR.
      *
      * @param content to get the text for
@@ -1283,10 +1283,10 @@ public class Server {
     }
 
     /**
-     * Given folder parent id and child chunk ID, return the ID string of the
+     * Given file parent id and child chunk ID, return the ID string of the
      * chunk as stored in Solr, e.g. FILEID_CHUNKID
      *
-     * @param parentID the parent folder id (id of the source content)
+     * @param parentID the parent file id (id of the source content)
      * @param childID  the child chunk id
      *
      * @return formatted string id
@@ -1327,7 +1327,7 @@ public class Server {
                  * exist or loaded if it already exists.
                  */
 
-                // In single user mode, if there is a core.properties folder already,
+                // In single user mode, if there is a core.properties file already,
                 // we've hit a solr bug. Compensate by deleting it.
                 if (caseType == CaseType.SINGLE_USER_CASE) {
                     Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
@@ -1391,7 +1391,7 @@ public class Server {
     }
 
     /**
-     * Determines whether or not the index folders folder for a Solr core
+     * Determines whether or not the index folder for a Solr core
      * exists.
      *
      * @param coreName the name of the core.
