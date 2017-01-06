@@ -746,9 +746,8 @@ public class Server {
         return indexDir;
     }
 
-    String findLatestIndexDataDir(Case theCase) {
+    String findLatestVersionIndexDir(List<String> allIndexes) {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
-        List<String> allIndexes = findAllIndexDirs(theCase);
         for (String path : allIndexes) {
             if (path.contains(indexFolderName)) {
                 return path;
@@ -766,7 +765,7 @@ public class Server {
      *
      * @return absolute path to index dir
      */
-    private List<String> findAllIndexDirs(Case theCase) {
+    List<String> findAllIndexDirs(Case theCase) {
         ArrayList<String> candidateIndexDirs = new ArrayList<>();
         // first find all existing "/ModuleOutput/keywordsearch/data/" folders
         if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
@@ -808,7 +807,7 @@ public class Server {
         // analyze possible index folders
         ArrayList<String> indexDirs = new ArrayList<>();
         for (String path : candidateIndexDirs) {
-            List<String> validIndexPaths = containsValidIndexFolder(path);
+            List<String> validIndexPaths = containsValidIndexFolders(path);
             for (String validPath : validIndexPaths) {
                 indexDirs.add(convertPathToUNC(validPath));
                 // there can be multiple index folders (e.g. current version and "old" version) so keep looking
@@ -856,7 +855,7 @@ public class Server {
         }
     }
 
-    private List<String> containsValidIndexFolder(String path) {
+    private List<String> containsValidIndexFolders(String path) {
         /* NOTE: All of the following paths are valid index paths:
         X:\Case\ModuleOutput\keywordsearch\data\index
         X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
@@ -926,7 +925,7 @@ public class Server {
      */
     private Core openCore(Case theCase) throws KeywordSearchModuleException {
         
-        String indexDir = findLatestIndexDataDir(Case.getCurrentCase()); // ELTODO
+        // ELTODO String indexDir = findLatestVersionIndexDir(Case.getCurrentCase()); // ELTODO
         
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {

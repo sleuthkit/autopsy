@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.openide.util.NbBundle;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.MissingResourceException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider;
@@ -253,40 +254,49 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
         // do a case subdirectory search to check if latest index exists
         
         // do a case subdirectory search to check for the existence and upgrade status of cores
-        String indexDir = server.findLatestIndexDataDir(Case.getCurrentCase()); // ELTODO
+        List<String> indexDirs = server.findAllIndexDirs(Case.getCurrentCase());
         
         // check if index needs upgrade
-        boolean needsUpgrade = true;
+        boolean needsUpgrade = false;
+        String currentVersionIndexDir = server.findLatestVersionIndexDir(indexDirs);
+        if (currentVersionIndexDir.isEmpty()) {
+            needsUpgrade = true;
+            
+            // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
+            String oldIndexDir = indexDirs.get(0);
         
-        if (needsUpgrade && RuntimeProperties.coreComponentsAreActive()) {
-            //pop up a message box to indicate the restrictions on adding additional 
-            //text and performing regex searches and give the user the option to decline the upgrade
-            boolean upgradeDeclined = true;
-            if (upgradeDeclined) {
-                throw new AutopsyServiceProviderException("ELTODO");
+            if (needsUpgrade && RuntimeProperties.coreComponentsAreActive()) {
+                //pop up a message box to indicate the restrictions on adding additional 
+                //text and performing regex searches and give the user the option to decline the upgrade
+                boolean upgradeDeclined = true;
+                if (upgradeDeclined) {
+                    throw new AutopsyServiceProviderException("ELTODO");
+                }
             }
-        }
-        
-        if (needsUpgrade) {            
-            // ELTODO Check for cancellation at whatever points are feasible
-            
-            // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
-            
-            // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
-            
-            // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
-            
-            // Open the upgraded index
-            
-            // execute a test query
-            boolean success = true;
-            
-            if (!success) {
-                // delete the new directories
+
+            if (needsUpgrade) {            
+                // ELTODO Check for cancellation at whatever points are feasible
+
+                // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+
+                // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+
+                // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+
+                // Open the upgraded index
+
+                // execute a test query
+                boolean success = true;
+
+                if (!success) {
+                    // delete the new directories
+
+                    // close the upgraded index?
+
+                    throw new AutopsyServiceProviderException("ELTODO");
+                }
                 
-                // close the upgraded index?
-                
-                throw new AutopsyServiceProviderException("ELTODO");
+                // currentVersionIndexDir = upgraded index dir
             }
         }
     }
