@@ -58,7 +58,7 @@ public class IngestJobSettings {
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
-    private static FilesSet ALL_FILES_INGEST_FILTER = new FilesSet("All Files", "All Files", false, true, Collections.emptyMap()); //NON-NLS
+    private static FilesSet ALL_FILES_INGEST_FILTER = new FilesSet("All Files", "All Files", false, true, Collections.emptyMap()); //NON-NLS  //WJS-TODO Figure out how to keep these names from being duplicated
     private static FilesSet ALL_AND_UNALLOC_FILES_INGEST_FILTER = new FilesSet("All Files and Unallocated Space", "All Files and Unallocated Space", false, false, Collections.emptyMap());  //NON-NLS
     private FilesSet fileIngestFilter;
     private final String executionContext;
