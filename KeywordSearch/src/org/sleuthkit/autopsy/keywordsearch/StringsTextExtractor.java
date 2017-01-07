@@ -58,7 +58,7 @@ class StringsTextExtractor implements TextExtractor {
     //stringChunkBuf[2] = (byte) 0xBF;
     //}
     public StringsTextExtractor() {
-        ingester = Server.getIngester();
+        ingester = Ingester.getDefault();
         extractScripts.add(DEFAULT_SCRIPT);
     }
 

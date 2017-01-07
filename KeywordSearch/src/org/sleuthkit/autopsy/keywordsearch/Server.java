@@ -1041,15 +1041,6 @@ public class Server {
     }
 
     /**
-     * Method to return ingester instance
-     *
-     * @return ingester instance
-     */
-    public static Ingester getIngester() {
-        return Ingester.getDefault();
-    }
-
-    /**
      * Given file parent id and child chunk ID, return the ID string of the
      * chunk as stored in Solr, e.g. FILEID_CHUNKID
      *

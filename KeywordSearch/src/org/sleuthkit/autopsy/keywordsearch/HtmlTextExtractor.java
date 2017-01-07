@@ -64,7 +64,7 @@ class HtmlTextExtractor implements TextExtractor {
     );
 
     HtmlTextExtractor() {
-        ingester = Server.getIngester();
+        ingester = Ingester.getDefault();
     }
 
     @Override

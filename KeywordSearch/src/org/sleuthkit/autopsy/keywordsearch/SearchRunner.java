@@ -62,7 +62,7 @@ public final class SearchRunner {
     private Map<Long, SearchJobInfo> jobs = new HashMap<>(); //guarded by "this"
 
     SearchRunner() {
-        ingester = Server.getIngester();
+        ingester = Ingester.getDefault();
         updateTimer = new Timer(NbBundle.getMessage(this.getClass(), "SearchRunner.updateTimer.title.text"), true); // run as a daemon
     }
 
