@@ -156,7 +156,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
-        ingester = Server.getIngester();
+        ingester = Ingester.getDefault();
         this.context = context;
 
         // increment the module reference count

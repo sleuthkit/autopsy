@@ -72,7 +72,7 @@ class TikaTextExtractor implements TextExtractor {
     private final List<String> TIKA_SUPPORTED_TYPES = new ArrayList<>();
 
     TikaTextExtractor() {
-        ingester = Server.getIngester();
+        ingester = Ingester.getDefault();
 
         Set<MediaType> mediaTypes = new Tika().getParser().getSupportedTypes(new ParseContext());
         for (MediaType mt : mediaTypes) {
