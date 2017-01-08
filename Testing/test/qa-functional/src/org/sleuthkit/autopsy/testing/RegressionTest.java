@@ -35,7 +35,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JTextField;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -50,10 +49,10 @@ import org.netbeans.jemmy.operators.JComboBoxOperator;
 import org.netbeans.jemmy.operators.JDialogOperator;
 import org.netbeans.jemmy.operators.JFileChooserOperator;
 import org.netbeans.jemmy.operators.JLabelOperator;
+import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
-import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.junit.NbModuleSuite;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
@@ -186,6 +185,8 @@ public class RegressionTest extends TestCase {
         String img_path = getEscapedPath(System.getProperty("img_path"));
         String imageDir = img_path;
         ((JTextField) jtfo0.getSource()).setText(imageDir);
+        JComboBoxOperator comboBoxOperator = new JComboBoxOperator(wo, 1);
+        comboBoxOperator.setSelectedItem("(GMT-5:00) America/New_York");
         wo.btNext().clickMouse();
     }
 
