@@ -30,7 +30,7 @@ import java.util.Map;
 class FilesSetSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Map<String, FilesSet> filesSets;
+    private final Map<String, FilesSet> filesSets;
 
     FilesSetSettings(Map<String, FilesSet> filesSets) {
         this.filesSets = filesSets;

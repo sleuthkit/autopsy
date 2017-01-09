@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;

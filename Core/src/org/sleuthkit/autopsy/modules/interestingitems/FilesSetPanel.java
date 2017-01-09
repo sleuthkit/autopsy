@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
-import java.awt.event.ActionEvent;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
