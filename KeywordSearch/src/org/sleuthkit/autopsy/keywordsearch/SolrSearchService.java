@@ -150,13 +150,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
         /*
          * Autopsy service providers may not have case-level resources.
          */
-        Server server = KeywordSearch.getServer();
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        List<String> indexDirs = server.findAllIndexDirs(Case.getCurrentCase());
+        List<String> indexDirs = IndexHandling.findAllIndexDirs(Case.getCurrentCase());
         
         // check if index needs upgrade
-        String currentVersionIndexDir = server.findLatestVersionIndexDir(indexDirs);
+        String currentVersionIndexDir = IndexHandling.findLatestVersionIndexDir(indexDirs);
         if (currentVersionIndexDir.isEmpty()) {
             
             // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
@@ -176,6 +175,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
             // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
             
             // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+            
+            // convert path to UNC path
             
             // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
             

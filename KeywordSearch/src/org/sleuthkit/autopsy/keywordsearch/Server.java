@@ -39,12 +39,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -72,7 +69,6 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.datamodel.Content;
-//ELTODO import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
 
 /**
  * Handles management of a either a local or centralized Solr server and its
@@ -189,13 +185,6 @@ public class Server {
     private UNCPathUtilities uncPathUtilities = null;
     private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
-    private static final String MODULE_OUTPUT = "ModuleOutput"; // ELTODO get "ModuleOutput" somehow...
-    private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
-    private static final String KWS_DATA_FOLDER_NAME = "data";
-    private static final String INDEX_FOLDER_NAME = "index";
-    private static final String CURRENT_SOLR_VERSION = "6";
-    private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
-    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr\\d{1,2}_schema_\\d{1,2}.\\d{1,2}$");
 
     public enum CORE_EVT_STATES {
 
@@ -310,14 +299,6 @@ public class Server {
 
     int getCurrentSolrStopPort() {
         return currentSolrStopPort;
-    }
-
-    String getCurrentSolrVersion() {
-        return CURRENT_SOLR_VERSION;
-    }
-
-    String getCurrentSchemaVersion() {
-        return CURRENT_SOLR_SCHEMA_VERSION;
     }
 
     /**
@@ -730,6 +711,7 @@ public class Server {
      * @return absolute path to index dir
      */
     String geCoreDataDirPath(Case theCase) {
+        // ELTODO this method is going to be removed
         String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
         if (uncPathUtilities != null) {
             // if we can check for UNC paths, do so, otherwise just return the indexDir
@@ -746,171 +728,6 @@ public class Server {
         return indexDir;
     }
 
-    String findLatestVersionIndexDir(List<String> allIndexes) {
-        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
-        for (String path : allIndexes) {
-            if (path.contains(indexFolderName)) {
-                return path;
-            }
-        }
-        return "";
-    }
-
-    /**
-     * Find index directory location for the case. This is done via subdirectory
-     * search of all existing "ModuleOutput/node_name/keywordsearch/data/"
-     * folders.
-     *
-     * @param theCase the case to get index dir for
-     *
-     * @return absolute path to index dir
-     */
-    List<String> findAllIndexDirs(Case theCase) {
-        ArrayList<String> candidateIndexDirs = new ArrayList<>();
-        // first find all existing "/ModuleOutput/keywordsearch/data/" folders
-        if (theCase.getCaseType() == CaseType.MULTI_USER_CASE) {
-            // multi user cases contain a subfolder for each node that participated in case ingest or review.
-            // Any one (but only one!) of those subfolders may contain the actual index.
-            /* NOTE: All of the following paths are valid multi-user index paths:
-            X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
-             */
-
-            // create a list of all sub-directories
-            List<File> contents = getAllContentsInFolder(theCase.getCaseDirectory());
-
-            // scan all topLevelOutputDir subfolders for presense of non-empty "/ModuleOutput/keywordsearch/data/" folder
-            for (File item : contents) {
-                File path = Paths.get(item.getAbsolutePath(), MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
-                // must be a non-empty directory
-                if (path.exists() && path.isDirectory()) {
-                    candidateIndexDirs.add(path.toString());
-                }
-            }
-        } else {
-            // single user case
-            /* NOTE: All of the following paths are valid single user index paths:
-            X:\Case\ModuleOutput\keywordsearch\data\index
-            X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-            X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-            X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
-             */
-            File path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
-            // must be a non-empty directory
-            if (path.exists() && path.isDirectory()) {
-                candidateIndexDirs.add(path.toString());
-            }
-        }
-        
-        // analyze possible index folders
-        ArrayList<String> indexDirs = new ArrayList<>();
-        for (String path : candidateIndexDirs) {
-            List<String> validIndexPaths = containsValidIndexFolders(path);
-            for (String validPath : validIndexPaths) {
-                indexDirs.add(convertPathToUNC(validPath));
-                // there can be multiple index folders (e.g. current version and "old" version) so keep looking
-            }
-        }
-        return indexDirs;
-    }
-    
-    String convertPathToUNC(String indexDir) {
-        // ELTODO do we need to do this when searching for old index?
-        if (uncPathUtilities == null) {
-            return indexDir;
-        }
-        // if we can check for UNC paths, do so, otherwise just return the indexDir
-        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
-        if (result == null) {
-            uncPathUtilities.rescanDrives();
-            result = uncPathUtilities.mappedDriveToUNC(indexDir);
-        }
-        if (result == null) {
-            return indexDir;
-        }
-        return result;
-    }
-
-    /**
-     * Returns a list of all contents in the folder of interest.
-     *
-     * @param path Absolute path of the folder of interest
-     *
-     * @return List of all contents in the folder of interest
-     */
-    private static List<File> getAllContentsInFolder(String path) {
-        File directory = new File(path);
-        File[] contents = directory.listFiles();
-        if (contents == null) {
-            // the directory file is not really a directory..
-            return Collections.emptyList();
-        }
-        else if (contents.length == 0) {
-            // Folder is empty
-            return Collections.emptyList();
-        }
-        else {
-            // Folder has contents
-            return new ArrayList<>(Arrays.asList(contents));
-        }
-    }
-
-    private List<String> containsValidIndexFolders(String path) {
-        /* NOTE: All of the following paths are valid index paths:
-        X:\Case\ModuleOutput\keywordsearch\data\index
-        X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-        X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-        X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
-         */
-
-        List<String> indexFolders = new ArrayList<>();
-        List<File> contents = getAllContentsInFolder(path);
-        // scan the folder for presense of non-empty "index" folder
-        for (File item : contents) {
-            // scan all subfolders for presense of non-empty "index" folder
-            if (isNonEmptyIndexFolder(item)) {
-                indexFolders.add(item.getAbsolutePath());
-                // keep looking as there may be more index folders
-                continue;
-            }
-            
-            // check if the folder matches "solrX_schema_Y" patern
-            if (matchesIndexFolderNameStandard(item.getName())) {
-                File nextLevelIndexFolder = Paths.get(item.getAbsolutePath(), INDEX_FOLDER_NAME).toFile();
-                // look for "index" sub-folder one level deeper
-                if (isNonEmptyIndexFolder(nextLevelIndexFolder)) {
-                    indexFolders.add(nextLevelIndexFolder.getAbsolutePath());
-                    // keep looking as there may be more index folders
-                }
-            }
-        }
-        return indexFolders;
-    }
-    
-    private boolean isNonEmptyIndexFolder(File path) {
-        if (path.exists() && path.isDirectory() && path.getName().equals(INDEX_FOLDER_NAME) && path.listFiles().length > 0) {
-            return true;
-        }
-        return false;
-    }
-    
-     /**
-     * Checks whether a name matches index folder name standard
-     *
-     * @param inputString The string to check.
-     *
-     * @return True or false.
-     */
-    public static boolean matchesIndexFolderNameStandard(String inputString) {
-        Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
-        return m.find();
-    }
 
     /**
      * ** end single-case specific methods ***
@@ -927,7 +744,7 @@ public class Server {
      */
     private Core openCore(Case theCase) throws KeywordSearchModuleException {
         
-        // ELTODO String indexDir = findLatestVersionIndexDir(Case.getCurrentCase()); // ELTODO
+        // ELTODO REMOVE String indexDir = findLatestVersionIndexDir(Case.getCurrentCase()); // ELTODO
         
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
@@ -1346,6 +1163,7 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
             }
 
+            // ELTODO set solr and schema version of the core that is being loaded. Make that available via API.
             return new Core(coreName, caseType);
 
         } catch (SolrServerException | SolrException | IOException ex) {
