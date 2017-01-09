@@ -93,6 +93,7 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
             this.fileSizeUnitComboBox.setVisible(false);
             this.fileSizeSpinner.setVisible(false);
             this.ruleDialogTitle = "FilesSetPanel.ingest.title";
+
             this.jLabel8.setVisible(false);
             this.equalitySignComboBox.setVisible(false);
             this.ignoreKnownFilesCheckbox.setVisible(false);
@@ -105,7 +106,7 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
         } else {
             this.ruleDialogTitle = "FilesSetPanel.interesting.title";
             this.skipsUnallocCheckbox.setVisible(false);
-            
+
         }
     }
 
@@ -376,17 +377,18 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
      * respond to user interactions with the dialog.
      *
      * @param selectedSet The currently selected files set, may be null to
-     * indicate a new interesting files set definition is to be created.
+     *                    indicate a new interesting files set definition is to
+     *                    be created.
      */
     private void doFileSetsDialog(FilesSet selectedSet) {
         // Create a files set defintion panle.
         FilesSetPanel panel;
         if (selectedSet != null) {
             // Editing an existing set definition.
-            panel = new FilesSetPanel(selectedSet);
+            panel = new FilesSetPanel(selectedSet, panelType);
         } else {
             // Creating a new set definition.
-            panel = new FilesSetPanel();
+            panel = new FilesSetPanel(panelType);
         }
 
         // Do a dialog box with the files set panel until the user either enters
@@ -414,7 +416,7 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
                 // Preserve the existing rules from the set being edited.
                 rules.putAll(selectedSet.getRules());
             }
-            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getSkipUnallocatedSpace(), rules);  //WJS-TODO add support for skipUnallocatedSpaceFlag
+            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getSkipUnallocatedSpace(), rules);
         }
     }
 
@@ -423,14 +425,14 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
      * dialog box and respond to user interactions with the dialog.
      *
      * @param selectedRule The currently selected rule, may be null to indicate
-     * a new rule definition is to be created.
+     *                     a new rule definition is to be created.
      */
     private void doFilesSetRuleDialog(FilesSet.Rule selectedRule) {
         // Create a files set rule panel.
         FilesSetRulePanel panel;
         if (selectedRule != null) {
             // Editing an existing rule definition.
-            panel = new FilesSetRulePanel(selectedRule, okButton, cancelButton);
+            panel = new FilesSetRulePanel(selectedRule, okButton, cancelButton, panelType);
         } else {
             // Creating a new rule definition.
             panel = new FilesSetRulePanel(okButton, cancelButton, panelType);
@@ -441,6 +443,7 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
         int option = JOptionPane.OK_OPTION;
         do {
             option = JOptionPane.showOptionDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
+
         } while (option == JOptionPane.OK_OPTION && !panel.isValidRuleDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
@@ -476,14 +479,15 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
      * owned by this panel. If there is a definition with the same name, it will
      * be replaced, so this is an add/edit operation.
      *
-     * @param oldSet A set to replace, null if the new set is not a replacement.
-     * @param name The name of the files set.
-     * @param description The description of the files set.
-     * @param ignoresKnownFiles Whether or not the files set ignores known
-     * files.
-     * @param rules The set membership rules for the set.
+     * @param oldSet                    A set to replace, null if the new set is
+     *                                  not a replacement.
+     * @param name                      The name of the files set.
+     * @param description               The description of the files set.
+     * @param ignoresKnownFiles         Whether or not the files set ignores
+     *                                  known files.
+     * @param rules                     The set membership rules for the set.
      * @param processesUnallocatedSpace Whether or not this set of rules
-     * processes unallocated space
+     *                                  processes unallocated space
      */
     void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, boolean skipsUnallocatedSpace, Map<String, FilesSet.Rule> rules) {
         if (oldSet != null) {
@@ -667,11 +671,6 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
         ignoreKnownFilesCheckbox.setFont(ignoreKnownFilesCheckbox.getFont().deriveFont(ignoreKnownFilesCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
         ignoreKnownFilesCheckbox.setEnabled(false);
-        ignoreKnownFilesCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                ignoreKnownFilesCheckboxActionPerformed(evt);
-            }
-        });
 
         fileNameRegexCheckbox.setFont(fileNameRegexCheckbox.getFont().deriveFont(fileNameRegexCheckbox.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(fileNameRegexCheckbox, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.fileNameRegexCheckbox.text")); // NOI18N
@@ -773,11 +772,6 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
         org.openide.awt.Mnemonics.setLocalizedText(skipsUnallocCheckbox, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.skipsUnallocCheckbox.text")); // NOI18N
         skipsUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.skipsUnallocCheckbox.toolTipText")); // NOI18N
         skipsUnallocCheckbox.setEnabled(false);
-        skipsUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                skipsUnallocCheckboxActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -872,6 +866,9 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
                         .addComponent(jLabel6)))
                 .addGap(17, 17, 17))
         );
+
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteSetButton, editSetButton, newSetButton});
+
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -963,10 +960,6 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void skipsUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_skipsUnallocCheckboxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_skipsUnallocCheckboxActionPerformed
-
     private void dirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dirsRadioButtonActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_dirsRadioButtonActionPerformed
@@ -1008,10 +1001,6 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
         }
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteSetButtonActionPerformed
-
-    private void ignoreKnownFilesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ignoreKnownFilesCheckboxActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ignoreKnownFilesCheckboxActionPerformed
 
     private void fileNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileNameTextFieldActionPerformed
         // TODO add your handling code here:

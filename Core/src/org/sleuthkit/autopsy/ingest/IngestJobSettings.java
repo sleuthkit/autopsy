@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class IngestJobSettings {
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
-    private static FilesSet ALL_FILES_INGEST_FILTER = new FilesSet("All Files", "All Files", false, true, Collections.emptyMap()); //NON-NLS  //WJS-TODO Figure out how to keep these names from being duplicated
+    private static FilesSet ALL_FILES_INGEST_FILTER = new FilesSet("All Files", "All Files", false, true, Collections.emptyMap()); //NON-NLS
     private static FilesSet ALL_AND_UNALLOC_FILES_INGEST_FILTER = new FilesSet("All Files and Unallocated Space", "All Files and Unallocated Space", false, false, Collections.emptyMap());  //NON-NLS
     private FilesSet fileIngestFilter;
     private final String executionContext;
@@ -82,7 +82,7 @@ public class IngestJobSettings {
      * Sets the FileIngestFilter which is currently being used by ingest.
      *
      * @param fileIngestFilter the FilesSet which represents the
-     * FileIngestFilter
+     *                         FileIngestFilter
      */
     protected void setFileIngestFilter(FilesSet fileIngestFilter) {
         this.fileIngestFilter = fileIngestFilter;
@@ -139,7 +139,7 @@ public class IngestJobSettings {
      * modules dialog. Different execution conterxts may have different ingest
      * job settings.
      *
-     * @param context The context identifier string.
+     * @param context    The context identifier string.
      * @param ingestType The type of modules ingest is running.
      */
     public IngestJobSettings(String context, IngestType ingestType) {
@@ -231,7 +231,7 @@ public class IngestJobSettings {
      * continue to work without modification.
      *
      * @return True for process unallocated space or false for skip unallocated
-     * space.
+     *         space.
      */
     boolean getProcessUnallocatedSpace() {
         boolean processUnallocated = true;
@@ -360,14 +360,14 @@ public class IngestJobSettings {
                     .getFileIngestFiltersWithDefaults()
                     .get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to get File Ingest Filters", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to get File Ingest Filters", ex); //NON-NLS
         }
     }
 
     /**
      * Gets the module names for a given key within these ingest job settings.
      *
-     * @param key The key string.
+     * @param key            The key string.
      * @param defaultSetting The default list of module names.
      *
      * @return The list of module names associated with the key.
@@ -501,7 +501,7 @@ public class IngestJobSettings {
      * Serializes the ingest job settings for this context for a given ingest
      * module.
      *
-     * @param factory The ingest module factory for the module.
+     * @param factory  The ingest module factory for the module.
      * @param settings The ingest job settings for the ingest module
      */
     private void saveModuleSettings(IngestModuleFactory factory, IngestModuleIngestJobSettings settings) {
@@ -521,7 +521,7 @@ public class IngestJobSettings {
      * @param input A hash set of strings.
      *
      * @return The contents of the hash set as a single string of
-     * comma-separated values.
+     *         comma-separated values.
      */
     private static String makeCommaSeparatedValuesList(HashSet<String> input) {
         if (input == null || input.isEmpty()) {

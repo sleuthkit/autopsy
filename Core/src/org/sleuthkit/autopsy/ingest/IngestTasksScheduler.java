@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -149,7 +149,7 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to be scheduled.
      *
      * @throws InterruptedException if the calling thread is blocked due to a
-     * full tasks queue and is interrupted.
+     *                              full tasks queue and is interrupted.
      */
     synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
         if (!job.isCancelled()) {
@@ -209,7 +209,7 @@ final class IngestTasksScheduler {
     /**
      * Schedules a file ingest task for an ingest job.
      *
-     * @param job The job for which the tasks are to be scheduled.
+     * @param job  The job for which the tasks are to be scheduled.
      * @param file The file to be associated with the task.
      */
     synchronized void scheduleFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
@@ -405,8 +405,8 @@ final class IngestTasksScheduler {
         }
 
         /**
-         * Check if the file is a member of the file ingest filter that is being 
-         * applied to the current run of ingest, checks if unallocated space 
+         * Check if the file is a member of the file ingest filter that is being
+         * applied to the current run of ingest, checks if unallocated space
          * should be processed inside call to fileIsMemberOf
          */
         if ((task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file)) == null) {
@@ -481,7 +481,7 @@ final class IngestTasksScheduler {
      * well.
      *
      * @param taskQueue The queue from which to remove the tasks.
-     * @param jobId The id of the job for which the tasks are to be removed.
+     * @param jobId     The id of the job for which the tasks are to be removed.
      */
     synchronized private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
         Iterator<? extends IngestTask> iterator = taskQueue.iterator();

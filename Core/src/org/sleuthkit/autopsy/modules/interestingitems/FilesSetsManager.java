@@ -114,7 +114,7 @@ public final class FilesSetsManager extends Observable {
      * Gets a copy of the current interesting files set definitions.
      *
      * @return A map of interesting files set names to interesting file sets,
-     * possibly empty.
+     *         possibly empty.
      */
     Map<String, FilesSet> getInterestingFilesSets() throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
@@ -129,12 +129,12 @@ public final class FilesSetsManager extends Observable {
      * @return A map of FilesSet names to file ingest sets, possibly empty.
      */
     public Map<String, FilesSet> getFileIngestFiltersWithDefaults() throws FilesSetsManagerException {
-            Map<String, FilesSet> returnMap = new HashMap<>();         
-            for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
-                returnMap.put(fSet.getName(), fSet);
-            }
-            returnMap.putAll(getFileIngestFilters());  
-            return returnMap;
+        Map<String, FilesSet> returnMap = new HashMap<>();
+        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
+            returnMap.put(fSet.getName(), fSet);
+        }
+        returnMap.putAll(getFileIngestFilters());
+        return returnMap;
     }
 
     /**
@@ -156,7 +156,7 @@ public final class FilesSetsManager extends Observable {
      * previous definitions.
      *
      * @param filesSets A mapping of interesting files set names to files sets,
-     * used to enforce unique files set names.
+     *                  used to enforce unique files set names.
      */
     void setInterestingFilesSets(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (INTERESTING_FILES_SET_LOCK) {
@@ -171,7 +171,7 @@ public final class FilesSetsManager extends Observable {
      * previous definitions.
      *
      * @param filesSets A mapping of interesting files set names to files sets,
-     * used to enforce unique files set names.
+     *                  used to enforce unique files set names.
      */
     void setFileIngestFilter(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
@@ -214,8 +214,8 @@ public final class FilesSetsManager extends Observable {
         /**
          * Reads interesting file set definitions from an XML file.
          *
-         * @param fileName The name of the file which is expected to store the
-         * serialized definitions
+         * @param fileName       The name of the file which is expected to store
+         *                       the serialized definitions
          * @param legacyFilePath Path of the set definitions file as a string.
          *
          * @return The set definitions in a map of set names to sets.
@@ -269,7 +269,7 @@ public final class FilesSetsManager extends Observable {
          * Reads the definitions from the serialization file
          *
          * @return the map representing settings saved to serialization file,
-         * empty set if the file does not exist.
+         *         empty set if the file does not exist.
          *
          * @throws FilesSetsManagerException if file could not be read
          */
@@ -295,9 +295,9 @@ public final class FilesSetsManager extends Observable {
         /**
          * Reads in an interesting files set.
          *
-         * @param setElem An interesting files set XML element
+         * @param setElem   An interesting files set XML element
          * @param filesSets A collection to which the set is to be added.
-         * @param filePath The source file, used for error reporting.
+         * @param filePath  The source file, used for error reporting.
          */
         private static void readFilesSet(Element setElem, Map<String, FilesSet> filesSets, String filePath) {
             // The file set must have a unique name.
@@ -381,7 +381,7 @@ public final class FilesSetsManager extends Observable {
          * @param elem The file name rule XML element.
          *
          * @return A file name rule, or null if there is an error (the error is
-         * logged).
+         *         logged).
          */
         private static FilesSet.Rule readFileNameRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -439,7 +439,7 @@ public final class FilesSetsManager extends Observable {
          * @param elem The file name extension rule XML element.
          *
          * @return A file name extension rule, or null if there is an error (the
-         * error is logged).
+         *         error is logged).
          */
         private static FilesSet.Rule readFileExtensionRule(Element elem) {
             String ruleName = FilesSetXML.readRuleName(elem);
@@ -532,7 +532,7 @@ public final class FilesSetsManager extends Observable {
          * @param ruleElement The XML element.
          *
          * @return The meta-type condition, or null if there is an error
-         * (logged).
+         *         (logged).
          */
         private static FilesSet.Rule.MetaTypeCondition readMetaTypeCondition(Element ruleElement) {
             FilesSet.Rule.MetaTypeCondition condition = null;

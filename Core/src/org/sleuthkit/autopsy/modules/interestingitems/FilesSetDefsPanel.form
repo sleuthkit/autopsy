@@ -66,11 +66,11 @@
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <Component id="newSetButton" min="-2" max="-2" attributes="0"/>
+                              <Component id="newSetButton" linkSize="3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
-                              <Component id="editSetButton" min="-2" max="-2" attributes="0"/>
+                              <Component id="editSetButton" linkSize="3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="deleteSetButton" min="-2" max="-2" attributes="0"/>
+                              <Component id="deleteSetButton" linkSize="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
                               <Group type="103" groupAlignment="0" max="-2" attributes="0">
@@ -563,9 +563,6 @@
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ignoreKnownFilesCheckboxActionPerformed"/>
-              </Events>
             </Component>
             <Component class="javax.swing.JCheckBox" name="fileNameRegexCheckbox">
               <Properties>
@@ -847,9 +844,6 @@
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="skipsUnallocCheckboxActionPerformed"/>
-              </Events>
             </Component>
           </SubComponents>
         </Container>

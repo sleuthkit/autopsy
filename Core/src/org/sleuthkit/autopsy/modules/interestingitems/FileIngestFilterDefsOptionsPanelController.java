@@ -42,17 +42,17 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 )
 
 /**
- * Class for creating an FilesSetDefsPanel which will be used for
- * configuring the FileIngestFilter.
+ * Class for creating an FilesSetDefsPanel which will be used for configuring
+ * the FileIngestFilter.
  */
 public final class FileIngestFilterDefsOptionsPanelController extends OptionsPanelController {
 
     private FilesSetDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    public final static String NEW_INGEST_FILTER = "<Create New>";
-      private static final Logger LOGGER = Logger.getLogger(FileIngestFilterDefsOptionsPanelController.class.getName());
-    
+    public final static String NEW_FILE_INGEST_FILTER = "Create new file ingest filter...";
+    private static final Logger LOGGER = Logger.getLogger(FileIngestFilterDefsOptionsPanelController.class.getName());
+
     /**
      * Component should load its data here.
      */
@@ -65,22 +65,22 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
     /**
      * Returns an array which will contain the names of all options which should
      * exist in the "Run Ingest Modules On:" JCombobox
-     * 
+     *
      * Keeping the default File Ingest Filters and the saved one seperate allows
-     * the default to always be first elements in 
+     * the default to always be first elements in
      *
      * @return -filterNames an array of all established filter names as well as
-     * a Create New option
+     *         a Create New option
      */
     public String[] getComboBoxContents() {
         ArrayList<String> nameList = new ArrayList<>();
         for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
             nameList.add(fSet.getName());
         }
-        nameList.add(NEW_INGEST_FILTER);
-        if (!(panel == null)) {            
+        nameList.add(NEW_FILE_INGEST_FILTER);
+        if (!(panel == null)) {
             nameList.addAll(panel.getKeys());
-        }             
+        }
         return nameList.toArray(new String[nameList.size()]);
     }
 
@@ -153,7 +153,7 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
      * is for File Ingest Filter settings
      *
      * @return an FilesSetDefsPanel which has text and fields modified to
- indicate it is for File Ingest Filtering.
+     *         indicate it is for File Ingest Filtering.
      */
     private FilesSetDefsPanel getPanel() {
         if (panel == null) {

@@ -49,14 +49,14 @@ public final class FilesSet implements Serializable {
     /**
      * Constructs an interesting files set.
      *
-     * @param name The name of the set.
-     * @param description A description of the set, may be null.
+     * @param name             The name of the set.
+     * @param description      A description of the set, may be null.
      * @param ignoreKnownFiles Whether or not to exclude known files from the
-     * set.
-     * @param rules The rules that define the set. May be null, but a set with
-     * no rules is the empty set.
+     *                         set.
+     * @param rules            The rules that define the set. May be null, but a
+     *                         set with no rules is the empty set.
      */
-    public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean skipUnallocatedSpace, Map<String, Rule> rules ) {
+    public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean skipUnallocatedSpace, Map<String, Rule> rules) {
         if ((name == null) || (name.isEmpty())) {
             throw new IllegalArgumentException("Interesting files set name cannot be null or empty");
         }
@@ -104,7 +104,7 @@ public final class FilesSet implements Serializable {
      * Returns whether or not this set of rules will process unallocated space.
      *
      * @return True if unallocated space should be processed, false if it should
-     * not be.
+     *         not be.
      */
     public boolean getSkipUnallocatedSpace() {
         return this.skipUnallocatedSpace;
@@ -125,23 +125,23 @@ public final class FilesSet implements Serializable {
      * @param file A file to test for set membership.
      *
      * @return The name of the first set membership rule satisfied by the file,
-     * will be null if the file does not belong to the set.
+     *         will be null if the file does not belong to the set.
      */
     public String fileIsMemberOf(AbstractFile file) {
         if ((this.ignoreKnownFiles) && (file.getKnown() == TskData.FileKnown.KNOWN)) {
             return null;
         }
 
-        if ((this.skipUnallocatedSpace) && 
-            (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) ||
-             file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) ||
-             file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
-                return null;
+        if ((this.skipUnallocatedSpace)
+                && (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
+                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
+            return null;
         }
-        
-        if ((rules.isEmpty())){
-            return "All Files";   //WJS-TODO Figure out how to make this return non-null when filter is default filter with no rules correctly
-         }
+
+        if ((rules.isEmpty())) { //WJS-TODO default filters have no rules they should pass, but what should non-default filters do with no rules?
+            return "All Files";
+        }
 
         for (Rule rule : rules.values()) {
             if (rule.isSatisfied(file)) {
@@ -177,10 +177,10 @@ public final class FilesSet implements Serializable {
         /**
          * Construct an interesting files set membership rule.
          *
-         * @param ruleName The name of the rule. Can be empty string.
+         * @param ruleName          The name of the rule. Can be empty string.
          * @param fileNameCondition A file name condition, may be null.
          * @param metaTypeCondition A file meta-type condition.
-         * @param pathCondition A file path condition, may be null.
+         * @param pathCondition     A file path condition, may be null.
          * @param mimeTypeCondition A file mime type condition, may be null.
          * @param fileSizeCondition A file size condition, may be null.
          */
@@ -581,7 +581,7 @@ public final class FilesSet implements Serializable {
              * regular expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             boolean isRegex();
 
@@ -641,7 +641,7 @@ public final class FilesSet implements Serializable {
              * regular expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             @Override
             public boolean isRegex() {
@@ -766,7 +766,7 @@ public final class FilesSet implements Serializable {
              * Construct a file name extension regular expression condition.
              *
              * @param extension The file name extension regular expression to be
-             * matched.
+             *                  matched.
              */
             ExtensionCondition(Pattern extension) {
                 super(extension.pattern(), false);
@@ -797,7 +797,7 @@ public final class FilesSet implements Serializable {
              * expression.
              *
              * @return True if the text to be matched is a regular expression,
-             * false otherwise.
+             *         false otherwise.
              */
             boolean isRegex();
 

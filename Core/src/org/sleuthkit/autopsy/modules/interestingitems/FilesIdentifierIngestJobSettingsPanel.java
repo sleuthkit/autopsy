@@ -53,7 +53,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
      * constructor.
      *
      * @return An instance of the ingest job settings panel interesting files
-     * identifier ingest modules.
+     *         identifier ingest modules.
      */
     static FilesIdentifierIngestJobSettingsPanel makePanel(FilesIdentifierIngestJobSettings settings) {
         FilesIdentifierIngestJobSettingsPanel panel = new FilesIdentifierIngestJobSettingsPanel(settings);
@@ -172,7 +172,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * job.
          *
          * @param filesSetRows A collection of row objects that bundles an
-         * interesting files set with an enabled flag
+         *                     interesting files set with an enabled flag
          */
         FilesSetsTableModel(List<FilesSetRow> filesSetRows) {
             this.filesSetRows = filesSetRows;
@@ -182,7 +182,7 @@ final class FilesIdentifierIngestJobSettingsPanel extends IngestModuleIngestJobS
          * Refreshes the table with a new set of rows.
          *
          * @param filesSetRows A collection of row objects that bundles an
-         * interesting files set with an enabled flag
+         *                     interesting files set with an enabled flag
          */
         void resetTableData(List<FilesSetRow> filesSetRows) {
             this.filesSetRows = filesSetRows;

@@ -68,15 +68,16 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      */
     FilesSetRulePanel(JButton okButton, JButton cancelButton, PANEL_TYPE panelType) {
         initComponents();
-        if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS){ //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
+        if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
             mimeCheck.setVisible(false);
             fileSizeComboBox.setVisible(false);
             fileSizeCheck.setVisible(false);
             equalitySymbolComboBox.setVisible(false);
             fileSizeSpinner.setVisible(false);
-        }
-        else {
+            org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ingest.jLabel5.text")); // NOI18N
+
+        } else {
             populateMimeTypesComboBox();
         }
         populateComponentsWithDefaultValues();
@@ -88,15 +89,25 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      *
      * @param rule The files set rule to be edited.
      */
-    FilesSetRulePanel(FilesSet.Rule rule, JButton okButton, JButton cancelButton) {
+    FilesSetRulePanel(FilesSet.Rule rule, JButton okButton, JButton cancelButton, PANEL_TYPE panelType) {
         initComponents();
+        if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
+            mimeTypeComboBox.setVisible(false);
+            mimeCheck.setVisible(false);
+            fileSizeComboBox.setVisible(false);
+            fileSizeCheck.setVisible(false);
+            equalitySymbolComboBox.setVisible(false);
+            fileSizeSpinner.setVisible(false);
+        } else {
+            populateMimeTypesComboBox();
+            populateMimeConditionComponents(rule);
+            populateSizeConditionComponents(rule);
+        }
         populateMimeTypesComboBox();
         populateRuleNameComponent(rule);
         populateTypeConditionComponents(rule);
         populateNameConditionComponents(rule);
         populatePathConditionComponents(rule);
-        populateMimeConditionComponents(rule);
-        populateSizeConditionComponents(rule);
         this.setButtons(okButton, cancelButton);
     }
 
@@ -632,7 +643,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         org.openide.awt.Mnemonics.setLocalizedText(pathSeparatorInfoLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.pathSeparatorInfoLabel.text")); // NOI18N
         pathSeparatorInfoLabel.setEnabled(false);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.jLabel5.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.interesting.jLabel5.text")); // NOI18N
 
         mimeTypeComboBox.setEditable(true);
         mimeTypeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] {""}));
@@ -644,7 +655,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         fileSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.FilesSetRulePanel_bytes(), Bundle.FilesSetRulePanel_kiloBytes(), Bundle.FilesSetRulePanel_megaBytes(), Bundle.FilesSetRulePanel_gigaBytes() }));
         fileSizeComboBox.setEnabled(false);
 
-        fileSizeSpinner.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(0), Integer.valueOf(0), null, Integer.valueOf(1)));
+        fileSizeSpinner.setModel(new javax.swing.SpinnerNumberModel(0, 0, null, 1));
         fileSizeSpinner.setEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(nameCheck, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.nameCheck.text")); // NOI18N
