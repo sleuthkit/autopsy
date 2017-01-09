@@ -843,14 +843,16 @@ public class Server {
     private static List<File> getAllContentsInFolder(String path) {
         File directory = new File(path);
         File[] contents = directory.listFiles();
-        // the directory file is not really a directory..
         if (contents == null) {
+            // the directory file is not really a directory..
             return Collections.emptyList();
-        } // Folder is empty
+        }
         else if (contents.length == 0) {
+            // Folder is empty
             return Collections.emptyList();
-        } // Folder has contents
+        }
         else {
+            // Folder has contents
             return new ArrayList<>(Arrays.asList(contents));
         }
     }
