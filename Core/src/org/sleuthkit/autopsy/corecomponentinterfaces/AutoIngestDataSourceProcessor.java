@@ -26,7 +26,7 @@ import java.nio.file.Path;
  *
  * @author elivis
  */
-public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor {
+public interface AutoIngestDataSourceProcessor extends DataSourceProcessor {
 
     /**
      * Indicates whether the DataSourceProcessor is capable of processing the
@@ -44,7 +44,7 @@ public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor 
      * @throws
      * org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException
      */
-    int canProcess(Path dataSourcePath) throws AutomatedIngestDataSourceProcessorException;
+    int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException;
 
     /**
      * Adds a data source to the case database using a background task in a
@@ -66,20 +66,20 @@ public interface AutomatedIngestDataSourceProcessor extends DataSourceProcessor 
      * @throws
      * org.sleuthkit.autopsy.corecomponentinterfaces.AutomatedIngestDataSourceProcessor.AutomatedIngestDataSourceProcessorException
      */
-    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutomatedIngestDataSourceProcessorException;
+    void process(String deviceId, Path dataSourcePath, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callBack) throws AutoIngestDataSourceProcessorException;
 
     /**
      * A custom exception for the use of AutomatedIngestDataSourceProcessor.
      */
-    public class AutomatedIngestDataSourceProcessorException extends Exception {
+    public class AutoIngestDataSourceProcessorException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
-        public AutomatedIngestDataSourceProcessorException(String message) {
+        public AutoIngestDataSourceProcessorException(String message) {
             super(message);
         }
 
-        public AutomatedIngestDataSourceProcessorException(String message, Throwable cause) {
+        public AutoIngestDataSourceProcessorException(String message, Throwable cause) {
             super(message, cause);
         }
     }

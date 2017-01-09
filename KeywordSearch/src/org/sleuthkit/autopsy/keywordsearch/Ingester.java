@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.base.Utf8;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -154,10 +153,8 @@ class Ingester {
         }
 
         Map<String, String> fields = getContentFields(source);
-        //Get a stream and a reader for that stream
-        try (final InputStream stream = extractor.getInputStream(source);
-                Reader reader = extractor.getReader(stream, source);) {
-
+        //Get a reader for the content of the given source
+        try (Reader reader = extractor.getReader(source);) {
             Chunker chunker = new Chunker(reader);
 
             for (Chunk chunk : chunker) {
@@ -252,6 +249,8 @@ class Ingester {
 
         }
     }
+
+    /**
 
     /**
      * Visitor used to create fields to send to SOLR index.
@@ -372,7 +371,6 @@ class Ingester {
     }
 
 }
-
 class Chunk {
     private final StringBuilder sb;
     private final int chunksize;

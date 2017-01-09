@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.StringExtract;
 import org.sleuthkit.autopsy.coreutils.StringExtract.StringExtractUnicodeTable.SCRIPT;
@@ -36,6 +37,8 @@ import org.sleuthkit.datamodel.TskException;
  * TextExtractor that extracts raw strings from an AbstractFile.
  */
 class StringsTextExtractor extends FileTextExtractor {
+
+    static final private Logger logger = Logger.getLogger(StringsTextExtractor.class.getName());
 
     /**
      * Options for this extractor
@@ -91,7 +94,12 @@ class StringsTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    boolean isDisabled() {
+    public void logWarning(final String msg, Exception ex) {
+        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
+    }
+
+    @Override
+    public boolean isDisabled() {
         boolean extractUTF8 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF8.toString()));
         boolean extractUTF16 = Boolean.parseBoolean(extractOptions.get(ExtractOptions.EXTRACT_UTF16.toString()));
 
@@ -99,11 +107,11 @@ class StringsTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    InputStreamReader getReader(final InputStream stringStream, AbstractFile sourceFile) throws Ingester.IngesterException {
+    public InputStreamReader getReader(AbstractFile sourceFile) throws Ingester.IngesterException {
+        InputStream stringStream = getInputStream(sourceFile);
         return new InputStreamReader(stringStream, Server.DEFAULT_INDEXED_TEXT_CHARSET);
     }
 
-    @Override
     InputStream getInputStream(AbstractFile sourceFile) {
         //check which extract stream to use
         if (extractScripts.size() == 1 && extractScripts.get(0).equals(SCRIPT.LATIN_1)) {

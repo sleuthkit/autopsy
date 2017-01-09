@@ -43,7 +43,7 @@ class DropdownToolbar extends javax.swing.JPanel {
     private static DropdownToolbar instance;
     private SearchSettingsChangeListener searchSettingsChangeListener;
     private boolean active = false;
-    private DropdownSingleKeywordSearchPanel dropPanel = null;
+    private DropdownSingleTermSearchPanel dropPanel = null;
 
     /**
      * Gets the singleton panel that provides a toolbar button for the dropdown
@@ -103,7 +103,7 @@ class DropdownToolbar extends javax.swing.JPanel {
             }
         });
 
-        dropPanel = DropdownSingleKeywordSearchPanel.getDefault();
+        dropPanel = DropdownSingleTermSearchPanel.getDefault();
         dropPanel.addSearchButtonActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
