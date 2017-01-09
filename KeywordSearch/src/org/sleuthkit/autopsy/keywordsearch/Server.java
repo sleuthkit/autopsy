@@ -49,13 +49,13 @@ import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.request.CoreAdminRequest;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
+import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
+import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.TermsResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
@@ -965,7 +965,7 @@ public class Server {
         }
     }
 
-    NamedList<Object> request(SolrRequest request) throws SolrServerException, NoOpenCoreException {
+    NamedList<Object> request(SolrRequest<?> request) throws SolrServerException, NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCore) {
@@ -1276,15 +1276,6 @@ public class Server {
     }
 
     /**
-     * Method to return ingester instance
-     *
-     * @return ingester instance
-     */
-    public static Ingester getIngester() {
-        return Ingester.getDefault();
-    }
-
-    /**
      * Given file parent id and child chunk ID, return the ID string of the
      * chunk as stored in Solr, e.g. FILEID_CHUNKID
      *
@@ -1457,7 +1448,7 @@ public class Server {
             return solrCore.query(sq);
         }
 
-        private NamedList<Object> request(SolrRequest request) throws SolrServerException {
+        private NamedList<Object> request(SolrRequest<?> request) throws SolrServerException {
             try {
                 return solrCore.request(request);
             } catch (IOException e) {
