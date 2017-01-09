@@ -190,6 +190,11 @@ public class Installer extends ModuleInstall {
     public Installer() {
         logger.log(Level.INFO, "core installer created"); //NON-NLS
         javaFxInit = false;
+        
+        // Prevent the Autopsy UI from shrinking on high DPI displays
+        System.setProperty("sun.java2d.dpiaware", "false");
+        System.setProperty("prism.allowhidpi", "false");
+        
         packageInstallers = new ArrayList<>();
         packageInstallers.add(org.sleuthkit.autopsy.coreutils.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.corecomponents.Installer.getDefault());
