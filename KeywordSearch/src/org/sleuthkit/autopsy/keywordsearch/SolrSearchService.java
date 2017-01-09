@@ -28,6 +28,7 @@ import java.util.MissingResourceException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -38,7 +39,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An implementation of the KeywordSearchService interface that uses Solr for
  * text indexing and search.
  */
-@ServiceProvider(service = KeywordSearchService.class)
+@ServiceProviders(value={
+    @ServiceProvider(service=KeywordSearchService.class),
+    @ServiceProvider(service=AutopsyServiceProvider.class)}
+)
 public class SolrSearchService implements KeywordSearchService, AutopsyServiceProvider  {
 
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
@@ -152,47 +156,43 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
         List<String> indexDirs = server.findAllIndexDirs(Case.getCurrentCase());
         
         // check if index needs upgrade
-        boolean needsUpgrade = false;
         String currentVersionIndexDir = server.findLatestVersionIndexDir(indexDirs);
         if (currentVersionIndexDir.isEmpty()) {
-            needsUpgrade = true;
             
             // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
             String oldIndexDir = indexDirs.get(0);
-        
-            if (needsUpgrade && RuntimeProperties.coreComponentsAreActive()) {
+
+            if (RuntimeProperties.coreComponentsAreActive()) {
                 //pop up a message box to indicate the restrictions on adding additional 
                 //text and performing regex searches and give the user the option to decline the upgrade
-                boolean upgradeDeclined = true;
+                boolean upgradeDeclined = false;
                 if (upgradeDeclined) {
                     throw new AutopsyServiceProviderException("ELTODO");
                 }
             }
 
-            if (needsUpgrade) {            
-                // ELTODO Check for cancellation at whatever points are feasible
+            // ELTODO Check for cancellation at whatever points are feasible
+            
+            // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            
+            // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+            
+            // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            
+            // Open the upgraded index
+            
+            // execute a test query
+            
+            boolean success = true;
 
-                // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            if (!success) {
+                // delete the new directories
 
-                // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
-
-                // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
-
-                // Open the upgraded index
-
-                // execute a test query
-                boolean success = true;
-
-                if (!success) {
-                    // delete the new directories
-
-                    // close the upgraded index?
-
-                    throw new AutopsyServiceProviderException("ELTODO");
-                }
-                
-                // currentVersionIndexDir = upgraded index dir
+                // close the upgraded index?
+                throw new AutopsyServiceProviderException("ELTODO");
             }
+
+            // currentVersionIndexDir = upgraded index dir
         }
     }
 
