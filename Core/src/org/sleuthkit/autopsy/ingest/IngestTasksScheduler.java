@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2012-2015 Basis Technology Corp.
+ * Copyright 2012-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.modules.interestingitems.IngestSetFilter;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FileSystem;
@@ -149,7 +150,7 @@ final class IngestTasksScheduler {
      * @param job The job for which the tasks are to be scheduled.
      *
      * @throws InterruptedException if the calling thread is blocked due to a
-     *                              full tasks queue and is interrupted.
+     * full tasks queue and is interrupted.
      */
     synchronized void scheduleIngestTasks(DataSourceIngestJob job) {
         if (!job.isCancelled()) {
@@ -209,7 +210,7 @@ final class IngestTasksScheduler {
     /**
      * Schedules a file ingest task for an ingest job.
      *
-     * @param job  The job for which the tasks are to be scheduled.
+     * @param job The job for which the tasks are to be scheduled.
      * @param file The file to be associated with the task.
      */
     synchronized void scheduleFileIngestTask(DataSourceIngestJob job, AbstractFile file) {
@@ -411,6 +412,13 @@ final class IngestTasksScheduler {
             return false;
         }
 
+        if (file.isFile()) {  //is this the criteria we want to be using(will unallocated space files show return true?)
+            IngestSetFilter ingestSetFilter;
+            ingestSetFilter = new IngestSetFilter();
+            if (!ingestSetFilter.match(file)) {
+                return false;
+            }
+        }
         // Skip the task if the file is one of a select group of special, large
         // NTFS or FAT file system files.
         if (file instanceof org.sleuthkit.datamodel.File) {
@@ -479,7 +487,7 @@ final class IngestTasksScheduler {
      * well.
      *
      * @param taskQueue The queue from which to remove the tasks.
-     * @param jobId     The id of the job for which the tasks are to be removed.
+     * @param jobId The id of the job for which the tasks are to be removed.
      */
     synchronized private void removeTasksForJob(Collection<? extends IngestTask> taskQueue, long jobId) {
         Iterator<? extends IngestTask> iterator = taskQueue.iterator();
@@ -555,12 +563,12 @@ final class IngestTasksScheduler {
             static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<>();
 
             static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<>();
+
             /*
              * prioritize root directory folders based on the assumption that we
              * are looking for user content. Other types of investigations may
              * want different priorities.
              */
-
             static /*
              * prioritize root directory folders based on the assumption that we
              * are looking for user content. Other types of investigations may

@@ -42,6 +42,7 @@ final class FilesSet implements Serializable {
     private final String name;
     private final String description;
     private final boolean ignoreKnownFiles;
+    private final boolean processUnallocated;
     private final Map<String, Rule> rules = new HashMap<>();
 
     /**
@@ -54,13 +55,14 @@ final class FilesSet implements Serializable {
      * @param rules            The rules that define the set. May be null, but a
      *                         set with no rules is the empty set.
      */
-    FilesSet(String name, String description, boolean ignoreKnownFiles, Map<String, Rule> rules) {
+    FilesSet(String name, String description, boolean ignoreKnownFiles, Map<String, Rule> rules, boolean processUnallocatedSpace) {
         if ((name == null) || (name.isEmpty())) {
             throw new IllegalArgumentException("Interesting files set name cannot be null or empty");
         }
         this.name = name;
         this.description = (description != null ? description : "");
         this.ignoreKnownFiles = ignoreKnownFiles;
+        this.processUnallocated = processUnallocatedSpace;
         if (rules != null) {
             this.rules.putAll(rules);
         }
@@ -97,6 +99,15 @@ final class FilesSet implements Serializable {
         return this.ignoreKnownFiles;
     }
 
+    /**
+     * Returns whether or not this set of rules will process unallocated space.
+     * 
+     * @return True if unallocated space should be processed, false if it should not be.
+     */
+    boolean processesUnallocatedSpace() {
+        return this.processUnallocated;
+    }
+    
     /**
      * Gets a copy of the set membership rules of this interesting files set.
      *

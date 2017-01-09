@@ -51,7 +51,8 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "InterestingItemDefsPanel.megaBytes=Megabytes",
         "InterestingItemDefsPanel.gigaBytes=Gigabytes",
         "InterestingItemsDefsPanel.loadError=Error loading interesting files sets from file.",
-        "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file."
+        "InterestingItemsDefsPanel.saveError=Error saving interesting files sets to file.",
+        "IngestFileFilter.title=Ingest File Set"
     })
 
     private final DefaultListModel<FilesSet> setsListModel = new DefaultListModel<>();
@@ -59,6 +60,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private final Logger logger = Logger.getLogger(InterestingItemDefsPanel.class.getName());
     private final JButton okButton = new JButton("OK");
     private final JButton cancelButton = new JButton("Cancel");
+    private final String settingsFileName;
+    private final String settingsLegacyFileName;
+    private final String ruleDialogTitle;
 
     // The following is a map of interesting files set names to interesting
     // files set definitions. It is a snapshot of the files set definitions
@@ -72,17 +76,39 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     /**
      * Constructs an interesting item definitions panel.
      */
-    InterestingItemDefsPanel() {
+    InterestingItemDefsPanel(String settingsName, String legacySettingsName) {
         this.initComponents();
+        this.settingsLegacyFileName = legacySettingsName;
         this.customInit();
         this.setsList.setModel(setsListModel);
         this.setsList.addListSelectionListener(new InterestingItemDefsPanel.SetsListSelectionListener());
         this.rulesList.setModel(rulesListModel);
         this.rulesList.addListSelectionListener(new InterestingItemDefsPanel.RulesListSelectionListener());
+        this.settingsFileName = settingsName;
+
+        if (legacySettingsName.equals("")) {  //Hide the mimetype settings when this is displaying FileSet rules instead of interesting item rules
+            this.mimeTypeComboBox.setVisible(false);
+            this.jLabel7.setVisible(false);
+            this.ruleDialogTitle = "IngestFileFilter.title";
+        } else {
+            this.ruleDialogTitle = "FilesSetPanel.title";
+        }
+
     }
 
-    @NbBundle.Messages({"InterestingItemDefsPanel.Title=Global Interesting Items Settings"})
+    Set<String> getKeys() {
+        load();
+        return filesSets.keySet();
+    }
+
+    @NbBundle.Messages({"InterestingItemDefsPanel.Title=Global Interesting Items Settings",
+        "IngestFilterItemDefsPanel.Title=Global Ingest Filter Settings"})
     private void customInit() {
+        if (settingsLegacyFileName.equals("")) {
+            setName(Bundle.IngestFilterItemDefsPanel_Title());
+        } else {
+            setName(Bundle.InterestingItemDefsPanel_Title());
+        }
         setName(Bundle.InterestingItemDefsPanel_Title());
 
         Set<String> fileTypesCollated = new HashSet<>();
@@ -122,7 +148,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     @Override
     public void saveSettings() {
         try {
-            InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets);
+            InterestingItemDefsManager.getInstance().setInterestingFilesSets(this.filesSets, settingsFileName);
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_saveError());
         }
@@ -146,7 +172,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         try {
             // Get a working copy of the interesting files set definitions and sort
             // by set name.
-            this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets());
+            this.filesSets = new TreeMap<>(InterestingItemDefsManager.getInstance().getInterestingFilesSets(settingsFileName, settingsLegacyFileName));
         } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.InterestingItemsDefsPanel_loadError());
             this.filesSets = new TreeMap<>();
@@ -175,6 +201,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setsListModel.clear();
         this.setDescriptionTextArea.setText("");
         this.ignoreKnownFilesCheckbox.setSelected(true);
+        this.processUnallocCheckbox.setSelected(true);
         this.newSetButton.setEnabled(true);
         this.editSetButton.setEnabled(false);
         this.deleteSetButton.setEnabled(false);
@@ -222,7 +249,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 // selected files set.
                 InterestingItemDefsPanel.this.setDescriptionTextArea.setText(selectedSet.getDescription());
                 InterestingItemDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
-
+                InterestingItemDefsPanel.this.processUnallocCheckbox.setSelected(selectedSet.processesUnallocatedSpace());
                 // Enable the new, edit and delete set buttons.
                 InterestingItemDefsPanel.this.newSetButton.setEnabled(true);
                 InterestingItemDefsPanel.this.editSetButton.setEnabled(true);
@@ -327,8 +354,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * respond to user interactions with the dialog.
      *
      * @param selectedSet The currently selected files set, may be null to
-     *                    indicate a new interesting files set definition is to
-     *                    be created.
+     * indicate a new interesting files set definition is to be created.
      */
     private void doFileSetsDialog(FilesSet selectedSet) {
         // Create a files set defintion panle.
@@ -346,7 +372,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.showConfirmDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
@@ -366,7 +392,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 // Preserve the existing rules from the set being edited.
                 rules.putAll(selectedSet.getRules());
             }
-            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), rules);
+            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), rules, panel.getProcessUnallocatedSpace());
         }
     }
 
@@ -375,7 +401,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * dialog box and respond to user interactions with the dialog.
      *
      * @param selectedRule The currently selected rule, may be null to indicate
-     *                     a new rule definition is to be created.
+     * a new rule definition is to be created.
      */
     private void doFilesSetRuleDialog(FilesSet.Rule selectedRule) {
         // Create a files set rule panel.
@@ -385,14 +411,14 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
             panel = new FilesSetRulePanel(selectedRule, okButton, cancelButton);
         } else {
             // Creating a new rule definition.
-            panel = new FilesSetRulePanel(okButton, cancelButton);
+            panel = new FilesSetRulePanel(okButton, cancelButton, (settingsLegacyFileName.equals("")));
         }
         // Do a dialog box with the files set panel until the user either enters
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showOptionDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.title"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
+            option = JOptionPane.showOptionDialog(null, panel, NbBundle.getMessage(FilesSetPanel.class, ruleDialogTitle), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{okButton, cancelButton}, okButton);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidRuleDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
@@ -412,7 +438,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
             // Add the new/edited files set definition, replacing any previous
             // definition with the same name and refreshing the display.
-            this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), rules);
+            this.replaceFilesSet(selectedSet, selectedSet.getName(), selectedSet.getDescription(), selectedSet.ignoresKnownFiles(), rules, selectedSet.processesUnallocatedSpace());
 
             // Select the new/edited rule. Queue it up so it happens after the
             // selection listeners react to the selection of the "new" files
@@ -428,15 +454,16 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
      * owned by this panel. If there is a definition with the same name, it will
      * be replaced, so this is an add/edit operation.
      *
-     * @param oldSet            A set to replace, null if the new set is not a
-     *                          replacement.
-     * @param name              The name of the files set.
-     * @param description       The description of the files set.
+     * @param oldSet A set to replace, null if the new set is not a replacement.
+     * @param name The name of the files set.
+     * @param description The description of the files set.
      * @param ignoresKnownFiles Whether or not the files set ignores known
-     *                          files.
-     * @param rules             The set membership rules for the set.
+     * files.
+     * @param rules The set membership rules for the set.
+     * @param processesUnallocatedSpace Whether or not this set of rules
+     * processes unallocated space
      */
-    void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, Map<String, FilesSet.Rule> rules) {
+    void replaceFilesSet(FilesSet oldSet, String name, String description, boolean ignoresKnownFiles, Map<String, FilesSet.Rule> rules, boolean processesUnallocatedSpace) {
         if (oldSet != null) {
             // Remove the set to be replaced from the working copy if the files
             // set definitions.
@@ -445,7 +472,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // Make the new/edited set definition and add it to the working copy of
         // the files set definitions.
-        FilesSet newSet = new FilesSet(name, description, ignoresKnownFiles, rules);
+        FilesSet newSet = new FilesSet(name, description, ignoresKnownFiles, rules, processesUnallocatedSpace);
         this.filesSets.put(newSet.getName(), newSet);
 
         // Redo the list model for the files set list component, which will make
@@ -513,6 +540,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         equalitySignComboBox = new javax.swing.JComboBox<String>();
         fileSizeSpinner = new javax.swing.JSpinner();
         fileSizeUnitComboBox = new javax.swing.JComboBox<String>();
+        processUnallocCheckbox = new javax.swing.JCheckBox();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -720,101 +748,111 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         fileSizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { Bundle.InterestingItemDefsPanel_bytes(), Bundle.InterestingItemDefsPanel_kiloBytes(), Bundle.InterestingItemDefsPanel_megaBytes(), Bundle.InterestingItemDefsPanel_gigaBytes() }));
         fileSizeUnitComboBox.setEnabled(false);
 
+        org.openide.awt.Mnemonics.setLocalizedText(processUnallocCheckbox, org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.processUnallocCheckbox.text")); // NOI18N
+        processUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(InterestingItemDefsPanel.class, "InterestingItemDefsPanel.processUnallocCheckbox.toolTipText")); // NOI18N
+	processUnallocCheckbox.setEnabled(false);
+        processUnallocCheckbox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                processUnallocCheckboxActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(360, 360, 360)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(rulesListLabel)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel6)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(ignoreKnownFilesCheckbox)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(360, 360, 360)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(rulesListLabel)
-                            .addComponent(jLabel5)
-                            .addComponent(ignoreKnownFilesCheckbox)
-                            .addComponent(jLabel6))
-                        .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(setsListLabel)
+                            .addComponent(setsListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
+                        .addComponent(newSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(editSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(deleteSetButton)))
+                .addGap(12, 12, 12)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(20, 20, 20)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(setsListLabel)
-                                    .addComponent(setsListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(18, 18, 18)
-                                .addComponent(separator, javax.swing.GroupLayout.PREFERRED_SIZE, 6, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(newSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(editSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(deleteSetButton)))
-                        .addGap(12, 12, 12)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(20, 20, 20)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(jPanel1Layout.createSequentialGroup()
                                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(jLabel3)
-                                                    .addComponent(jLabel2))
-                                                .addGap(6, 6, 6))
-                                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                                .addComponent(jLabel4)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(rulePathConditionTextField, javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(fileNameTextField)))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel7)
-                                            .addComponent(jLabel8))
-                                        .addGap(6, 6, 6)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                                .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(fileSizeSpinner, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addGap(8, 8, 8))
-                                            .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                            .addComponent(jLabel3)
+                                            .addComponent(jLabel2))
+                                        .addGap(6, 6, 6))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel4)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(rulePathConditionTextField, javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(fileNameTextField)))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(setDescScrollPanel)
-                                    .addComponent(rulesListScrollPane))
-                                .addGap(7, 7, 7))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(92, 92, 92)
-                                        .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addComponent(dirsRadioButton)
+                                    .addComponent(jLabel7)
+                                    .addComponent(jLabel8))
+                                .addGap(6, 6, 6)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                                        .addComponent(equalitySignComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(bothRadioButton))
+                                        .addComponent(fileSizeSpinner, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(fileSizeUnitComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(8, 8, 8))
+                                    .addComponent(mimeTypeComboBox, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(setDescScrollPanel)
+                            .addComponent(rulesListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 342, Short.MAX_VALUE))
+                        .addGap(7, 7, 7))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(92, 92, 92)
+                                .addComponent(filesRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(dirsRadioButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(bothRadioButton))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(newRuleButton)
+                                .addGap(18, 18, 18)
+                                .addComponent(editRuleButton)
+                                .addGap(18, 18, 18)
+                                .addComponent(deleteRuleButton))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(96, 96, 96)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(newRuleButton)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(editRuleButton)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(deleteRuleButton))
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(96, 96, 96)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(fileNameRadioButton)
-                                                .addGap(4, 4, 4)
-                                                .addComponent(fileNameExtensionRadioButton)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(fileNameRegexCheckbox))
-                                            .addComponent(rulePathConditionRegexCheckBox))))
-                                .addGap(4, 4, 4)))))
-                .addGap(23, 23, 23))
+                                        .addComponent(fileNameRadioButton)
+                                        .addGap(4, 4, 4)
+                                        .addComponent(fileNameExtensionRadioButton)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(fileNameRegexCheckbox))
+                                    .addComponent(rulePathConditionRegexCheckBox))))
+                        .addGap(4, 4, 4)))
+                .addGap(85, 85, 85))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -842,7 +880,9 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(ignoreKnownFilesCheckbox)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(ignoreKnownFilesCheckbox)
+                                    .addComponent(processUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(rulesListLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -923,7 +963,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         Map<String, FilesSet.Rule> rules = new HashMap<>(oldSet.getRules());
         FilesSet.Rule selectedRule = this.rulesList.getSelectedValue();
         rules.remove(selectedRule.getUuid());
-        this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules);
+        this.replaceFilesSet(oldSet, oldSet.getName(), oldSet.getDescription(), oldSet.ignoresKnownFiles(), rules, oldSet.processesUnallocatedSpace());
         if (!this.rulesListModel.isEmpty()) {
             this.rulesList.setSelectedIndex(0);
         } else {
@@ -970,6 +1010,10 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // TODO add your handling code here:
     }//GEN-LAST:event_fileNameTextFieldActionPerformed
 
+    private void processUnallocCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processUnallocCheckboxActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_processUnallocCheckboxActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton bothRadioButton;
     private javax.swing.JButton deleteRuleButton;
@@ -1002,6 +1046,7 @@ final class InterestingItemDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JComboBox<String> mimeTypeComboBox;
     private javax.swing.JButton newRuleButton;
     private javax.swing.JButton newSetButton;
+    private javax.swing.JCheckBox processUnallocCheckbox;
     private javax.swing.JCheckBox rulePathConditionRegexCheckBox;
     private javax.swing.JTextField rulePathConditionTextField;
     private javax.swing.JList<FilesSet.Rule> rulesList;
