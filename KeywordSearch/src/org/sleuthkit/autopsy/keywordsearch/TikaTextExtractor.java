@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.io.CharSource;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -36,6 +35,7 @@ import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 class TikaTextExtractor extends FileTextExtractor {
 
+    static final private Logger logger = Logger.getLogger(TikaTextExtractor.class.getName());
     private final ExecutorService tikaParseExecutor = Executors.newSingleThreadExecutor();
 
     private static final List<String> TIKA_SUPPORTED_TYPES
@@ -60,13 +61,15 @@ class TikaTextExtractor extends FileTextExtractor {
             .collect(Collectors.toList());
 
     @Override
-    void logWarning(final String msg, Exception ex) {
+    public void logWarning(final String msg, Exception ex) {
         KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
-        super.logWarning(msg, ex);
+        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
     @Override
-    Reader getReader(final InputStream stream, AbstractFile sourceFile) throws IngesterException, MissingResourceException {
+    public Reader getReader(AbstractFile sourceFile) throws IngesterException, MissingResourceException {
+        ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
+
         Metadata metadata = new Metadata();
         //Parse the file in a task, a convenient way to have a timeout...
         final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, metadata));
@@ -125,13 +128,9 @@ class TikaTextExtractor extends FileTextExtractor {
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
 
-    @Override
-    InputStream getInputStream(AbstractFile sourceFile1) {
-        return new ReadContentInputStream(sourceFile1);
-    }
 
     @Override
-    boolean isDisabled() {
+    public boolean isDisabled() {
         return false;
     }
 

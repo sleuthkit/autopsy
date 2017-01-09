@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import com.google.common.base.Utf8;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -156,9 +155,8 @@ class Ingester {
         }
 
         Map<String, String> fields = getContentFields(source);
-        //Get a stream and a reader for that stream
-        try (final InputStream stream = extractor.getInputStream(source);
-                BufferedReader reader = new BufferedReader(extractor.getReader(stream, source));) {
+        //Get a reader for the content of the given source
+        try (BufferedReader reader = new BufferedReader(extractor.getReader(source));) {
             Chunker chunker = new Chunker(reader);
             for (Chunk chunk : chunker) {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
