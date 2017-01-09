@@ -19,21 +19,17 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.util.MissingResourceException;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
-<<<<<<< HEAD
 import java.net.InetAddress;
 import java.util.List;
 import java.util.MissingResourceException;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider;
-=======
 import org.openide.util.lookup.ServiceProvider;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
->>>>>>> be7bdced9064f55ef50e6a9643f6b8d9c4927fdc
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
