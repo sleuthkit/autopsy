@@ -46,7 +46,7 @@ public class KnownFileFilterNode extends FilterNode {
             @Override
             public void preferenceChange(PreferenceChangeEvent evt) {
                 switch (evt.getKey()) {
-                    case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SOURCES_TREE:
+                    case UserPreferences.HIDE_KNOWN_FILES_IN_DATA_SRCS_TREE:
                         filterFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
                         break;
                     case UserPreferences.HIDE_KNOWN_FILES_IN_VIEWS_TREE:

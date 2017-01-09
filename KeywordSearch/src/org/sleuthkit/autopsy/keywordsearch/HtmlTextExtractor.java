@@ -50,7 +50,6 @@ class HtmlTextExtractor extends FileTextExtractor {
             "text/javascript" //NON-NLS
     );
 
-
     @Override
     boolean isContentTypeSpecific() {
         return true;
