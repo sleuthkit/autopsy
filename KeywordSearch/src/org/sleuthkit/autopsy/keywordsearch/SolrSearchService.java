@@ -48,6 +48,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
+    private static final String SERVICE_NAME = "Solr Search Service";
 
     ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
@@ -143,7 +144,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
      * @param context
      *
      * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
      */
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
@@ -152,7 +153,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
          */
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        List<String> indexDirs = IndexHandling.findAllIndexDirs(Case.getCurrentCase());
+        List<String> indexDirs = IndexHandling.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
         String currentVersionIndexDir = IndexHandling.findLatestVersionIndexDir(indexDirs);
@@ -173,8 +174,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             // ELTODO Check for cancellation at whatever points are feasible
             
             // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            String newIndexDir = IndexHandling.createReferenceIndexCopy(context.getCase(), oldIndexDir);
             
             // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+            IndexHandling.createReferenceConfigSetCopy(newIndexDir);
             
             // convert path to UNC path
             
@@ -202,12 +205,17 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
      * @param context
      *
      * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
          * Autopsy service providers may not have case-level resources.
          */
+    }
+
+    @Override
+    public String getServiceName() {
+        return SERVICE_NAME;
     }
 }

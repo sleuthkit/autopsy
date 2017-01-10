@@ -26,8 +26,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FileUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
  * This class handles the task of finding KWS index folders and upgrading old
@@ -42,7 +45,9 @@ class IndexHandling {
     private static final String INDEX_FOLDER_NAME = "index";
     private static final String CURRENT_SOLR_VERSION = "6";
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
-    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr\\d{1,2}_schema_\\d{1,2}.\\d{1,2}$");    
+    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr\\d{1,2}_schema_\\d{1,2}.\\d{1,2}$");
+    private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
+    private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
     
     
     static String getCurrentSolrVersion() {
@@ -62,6 +67,54 @@ class IndexHandling {
         }
         return "";
     }
+    
+    static String createReferenceIndexCopy(Case theCase, String indexPath) throws AutopsyService.AutopsyServiceException {
+        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
+        try {
+            // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
+            File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
+            if (targetDirPath.exists()) {
+                // targetDirPath should not exist, at least the target directory should be empty
+                List<File> contents = getAllContentsInFolder(targetDirPath.getAbsolutePath());
+                if (!contents.isEmpty()) {
+                    // target directory is not empty
+                    throw new AutopsyService.AutopsyServiceException("ELTODO");
+                }
+            }
+            targetDirPath.mkdirs();
+            FileUtils.copyDirectory(new File(indexPath), targetDirPath);
+            return targetDirPath.getAbsolutePath();
+        } catch (Exception ex) {
+            throw new AutopsyService.AutopsyServiceException("ELTODO");
+        }
+    }
+    
+    
+    static void createReferenceConfigSetCopy(String indexPath) throws AutopsyService.AutopsyServiceException {
+        try {
+            // this will only work for Windows OS
+            if (!PlatformUtil.isWindowsOS()) {
+                throw new AutopsyService.AutopsyServiceException("ELTODO");
+            }
+            // config set should be located in "C:/some/directory/AutopsyXYZ/autopsy/solr/solr/configsets/"
+            File pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET).toFile();
+            if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
+                // try the "release/solr/solr/configsets/" folder instead
+                pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET_2).toFile();
+                if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
+                    throw new AutopsyService.AutopsyServiceException("ELTODO");
+                }
+            }
+            File targetDirPath = new File(indexPath); //NON-NLS
+            if (!targetDirPath.exists()) {
+                targetDirPath.mkdirs();
+            }
+            // copy config set 
+            FileUtils.copyDirectory(pathToConfigSet, new File(indexPath));
+        } catch (Exception ex) {
+            throw new AutopsyService.AutopsyServiceException("ELTODO");
+        }
+    }
 
     /**
      * Find index directory location for the case. This is done via subdirectory
@@ -70,7 +123,7 @@ class IndexHandling {
      *
      * @param theCase the case to get index dir for
      *
-     * @return absolute path to index dir
+     * @return List of absolute paths to all found index directories
      */
     static List<String> findAllIndexDirs(Case theCase) {
         ArrayList<String> candidateIndexDirs = new ArrayList<>();
@@ -88,7 +141,7 @@ class IndexHandling {
             // create a list of all sub-directories
             List<File> contents = getAllContentsInFolder(theCase.getCaseDirectory());
             
-            // ELTODO decipher "ModuleOutput" from path
+            // ELTODO decipher "ModuleOutput" from targetDirPath
 
             // scan all topLevelOutputDir subfolders for presence of non-empty "/ModuleOutput/keywordsearch/data/" folder
             for (File item : contents) {
@@ -146,7 +199,7 @@ class IndexHandling {
     /**
      * Returns a list of all contents in the folder of interest.
      *
-     * @param path Absolute path of the folder of interest
+     * @param path Absolute targetDirPath of the folder of interest
      *
      * @return List of all contents in the folder of interest
      */
