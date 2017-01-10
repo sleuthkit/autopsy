@@ -41,6 +41,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
@@ -58,6 +60,7 @@ import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
@@ -1317,6 +1320,18 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
+            
+            AutopsyService.CaseContext context = new AutopsyService.CaseContext(Case.currentCase, new LoggingProgressIndicator());
+            String serviceName = "";
+            for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
+                try {
+                    serviceName = service.getServiceName();
+                    service.openCaseResources(context);
+                } catch (AutopsyService.AutopsyServiceException ex) {
+                    Case.logger.log(Level.SEVERE, String.format("%s service failed to open case resources", serviceName), ex);
+                }
+            }           
+            
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
 
         } else {
