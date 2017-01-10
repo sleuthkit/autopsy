@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,35 +19,37 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
-import java.util.HashMap;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
-import org.apache.solr.common.util.ContentStreamBase.StringStream;
-import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.datamodel.ContentUtils;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.openide.util.NbBundle;
 import java.net.InetAddress;
+import java.util.List;
 import java.util.MissingResourceException;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider;
+import org.openide.util.lookup.ServiceProvider;
+import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * An implementation of the KeywordSearchService interface that uses Solr for
  * text indexing and search.
  */
-@ServiceProvider(service = KeywordSearchService.class)
-public class SolrSearchService implements KeywordSearchService {
+@ServiceProviders(value={
+    @ServiceProvider(service=KeywordSearchService.class),
+    @ServiceProvider(service=AutopsyServiceProvider.class)}
+)
+public class SolrSearchService implements KeywordSearchService, AutopsyServiceProvider  {
 
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
+
+    ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
@@ -57,109 +59,14 @@ public class SolrSearchService implements KeywordSearchService {
 
         // We only support artifact indexing for Autopsy versions that use
         // the negative range for artifact ids.
-        long artifactId = artifact.getArtifactID();
-
-        if (artifactId > 0) {
+        if (artifact.getArtifactID() > 0) {
             return;
         }
-
-        Case currentCase;
-        try {
-            currentCase = Case.getCurrentCase();
-        } catch (IllegalStateException ignore) {
-            // thorown by Case.getCurrentCase() if currentCase is null
-            return;
-        }
-
-        SleuthkitCase sleuthkitCase = currentCase.getSleuthkitCase();
-        if (sleuthkitCase == null) {
-            return;
-        }
-
-        Content dataSource;
-        AbstractFile abstractFile = sleuthkitCase.getAbstractFileById(artifact.getObjectID());
-        if (abstractFile != null) {
-            dataSource = abstractFile.getDataSource();
-        } else {
-            dataSource = sleuthkitCase.getContentById(artifact.getObjectID());
-        }
-
-        if (dataSource == null) {
-            return;
-        }
-
-        // Concatenate the string values of all attributes into a single 
-        // "content" string to be indexed.
-        StringBuilder artifactContents = new StringBuilder();
-
-        for (BlackboardAttribute attribute : artifact.getAttributes()) {
-            artifactContents.append(attribute.getAttributeType().getDisplayName());
-            artifactContents.append(" : ");
-
-            // This is ugly since it will need to updated any time a new
-            // TSK_DATETIME_* attribute is added. A slightly less ugly 
-            // alternative would be to assume that all date time attributes
-            // will have a name of the form "TSK_DATETIME*" and check
-            // attribute.getAttributeTypeName().startsWith("TSK_DATETIME*".
-            // The major problem with that approach is that it would require
-            // a round trip to the database to get the type name string.
-            // We have also discussed modifying BlackboardAttribute.getDisplayString()
-            // to magically format datetime attributes but that is complicated by
-            // the fact that BlackboardAttribute exists in Sleuthkit data model
-            // while the utility to determine the timezone to use is in ContentUtils
-            // in the Autopsy datamodel.
-            if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME.getTypeID()
-                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_ACCESSED.getTypeID()
-                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_CREATED.getTypeID()
-                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_MODIFIED.getTypeID()
-                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_RCVD.getTypeID()
-                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_START.getTypeID()
-                    || attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DATETIME_END.getTypeID()) {
-
-                artifactContents.append(ContentUtils.getStringTime(attribute.getValueLong(), dataSource));
-            } else {
-                artifactContents.append(attribute.getDisplayString());
-            }
-            artifactContents.append(System.lineSeparator());
-        }
-
-        if (artifactContents.length() == 0) {
-            return;
-        }
-
-        // To play by the rules of the existing text markup implementations,
-        // we need to (a) index the artifact contents in a "chunk" and 
-        // (b) create a separate index entry for the base artifact.
-        // We distinguish artifact content from file content by applying a 
-        // mask to the artifact id to make its value > 0x8000000000000000 (i.e. negative).
-        // First, create an index entry for the base artifact.
-        HashMap<String, String> solrFields = new HashMap<>();
-        String documentId = Long.toString(artifactId);
-
-        solrFields.put(Server.Schema.ID.toString(), documentId);
-
-        // Set the IMAGE_ID field.
-        solrFields.put(Server.Schema.IMAGE_ID.toString(), Long.toString(dataSource.getId()));
+        final Ingester ingester = Ingester.getDefault();
 
         try {
-            Ingester.getDefault().ingest(new StringStream(""), solrFields, 0);
-        } catch (Ingester.IngesterException ex) {
-            throw new TskCoreException(ex.getCause().getMessage(), ex);
-        }
-
-        // Next create the index entry for the document content.
-        // The content gets added to a single chunk. We may need to add chunking
-        // support later.
-        long chunkId = 1;
-
-        documentId += "_" + Long.toString(chunkId);
-        solrFields.replace(Server.Schema.ID.toString(), documentId);
-
-        StringStream contentStream = new StringStream(artifactContents.toString());
-
-        try {
-            Ingester.getDefault().ingest(contentStream, solrFields, contentStream.getSize());
+            ingester.indexMetaDataOnly(artifact);
+            ingester.indexText(extractor, artifact, null);
         } catch (Ingester.IngesterException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
@@ -229,5 +136,78 @@ public class SolrSearchService implements KeywordSearchService {
 
     @Override
     public void close() throws IOException {
+    }
+    
+     /**
+     *
+     * @param context
+     *
+     * @throws
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     */
+    @Override
+    public void openCaseResources(Context context) throws AutopsyServiceProviderException {
+        /*
+         * Autopsy service providers may not have case-level resources.
+         */
+        
+        // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
+        List<String> indexDirs = IndexHandling.findAllIndexDirs(Case.getCurrentCase());
+        
+        // check if index needs upgrade
+        String currentVersionIndexDir = IndexHandling.findLatestVersionIndexDir(indexDirs);
+        if (currentVersionIndexDir.isEmpty()) {
+            
+            // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
+            String oldIndexDir = indexDirs.get(0);
+
+            if (RuntimeProperties.coreComponentsAreActive()) {
+                //pop up a message box to indicate the restrictions on adding additional 
+                //text and performing regex searches and give the user the option to decline the upgrade
+                boolean upgradeDeclined = false;
+                if (upgradeDeclined) {
+                    throw new AutopsyServiceProviderException("ELTODO");
+                }
+            }
+
+            // ELTODO Check for cancellation at whatever points are feasible
+            
+            // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            
+            // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+            
+            // convert path to UNC path
+            
+            // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            
+            // Open the upgraded index
+            
+            // execute a test query
+            
+            boolean success = true;
+
+            if (!success) {
+                // delete the new directories
+
+                // close the upgraded index?
+                throw new AutopsyServiceProviderException("ELTODO");
+            }
+
+            // currentVersionIndexDir = upgraded index dir
+        }
+    }
+
+    /**
+     *
+     * @param context
+     *
+     * @throws
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     */
+    @Override
+    public void closeCaseResources(Context context) throws AutopsyServiceProviderException {
+        /*
+         * Autopsy service providers may not have case-level resources.
+         */
     }
 }
