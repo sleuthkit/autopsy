@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -230,7 +232,7 @@ public final class FilesSetsManager extends Observable {
             }
             // Check if the legacy xml file exists.
             if (!legacyFileName.isEmpty()) {
-                File defsFile = new File(PlatformUtil.getUserConfigDirectory() + File.separator + legacyFileName);
+                File defsFile = Paths.get(PlatformUtil.getUserConfigDirectory(),legacyFileName).toFile();
                 if (!defsFile.exists()) {
                     return filesSets;
                 }
@@ -273,18 +275,17 @@ public final class FilesSetsManager extends Observable {
          * @throws FilesSetsManagerException if file could not be read
          */
         private static Map<String, FilesSet> readSerializedDefinitions(String serialFileName) throws FilesSetsManagerException {
-            String filePath;
-            filePath = PlatformUtil.getUserConfigDirectory() + File.separator + serialFileName;
-            System.out.println(filePath);
-            File fileSetFile = new File(filePath);
+            Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(),serialFileName);
+            File fileSetFile = filePath.toFile();
+            String filePathStr = filePath.toString();
             if (fileSetFile.exists()) {
                 try {
-                    try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePath))) {
+                    try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
                         FilesSetSettings filesSetsSettings = (FilesSetSettings) in.readObject();
                         return filesSetsSettings.getFilesSets();
                     }
                 } catch (IOException | ClassNotFoundException ex) {
-                    throw new FilesSetsManagerException(String.format("Failed to read settings from %s", filePath), ex);
+                    throw new FilesSetsManagerException(String.format("Failed to read settings from %s", filePathStr), ex);
                 }
             } else {
                 return new HashMap<>();
@@ -597,7 +598,7 @@ public final class FilesSetsManager extends Observable {
         // multiple intersting files set definition files, e.g., one for 
         // definitions that ship with Autopsy and one for user definitions.
         static boolean writeDefinitionsFile(String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManagerException {
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(PlatformUtil.getUserConfigDirectory() + File.separator + fileName))) {
+            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), fileName).toString()))) {
                 out.writeObject(new FilesSetSettings(interestingFilesSets));
             } catch (IOException ex) {
                 throw new FilesSetsManagerException(String.format("Failed to write settings to %s", fileName), ex);

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -137,14 +138,11 @@ public final class FilesSet implements Serializable {
                 || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
             return null;
         }
-
-        if ((rules.isEmpty())) { //WJS-TODO default filters have no rules they should pass, but what should non-default filters do with no rules?
-            return "All Files";
-        }
-
-        for (Rule rule : rules.values()) {
-            if (rule.isSatisfied(file)) {
-                return rule.getName();
+        //default filters have no rules and they need to pass this test,
+        //however a regular FilesSet with no rules should not pass any files
+        for (FilesSet defaultFilter : IngestJobSettings.getStandardFileIngestFilters()){
+            if (name.equals(defaultFilter.getName())){
+                return defaultFilter.getName();
             }
         }
         return null;
