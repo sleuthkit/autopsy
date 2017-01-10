@@ -117,7 +117,7 @@ public interface AutopsyServiceProvider {
          *
          * @param message Exception message.
          */
-        AutopsyServiceProviderException(String message) {
+        public AutopsyServiceProviderException(String message) {
             super(message);
         }
 
@@ -128,7 +128,7 @@ public interface AutopsyServiceProvider {
          * @param message   Exception message.
          * @param throwable Exception cause.
          */
-        AutopsyServiceProviderException(String message, Throwable throwable) {
+        public AutopsyServiceProviderException(String message, Throwable throwable) {
             super(message, throwable);
         }
     }

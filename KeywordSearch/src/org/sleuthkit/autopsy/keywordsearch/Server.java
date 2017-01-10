@@ -369,7 +369,9 @@ public class Server {
      * Run a Solr command with the given arguments.
      *
      * @param solrArguments Command line arguments to pass to the Solr command.
+     *
      * @return
+     *
      * @throws IOException
      */
     private Process runSolrCommand(List<String> solrArguments) throws IOException {
@@ -602,7 +604,7 @@ public class Server {
      * request.
      *
      * @return false if the request failed with a connection error, otherwise
-     * true
+     *         true
      */
     synchronized boolean isRunning() throws KeywordSearchModuleException {
         try {
@@ -709,6 +711,7 @@ public class Server {
      * @return absolute path to index dir
      */
     String geCoreDataDirPath(Case theCase) {
+        // ELTODO this method is going to be removed
         String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
         if (uncPathUtilities != null) {
             // if we can check for UNC paths, do so, otherwise just return the indexDir
@@ -725,6 +728,7 @@ public class Server {
         return indexDir;
     }
 
+
     /**
      * ** end single-case specific methods ***
      */
@@ -739,6 +743,9 @@ public class Server {
      *                                      creating/opening the core.
      */
     private Core openCore(Case theCase) throws KeywordSearchModuleException {
+        
+        // ELTODO REMOVE String indexDir = findLatestVersionIndexDir(Case.getCurrentCase()); // ELTODO
+        
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
@@ -814,8 +821,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr file chunks (not logical
-     * files) indexed without actually returning the content.
+     * Execute query that gets only number of all Solr file chunks (not
+     * logical files) indexed without actually returning the content.
      *
      * @return int representing number of indexed chunks
      *
@@ -839,8 +846,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr documents indexed (files
-     * and chunks) without actually returning the documents
+     * Execute query that gets only number of all Solr documents indexed
+     * (files and chunks) without actually returning the documents
      *
      * @return int representing number of indexed files (files and chunks)
      *
@@ -893,10 +900,11 @@ public class Server {
     /**
      * Execute query that gets number of indexed file chunks for a file
      *
-     * @param fileID file id of the original file broken into chunks and indexed
+     * @param fileID file id of the original file broken into chunks and
+     *               indexed
      *
-     * @return int representing number of indexed file chunks, 0 if there is no
-     *         chunks
+     * @return int representing number of indexed file chunks, 0 if there is
+     *         no chunks
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -1155,6 +1163,7 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
             }
 
+            // ELTODO set solr and schema version of the core that is being loaded. Make that available via API.
             return new Core(coreName, caseType);
 
         } catch (SolrServerException | SolrException | IOException ex) {
@@ -1193,7 +1202,8 @@ public class Server {
     }
 
     /**
-     * Determines whether or not the index files folder for a Solr core exists.
+     * Determines whether or not the index files folder for a Solr core
+     * exists.
      *
      * @param coreName the name of the core.
      *
@@ -1364,8 +1374,8 @@ public class Server {
          * Execute query that gets only number of all Solr files (not chunks)
          * indexed without actually returning the files
          *
-         * @return int representing number of indexed files (entire files, not
-         *         chunks)
+         * @return int representing number of indexed files (entire files,
+         *         not chunks)
          *
          * @throws SolrServerException
          */
@@ -1374,8 +1384,9 @@ public class Server {
         }
 
         /**
-         * Execute query that gets only number of all chunks (not logical files,
-         * or all documents) indexed without actually returning the content
+         * Execute query that gets only number of all chunks (not logical
+         * folders, or all documents) indexed without actually returning the
+         * content
          *
          * @return int representing number of indexed chunks
          *
@@ -1425,11 +1436,11 @@ public class Server {
         /**
          * Execute query that gets number of indexed file chunks for a file
          *
-         * @param contentID file id of the original file broken into chunks and
-         *                  indexed
+         * @param contentID file id of the original file broken into chunks
+         *                  and indexed
          *
-         * @return int representing number of indexed file chunks, 0 if there is
-         *         no chunks
+         * @return int representing number of indexed file chunks, 0 if there
+         *         is no chunks
          *
          * @throws SolrServerException
          */
