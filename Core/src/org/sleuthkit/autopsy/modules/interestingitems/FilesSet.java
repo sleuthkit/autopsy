@@ -145,6 +145,11 @@ public final class FilesSet implements Serializable {
                 return defaultFilter.getName();
             }
         }
+        for (Rule rule : rules.values()) {
+            if (rule.isSatisfied(file)) {
+                return rule.getName();
+            }
+        }
         return null;
     }
 
