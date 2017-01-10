@@ -40,7 +40,7 @@ abstract class KeywordSearchList {
     protected static final Logger LOGGER = Logger.getLogger(KeywordSearchList.class.getName());
 
     private static final String PHONE_NUMBER_REGEX = "(\\([0-9]{3}\\)|[0-9]{3})([ \\-\\.])[0-9]{3}([ \\-\\.])[0-9]{4}";  //NON-NLS
-    private static final String IP_ADDRESS_REGEX = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]|[0-9])[^\\.]";  //NON-NLS
+    private static final String IP_ADDRESS_REGEX = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]|[0-9])";  //NON-NLS
     private static final String EMAIL_ADDRESS_REGEX = "(\\{?)[a-zA-Z0-9%+_\\-]+(\\.[a-zA-Z0-9%+_\\-]+)*(\\}?)\\@([a-zA-Z0-9]([a-zA-Z0-9\\-]*[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,4}";  //NON-NLS
     private static final String URL_REGEX = "(((((h|H)(t|T))|(f|F))(t|T)(p|P)(s|S?)\\:\\/\\/)|(w|W){3,3}\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(\\/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*";  //NON-NLS
 
