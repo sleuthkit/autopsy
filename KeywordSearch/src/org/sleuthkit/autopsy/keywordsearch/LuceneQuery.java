@@ -59,11 +59,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private String field = null;
     private static final int MAX_RESULTS = 20000;
     static final int SNIPPET_LENGTH = 50;
-    //can use different highlight schema fields for regex and literal search
-    static final String HIGHLIGHT_FIELD_LITERAL = Server.Schema.TEXT.toString();
-    static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.TEXT.toString();
-    //TODO use content_ws stored="true" in solr schema for perfect highlight hits
-    //static final String HIGHLIGHT_FIELD_REGEX = Server.Schema.CONTENT_WS.toString()
+    static final String HIGHLIGHT_FIELD = Server.Schema.TEXT.toString();
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
@@ -250,13 +246,15 @@ class LuceneQuery implements KeywordSearchQuery {
     private SolrQuery createAndConfigureSolrQuery(boolean snippets) {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
-        //set query, force quotes/grouping around all literal queries
-        final String groupedQuery = KeywordSearchUtil.quoteQuery(keywordStringEscaped);
-        String theQueryStr = groupedQuery;
+        // Wrap the query string in quotes if this is a literal search term.
+        String theQueryStr = keyword.searchTermIsLiteral() 
+                ? KeywordSearchUtil.quoteQuery(keywordStringEscaped) : keywordStringEscaped;
+
+        // Run the query against an optional alternative field. 
         if (field != null) {
             //use the optional field
             StringBuilder sb = new StringBuilder();
-            sb.append(field).append(":").append(groupedQuery);
+            sb.append(field).append(":").append(theQueryStr);
             theQueryStr = sb.toString();
         }
         q.setQuery(theQueryStr);
@@ -345,20 +343,13 @@ class LuceneQuery implements KeywordSearchQuery {
     public static String querySnippet(String query, long solrObjectId, int chunkID, boolean isRegex, boolean group) throws NoOpenCoreException {
         Server solrServer = KeywordSearch.getServer();
 
-        String highlightField;
-        if (isRegex) {
-            highlightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
-        } else {
-            highlightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
-        }
-
         SolrQuery q = new SolrQuery();
 
         String queryStr;
 
         if (isRegex) {
             StringBuilder sb = new StringBuilder();
-            sb.append(highlightField).append(":");
+            sb.append(LuceneQuery.HIGHLIGHT_FIELD).append(":");
             if (group) {
                 sb.append("\"");
             }
@@ -387,7 +378,7 @@ class LuceneQuery implements KeywordSearchQuery {
         String idQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIDStr);
         q.setShowDebugInfo(DEBUG); //debug
         q.addFilterQuery(idQuery);
-        q.addHighlightField(highlightField);
+        q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
         //q.setHighlightSimplePre("&laquo;"); //original highlighter only
         //q.setHighlightSimplePost("&raquo;");  //original highlighter only
         q.setHighlightSnippets(1);
@@ -413,7 +404,7 @@ class LuceneQuery implements KeywordSearchQuery {
             if (responseHighlightID == null) {
                 return "";
             }
-            List<String> contentHighlights = responseHighlightID.get(highlightField);
+            List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
             if (contentHighlights == null) {
                 return "";
             } else {

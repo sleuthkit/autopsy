@@ -31,10 +31,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrQuery.SortClause;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.CursorMarkParams;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -74,9 +76,18 @@ final class RegexQuery implements KeywordSearchQuery {
     private final Keyword keyword;
     private String field = Server.Schema.CONTENT_STR.toString();
     private final String keywordString;
-    static final private int MAX_RESULTS = 20000;
+    static final private int MAX_RESULTS = 512;
     private boolean escaped;
     private String escapedQuery;
+
+    // These are the valid characters that can appear either before or after a
+    // keyword hit. We use these characters to try to turn the hit into a
+    // token that can be more readily matched when it comes to highlighting
+    // against the Schema.TEXT field later.
+    private static final String BOUNDARY_CHARS = "[\\s\\[\\]\\(\\)\\,\\\"\\\'\\!\\?\\.\\/\\:\\;\\=\\<\\>\\^\\{\\}]"; //NON-NLS
+
+    private boolean queryStringContainsWildcardPrefix = false;
+    private boolean queryStringContainsWildcardSuffix = false;
 
     /**
      * Constructor with query to process.
@@ -88,6 +99,14 @@ final class RegexQuery implements KeywordSearchQuery {
         this.keywordList = keywordList;
         this.keyword = keyword;
         this.keywordString = keyword.getSearchTerm();
+
+        if (this.keywordString.startsWith(".*")) {
+            this.queryStringContainsWildcardPrefix = true;
+        }
+
+        if (this.keywordString.endsWith(".*")) {
+            this.queryStringContainsWildcardSuffix = true;
+        }
     }
 
     @Override
@@ -120,8 +139,27 @@ final class RegexQuery implements KeywordSearchQuery {
         SolrQuery solrQuery = new SolrQuery();
         solrQuery.setShowDebugInfo(true); //debug
 
-        solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/.*" + getQueryString() + ".*/");
-        solrQuery.setRows(MAX_RESULTS);
+        /**
+         * The provided regular expression may include wildcards at the
+         * beginning and/or end. These wildcards are used to indicate that
+         * the user wants to find hits for the regex that are embedded
+         * within other characters. For example, if we are given .*127.0.0.1.*
+         * as a regular expression, this will produce hits for:
+         * (a) " 127.0.0.1 " as a standalone token (surrounded by whitespace).
+         * (b) "abc127.0.0.1def" where the IP address is surrounded by other characters.
+         *
+         * If we are given this type of regex, we do not need to add our own
+         * wildcards to anchor the query. Otherwise, we need to add wildcard
+         * anchors because Lucene string regex searches default to using ^ and $
+         * to match the entire string.
+         */
+
+        // We construct the query by surrounding it with slashes (to indicate it is
+        // a regular expression search) and .* as anchors (if the query doesn't
+        // already have them).
+        solrQuery.setQuery((field == null ? Server.Schema.CONTENT_STR.toString() : field) + ":/"
+                + (queryStringContainsWildcardPrefix ? "" : ".*") + getQueryString()
+                + (queryStringContainsWildcardSuffix ? "" : ".*") + "/");
 
         // Set the fields we want to have returned by the query.
         if (KeywordSearchSettings.getShowSnippets()) {
@@ -133,18 +171,21 @@ final class RegexQuery implements KeywordSearchQuery {
                 .map(KeywordQueryFilter::toString)
                 .forEach(solrQuery::addFilterQuery);
 
-        int start = 0;
+        solrQuery.setRows(MAX_RESULTS);
+        // Setting the sort order is necessary for cursor based paging to work.
+        solrQuery.setSort(SortClause.asc(Server.Schema.ID.toString()));
+        
+        String cursorMark = CursorMarkParams.CURSOR_MARK_START;
         SolrDocumentList resultList = null;
-        // cycle through results in sets of MAX_RESULTS
-        while (resultList == null || start < resultList.getNumFound()) {
-            solrQuery.setStart(start);
+        boolean allResultsProcessed = false;
 
+        while (!allResultsProcessed) {
             try {
-                final QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
+                solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, cursorMark);
+                QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
                 resultList = response.getResults();
 
                 for (SolrDocument resultDoc : resultList) {
-
                     try {
                         List<KeywordHit> keywordHits = createKeywordHits(resultDoc);
                         for (KeywordHit hit : keywordHits) {
@@ -154,13 +195,18 @@ final class RegexQuery implements KeywordSearchQuery {
                         //
                     }
                 }
+                
+                String nextCursorMark = response.getNextCursorMark();
+                if (cursorMark.equals(nextCursorMark)) {
+                    allResultsProcessed = true;
+                }
+                cursorMark = nextCursorMark;
             } catch (KeywordSearchModuleException ex) {
                 LOGGER.log(Level.SEVERE, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             }
-
-            start = start + MAX_RESULTS;
         }
+        
         for (Keyword k : hitsMultMap.keySet()) {
             results.addResult(k, hitsMultMap.get(k));
         }
@@ -173,22 +219,60 @@ final class RegexQuery implements KeywordSearchQuery {
         List<KeywordHit> hits = new ArrayList<>();
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
 
-        String content = solrDoc.getOrDefault(Server.Schema.CONTENT_STR.toString(), "").toString();
+        String content = solrDoc.getOrDefault(Server.Schema.CONTENT_STR.toString(), "").toString(); //NON-NLS
 
-        Matcher hitMatcher = Pattern.compile(keywordString).matcher(content);
+        // By default, we create keyword hits on whitespace or punctuation character boundaries.
+        // Having a set of well defined boundary characters produces hits that can
+        // subsequently be matched for highlighting against the tokens produced by
+        // the standard tokenizer.
+        // This behavior can be overridden by the user if they give us a search string
+        // with .* at either the start and/or end of the string. This basically tells us find
+        // all hits instead of the ones surrounded by one of our boundary characters.
+        String keywordTokenRegex =
+                // If the given search string starts with .*, we ignore our default
+                // boundary prefix characters
+                (queryStringContainsWildcardPrefix ? "" : BOUNDARY_CHARS) //NON-NLS
+                + keywordString
+                // If the given search string ends with .*, we ignore our default
+                // boundary suffix characters
+                + (queryStringContainsWildcardSuffix ? "" : BOUNDARY_CHARS); //NON-NLS
 
-        while (hitMatcher.find()) {
-            String snippet = "";
-            final String hit = hitMatcher.group();
+        Matcher hitMatcher = Pattern.compile(keywordTokenRegex).matcher(content);
+        int offset = 0;
+
+        while (hitMatcher.find(offset)) {
+            StringBuilder snippet = new StringBuilder();
+            String hit = hitMatcher.group();
+
+            // Back the matcher offset up by 1 character as it will have eaten
+            // a single space/newline/other boundary character at the end of the hit.
+            // This was causing us to miss hits that appeared consecutively in the
+            // input where they were separated by a single boundary character.
+            offset = hitMatcher.end() - 1;
+
+            // Remove leading and trailing whitespace.
+            hit = hit.trim();
+
+            // Remove any remaining leading and trailing boundary characters.
+            if (!queryStringContainsWildcardPrefix) {
+                hit = hit.replaceAll("^" + BOUNDARY_CHARS, ""); //NON-NLS
+            }
+            if (!queryStringContainsWildcardSuffix) {
+                hit = hit.replaceAll(BOUNDARY_CHARS + "$", ""); //NON-NLS
+            }
+
             /*
              * If searching for credit card account numbers, do a Luhn check
              * on the term and discard it if it does not pass.
              */
             if (keyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-                ccnMatcher.find();
-                final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
-                if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                if (ccnMatcher.find()) {
+                    final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
+                    if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                        continue;
+                    }
+                } else {
                     continue;
                 }
             }
@@ -199,12 +283,14 @@ final class RegexQuery implements KeywordSearchQuery {
              */
             if (KeywordSearchSettings.getShowSnippets()) {
                 int maxIndex = content.length() - 1;
-                snippet = content.substring(Integer.max(0, hitMatcher.start() - 30), Integer.max(0, hitMatcher.start() - 1));
-                snippet += "<<" + hit + "<<";
-                snippet += content.substring(Integer.min(maxIndex, hitMatcher.end() + 1), Integer.min(maxIndex, hitMatcher.end() + 30));
+                snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start() + 1)));
+                snippet.appendCodePoint(171);
+                snippet.append(hit);
+                snippet.appendCodePoint(171);
+                snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end() - 1), Integer.min(maxIndex, hitMatcher.end() + 20)));
             }
 
-            hits.add(new KeywordHit(docId, snippet, hit));
+            hits.add(new KeywordHit(docId, snippet.toString(), hit));
         }
         return hits;
     }
