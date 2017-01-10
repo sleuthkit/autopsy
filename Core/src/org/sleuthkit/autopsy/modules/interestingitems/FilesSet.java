@@ -140,8 +140,8 @@ public final class FilesSet implements Serializable {
         }
         //default filters have no rules and they need to pass this test,
         //however a regular FilesSet with no rules should not pass any files
-        for (FilesSet defaultFilter : IngestJobSettings.getStandardFileIngestFilters()){
-            if (name.equals(defaultFilter.getName())){
+        for (FilesSet defaultFilter : IngestJobSettings.getStandardFileIngestFilters()) {
+            if (name.equals(defaultFilter.getName())) {
                 return defaultFilter.getName();
             }
         }
