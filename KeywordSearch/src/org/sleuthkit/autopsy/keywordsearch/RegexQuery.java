@@ -84,7 +84,7 @@ final class RegexQuery implements KeywordSearchQuery {
     // keyword hit. We use these characters to try to turn the hit into a
     // token that can be more readily matched when it comes to highlighting
     // against the Schema.TEXT field later.
-    private static final String BOUNDARY_CHARS = "(\\s|\\[|\\]|\\(|\\)|\\,|\\!|\\?|\\:|;|=|\\<|\\>|\\^|\\{|\\})"; //NON-NLS
+    private static final String BOUNDARY_CHARS = "[\\s\\[\\]\\(\\)\\,\\\"\\\'\\!\\?\\.\\/\\:\\;\\=\\<\\>\\^\\{\\}]"; //NON-NLS
 
     private boolean queryStringContainsWildcardPrefix = false;
     private boolean queryStringContainsWildcardSuffix = false;
@@ -238,12 +238,22 @@ final class RegexQuery implements KeywordSearchQuery {
                 + (queryStringContainsWildcardSuffix ? "" : BOUNDARY_CHARS); //NON-NLS
 
         Matcher hitMatcher = Pattern.compile(keywordTokenRegex).matcher(content);
+        int offset = 0;
 
-        while (hitMatcher.find()) {
+        while (hitMatcher.find(offset)) {
             StringBuilder snippet = new StringBuilder();
             String hit = hitMatcher.group();
 
-            // Remove leading and trailing boundary characters.
+            // Back the matcher offset up by 1 character as it will have eaten
+            // a single space/newline/other boundary character at the end of the hit.
+            // This was causing us to miss hits that appeared consecutively in the
+            // input where they were separated by a single boundary character.
+            offset = hitMatcher.end() - 1;
+
+            // Remove leading and trailing whitespace.
+            hit = hit.trim();
+
+            // Remove any remaining leading and trailing boundary characters.
             if (!queryStringContainsWildcardPrefix) {
                 hit = hit.replaceAll("^" + BOUNDARY_CHARS, ""); //NON-NLS
             }
