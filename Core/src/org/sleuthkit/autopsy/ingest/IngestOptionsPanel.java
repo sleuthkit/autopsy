@@ -30,6 +30,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
 
     private FilesSetDefsPanel filterPanel;
     private IngestSettingsPanel settingsPanel;
+    private ProfileSettingsPanel profilePanel;
 
 
     IngestOptionsPanel() {
@@ -41,10 +42,13 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         setName("Temporary Name");
         filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
         settingsPanel = new IngestSettingsPanel();
+        profilePanel = new ProfileSettingsPanel();
         tabbedPane.insertTab("Settings", null,
                 settingsPanel, "Tootip 1", 0);
-        tabbedPane.insertTab("Filters", null,
+        tabbedPane.insertTab("File Filters", null,
                 filterPanel, "Tooltip 2", 1);
+        tabbedPane.insertTab("Profiles", null,
+                profilePanel, "Tooltip 3", 2);
 
     }
 
@@ -52,18 +56,21 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     public void addPropertyChangeListener(PropertyChangeListener l) {
         filterPanel.addPropertyChangeListener(l);
         settingsPanel.addPropertyChangeListener(l);
+        profilePanel.addPropertyChangeListener(l);
     }
 
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
         filterPanel.removePropertyChangeListener(l);
         settingsPanel.removePropertyChangeListener(l);
+        profilePanel.removePropertyChangeListener(l);
     }
 
     @Override
     public void saveSettings() {
         filterPanel.store();
         settingsPanel.store();
+        profilePanel.store();
     }
 
     @Override
@@ -75,6 +82,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     public void load() {
         filterPanel.load();
         settingsPanel.load(); 
+        profilePanel.load();
    }
 
     boolean valid() {
