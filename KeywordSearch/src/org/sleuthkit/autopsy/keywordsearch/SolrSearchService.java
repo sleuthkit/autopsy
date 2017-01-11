@@ -19,21 +19,21 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.openide.util.NbBundle;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.MissingResourceException;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 
 /**
  * An implementation of the KeywordSearchService interface that uses Solr for
@@ -48,6 +48,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
+    private static final String SERVICE_NAME = "Solr Keyword Search Service";
 
     ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
@@ -209,5 +210,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         /*
          * Autopsy service providers may not have case-level resources.
          */
+    }
+
+    @Override
+    public String getServiceName() {
+        return SERVICE_NAME;
     }
 }

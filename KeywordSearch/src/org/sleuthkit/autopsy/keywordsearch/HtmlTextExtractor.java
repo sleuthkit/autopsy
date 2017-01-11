@@ -19,16 +19,17 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
 import net.htmlparser.jericho.StartTagType;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -37,6 +38,7 @@ import org.sleuthkit.datamodel.ReadContentInputStream;
  */
 class HtmlTextExtractor extends FileTextExtractor {
 
+    static final private Logger logger = Logger.getLogger(HtmlTextExtractor.class.getName());
     private static final int MAX_SIZE = 50_000_000; //50MB
 
     static final List<String> WEB_MIME_TYPES = Arrays.asList(
@@ -61,7 +63,9 @@ class HtmlTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    Reader getReader(InputStream in, AbstractFile sourceFile) throws Ingester.IngesterException {
+    public Reader getReader(AbstractFile sourceFile) throws Ingester.IngesterException {
+        ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
+
         //Parse the stream with Jericho and put the results in a Reader
         try {
             StringBuilder scripts = new StringBuilder();
@@ -75,7 +79,7 @@ class HtmlTextExtractor extends FileTextExtractor {
             int numComments = 0;
             int numOthers = 0;
 
-            Source source = new Source(in);
+            Source source = new Source(stream);
             source.fullSequentialParse();
             Renderer renderer = source.getRenderer();
             renderer.setNewLine("\n");
@@ -158,12 +162,11 @@ class HtmlTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    InputStream getInputStream(AbstractFile sourceFile1) {
-        return new ReadContentInputStream(sourceFile1);
+    public boolean isDisabled() {
+        return false;
     }
 
-    @Override
-    boolean isDisabled() {
-        return false;
+    public void logWarning(final String msg, Exception ex) {
+        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 }

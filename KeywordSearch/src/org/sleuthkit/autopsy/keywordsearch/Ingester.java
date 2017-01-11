@@ -18,11 +18,13 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.base.Utf8;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrInputDocument;
@@ -54,9 +56,6 @@ class Ingester {
     private final Server solrServer = KeywordSearch.getServer();
     private static final SolrFieldsVisitor SOLR_FIELDS_VISITOR = new SolrFieldsVisitor();
     private static Ingester instance;
-    private static final int MAX_EXTR_TEXT_CHARS = 512 * 1024; //chars
-    private static final int SINGLE_READ_CHARS = 1024;
-    private static final int EXTRA_CHARS = 128;
 
     private Ingester() {
     }
@@ -118,6 +117,136 @@ class Ingester {
      */
     private Map<String, String> getContentFields(SleuthkitVisitableItem item) {
         return item.accept(SOLR_FIELDS_VISITOR);
+    }
+
+    /**
+     * Use the given TextExtractor to extract text from the given source. The
+     * text will be chunked and each chunk passed to Solr to add to the index.
+     *
+     *
+     * @param <A>       The type of the Appendix provider that provides
+     *                  additional text to append to the final chunk.
+     * @param <T>       A subclass of SleuthkitVisibleItem.
+     * @param extractor The TextExtractor that will be used to extract text from
+     *                  the given source.
+     * @param source    The source from which text will be extracted, chunked,
+     *                  and indexed.
+     * @param context   The ingest job context that can be used to cancel this
+     *                  process.
+     *
+     * @return True if this method executed normally. or False if there was an
+     *         unexpected exception. //JMTODO: This policy needs to be reviewed.
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    < T extends SleuthkitVisitableItem> boolean indexText(TextExtractor< T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
+        final long sourceID = extractor.getID(source);
+        final String sourceName = extractor.getName(source);
+
+        int numChunks = 0; //unknown until chunking is done
+
+        if (extractor.isDisabled()) {
+            /* some Extrctors, notable the strings extractor, have options which
+             * can be configured such that no extraction should be done */
+            return true;
+        }
+
+        Map<String, String> fields = getContentFields(source);
+        //Get a reader for the content of the given source
+        try (Reader reader = extractor.getReader(source);) {
+            Chunker chunker = new Chunker(reader);
+
+            for (Chunk chunk : chunker) {
+                String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
+                fields.put(Server.Schema.ID.toString(), chunkId);
+                try {
+                    //add the chunk text to Solr index
+                    indexChunk(chunk.getText().toString(), sourceName, fields);
+                    numChunks++;
+                } catch (Ingester.IngesterException ingEx) {
+                    extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
+                            + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
+
+                    throw ingEx; //need to rethrow to signal error and move on
+                } catch (Exception ex) {
+                    throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
+                }
+            }
+        } catch (IOException ex) {
+            extractor.logWarning("Unable to read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
+            return false;
+        } catch (Exception ex) {
+            extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
+            return false;
+        } finally {
+            //after all chunks, index just the meta data, including the  numChunks, of the parent file
+            fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
+            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID)); //reset id field to base document id
+            indexChunk(null, sourceName, fields);
+        }
+
+        return true;
+    }
+
+    /**
+     * Add one chunk as to the Solr index as a seperate sold document.
+     *
+     * TODO see if can use a byte or string streaming way to add content to
+     * /update handler e.g. with XMLUpdateRequestHandler (deprecated in SOlr
+     * 4.0.0), see if possible to stream with UpdateRequestHandler
+     *
+     * @param chunk  The chunk content as a string
+     * @param fields
+     * @param size
+     *
+     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
+     */
+    private void indexChunk(String chunk, String sourceName, Map<String, String> fields) throws IngesterException {
+        if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
+            //JMTODO: actually if the we couldn't get the image id it is set to -1,
+            // but does this really mean we don't want to index it?
+
+            //skip the file, image id unknown
+            //JMTODO: does this need to ne internationalized?
+            String msg = NbBundle.getMessage(Ingester.class,
+                    "Ingester.ingest.exception.unknownImgId.msg", sourceName); //JMTODO: does this need to ne internationalized?
+            logger.log(Level.SEVERE, msg);
+            throw new IngesterException(msg);
+        }
+
+        //Make a SolrInputDocument out of the field map
+        SolrInputDocument updateDoc = new SolrInputDocument();
+        for (String key : fields.keySet()) {
+            updateDoc.addField(key, fields.get(key));
+        }
+        //add the content to the SolrInputDocument
+        //JMTODO: can we just add it to the field map before passing that in?
+        updateDoc.addField(Server.Schema.CONTENT.toString(), chunk);
+
+        try {
+            //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
+            solrServer.addDocument(updateDoc);
+            uncommitedIngests = true;
+
+        } catch (KeywordSearchModuleException ex) {
+            //JMTODO: does this need to ne internationalized?
+            throw new IngesterException(
+                    NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
+        }
+    }
+
+    /**
+     * Tells Solr to commit (necessary before ingested files will appear in
+     * searches)
+     */
+    void commit() {
+        try {
+            solrServer.commit();
+            uncommitedIngests = false;
+        } catch (NoOpenCoreException | SolrServerException ex) {
+            logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
+
+        }
     }
 
     /**
@@ -222,192 +351,6 @@ class Ingester {
     }
 
     /**
-     * Use the given TextExtractor to extract text from the given source. The
-     * text will be chunked and each chunk passed to Solr to add to the index.
-     *
-     *
-     * @param <A>       The type of the Appendix provider that provides
-     *                  additional text to append to the final chunk.
-     * @param <T>       A subclass of SleuthkitVisibleItem.
-     * @param extractor The TextExtractor that will be used to extract text from
-     *                  the given source.
-     * @param source    The source from which text will be extracted, chunked,
-     *                  and indexed.
-     * @param context   The ingest job context that can be used to cancel this
-     *                  process.
-     *
-     * @return True if this method executed normally. or False if there was an
-     *         unexpected exception. //JMTODO: This policy needs to be reviewed.
-     *
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
-     */
-    < T extends SleuthkitVisitableItem> boolean indexText(TextExtractor< T> extractor, T source, IngestJobContext context) throws Ingester.IngesterException {
-        final long sourceID = extractor.getID(source);
-        final String sourceName = extractor.getName(source);
-
-        int numChunks = 0; //unknown until chunking is done
-
-        if (extractor.isDisabled()) {
-            /* some Extrctors, notable the strings extractor, have options which
-             * can be configured such that no extraction should be done */
-            return true;
-        }
-
-        Map<String, String> fields = getContentFields(source);
-        //Get a stream and a reader for that stream
-        try (final InputStream stream = extractor.getInputStream(source);
-                Reader reader = extractor.getReader(stream, source);) {
-
-            //we read max 1024 chars at time, this seems to max what some Readers would return
-            char[] textChunkBuf = new char[MAX_EXTR_TEXT_CHARS];
-
-            boolean eof = false;  //have we read until the end of the file yet
-            while (!eof) {
-                int chunkSizeInChars = 0;  // the size in chars of the chunk (so far)
-                if (context != null && context.fileIngestIsCancelled()) {
-                    return true;
-                }
-                long charsRead = 0;  // number of chars read in the most recent read operation
-                //consume bytes to fill entire chunk (but leave EXTRA_CHARS to end the word)
-                while ((chunkSizeInChars < MAX_EXTR_TEXT_CHARS - SINGLE_READ_CHARS - EXTRA_CHARS)
-                        && (charsRead = reader.read(textChunkBuf, chunkSizeInChars, SINGLE_READ_CHARS)) != -1) {
-                    chunkSizeInChars += charsRead;
-                }
-
-                if (charsRead == -1) {
-                    //this is the last chunk
-                    eof = true;
-                } else {
-                    chunkSizeInChars += charsRead;
-
-                    //if we haven't reached the end of the file,
-                    //try to read char-by-char until whitespace to not break words
-                    while ((chunkSizeInChars < MAX_EXTR_TEXT_CHARS - 1)
-                            && (Character.isWhitespace(textChunkBuf[chunkSizeInChars - 1]) == false)
-                            && (charsRead = reader.read(textChunkBuf, chunkSizeInChars, 1)) != -1) {
-                        chunkSizeInChars += charsRead;
-                    }
-                    if (charsRead == -1) {
-                        //this is the last chunk
-                        eof = true;
-                    }
-                }
-
-                StringBuilder sb = new StringBuilder(chunkSizeInChars)
-                        .append(textChunkBuf, 0, chunkSizeInChars);
-
-                sanitizeToUTF8(sb);   //replace non UTF8 chars with '^'
-
-                String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
-                fields.put(Server.Schema.ID.toString(), chunkId);
-                try {
-                    //pass the chunk to method that adds it to Solr index
-                    indexChunk(sb.toString(), sourceName, fields);
-                    numChunks++;
-                } catch (Ingester.IngesterException ingEx) {
-                    extractor.logWarning("Ingester had a problem with extracted string from file '" //NON-NLS
-                            + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
-
-                    throw ingEx; //need to rethrow to signal error and move on
-                } catch (Exception ex) {
-                    throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
-                }
-            }
-        } catch (IOException ex) {
-            extractor.logWarning("Unable to read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
-            return false;
-        } catch (Exception ex) {
-            extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
-            return false;
-        } finally {
-            //after all chunks, index just the meta data, including the  numChunks, of the parent file
-            fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID)); //reset id field to base document id
-            indexChunk(null, sourceName, fields);
-        }
-        return true;
-    }
-
-    /**
-     * Sanitize the given StringBuilder by replacing non-UTF-8 characters with
-     * caret '^'
-     *
-     * @param sb the StringBuilder to sanitize
-     *
-     * //JMTODO: use Charsequence.chars() or codePoints() and then a mapping
-     * function?
-     */
-    private static void sanitizeToUTF8(StringBuilder sb) {
-        final int length = sb.length();
-
-        // Sanitize by replacing non-UTF-8 characters with caret '^'
-        for (int i = 0; i < length; i++) {
-            if (TextUtil.isValidSolrUTF8(sb.charAt(i)) == false) {
-                sb.replace(i, i + 1, "^");
-            }
-        }
-    }
-
-    /**
-     * Add one chunk as to the Solr index as a seperate sold document.
-     *
-     * TODO see if can use a byte or string streaming way to add content to
-     * /update handler e.g. with XMLUpdateRequestHandler (deprecated in SOlr
-     * 4.0.0), see if possible to stream with UpdateRequestHandler
-     *
-     * @param chunk  The chunk content as a string
-     * @param fields
-     * @param size
-     *
-     * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
-     */
-    private void indexChunk(String chunk, String sourceName, Map<String, String> fields) throws IngesterException {
-        if (fields.get(Server.Schema.IMAGE_ID.toString()) == null) {
-            //JMTODO: actually if the we couldn't get the image id it is set to -1,
-            // but does this really mean we don't want to index it?
-
-            //skip the file, image id unknown
-            //JMTODO: does this need to ne internationalized?
-            String msg = NbBundle.getMessage(Ingester.class,
-                    "Ingester.ingest.exception.unknownImgId.msg", sourceName); //JMTODO: does this need to ne internationalized?
-            logger.log(Level.SEVERE, msg);
-            throw new IngesterException(msg);
-        }
-
-        //Make a SolrInputDocument out of the field map
-        SolrInputDocument updateDoc = new SolrInputDocument();
-        for (String key : fields.keySet()) {
-            updateDoc.addField(key, fields.get(key));
-        }
-        //add the content to the SolrInputDocument
-        //JMTODO: can we just add it to the field map before passing that in?
-        updateDoc.addField(Server.Schema.CONTENT.toString(), chunk);
-
-        try {
-            //TODO: consider timeout thread, or vary socket timeout based on size of indexed content
-            solrServer.addDocument(updateDoc);
-            uncommitedIngests = true;
-        } catch (KeywordSearchModuleException ex) {
-            //JMTODO: does this need to ne internationalized?
-            throw new IngesterException(
-                    NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
-        }
-    }
-
-    /**
-     * Tells Solr to commit (necessary before ingested files will appear in
-     * searches)
-     */
-    void commit() {
-        try {
-            solrServer.commit();
-            uncommitedIngests = false;
-        } catch (NoOpenCoreException | SolrServerException ex) {
-            logger.log(Level.WARNING, "Error commiting index", ex); //NON-NLS
-        }
-    }
-
-    /**
      * Indicates that there was an error with the specific ingest operation, but
      * it's still okay to continue ingesting files.
      */
@@ -422,5 +365,147 @@ class Ingester {
         IngesterException(String message) {
             super(message);
         }
+    }
+
+}
+
+class Chunk {
+    private final StringBuilder sb;
+    private final int chunksize;
+
+    Chunk(StringBuilder sb, int chunksize) {
+        this.sb = sb;
+        this.chunksize = chunksize;
+    }
+
+    StringBuilder getText() {
+        return sb;
+    }
+
+    int getSize() {
+        return chunksize;
+    }
+}
+
+/**
+ * Encapsulates the content chunking algorithm in implementation of the Iterator
+ * interface.
+ */
+class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
+
+    private static final int INITIAL_CHUNK_SIZE = 32 * 1024; //bytes
+    private static final int SINGLE_READ_CHARS = 1024;
+
+    private int chunkSizeBytes = 0;  // the size in bytes of chunk (so far)
+    private int charsRead = 0;  // number of chars read in the most recent read operation
+    private boolean whitespace = false;
+    private char[] tempChunkBuf;
+    private StringBuilder chunkText;
+    private boolean endOfContent = false;
+    private final Reader reader;
+
+    /**
+     * Create a Chunker that will chunk the content of the given Reader.
+     *
+     * @param reader The content to chunk.
+     */
+    Chunker(Reader reader) {
+        this.reader = reader;
+    }
+
+    @Override
+    public Iterator<Chunk> iterator() {
+        return this;
+    }
+
+    /**
+     * Are there any more chunks available from this chunker?
+     *
+     *
+     * @return true if there are more chunks available.
+     */
+    @Override
+    public boolean hasNext() {
+        return endOfContent == false;
+    }
+
+    @Override
+    public Chunk next() {
+        if (hasNext()) {
+            chunkText = new StringBuilder();
+            tempChunkBuf = new char[SINGLE_READ_CHARS];
+            chunkSizeBytes = 0;
+            //read chars up to initial chunk size
+            while (chunkSizeBytes < INITIAL_CHUNK_SIZE && endOfContent == false) {
+                try {
+                    charsRead = reader.read(tempChunkBuf, 0, SINGLE_READ_CHARS);
+                } catch (IOException ex) {
+                    throw new RuntimeException("IOException while attempting to read chunk.", ex);
+                }
+                    if (-1 == charsRead) {
+                        //this is the last chunk
+                        endOfContent = true;
+                    } else {
+                        String chunkSegment = new String(tempChunkBuf, 0, charsRead);
+                        chunkSizeBytes += Utf8.encodedLength(chunkSegment);
+                        chunkText.append(chunkSegment);
+                    }
+
+            }
+            if (false == endOfContent) {
+                endOfContent = readChunkUntilWhiteSpace();
+            }
+            return new Chunk(sanitizeToUTF8(chunkText), chunkSizeBytes);
+        } else {
+            throw new NoSuchElementException("There are no more chunks.");
+        }
+    }
+
+
+    private boolean readChunkUntilWhiteSpace() {
+        charsRead = 0;
+        whitespace = false;
+        //if we haven't reached the end of the file,
+        //try to read char-by-char until whitespace to not break words
+        while ((chunkSizeBytes < INITIAL_CHUNK_SIZE)
+                && (false == whitespace)) {
+            try {
+                charsRead = reader.read(tempChunkBuf, 0, 1);
+            } catch (IOException ex) {
+                throw new RuntimeException("IOException while attempting to read chunk until whitespace.", ex);
+            }
+            if (-1 == charsRead) {
+                //this is the last chunk
+                return true;
+            } else {
+                whitespace = Character.isWhitespace(tempChunkBuf[0]);
+                String chunkSegment = new String(tempChunkBuf, 0, 1);
+                chunkSizeBytes += Utf8.encodedLength(chunkSegment);
+                chunkText.append(chunkSegment);
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Sanitize the given StringBuilder by replacing non-UTF-8 characters with
+     * caret '^'
+     *
+     * @param sb the StringBuilder to sanitize
+     *
+     * //JMTODO: use Charsequence.chars() or codePoints() and then a mapping
+     * function?
+     */
+    private static StringBuilder sanitizeToUTF8(StringBuilder sb) {
+        final int length = sb.length();
+
+        // Sanitize by replacing non-UTF-8 characters with caret '^'
+        for (int i = 0; i < length; i++) {
+            if (TextUtil.isValidSolrUTF8(sb.charAt(i)) == false) {
+                sb.replace(i, i + 1, "^");
+
+            }
+        }
+        return sb;
     }
 }
