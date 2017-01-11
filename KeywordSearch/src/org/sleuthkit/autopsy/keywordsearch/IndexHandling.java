@@ -24,11 +24,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
@@ -69,6 +71,8 @@ class IndexHandling {
     }
     
     static String createReferenceIndexCopy(Case theCase, String indexPath) throws AutopsyService.AutopsyServiceException {
+        Logger logger = Logger.getLogger(IndexHandling.class.getName());    // ELTODO REMOVE
+        logger.log(Level.SEVERE, "ELTODO copying index at path {0} ", indexPath); //NON-NLS
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
         try {
             // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
@@ -91,7 +95,11 @@ class IndexHandling {
     
     
     static void createReferenceConfigSetCopy(String indexPath) throws AutopsyService.AutopsyServiceException {
+        Logger logger = Logger.getLogger(IndexHandling.class.getName());    // ELTODO REMOVE
         try {
+            // ELTODO See if there is SOLR_HOME environment variable first
+            
+            // if there is no SOLR_HOME:
             // this will only work for Windows OS
             if (!PlatformUtil.isWindowsOS()) {
                 throw new AutopsyService.AutopsyServiceException("ELTODO");
@@ -99,10 +107,13 @@ class IndexHandling {
             // config set should be located in "C:/some/directory/AutopsyXYZ/autopsy/solr/solr/configsets/"
             File pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET).toFile();
             if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
+                logger.log(Level.SEVERE, "ELTODO path {0} doesn''t exist", pathToConfigSet.getAbsolutePath()); //NON-NLS
                 // try the "release/solr/solr/configsets/" folder instead
                 pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET_2).toFile();
                 if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
-                    throw new AutopsyService.AutopsyServiceException("ELTODO");
+                    logger.log(Level.SEVERE, "ELTODO path {0} doesn''t exist", pathToConfigSet.getAbsolutePath()); //NON-NLS
+                    return;
+                    // ELTODO This is NTH: throw new AutopsyService.AutopsyServiceException("ELTODO");
                 }
             }
             File targetDirPath = new File(indexPath); //NON-NLS
