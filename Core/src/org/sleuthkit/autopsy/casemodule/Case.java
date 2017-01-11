@@ -1320,18 +1320,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
-            
+
             AutopsyService.CaseContext context = new AutopsyService.CaseContext(Case.currentCase, new LoggingProgressIndicator());
             String serviceName = "";
             for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
                 try {
                     serviceName = service.getServiceName();
-                    service.openCaseResources(context);
+                    if (!serviceName.equals("Solr Keyword Search Service")) {
+                        service.openCaseResources(context);
+                    }
                 } catch (AutopsyService.AutopsyServiceException ex) {
                     Case.logger.log(Level.SEVERE, String.format("%s service failed to open case resources", serviceName), ex);
                 }
-            }           
-            
+            }
+
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
 
         } else {
