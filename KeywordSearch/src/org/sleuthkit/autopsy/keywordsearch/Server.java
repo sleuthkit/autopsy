@@ -148,6 +148,12 @@ public class Server {
             public String toString() {
                 return "num_chunks"; //NON-NLS
             }
+        },
+        CHUNK_SIZE {
+            @Override
+            public String toString() {
+                return "chunk_size"; //NON-NLS
+            }
         }
     };
 
