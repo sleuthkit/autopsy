@@ -50,7 +50,8 @@ public final class CoordinationService {
 
         CASES("cases"),
         MANIFESTS("manifests"),
-        CONFIG("config");
+        CONFIG("config"),
+        RESOURCE("resource");
 
         private final String displayName;
 

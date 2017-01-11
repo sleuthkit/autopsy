@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;

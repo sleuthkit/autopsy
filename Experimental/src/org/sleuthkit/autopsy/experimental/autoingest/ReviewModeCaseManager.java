@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -38,7 +35,6 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseNewAction;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 
 /**
  * Handles opening, locking, and unlocking cases in review mode. Instances of
@@ -47,7 +43,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Coordinatio
  * dispatch thread (EDT). Because of the tight coupling to the UI, exception
  * messages are deliberately user-friendly.
  */
-final class ReviewModeCaseManager implements PropertyChangeListener {
+final class ReviewModeCaseManager {
 
     /*
      * Provides uniform exceptions with user-friendly error messages.
@@ -77,14 +73,7 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
      */
     synchronized static ReviewModeCaseManager getInstance() {
         if (instance == null) {
-            /*
-             * Two stage construction is used here to avoid allowing "this"
-             * reference to escape from the constructor via registering as an
-             * PropertyChangeListener. This is to ensure that a partially
-             * constructed manager is not published to other threads.
-             */
             instance = new ReviewModeCaseManager();
-            Case.addPropertyChangeListener(instance);
         }
         return instance;
     }
@@ -149,17 +138,7 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
      * requirement
      */
     synchronized void openCaseInEDT(Path caseMetadataFilePath) throws ReviewModeCaseManagerException {
-        Path caseFolderPath = caseMetadataFilePath.getParent();
         try {
-            /*
-             * Acquire a lock on the case folder. If the lock cannot be
-             * acquired, the case cannot be opened.
-             */
-            currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseFolderPath.toString());
-            if (null == currentCaseLock) {
-                throw new ReviewModeCaseManagerException("Could not get shared access to multi-user case folder");
-            }
-
             /*
              * Open the case.
              */
@@ -177,64 +156,8 @@ final class ReviewModeCaseManager implements PropertyChangeListener {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
             });
 
-        } catch (CoordinationServiceException | ReviewModeCaseManagerException | CaseActionException ex) {
-            /*
-             * Release the coordination service lock on the case folder.
-             */
-            try {
-                if (currentCaseLock != null) {
-                    currentCaseLock.release();
-                    currentCaseLock = null;
-                }
-            } catch (CoordinationService.CoordinationServiceException exx) {
-                logger.log(Level.SEVERE, String.format("Error deleting legacy LOCKED state file for case at %s", caseFolderPath), exx);
-            }
-
-            if (ex instanceof CoordinationServiceException) {
-                throw new ReviewModeCaseManagerException("Could not get access to the case folder from the coordination service, contact administrator", ex);
-            } else if (ex instanceof IOException) {
-                throw new ReviewModeCaseManagerException("Could not write to the case folder, contact adminstrator", ex);
-            } else if (ex instanceof CaseActionException) {
-                /*
-                 * CaseActionExceptions have user friendly error messages.
-                 */
-                throw new ReviewModeCaseManagerException(String.format("Could not open the case (%s), contract administrator", ex.getMessage()), ex);
-            } else if (ex instanceof ReviewModeCaseManagerException) {
-                throw (ReviewModeCaseManagerException) ex;
-            }
+        } catch (CaseActionException ex) {
+            throw new ReviewModeCaseManagerException(String.format("Could not open the case (%s), contract administrator", ex.getMessage()), ex);
         }
     }
-
-    /**
-     * @inheritDoc
-     */
-    @Override
-    public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())
-                && null != evt.getOldValue()
-                && null == evt.getNewValue()) {
-            /*
-             * When a case is closed, release the coordination service lock on
-             * the case folder. This must be done in the EDT because it was
-             * acquired in the EDT via openCase().
-             */
-            if (null != currentCaseLock) {
-                try {
-                    SwingUtilities.invokeAndWait(() -> {
-                        try {
-                            currentCaseLock.release();
-                            currentCaseLock = null;
-                        } catch (CoordinationService.CoordinationServiceException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to release the coordination service lock with path %s", currentCaseLock.getNodePath()), ex);
-                            currentCaseLock = null;
-                        }
-                    });
-                } catch (InterruptedException | InvocationTargetException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to release the coordination service lock with path %s", currentCaseLock.getNodePath()), ex);
-                    currentCaseLock = null;
-                }
-            }
-        }
-    }
-
 }
