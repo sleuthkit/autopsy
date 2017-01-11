@@ -77,9 +77,9 @@ public class ImageNode extends AbstractContentNode<Image> {
         String imgName = nameForImage(img);
         this.setDisplayName(imgName);
         this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/hard-drive-icon.jpg"); //NON-NLS
-        
+
         // Listen for ingest events so that we can detect new added files (e.g. carved)
-        IngestManager.getInstance().addIngestModuleEventListener(pcl);        
+        IngestManager.getInstance().addIngestModuleEventListener(pcl);
         // Listen for case events so that we can detect when case is closed
         Case.addPropertyChangeListener(pcl);
     }
@@ -100,8 +100,6 @@ public class ImageNode extends AbstractContentNode<Image> {
     @Messages({"ImageNode.action.runIngestMods.text=Run Ingest Modules",
         "ImageNode.getActions.openFileSearchByAttr.text=Open File Search by Attributes",})
     public Action[] getActions(boolean context) {
-
-        
 
         List<Action> actionsList = new ArrayList<Action>();
         for (Action a : super.getActions(true)) {
@@ -215,7 +213,12 @@ public class ImageNode extends AbstractContentNode<Image> {
     public String getItemType() {
         return getClass().getName();
     }
-    
+
+    /*
+     * This property change listener refreshes the tree when a new file is
+     * carved out of this image (i.e, the image is being treated as raw bytes
+     * and was ingested by the RawDSProcessor).
+     */
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 
@@ -255,6 +258,5 @@ public class ImageNode extends AbstractContentNode<Image> {
             }
         }
     };
-    
-    
+
 }
