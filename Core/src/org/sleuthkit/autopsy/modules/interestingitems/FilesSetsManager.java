@@ -62,7 +62,7 @@ public final class FilesSetsManager extends Observable {
     private static FilesSetsManager instance;
 
     /**
-     * Gets the interesting item definitions manager singleton.
+     * Gets the FilesSet definitions manager singleton.
      */
     public synchronized static FilesSetsManager getInstance() {
         if (instance == null) {
@@ -171,7 +171,7 @@ public final class FilesSetsManager extends Observable {
      * Sets the current interesting file sets definitions, replacing any
      * previous definitions.
      *
-     * @param filesSets A mapping of interesting files set names to files sets,
+     * @param filesSets A mapping of file ingest filters names to files sets,
      *                  used to enforce unique files set names.
      */
     void setFileIngestFilter(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
@@ -181,7 +181,7 @@ public final class FilesSetsManager extends Observable {
     }
 
     /**
-     * Reads and writes interesting files set definitions to and from disk in
+     * Reads and writes FilesSet definitions to and from disk in
      * XML format.
      */
     private final static class FilesSetXML {
@@ -191,7 +191,7 @@ public final class FilesSetsManager extends Observable {
         private static final List<String> illegalFileNameChars = FilesSetsManager.getIllegalFileNameChars();
 
         // The following tags and attributes are identical to those used in the  
-        // TSK Framework interesting files set definitions file schema.
+        // TSK Framework FilesSet definitions file schema.
         private static final String FILE_SETS_ROOT_TAG = "INTERESTING_FILE_SETS"; //NON-NLS
         private static final String FILE_SET_TAG = "INTERESTING_FILE_SET"; //NON-NLS
         private static final String NAME_RULE_TAG = "NAME"; //NON-NLS
@@ -213,7 +213,7 @@ public final class FilesSetsManager extends Observable {
         private static int unnamedLegacyRuleCounter;
 
         /**
-         * Reads interesting file set definitions from an XML file.
+         * Reads FilesSet definitions from an XML file.
          *
          * @param fileName       The name of the file which is expected to store
          *                       the serialized definitions
@@ -239,21 +239,21 @@ public final class FilesSetsManager extends Observable {
 
                 // Check if the file can be read.
                 if (!defsFile.canRead()) {
-                    logger.log(Level.SEVERE, "Interesting file sets definition file at {0} exists, but cannot be read", defsFile.getPath()); // NON-NLS
+                    logger.log(Level.SEVERE, "FilesSet definition file at {0} exists, but cannot be read", defsFile.getPath()); // NON-NLS
                     return filesSets;
                 }
 
                 // Parse the XML in the file.
                 Document doc = XMLUtil.loadDoc(FilesSetXML.class, defsFile.getPath());
                 if (doc == null) {
-                    logger.log(Level.SEVERE, "Failed to parse interesting file sets definition file at {0}", defsFile.getPath()); // NON-NLS
+                    logger.log(Level.SEVERE, "FilesSet definition file at {0}", defsFile.getPath()); // NON-NLS
                     return filesSets;
                 }
 
                 // Get the root element.
                 Element root = doc.getDocumentElement();
                 if (root == null) {
-                    logger.log(Level.SEVERE, "Failed to get root {0} element tag of interesting file sets definition file at {1}", new Object[]{FilesSetXML.FILE_SETS_ROOT_TAG, defsFile.getPath()}); // NON-NLS
+                    logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", new Object[]{FilesSetXML.FILE_SETS_ROOT_TAG, defsFile.getPath()}); // NON-NLS
                     return filesSets;
                 }
 
@@ -293,9 +293,9 @@ public final class FilesSetsManager extends Observable {
         }
 
         /**
-         * Reads in an interesting files set.
+         * Reads in a FilesSet.
          *
-         * @param setElem   An interesting files set XML element
+         * @param setElem   A FilesSet XML element
          * @param filesSets A collection to which the set is to be added.
          * @param filePath  The source file, used for error reporting.
          */
@@ -303,11 +303,11 @@ public final class FilesSetsManager extends Observable {
             // The file set must have a unique name.
             String setName = setElem.getAttribute(FilesSetXML.NAME_ATTR);
             if (setName.isEmpty()) {
-                logger.log(Level.SEVERE, "Found {0} element without required {1} attribute, ignoring malformed file set definition in interesting file sets definition file at {2}", new Object[]{FilesSetXML.FILE_SET_TAG, FilesSetXML.NAME_ATTR, filePath}); // NON-NLS
+                logger.log(Level.SEVERE, "Found {0} element without required {1} attribute, ignoring malformed file set definition in FilesSet definition file at {2}", new Object[]{FilesSetXML.FILE_SET_TAG, FilesSetXML.NAME_ATTR, filePath}); // NON-NLS
                 return;
             }
             if (filesSets.containsKey(setName)) {
-                logger.log(Level.SEVERE, "Found duplicate definition of set named {0} in interesting file sets definition file at {1}, discarding duplicate set", new Object[]{setName, filePath}); // NON-NLS
+                logger.log(Level.SEVERE, "Found duplicate definition of set named {0} in FilesSet definition file at {1}, discarding duplicate set", new Object[]{setName, filePath}); // NON-NLS
                 return;
             }
 
@@ -340,11 +340,11 @@ public final class FilesSetsManager extends Observable {
                     if (!rules.containsKey(rule.getUuid())) {
                         rules.put(rule.getUuid(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); // NON-NLS
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in FilesSet definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); // NON-NLS
                         return;
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in interesting file sets definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); // NON-NLS
+                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in FilesSet definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); // NON-NLS
                     return;
                 }
             }
@@ -358,11 +358,11 @@ public final class FilesSetsManager extends Observable {
                     if (!rules.containsKey(rule.getUuid())) {
                         rules.put(rule.getUuid(), rule);
                     } else {
-                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in interesting file sets definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); //NOI18N NON-NLS
+                        logger.log(Level.SEVERE, "Found duplicate rule {0} for set named {1} in FilesSet definition file at {2}, discarding malformed set", new Object[]{rule.getUuid(), setName, filePath}); //NOI18N NON-NLS
                         return;
                     }
                 } else {
-                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in interesting file sets definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); //NOI18N NON-NLS
+                    logger.log(Level.SEVERE, "Found malformed rule for set named {0} in FilesSet definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); //NOI18N NON-NLS
                     return;
                 }
             }
@@ -375,7 +375,7 @@ public final class FilesSetsManager extends Observable {
         }
 
         /**
-         * Construct an interesting files set file name rule from the data in an
+         * Construct a FilesSet file name rule from the data in an
          * XML element.
          *
          * @param elem The file name rule XML element.
@@ -433,7 +433,7 @@ public final class FilesSetsManager extends Observable {
         }
 
         /**
-         * Construct an interesting files set file name extension rule from the
+         * Construct a FilesSet file name extension rule from the
          * data in an XML element.
          *
          * @param elem The file name extension rule XML element.
@@ -526,7 +526,7 @@ public final class FilesSetsManager extends Observable {
         }
 
         /**
-         * Construct a meta-type condition for an interesting files set
+         * Construct a meta-type condition for a FilesSet
          * membership rule from data in an XML element.
          *
          * @param ruleElement The XML element.
@@ -553,7 +553,7 @@ public final class FilesSetsManager extends Observable {
                         break;
                 }
             } else {
-                // Accept TSK Framework interesting files set definitions, 
+                // Accept TSK Framework FilesSet definitions, 
                 // default to files.
                 condition = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES);
             }
@@ -561,7 +561,7 @@ public final class FilesSetsManager extends Observable {
         }
 
         /**
-         * Construct a path condition for an interesting files set membership
+         * Construct a path condition for a FilesSet membership
          * rule from data in an XML element.
          *
          * @param ruleElement The XML element.
@@ -586,7 +586,7 @@ public final class FilesSetsManager extends Observable {
         }
 
         /**
-         * Writes interesting files set definitions to disk as an XML file,
+         * Writes FilesSet definitions to disk as an XML file,
          * logging any errors.
          *
          * @param fileName Name of the set definitions file as a string.

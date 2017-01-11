@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TYPE;
 
 /**
- * A panel that allows a user to create and edit interesting files set
+ * A panel that allows a user to create and edit files set
  * membership rules.
  */
 final class FilesSetRulePanel extends javax.swing.JPanel {
@@ -251,8 +251,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             case DIRECTORIES:
                 this.dirsRadioButton.setSelected(true);
                 break;
-            case FILES_AND_DIRECTORIES:
-                this.filesAndDirsRadioButton.setSelected(true);
+            case ALL:
+                this.allRadioButton.setSelected(true);
                 break;
         }
     }
@@ -295,7 +295,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     /**
      * Returns whether or not the data entered in the panel constitutes a valid
-     * interesting files set membership rule definition, displaying a dialog
+     * files set membership rule definition, displaying a dialog
      * explaining the deficiency if the definition is invalid.
      *
      * @return True if the definition is valid, false otherwise.
@@ -479,7 +479,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         } else if (this.dirsRadioButton.isSelected()) {
             return new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.DIRECTORIES);
         } else {
-            return new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.FILES_AND_DIRECTORIES);
+            return new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.ALL);
         }
     }
 
@@ -601,7 +601,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         fileSizeCheck = new javax.swing.JCheckBox();
         filesRadioButton = new javax.swing.JRadioButton();
         dirsRadioButton = new javax.swing.JRadioButton();
-        filesAndDirsRadioButton = new javax.swing.JRadioButton();
+        allRadioButton = new javax.swing.JRadioButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(ruleNameLabel, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ruleNameLabel.text")); // NOI18N
 
@@ -620,11 +620,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         nameButtonGroup.add(fullNameRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(fullNameRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.fullNameRadioButton.text")); // NOI18N
         fullNameRadioButton.setEnabled(false);
-        fullNameRadioButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                fullNameRadioButtonActionPerformed(evt);
-            }
-        });
 
         nameButtonGroup.add(extensionRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(extensionRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.extensionRadioButton.text")); // NOI18N
@@ -702,11 +697,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             }
         });
 
-        typeButtonGroup.add(filesAndDirsRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(filesAndDirsRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.filesAndDirsRadioButton.text")); // NOI18N
-        filesAndDirsRadioButton.addActionListener(new java.awt.event.ActionListener() {
+        typeButtonGroup.add(allRadioButton);
+        org.openide.awt.Mnemonics.setLocalizedText(allRadioButton, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.allRadioButton.text")); // NOI18N
+        allRadioButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                filesAndDirsRadioButtonActionPerformed(evt);
+                allRadioButtonActionPerformed(evt);
             }
         });
 
@@ -733,7 +728,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(dirsRadioButton)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(filesAndDirsRadioButton)))
+                                        .addComponent(allRadioButton)))
                                 .addGap(0, 0, Short.MAX_VALUE))))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
@@ -784,7 +779,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
                     .addComponent(jLabel1)
                     .addComponent(filesRadioButton)
                     .addComponent(dirsRadioButton)
-                    .addComponent(filesAndDirsRadioButton))
+                    .addComponent(allRadioButton))
                 .addGap(5, 5, 5)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(nameTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -889,22 +884,18 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         this.setComponentsForSearchType();
     }//GEN-LAST:event_dirsRadioButtonActionPerformed
 
-    private void filesAndDirsRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filesAndDirsRadioButtonActionPerformed
+    private void allRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allRadioButtonActionPerformed
         this.setComponentsForSearchType();
-    }//GEN-LAST:event_filesAndDirsRadioButtonActionPerformed
-
-    private void fullNameRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullNameRadioButtonActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_fullNameRadioButtonActionPerformed
+    }//GEN-LAST:event_allRadioButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JRadioButton allRadioButton;
     private javax.swing.JRadioButton dirsRadioButton;
     private javax.swing.JComboBox<String> equalitySymbolComboBox;
     private javax.swing.JRadioButton extensionRadioButton;
     private javax.swing.JCheckBox fileSizeCheck;
     private javax.swing.JComboBox<String> fileSizeComboBox;
     private javax.swing.JSpinner fileSizeSpinner;
-    private javax.swing.JRadioButton filesAndDirsRadioButton;
     private javax.swing.JRadioButton filesRadioButton;
     private javax.swing.JRadioButton fullNameRadioButton;
     private javax.swing.JLabel jLabel1;
