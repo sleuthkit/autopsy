@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -98,9 +99,9 @@ import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.Lookup;

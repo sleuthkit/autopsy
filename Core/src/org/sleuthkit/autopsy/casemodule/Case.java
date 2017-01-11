@@ -39,6 +39,12 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.util.Exceptions;
@@ -57,6 +63,8 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ReportAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.Services;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -283,6 +291,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static String appName;
     private static Case currentCase;
+    private static CoordinationService.Lock currentCaseLock;
+    private static ExecutorService currentCaseExecutor;
     private final CaseMetadata caseMetadata;
     private final SleuthkitCase db;
     private final Services services;
@@ -835,10 +845,30 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *                             exception.
      */
     public void closeCase() throws CaseActionException {
+        
+        // The unlock must happen on the same thread that created the lock
+        Future<Void> future = getCurrentCaseExecutor().submit(() -> {
+            try{
+                if (currentCaseLock != null) {
+                    currentCaseLock.release();
+                    currentCaseLock = null;
+                }
+            } catch (CoordinationService.CoordinationServiceException exx) {
+                logger.log(Level.SEVERE, String.format("Error releasing shared lock"), exx);
+            }
+            return null;
+        });
+        try{
+            future.get();
+        } catch (InterruptedException | ExecutionException ex){
+            logger.log(Level.SEVERE, String.format("Interrupted while releasing shared lock"), ex);
+        }        
+        
         changeCurrentCase(null);
+      
         try {
             services.close();
-            this.db.close();
+            this.db.close(); 
         } catch (Exception e) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.closeCase.exception.msg"), e);
         }
@@ -943,6 +973,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public static void create(String caseDir, String caseName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         logger.log(Level.INFO, "Attempting to create case {0} in directory = {1}", new Object[]{caseName, caseDir}); //NON-NLS
 
+        CoordinationService.Lock exclusiveResourceLock = null;
+        boolean caseCreatedSuccessfully = false;
+        
         /*
          * Create case directory if it doesn't already exist.
          */
@@ -965,49 +998,113 @@ public class Case implements SleuthkitCase.ErrorObserver {
         } else if (caseType == CaseType.MULTI_USER_CASE) {
             dbName = indexName;
         }
+        
+        try{
+            /* If this is a multi-user case, acquire two locks:
+             * - a shared lock on the case to prevent it from being deleted while open
+             * - an exclusive lock to prevent multiple clients from executing openCase simultaneously 
+            */
+            if(caseType == CaseType.MULTI_USER_CASE){
+                try{
 
-        /*
-         * Create the case metadata (.aut) file.
-         */
-        CaseMetadata metadata;
-        try {
-            metadata = new CaseMetadata(caseDir, caseType, caseName, caseNumber, examiner, dbName, indexName);
-        } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_creationException(), ex);
-        }
+                    // The shared lock uses case directory
+                    // The shared lock needs to be created on a special thread so it can be released
+                    // from the same thread.
+                    Future<Void> future = getCurrentCaseExecutor().submit(() -> {
+                        currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseDir);
+                        if (null == currentCaseLock) {
+                            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
+                        }
+                        return null;
+                    });
+                    future.get();
 
-        /*
-         * Create the case database.
-         */
-        SleuthkitCase db = null;
-        try {
-            if (caseType == CaseType.SINGLE_USER_CASE) {
-                db = SleuthkitCase.newCase(dbName);
-            } else if (caseType == CaseType.MULTI_USER_CASE) {
-                db = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                    // The exclusive lock uses the unique case name.
+                    // This lock does not need to be on a special thread since it will be released before
+                    // leaving this method
+                    exclusiveResourceLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
+                            dbName, 12, TimeUnit.HOURS);
+                    if (null == exclusiveResourceLock) {
+                        throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
+                    }
+                } catch (Exception ex){
+                    throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
+                }
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, String.format("Error creating a case %s in %s ", caseName, caseDir), ex); //NON-NLS
-            SwingUtilities.invokeLater(() -> {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            });
+
             /*
-             * SleuthkitCase.newCase throws TskCoreExceptions with user-friendly
-             * messages, so propagate the exception message.
+             * Create the case metadata (.aut) file.
              */
-            throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
-        } catch (UserPreferencesException ex) {
-            logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
-            SwingUtilities.invokeLater(() -> {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            });
-            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+            CaseMetadata metadata;
+            try {
+                metadata = new CaseMetadata(caseDir, caseType, caseName, caseNumber, examiner, dbName, indexName);
+            } catch (CaseMetadataException ex) {
+                throw new CaseActionException(Bundle.Case_creationException(), ex);
+            }
+
+            /*
+             * Create the case database.
+             */
+            SleuthkitCase db = null;
+            try {
+                if (caseType == CaseType.SINGLE_USER_CASE) {
+                    db = SleuthkitCase.newCase(dbName);
+                } else if (caseType == CaseType.MULTI_USER_CASE) {
+                    db = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, String.format("Error creating a case %s in %s ", caseName, caseDir), ex); //NON-NLS
+                SwingUtilities.invokeLater(() -> {
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                });
+                /*
+                 * SleuthkitCase.newCase throws TskCoreExceptions with user-friendly
+                 * messages, so propagate the exception message.
+                 */
+                throw new CaseActionException(ex.getMessage(), ex); //NON-NLS
+            } catch (UserPreferencesException ex) {
+                logger.log(Level.SEVERE, "Error accessing case database connection info", ex); //NON-NLS
+                SwingUtilities.invokeLater(() -> {
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                });
+                throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
+            }
+
+            Case newCase = new Case(metadata, db);
+            changeCurrentCase(newCase);
+            caseCreatedSuccessfully = true;
+
+            logger.log(Level.INFO, "Created case {0} in directory = {1}", new Object[]{caseName, caseDir}); //NON-NLS
+        } finally {
+            // Release the exclusive resource lock
+            try {
+                if (exclusiveResourceLock != null) {
+                    exclusiveResourceLock.release();
+                }
+            } catch (CoordinationService.CoordinationServiceException exx) {
+                logger.log(Level.SEVERE, String.format("Error releasing resource lock for case {0}", caseName), exx);
+            }
+
+            // If an error occurred while opening the case, release the shared case lock as well
+            if(! caseCreatedSuccessfully){
+                Future<Void> future = getCurrentCaseExecutor().submit(() -> {
+                    try {
+                        if (currentCaseLock != null) {
+                            currentCaseLock.release();
+                            currentCaseLock = null;
+                        }
+                    } catch (CoordinationService.CoordinationServiceException exx) {
+                        logger.log(Level.SEVERE, String.format("Error releasing shared lock for case {0}", caseName), exx);
+                    }   
+                    return null;
+                });
+                try{
+                     future.get();
+                } catch (InterruptedException | ExecutionException ex){
+                      logger.log(Level.SEVERE, String.format("Interrupted while releasing shared lock"), ex);
+                }                     
+            }            
         }
-
-        Case newCase = new Case(metadata, db);
-        changeCurrentCase(newCase);
-
-        logger.log(Level.INFO, "Created case {0} in directory = {1}", new Object[]{caseName, caseDir}); //NON-NLS
     }
 
     /**
@@ -1146,6 +1243,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     public static void open(String caseMetadataFilePath) throws CaseActionException {
         logger.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS
+        CoordinationService.Lock exclusiveResourceLock = null;
+        boolean caseOpenedSuccessfully = false;
 
         /*
          * Verify the extension of the case metadata file.
@@ -1160,6 +1259,39 @@ public class Case implements SleuthkitCase.ErrorObserver {
              */
             CaseMetadata metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
             CaseType caseType = metadata.getCaseType();
+
+            /*
+             * If this is a multi-user case, acquire two locks:
+             * - a shared lock on the case to prevent it from being deleted while open
+             * - an exclusive lock to prevent multiple clients from executing openCase simultaneously 
+            */
+            if(caseType == CaseType.MULTI_USER_CASE){
+                try{
+
+                    // The shared lock uses the case directory
+                    // The shared lock needs to be created on a special thread so it can be released
+                    // from the same thread.
+                    Future<Void> future = getCurrentCaseExecutor().submit(() -> {
+                        currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory());
+                        if (null == currentCaseLock) {
+                            throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
+                        }
+                        return null;
+                    });
+                    future.get();
+
+                    // The exclusive lock uses the unique case name
+                    // This lock does not need to be on a special thread since it will be released before
+                    // leaving this method
+                    exclusiveResourceLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
+                            metadata.getCaseDatabaseName(), 12, TimeUnit.HOURS);
+                    if (null == exclusiveResourceLock) {
+                        throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
+                    }
+                } catch (Exception ex){
+                    throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
+                }
+            }
 
             /*
              * Open the case database.
@@ -1224,6 +1356,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
             Case openedCase = new Case(metadata, db);
             changeCurrentCase(openedCase);
+            caseOpenedSuccessfully = true;
 
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.metaDataFileCorrupt.exception.msg"), ex); //NON-NLS
@@ -1236,6 +1369,36 @@ public class Case implements SleuthkitCase.ErrorObserver {
              * user-friendly messages, so propagate the exception message.
              */
             throw new CaseActionException(ex.getMessage(), ex);
+        } finally {
+            // Release the exclusive resource lock
+            try {
+                if (exclusiveResourceLock != null) {
+                    exclusiveResourceLock.release();
+                    exclusiveResourceLock = null;
+                }
+            } catch (CoordinationService.CoordinationServiceException exx) {
+                logger.log(Level.SEVERE, String.format("Error releasing resource lock for case {0}", caseMetadataFilePath), exx);
+            }
+
+            // If an error occurred while opening the case, release the shared case lock as well
+            if(! caseOpenedSuccessfully){
+                Future<Void> future = getCurrentCaseExecutor().submit(() -> {
+                    try {
+                        if (currentCaseLock != null) {
+                            currentCaseLock.release();
+                            currentCaseLock = null;
+                        }
+                    } catch (CoordinationService.CoordinationServiceException exx) {
+                        logger.log(Level.SEVERE, String.format("Error releasing shared lock for case {0}", caseMetadataFilePath), exx);
+                    }   
+                    return null;
+                });
+                try{
+                     future.get();
+                } catch (InterruptedException | ExecutionException ex){
+                      logger.log(Level.SEVERE, String.format("Interrupted while releasing shared lock"), ex);
+                }    
+            }
         }
     }
 
@@ -1450,11 +1613,22 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *
      * @param casePath A case directory path.
      *
-     * @return True if the deleteion succeeded, false otherwise.
+     * @return True if the deletion succeeded, false otherwise.
      */
     static boolean deleteCaseDirectory(File casePath) {
         logger.log(Level.INFO, "Deleting case directory: {0}", casePath.getAbsolutePath()); //NON-NLS
         return FileUtil.deleteDir(casePath);
+    }
+    
+    /**
+     * Get the single thread executor for the current case, creating it if necessary.
+     * @return The executor
+     */
+    private static ExecutorService getCurrentCaseExecutor(){
+        if(currentCaseExecutor == null){
+            currentCaseExecutor = Executors.newSingleThreadExecutor();
+        }
+        return currentCaseExecutor;
     }
 
     /**
