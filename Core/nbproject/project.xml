@@ -231,6 +231,7 @@
                 <package>org.sleuthkit.autopsy.casemodule.events</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
                 <package>org.sleuthkit.autopsy.contentviewers</package>
+                <package>org.sleuthkit.autopsy.coordinationservice</package>
                 <package>org.sleuthkit.autopsy.core</package>
                 <package>org.sleuthkit.autopsy.core.events</package>
                 <package>org.sleuthkit.autopsy.corecomponentinterfaces</package>
@@ -325,6 +326,22 @@
             <class-path-extension>
                 <runtime-relative-path>ext/Tsk_DataModel_PostgreSQL.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/Tsk_DataModel_PostgreSQL.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/zookeeper-3.4.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/zookeeper-3.4.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-client-2.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-client-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-recipes-2.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-recipes-2.8.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/curator-framework-2.8.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/curator-framework-2.8.0.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.coordinationservice;
+package org.sleuthkit.autopsy.coordinationservice;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +50,8 @@ public final class CoordinationService {
 
         CASES("cases"),
         MANIFESTS("manifests"),
-        CONFIG("config");
+        CONFIG("config"),
+        RESOURCE("resource");
 
         private final String displayName;
 

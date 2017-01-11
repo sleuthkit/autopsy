@@ -16,15 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.coordinationservice;
 
 /**
  * Namespace elements for auto ingest coordination service nodes.
  */
-final class CoordinationServiceNamespace {
+public final class CoordinationServiceNamespace {
     private static final String ROOT = "autopsy";
 
-    static String getRoot() {
+    public static String getRoot() {
         return ROOT;
     }
 
