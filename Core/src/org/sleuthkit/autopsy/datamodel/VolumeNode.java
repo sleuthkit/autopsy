@@ -80,6 +80,10 @@ public class VolumeNode extends AbstractContentNode<Volume> {
         Case.removePropertyChangeListener(pcl);
     }
 
+    /*
+     * This property change listener refreshes the tree when a new file is
+     * carved out of the unallocated space of this volume.
+     */
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
 

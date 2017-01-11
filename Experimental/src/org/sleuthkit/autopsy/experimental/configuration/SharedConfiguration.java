@@ -49,9 +49,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestSettingsPanel.UpdateConfigSwingWorker;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 
 /*
  * A utility class for loading and saving shared configuration data
