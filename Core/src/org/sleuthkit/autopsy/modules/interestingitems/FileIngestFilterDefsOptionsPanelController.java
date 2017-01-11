@@ -30,14 +30,6 @@ import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 
-@OptionsPanelController.TopLevelRegistration(
-        categoryName = "#OptionsCategory_Name_FileIngestFilterDefinitions",
-        iconBase = "org/sleuthkit/autopsy/images/file_ingest_filter32x32.png",
-        keywords = "#OptionsCategory_Keywords_FileIngestFilterDefinitions",
-        keywordsCategory = "FileIngestFilterDefinitions",
-        position = 7
-)
-
 /**
  * Class for creating an FilesSetDefsPanel which will be used for configuring
  * the FileIngestFilter.

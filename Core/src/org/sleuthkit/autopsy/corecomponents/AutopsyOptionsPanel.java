@@ -18,13 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
-import java.text.NumberFormat;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JFormattedTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
@@ -34,65 +28,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     AutopsyOptionsPanel() {
         initComponents();
-        int availableProcessors = Runtime.getRuntime().availableProcessors();
-        Integer fileIngestThreadCountChoices[];
-        int recommendedFileIngestThreadCount;
-        if (availableProcessors >= 16) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6, 8, 12, 16};
-            if (availableProcessors >= 18) {
-                recommendedFileIngestThreadCount = 16;
-            } else {
-                recommendedFileIngestThreadCount = 12;
-            }
-        } else if (availableProcessors >= 12 && availableProcessors <= 15) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6, 8, 12};
-            if (availableProcessors >= 14) {
-                recommendedFileIngestThreadCount = 12;
-            } else {
-                recommendedFileIngestThreadCount = 8;
-            }
-        } else if (availableProcessors >= 8 && availableProcessors <= 11) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6, 8};
-            if (availableProcessors >= 10) {
-                recommendedFileIngestThreadCount = 8;
-            } else {
-                recommendedFileIngestThreadCount = 6;
-            }
-        } else if (availableProcessors >= 6 && availableProcessors <= 7) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6};
-            recommendedFileIngestThreadCount = 4;
-        } else if (availableProcessors >= 4 && availableProcessors <= 5) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4};
-            recommendedFileIngestThreadCount = 2;
-        } else if (availableProcessors >= 2 && availableProcessors <= 3) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2};
-            recommendedFileIngestThreadCount = 1;
-        } else {
-            fileIngestThreadCountChoices = new Integer[]{1};
-            recommendedFileIngestThreadCount = 1;
-        }
-        numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(fileIngestThreadCountChoices));
-        restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", recommendedFileIngestThreadCount));
-        // TODO listen to changes in form fields and call controller.changed()
-        DocumentListener docListener = new DocumentListener() {
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            }
-        };
-        this.jFormattedTextFieldProcTimeOutHrs.getDocument().addDocumentListener(docListener);
-        
     }
 
     void load() {
@@ -106,20 +41,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
-        numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
-        if (UserPreferences.getIsTimeOutEnabled()) {
-            // user specified time out
-            jCheckBoxEnableProcTimeout.setSelected(true);
-            jFormattedTextFieldProcTimeOutHrs.setEditable(true);
-            int timeOutHrs = UserPreferences.getProcessTimeOutHrs();
-            jFormattedTextFieldProcTimeOutHrs.setValue((long) timeOutHrs);
-        } else {
-            // never time out
-            jCheckBoxEnableProcTimeout.setSelected(false);
-            jFormattedTextFieldProcTimeOutHrs.setEditable(false);
-            int timeOutHrs = UserPreferences.getProcessTimeOutHrs();
-            jFormattedTextFieldProcTimeOutHrs.setValue((long) timeOutHrs);
-        }
     }
 
     void store() {
@@ -129,14 +50,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCB.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
-        UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
-
-        UserPreferences.setIsTimeOutEnabled(jCheckBoxEnableProcTimeout.isSelected());
-        if (jCheckBoxEnableProcTimeout.isSelected()) {
-            // only store time out if it is enabled
-            long timeOutHrs = (long) jFormattedTextFieldProcTimeOutHrs.getValue();
-            UserPreferences.setProcessTimeOutHrs((int) timeOutHrs);
-        }
     }
     
     boolean valid() {
@@ -164,13 +77,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         jLabelHideKnownFiles = new javax.swing.JLabel();
         dataSourcesHideKnownCB = new javax.swing.JCheckBox();
         viewsHideKnownCB = new javax.swing.JCheckBox();
-        jLabelNumThreads = new javax.swing.JLabel();
-        numberOfFileIngestThreadsComboBox = new javax.swing.JComboBox<>();
-        restartRequiredLabel = new javax.swing.JLabel();
-        jLabelSetProcessTimeOut = new javax.swing.JLabel();
-        jCheckBoxEnableProcTimeout = new javax.swing.JCheckBox();
-        jLabelProcessTimeOutUnits = new javax.swing.JLabel();
-        jFormattedTextFieldProcTimeOutHrs = new JFormattedTextField(NumberFormat.getIntegerInstance());
         dataSourcesHideSlackCB = new javax.swing.JCheckBox();
         viewsHideSlackCB = new javax.swing.JCheckBox();
         jLabelHideSlackFiles = new javax.swing.JLabel();
@@ -231,35 +137,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelNumThreads, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelNumThreads.text")); // NOI18N
-
-        numberOfFileIngestThreadsComboBox.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                numberOfFileIngestThreadsComboBoxActionPerformed(evt);
-            }
-        });
-
-        restartRequiredLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/warning16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(restartRequiredLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelSetProcessTimeOut, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelSetProcessTimeOut.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(jCheckBoxEnableProcTimeout, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jCheckBoxEnableProcTimeout.text")); // NOI18N
-        jCheckBoxEnableProcTimeout.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBoxEnableProcTimeoutActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(jLabelProcessTimeOutUnits, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelProcessTimeOutUnits.text")); // NOI18N
-
-        jFormattedTextFieldProcTimeOutHrs.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jFormattedTextFieldProcTimeOutHrs.text")); // NOI18N
-        jFormattedTextFieldProcTimeOutHrs.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jFormattedTextFieldProcTimeOutHrsActionPerformed(evt);
-            }
-        });
-
         org.openide.awt.Mnemonics.setLocalizedText(dataSourcesHideSlackCB, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.dataSourcesHideSlackCB.text")); // NOI18N
         dataSourcesHideSlackCB.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -285,29 +162,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabelTimeDisplay)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(restartRequiredLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabelTimeDisplay)
-                                    .addComponent(jLabelNumThreads)
-                                    .addComponent(jLabelSetProcessTimeOut)
-                                    .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(useLocalTimeRB)
-                                            .addComponent(useGMTTimeRB)
-                                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                                .addComponent(jCheckBoxEnableProcTimeout)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(jLabelProcessTimeOutUnits)))))
-                                .addGap(213, 213, 213)))
-                        .addContainerGap())
+                                    .addComponent(useLocalTimeRB)
+                                    .addComponent(useGMTTimeRB))))
+                        .addContainerGap(512, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabelHideKnownFiles)
@@ -357,21 +218,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(useLocalTimeRB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(useGMTTimeRB)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabelNumThreads)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(numberOfFileIngestThreadsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(restartRequiredLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabelSetProcessTimeOut)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jCheckBoxEnableProcTimeout)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jFormattedTextFieldProcTimeOutHrs, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabelProcessTimeOutUnits)))
-                .addContainerGap(49, Short.MAX_VALUE))
+                .addContainerGap(148, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel1);
@@ -387,11 +234,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addComponent(jScrollPane1)
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void jCheckBoxEnableProcTimeoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxEnableProcTimeoutActionPerformed
-        jFormattedTextFieldProcTimeOutHrs.setEditable(jCheckBoxEnableProcTimeout.isSelected());
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_jCheckBoxEnableProcTimeoutActionPerformed
 
     private void useBestViewerRBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useBestViewerRBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
@@ -417,14 +259,6 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_useGMTTimeRBActionPerformed
 
-    private void numberOfFileIngestThreadsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numberOfFileIngestThreadsComboBoxActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_numberOfFileIngestThreadsComboBoxActionPerformed
-
-    private void jFormattedTextFieldProcTimeOutHrsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
-
     private void dataSourcesHideSlackCBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dataSourcesHideSlackCBActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_dataSourcesHideSlackCBActionPerformed
@@ -438,20 +272,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     private javax.swing.ButtonGroup buttonGroup3;
     private javax.swing.JCheckBox dataSourcesHideKnownCB;
     private javax.swing.JCheckBox dataSourcesHideSlackCB;
-    private javax.swing.JCheckBox jCheckBoxEnableProcTimeout;
-    private javax.swing.JFormattedTextField jFormattedTextFieldProcTimeOutHrs;
     private javax.swing.JLabel jLabelHideKnownFiles;
     private javax.swing.JLabel jLabelHideSlackFiles;
-    private javax.swing.JLabel jLabelNumThreads;
-    private javax.swing.JLabel jLabelProcessTimeOutUnits;
     private javax.swing.JLabel jLabelSelectFile;
-    private javax.swing.JLabel jLabelSetProcessTimeOut;
     private javax.swing.JLabel jLabelTimeDisplay;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JRadioButton keepCurrentViewerRB;
-    private javax.swing.JComboBox<Integer> numberOfFileIngestThreadsComboBox;
-    private javax.swing.JLabel restartRequiredLabel;
     private javax.swing.JRadioButton useBestViewerRB;
     private javax.swing.JRadioButton useGMTTimeRB;
     private javax.swing.JRadioButton useLocalTimeRB;
