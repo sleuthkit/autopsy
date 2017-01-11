@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.InputStream;
 import java.io.Reader;
-import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.SleuthkitVisitableItem;
 
 /**
@@ -31,9 +28,8 @@ import org.sleuthkit.datamodel.SleuthkitVisitableItem;
  * @param <TextSource> The subtype of SleuthkitVisitableItem an implementation
  *                     is able to process.
  */
-abstract class TextExtractor< TextSource extends SleuthkitVisitableItem> {
+interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
 
-    static final private Logger logger = Logger.getLogger(TextExtractor.class.getName());
 
     /**
      * Is this extractor configured such that no extraction will/should be done?
@@ -48,18 +44,8 @@ abstract class TextExtractor< TextSource extends SleuthkitVisitableItem> {
      * @param msg
      * @param ex
      */
-    void logWarning(String msg, Exception ex) {
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
-    }
+    abstract void logWarning(String msg, Exception ex);
 
-    /**
-     * Get an input stream over the content of the given source.
-     *
-     * @param source
-     *
-     * @return
-     */
-    abstract InputStream getInputStream(TextSource source);
 
     /**
      * Get a reader that over the text extracted from the given source.
@@ -71,7 +57,7 @@ abstract class TextExtractor< TextSource extends SleuthkitVisitableItem> {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    abstract Reader getReader(InputStream stream, TextSource source) throws Ingester.IngesterException;
+    abstract Reader getReader(TextSource source) throws Ingester.IngesterException;
 
     /**
      * Get the 'object' id of the given source.
