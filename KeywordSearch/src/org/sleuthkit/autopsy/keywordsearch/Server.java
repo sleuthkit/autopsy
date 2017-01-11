@@ -158,6 +158,12 @@ public class Server {
                 return "num_chunks"; //NON-NLS
             }
         },
+        CHUNK_SIZE {
+            @Override
+            public String toString() {
+                return "chunk_size"; //NON-NLS
+            }
+        }
     };
 
     public static final String HL_ANALYZE_CHARS_UNLIMITED = "500000"; //max 1MB in a chunk. use -1 for unlimited, but -1 option may not be supported (not documented)
