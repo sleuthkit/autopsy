@@ -5,15 +5,13 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
-import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 
-
-public class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel  {
 
     /**
      * Creates new form ProfileOptionsPanel
      */
-    public ProfileSettingsPanel() {
+    ProfileSettingsPanel() {
         initComponents();
     }
 
@@ -43,16 +41,13 @@ public class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implem
   
     }
 
-    @Override
-    public void store() {
+    void store() {
  
     }
 
-    @Override
-    public void load() {
+    void load() {
     
     }
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
