@@ -19,17 +19,17 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.IOException;
-import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.openide.util.NbBundle;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.MissingResourceException;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -41,13 +41,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @ServiceProviders(value={
     @ServiceProvider(service=KeywordSearchService.class),
-    @ServiceProvider(service=AutopsyServiceProvider.class)}
+    @ServiceProvider(service=AutopsyService.class)}
 )
-public class SolrSearchService implements KeywordSearchService, AutopsyServiceProvider  {
+public class SolrSearchService implements KeywordSearchService, AutopsyService  {
 
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
+    private static final String SERVICE_NAME = "Solr Keyword Search Service";
 
     ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
@@ -146,7 +147,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
      * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
      */
     @Override
-    public void openCaseResources(Context context) throws AutopsyServiceProviderException {
+    public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
          * Autopsy service providers may not have case-level resources.
          */
@@ -166,7 +167,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
                 //text and performing regex searches and give the user the option to decline the upgrade
                 boolean upgradeDeclined = false;
                 if (upgradeDeclined) {
-                    throw new AutopsyServiceProviderException("ELTODO");
+                    throw new AutopsyServiceException("ELTODO");
                 }
             }
 
@@ -190,7 +191,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
                 // delete the new directories
 
                 // close the upgraded index?
-                throw new AutopsyServiceProviderException("ELTODO");
+                throw new AutopsyServiceException("ELTODO");
             }
 
             // currentVersionIndexDir = upgraded index dir
@@ -205,9 +206,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyServicePr
      * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
      */
     @Override
-    public void closeCaseResources(Context context) throws AutopsyServiceProviderException {
+    public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
          * Autopsy service providers may not have case-level resources.
          */
+    }
+
+    @Override
+    public String getServiceName() {
+        return SERVICE_NAME;
     }
 }

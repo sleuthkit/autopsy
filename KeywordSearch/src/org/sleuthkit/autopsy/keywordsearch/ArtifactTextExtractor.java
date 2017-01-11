@@ -38,7 +38,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Extracts text from artifacts by concatenating the values of all of the
  * artifact's attributes.
  */
-public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
+class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
     static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
     /**
@@ -82,13 +82,16 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
     }
 
     @Override
-    boolean isDisabled() {
+     public boolean isDisabled() {
         return false;
+     }
+
+     @Override
+     public void logWarning(final String msg, Exception ex) {
+        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
-
-    @Override
-    InputStream getInputStream(BlackboardArtifact artifact) {
+    private InputStream getInputStream(BlackboardArtifact artifact) {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
@@ -127,17 +130,17 @@ public class ArtifactTextExtractor extends TextExtractor<BlackboardArtifact> {
     }
 
     @Override
-    Reader getReader(InputStream stream, BlackboardArtifact source) throws Ingester.IngesterException {
-        return new InputStreamReader(stream, StandardCharsets.UTF_8);
+    public Reader getReader(BlackboardArtifact source) throws Ingester.IngesterException {
+        return new InputStreamReader(getInputStream(source), StandardCharsets.UTF_8);
     }
 
     @Override
-    long getID(BlackboardArtifact source) {
+    public long getID(BlackboardArtifact source) {
         return source.getArtifactID();
     }
 
     @Override
-    String getName(BlackboardArtifact source) {
+    public String getName(BlackboardArtifact source) {
         return source.getDisplayName() + "_" + source.getArtifactID();
     }
 }
