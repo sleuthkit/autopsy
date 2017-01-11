@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,18 +20,16 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.util.SimpleOrderedMap;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -206,6 +204,7 @@ class LuceneQuery implements KeywordSearchQuery {
         response = solrServer.query(q, METHOD.POST);
 
         resultList = response.getResults();
+        SimpleOrderedMap termVectors = (SimpleOrderedMap) response.getResponse().get("termVectors");
 
         // objectId_chunk -> "text" -> List of previews
         highlightResponse = response.getHighlighting();
@@ -225,8 +224,9 @@ class LuceneQuery implements KeywordSearchQuery {
             }
             for (SolrDocument resultDoc : resultList) {
                 KeywordHit contentHit;
+
                 try {
-                    contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
+                    contentHit = createKeywordtHit(resultDoc, highlightResponse, termVectors, sleuthkitCase);
                 } catch (TskException ex) {
                     return matches;
                 }
@@ -247,7 +247,7 @@ class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
         // Wrap the query string in quotes if this is a literal search term.
-        String theQueryStr = keyword.searchTermIsLiteral() 
+        String theQueryStr = keyword.searchTermIsLiteral()
                 ? KeywordSearchUtil.quoteQuery(keywordStringEscaped) : keywordStringEscaped;
 
         // Run the query against an optional alternative field. 
@@ -260,11 +260,18 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
 
-        q.setFields(Server.Schema.ID.toString());
+//        q.setFields(Server.Schema.ID.toString());
         q.addSort(Server.Schema.ID.toString(), SolrQuery.ORDER.asc);
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
         }
+
+        q.setRequestHandler("/tvrh");
+        q.setParam("tv", true);
+        if (field != null) {
+            q.setParam("tv.fl", field);
+        }
+        q.setParam("tv.all", true);
 
         if (snippets) {
             q.addHighlightField(Server.Schema.TEXT.toString());
@@ -290,12 +297,15 @@ class LuceneQuery implements KeywordSearchQuery {
         return q;
     }
 
-    private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SleuthkitCase caseDb) throws TskException {
+    private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SimpleOrderedMap termVectors, SleuthkitCase caseDb) throws TskException {
         /**
          * Get the first snippet from the document if keyword search is
          * configured to use snippets.
          */
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
+
+        SimpleOrderedMap<?> get = (SimpleOrderedMap<?>) termVectors.get(docId);
+
         String snippet = "";
         if (KeywordSearchSettings.getShowSnippets()) {
             List<String> snippetList = highlightResponse.get(docId).get(Server.Schema.TEXT.toString());
@@ -304,6 +314,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
             }
         }
+
         return new KeywordHit(docId, snippet);
     }
 
