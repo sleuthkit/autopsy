@@ -34,6 +34,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
+// Solr 4 to 5 index upgrade jars
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.StandardAnalyzer; 
+import org.apache.lucene.index.IndexUpgrader;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.Directory; 
+import org.apache.lucene.store.FSDirectory; 
+
 /**
  * This class handles the task of finding KWS index folders and upgrading old
  * indexes to the latest supported Solr version. 
@@ -286,4 +294,22 @@ class IndexHandling {
         return m.find();
     }    
     
+    
+    private static void upgradeSolrIndex4to5(String solr4path) throws AutopsyService.AutopsyServiceException {
+        
+        try {
+            Directory dir = FSDirectory.open(new File(solr4path).toPath());
+
+            // upgrade from Solr 4 to Solr 5
+            IndexWriterConfig config;
+            Analyzer analyzer = new StandardAnalyzer();
+            config = new IndexWriterConfig(analyzer);
+            //config.setCodec(new Lucene50Codec());
+            //IndexWriter writer = new IndexWriter(dir, config);
+            IndexUpgrader upgrader = new IndexUpgrader(dir, config, true);
+            upgrader.upgrade();
+        } catch (Exception ex) {
+            throw new AutopsyService.AutopsyServiceException("ELTODO");
+        }
+    }
 }

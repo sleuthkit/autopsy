@@ -14,8 +14,11 @@
     <dependencies>
         <!-- Solr -->
         <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="6.2.1"/>
-
+        
         <!-- Autopsy -->
+        <dependency conf="autopsy->*" org="org.apache.lucene" name="lucene-codecs" rev="5.5.1"/>
+        <dependency conf="autopsy->*" org="org.apache.lucene" name="lucene-backward-codecs" rev="5.5.1"/>
+        <dependency conf="autopsy->*" org="org.apache.lucene" name="lucene-analyzers-common" rev="5.5.1"/>
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="6.2.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
         <dependency conf="autopsy->*" org="commons-validator" name="commons-validator" rev="1.5.1"/>
@@ -38,5 +41,6 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
               
+        <conflict manager="all"/>
     </dependencies>
 </ivy-module>
