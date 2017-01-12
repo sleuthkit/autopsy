@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.net.URL;
 import java.io.File;
+import java.io.IOException;
 import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -30,11 +31,15 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
+import org.openide.modules.InstalledFileLocator;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
+import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 
 /**
  * This class handles the task of finding KWS index folders and upgrading old
@@ -43,6 +48,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 class IndexHandling {
     
     private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
+    private static final String JAVA_PATH = PlatformUtil.getJavaPath();
     private static final String MODULE_OUTPUT = "ModuleOutput"; // ELTODO get "ModuleOutput" somehow...
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
@@ -289,19 +295,67 @@ class IndexHandling {
     }    
     
     
-    private static void upgradeSolrIndex4to5(String solr4path) throws AutopsyService.AutopsyServiceException {        
+    static boolean upgradeSolrIndex4to5(String solr4path, String tempResultsDir) {
+        
+        boolean success = true;
+        String outputFileName = "output.txt";
         try {
-            // execute lucene upgrade command
+            final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr4to5IndexUpgrade", IndexHandling.class.getPackage().getName(), false); //NON-NLS
+            if (upgradeToolFolder == null) {
+                return false;
+            }
+
+            String upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr4IndexUpgrade.jar").toString();
+            
+            final String outputFileFullPath = Paths.get(tempResultsDir, outputFileName).toString();
+            final String errFileFullPath = Paths.get(tempResultsDir, outputFileName + ".err").toString(); //NON-NLS
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(JAVA_PATH);
+            commandLine.add("-jar");
+            commandLine.add(upgradeJarPath);
+            commandLine.add(solr4path);
+            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+            //processBuilder.directory(upgradeToolFolder);
+            processBuilder.redirectOutput(new File(outputFileFullPath));
+            processBuilder.redirectError(new File(errFileFullPath));
+            ExecUtil.execute(processBuilder);            
+
         } catch (Exception ex) {
-            throw new AutopsyService.AutopsyServiceException("ELTODO");
+            success = false;
         }
+        // execute lucene upgrade command
+        /* java -classpath ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader "C:\Users\elivis\TEMP\xp new test - orig\ingest1\ModuleOutput\keywordsearch\data\index"
+
+
+        try {
+            final String outputFileFullPath = Paths.get(tempResultsDir, outputFileName).toString();
+            final String errFileFullPath = Paths.get(tempResultsDir, outputFileName + ".err").toString(); //NON-NLS
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(JAVA_PATH);
+            commandLine.add("-cp"); //NON-NLS
+            commandLine.add(".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar"); //NON-NLS
+            // ELTODO commandLine.add("-delete-prior-commits"); //NON-NLS
+            commandLine.add("-verbose");  //NON-NLS
+            commandLine.add(solr4path);
+            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+            processBuilder.redirectOutput(new File(outputFileFullPath));
+            processBuilder.redirectError(new File(errFileFullPath));
+            ExecUtil.execute(processBuilder);
+            // @@@ Investigate use of history versus cache as type.
+        } catch (Exception ex) {
+            success = false;
+        }*/
+        return success;    
     }
     
-    private static void upgradeSolrIndex5to6(String solr4path) throws AutopsyService.AutopsyServiceException {
+    static boolean upgradeSolrIndex5to6(String solr4path) {
+        boolean success = true;
         try {
             // execute lucene upgrade command
+            // java -classpath ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader "C:\Users\elivis\TEMP\xp new test - orig\ingest1\ModuleOutput\keywordsearch\data\index"
         } catch (Exception ex) {
-            throw new AutopsyService.AutopsyServiceException("ELTODO");
+            success = false;
         }
+        return success;  
     }
 }

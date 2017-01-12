@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.MissingResourceException;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -181,13 +183,15 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             // convert path to UNC path
             
             // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            File tmpDir = Paths.get(context.getCase().getTempDirectory(), "IndexUpgrade").toFile(); //NON-NLS
+            tmpDir.mkdirs();
+            boolean success = IndexHandling.upgradeSolrIndex4to5(newIndexDir, tmpDir.getAbsolutePath());
             
             // Open the upgraded index
             
             // execute a test query
             
-            boolean success = true;
-
+            success = true;
             if (!success) {
                 // delete the new directories
 
