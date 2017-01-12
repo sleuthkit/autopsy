@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.net.URL;
 import java.io.File;
+import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,14 +35,6 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-
-// Solr 4 to 5 index upgrade jars
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer; 
-import org.apache.lucene.index.IndexUpgrader;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.store.Directory; 
-import org.apache.lucene.store.FSDirectory; 
 
 /**
  * This class handles the task of finding KWS index folders and upgrading old
@@ -295,19 +289,17 @@ class IndexHandling {
     }    
     
     
-    private static void upgradeSolrIndex4to5(String solr4path) throws AutopsyService.AutopsyServiceException {
-        
+    private static void upgradeSolrIndex4to5(String solr4path) throws AutopsyService.AutopsyServiceException {        
         try {
-            Directory dir = FSDirectory.open(new File(solr4path).toPath());
-
-            // upgrade from Solr 4 to Solr 5
-            IndexWriterConfig config;
-            Analyzer analyzer = new StandardAnalyzer();
-            config = new IndexWriterConfig(analyzer);
-            //config.setCodec(new Lucene50Codec());
-            //IndexWriter writer = new IndexWriter(dir, config);
-            IndexUpgrader upgrader = new IndexUpgrader(dir, config, true);
-            upgrader.upgrade();
+            // execute lucene upgrade command
+        } catch (Exception ex) {
+            throw new AutopsyService.AutopsyServiceException("ELTODO");
+        }
+    }
+    
+    private static void upgradeSolrIndex5to6(String solr4path) throws AutopsyService.AutopsyServiceException {
+        try {
+            // execute lucene upgrade command
         } catch (Exception ex) {
             throw new AutopsyService.AutopsyServiceException("ELTODO");
         }

@@ -258,20 +258,12 @@
                 <binary-origin>release/modules/ext/xmpcore-5.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/lucene-analyzers-common-5.5.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-analyzers-common-5.5.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/metadata-extractor-2.7.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/metadata-extractor-2.7.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tagsoup-1.2.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/tagsoup-1.2.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/lucene-codecs-5.5.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-codecs-5.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-compress-1.5.jar</runtime-relative-path>
@@ -316,10 +308,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/org.apache.felix.scr.generator-1.1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/org.apache.felix.scr.generator-1.1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/lucene-backward-codecs-5.5.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-backward-codecs-5.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-3.10-beta2.jar</runtime-relative-path>
@@ -368,10 +356,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/lucene-core-5.5.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/lucene-core-5.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.7.2.jar</runtime-relative-path>
