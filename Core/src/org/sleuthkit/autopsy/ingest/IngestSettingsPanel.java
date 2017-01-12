@@ -38,7 +38,7 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
         Integer fileIngestThreadCountChoices[];
         int recommendedFileIngestThreadCount;
 
-        if (availableProcessors >= 6 && availableProcessors <= 7) {
+        if (availableProcessors >= 6) {
             fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6};
             recommendedFileIngestThreadCount = 4;
         } else if (availableProcessors >= 4 && availableProcessors <= 5) {
