@@ -49,35 +49,6 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Group type="102" alignment="1" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jLabelTimeDisplay" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="useLocalTimeRB" min="-2" max="-2" attributes="0"/>
-                                          <Component id="useGMTTimeRB" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                              </Group>
-                              <EmptySpace pref="512" max="32767" attributes="0"/>
-                          </Group>
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="jLabelHideKnownFiles" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Component id="jLabelSelectFile" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="keepCurrentViewerRB" min="-2" max="-2" attributes="0"/>
-                                          <Component id="useBestViewerRB" min="-2" max="-2" attributes="0"/>
-                                          <Component id="dataSourcesHideKnownCB" alignment="0" min="-2" max="-2" attributes="0"/>
-                                          <Component id="viewsHideKnownCB" alignment="0" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                              </Group>
-                              <EmptySpace min="395" max="32767" attributes="0"/>
-                          </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabelHideSlackFiles" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -90,6 +61,30 @@
                                   </Group>
                               </Group>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Component id="jLabelTimeDisplay" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="useLocalTimeRB" min="-2" max="-2" attributes="0"/>
+                                          <Component id="useGMTTimeRB" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                                  <Component id="jLabelHideKnownFiles" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabelSelectFile" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <EmptySpace min="10" pref="10" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Component id="keepCurrentViewerRB" min="-2" max="-2" attributes="0"/>
+                                          <Component id="useBestViewerRB" min="-2" max="-2" attributes="0"/>
+                                          <Component id="dataSourcesHideKnownCB" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Component id="viewsHideKnownCB" alignment="0" min="-2" max="-2" attributes="0"/>
+                                      </Group>
+                                  </Group>
+                              </Group>
+                              <EmptySpace max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>

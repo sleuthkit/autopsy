@@ -51,7 +51,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
     }
-    
+
     boolean valid() {
         return true;
     }
