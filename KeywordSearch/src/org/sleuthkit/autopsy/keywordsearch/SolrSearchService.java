@@ -18,18 +18,21 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -45,6 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 )
 public class SolrSearchService implements KeywordSearchService, AutopsyService  {
 
+    private static final Logger logger = Logger.getLogger(IndexHandling.class.getName());
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
@@ -144,7 +148,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
      * @param context
      *
      * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
      */
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
@@ -153,7 +157,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
          */
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        List<String> indexDirs = IndexHandling.findAllIndexDirs(Case.getCurrentCase());
+        IndexHandling indexHandler = new IndexHandling();
+        List<String> indexDirs = indexHandler.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
         String currentVersionIndexDir = IndexHandling.findLatestVersionIndexDir(indexDirs);
@@ -165,37 +170,69 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             if (RuntimeProperties.coreComponentsAreActive()) {
                 //pop up a message box to indicate the restrictions on adding additional 
                 //text and performing regex searches and give the user the option to decline the upgrade
-                boolean upgradeDeclined = false;
-                if (upgradeDeclined) {
-                    throw new AutopsyServiceException("ELTODO");
+                if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"), 
+                        NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"), 
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {                    
+                    // upgrade declined - throw exception
+                    throw new AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.upgradeDeclinedMsg"));
                 }
             }
 
             // ELTODO Check for cancellation at whatever points are feasible
             
             // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            String newIndexDir = indexHandler.createReferenceIndexCopy(context.getCase(), oldIndexDir);
             
             // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+            indexHandler.createReferenceConfigSetCopy(newIndexDir);
             
             // convert path to UNC path
             
             // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
-            
+            File tmpDir = Paths.get(context.getCase().getTempDirectory(), "IndexUpgrade").toFile(); //NON-NLS
+            tmpDir.mkdirs();
+
+            boolean success = true;
+            try {
+                // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will throw exception right away.
+                success = indexHandler.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
+            } catch (Exception ex) {
+                // this may not be an error, for example if index is Solr 5 to begin with
+                logger.log(Level.WARNING, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 {0} ", newIndexDir); //NON-NLS
+            }
+
+            try {
+                // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
+                success = indexHandler.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 {0} ", newIndexDir); //NON-NLS
+                success = false;
+            }
+
+            success = true; // ELTODO remove
+            if (!success) {
+                // delete the new directories
+                new File(newIndexDir).delete();
+                throw new AutopsyServiceException("ELTODO");
+            }
+
             // Open the upgraded index
             
             // execute a test query
             
-            boolean success = true;
-
+            success = true; // ELTODO remove
             if (!success) {
                 // delete the new directories
-
-                // close the upgraded index?
+                new File(newIndexDir).delete();
+                // ELTODO close the upgraded index?
                 throw new AutopsyServiceException("ELTODO");
             }
 
-            // currentVersionIndexDir = upgraded index dir
+            // set the upgraded reference index as the index to be used for this case
+            currentVersionIndexDir = newIndexDir;
         }
+        
+        // open currentVersionIndexDir index
     }
 
     /**
@@ -203,7 +240,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
      * @param context
      *
      * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
