@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.MissingResourceException;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -27,7 +29,6 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -144,7 +145,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
      * @param context
      *
      * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
      */
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
@@ -153,7 +154,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
          */
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        List<String> indexDirs = IndexHandling.findAllIndexDirs(Case.getCurrentCase());
+        List<String> indexDirs = IndexHandling.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
         String currentVersionIndexDir = IndexHandling.findLatestVersionIndexDir(indexDirs);
@@ -174,19 +175,36 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             // ELTODO Check for cancellation at whatever points are feasible
             
             // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            String newIndexDir = IndexHandling.createReferenceIndexCopy(context.getCase(), oldIndexDir);
             
             // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
+            IndexHandling.createReferenceConfigSetCopy(newIndexDir);
             
             // convert path to UNC path
             
             // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            File tmpDir = Paths.get(context.getCase().getTempDirectory(), "IndexUpgrade").toFile(); //NON-NLS
+            tmpDir.mkdirs();
+            
+            // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will simply exit right away.
+            boolean success = IndexHandling.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
+            
+            // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
+            success = IndexHandling.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
+            
+            success = true; // ELTODO remove
+            if (!success) {
+                // delete the new directories
+
+                // close the upgraded index?
+                throw new AutopsyServiceException("ELTODO");
+            }
             
             // Open the upgraded index
             
             // execute a test query
             
-            boolean success = true;
-
+            success = true; // ELTODO remove
             if (!success) {
                 // delete the new directories
 
@@ -196,6 +214,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
             // currentVersionIndexDir = upgraded index dir
         }
+        
+        // open currentVersionIndexDir index
     }
 
     /**
@@ -203,7 +223,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
      * @param context
      *
      * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyServiceProvider.AutopsyServiceProviderException
+     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
