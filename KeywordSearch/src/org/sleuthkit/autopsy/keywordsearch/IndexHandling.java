@@ -96,6 +96,7 @@ class IndexHandling {
         }
     }
 
+    // ELTODO This is NTH:
     static void createReferenceConfigSetCopy(String indexPath) throws AutopsyService.AutopsyServiceException {
         File pathToConfigSet = new File("");
         Logger logger = Logger.getLogger(IndexHandling.class.getName());    // ELTODO REMOVE

@@ -166,9 +166,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             if (RuntimeProperties.coreComponentsAreActive()) {
                 //pop up a message box to indicate the restrictions on adding additional 
                 //text and performing regex searches and give the user the option to decline the upgrade
-                boolean upgradeDeclined = false;
-                if (upgradeDeclined) {
-                    throw new AutopsyServiceException("ELTODO");
+                if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"), 
+                        NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"), 
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {                    
+                    // upgrade declined - throw exception
+                    throw new AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.upgradeDeclinedMsg"));
                 }
             }
 
@@ -195,8 +197,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             success = true; // ELTODO remove
             if (!success) {
                 // delete the new directories
-
-                // close the upgraded index?
+                new File(newIndexDir).delete();
                 throw new AutopsyServiceException("ELTODO");
             }
             
@@ -207,12 +208,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             success = true; // ELTODO remove
             if (!success) {
                 // delete the new directories
-
-                // close the upgraded index?
+                new File(newIndexDir).delete();
+                // ELTODO close the upgraded index?
                 throw new AutopsyServiceException("ELTODO");
             }
 
-            // currentVersionIndexDir = upgraded index dir
+            // set the upgraded reference index as the index to be used for this case
+            currentVersionIndexDir = newIndexDir;
         }
         
         // open currentVersionIndexDir index
