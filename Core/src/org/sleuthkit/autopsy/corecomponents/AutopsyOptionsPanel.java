@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,39 +32,29 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  */
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
+    private static final long serialVersionUID = 1L;
+
     AutopsyOptionsPanel() {
         initComponents();
+
+        /*
+         * Profiling has shown that contention for I/O resources and for the
+         * case database limits the number of threads that can do meaningful
+         * work during ingest. If Autopsy was compute-bound, adding more threads
+         * on machines with enough processors might help, but currently, after
+         * four threads, performance actually stays flat and then starts to
+         * degrade.
+         */
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         Integer fileIngestThreadCountChoices[];
         int recommendedFileIngestThreadCount;
-        if (availableProcessors >= 16) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6, 8, 12, 16};
-            if (availableProcessors >= 18) {
-                recommendedFileIngestThreadCount = 16;
-            } else {
-                recommendedFileIngestThreadCount = 12;
-            }
-        } else if (availableProcessors >= 12 && availableProcessors <= 15) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6, 8, 12};
-            if (availableProcessors >= 14) {
-                recommendedFileIngestThreadCount = 12;
-            } else {
-                recommendedFileIngestThreadCount = 8;
-            }
-        } else if (availableProcessors >= 8 && availableProcessors <= 11) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6, 8};
-            if (availableProcessors >= 10) {
-                recommendedFileIngestThreadCount = 8;
-            } else {
-                recommendedFileIngestThreadCount = 6;
-            }
-        } else if (availableProcessors >= 6 && availableProcessors <= 7) {
-            fileIngestThreadCountChoices = new Integer[]{1, 2, 4, 6};
+        if (availableProcessors >= 6) {
+            fileIngestThreadCountChoices = new Integer[]{1, 2, 4};
             recommendedFileIngestThreadCount = 4;
-        } else if (availableProcessors >= 4 && availableProcessors <= 5) {
+        } else if (availableProcessors >= 4 && availableProcessors < 6) {
             fileIngestThreadCountChoices = new Integer[]{1, 2, 4};
             recommendedFileIngestThreadCount = 2;
-        } else if (availableProcessors >= 2 && availableProcessors <= 3) {
+        } else if (availableProcessors >= 2 && availableProcessors < 4) {
             fileIngestThreadCountChoices = new Integer[]{1, 2};
             recommendedFileIngestThreadCount = 1;
         } else {
@@ -72,7 +62,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             recommendedFileIngestThreadCount = 1;
         }
         numberOfFileIngestThreadsComboBox.setModel(new DefaultComboBoxModel<>(fileIngestThreadCountChoices));
+
         restartRequiredLabel.setText(NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.restartRequiredLabel.text", recommendedFileIngestThreadCount));
+
         // TODO listen to changes in form fields and call controller.changed()
         DocumentListener docListener = new DocumentListener() {
 
@@ -92,7 +84,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             }
         };
         this.jFormattedTextFieldProcTimeOutHrs.getDocument().addDocumentListener(docListener);
-        
+
     }
 
     void load() {
@@ -138,7 +130,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             UserPreferences.setProcessTimeOutHrs((int) timeOutHrs);
         }
     }
-    
+
     boolean valid() {
         return true;
     }

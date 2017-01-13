@@ -49,9 +49,9 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestSettingsPanel.UpdateConfigSwingWorker;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 
 /*
  * A utility class for loading and saving shared configuration data
@@ -160,7 +160,7 @@ public class SharedConfiguration {
 
         File remoteFolder = getSharedFolder();
 
-        try (Lock writeLock = CoordinationService.getInstance(LOCK_ROOT).tryGetExclusiveLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
+        try (Lock writeLock = CoordinationService.getServiceForNamespace(LOCK_ROOT).tryGetExclusiveLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
             if (writeLock == null) {
                 logger.log(Level.INFO, String.format("Failed to lock %s - another node is currently uploading or downloading configuration", remoteFolder.getAbsolutePath()));
                 return SharedConfigResult.LOCKED;
@@ -230,7 +230,7 @@ public class SharedConfiguration {
 
         File remoteFolder = getSharedFolder();
 
-        try (Lock readLock = CoordinationService.getInstance(LOCK_ROOT).tryGetSharedLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
+        try (Lock readLock = CoordinationService.getServiceForNamespace(LOCK_ROOT).tryGetSharedLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
             if (readLock == null) {
                 return SharedConfigResult.LOCKED;
             }

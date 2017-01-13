@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2016-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,15 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.experimental.autoingest;
+package org.sleuthkit.autopsy.coordinationservice;
 
 /**
- * Namespace elements for auto ingest coordination service nodes.
+ * Root node for Autopsy coordination service namespace.
  */
-final class CoordinationServiceNamespace {
+public final class CoordinationServiceNamespace {
     private static final String ROOT = "autopsy";
 
-    static String getRoot() {
+    public static String getRoot() {
         return ROOT;
     }
 
