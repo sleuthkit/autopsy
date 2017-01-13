@@ -14,7 +14,7 @@
     <dependencies>
         <!-- Solr -->
         <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="6.2.1"/>
-        
+
         <!-- Autopsy -->
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="6.2.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
@@ -37,5 +37,6 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="slf4j-log4j12" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
+              
     </dependencies>
 </ivy-module>
