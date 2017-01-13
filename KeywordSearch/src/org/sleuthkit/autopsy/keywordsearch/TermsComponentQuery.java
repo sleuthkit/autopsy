@@ -72,9 +72,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * card account search and should be factored into another class when time
      * permits.
      */
-    private static final Pattern CREDIT_CARD_NUM_PATTERN = Pattern.compile("(?<ccn>[3456]([ -]?\\d){11,18})");   //12-19 digits, with possible single spaces or dashes in between. First digit is 3,4,5, or 6 //NON-NLS
-    private static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
-    private static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
+    static final Pattern CREDIT_CARD_NUM_PATTERN = Pattern.compile("(?<ccn>[3-6]([ -]?[0-9]){11,18})");   //12-19 digits, with possible single spaces or dashes in between. First digit is 3,4,5, or 6 //NON-NLS
+    static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
+    static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
             /*
              * Track 1 is alphanumeric.
              *
@@ -86,7 +86,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             "(?:" //begin nested optinal group //NON-NLS
             + "%?" //optional start sentinal: % //NON-NLS
             + "B)?" //format code  //NON-NLS
-            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "\\^" //separator //NON-NLS
             + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
             + "(?:\\^" //separator //NON-NLS
@@ -96,7 +96,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?:\\?" // end sentinal: ? //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
-    private static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
+     static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
             /*
              * Track 2 is numeric plus six punctuation symbolls :;<=>?
              *
@@ -107,7 +107,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              *
              */
             "[:;<=>?]?" //(optional)start sentinel //NON-NLS
-            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "(?:[:;<=>?]" //separator //NON-NLS
             + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
             + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
@@ -115,7 +115,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?:[:;<=>?]" //end sentinel //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
-    private static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
+     static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
 
     /**
      * Constructs an object that implements a regex query that will be performed
@@ -327,7 +327,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * @param listName   The name of the keyword list that contained the keyword
      *                   for which the hit was found.
      *
-     * 
+     *
      *
      * @return An object that wraps an artifact and a mapping by id of its
      *         attributes.

@@ -296,13 +296,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      */
     private String constructEscapedSolrQuery(String query, boolean literal_query) {
         StringBuilder highlightQuery = new StringBuilder();
-        String highLightField;
-        if (literal_query) {
-            highLightField = LuceneQuery.HIGHLIGHT_FIELD_LITERAL;
-        } else {
-            highLightField = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
-        }
-        highlightQuery.append(highLightField).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(query)).append("\"");
+        highlightQuery.append(LuceneQuery.HIGHLIGHT_FIELD).append(":").append("\"").append(KeywordSearchUtil.escapeLuceneQuery(query)).append("\"");
         return highlightQuery.toString();
     }
 

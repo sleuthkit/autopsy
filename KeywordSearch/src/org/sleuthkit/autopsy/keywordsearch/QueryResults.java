@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.SwingWorker;
+import org.apache.commons.lang.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.NbBundle;
@@ -46,7 +47,7 @@ import org.sleuthkit.datamodel.Content;
  *
  */
 class QueryResults {
-
+    
     private static final Logger logger = Logger.getLogger(QueryResults.class.getName());
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     /**
@@ -64,12 +65,12 @@ class QueryResults {
      */
     // TODO: This is redundant. The keyword list is in the query. 
     private final KeywordList keywordList;
-
+    
     QueryResults(KeywordSearchQuery query, KeywordList keywordList) {
         this.keywordSearchQuery = query;
         this.keywordList = keywordList;
     }
-
+    
     void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
@@ -78,15 +79,15 @@ class QueryResults {
     KeywordList getKeywordList() {
         return keywordList;
     }
-
+    
     KeywordSearchQuery getQuery() {
         return keywordSearchQuery;
     }
-
+    
     List<KeywordHit> getResults(Keyword keyword) {
         return results.get(keyword);
     }
-
+    
     Set<Keyword> getKeywords() {
         return results.keySet();
     }
@@ -112,7 +113,7 @@ class QueryResults {
             progress.start(getKeywords().size());
         }
         int unitProgress = 0;
-
+        
         for (final Keyword keyword : getKeywords()) {
             if (worker.isCancelled()) {
                 logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
@@ -130,20 +131,22 @@ class QueryResults {
                 }
                 subProgress.progress(keywordList.getName() + ": " + hitDisplayStr, unitProgress);
             }
-
+            
             for (KeywordHit hit : getOneHitPerObject(keyword)) {
                 String termString = keyword.getSearchTerm();
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
-                String snippet;
-                try {
-                    snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
-                } catch (NoOpenCoreException e) {
-                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                    //no reason to continue
-                    break;
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                    continue;
+                String snippet = hit.getSnippet();
+                if (StringUtils.isBlank(snippet)) {
+                    try {
+                        snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
+                    } catch (NoOpenCoreException e) {
+                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                        //no reason to continue
+                        break;
+                    } catch (Exception e) {
+                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                        continue;
+                    }
                 }
                 if (snippet != null) {
                     KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(termString, hit, snippet, keywordList.getName());
@@ -166,11 +169,11 @@ class QueryResults {
                     //group artifacts by type
                     .collect(Collectors.groupingBy(BlackboardArtifact::getArtifactTypeID))
                     //for each type send an event
-                    .forEach((typeID, artifacts) ->
-                            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
-
+                    .forEach((typeID, artifacts)
+                            -> IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
+            
         }
-
+        
         return newArtifacts;
     }
 
@@ -183,7 +186,7 @@ class QueryResults {
      *         SolrObjectID-ChunkID pairs.
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
-
+        
         HashMap<Long, KeywordHit> hits = new HashMap<>();
 
         // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
@@ -206,7 +209,7 @@ class QueryResults {
     private void writeSingleFileInboxMessage(KeywordCachedArtifact written, Content hitContent) {
         StringBuilder subjectSb = new StringBuilder();
         StringBuilder detailsSb = new StringBuilder();
-
+        
         if (!keywordSearchQuery.isLiteral()) {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
         } else {
@@ -270,5 +273,5 @@ class QueryResults {
 
         IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
     }
-
+    
 }

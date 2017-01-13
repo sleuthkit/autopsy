@@ -47,6 +47,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import org.openide.util.Exceptions;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
@@ -66,6 +68,7 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.corecomponentinterfaces.CoreComponentControl;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
@@ -1008,7 +1011,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The shared lock needs to be created on a special thread so it can be released
                     // from the same thread.
                     Future<Void> future = getCurrentCaseExecutor().submit(() -> {
-                        currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseDir);
+                        currentCaseLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseDir);
                         if (null == currentCaseLock) {
                             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
                         }
@@ -1019,7 +1022,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The exclusive lock uses the unique case name.
                     // This lock does not need to be on a special thread since it will be released before
                     // leaving this method
-                    exclusiveResourceLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
+                    exclusiveResourceLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
                             dbName, 12, TimeUnit.HOURS);
                     if (null == exclusiveResourceLock) {
                         throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
@@ -1269,7 +1272,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The shared lock needs to be created on a special thread so it can be released
                     // from the same thread.
                     Future<Void> future = getCurrentCaseExecutor().submit(() -> {
-                        currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory());
+                        currentCaseLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory());
                         if (null == currentCaseLock) {
                             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
                         }
@@ -1280,7 +1283,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The exclusive lock uses the unique case name
                     // This lock does not need to be on a special thread since it will be released before
                     // leaving this method
-                    exclusiveResourceLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
+                    exclusiveResourceLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
                             metadata.getCaseDatabaseName(), 12, TimeUnit.HOURS);
                     if (null == exclusiveResourceLock) {
                         throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
@@ -1480,6 +1483,20 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     MessageNotifyUtil.Notify.error(NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.Title"), NbBundle.getMessage(Case.class, "Case.CollaborationSetup.FailNotify.ErrMsg"));
                 }
             }
+
+            AutopsyService.CaseContext context = new AutopsyService.CaseContext(Case.currentCase, new LoggingProgressIndicator());
+            String serviceName = "";
+            for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
+                try {
+                    serviceName = service.getServiceName();
+                    if (!serviceName.equals("Solr Keyword Search Service")) {
+                        service.openCaseResources(context);
+                    }
+                } catch (AutopsyService.AutopsyServiceException ex) {
+                    Case.logger.log(Level.SEVERE, String.format("%s service failed to open case resources", serviceName), ex);
+                }
+            }
+
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
 
         } else {
