@@ -249,9 +249,6 @@ final class RegexQuery implements KeywordSearchQuery {
             // input where they were separated by a single boundary character.
             offset = hitMatcher.end() - 1;
 
-            // Remove leading and trailing whitespace.
-            hit = hit.trim();
-
             // Remove any remaining leading and trailing boundary characters.
             if (!queryStringContainsWildcardPrefix) {
                 hit = hit.replaceAll("^" + BOUNDARY_CHARS, ""); //NON-NLS
