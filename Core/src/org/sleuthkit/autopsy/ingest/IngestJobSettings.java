@@ -52,7 +52,7 @@ public class IngestJobSettings {
 
     private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
-    private static final String LAST_FILE_INGEST_FILTER_KEY = "Last File Ingest Filter Used";
+    private static final String LAST_FILE_INGEST_FILTER_KEY = "Last_File_Ingest_Filter";
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
