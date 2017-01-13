@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -42,8 +43,9 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 class IndexHandling {
 
-    private UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
-    private static final String JAVA_PATH = PlatformUtil.getJavaPath();
+    private static final Logger logger = Logger.getLogger(IndexHandling.class.getName()); 
+    private UNCPathUtilities uncPathUtilities;
+    private String JAVA_PATH;
     private static final String MODULE_OUTPUT = "ModuleOutput"; // ELTODO get "ModuleOutput" somehow...
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
@@ -54,6 +56,11 @@ class IndexHandling {
     // If SOLR_HOME environment variable doesn't exist, try these relative paths to find Solr config sets:
     private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
     private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
+    
+    void IndexHandling() {
+        uncPathUtilities = new UNCPathUtilities();
+        JAVA_PATH = PlatformUtil.getJavaPath();
+    }
 
     static String getCurrentSolrVersion() {
         return CURRENT_SOLR_VERSION;
@@ -73,9 +80,8 @@ class IndexHandling {
         return "";
     }
 
-    static String createReferenceIndexCopy(Case theCase, String indexPath) throws AutopsyService.AutopsyServiceException {
-        Logger logger = Logger.getLogger(IndexHandling.class.getName());    // ELTODO REMOVE
-        logger.log(Level.SEVERE, "ELTODO copying index at path {0} ", indexPath); //NON-NLS
+    String createReferenceIndexCopy(Case theCase, String indexPath) throws AutopsyService.AutopsyServiceException {
+        logger.log(Level.INFO, "Creating a reference copy of KWS index in {0} ", indexPath); //NON-NLS
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
         try {
             // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
@@ -85,21 +91,23 @@ class IndexHandling {
                 List<File> contents = getAllContentsInFolder(targetDirPath.getAbsolutePath());
                 if (!contents.isEmpty()) {
                     // target directory is not empty
-                    throw new AutopsyService.AutopsyServiceException("ELTODO");
+                    logger.log(Level.SEVERE, "Creating a reference copy of KWS index in {0} ", indexPath); //NON-NLS
+                    throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.targetDirNotEmptyError", targetDirPath.getAbsolutePath()));
                 }
             }
             targetDirPath.mkdirs();
             FileUtils.copyDirectory(new File(indexPath), targetDirPath);
             return targetDirPath.getAbsolutePath();
         } catch (Exception ex) {
-            throw new AutopsyService.AutopsyServiceException("ELTODO");
+            logger.log(Level.SEVERE, "Error occurred while creating a reference copy of keyword search index {0}", ex); //NON-NLS
+            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.ErrorDuringIndexCopy", ex));
         }
     }
 
-    // ELTODO This is NTH:
-    static void createReferenceConfigSetCopy(String indexPath) throws AutopsyService.AutopsyServiceException {
+    // ELTODO This functionality is NTH:
+    void createReferenceConfigSetCopy(String indexPath) throws AutopsyService.AutopsyServiceException {
+        logger.log(Level.INFO, "Creating a reference copy of config set in {0} ", indexPath); //NON-NLS
         File pathToConfigSet = new File("");
-        Logger logger = Logger.getLogger(IndexHandling.class.getName());    // ELTODO REMOVE
         try {
             // See if there is SOLR_HOME environment variable first
             String solrHome = System.getenv("SOLR_HOME");
@@ -115,11 +123,10 @@ class IndexHandling {
                 // config set should be located in "C:/some/directory/AutopsyXYZ/autopsy/solr/solr/configsets/"
                 pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET).toFile();
                 if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
-                    logger.log(Level.SEVERE, "ELTODO path {0} doesn''t exist", pathToConfigSet.getAbsolutePath()); //NON-NLS
                     // try the "release/solr/solr/configsets/" folder instead
                     pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET_2).toFile();
                     if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
-                        logger.log(Level.SEVERE, "ELTODO path {0} doesn''t exist", pathToConfigSet.getAbsolutePath()); //NON-NLS
+                        logger.log(Level.WARNING, "Unable to locate KWS config set in order to create a reference copy"); //NON-NLS
                         return;
                         // ELTODO This is NTH: throw new AutopsyService.AutopsyServiceException("ELTODO");
                     }
@@ -130,9 +137,11 @@ class IndexHandling {
                 targetDirPath.mkdirs();
             }
             // copy config set 
-            FileUtils.copyDirectory(pathToConfigSet, new File(indexPath));
+            if (!pathToConfigSet.getAbsolutePath().isEmpty() && pathToConfigSet.exists()) {
+                FileUtils.copyDirectory(pathToConfigSet, new File(indexPath));
+            }
         } catch (Exception ex) {
-            throw new AutopsyService.AutopsyServiceException("ELTODO");
+            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.ErrorDuringConfigSetCopy", ex));
         }
     }
 
@@ -145,7 +154,7 @@ class IndexHandling {
      *
      * @return List of absolute paths to all found index directories
      */
-    static List<String> findAllIndexDirs(Case theCase) {
+    List<String> findAllIndexDirs(Case theCase) {
         ArrayList<String> candidateIndexDirs = new ArrayList<>();
         // first find all existing "/ModuleOutput/keywordsearch/data/" folders
         if (theCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
@@ -190,8 +199,7 @@ class IndexHandling {
         for (String path : candidateIndexDirs) {
             List<String> validIndexPaths = containsValidIndexFolders(path);
             for (String validPath : validIndexPaths) {
-                indexDirs.add(validPath);
-                // ELTODO indexDirs.add(convertPathToUNC(validPath));
+                indexDirs.add(convertPathToUNC(validPath));
                 // there can be multiple index folders (e.g. current version and "old" version) so keep looking
             }
         }
@@ -300,20 +308,22 @@ class IndexHandling {
      *
      * @return True is index upgraded successfully, false otherwise
      */
-    static boolean upgradeSolrIndexVersion4to5(String solr4IndexPath, String tempResultsDir) {
+    boolean upgradeSolrIndexVersion4to5(String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
 
-        boolean success = true;
         String outputFileName = "output.txt";
+        logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 4 to Solr 5", solr4IndexPath); //NON-NLS
         try {
             // find the index upgrade tool
             final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr4to5IndexUpgrade", IndexHandling.class.getPackage().getName(), false); //NON-NLS
             if (upgradeToolFolder == null) {
+                logger.log(Level.SEVERE, "Unable to licate Sorl 4 to Solr 5 upgrade tool"); //NON-NLS
                 return false;
             }
 
             // full path to index upgrade jar file
             File upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr4IndexUpgrade.jar").toFile();
             if (!upgradeJarPath.exists() || !upgradeJarPath.isFile()) {
+                logger.log(Level.SEVERE, "Unable to licate Sorl 4 to Solr 5 upgrade tool's JAR file at {0}", upgradeJarPath); //NON-NLS
                 return false;
             }
             
@@ -332,11 +342,12 @@ class IndexHandling {
             processBuilder.redirectError(new File(errFileFullPath));
             ExecUtil.execute(processBuilder);
         } catch (Exception ex) {
-            success = false;
+            logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 {0} ", solr4IndexPath); //NON-NLS
+            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.solr4to5UpgradeException"), ex);
         }
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return success;
+        return true;
     }
 
     /**
@@ -347,20 +358,22 @@ class IndexHandling {
      *
      * @return True is index upgraded successfully, false otherwise
      */
-    static boolean upgradeSolrIndexVersion5to6(String solr5IndexPath, String tempResultsDir) {
+    boolean upgradeSolrIndexVersion5to6(String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
 
-        boolean success = true;
         String outputFileName = "output.txt";
+        logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 5 to Solr 6", solr5IndexPath); //NON-NLS
         try {
             // find the index upgrade tool
             final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr5to6IndexUpgrade", IndexHandling.class.getPackage().getName(), false); //NON-NLS
             if (upgradeToolFolder == null) {
+                logger.log(Level.SEVERE, "Unable to licate Sorl 5 to Solr 6 upgrade tool"); //NON-NLS
                 return false;
             }
 
             // full path to index upgrade jar file
             File upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr5IndexUpgrade.jar").toFile();
             if (!upgradeJarPath.exists() || !upgradeJarPath.isFile()) {
+                logger.log(Level.SEVERE, "Unable to licate Sorl 5 to Solr 6 upgrade tool's JAR file at {0}", upgradeJarPath); //NON-NLS
                 return false;
             }
 
@@ -379,11 +392,12 @@ class IndexHandling {
             processBuilder.redirectError(new File(errFileFullPath));
             ExecUtil.execute(processBuilder);
         } catch (Exception ex) {
-            success = false;
+            logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 {0} ", solr5IndexPath); //NON-NLS
+            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.solr5to6UpgradeException"), ex);
         }
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return success;
+        return true;
     }
 }

@@ -154,7 +154,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
          */
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        List<String> indexDirs = IndexHandling.findAllIndexDirs(context.getCase());
+        IndexHandling indexHandler = new IndexHandling();
+        List<String> indexDirs = indexHandler.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
         String currentVersionIndexDir = IndexHandling.findLatestVersionIndexDir(indexDirs);
@@ -177,10 +178,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             // ELTODO Check for cancellation at whatever points are feasible
             
             // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
-            String newIndexDir = IndexHandling.createReferenceIndexCopy(context.getCase(), oldIndexDir);
+            String newIndexDir = indexHandler.createReferenceIndexCopy(context.getCase(), oldIndexDir);
             
             // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
-            IndexHandling.createReferenceConfigSetCopy(newIndexDir);
+            indexHandler.createReferenceConfigSetCopy(newIndexDir);
             
             // convert path to UNC path
             
@@ -189,10 +190,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             tmpDir.mkdirs();
             
             // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will simply exit right away.
-            boolean success = IndexHandling.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
+            boolean success = indexHandler.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
             
             // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
-            success = IndexHandling.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
+            success = indexHandler.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
             
             success = true; // ELTODO remove
             if (!success) {
