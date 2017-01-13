@@ -210,7 +210,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                             }
                         } else {
                             reader.unread(tempChunkBuf, i, charsRead - i);
-                            break;
+                            return;
                         }
                     }
                 }
