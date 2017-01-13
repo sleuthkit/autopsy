@@ -18,10 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.net.URL;
 import java.io.File;
-import java.io.IOException;
-import java.net.URLClassLoader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,14 +29,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProcessTerminator;
 
 /**
  * This class handles the task of finding KWS index folders and upgrading old
