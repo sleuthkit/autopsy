@@ -187,10 +187,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             tmpDir.mkdirs();
             
             // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will simply exit right away.
-            boolean success = IndexHandling.upgradeSolrIndex4to5(newIndexDir, tmpDir.getAbsolutePath());
+            boolean success = IndexHandling.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
             
             // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
-            success = IndexHandling.upgradeSolrIndex5to6(newIndexDir, tmpDir.getAbsolutePath());
+            success = IndexHandling.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
             
             success = true; // ELTODO remove
             if (!success) {
