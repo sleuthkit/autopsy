@@ -185,13 +185,26 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
             File tmpDir = Paths.get(context.getCase().getTempDirectory(), "IndexUpgrade").toFile(); //NON-NLS
             tmpDir.mkdirs();
+            
+            // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will simply exit right away.
             boolean success = IndexHandling.upgradeSolrIndex4to5(newIndexDir, tmpDir.getAbsolutePath());
+            
+            // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
+            success = IndexHandling.upgradeSolrIndex5to6(newIndexDir, tmpDir.getAbsolutePath());
+            
+            success = true; // ELTODO remove
+            if (!success) {
+                // delete the new directories
+
+                // close the upgraded index?
+                throw new AutopsyServiceException("ELTODO");
+            }
             
             // Open the upgraded index
             
             // execute a test query
             
-            success = true;
+            success = true; // ELTODO remove
             if (!success) {
                 // delete the new directories
 
@@ -201,6 +214,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
             // currentVersionIndexDir = upgraded index dir
         }
+        
+        // open currentVersionIndexDir index
     }
 
     /**

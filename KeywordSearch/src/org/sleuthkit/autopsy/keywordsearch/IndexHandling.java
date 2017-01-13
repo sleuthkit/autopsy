@@ -295,7 +295,7 @@ class IndexHandling {
     }    
     
     
-    static boolean upgradeSolrIndex4to5(String solr4path, String tempResultsDir) {
+    static boolean upgradeSolrIndex4to5(String solr4IndexPath, String tempResultsDir) {
         
         boolean success = true;
         String outputFileName = "output.txt";
@@ -313,49 +313,48 @@ class IndexHandling {
             commandLine.add(JAVA_PATH);
             commandLine.add("-jar");
             commandLine.add(upgradeJarPath);
-            commandLine.add(solr4path);
-            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-            //processBuilder.directory(upgradeToolFolder);
-            processBuilder.redirectOutput(new File(outputFileFullPath));
-            processBuilder.redirectError(new File(errFileFullPath));
-            ExecUtil.execute(processBuilder);            
-
-        } catch (Exception ex) {
-            success = false;
-        }
-        // execute lucene upgrade command
-        /* java -classpath ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader "C:\Users\elivis\TEMP\xp new test - orig\ingest1\ModuleOutput\keywordsearch\data\index"
-
-
-        try {
-            final String outputFileFullPath = Paths.get(tempResultsDir, outputFileName).toString();
-            final String errFileFullPath = Paths.get(tempResultsDir, outputFileName + ".err").toString(); //NON-NLS
-            List<String> commandLine = new ArrayList<>();
-            commandLine.add(JAVA_PATH);
-            commandLine.add("-cp"); //NON-NLS
-            commandLine.add(".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar"); //NON-NLS
-            // ELTODO commandLine.add("-delete-prior-commits"); //NON-NLS
-            commandLine.add("-verbose");  //NON-NLS
-            commandLine.add(solr4path);
+            commandLine.add(solr4IndexPath);
             ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
             processBuilder.redirectOutput(new File(outputFileFullPath));
             processBuilder.redirectError(new File(errFileFullPath));
             ExecUtil.execute(processBuilder);
-            // @@@ Investigate use of history versus cache as type.
-        } catch (Exception ex) {
-            success = false;
-        }*/
-        return success;    
-    }
-    
-    static boolean upgradeSolrIndex5to6(String solr4path) {
-        boolean success = true;
-        try {
-            // execute lucene upgrade command
-            // java -classpath ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader "C:\Users\elivis\TEMP\xp new test - orig\ingest1\ModuleOutput\keywordsearch\data\index"
         } catch (Exception ex) {
             success = false;
         }
+        // alternatively can execute lucene upgrade command from the folder where lucene jars are located
+        // java -cp ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
+        return success;    
+    }
+    
+    static boolean upgradeSolrIndex5to6(String solr5IndexPath, String tempResultsDir) {
+
+        boolean success = true;
+        String outputFileName = "output.txt";
+        try {
+            final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr5to6IndexUpgrade", IndexHandling.class.getPackage().getName(), false); //NON-NLS
+            if (upgradeToolFolder == null) {
+                return false;
+            }
+
+            String upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr5IndexUpgrade.jar").toString();
+            
+            final String outputFileFullPath = Paths.get(tempResultsDir, outputFileName).toString();
+            final String errFileFullPath = Paths.get(tempResultsDir, outputFileName + ".err").toString(); //NON-NLS
+            List<String> commandLine = new ArrayList<>();
+            commandLine.add(JAVA_PATH);
+            commandLine.add("-jar");
+            commandLine.add(upgradeJarPath);
+            commandLine.add(solr5IndexPath);
+            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
+            processBuilder.redirectOutput(new File(outputFileFullPath));
+            processBuilder.redirectError(new File(errFileFullPath));
+            ExecUtil.execute(processBuilder); 
+        } catch (Exception ex) {
+            success = false;
+        }
+        
+        // alternatively can execute lucene upgrade command from the folder where lucene jars are located
+        // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
         return success;  
     }
 }
