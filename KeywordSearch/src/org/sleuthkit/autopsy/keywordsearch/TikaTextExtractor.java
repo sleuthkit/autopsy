@@ -51,7 +51,7 @@ class TikaTextExtractor extends FileTextExtractor {
 
     private static final List<String> TIKA_SUPPORTED_TYPES
             = new Tika().getParser().getSupportedTypes(new ParseContext())
-            .parallelStream()
+            .stream()
             .map(mt -> mt.getType() + "/" + mt.getSubtype())
             .collect(Collectors.toList());
 

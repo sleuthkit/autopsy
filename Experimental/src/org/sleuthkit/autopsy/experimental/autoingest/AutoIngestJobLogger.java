@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -29,9 +30,9 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.experimental.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import java.util.concurrent.TimeUnit;
 import java.util.List;
 import javax.annotation.concurrent.Immutable;
@@ -430,7 +431,7 @@ final class AutoIngestJobLogger {
      *                                      log file.
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
-        try (Lock lock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, getLogPath(caseDirectoryPath).toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
+        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, getLogPath(caseDirectoryPath).toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
                 File logFile = getLogPath(caseDirectoryPath).toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {

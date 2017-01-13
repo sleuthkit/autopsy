@@ -137,7 +137,6 @@ final class RegexQuery implements KeywordSearchQuery {
 
         final Server solrServer = KeywordSearch.getServer();
         SolrQuery solrQuery = new SolrQuery();
-        solrQuery.setShowDebugInfo(true); //debug
 
         /**
          * The provided regular expression may include wildcards at the
