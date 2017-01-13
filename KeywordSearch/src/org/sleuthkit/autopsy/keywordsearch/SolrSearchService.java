@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.logging.Level;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
@@ -31,6 +32,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -46,6 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 )
 public class SolrSearchService implements KeywordSearchService, AutopsyService  {
 
+    private static final Logger logger = Logger.getLogger(IndexHandling.class.getName());
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
@@ -188,20 +191,31 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
             File tmpDir = Paths.get(context.getCase().getTempDirectory(), "IndexUpgrade").toFile(); //NON-NLS
             tmpDir.mkdirs();
-            
-            // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will simply exit right away.
-            boolean success = indexHandler.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
-            
-            // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
-            success = indexHandler.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
-            
+
+            boolean success = true;
+            try {
+                // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will throw exception right away.
+                success = indexHandler.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
+            } catch (Exception ex) {
+                // this may not be an error, for example if index is Solr 5 to begin with
+                logger.log(Level.WARNING, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 {0} ", newIndexDir); //NON-NLS
+            }
+
+            try {
+                // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
+                success = indexHandler.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 {0} ", newIndexDir); //NON-NLS
+                success = false;
+            }
+
             success = true; // ELTODO remove
             if (!success) {
                 // delete the new directories
                 new File(newIndexDir).delete();
                 throw new AutopsyServiceException("ELTODO");
             }
-            
+
             // Open the upgraded index
             
             // execute a test query

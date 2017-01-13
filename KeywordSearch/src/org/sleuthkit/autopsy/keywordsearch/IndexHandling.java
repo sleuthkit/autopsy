@@ -46,7 +46,6 @@ class IndexHandling {
     private static final Logger logger = Logger.getLogger(IndexHandling.class.getName()); 
     private UNCPathUtilities uncPathUtilities;
     private String JAVA_PATH;
-    private static final String MODULE_OUTPUT = "ModuleOutput"; // ELTODO get "ModuleOutput" somehow...
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
@@ -57,7 +56,7 @@ class IndexHandling {
     private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
     private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
     
-    void IndexHandling() {
+    IndexHandling() {
         uncPathUtilities = new UNCPathUtilities();
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
@@ -170,13 +169,18 @@ class IndexHandling {
             // create a list of all sub-directories
             List<File> contents = getAllContentsInFolder(theCase.getCaseDirectory());
 
-            // ELTODO decipher "ModuleOutput" from targetDirPath
-            // scan all topLevelOutputDir subfolders for presence of non-empty "/ModuleOutput/keywordsearch/data/" folder
-            for (File item : contents) {
-                File path = Paths.get(item.getAbsolutePath(), MODULE_OUTPUT, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
-                // must be a non-empty directory
-                if (path.exists() && path.isDirectory()) {
-                    candidateIndexDirs.add(path.toString());
+            if (!contents.isEmpty()) {
+                // decipher "ModuleOutput" directory name from module output path 
+                // (e.g. X:\Case\ingest4\ModuleOutput\) because there is no other way to get it...
+                String moduleOutDirName = new File(theCase.getModuleDirectory()).getName();
+                
+                // scan all topLevelOutputDir subfolders for presence of non-empty "/ModuleOutput/keywordsearch/data/" folder
+                for (File item : contents) {
+                    File path = Paths.get(item.getAbsolutePath(), moduleOutDirName, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
+                    // must be a non-empty directory
+                    if (path.exists() && path.isDirectory()) {
+                        candidateIndexDirs.add(path.toString());
+                    }
                 }
             }
         } else {
@@ -342,7 +346,6 @@ class IndexHandling {
             processBuilder.redirectError(new File(errFileFullPath));
             ExecUtil.execute(processBuilder);
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 {0} ", solr4IndexPath); //NON-NLS
             throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.solr4to5UpgradeException"), ex);
         }
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
@@ -392,7 +395,6 @@ class IndexHandling {
             processBuilder.redirectError(new File(errFileFullPath));
             ExecUtil.execute(processBuilder);
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 {0} ", solr5IndexPath); //NON-NLS
             throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.solr5to6UpgradeException"), ex);
         }
 
