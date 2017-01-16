@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -29,6 +28,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
+import org.sleuthkit.autopsy.keywordsearch.TextExtractor.TextExtractorException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -170,10 +171,11 @@ class Ingester {
                     throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
                 }
             }
-        } catch (IOException ex) {
+        } catch (TextExtractorException ex) {
             extractor.logWarning("Unable to read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
-        } catch (Exception ex) {
+        } //NON-NLS
+        catch (Exception ex) {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
