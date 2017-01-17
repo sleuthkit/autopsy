@@ -74,7 +74,17 @@ class IndexFinder {
         return "";
     }
 
-    String createReferenceIndexCopy(Case theCase, String indexPath) throws AutopsyService.AutopsyServiceException {
+    String copyIndexAndConfigSet(Case theCase, String oldIndexDir) throws AutopsyService.AutopsyServiceException {
+        // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
+        String newIndexDir = createReferenceIndexCopy(theCase, oldIndexDir);
+
+        // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
+        createReferenceConfigSetCopy(new File(newIndexDir).getParent());
+        
+        return newIndexDir;
+    }
+
+    private String createReferenceIndexCopy(Case theCase, String indexPath) throws AutopsyService.AutopsyServiceException {
         logger.log(Level.INFO, "Creating a reference copy of KWS index in {0} ", indexPath); //NON-NLS
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
         try {
@@ -99,7 +109,7 @@ class IndexFinder {
     }
 
     // ELTODO This functionality is NTH:
-    void createReferenceConfigSetCopy(String indexPath) throws AutopsyService.AutopsyServiceException {
+    private void createReferenceConfigSetCopy(String indexPath) {
         logger.log(Level.INFO, "Creating a reference copy of config set in {0} ", indexPath); //NON-NLS
         File pathToConfigSet = new File("");
         try {
@@ -135,7 +145,8 @@ class IndexFinder {
                 FileUtils.copyDirectory(pathToConfigSet, new File(indexPath));
             }
         } catch (Exception ex) {
-            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.ErrorDuringConfigSetCopy", ex));
+            // This feature is a NTH so don't re-throw 
+            logger.log(Level.WARNING, "Error while copying KWS config set to {0}", indexPath); //NON-NLS
         }
     }
 

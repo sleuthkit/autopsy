@@ -87,7 +87,7 @@ public class IndexUpgrader {
         if (!success) {
             // delete the new directories
             new File(newIndexDir).delete();
-            throw new AutopsyService.AutopsyServiceException("ELTODO");
+            throw new AutopsyService.AutopsyServiceException("Failed to upgrade existing keyword search index");
         }
     }
     
