@@ -30,9 +30,11 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -161,40 +163,62 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         List<String> indexDirs = indexFinder.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
+        String schemaVer; 
         String currentVersionIndexDir = IndexFinder.findLatestVersionIndexDir(indexDirs);
         if (currentVersionIndexDir.isEmpty()) {
-            
-            // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
-            String oldIndexDir = indexDirs.get(0);
+            if (indexDirs.isEmpty()) {
+                // new case that doesn't have an existing index. create new index folder
+                currentVersionIndexDir = IndexFinder.createLatestVersionIndexDir(context.getCase());
+                schemaVer = IndexFinder.getCurrentSchemaVersion();
+            } else {
+                // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
+                // ELTODO need to handle here a case where it is Solr 6 index but not latest schema
+                // ELTODO figure out the schema version of the "old" index
+                String oldIndexDir = indexDirs.get(0);
 
-            if (RuntimeProperties.coreComponentsAreActive()) {
-                //pop up a message box to indicate the restrictions on adding additional 
-                //text and performing regex searches and give the user the option to decline the upgrade
-                if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"), 
-                        NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"), 
-                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {                    
-                    // upgrade declined - throw exception
-                    throw new AutopsyServiceException("Index upgrade was declined by user");
+                if (RuntimeProperties.coreComponentsAreActive()) {
+                    //pop up a message box to indicate the restrictions on adding additional 
+                    //text and performing regex searches and give the user the option to decline the upgrade
+                    if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"),
+                            NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"),
+                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                        // upgrade declined - throw exception
+                        throw new AutopsyServiceException("Index upgrade was declined by user");
+                    }
                 }
+
+                // ELTODO Check for cancellation at whatever points are feasible
+                
+                // Copy the "old" index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
+                String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), oldIndexDir);
+
+                // upgrade the "old" index to the latest supported Solr version
+                IndexUpgrader indexUpgrader = new IndexUpgrader();
+                indexUpgrader.performIndexUpgrade(newIndexDir, context.getCase().getTempDirectory());
+
+                // set the upgraded reference index as the index to be used for this case
+                currentVersionIndexDir = newIndexDir;
+                // schemaVer = ; // ELTODO
             }
-
-            // ELTODO Check for cancellation at whatever points are feasible
-            
-            // Copy the "old" index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-            String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), oldIndexDir);
-            
-            // upgrade the "old" index to the latest supported Solr version
-            IndexUpgrader indexUpgrader = new IndexUpgrader();
-            indexUpgrader.performIndexUpgrade(newIndexDir, context.getCase().getTempDirectory());
-
-            // set the upgraded reference index as the index to be used for this case
-            currentVersionIndexDir = newIndexDir;
+        } else {
+            // found index that is latest version of Solr and schema
+            schemaVer = IndexFinder.getCurrentSchemaVersion();
         }
-        
-        // open currentVersionIndexDir index
-            
-        // execute a test query
-        // if failed, close the upgraded index?
+                
+        // open core
+        try {
+            // ELTODO figure out the schema version of the core that's being opened
+            //KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndexDir, schemaVer);
+            KeywordSearch.getServer().openCoreForCase(context.getCase());
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
+            if (RuntimeProperties.coreComponentsAreActive()) {
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
+            }
+        }
+
+        // ELTODO execute a test query
+        // ELTODO if failed, close the upgraded index?
     }
 
     /**
@@ -209,6 +233,22 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         /*
          * Autopsy service providers may not have case-level resources.
          */
+        try {
+            KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
+            /*
+            * TODO (AUT-2084): The following code
+            * KeywordSearch.CaseChangeListener gambles that any
+            * BlackboardResultWriters (SwingWorkers) will complete
+            * in less than roughly two seconds
+            */
+            Thread.sleep(2000);
+            KeywordSearch.getServer().closeCore();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
+            if (RuntimeProperties.coreComponentsAreActive()) {
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
+            }
+        }
     }
 
     @Override

@@ -45,8 +45,6 @@ class Installer extends ModuleInstall {
         //Setup the default KeywordSearch configuration files
         KeywordSearchSettings.setDefaults();
 
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new KeywordSearch.CaseChangeListener());
-
         final Server server = KeywordSearch.getServer();
         try {
             server.start();

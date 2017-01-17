@@ -28,7 +28,6 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -72,6 +71,14 @@ class IndexFinder {
             }
         }
         return "";
+    }
+    
+    static String createLatestVersionIndexDir(Case theCase) {
+        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
+        // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
+        File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
+        targetDirPath.mkdirs();
+        return targetDirPath.getAbsolutePath();
     }
 
     String copyIndexAndConfigSet(Case theCase, String oldIndexDir) throws AutopsyService.AutopsyServiceException {
