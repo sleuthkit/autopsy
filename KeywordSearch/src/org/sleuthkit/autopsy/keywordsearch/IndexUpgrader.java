@@ -41,9 +41,6 @@ public class IndexUpgrader {
     
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private final String JAVA_PATH;
-    // If SOLR_HOME environment variable doesn't exist, try these relative paths to find Solr config sets:
-    private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
-    private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
     
     IndexUpgrader() {
         JAVA_PATH = PlatformUtil.getJavaPath();
@@ -60,25 +57,19 @@ public class IndexUpgrader {
         try {
             // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will throw exception right away.
             upgradeSolrIndexVersion4to5(newIndexDir, tempResultsDir);
-        } catch (AutopsyService.AutopsyServiceException | SecurityException | IOException ex) {
-            // this may not be an error, for example if index is Solr 5 to begin with
-            logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 " + newIndexDir, ex); //NON-NLS
+        } catch (Exception ex) {
+            // catch-all firewall for exceptions thrown by the Solr 4 to 5 upgrade tool itself
+            logger.log(Level.SEVERE, "Exception while running Sorl 4 to Solr 5 upgrade tool " + newIndexDir, ex); //NON-NLS
             success = false;
-        } catch (Exception ex2) {
-            // exceptions thrown by the Solr 4 ot 5 upgrade tool itself may not be an error, for example if index is Solr 5 (or later) to begin with
-            logger.log(Level.WARNING, "Exception while running Sorl 4 to Solr 5 upgrade tool " + newIndexDir, ex2); //NON-NLS
         }
 
         if (success) {
             try {
                 // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
                 upgradeSolrIndexVersion5to6(newIndexDir, tempResultsDir);
-            } catch (AutopsyService.AutopsyServiceException | SecurityException | IOException ex) {
-                logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 " + newIndexDir, ex); //NON-NLS
-                success = false;
-            } catch (Exception ex2) {
-                // exceptions thrown by Solr 5 to 6 upgrade tool itself should always be treated as errors
-                logger.log(Level.SEVERE, "Exception while running Sorl 5 to Solr 6 upgrade tool " + newIndexDir, ex2); //NON-NLS
+            } catch (Exception ex) {
+                // catch-all firewall for exceptions thrown by Solr 5 to 6 upgrade tool itself
+                logger.log(Level.SEVERE, "Exception while running Sorl 5 to Solr 6 upgrade tool " + newIndexDir, ex); //NON-NLS
                 success = false;
             }
         }
