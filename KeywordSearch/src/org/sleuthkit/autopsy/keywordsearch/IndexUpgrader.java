@@ -74,7 +74,6 @@ public class IndexUpgrader {
             }
         }
 
-        success = true; // ELTODO remove
         if (!success) {
             // delete the new directories
             new File(newIndexDir).delete();
