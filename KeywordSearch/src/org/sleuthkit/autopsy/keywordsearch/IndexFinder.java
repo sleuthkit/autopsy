@@ -28,24 +28,20 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
-import org.openide.modules.InstalledFileLocator;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
-import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * This class handles the task of finding KWS index folders and upgrading old
- * indexes to the latest supported Solr version.
+ * This class handles the task of finding and identifying KWS index folders.
  */
-class IndexHandling {
+class IndexFinder {
 
-    private static final Logger logger = Logger.getLogger(IndexHandling.class.getName()); 
+    private static final Logger logger = Logger.getLogger(IndexFinder.class.getName()); 
     private UNCPathUtilities uncPathUtilities;
-    private String JAVA_PATH;
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
@@ -56,9 +52,8 @@ class IndexHandling {
     private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
     private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
     
-    IndexHandling() {
+    IndexFinder() {
         uncPathUtilities = new UNCPathUtilities();
-        JAVA_PATH = PlatformUtil.getJavaPath();
     }
 
     static String getCurrentSolrVersion() {
@@ -302,104 +297,5 @@ class IndexHandling {
     public static boolean matchesIndexFolderNameStandard(String inputString) {
         Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
         return m.find();
-    }
-
-    /**
-     * Upgrades Solr index from version 4 to 5.
-     *
-     * @param solr4IndexPath Full path to Solr v4 index directory
-     * @param tempResultsDir Path to directory where to store log output
-     *
-     * @return True is index upgraded successfully, false otherwise
-     */
-    boolean upgradeSolrIndexVersion4to5(String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
-
-        String outputFileName = "output.txt";
-        logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 4 to Solr 5", solr4IndexPath); //NON-NLS
-        try {
-            // find the index upgrade tool
-            final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr4to5IndexUpgrade", IndexHandling.class.getPackage().getName(), false); //NON-NLS
-            if (upgradeToolFolder == null) {
-                logger.log(Level.SEVERE, "Unable to licate Sorl 4 to Solr 5 upgrade tool"); //NON-NLS
-                return false;
-            }
-
-            // full path to index upgrade jar file
-            File upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr4IndexUpgrade.jar").toFile();
-            if (!upgradeJarPath.exists() || !upgradeJarPath.isFile()) {
-                logger.log(Level.SEVERE, "Unable to licate Sorl 4 to Solr 5 upgrade tool's JAR file at {0}", upgradeJarPath); //NON-NLS
-                return false;
-            }
-            
-            // create log output directory if it doesn't exist
-            new File(tempResultsDir).mkdirs();
-
-            final String outputFileFullPath = Paths.get(tempResultsDir, outputFileName).toString();
-            final String errFileFullPath = Paths.get(tempResultsDir, outputFileName + ".err").toString(); //NON-NLS
-            List<String> commandLine = new ArrayList<>();
-            commandLine.add(JAVA_PATH);
-            commandLine.add("-jar");
-            commandLine.add(upgradeJarPath.getAbsolutePath());
-            commandLine.add(solr4IndexPath);
-            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-            processBuilder.redirectOutput(new File(outputFileFullPath));
-            processBuilder.redirectError(new File(errFileFullPath));
-            ExecUtil.execute(processBuilder);
-        } catch (Exception ex) {
-            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.solr4to5UpgradeException"), ex);
-        }
-        // alternatively can execute lucene upgrade command from the folder where lucene jars are located
-        // java -cp ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return true;
-    }
-
-    /**
-     * Upgrades Solr index from version 5 to 6.
-     *
-     * @param solr5IndexPath Full path to Solr v5 index directory
-     * @param tempResultsDir Path to directory where to store log output
-     *
-     * @return True is index upgraded successfully, false otherwise
-     */
-    boolean upgradeSolrIndexVersion5to6(String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
-
-        String outputFileName = "output.txt";
-        logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 5 to Solr 6", solr5IndexPath); //NON-NLS
-        try {
-            // find the index upgrade tool
-            final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr5to6IndexUpgrade", IndexHandling.class.getPackage().getName(), false); //NON-NLS
-            if (upgradeToolFolder == null) {
-                logger.log(Level.SEVERE, "Unable to licate Sorl 5 to Solr 6 upgrade tool"); //NON-NLS
-                return false;
-            }
-
-            // full path to index upgrade jar file
-            File upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr5IndexUpgrade.jar").toFile();
-            if (!upgradeJarPath.exists() || !upgradeJarPath.isFile()) {
-                logger.log(Level.SEVERE, "Unable to licate Sorl 5 to Solr 6 upgrade tool's JAR file at {0}", upgradeJarPath); //NON-NLS
-                return false;
-            }
-
-            // create log output directory if it doesn't exist
-            new File(tempResultsDir).mkdirs();
-
-            final String outputFileFullPath = Paths.get(tempResultsDir, outputFileName).toString();
-            final String errFileFullPath = Paths.get(tempResultsDir, outputFileName + ".err").toString(); //NON-NLS
-            List<String> commandLine = new ArrayList<>();
-            commandLine.add(JAVA_PATH);
-            commandLine.add("-jar");
-            commandLine.add(upgradeJarPath.getAbsolutePath());
-            commandLine.add(solr5IndexPath);
-            ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
-            processBuilder.redirectOutput(new File(outputFileFullPath));
-            processBuilder.redirectError(new File(errFileFullPath));
-            ExecUtil.execute(processBuilder);
-        } catch (Exception ex) {
-            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.solr5to6UpgradeException"), ex);
-        }
-
-        // alternatively can execute lucene upgrade command from the folder where lucene jars are located
-        // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return true;
     }
 }

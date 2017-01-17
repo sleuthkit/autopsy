@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 )
 public class SolrSearchService implements KeywordSearchService, AutopsyService  {
 
-    private static final Logger logger = Logger.getLogger(IndexHandling.class.getName());
+    private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
@@ -157,11 +157,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
          */
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        IndexHandling indexHandler = new IndexHandling();
-        List<String> indexDirs = indexHandler.findAllIndexDirs(context.getCase());
+        IndexFinder indexFinder = new IndexFinder();
+        List<String> indexDirs = indexFinder.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
-        String currentVersionIndexDir = IndexHandling.findLatestVersionIndexDir(indexDirs);
+        String currentVersionIndexDir = IndexFinder.findLatestVersionIndexDir(indexDirs);
         if (currentVersionIndexDir.isEmpty()) {
             
             // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
@@ -180,34 +180,43 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
             // ELTODO Check for cancellation at whatever points are feasible
             
-            // Copy the contents (core) of ModuleOutput/keywordsearch/data/index into ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
-            String newIndexDir = indexHandler.createReferenceIndexCopy(context.getCase(), oldIndexDir);
+            // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
+            String newIndexDir = indexFinder.createReferenceIndexCopy(context.getCase(), oldIndexDir);
             
-            // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solr6_schema_2.0/configset
-            indexHandler.createReferenceConfigSetCopy(newIndexDir);
+            // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
+            indexFinder.createReferenceConfigSetCopy(newIndexDir);
             
-            // convert path to UNC path
-            
-            // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solr6_schema_2.0/index
+            // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solrX_schema_Y/index
             File tmpDir = Paths.get(context.getCase().getTempDirectory(), "IndexUpgrade").toFile(); //NON-NLS
             tmpDir.mkdirs();
 
             boolean success = true;
+            IndexUpgrader indexUpgrader = new IndexUpgrader();
             try {
                 // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will throw exception right away.
-                success = indexHandler.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
-            } catch (Exception ex) {
+                indexUpgrader.upgradeSolrIndexVersion4to5(newIndexDir, tmpDir.getAbsolutePath());
+            } catch (AutopsyServiceException | SecurityException | IOException ex) {
                 // this may not be an error, for example if index is Solr 5 to begin with
-                logger.log(Level.WARNING, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 {0} ", newIndexDir); //NON-NLS
+                logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 " + newIndexDir, ex); //NON-NLS
+                success = false;
+            } catch (Exception ex2) {
+                // exceptions thrown by the Solr 4 ot 5 upgrade tool itself may not be an error, for example if index is Solr 5 (or later) to begin with
+                logger.log(Level.WARNING, "Exception while running Sorl 4 to Solr 5 upgrade tool " + newIndexDir, ex2); //NON-NLS
             }
 
-            try {
-                // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
-                success = indexHandler.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 {0} ", newIndexDir); //NON-NLS
-                success = false;
-            }
+            if (success) {
+                try {
+                    // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
+                    indexUpgrader.upgradeSolrIndexVersion5to6(newIndexDir, tmpDir.getAbsolutePath());
+                } catch (AutopsyServiceException | SecurityException | IOException ex) {
+                    logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 " + newIndexDir, ex); //NON-NLS
+                    success = false;
+                } catch (Exception ex2) {
+                    // exceptions thrown by Solr 5 to 6 upgrade tool itself should always be treated as errors
+                    logger.log(Level.SEVERE, "Exception while running Sorl 5 to Solr 6 upgrade tool " + newIndexDir, ex2); //NON-NLS
+                    success = false;
+                }
+            } 
 
             success = true; // ELTODO remove
             if (!success) {
@@ -216,15 +225,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 throw new AutopsyServiceException("ELTODO");
             }
 
-            // Open the upgraded index
-            
-            // execute a test query
-            
             success = true; // ELTODO remove
             if (!success) {
                 // delete the new directories
                 new File(newIndexDir).delete();
-                // ELTODO close the upgraded index?
                 throw new AutopsyServiceException("ELTODO");
             }
 
@@ -233,6 +237,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         }
         
         // open currentVersionIndexDir index
+            
+        // execute a test query
+        // if failed, close the upgraded index?
     }
 
     /**
