@@ -96,7 +96,7 @@ class IndexFinder {
                 if (!contents.isEmpty()) {
                     // target directory is not empty
                     logger.log(Level.SEVERE, "Creating a reference copy of KWS index in {0} ", indexPath); //NON-NLS
-                    throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.targetDirNotEmptyError", targetDirPath.getAbsolutePath()));
+                    throw new AutopsyService.AutopsyServiceException("Directory to store the upgraded index must be empty " + targetDirPath.getAbsolutePath());
                 }
             }
             targetDirPath.mkdirs();
@@ -104,7 +104,7 @@ class IndexFinder {
             return targetDirPath.getAbsolutePath();
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Error occurred while creating a reference copy of keyword search index {0}", ex); //NON-NLS
-            throw new AutopsyService.AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexCopy.ErrorDuringIndexCopy", ex));
+            throw new AutopsyService.AutopsyServiceException("Error occurred while creating a copy of keyword search index", ex);
         }
     }
 

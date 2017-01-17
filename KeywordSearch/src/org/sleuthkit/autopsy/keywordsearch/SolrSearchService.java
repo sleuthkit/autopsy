@@ -174,7 +174,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                         NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"), 
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {                    
                     // upgrade declined - throw exception
-                    throw new AutopsyServiceException(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.upgradeDeclinedMsg"));
+                    throw new AutopsyServiceException("Index upgrade was declined by user");
                 }
             }
 
