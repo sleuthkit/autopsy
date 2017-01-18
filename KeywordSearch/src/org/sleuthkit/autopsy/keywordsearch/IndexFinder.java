@@ -305,7 +305,7 @@ class IndexFinder {
      *
      * @return True or false.
      */
-    public static boolean matchesIndexFolderNameStandard(String inputString) {
+    private static boolean matchesIndexFolderNameStandard(String inputString) {
         Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
         return m.find();
     }

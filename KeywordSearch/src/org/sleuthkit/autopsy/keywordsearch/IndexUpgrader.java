@@ -24,10 +24,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.apache.commons.io.FileUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -37,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * This class handles the task of upgrading old indexes to the latest supported
  * Solr version.
  */
-public class IndexUpgrader {
+class IndexUpgrader {
     
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private final String JAVA_PATH;
@@ -89,7 +86,7 @@ public class IndexUpgrader {
      *
      * @return True is index upgraded successfully, false otherwise
      */
-    void upgradeSolrIndexVersion4to5(String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    private void upgradeSolrIndexVersion4to5(String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
 
         String outputFileName = "output.txt";
         logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 4 to Solr 5", solr4IndexPath); //NON-NLS
@@ -135,7 +132,7 @@ public class IndexUpgrader {
      *
      * @return True is index upgraded successfully, false otherwise
      */
-    void upgradeSolrIndexVersion5to6(String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    private void upgradeSolrIndexVersion5to6(String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
 
         String outputFileName = "output.txt";
         logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 5 to Solr 6", solr5IndexPath); //NON-NLS
