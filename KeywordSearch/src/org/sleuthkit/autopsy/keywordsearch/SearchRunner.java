@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CancellationException;
@@ -262,12 +264,12 @@ public final class SearchRunner {
         // mutable state:
         private volatile boolean workerRunning;
         private List<String> keywordListNames; //guarded by SearchJobInfo.this
-        private Map<Keyword, List<Long>> currentResults; //guarded by SearchJobInfo.this
+        private Map<Keyword, Set<String>> currentResults; //guarded by SearchJobInfo.this
         private SearchRunner.Searcher currentSearcher;
         private AtomicLong moduleReferenceCount = new AtomicLong(0);
         private final Object finalSearchLock = new Object(); //used for a condition wait
 
-        public SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
+        private SearchJobInfo(long jobId, long dataSourceId, List<String> keywordListNames) {
             this.jobId = jobId;
             this.dataSourceId = dataSourceId;
             this.keywordListNames = new ArrayList<>(keywordListNames);
@@ -276,53 +278,53 @@ public final class SearchRunner {
             currentSearcher = null;
         }
 
-        public long getJobId() {
+        private long getJobId() {
             return jobId;
         }
 
-        public long getDataSourceId() {
+        private long getDataSourceId() {
             return dataSourceId;
         }
 
-        public synchronized List<String> getKeywordListNames() {
+        private synchronized List<String> getKeywordListNames() {
             return new ArrayList<>(keywordListNames);
         }
 
-        public synchronized void addKeywordListName(String keywordListName) {
+        private synchronized void addKeywordListName(String keywordListName) {
             if (!keywordListNames.contains(keywordListName)) {
                 keywordListNames.add(keywordListName);
             }
         }
 
-        public synchronized List<Long> currentKeywordResults(Keyword k) {
+        private synchronized Set<String> currentKeywordResults(Keyword k) {
             return currentResults.get(k);
         }
 
-        public synchronized void addKeywordResults(Keyword k, List<Long> resultsIDs) {
+        private synchronized void addKeywordResults(Keyword k, Set<String> resultsIDs) {
             currentResults.put(k, resultsIDs);
         }
 
-        public boolean isWorkerRunning() {
+        private boolean isWorkerRunning() {
             return workerRunning;
         }
 
-        public void setWorkerRunning(boolean flag) {
+        private void setWorkerRunning(boolean flag) {
             workerRunning = flag;
         }
 
-        public synchronized SearchRunner.Searcher getCurrentSearcher() {
+        private synchronized SearchRunner.Searcher getCurrentSearcher() {
             return currentSearcher;
         }
 
-        public synchronized void setCurrentSearcher(SearchRunner.Searcher searchRunner) {
+        private synchronized void setCurrentSearcher(SearchRunner.Searcher searchRunner) {
             currentSearcher = searchRunner;
         }
 
-        public void incrementModuleReferenceCount() {
+        private void incrementModuleReferenceCount() {
             moduleReferenceCount.incrementAndGet();
         }
 
-        public long decrementModuleReferenceCount() {
+        private long decrementModuleReferenceCount() {
             return moduleReferenceCount.decrementAndGet();
         }
 
@@ -331,7 +333,7 @@ public final class SearchRunner {
          *
          * @throws InterruptedException
          */
-        public void waitForCurrentWorker() throws InterruptedException {
+        private void waitForCurrentWorker() throws InterruptedException {
             synchronized (finalSearchLock) {
                 while (workerRunning) {
                     finalSearchLock.wait(); //wait() releases the lock
@@ -342,7 +344,7 @@ public final class SearchRunner {
         /**
          * Unset workerRunning and wake up thread(s) waiting on finalSearchLock
          */
-        public void searchNotify() {
+        private void searchNotify() {
             synchronized (finalSearchLock) {
                 workerRunning = false;
                 finalSearchLock.notify();
@@ -567,37 +569,59 @@ public final class SearchRunner {
             });
         }
 
-        //calculate new results but substracting results already obtained in this ingest
-        //update currentResults map with the new results
+        /**
+         * Over time, periodic searches can produce keyword hits that were seen
+         * in earlier searches (in addition to new hits). 
+         * This method filters out all of the hits found in earlier
+         * periodic searches and returns only the results found by the most 
+         * recent search.
+         *
+         * @param queryResult The results returned by a keyword search.
+         * @return The set of hits found by the most recent search.
+         *
+         */
         private QueryResults filterResults(QueryResults queryResult) {
 
+            // Create a new (empty) QueryResults object to hold the most recently found hits.
             QueryResults newResults = new QueryResults(queryResult.getQuery(), queryResult.getKeywordList());
 
             for (Keyword keyword : queryResult.getKeywords()) {
                 List<KeywordHit> queryTermResults = queryResult.getResults(keyword);
 
-                //translate to list of IDs that we keep track of
-                List<Long> queryTermResultsIDs = new ArrayList<>();
-                for (KeywordHit ch : queryTermResults) {
-                    queryTermResultsIDs.add(ch.getSolrObjectId());
+                // Grab the set of solr document ids that have a hit for this
+                // keyword.
+                Set<String> queryTermResultsIDs = new HashSet<>();
+                for (KeywordHit hit : queryTermResults) {
+                    queryTermResultsIDs.add(hit.getSolrDocumentId());
                 }
 
-                List<Long> curTermResults = job.currentKeywordResults(keyword);
+                // Get the set of document ids seen in the past by this searcher
+                // for the given keyword.
+                Set<String> curTermResults = job.currentKeywordResults(keyword);
                 if (curTermResults == null) {
+                    // If we haven't seen any results in the past, we simply
+                    // add all of the incoming results to the outgoing collection.
                     job.addKeywordResults(keyword, queryTermResultsIDs);
                     newResults.addResult(keyword, queryTermResults);
                 } else {
-                    //some AbstractFile hits already exist for this keyword
+                    // Otherwise, we have seen results for this keyword in the past.
+                    // For each of the keyword hits in the incoming results we check to
+                    // see if we have seen the document id previously.
                     for (KeywordHit res : queryTermResults) {
-                        if (!curTermResults.contains(res.getSolrObjectId())) {
-                            //add to new results
-                            List<KeywordHit> newResultsFs = newResults.getResults(keyword);
-                            if (newResultsFs == null) {
-                                newResultsFs = new ArrayList<>();
-                                newResults.addResult(keyword, newResultsFs);
+                        if (!curTermResults.contains(res.getSolrDocumentId())) {
+                            // We have not seen the document id before so we add
+                            // the keyword hit to the results
+                            List<KeywordHit> newKeywordHits = newResults.getResults(keyword);
+                            if (newKeywordHits == null) {
+                                // Create an empty list to hold the new hits.
+                                newKeywordHits = new ArrayList<>();
+                                newResults.addResult(keyword, newKeywordHits);
                             }
-                            newResultsFs.add(res);
-                            curTermResults.add(res.getSolrObjectId());
+                            // Add the new hit to the list.
+                            newKeywordHits.add(res);
+                            // Add the document id to the set of document ids
+                            // that have been seen for this keyword.
+                            curTermResults.add(res.getSolrDocumentId());
                         }
                     }
                 }
