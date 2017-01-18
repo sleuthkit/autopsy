@@ -60,7 +60,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     /** has the chunker reached the end of the Reader? If so, there are no more
      * chunks, and the current chunk does not need a window. */
     private boolean endOfReaderReached = false;
-
+    private Exception ex;
 
     /**
      * Create a Chunker that will chunk the content of the given Reader.
@@ -76,9 +76,18 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return this;
     }
 
+    boolean hasException() {
+        return ex != null;
+    }
+
+    public Exception getException() {
+        return ex;
+    }
+
     @Override
     public boolean hasNext() {
-        return endOfReaderReached == false;
+        return (ex == null)
+                && (endOfReaderReached == false);
     }
 
     /**
@@ -102,7 +111,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
     @Override
     public Chunk next() {
-        if (endOfReaderReached) {
+        if (hasNext() == false) {
             throw new NoSuchElementException("There are no more chunks.");
         }
         //reset state for the next chunk
@@ -115,14 +124,9 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
             readBaseChunk();
             baseChunkSizeChars = currentChunk.length();
             readWindow();
-
-        } catch (IOException ioEx) {
-            throw new RuntimeException("IOException while reading chunk.", ioEx);
-        }
-        try {
             reader.unread(currentWindow.toString().toCharArray());
-        } catch (IOException ex) {
-            throw new RuntimeException("IOException while resetting chunk reader.", ex);
+        } catch (IOException ioEx) {
+            ex = ioEx;
         }
 
         if (endOfReaderReached) {

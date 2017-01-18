@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
-import org.sleuthkit.autopsy.keywordsearch.TextExtractor.TextExtractorException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -145,8 +144,8 @@ class Ingester {
         int numChunks = 0; //unknown until chunking is done
 
         if (extractor.isDisabled()) {
-            /* some Extrctors, notable the strings extractor, have options which
-             * can be configured such that no extraction should be done */
+            /* some Extractors, notable the strings extractor, have options
+             * which can be configured such that no extraction should be done */
             return true;
         }
 
@@ -167,15 +166,13 @@ class Ingester {
                             + sourceName + "' (id: " + sourceID + ").", ingEx);//NON-NLS
 
                     throw ingEx; //need to rethrow to signal error and move on
-                } catch (Exception ex) {
-                    throw new IngesterException(String.format("Error ingesting (indexing) file chunk: %s", chunkId), ex);
                 }
             }
-        } catch (TextExtractorException ex) {
-            extractor.logWarning("Unable to read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
-            return false;
-        } //NON-NLS
-        catch (Exception ex) {
+            if (chunker.hasException()) {
+                extractor.logWarning("Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
+                return false;
+            }
+        } catch (Exception ex) {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
@@ -189,7 +186,7 @@ class Ingester {
     }
 
     /**
-     * Add one chunk as to the Solr index as a seperate sold document.
+     * Add one chunk as to the Solr index as a separate Solr document.
      *
      * TODO see if can use a byte or string streaming way to add content to
      * /update handler e.g. with XMLUpdateRequestHandler (deprecated in SOlr
@@ -229,7 +226,7 @@ class Ingester {
             uncommitedIngests = true;
 
         } catch (KeywordSearchModuleException ex) {
-            //JMTODO: does this need to ne internationalized?
+            //JMTODO: does this need to be internationalized?
             throw new IngesterException(
                     NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);
         }
