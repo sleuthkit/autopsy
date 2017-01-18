@@ -52,7 +52,7 @@ public class IngestJobSettings {
 
     private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
     private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
-    private static final String LAST_FILE_INGEST_FILTER_KEY = "Last File Ingest Filter Used";
+    private static final String LAST_FILE_INGEST_FILTER_KEY = "Last_File_Ingest_Filter"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER = "IngestModuleSettings"; //NON-NLS
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
@@ -60,7 +60,7 @@ public class IngestJobSettings {
     private static FilesSet ALL_FILES_INGEST_FILTER = new FilesSet("All Files", "All Files", false, true, Collections.emptyMap()); //NON-NLS
     private static FilesSet ALL_AND_UNALLOC_FILES_INGEST_FILTER = new FilesSet("All Files and Unallocated Space", "All Files and Unallocated Space", false, false, Collections.emptyMap());  //NON-NLS
     private FilesSet fileIngestFilter;
-    private final String executionContext;
+    private String executionContext;
     private final IngestType ingestType;
     private String moduleSettingsFolderPath;
     private static final CharSequence pythonModuleSettingsPrefixCS = "org.python.proxies.".subSequence(0, "org.python.proxies.".length() - 1); //NON-NLS
@@ -164,6 +164,11 @@ public class IngestJobSettings {
         this.store();
     }
 
+    public void saveAs(String executionContext) {
+        this.executionContext = executionContext;
+        this.store();
+    }
+    
     /**
      * Gets the ingest execution context identifier. Examples of execution
      * contexts include the add data source wizard and the run ingest modules
@@ -249,6 +254,16 @@ public class IngestJobSettings {
         return Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, executionContext);
     }
 
+     /**
+     * Returns the path to the ingest module settings folder from a static manner.
+     *
+     * @param context specify the context of the folder you wish to get
+     * @return path to the module settings folder
+     */
+    static Path getSavedModuleSettingsFolder(String context) {
+        return Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, context);
+    }
+    
     /**
      * Creates the folder for saving the individual ingest module settings part
      * of these ingest job settings.
@@ -371,7 +386,7 @@ public class IngestJobSettings {
      *
      * @return The list of module names associated with the key.
      */
-    private HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
+    HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
         if (ModuleSettings.settingExists(this.executionContext, key) == false) {
             ModuleSettings.setConfigSetting(this.executionContext, key, defaultSetting);
         }

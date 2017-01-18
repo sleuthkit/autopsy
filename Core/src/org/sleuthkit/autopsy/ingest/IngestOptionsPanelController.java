@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
@@ -63,10 +64,16 @@ public class IngestOptionsPanelController extends OptionsPanelController {
     @Override
     public void applyChanges() {
         if (changed) {
-            getPanel().store();
-            changed = false;
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    getPanel().store();
+                    changed = false;
+                }
+            });
         }
     }
+    
 
     @Override
     public void cancel() {

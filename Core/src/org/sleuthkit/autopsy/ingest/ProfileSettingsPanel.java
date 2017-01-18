@@ -6,13 +6,25 @@
 package org.sleuthkit.autopsy.ingest;
 
 //WJS-TODO hook up all labels and fields to bundle properties instead of plain text
-class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
+import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import org.netbeans.spi.options.OptionsPanelController;
+import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
+import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
+
+class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+
+    private final DefaultListModel<IngestProfile> profilesListModel = new DefaultListModel<>();
 
     /**
      * Creates new form ProfileOptionsPanel
      */
     ProfileSettingsPanel() {
         initComponents();
+        this.profileList.setModel(profilesListModel);
+        this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
     }
 
     /**
@@ -45,11 +57,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        profileList.setModel(new javax.swing.AbstractListModel<String>() {
-            String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
-            public int getSize() { return strings.length; }
-            public String getElementAt(int i) { return strings[i]; }
-        });
+        profileList.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         profileListPane.setViewportView(profileList);
 
         org.openide.awt.Mnemonics.setLocalizedText(profileListLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.profileListLabel.text")); // NOI18N
@@ -60,13 +68,28 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
         newProfileButton.setMaximumSize(new java.awt.Dimension(97, 23));
         newProfileButton.setMinimumSize(new java.awt.Dimension(97, 23));
         newProfileButton.setPreferredSize(new java.awt.Dimension(97, 23));
+        newProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newProfileButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(editProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.editProfileButton.text")); // NOI18N
         editProfileButton.setMaximumSize(new java.awt.Dimension(97, 23));
         editProfileButton.setMinimumSize(new java.awt.Dimension(97, 23));
         editProfileButton.setPreferredSize(new java.awt.Dimension(97, 23));
+        editProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editProfileButtonActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(deleteProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.deleteProfileButton.text")); // NOI18N
+        deleteProfileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteProfileButtonActionPerformed(evt);
+            }
+        });
 
         profileDescArea.setEditable(false);
         profileDescArea.setBackground(new java.awt.Color(240, 240, 240));
@@ -88,6 +111,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(fitlerDescLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.fitlerDescLabel.text")); // NOI18N
 
+        filterDescArea.setEditable(false);
         filterDescArea.setBackground(new java.awt.Color(240, 240, 240));
         filterDescArea.setColumns(20);
         filterDescArea.setRows(5);
@@ -95,6 +119,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
         filterDescArea.setPreferredSize(new java.awt.Dimension(14, 42));
         filterDescPane.setViewportView(filterDescArea);
 
+        selectedModulesArea.setEditable(false);
         selectedModulesArea.setBackground(new java.awt.Color(240, 240, 240));
         selectedModulesArea.setColumns(20);
         selectedModulesArea.setRows(5);
@@ -120,15 +145,15 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(editProfileButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deleteProfileButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                                .addComponent(deleteProfileButton, javax.swing.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE)))))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(10, 10, 10)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(filterDescPane, javax.swing.GroupLayout.PREFERRED_SIZE, 527, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(profileDescPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 527, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(selectedModulesPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 527, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(filterDescPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 530, Short.MAX_VALUE)
+                            .addComponent(profileDescPane, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(selectedModulesPane, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addComponent(fitlerDescLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filterNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -136,16 +161,13 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
                         .addComponent(filterNameText, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(selectedModulesLabel)
                     .addComponent(profileDescLabel))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(14, 14, 14))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                     .addContainerGap(330, Short.MAX_VALUE)
                     .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addContainerGap(564, Short.MAX_VALUE)))
         );
-
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {filterDescPane, profileDescPane, selectedModulesPane});
-
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -183,16 +205,115 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void newProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newProfileButtonActionPerformed
+        doProfileDialog(null);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_newProfileButtonActionPerformed
+
+    private void deleteProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteProfileButtonActionPerformed
+        IngestProfile selectedProfile = this.profileList.getSelectedValue();
+        this.profilesListModel.removeElement(selectedProfile);
+        IngestProfile.deleteProfile(selectedProfile);
+
+        // Select the first of the remaining set definitions. This will cause
+        // the selection listeners to repopulate the subordinate components.
+        this.resetComponents();
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_deleteProfileButtonActionPerformed
+
+    private void resetComponents() {
+        if (!this.profilesListModel.isEmpty()) {
+            this.profileList.setSelectedIndex(0);
+        } else {
+            this.profilesListModel.clear();
+            this.profileDescArea.setText("");
+            this.filterDescArea.setText("");
+            this.filterNameText.setText("");
+            this.selectedModulesArea.setText("");
+        }
+    }
+    private void editProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editProfileButtonActionPerformed
+        IngestProfile selectedProfile = profileList.getSelectedValue();
+        doProfileDialog(selectedProfile);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_editProfileButtonActionPerformed
+
+    private void doProfileDialog(IngestProfile selectedProfile) {
+        // Create a files set defintion panle.
+        ProfilePanel panel;
+        if (selectedProfile != null) {
+            // Editing an existing set definition.
+            panel = new ProfilePanel(selectedProfile);
+        } else {
+            // Creating a new set definition.
+            panel = new ProfilePanel();
+        }
+        // Do a dialog box with the files set panel until the user either enters
+        // a valid definition or cancels. Note that the panel gives the user
+        // feedback when isValidDefinition() is called.
+        int option = JOptionPane.OK_OPTION;
+        //    do {
+        option = JOptionPane.showConfirmDialog(null, panel, "new profile title", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+//        } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
+
+        if (option == JOptionPane.OK_OPTION) {
+            panel.saveSettings();
+            //this.resetComponents();
+            load();
+        }
+
+    }
+
     @Override
     public void saveSettings() {
 
     }
 
-    void store() {
+    @Override
+    public void store() {
 
     }
 
-    void load() {
+    @Override
+    public void load() {
+        int currentIndex = profileList.getSelectedIndex();
+        profilesListModel.clear();
+        IngestProfileList iList = new IngestProfileList();
+        iList.loadProfileList();
+        for (IngestProfile profile : iList.profileList) {
+            profilesListModel.addElement(profile);
+        }
+        if (profilesListModel.isEmpty()) {
+            editProfileButton.setEnabled(false);
+            deleteProfileButton.setEnabled(false);
+        } else {
+            editProfileButton.setEnabled(true);
+            deleteProfileButton.setEnabled(true);
+        }
+        profileList.setSelectedIndex(currentIndex);
+    }
+
+    private final class ProfileListSelectionListener implements ListSelectionListener {
+
+        @Override
+        public void valueChanged(ListSelectionEvent e) {
+            if (e.getValueIsAdjusting()) {
+                return;
+            }
+
+            // Get the selected interesting files set and populate the set
+            // components.
+            IngestProfile selectedProfile = ProfileSettingsPanel.this.profileList.getSelectedValue();
+            if (selectedProfile != null) {
+                profileDescArea.setText(selectedProfile.getDescription());
+                selectedModulesArea.setText("");
+                for (String moduleName : selectedProfile.getModuleNames(IngestProfile.ENABLED_MODULES_KEY)) {
+                    selectedModulesArea.append(moduleName + "\n");// Populate the components that display the properties of the  selectedProfile.getModuleNames(IngestProfile.ENABLED_MODULES_KEY);
+                }
+
+            }
+
+        }
 
     }
 
@@ -209,7 +330,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel {
     private javax.swing.JTextArea profileDescArea;
     private javax.swing.JLabel profileDescLabel;
     private javax.swing.JScrollPane profileDescPane;
-    private javax.swing.JList<String> profileList;
+    private javax.swing.JList<IngestProfile> profileList;
     private javax.swing.JLabel profileListLabel;
     private javax.swing.JScrollPane profileListPane;
     private javax.swing.JTextArea selectedModulesArea;

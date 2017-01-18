@@ -32,7 +32,6 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     private IngestSettingsPanel settingsPanel;
     private ProfileSettingsPanel profilePanel;
 
-
     IngestOptionsPanel() {
         initComponents();
         customizeComponents();
@@ -49,6 +48,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
                 filterPanel, "Tooltip 2", 1);
         tabbedPane.insertTab("Profiles", null,
                 profilePanel, "Tooltip 3", 2);
+
 
     }
 
@@ -81,16 +81,16 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     @Override
     public void load() {
         filterPanel.load();
-        settingsPanel.load(); 
+        settingsPanel.load();
         profilePanel.load();
-   }
+    }
 
     boolean valid() {
         return true;
     }
 
     public void cancel() {
-   
+        saveSettings();
     }
 
     /**

@@ -38,7 +38,7 @@
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="editProfileButton" max="32767" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="deleteProfileButton" max="32767" attributes="0"/>
+                              <Component id="deleteProfileButton" pref="98" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -48,9 +48,9 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="filterDescPane" linkSize="1" min="-2" pref="527" max="-2" attributes="0"/>
-                          <Component id="profileDescPane" linkSize="1" alignment="1" min="-2" pref="527" max="-2" attributes="0"/>
-                          <Component id="selectedModulesPane" linkSize="1" alignment="1" min="-2" pref="527" max="-2" attributes="0"/>
+                          <Component id="filterDescPane" alignment="1" pref="530" max="32767" attributes="0"/>
+                          <Component id="profileDescPane" alignment="1" max="32767" attributes="0"/>
+                          <Component id="selectedModulesPane" alignment="1" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                   <Component id="fitlerDescLabel" min="-2" max="-2" attributes="0"/>
@@ -62,7 +62,7 @@
                   <Component id="selectedModulesLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="profileDescLabel" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="18" max="32767" attributes="0"/>
+              <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
           </Group>
           <Group type="103" rootIndex="1" groupAlignment="0" attributes="0">
               <Group type="102" alignment="1" attributes="0">
@@ -129,17 +129,12 @@
         <Component class="javax.swing.JList" name="profileList">
           <Properties>
             <Property name="model" type="javax.swing.ListModel" editor="org.netbeans.modules.form.editors2.ListModelEditor">
-              <StringArray count="5">
-                <StringItem index="0" value="Item 1"/>
-                <StringItem index="1" value="Item 2"/>
-                <StringItem index="2" value="Item 3"/>
-                <StringItem index="3" value="Item 4"/>
-                <StringItem index="4" value="Item 5"/>
-              </StringArray>
+              <StringArray count="0"/>
             </Property>
+            <Property name="selectionMode" type="int" value="0"/>
           </Properties>
           <AuxValues>
-            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+            <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;IngestProfile&gt;"/>
           </AuxValues>
         </Component>
       </SubComponents>
@@ -171,6 +166,9 @@
           <Dimension value="[97, 23]"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="newProfileButtonActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="editProfileButton">
       <Properties>
@@ -187,6 +185,9 @@
           <Dimension value="[97, 23]"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="editProfileButtonActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="deleteProfileButton">
       <Properties>
@@ -194,6 +195,9 @@
           <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="ProfileSettingsPanel.deleteProfileButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="deleteProfileButtonActionPerformed"/>
+      </Events>
     </Component>
     <Container class="javax.swing.JScrollPane" name="profileDescPane">
       <AuxValues>
@@ -265,6 +269,7 @@
       <SubComponents>
         <Component class="javax.swing.JTextArea" name="filterDescArea">
           <Properties>
+            <Property name="editable" type="boolean" value="false"/>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="f0" green="f0" red="f0" type="rgb"/>
             </Property>
@@ -289,6 +294,7 @@
       <SubComponents>
         <Component class="javax.swing.JTextArea" name="selectedModulesArea">
           <Properties>
+            <Property name="editable" type="boolean" value="false"/>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="f0" green="f0" red="f0" type="rgb"/>
             </Property>
