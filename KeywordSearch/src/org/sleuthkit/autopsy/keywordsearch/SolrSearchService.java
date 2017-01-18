@@ -206,7 +206,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     // ELTODO Check for cancellation at whatever points are feasible
                     
                     // Copy the "old" index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade.getIndexPath());
+                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade);
 
                     // upgrade the "old" index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();

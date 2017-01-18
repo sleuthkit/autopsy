@@ -24,10 +24,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.apache.commons.io.FileUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -41,9 +38,6 @@ public class IndexUpgrader {
     
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private final String JAVA_PATH;
-    // If SOLR_HOME environment variable doesn't exist, try these relative paths to find Solr config sets:
-    private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
-    private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
     
     IndexUpgrader() {
         JAVA_PATH = PlatformUtil.getJavaPath();
@@ -83,7 +77,6 @@ public class IndexUpgrader {
             }
         }
 
-        success = true; // ELTODO remove
         if (!success) {
             // delete the new directories
             new File(newIndexDir).delete();

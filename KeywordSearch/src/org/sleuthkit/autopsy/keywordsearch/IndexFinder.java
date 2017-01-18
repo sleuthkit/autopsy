@@ -47,7 +47,8 @@ class IndexFinder {
     private static final String INDEX_FOLDER_NAME = "index";
     private static final String CURRENT_SOLR_VERSION = "6";
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
-    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr\\d{1,2}_schema_\\d{1,2}.\\d{1,2}$");
+    //private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr\\d{1,2}_schema_\\d{1,2}.\\d{1,2}$");
+    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr(\\d{1,2})_schema_(\\d{1,2}\\.\\d{1,2})$");
     // If SOLR_HOME environment variable doesn't exist, try these relative paths to find Solr config sets:
     private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
     private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
@@ -69,7 +70,7 @@ class IndexFinder {
         for (Index index : allIndexes) {
             String path = index.getIndexPath();
             if (path.contains(indexFolderName)) {
-                return new Index(path, CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION);
+                return index;
             }
         }
         return new Index();
@@ -97,7 +98,7 @@ class IndexFinder {
             // higher Solr version takes priority because it may negate index upgrade
             if (NumberUtils.toDouble(index.getSolrVersion()) >= solrVerFound) {
                 // if same solr version, pick the one with highest schema version
-                if (NumberUtils.toDouble(index.getSchemaVersion()) > schemaVerFound) {
+                if (NumberUtils.toDouble(index.getSchemaVersion()) >= schemaVerFound) {
                     bestCandidateIndex = index;
                     solrVerFound = NumberUtils.toDouble(index.getSolrVersion());
                     schemaVerFound = NumberUtils.toDouble(index.getSchemaVersion());
@@ -107,9 +108,9 @@ class IndexFinder {
         return bestCandidateIndex;
     }
 
-    String copyIndexAndConfigSet(Case theCase, String oldIndexDir) throws AutopsyService.AutopsyServiceException {
+    String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
         // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
-        String newIndexDir = createReferenceIndexCopy(theCase, oldIndexDir);
+        String newIndexDir = createReferenceIndexCopy(theCase, indexToUpgrade);
 
         // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
         createReferenceConfigSetCopy(new File(newIndexDir).getParent());
@@ -117,9 +118,10 @@ class IndexFinder {
         return newIndexDir;
     }
 
-    private String createReferenceIndexCopy(Case theCase, String indexPath) throws AutopsyService.AutopsyServiceException {
-        logger.log(Level.INFO, "Creating a reference copy of KWS index in {0} ", indexPath); //NON-NLS
-        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
+    private String createReferenceIndexCopy(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
+        logger.log(Level.INFO, "Creating a reference copy of KWS index in {0} ", indexToUpgrade.getIndexPath()); //NON-NLS
+        // folder name for the upgraded index should be latest Solr version BUT schema verion of the existing index
+        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + indexToUpgrade.getSchemaVersion();
         try {
             // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
             File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
@@ -128,12 +130,12 @@ class IndexFinder {
                 List<File> contents = getAllContentsInFolder(targetDirPath.getAbsolutePath());
                 if (!contents.isEmpty()) {
                     // target directory is not empty
-                    logger.log(Level.SEVERE, "Creating a reference copy of KWS index in {0} ", indexPath); //NON-NLS
+                    logger.log(Level.SEVERE, "Creating a reference copy of KWS index in {0} ", indexToUpgrade.getIndexPath()); //NON-NLS
                     throw new AutopsyService.AutopsyServiceException("Directory to store the upgraded index must be empty " + targetDirPath.getAbsolutePath());
                 }
             }
             targetDirPath.mkdirs();
-            FileUtils.copyDirectory(new File(indexPath), targetDirPath);
+            FileUtils.copyDirectory(new File(indexToUpgrade.getIndexPath()), targetDirPath);
             return targetDirPath.getAbsolutePath();
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Error occurred while creating a reference copy of keyword search index {0}", ex); //NON-NLS
@@ -266,7 +268,7 @@ class IndexFinder {
             // invalid index path
             return "";
         }
-        String parentFolderName = file.getParent();
+        String parentFolderName = file.getParentFile().getName();
         if (parentFolderName.equals(KWS_DATA_FOLDER_NAME)) {
             // this is a Solr4 path, e.g. X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
             return "4";
@@ -289,7 +291,7 @@ class IndexFinder {
             // invalid index path
             return "";
         }
-        String parentFolderName = file.getParent();
+        String parentFolderName = file.getParentFile().getName();
         if (parentFolderName.equals(KWS_DATA_FOLDER_NAME)) {
             // this is a Solr 4 schema 1.8 path, e.g. X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
             return "1.8";
