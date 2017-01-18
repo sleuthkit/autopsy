@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,11 +46,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class Installer extends ModuleInstall {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(Installer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Installer.class.getName());
     private static Installer instance;
 
     public synchronized static Installer getDefault() {
-        if (instance == null) {
+        if (null == instance) {
             instance = new Installer();
         }
         return instance;
@@ -80,21 +80,19 @@ public class Installer extends ModuleInstall {
                 if (processor instanceof OpenFromArguments) {
                     OpenFromArguments argsProcessor = (OpenFromArguments) processor;
                     final String caseFile = argsProcessor.getDefaultArg();
-                    if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(CaseMetadata.getFileExtension()) && new File(caseFile).exists()) { //NON-NLS
-                        new Thread(() -> {
-                            try {
-                                Case.open(caseFile);
-                            } catch (Exception ex) {
-                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
-                            }
-                        }).start();
+                    if (caseFile != null && !caseFile.isEmpty() && caseFile.endsWith(CaseMetadata.getFileExtension()) && new File(caseFile).exists()) { //NON-NLS
+                        try {
+                            Case.openCurrentCase(caseFile);
+                        } catch (CaseActionException ex) {
+                            // RJCTODO: SHould there be a popup here?
+                            LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
+                        }
                         return;
                     }
                 }
             }
             StartupWindowProvider.getInstance().open();
         });
-
     }
 
     @Override
@@ -104,22 +102,11 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void close() {
-        new Thread(() -> {
-            String caseDirName = null;
-            try {
-                if (Case.isCaseOpen()) {
-                    Case currentCase = Case.getCurrentCase();
-                    caseDirName = currentCase.getCaseDirectory();
-                    currentCase.closeCase();
-                }
-            } catch (CaseActionException ex) {
-                logger.log(Level.SEVERE, String.format("Error closing case with case directory %s", (null != caseDirName ? caseDirName : "?")), ex); //NON-NLS
-            } catch (IllegalStateException ignored) {
-                /*
-                 * No current case. Case.isCaseOpen is not reliable. 
-                 */
-            }
-        }).start();
+        try {
+            Case.closeCurrentCase();
+        } catch (CaseActionException ex) {
+            LOGGER.log(Level.SEVERE, "Error closing current case", ex); //NON-NLS
+        }
     }
 
     private void setLookAndFeel() {
@@ -137,7 +124,7 @@ public class Installer extends ModuleInstall {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
+            LOGGER.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
         }
 
         // Store the keys that deal with menu items
@@ -153,7 +140,7 @@ public class Installer extends ModuleInstall {
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
                 } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                    logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
+                    LOGGER.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
                 }
                 break;
             }

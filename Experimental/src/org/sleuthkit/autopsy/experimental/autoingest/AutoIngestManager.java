@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -1983,16 +1983,16 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             String caseName = manifest.getCaseName();
             SYS_LOGGER.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
             currentJob.setStage(AutoIngestJob.Stage.OPENING_CASE);
-            try (Lock caseLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, 30, TimeUnit.MINUTES)) {
+            try (Lock caseLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, 12, TimeUnit.HOURS)) { // RJCTODO: New lock type!
                 if (null != caseLock) {
                     try {
                         Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);
                         if (null != caseDirectoryPath) {
                             Path metadataFilePath = caseDirectoryPath.resolve(manifest.getCaseName() + CaseMetadata.getFileExtension());
-                            Case.open(metadataFilePath.toString());
+                            Case.openCurrentCase(metadataFilePath.toString());
                         } else {
                             caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                            Case.create(caseDirectoryPath.toString(), currentJob.getManifest().getCaseName(), "", "", CaseType.MULTI_USER_CASE);
+                            Case.createCurrentCase(caseDirectoryPath.toString(), currentJob.getManifest().getCaseName(), "", "", CaseType.MULTI_USER_CASE);
                             /*
                              * Sleep a bit before releasing the lock to ensure
                              * that the new case folder is visible on the

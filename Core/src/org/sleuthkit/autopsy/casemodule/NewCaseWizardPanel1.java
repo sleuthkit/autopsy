@@ -316,7 +316,6 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                 logger.log(Level.WARNING, "Startup window didn't close as expected.", ex); //NON-NLS
 
             }
-
         }
     }
 }

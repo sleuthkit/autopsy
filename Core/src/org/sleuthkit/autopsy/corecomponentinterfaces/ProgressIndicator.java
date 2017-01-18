@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,49 +19,46 @@
 package org.sleuthkit.autopsy.corecomponentinterfaces;
 
 /**
- * An interface for task progress indicators. A progress indicator can run in
+ * An interface for progress indicators. A progress indicator can run in
  * determinate mode (the total number of work units to be completed is known) or
  * indeterminate mode. Switching back and forth between the two modes is
- * supported.
+ * supported. Starting, finishing, and starting again is supported.
  */
 public interface ProgressIndicator {
-
-    /**
-     * Sets the name of the task for which progress is being indicated. This
-     * should be set before the task is started and should not be changed.
-     *
-     * @param taskName The task name.
-     */
-    void setTaskName(String taskName);
 
     /**
      * Starts the progress indicator in determinate mode (the total number of
      * work units to be completed is known).
      *
+     * @param message        The initial progress message.
      * @param totalWorkUnits The total number of work units.
      */
-    void start(int totalWorkUnits);
+    void start(String message, int totalWorkUnits);
 
     /**
      * Starts the progress indicator in indeterminate mode (the total number of
      * work units to be completed is unknown).
+     *
+     * @param message The initial progress message.
      */
-    void start();
+    void start(String message);
 
     /**
      * Switches the progress indicator to indeterminate mode (the total number
      * of work units to be completed is unknown).
+     * @param message The initial progress message.
      */
-    public void switchToIndeterminate();
+    public void switchToIndeterminate(String message);
 
     /**
      * Switches the progress indicator to determinate mode (the total number of
      * work units to be completed is known).
      *
+     * @param message The initial progress message.
      * @param workUnitsCompleted The number of work units completed so far.
      * @param totalWorkUnits     The total number of work units to be completed.
      */
-    public void switchToDeterminate(int workUnitsCompleted, int totalWorkUnits);
+    public void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits);
 
     /**
      * Updates the progress indicator with a progress message.
@@ -91,7 +88,9 @@ public interface ProgressIndicator {
 
     /**
      * Finishes the progress indicator when the task is completed.
+     *
+     * @param message The finished message.
      */
-    void finish();
-    
+    void finish(String message);
+
 }

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,35 +23,31 @@ import java.awt.event.ActionEvent;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.SwingWorker;
-import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import java.util.logging.Level;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
-import org.openide.windows.WindowManager;
-import java.awt.Cursor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
 
 /**
- * The action to close the current Case. This class should be disabled on
- * creation and it will be enabled on new case creation or case opened.
+ * An action to close the current case and pop up the start up window that
+ * allows a user to open anothjer case. This action should only be enabled when
+ * there is a current case.
+ *
+ * IMPORTANT: Must be called in the Swing Event Dispatch Thread (EDT).
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
 @ActionReferences(value = {
-    @ActionReference(path = "Toolbars/Case", position = 104)})
+    @ActionReference(path = "Toolbars/Case", position = 104)
+})
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
-    JButton toolbarButton = new JButton();
+    private static final long serialVersionUID = 1L;
+    private final JButton toolbarButton = new JButton();
 
     /**
      * The constructor for this class
@@ -59,10 +55,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
     public CaseCloseAction() {
         putValue("iconBase", "org/sleuthkit/autopsy/images/close-icon.png"); // put the icon NON-NLS
         putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); // put the action Name
-
-        // set action of the toolbar button
         toolbarButton.addActionListener(CaseCloseAction.this::actionPerformed);
-
         this.setEnabled(false);
     }
 
@@ -73,51 +66,9 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-
-        // if ingest is ongoing, warn and get confirmaion before opening a different case
-        if (IngestManager.getInstance().isIngestRunning()) {
-            // show the confirmation first to close the current case and open the "New Case" wizard panel
-            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
-                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
-                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-            descriptor.setValue(NotifyDescriptor.NO_OPTION);
-
-            Object res = DialogDisplayer.getDefault().notify(descriptor);
-            if (res != null && res == DialogDescriptor.YES_OPTION) {
-                try {
-                    Case.getCurrentCase().closeCase(); // close the current case
-                } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
-                }
-            } else {
-                return;
-            }
+        if (CaseActionHelper.closeCaseAndContinueAction()) {
+            StartupWindowProvider.getInstance().open();
         }
-
-        if (Case.isCaseOpen() == false) {
-            return;
-        }
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    Case result = Case.getCurrentCase();
-                    result.closeCase();
-                } catch (CaseActionException | IllegalStateException unused) {
-                    // Already logged.
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                StartupWindowProvider.getInstance().open();
-            }
-        }.execute();
     }
 
     /**

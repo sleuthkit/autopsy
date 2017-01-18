@@ -195,6 +195,7 @@ public class SingleUserCaseConverter {
         CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
                 CaseType.MULTI_USER_CASE,
                 icd.getNewCaseName(),
+                icd.getNewCaseName(), // RJCTODO
                 oldCaseMetadata.getCaseNumber(),
                 oldCaseMetadata.getExaminer(),
                 dbName, solrName);

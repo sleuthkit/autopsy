@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-201y Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,26 +26,26 @@ import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * RJCTODO
+ */
 @ActionRegistration(displayName = "Exit", iconInMenu = true)
 @ActionReference(path = "Menu/Case", position = 1000, separatorBefore = 999)
 @ActionID(id = "org.sleuthkit.autopsy.casemodule.ExitAction", category = "Case")
-
 final public class ExitAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            Case currentCase = Case.getCurrentCase();
-            if (currentCase != null) {
-                currentCase.closeCase();
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Had a problem closing the case.", ex); //NON-NLS
+            Case.closeCurrentCase();
+        } catch (CaseActionException ex) {
+            // RJCTODO: Pop up here
+            Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Error closing the current case", ex); //NON-NLS
         } finally {
             LifecycleManager.getDefault().exit();
         }
     }
-
 }

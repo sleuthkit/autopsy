@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,8 @@ public final class CaseMetadata {
     private static final String FILE_EXTENSION = ".aut";
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private static final String SCHEMA_VERSION_ONE = "1.0";
-    private final static String AUTOPSY_CREATED_VERSION_ELEMENT_NAME = "AutopsyCreatedVersion"; //NON-NLS
+    private static final String SCHEMA_VERSION_TWO = "2";
+    private final static String AUTOPSY_VERSION_ELEMENT_NAME = "AutopsyCreatedVersion"; //NON-NLS
     private final static String CASE_DATABASE_NAME_ELEMENT_NAME = "DatabaseName"; //NON-NLS
     private final static String TEXT_INDEX_NAME_ELEMENT = "TextIndexName"; //NON-NLS
     private static final String CURRENT_SCHEMA_VERSION = "2.0";
@@ -74,6 +75,7 @@ public final class CaseMetadata {
     private final Path metadataFilePath;
     private Case.CaseType caseType;
     private String caseName;
+    private String caseDisplayName;
     private String caseNumber;
     private String examiner;
     private String caseDatabase;
@@ -96,7 +98,9 @@ public final class CaseMetadata {
      *
      * @param caseDirectory     The case directory.
      * @param caseType          The type of case.
-     * @param caseName          The name of the case.
+     * @param caseName          The immutable name of the case.
+     * @param caseDisplayName   The display name of the case, can be changed by
+     *                          a user.
      * @param caseNumber        The case number.
      * @param examiner          The name of the case examiner.
      * @param caseDatabase      For a single-user case, the full path to the
@@ -107,10 +111,11 @@ public final class CaseMetadata {
      * @throws CaseMetadataException If the new case metadata file cannot be
      *                               created.
      */
-    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseNumber, String examiner, String caseDatabase, String caseTextIndexName) throws CaseMetadataException {
+    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseDisplayName, String caseNumber, String examiner, String caseDatabase, String caseTextIndexName) throws CaseMetadataException {
         metadataFilePath = Paths.get(caseDirectory, caseName + FILE_EXTENSION);
         this.caseType = caseType;
         this.caseName = caseName;
+        this.caseDisplayName = caseDisplayName;
         this.caseNumber = caseNumber;
         this.examiner = examiner;
         this.caseDatabase = caseDatabase;
@@ -162,10 +167,11 @@ public final class CaseMetadata {
     }
 
     /**
-     * Gets the case display name.
+     * Gets the immutable case name, set at case creation.
      *
      * @return The case display name.
      */
+    // RJCTODO: Deal with the change
     public String getCaseName() {
         return caseName;
     }
@@ -176,6 +182,7 @@ public final class CaseMetadata {
      *
      * @param caseName A case display name.
      */
+    // RJCTODO: Deal with the change, remove this
     void setCaseName(String caseName) throws CaseMetadataException {
         String oldCaseName = caseName;
         this.caseName = caseName;
@@ -187,6 +194,33 @@ public final class CaseMetadata {
         }
     }
 
+    /**
+     * Gets the case display name.
+     *
+     * @return The case display name.
+     */
+    public String getCaseDisplayName() {
+        return this.caseDisplayName;
+    }
+    
+    /**
+     * Sets the case display name. This does not change the name of the case
+     * directory, the case database, or the text index name.
+     *
+     * @param caseName A case display name.
+     */
+    // RJCTODO: Deal with the change
+    void setCaseDisplayName(String caseName) throws CaseMetadataException {
+        String oldCaseName = caseName;
+        this.caseDisplayName = caseName;
+        try {
+            writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.caseDisplayName = oldCaseName;
+            throw ex;
+        }
+    }
+    
     /**
      * Gets the case number.
      *
@@ -301,6 +335,7 @@ public final class CaseMetadata {
      * @throws CaseMetadataException If there is an error writing to the case
      *                               metadata file.
      */
+    // RJCTODO: Should we have a backup copy of the file in case of error?
     private void writeToFile() throws CaseMetadataException {
         try {
             /*
@@ -402,7 +437,7 @@ public final class CaseMetadata {
             String schemaVersion = getElementTextContent(rootElement, SCHEMA_VERSION_ELEMENT_NAME, true);
             this.createdDate = getElementTextContent(rootElement, CREATED_DATE_ELEMENT_NAME, true);
             if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
-                this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_VERSION_ELEMENT_NAME, true);
+                this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_VERSION_ELEMENT_NAME, true);
             } else {
                 this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_BY_ELEMENT_NAME, true);
             }

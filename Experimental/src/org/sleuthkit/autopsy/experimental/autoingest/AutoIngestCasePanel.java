@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,38 +18,38 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.awt.Cursor;
 import java.awt.Desktop;
-import java.nio.file.Paths;
-import java.util.List;
-import javax.swing.JPanel;
 import java.awt.EventQueue;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JOptionPane;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
-import java.awt.Cursor;
-import java.io.IOException;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.experimental.autoingest.ReviewModeCaseManager.ReviewModeCaseManagerException;
+import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * A panel that allows a user to open cases created by automated ingest.
+ * A panel that allows a user to open cases created by auto ingest.
  */
-public final class ReviewModeCasePanel extends JPanel {
+public final class AutoIngestCasePanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(ReviewModeCasePanel.class.getName());
+    private static final Logger logger = Logger.getLogger(AutoIngestCasePanel.class.getName());
     private static final AutoIngestCase.LastAccessedDateDescendingComparator reverseDateModifiedComparator = new AutoIngestCase.LastAccessedDateDescendingComparator();
     private static final int CASE_COL_MIN_WIDTH = 30;
     private static final int CASE_COL_MAX_WIDTH = 2000;
@@ -60,8 +60,8 @@ public final class ReviewModeCasePanel extends JPanel {
     private static final int STATUS_COL_MIN_WIDTH = 55;
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
-    private static final int MILLISECONDS_TO_WAIT_BEFORE_STARTING = 500; // RJCTODO: Shorten name
-    private static final int MILLISECONDS_TO_WAIT_BETWEEN_UPDATES = 30000; // RJCTODO: Shorten name
+    private static final int MILLIS_TO_WAIT_BEFORE_STARTING = 500;
+    private static final int MILLIS_TO_WAIT_BETWEEN_UPDATES = 30000;
     private ScheduledThreadPoolExecutor casesTableRefreshExecutor;
 
     /*
@@ -71,11 +71,11 @@ public final class ReviewModeCasePanel extends JPanel {
      * TODO (RC): Consider unifying this stuff in an enum as in
      * AutoIngestDashboard to make it less error prone.
      */
-    private static final String CASE_HEADER = org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.CaseHeaderText");
-    private static final String CREATEDTIME_HEADER = org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
-    private static final String COMPLETEDTIME_HEADER = org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
-    private static final String STATUS_ICON_HEADER = org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
-    private static final String OUTPUT_FOLDER_HEADER = org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
+    private static final String CASE_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.CaseHeaderText");
+    private static final String CREATEDTIME_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.CreatedTimeHeaderText");
+    private static final String COMPLETEDTIME_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.LastAccessedTimeHeaderText");
+    private static final String STATUS_ICON_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.StatusIconHeaderText");
+    private static final String OUTPUT_FOLDER_HEADER = org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.OutputFolderHeaderText");
 
     enum COLUMN_HEADERS {
 
@@ -83,7 +83,7 @@ public final class ReviewModeCasePanel extends JPanel {
         CREATEDTIME,
         COMPLETEDTIME,
         STATUS_ICON,
-        OUTPUTFOLDER // RJCTODO: Change name
+        OUTPUTFOLDER
     }
     private final String[] columnNames = {CASE_HEADER, CREATEDTIME_HEADER, COMPLETEDTIME_HEADER, STATUS_ICON_HEADER, OUTPUT_FOLDER_HEADER};
     private DefaultTableModel caseTableModel;
@@ -92,8 +92,10 @@ public final class ReviewModeCasePanel extends JPanel {
     /**
      * Constructs a panel that allows a user to open cases created by automated
      * ingest.
+     *
+     * @param parent The parent dialog for this panel.
      */
-    public ReviewModeCasePanel(JDialog parent) {
+    public AutoIngestCasePanel(JDialog parent) {
         caseTableModel = new DefaultTableModel(columnNames, 0) {
             private static final long serialVersionUID = 1L;
 
@@ -183,7 +185,7 @@ public final class ReviewModeCasePanel extends JPanel {
             casesTableRefreshExecutor = new ScheduledThreadPoolExecutor(1);
             this.casesTableRefreshExecutor.scheduleAtFixedRate(() -> {
                 refreshCasesTable();
-            }, MILLISECONDS_TO_WAIT_BEFORE_STARTING, MILLISECONDS_TO_WAIT_BETWEEN_UPDATES, TimeUnit.MILLISECONDS);
+            }, MILLIS_TO_WAIT_BEFORE_STARTING, MILLIS_TO_WAIT_BETWEEN_UPDATES, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -214,7 +216,7 @@ public final class ReviewModeCasePanel extends JPanel {
     private void refreshCasesTable() {
         try {
             currentlySelectedCase = getSelectedCase();
-            List<AutoIngestCase> theModel = ReviewModeCaseManager.getInstance().getCases();
+            List<AutoIngestCase> theModel = AutoIngestCaseManager.getInstance().getCases();
             EventQueue.invokeLater(new CaseTableRefreshTask(theModel));
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unexpected exception in refreshCasesTable", ex); //NON-NLS
@@ -279,10 +281,10 @@ public final class ReviewModeCasePanel extends JPanel {
     private void openCase(Path caseMetadataFilePath) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            ReviewModeCaseManager.getInstance().openCaseInEDT(caseMetadataFilePath);
+            AutoIngestCaseManager.getInstance().openCase(caseMetadataFilePath);
             stopCasesTableRefreshes();
             StartupWindowProvider.getInstance().close();
-        } catch (ReviewModeCaseManagerException ex) {
+        } catch (CaseActionException ex) {
             logger.log(Level.SEVERE, String.format("Error while opening case with case metadata file path %s", caseMetadataFilePath), ex);
             /*
              * ReviewModeCaseManagerExceptions have user-friendly error
@@ -290,7 +292,7 @@ public final class ReviewModeCasePanel extends JPanel {
              */
             JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                     ex.getMessage(),
-                    org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.cannotOpenCase"),
+                    org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.cannotOpenCase"),
                     JOptionPane.ERROR_MESSAGE);
 
         } finally {
@@ -345,18 +347,12 @@ public final class ReviewModeCasePanel extends JPanel {
             long multiplier = 1;
             if (rbAllCases.isSelected()) {
                 return true;
-            } else {
-                if (rbMonths.isSelected()) {
-                    multiplier = 31;
-                } else {
-                    if (rbWeeks.isSelected()) {
-                        multiplier = 7;
-                    } else {
-                        if (rbDays.isSelected()) {
-                            multiplier = 1;
-                        }
-                    }
-                }
+            } else if (rbMonths.isSelected()) {
+                multiplier = 31;
+            } else if (rbWeeks.isSelected()) {
+                multiplier = 7;
+            } else if (rbDays.isSelected()) {
+                multiplier = 1;
             }
             return ((currentTime - inputTime) / (1000 * 60 * 60 * 24)) < (numberOfUnits * multiplier);
         }
@@ -387,7 +383,7 @@ public final class ReviewModeCasePanel extends JPanel {
 
         setName("Completed Cases"); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.bnOpen.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnOpen, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnOpen.text")); // NOI18N
         bnOpen.setEnabled(false);
         bnOpen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -407,7 +403,7 @@ public final class ReviewModeCasePanel extends JPanel {
         });
         scrollPaneTable.setViewportView(casesTable);
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.bnRefresh.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnRefresh.text")); // NOI18N
         bnRefresh.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnRefreshActionPerformed(evt);
@@ -416,7 +412,7 @@ public final class ReviewModeCasePanel extends JPanel {
 
         rbGroupHistoryLength.add(rbAllCases);
         rbAllCases.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(rbAllCases, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.rbAllCases.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbAllCases, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbAllCases.text")); // NOI18N
         rbAllCases.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbAllCasesItemStateChanged(evt);
@@ -424,7 +420,7 @@ public final class ReviewModeCasePanel extends JPanel {
         });
 
         rbGroupHistoryLength.add(rbMonths);
-        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.rbMonths.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbMonths.text")); // NOI18N
         rbMonths.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbMonthsItemStateChanged(evt);
@@ -432,7 +428,7 @@ public final class ReviewModeCasePanel extends JPanel {
         });
 
         rbGroupHistoryLength.add(rbWeeks);
-        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.rbWeeks.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbWeeks.text")); // NOI18N
         rbWeeks.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 rbWeeksItemStateChanged(evt);
@@ -440,7 +436,7 @@ public final class ReviewModeCasePanel extends JPanel {
         });
 
         rbGroupHistoryLength.add(rbDays);
-        org.openide.awt.Mnemonics.setLocalizedText(rbDays, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.rbDays.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbDays, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbDays.text")); // NOI18N
         rbDays.setName(""); // NOI18N
         rbDays.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -449,7 +445,7 @@ public final class ReviewModeCasePanel extends JPanel {
         });
 
         rbGroupLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.rbGroupLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbGroupLabel.text")); // NOI18N
 
         javax.swing.GroupLayout panelFilterLayout = new javax.swing.GroupLayout(panelFilter);
         panelFilter.setLayout(panelFilterLayout);
@@ -481,8 +477,8 @@ public final class ReviewModeCasePanel extends JPanel {
                 .addContainerGap())
         );
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.bnShowLog.text")); // NOI18N
-        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "ReviewModeCasePanel.bnShowLog.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.text")); // NOI18N
+        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.toolTipText")); // NOI18N
         bnShowLog.setEnabled(false);
         bnShowLog.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -586,14 +582,14 @@ public final class ReviewModeCasePanel extends JPanel {
                 if (pathToLog.toFile().exists()) {
                     Desktop.getDesktop().edit(pathToLog.toFile());
                 } else {
-                    JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "DisplayLogDialog.cannotFindLog"),
-                        org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.cannotFindLog"),
+                            org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.unableToShowLogFile"), JOptionPane.ERROR_MESSAGE);
                 }
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, String.format("Error attempting to open case auto ingest log file %s", pathToLog), ex);
                 JOptionPane.showMessageDialog(this,
-                        org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "DisplayLogDialog.cannotOpenLog"),
-                        org.openide.util.NbBundle.getMessage(ReviewModeCasePanel.class, "DisplayLogDialog.unableToShowLogFile"),
+                        org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.cannotOpenLog"),
+                        org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "DisplayLogDialog.unableToShowLogFile"),
                         JOptionPane.PLAIN_MESSAGE);
             }
         }

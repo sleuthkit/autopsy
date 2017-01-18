@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,21 +28,16 @@ import org.openide.util.lookup.ServiceProvider;
 /**
  * The action to create a new case. This action class is always enabled.
  *
- * @author jantonius
+ * IMPORTANT: Must be called in the Swing Event Dispatch Thread (EDT).
  */
 @ServiceProvider(service = CaseNewActionInterface.class)
 public final class CaseNewAction extends CallableSystemAction implements CaseNewActionInterface {
 
-    private NewCaseWizardAction wizard = SystemAction.get(NewCaseWizardAction.class);
+    private static final long serialVersionUID = 1L;
 
-    /**
-     * Calls the "New Case" wizard panel action.
-     *
-     * @param e
-     */
     @Override
     public void actionPerformed(ActionEvent e) {
-        wizard.performAction();
+        SystemAction.get(NewCaseWizardAction.class).performAction();
     }
 
     @Override

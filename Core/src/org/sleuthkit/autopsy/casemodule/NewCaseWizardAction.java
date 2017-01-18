@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,28 +19,25 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComponent;
-import javax.swing.SwingWorker;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.DialogDescriptor;
+import javax.swing.SwingWorker;
 import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JOptionPane;
-import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.openide.windows.WindowManager;
-import java.awt.Cursor;
-import java.util.concurrent.ExecutionException;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * An action that creates and runs the new case wizard.
@@ -53,36 +50,10 @@ final class NewCaseWizardAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        /*
-         * If ingest is running, do a dialog to warn the user and confirm the
-         * intent to close the current case and leave the ingest process
-         * incomplete.
-         */
-        if (IngestManager.getInstance().isIngestRunning()) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning"),
-                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
-                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-            descriptor.setValue(NotifyDescriptor.NO_OPTION);
-            Object res = DialogDisplayer.getDefault().notify(descriptor);
-            if (res != null && res == DialogDescriptor.YES_OPTION) {
-                Case currentCase = null;
-                try {
-                    currentCase = Case.getCurrentCase();
-                    currentCase.closeCase();
-                } catch (IllegalStateException ignored) {
-                    /*
-                     * No current case.
-                     */
-                } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, String.format("Error closing case at %s while ingest was running", (null != currentCase ? currentCase.getCaseDirectory() : "?")), ex); //NON-NLS
-                }
-            } else {
-                return;
-            }
+        if (CaseActionHelper.closeCaseAndContinueAction()) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)); // RJCTODO: Is this right?
+            runNewCaseWizard();
         }
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        runNewCaseWizard();
     }
 
     private void runNewCaseWizard() {
@@ -101,7 +72,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                    Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
+                    Case.createCurrentCase(createdDirectory, caseName, caseNumber, examiner, caseType);
                     return null;
                 }
 
@@ -111,7 +82,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         get();
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
-                    } catch (Exception ex) {
+                    } catch (InterruptedException | ExecutionException ex) {
                         logger.log(Level.SEVERE, String.format("Error creating case %s", wizardDescriptor.getProperty("caseName")), ex); //NON-NLS                                                
                         SwingUtilities.invokeLater(() -> {
                             JOptionPane.showMessageDialog(
