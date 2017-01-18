@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.commons.lang.math.NumberUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
@@ -43,42 +44,28 @@ public class IndexUpgrader {
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
     
-    void performIndexUpgrade(String newIndexDir, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
+    void performIndexUpgrade(Index indexToUpgrade, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
         // ELTODO Check for cancellation at whatever points are feasible
-        
+
+        String newIndexDir = indexToUpgrade.getIndexPath();
+
         // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solrX_schema_Y/index
         File tmpDir = Paths.get(tempResultsDir, "IndexUpgrade").toFile(); //NON-NLS
         tmpDir.mkdirs();
-            
-        boolean success = true;
+
+        double currentSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
         try {
-            // upgrade from Solr 4 to 5. If index is newer than Solr 4 then the upgrade script will throw exception right away.
-            upgradeSolrIndexVersion4to5(newIndexDir, tempResultsDir);
-        } catch (AutopsyService.AutopsyServiceException | SecurityException | IOException ex) {
-            // this may not be an error, for example if index is Solr 5 to begin with
-            logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 4 to Solr 5 " + newIndexDir, ex); //NON-NLS
-            success = false;
-        } catch (Exception ex2) {
-            // exceptions thrown by the Solr 4 ot 5 upgrade tool itself may not be an error, for example if index is Solr 5 (or later) to begin with
-            logger.log(Level.WARNING, "Exception while running Sorl 4 to Solr 5 upgrade tool " + newIndexDir, ex2); //NON-NLS
+            // upgrade from Solr 4 to 5
+            currentSolrVersion = upgradeSolrIndexVersion4to5(currentSolrVersion, newIndexDir, tempResultsDir);
+            // upgrade from Solr 5 to 6
+            currentSolrVersion = upgradeSolrIndexVersion5to6(currentSolrVersion, newIndexDir, tempResultsDir);
+        } catch (Exception ex) {
+            // catch-all firewall for exceptions thrown by Solr upgrade tools
+            logger.log(Level.SEVERE, "Exception while running Sorl index upgrade " + newIndexDir, ex); //NON-NLS
         }
 
-        if (success) {
-            try {
-                // upgrade from Solr 5 to 6. This one must complete successfully in order to produce a valid Solr 6 index.
-                upgradeSolrIndexVersion5to6(newIndexDir, tempResultsDir);
-            } catch (AutopsyService.AutopsyServiceException | SecurityException | IOException ex) {
-                logger.log(Level.SEVERE, "Exception while upgrading keyword search index from Sorl 5 to Solr 6 " + newIndexDir, ex); //NON-NLS
-                success = false;
-            } catch (Exception ex2) {
-                // exceptions thrown by Solr 5 to 6 upgrade tool itself should always be treated as errors
-                logger.log(Level.SEVERE, "Exception while running Sorl 5 to Solr 6 upgrade tool " + newIndexDir, ex2); //NON-NLS
-                success = false;
-            }
-        }
-
-        if (!success) {
-            // delete the new directories
+        if (currentSolrVersion != NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
+            // upgrade did not complete, delete the new directories
             new File(newIndexDir).delete();
             throw new AutopsyService.AutopsyServiceException("Failed to upgrade existing keyword search index");
         }
@@ -87,13 +74,17 @@ public class IndexUpgrader {
     /**
      * Upgrades Solr index from version 4 to 5.
      *
+     * @param currentIndexVersion Current Solr index version
      * @param solr4IndexPath Full path to Solr v4 index directory
      * @param tempResultsDir Path to directory where to store log output
      *
-     * @return True is index upgraded successfully, false otherwise
+     * @return The new Solr index version.
      */
-    void upgradeSolrIndexVersion4to5(String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    double upgradeSolrIndexVersion4to5(double currentIndexVersion, String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
 
+        if (currentIndexVersion != 4.0) {
+            return currentIndexVersion;
+        }
         String outputFileName = "output.txt";
         logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 4 to Solr 5", solr4IndexPath); //NON-NLS
 
@@ -128,18 +119,22 @@ public class IndexUpgrader {
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
+        return 4.0;
     }
 
     /**
      * Upgrades Solr index from version 5 to 6.
      *
+     * @param currentIndexVersion Current Solr index version
      * @param solr5IndexPath Full path to Solr v5 index directory
      * @param tempResultsDir Path to directory where to store log output
      *
-     * @return True is index upgraded successfully, false otherwise
+     * @return The new Solr index version.
      */
-    void upgradeSolrIndexVersion5to6(String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
-
+    double upgradeSolrIndexVersion5to6(double currentIndexVersion, String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+        if (currentIndexVersion != 5.0) {
+            return currentIndexVersion;
+        }
         String outputFileName = "output.txt";
         logger.log(Level.INFO, "Upgrading KWS index {0} from Sorl 5 to Solr 6", solr5IndexPath); //NON-NLS
 
@@ -174,6 +169,7 @@ public class IndexUpgrader {
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
+        return 5.0;
     }
     
 }

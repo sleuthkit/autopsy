@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
@@ -31,7 +29,6 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -205,12 +202,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
                     // ELTODO Check for cancellation at whatever points are feasible
                     
-                    // Copy the "old" index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
+                    // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
                     String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade);
 
-                    // upgrade the "old" index to the latest supported Solr version
+                    // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    indexUpgrader.performIndexUpgrade(newIndexDir, context.getCase().getTempDirectory());
+                    indexUpgrader.performIndexUpgrade(indexToUpgrade, context.getCase().getTempDirectory());
 
                     // set the upgraded index as the index to be used for this case
                     currentVersionIndex.setIndexPath(newIndexDir);
