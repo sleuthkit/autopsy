@@ -118,7 +118,7 @@ class IndexUpgrader {
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return 4.0;
+        return 5.0;
     }
 
     /**
@@ -166,7 +166,7 @@ class IndexUpgrader {
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return 5.0;
+        return 6.0;
     }
     
 }
