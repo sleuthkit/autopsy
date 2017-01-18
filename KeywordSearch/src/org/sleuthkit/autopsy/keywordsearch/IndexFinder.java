@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -83,11 +84,27 @@ class IndexFinder {
     }
     
     static Index identifyIndexToUpgrade(List<Index> allIndexes) {
-        // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
-        // ELTODO need to handle here a case where it is Solr 6 index but not latest schema
-        // ELTODO figure out the schema version of the "old" index
-        
-        return new Index();
+        /* NOTE: All of the following paths are valid multi-user index paths:
+            (Solr 4, schema 1.8) X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         */
+        Index bestCandidateIndex = new Index();
+        double solrVerFound = 0.0;
+        double schemaVerFound = 0.0;
+        for (Index index : allIndexes) {
+            // higher Solr version takes priority because it may negate index upgrade
+            if (NumberUtils.toDouble(index.getSolrVersion()) >= solrVerFound) {
+                // if same solr version, pick the one with highest schema version
+                if (NumberUtils.toDouble(index.getSchemaVersion()) > schemaVerFound) {
+                    bestCandidateIndex = index;
+                    solrVerFound = NumberUtils.toDouble(index.getSolrVersion());
+                    schemaVerFound = NumberUtils.toDouble(index.getSchemaVersion());
+                }                
+            }
+        }
+        return bestCandidateIndex;
     }
 
     String copyIndexAndConfigSet(Case theCase, String oldIndexDir) throws AutopsyService.AutopsyServiceException {

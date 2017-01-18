@@ -180,10 +180,18 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
                 }
 
-                // get Solr and schema verison of latest index
-                if (NumberUtils.toDouble(indexToUpgrade.getSolrVersion()) < NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
+                double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
+                double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
+                if (indexSolrVersion > currentSolrVersion) {
+                    // oops!
+                    throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
+                } 
+                else if (indexSolrVersion == currentSolrVersion) {
+                    // latest Solr version but not latest schema. it should be used in read-only mode and not be upgraded
+                    currentVersionIndex = indexToUpgrade;                   
+                }
+                else {
                     // index needs to be upgraded to latest supported version of Solr
-
                     if (RuntimeProperties.coreComponentsAreActive()) {
                         //pop up a message box to indicate the restrictions on adding additional 
                         //text and performing regex searches and give the user the option to decline the upgrade
