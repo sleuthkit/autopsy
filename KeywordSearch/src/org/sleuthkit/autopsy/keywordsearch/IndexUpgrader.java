@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  * This class handles the task of upgrading old indexes to the latest supported
  * Solr version.
  */
-public class IndexUpgrader {
+class IndexUpgrader {
     
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private final String JAVA_PATH;
@@ -80,7 +80,7 @@ public class IndexUpgrader {
      *
      * @return The new Solr index version.
      */
-    double upgradeSolrIndexVersion4to5(double currentIndexVersion, String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    private double upgradeSolrIndexVersion4to5(double currentIndexVersion, String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
 
         if (currentIndexVersion != 4.0) {
             return currentIndexVersion;
@@ -131,7 +131,7 @@ public class IndexUpgrader {
      *
      * @return The new Solr index version.
      */
-    double upgradeSolrIndexVersion5to6(double currentIndexVersion, String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    private double upgradeSolrIndexVersion5to6(double currentIndexVersion, String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
         if (currentIndexVersion != 5.0) {
             return currentIndexVersion;
         }
