@@ -264,7 +264,9 @@ public final class SearchRunner {
         // mutable state:
         private volatile boolean workerRunning;
         private List<String> keywordListNames; //guarded by SearchJobInfo.this
-        private Map<Keyword, Set<String>> currentResults; //guarded by SearchJobInfo.this
+
+        // Map of keyword to the object ids that contain a hit
+        private Map<Keyword, Set<Long>> currentResults; //guarded by SearchJobInfo.this
         private SearchRunner.Searcher currentSearcher;
         private AtomicLong moduleReferenceCount = new AtomicLong(0);
         private final Object finalSearchLock = new Object(); //used for a condition wait
@@ -296,11 +298,11 @@ public final class SearchRunner {
             }
         }
 
-        private synchronized Set<String> currentKeywordResults(Keyword k) {
+        private synchronized Set<Long> currentKeywordResults(Keyword k) {
             return currentResults.get(k);
         }
 
-        private synchronized void addKeywordResults(Keyword k, Set<String> resultsIDs) {
+        private synchronized void addKeywordResults(Keyword k, Set<Long> resultsIDs) {
             currentResults.put(k, resultsIDs);
         }
 
@@ -470,8 +472,8 @@ public final class SearchRunner {
                         return null;
                     }
 
-                    // calculate new results by substracting results already obtained in this ingest
-                    // this creates a map of each keyword to the list of unique files that have that hit. 
+                    // Reduce the results of the query to only those hits we
+                    // have not already seen. 
                     QueryResults newResults = filterResults(queryResults);
 
                     if (!newResults.getKeywords().isEmpty()) {
@@ -570,61 +572,67 @@ public final class SearchRunner {
         }
 
         /**
-         * Over time, periodic searches can produce keyword hits that were seen
-         * in earlier searches (in addition to new hits). 
          * This method filters out all of the hits found in earlier
          * periodic searches and returns only the results found by the most 
          * recent search.
          *
+         * This method will only return hits for objects for which we haven't
+         * previously seen a hit for the keyword.
+         * 
          * @param queryResult The results returned by a keyword search.
-         * @return The set of hits found by the most recent search.
+         * @return The set of hits found by the most recent search for objects
+         * that have not previously had a hit.
          *
          */
         private QueryResults filterResults(QueryResults queryResult) {
 
-            // Create a new (empty) QueryResults object to hold the most recently found hits.
+            // Create a new (empty) QueryResults object to hold the most recently
+            // found hits.
             QueryResults newResults = new QueryResults(queryResult.getQuery(), queryResult.getKeywordList());
 
+            // For each keyword represented in the results.
             for (Keyword keyword : queryResult.getKeywords()) {
+                // These are all of the hits across all objects for the most recent search.
+                // This may well include duplicates of hits we've seen in earlier periodic searches.
                 List<KeywordHit> queryTermResults = queryResult.getResults(keyword);
 
-                // Grab the set of solr document ids that have a hit for this
-                // keyword.
-                Set<String> queryTermResultsIDs = new HashSet<>();
-                for (KeywordHit hit : queryTermResults) {
-                    queryTermResultsIDs.add(hit.getSolrDocumentId());
+                // This will be used to build up the hits we haven't seen before
+                // for this keyword.
+                List<KeywordHit> newUniqueHits = new ArrayList<>();
+
+                // Get the set of object ids seen in the past by this searcher
+                // for the given keyword.
+                Set<Long> curTermResults = job.currentKeywordResults(keyword);
+                if (curTermResults == null) {
+                    // We create a new empty set if we haven't seen results for
+                    // this keyword before.
+                    curTermResults = new HashSet<>();
                 }
 
-                // Get the set of document ids seen in the past by this searcher
-                // for the given keyword.
-                Set<String> curTermResults = job.currentKeywordResults(keyword);
-                if (curTermResults == null) {
-                    // If we haven't seen any results in the past, we simply
-                    // add all of the incoming results to the outgoing collection.
-                    job.addKeywordResults(keyword, queryTermResultsIDs);
-                    newResults.addResult(keyword, queryTermResults);
-                } else {
-                    // Otherwise, we have seen results for this keyword in the past.
-                    // For each of the keyword hits in the incoming results we check to
-                    // see if we have seen the document id previously.
-                    for (KeywordHit res : queryTermResults) {
-                        if (!curTermResults.contains(res.getSolrDocumentId())) {
-                            // We have not seen the document id before so we add
-                            // the keyword hit to the results
-                            List<KeywordHit> newKeywordHits = newResults.getResults(keyword);
-                            if (newKeywordHits == null) {
-                                // Create an empty list to hold the new hits.
-                                newKeywordHits = new ArrayList<>();
-                                newResults.addResult(keyword, newKeywordHits);
-                            }
-                            // Add the new hit to the list.
-                            newKeywordHits.add(res);
-                            // Add the document id to the set of document ids
-                            // that have been seen for this keyword.
-                            curTermResults.add(res.getSolrDocumentId());
-                        }
+                // For each hit for this keyword.
+                for (KeywordHit hit : queryTermResults) {
+                    if (curTermResults.contains(hit.getSolrObjectId())) {
+                        // Skip the hit if we've already seen a hit for
+                        // this keyword in the object.
+                        continue;
                     }
+
+                    // We haven't seen the hit before so add it to list of new
+                    // unique hits.
+                    newUniqueHits.add(hit);
+
+                    // Add the object id to the results we've seen for this
+                    // keyword.
+                    curTermResults.add(hit.getSolrObjectId());
                 }
+
+                // Update the job with the list of objects for which we have
+                // seen hits for the current keyword.
+                job.addKeywordResults(keyword, curTermResults);
+
+                // Add the new hits for the current keyword into the results
+                // to be returned.
+                newResults.addResult(keyword, newUniqueHits);
             }
 
             return newResults;
