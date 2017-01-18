@@ -63,22 +63,31 @@ class IndexFinder {
         return CURRENT_SOLR_SCHEMA_VERSION;
     }
 
-    static String findLatestVersionIndexDir(List<String> allIndexes) {
+    static Index findLatestVersionIndexDir(List<Index> allIndexes) {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
-        for (String path : allIndexes) {
+        for (Index index : allIndexes) {
+            String path = index.getIndexPath();
             if (path.contains(indexFolderName)) {
-                return path;
+                return new Index(path, CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION);
             }
         }
-        return "";
+        return new Index();
     }
     
-    static String createLatestVersionIndexDir(Case theCase) {
+    static Index createLatestVersionIndexDir(Case theCase) {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
         // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
         File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
         targetDirPath.mkdirs();
-        return targetDirPath.getAbsolutePath();
+        return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION);
+    }
+    
+    static Index identifyIndexToUpgrade(List<Index> allIndexes) {
+        // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
+        // ELTODO need to handle here a case where it is Solr 6 index but not latest schema
+        // ELTODO figure out the schema version of the "old" index
+        
+        return new Index();
     }
 
     String copyIndexAndConfigSet(Case theCase, String oldIndexDir) throws AutopsyService.AutopsyServiceException {
@@ -164,9 +173,9 @@ class IndexFinder {
      *
      * @param theCase the case to get index dir for
      *
-     * @return List of absolute paths to all found index directories
+     * @return List of Index objects for each found index directory
      */
-    List<String> findAllIndexDirs(Case theCase) {
+    List<Index> findAllIndexDirs(Case theCase) {
         ArrayList<String> candidateIndexDirs = new ArrayList<>();
         // first find all existing "/ModuleOutput/keywordsearch/data/" folders
         if (theCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
@@ -212,16 +221,66 @@ class IndexFinder {
         }
 
         // analyze possible index folders
-        ArrayList<String> indexDirs = new ArrayList<>();
+        ArrayList<Index> indexes = new ArrayList<>();
         for (String path : candidateIndexDirs) {
             List<String> validIndexPaths = containsValidIndexFolders(path);
             for (String validPath : validIndexPaths) {
-                indexDirs.add(convertPathToUNC(validPath));
-                // there can be multiple index folders (e.g. current version and "old" version) so keep looking
+                String solrVersion = getSolrVersionFromIndexPath(validPath);
+                String schemaVersion = getSchemaVersionFromIndexPath(validPath);
+                if (!validPath.isEmpty() && !solrVersion.isEmpty() && !schemaVersion.isEmpty()) {
+                    indexes.add(new Index(convertPathToUNC(validPath), solrVersion, schemaVersion));
+                    // there can be multiple index folders (e.g. current version and "old" version) so keep looking
+                }
             }
         }
-        return indexDirs;
+        return indexes;
     }
+    
+    String getSolrVersionFromIndexPath(String path) {
+        /* NOTE: All of the following paths are valid multi-user index paths:
+            (Solr 4, schema 1.8) X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         */
+        File file = new File(path);
+        // sanity check - must be "index" folder
+        if (!file.getName().equals(INDEX_FOLDER_NAME)) {
+            // invalid index path
+            return "";
+        }
+        String parentFolderName = file.getParent();
+        if (parentFolderName.equals(KWS_DATA_FOLDER_NAME)) {
+            // this is a Solr4 path, e.g. X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+            return "4";
+        } 
+        
+        // extract Solr version if name matches "solrX_schema_Y" format
+        return getSolrVersionFromIndexFolderName(parentFolderName);
+    }
+    
+    String getSchemaVersionFromIndexPath(String path) {
+        /* NOTE: All of the following paths are valid multi-user index paths:
+            (Solr 4, schema 1.8) X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         */
+        File file = new File(path);
+        // sanity check - must be "index" folder
+        if (!file.getName().equals(INDEX_FOLDER_NAME)) {
+            // invalid index path
+            return "";
+        }
+        String parentFolderName = file.getParent();
+        if (parentFolderName.equals(KWS_DATA_FOLDER_NAME)) {
+            // this is a Solr 4 schema 1.8 path, e.g. X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+            return "1.8";
+        } 
+        
+        // extract schema version if name matches "solrX_schema_Y" format
+        return getSchemaVersionFromIndexFolderName(parentFolderName);
+    }    
 
     String convertPathToUNC(String indexDir) {
         // ELTODO do we need to do this when searching for old index?
@@ -312,8 +371,38 @@ class IndexFinder {
      *
      * @return True or false.
      */
-    public static boolean matchesIndexFolderNameStandard(String inputString) {
+    static boolean matchesIndexFolderNameStandard(String inputString) {
         Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
         return m.find();
     }
+    
+    /**
+     * Gets Solr version number if index folder name matches the standard
+     *
+     * @param inputString The string to check.
+     *
+     * @return Solr version, empty string on error
+     */
+    static String getSolrVersionFromIndexFolderName(String inputString) {
+        Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
+        if (m.find()) {
+            return m.group(1);
+        }
+        return "";
+    }
+    
+    /**
+     * Gets Solr schema version number if index folder name matches the standard
+     *
+     * @param inputString The string to check.
+     *
+     * @return Solr schema version, empty string on error
+     */
+    static String getSchemaVersionFromIndexFolderName(String inputString) {
+        Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
+        if (m.find()) {
+            return m.group(2);
+        }
+        return "";
+    }     
 }

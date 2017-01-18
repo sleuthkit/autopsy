@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
@@ -160,55 +161,60 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
         IndexFinder indexFinder = new IndexFinder();
-        List<String> indexDirs = indexFinder.findAllIndexDirs(context.getCase());
+        List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
-        String schemaVer; 
-        String currentVersionIndexDir = IndexFinder.findLatestVersionIndexDir(indexDirs);
-        if (currentVersionIndexDir.isEmpty()) {
-            if (indexDirs.isEmpty()) {
-                // new case that doesn't have an existing index. create new index folder
-                currentVersionIndexDir = IndexFinder.createLatestVersionIndexDir(context.getCase());
-                schemaVer = IndexFinder.getCurrentSchemaVersion();
-            } else {
-                // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
-                // ELTODO need to handle here a case where it is Solr 6 index but not latest schema
-                // ELTODO figure out the schema version of the "old" index
-                String oldIndexDir = indexDirs.get(0);
+        Index currentVersionIndex;
+        if (indexes.isEmpty()) {
+            // new case that doesn't have an existing index. create new index folder
+            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
+        } else {
+            // check if one of the existing indexes is for latest Solr version and schema
+            currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
 
-                if (RuntimeProperties.coreComponentsAreActive()) {
-                    //pop up a message box to indicate the restrictions on adding additional 
-                    //text and performing regex searches and give the user the option to decline the upgrade
-                    if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"),
-                            NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"),
-                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                        // upgrade declined - throw exception
-                        throw new AutopsyServiceException("Index upgrade was declined by user");
-                    }
+            if (!currentVersionIndex.isIndexDataPopulated()) {
+                // found existing index(es) but none were for latest Solr version and schema version
+                Index indexToUpgrade = IndexFinder.identifyIndexToUpgrade(indexes);
+                if (!indexToUpgrade.isIndexDataPopulated()) {
+                    // unable to find index that can be upgraded
+                    throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
                 }
 
-                // ELTODO Check for cancellation at whatever points are feasible
-                
-                // Copy the "old" index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), oldIndexDir);
+                // get Solr and schema verison of latest index
+                if (NumberUtils.toDouble(indexToUpgrade.getSolrVersion()) < NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
+                    // index needs to be upgraded to latest supported version of Solr
 
-                // upgrade the "old" index to the latest supported Solr version
-                IndexUpgrader indexUpgrader = new IndexUpgrader();
-                indexUpgrader.performIndexUpgrade(newIndexDir, context.getCase().getTempDirectory());
+                    if (RuntimeProperties.coreComponentsAreActive()) {
+                        //pop up a message box to indicate the restrictions on adding additional 
+                        //text and performing regex searches and give the user the option to decline the upgrade
+                        if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"),
+                                NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"),
+                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                            // upgrade declined - throw exception
+                            throw new AutopsyServiceException("Index upgrade was declined by user");
+                        }
+                    }
 
-                // set the upgraded reference index as the index to be used for this case
-                currentVersionIndexDir = newIndexDir;
-                // schemaVer = ; // ELTODO
+                    // ELTODO Check for cancellation at whatever points are feasible
+                    
+                    // Copy the "old" index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
+                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade.getIndexPath());
+
+                    // upgrade the "old" index to the latest supported Solr version
+                    IndexUpgrader indexUpgrader = new IndexUpgrader();
+                    indexUpgrader.performIndexUpgrade(newIndexDir, context.getCase().getTempDirectory());
+
+                    // set the upgraded index as the index to be used for this case
+                    currentVersionIndex.setIndexPath(newIndexDir);
+                    currentVersionIndex.setSolrVersion(IndexFinder.getCurrentSolrVersion());
+                    currentVersionIndex.setSchemaVersion(indexToUpgrade.getSchemaVersion());
+                }
             }
-        } else {
-            // found index that is latest version of Solr and schema
-            schemaVer = IndexFinder.getCurrentSchemaVersion();
         }
                 
         // open core
         try {
-            // ELTODO figure out the schema version of the core that's being opened
-            //KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndexDir, schemaVer);
+            //KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
             KeywordSearch.getServer().openCoreForCase(context.getCase());
         } catch (Exception ex) {
             logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
