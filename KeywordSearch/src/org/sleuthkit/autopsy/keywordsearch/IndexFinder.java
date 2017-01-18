@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +42,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 class IndexFinder {
 
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName()); 
-    private UNCPathUtilities uncPathUtilities;
+    private final UNCPathUtilities uncPathUtilities;
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
@@ -109,7 +110,7 @@ class IndexFinder {
 
     String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
         // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
-        String newIndexDir = createReferenceIndexCopy(theCase, indexToUpgrade);
+        String newIndexDir = copyExistingIndex(theCase, indexToUpgrade);
 
         // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
         createReferenceConfigSetCopy(new File(newIndexDir).getParent());
@@ -117,8 +118,7 @@ class IndexFinder {
         return newIndexDir;
     }
 
-    private String createReferenceIndexCopy(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
-        logger.log(Level.INFO, "Creating a reference copy of KWS index in {0} ", indexToUpgrade.getIndexPath()); //NON-NLS
+    private static String copyExistingIndex(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
         // folder name for the upgraded index should be latest Solr version BUT schema verion of the existing index
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + indexToUpgrade.getSchemaVersion();
         try {
@@ -129,22 +129,19 @@ class IndexFinder {
                 List<File> contents = getAllContentsInFolder(targetDirPath.getAbsolutePath());
                 if (!contents.isEmpty()) {
                     // target directory is not empty
-                    logger.log(Level.SEVERE, "Creating a reference copy of KWS index in {0} ", indexToUpgrade.getIndexPath()); //NON-NLS
                     throw new AutopsyService.AutopsyServiceException("Directory to store the upgraded index must be empty " + targetDirPath.getAbsolutePath());
                 }
             }
             targetDirPath.mkdirs();
             FileUtils.copyDirectory(new File(indexToUpgrade.getIndexPath()), targetDirPath);
             return targetDirPath.getAbsolutePath();
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Error occurred while creating a reference copy of keyword search index {0}", ex); //NON-NLS
+        } catch (AutopsyService.AutopsyServiceException | IOException ex) {
             throw new AutopsyService.AutopsyServiceException("Error occurred while creating a copy of keyword search index", ex);
         }
     }
 
     // ELTODO This functionality is NTH:
     private void createReferenceConfigSetCopy(String indexPath) {
-        logger.log(Level.INFO, "Creating a reference copy of config set in {0} ", indexPath); //NON-NLS
         File pathToConfigSet = new File("");
         try {
             // See if there is SOLR_HOME environment variable first
@@ -178,14 +175,13 @@ class IndexFinder {
             if (!pathToConfigSet.getAbsolutePath().isEmpty() && pathToConfigSet.exists()) {
                 FileUtils.copyDirectory(pathToConfigSet, new File(indexPath));
             }
-        } catch (Exception ex) {
+        } catch (AutopsyService.AutopsyServiceException | IOException ex) {
             // This feature is a NTH so don't re-throw 
-            logger.log(Level.WARNING, "Error while copying KWS config set to {0}", indexPath); //NON-NLS
         }
     }
 
     /**
-     * Find index directory location for the case. This is done via subdirectory
+     * Find index directory location(s) for the case. This is done via subdirectory
      * search of all existing "ModuleOutput/node_name/keywordsearch/data/"
      * folders.
      *
@@ -206,9 +202,8 @@ class IndexFinder {
             X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
              */
 
-            // create a list of all sub-directories
+            // get a list of all folder's contents
             List<File> contents = getAllContentsInFolder(theCase.getCaseDirectory());
-
             if (!contents.isEmpty()) {
                 // decipher "ModuleOutput" directory name from module output path 
                 // (e.g. X:\Case\ingest4\ModuleOutput\) because there is no other way to get it...

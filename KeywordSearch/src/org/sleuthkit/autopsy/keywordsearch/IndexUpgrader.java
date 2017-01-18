@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -61,13 +61,14 @@ class IndexUpgrader {
             currentSolrVersion = upgradeSolrIndexVersion5to6(currentSolrVersion, newIndexDir, tempResultsDir);
         } catch (Exception ex) {
             // catch-all firewall for exceptions thrown by Solr upgrade tools
-            logger.log(Level.SEVERE, "Exception while running Sorl index upgrade " + newIndexDir, ex); //NON-NLS
-        }
-
-        if (currentSolrVersion != NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
-            // upgrade did not complete, delete the new directories
-            new File(newIndexDir).delete();
-            throw new AutopsyService.AutopsyServiceException("Failed to upgrade existing keyword search index");
+            throw new AutopsyService.AutopsyServiceException("Exception while running Solr index upgrade in " + newIndexDir, ex); //NON-NLS
+        } finally {
+            if (currentSolrVersion != NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
+                // upgrade did not complete, delete the new index directories
+                if (!new File(newIndexDir).delete()) {
+                    logger.log(Level.SEVERE, "Unable to delete folder {0}", newIndexDir); //NON-NLS
+                }
+            }
         }
     }
     
@@ -91,14 +92,12 @@ class IndexUpgrader {
         // find the index upgrade tool
         final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr4to5IndexUpgrade", IndexFinder.class.getPackage().getName(), false); //NON-NLS
         if (upgradeToolFolder == null) {
-            logger.log(Level.SEVERE, "Unable to locate Sorl 4 to Solr 5 upgrade tool"); //NON-NLS
             throw new AutopsyService.AutopsyServiceException("Unable to locate Sorl 4 to Solr 5 upgrade tool");
         }
 
         // full path to index upgrade jar file
         File upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr4IndexUpgrade.jar").toFile();
         if (!upgradeJarPath.exists() || !upgradeJarPath.isFile()) {
-            logger.log(Level.SEVERE, "Unable to locate Sorl 4 to Solr 5 upgrade tool's JAR file at {0}", upgradeJarPath); //NON-NLS
             throw new AutopsyService.AutopsyServiceException("Unable to locate Sorl 4 to Solr 5 upgrade tool's JAR file");
         }
 
@@ -141,14 +140,12 @@ class IndexUpgrader {
         // find the index upgrade tool
         final File upgradeToolFolder = InstalledFileLocator.getDefault().locate("Solr5to6IndexUpgrade", IndexFinder.class.getPackage().getName(), false); //NON-NLS
         if (upgradeToolFolder == null) {
-            logger.log(Level.SEVERE, "Unable to locate Sorl 5 to Solr 6 upgrade tool"); //NON-NLS
             throw new AutopsyService.AutopsyServiceException("Unable to locate Sorl 5 to Solr 6 upgrade tool");
         }
 
         // full path to index upgrade jar file
         File upgradeJarPath = Paths.get(upgradeToolFolder.getAbsolutePath(), "Solr5IndexUpgrade.jar").toFile();
         if (!upgradeJarPath.exists() || !upgradeJarPath.isFile()) {
-            logger.log(Level.SEVERE, "Unable to locate Sorl 5 to Solr 6 upgrade tool's JAR file at {0}", upgradeJarPath); //NON-NLS
             throw new AutopsyService.AutopsyServiceException("Unable to locate Sorl 5 to Solr 6 upgrade tool's JAR file");
         }
 
