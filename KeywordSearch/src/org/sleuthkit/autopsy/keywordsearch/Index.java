@@ -26,12 +26,14 @@ class Index {
     private final String indexPath;
     private final String schemaVersion;
     private final String solrVersion;
+    private boolean newIndex;
     
     Index(String indexPath, String solrVersion, String schemaVersion) {
         this.indexPath = indexPath;
         this.solrVersion = solrVersion;
         this.schemaVersion = schemaVersion;
-    }
+        newIndex = false;
+    }   
 
     /**
      * @return the indexPath
@@ -62,5 +64,19 @@ class Index {
             return true;
         }
         return false;
+    }
+
+    /**
+     * @return the newIndex
+     */
+    boolean isNewIndex() {
+        return newIndex;
+    }
+
+    /**
+     * @param newIndex the newIndex to set
+     */
+    void setNewIndex(boolean newIndex) {
+        this.newIndex = newIndex;
     }
 }

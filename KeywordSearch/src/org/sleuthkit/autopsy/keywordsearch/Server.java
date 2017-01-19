@@ -36,9 +36,11 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -724,7 +726,7 @@ public class Server {
      *                                      creating/opening the core.
      */
     private Core openCore(Case theCase, Index index) throws KeywordSearchModuleException {
-        
+
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
@@ -739,8 +741,75 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
         }
 
-        String coreName = theCase.getTextIndexName();
-        return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, index, theCase.getCaseType());
+        try {
+            CaseType caseType = theCase.getCaseType();
+            String coreName;
+            if (index.isNewIndex()) {
+                // come up with a new core name
+                coreName = createCoreName(theCase.getName());
+            } else {
+                // ELTODO get core name
+                coreName = "";
+            }
+
+            File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
+            if (!dataDir.exists()) {
+                dataDir.mkdirs();
+            }
+
+            if (!this.isRunning()) {
+                logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
+            }
+
+            if (!coreIsLoaded(coreName)) {
+                /*
+                 * The core either does not exist or it is not loaded. Make a
+                 * request that will cause the core to be created if it does not
+                 * exist or loaded if it already exists.
+                 */
+
+                // In single user mode, if there is a core.properties file already,
+                // we've hit a solr bug. Compensate by deleting it.
+                if (caseType == CaseType.SINGLE_USER_CASE) {
+                    Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
+                    if (corePropertiesFile.toFile().exists()) {
+                        try {
+                            corePropertiesFile.toFile().delete();
+                        } catch (Exception ex) {
+                            logger.log(Level.INFO, "Could not delete pre-existing core.properties prior to opening the core."); //NON-NLS
+                        }
+                    }
+                }
+
+                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                createCoreRequest.setCoreName(coreName);
+                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCoreRequest.setIsLoadOnStartup(false);
+                createCoreRequest.setIsTransient(true);
+                currentSolrServer.request(createCoreRequest);
+            }
+
+            if (!coreIndexFolderExists(coreName)) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+            }
+
+            return new Core(coreName, caseType, index);
+
+        } catch (SolrServerException | SolrException | IOException ex) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+        }
+    }
+    
+    private String createCoreName(String caseName) {
+        if (caseName.isEmpty()) {
+            caseName = DEFAULT_CORE_NAME;
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        Date date = new Date();
+        String coreName = caseName + "_" + dateFormat.format(date);
+        return coreName;
     }
 
     /**
@@ -1081,73 +1150,6 @@ public class Server {
      */
     public static String getChunkIdString(long parentID, int childID) {
         return Long.toString(parentID) + Server.CHUNK_ID_SEPARATOR + Integer.toString(childID);
-    }
-
-    /**
-     * Creates/opens a Solr core (index) for a case.
-     *
-     * @param coreName The core name.
-     * @param index    The text index object for the core.
-     * @param caseType The type of the case (single-user or multi-user) for
-     *                 which the core is being created/opened.
-     *
-     * @return An object representing the created/opened core.
-     *
-     * @throws KeywordSearchModuleException If an error occurs while
-     *                                      creating/opening the core.
-     */
-    private Core openCore(String coreName, Index index, CaseType caseType) throws KeywordSearchModuleException {
-
-        try {
-            
-            File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
-            if (!dataDir.exists()) {
-                dataDir.mkdirs();
-            }
-
-            if (!this.isRunning()) {
-                logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
-                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
-            }
-
-            if (!coreIsLoaded(coreName)) {
-                /*
-                 * The core either does not exist or it is not loaded. Make a
-                 * request that will cause the core to be created if it does not
-                 * exist or loaded if it already exists.
-                 */
-
-                // In single user mode, if there is a core.properties file already,
-                // we've hit a solr bug. Compensate by deleting it.
-                if (caseType == CaseType.SINGLE_USER_CASE) {
-                    Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
-                    if (corePropertiesFile.toFile().exists()) {
-                        try {
-                            corePropertiesFile.toFile().delete();
-                        } catch (Exception ex) {
-                            logger.log(Level.INFO, "Could not delete pre-existing core.properties prior to opening the core."); //NON-NLS
-                        }
-                    }
-                }
-
-                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
-                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
-                createCoreRequest.setCoreName(coreName);
-                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
-                createCoreRequest.setIsLoadOnStartup(false);
-                createCoreRequest.setIsTransient(true);
-                currentSolrServer.request(createCoreRequest);
-            }
-
-            if (!coreIndexFolderExists(coreName)) {
-                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
-            }
-
-            return new Core(coreName, caseType, index);
-
-        } catch (SolrServerException | SolrException | IOException ex) {
-            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
-        }
     }
 
     /**

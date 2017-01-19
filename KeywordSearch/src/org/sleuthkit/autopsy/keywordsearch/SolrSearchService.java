@@ -165,6 +165,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         if (indexes.isEmpty()) {
             // new case that doesn't have an existing index. create new index folder
             currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
+            currentVersionIndex.setNewIndex(true);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
@@ -220,6 +221,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
                     // set the upgraded index as the index to be used for this case
                     currentVersionIndex = new Index(newIndexDir, IndexFinder.getCurrentSolrVersion(), indexToUpgrade.getSchemaVersion());
+                    currentVersionIndex.setNewIndex(true);
                 }
             }
         }
