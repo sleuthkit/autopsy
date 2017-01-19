@@ -1680,9 +1680,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             )) {
                 try {
                     serviceName = service.getServiceName();
-                    if (!serviceName.equals("Solr Keyword Search Service")) {
-                        service.openCaseResources(context);
-                    }
+                    service.openCaseResources(context);
                 } catch (AutopsyService.AutopsyServiceException ex) {
                     Case.LOGGER.log(Level.SEVERE, String.format("%s service failed to open case resources", serviceName), ex);
                 }

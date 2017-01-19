@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,12 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.openide.util.NbBundle;
@@ -33,6 +32,7 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -158,43 +158,87 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
         IndexFinder indexFinder = new IndexFinder();
-        List<String> indexDirs = indexFinder.findAllIndexDirs(context.getCase());
+        List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
         
         // check if index needs upgrade
-        String currentVersionIndexDir = IndexFinder.findLatestVersionIndexDir(indexDirs);
-        if (currentVersionIndexDir.isEmpty()) {
-            
-            // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
-            String oldIndexDir = indexDirs.get(0);
+        Index currentVersionIndex;
+        if (indexes.isEmpty()) {
+            // new case that doesn't have an existing index. create new index folder
+            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
+        } else {
+            // check if one of the existing indexes is for latest Solr version and schema
+            currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
 
-            if (RuntimeProperties.runningWithGUI()) {
-                //pop up a message box to indicate the restrictions on adding additional 
-                //text and performing regex searches and give the user the option to decline the upgrade
-                if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"), 
-                        NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"), 
-                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {                    
-                    // upgrade declined - throw exception
-                    throw new AutopsyServiceException("Index upgrade was declined by user");
+            if (!currentVersionIndex.isIndexDataPopulated()) {
+                // found existing index(es) but none were for latest Solr version and schema version
+                Index indexToUpgrade = IndexFinder.identifyIndexToUpgrade(indexes);
+                if (!indexToUpgrade.isIndexDataPopulated()) {
+                    // unable to find index that can be upgraded
+                    throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
+                }
+
+                double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
+                double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
+                if (indexSolrVersion > currentSolrVersion) {
+                    // oops!
+                    throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
+                } 
+                else if (indexSolrVersion == currentSolrVersion) {
+                    // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
+                    if (RuntimeProperties.runningWithGUI()) {
+                        // pop up a message box to indicate the read-only restrictions.
+                        if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"),
+                                NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
+                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                            // case open declined - throw exception
+                            throw new AutopsyServiceException("Case open declined by user");
+                        }
+                    }
+                    // proceed with case open
+                    currentVersionIndex = indexToUpgrade;
+                }
+                else {
+                    // index needs to be upgraded to latest supported version of Solr
+                    if (RuntimeProperties.runningWithGUI()) {
+                        //pop up a message box to indicate the restrictions on adding additional 
+                        //text and performing regex searches and give the user the option to decline the upgrade
+                        if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"),
+                                NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"),
+                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                            // upgrade declined - throw exception
+                            throw new AutopsyServiceException("Index upgrade was declined by user");
+                        }
+                    }
+
+                    // ELTODO Check for cancellation at whatever points are feasible
+                    
+                    // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
+                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade);
+
+                    // upgrade the existing index to the latest supported Solr version
+                    IndexUpgrader indexUpgrader = new IndexUpgrader();
+                    indexUpgrader.performIndexUpgrade(indexToUpgrade, context.getCase().getTempDirectory());
+
+                    // set the upgraded index as the index to be used for this case
+                    currentVersionIndex.setIndexPath(newIndexDir);
+                    currentVersionIndex.setSolrVersion(IndexFinder.getCurrentSolrVersion());
+                    currentVersionIndex.setSchemaVersion(indexToUpgrade.getSchemaVersion());
                 }
             }
-
-            // ELTODO Check for cancellation at whatever points are feasible
-            
-            // Copy the "old" index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-            String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), oldIndexDir);
-            
-            // upgrade the "old" index to the latest supported Solr version
-            IndexUpgrader indexUpgrader = new IndexUpgrader();
-            indexUpgrader.performIndexUpgrade(newIndexDir, context.getCase().getTempDirectory());
-
-            // set the upgraded reference index as the index to be used for this case
-            currentVersionIndexDir = newIndexDir;
         }
-        
-        // open currentVersionIndexDir index
-            
-        // execute a test query
-        // if failed, close the upgraded index?
+                
+        // open core
+        try {
+            KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
+            if (RuntimeProperties.runningWithGUI()) {
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
+            }
+        }
+
+        // ELTODO execute a test query
+        // ELTODO if failed, close the upgraded index?
     }
 
     /**
@@ -209,6 +253,22 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         /*
          * Autopsy service providers may not have case-level resources.
          */
+        try {
+            KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
+            /*
+            * TODO (AUT-2084): The following code
+            * KeywordSearch.CaseChangeListener gambles that any
+            * BlackboardResultWriters (SwingWorkers) will complete
+            * in less than roughly two seconds
+            */
+            Thread.sleep(2000);
+            KeywordSearch.getServer().closeCore();
+        } catch (Exception ex) {
+            logger.log(Level.SEVERE, String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
+            if (RuntimeProperties.runningWithGUI()) {
+                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
+            }
+        }
     }
 
     @Override

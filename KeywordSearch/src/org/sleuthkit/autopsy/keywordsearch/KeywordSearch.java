@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -28,10 +27,8 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.BlackboardResultWriter;
 
 /**
  * Wrapper over KeywordSearch Solr server singleton. The class also provides
@@ -107,56 +104,6 @@ public class KeywordSearch {
                     NbBundle.getMessage(KeywordSearch.class,
                             "KeywordSearch.fireNumIdxFileChg.moduleErr.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
-        }
-    }
-
-    /**
-     * Listener to create/open and close Solr cores when cases are
-     * created/opened and closed.
-     */
-    static class CaseChangeListener implements PropertyChangeListener {
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                if (null != evt.getOldValue()) {
-                    /*
-                     * A case is being closed.
-                     */
-                    Case closedCase = (Case) evt.getOldValue();
-                    try {
-                        BlackboardResultWriter.stopAllWriters();
-                        /*
-                         * TODO (AUT-2084): The following code
-                         * KeywordSearch.CaseChangeListener gambles that any
-                         * BlackboardResultWriters (SwingWorkers) will complete
-                         * in less than roughly two seconds
-                         */
-                        Thread.sleep(2000);
-                        server.closeCore();
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, String.format("Failed to close core for %s", closedCase.getCaseDirectory()), ex); //NON-NLS
-                        if (RuntimeProperties.runningWithGUI()) {
-                            MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
-                        }
-                    }
-                }
-
-                if (null != evt.getNewValue()) {
-                    /*
-                     * A case is being created/opened.
-                     */
-                    Case openedCase = (Case) evt.getNewValue();
-                    try {
-                        server.openCoreForCase(openedCase);
-                    } catch (Exception ex) {
-                        logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", openedCase.getCaseDirectory()), ex); //NON-NLS
-                        if (RuntimeProperties.runningWithGUI()) {
-                            MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
-                        }
-                    }
-                }
-            }
         }
     }
 }
