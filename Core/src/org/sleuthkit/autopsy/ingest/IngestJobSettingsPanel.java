@@ -424,7 +424,8 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
                         .getFileIngestFiltersWithDefaults()
                         .get(fileIngestFilterComboBox.getSelectedItem().toString()));
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                logger.log(Level.SEVERE, "Failed to get File Ingest Filters", ex); //NON-NLS
+                settings.setFileIngestFilter(FilesSetsManager.getDefaultFilter());
+                logger.log(Level.SEVERE, "Failed to get file ingest filter from combobox, default filter being used", ex); //NON-NLS
             }
         }
     }//GEN-LAST:event_fileIngestFilterComboBoxActionPerformed

@@ -57,8 +57,6 @@ public class IngestJobSettings {
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
-    private static FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet("All Files and Directories", "All Files and Directories", false, true, Collections.emptyMap()); //NON-NLS
-    private static FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet("All Files, Directories, and Unallocated Space", "All Files, Directories, and Unallocated Space", false, false, Collections.emptyMap());  //NON-NLS
     private FilesSet fileIngestFilter;
     private final String executionContext;
     private final IngestType ingestType;
@@ -73,7 +71,7 @@ public class IngestJobSettings {
      *
      * @return FilesSet which represents the FileIngestFilter
      */
-    protected FilesSet getFileIngestFilter() {
+    FilesSet getFileIngestFilter() {
         return fileIngestFilter;
     }
 
@@ -83,17 +81,8 @@ public class IngestJobSettings {
      * @param fileIngestFilter the FilesSet which represents the
      *                         FileIngestFilter
      */
-    protected void setFileIngestFilter(FilesSet fileIngestFilter) {
+    void setFileIngestFilter(FilesSet fileIngestFilter) {
         this.fileIngestFilter = fileIngestFilter;
-    }
-
-    /**
-     * Get a list of default FileIngestFilters.
-     *
-     * @return a list of FilesSets which cover default options.
-     */
-    public static List<FilesSet> getStandardFileIngestFilters() {
-        return Arrays.asList(FILES_DIRS_UNALLOC_INGEST_FILTER, FILES_DIRS_INGEST_FILTER);
     }
 
     /**
@@ -224,15 +213,19 @@ public class IngestJobSettings {
     }
 
     /**
-     * If unallocated space should be processed Gets the the opposite of the
-     * File Ingest Filter's skip unallocated space flag. So that the existing
-     * logic in PhotoRec Carver and any other modules that may use this will
-     * continue to work without modification.
+     * Gets the process unallocated space flag part of these ingest job
+     * settings.
      *
-     * @return True for process unallocated space or false for skip unallocated
-     *         space.
+     * @return True or false.
+     *
      */
     boolean getProcessUnallocatedSpace() {
+        /*
+         * Used to be a simple flag but the processUnallocated checkbox was changed 
+         * to a skip unallocated. This was due to the FileIngestFilters needing 
+         * a default value which did not skip unallocated files. This method 
+         * exists to maintain existing functionality.
+         */
         boolean processUnallocated = true;
         if (!Objects.isNull(this.fileIngestFilter)) {
             processUnallocated = (this.fileIngestFilter.getSkipUnallocatedSpace() == false);
@@ -352,14 +345,15 @@ public class IngestJobSettings {
          * Restore the last used File Ingest Filter
          */
         if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY) == false) {
-            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, IngestJobSettings.FILES_DIRS_UNALLOC_INGEST_FILTER.getName());
+            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, FilesSetsManager.getDefaultFilter().getName());
         }
         try {
             this.fileIngestFilter = FilesSetsManager.getInstance()
                     .getFileIngestFiltersWithDefaults()
                     .get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to get File Ingest Filters", ex); //NON-NLS
+            this.fileIngestFilter = FilesSetsManager.getDefaultFilter();
+            LOGGER.log(Level.SEVERE, "Failed to get file ingest filter from .properties file, default filter being used", ex); //NON-NLS
         }
     }
 

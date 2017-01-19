@@ -79,7 +79,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
         } else {
             // The FileIngestFilters have reserved names for default filter, and creating a new filter from the jComboBox
             // These names if used would have undefined results, so prohibiting the user from using them is necessary
-            for (FilesSet filesSet : IngestJobSettings.getStandardFileIngestFilters()) {
+            for (FilesSet filesSet : FilesSetsManager.getStandardFileIngestFilters()) {
                 if (this.nameTextField.getText().equals(filesSet.getName())) {
                     NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                             NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.messages.filesSetsReservedName"),

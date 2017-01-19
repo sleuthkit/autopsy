@@ -60,6 +60,8 @@ public final class FilesSetsManager extends Observable {
     private static final Object FILE_INGEST_FILTER_LOCK = new Object();
     private static final Object INTERESTING_FILES_SET_LOCK = new Object();
     private static FilesSetsManager instance;
+    private static FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet("All Files and Directories", "All Files and Directories", false, true, Collections.emptyMap()); //NON-NLS
+    private static FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet("All Files, Directories, and Unallocated Space", "All Files, Directories, and Unallocated Space", false, false, Collections.emptyMap()); //NON-NLS
 
     /**
      * Gets the FilesSet definitions manager singleton.
@@ -112,6 +114,25 @@ public final class FilesSetsManager extends Observable {
     }
 
     /**
+     * Get a list of default FileIngestFilters.
+     *
+     * @return a list of FilesSets which cover default options.
+     */
+    public static List<FilesSet> getStandardFileIngestFilters() {
+        return Arrays.asList(FILES_DIRS_UNALLOC_INGEST_FILTER, FILES_DIRS_INGEST_FILTER);
+    }
+
+    /**
+     * Get the filter that should be used as the default value, 
+     * if no filter is specified.
+     * 
+     * @return FILES_DIRS_UNALLOC_INGEST_FILTER
+     */
+    public static FilesSet getDefaultFilter(){
+        return FILES_DIRS_UNALLOC_INGEST_FILTER;
+    }
+    
+    /**
      * Gets a copy of the current interesting files set definitions.
      *
      * @return A map of interesting files set names to interesting file sets,
@@ -131,7 +152,7 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getFileIngestFiltersWithDefaults() throws FilesSetsManagerException {
         Map<String, FilesSet> returnMap = new HashMap<>();
-        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
+        for (FilesSet fSet : getStandardFileIngestFilters()) {
             returnMap.put(fSet.getName(), fSet);
         }
         returnMap.putAll(getFileIngestFilters());

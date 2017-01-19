@@ -71,7 +71,7 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
      */
     public String[] getComboBoxContents() {
         ArrayList<String> nameList = new ArrayList<>();
-        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
+        for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
             nameList.add(fSet.getName());
         }
         nameList.add(NEW_FILE_INGEST_FILTER);
