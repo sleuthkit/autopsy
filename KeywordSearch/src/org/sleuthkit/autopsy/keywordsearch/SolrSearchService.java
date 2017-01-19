@@ -229,8 +229,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 
         // open core
         try {
-            //KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
-            KeywordSearch.getServer().openCoreForCase(context.getCase());
+            KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
+            //KeywordSearch.getServer().openCoreForCase(context.getCase());
         } catch (Exception ex) {
             logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
             if (RuntimeProperties.coreComponentsAreActive()) {

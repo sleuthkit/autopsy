@@ -148,7 +148,7 @@ public class KeywordSearch {
                      */
                     Case openedCase = (Case) evt.getNewValue();
                     try {
-                        server.openCoreForCase(openedCase);
+                        //server.openCoreForCase(openedCase);
                     } catch (Exception ex) {
                         logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", openedCase.getCaseDirectory()), ex); //NON-NLS
                         if (RuntimeProperties.coreComponentsAreActive()) {

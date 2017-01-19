@@ -658,15 +658,15 @@ public class Server {
      * Creates/opens a Solr core (index) for a case.
      *
      * @param theCase The case for which the core is to be created/opened.
-     *
+     * @param index The text index that the Solr core should be using.
      *
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
      */
-    void openCoreForCase(Case theCase) throws KeywordSearchModuleException {
+    void openCoreForCase(Case theCase, Index index) throws KeywordSearchModuleException {
         currentCoreLock.writeLock().lock();
         try {
-            currentCore = openCore(theCase);
+            currentCore = openCore(theCase, index);
             serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
         } finally {
             currentCoreLock.writeLock().unlock();
@@ -710,47 +710,20 @@ public class Server {
     }
 
     /**
-     * Get index dir location for the case
-     *
-     * @param theCase the case to get index dir for
-     *
-     * @return absolute path to index dir
-     */
-    String geCoreDataDirPath(Case theCase) {
-        // ELTODO this method is going to be removed
-        String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-        if (uncPathUtilities != null) {
-            // if we can check for UNC paths, do so, otherwise just return the indexDir
-            String result = uncPathUtilities.mappedDriveToUNC(indexDir);
-            if (result == null) {
-                uncPathUtilities.rescanDrives();
-                result = uncPathUtilities.mappedDriveToUNC(indexDir);
-            }
-            if (result == null) {
-                return indexDir;
-            }
-            return result;
-        }
-        return indexDir;
-    }
-
-
-    /**
      * ** end single-case specific methods ***
      */
     /**
      * Creates/opens a Solr core (index) for a case.
      *
      * @param theCase The case for which the core is to be created/opened.
+     * @param index The text index that the Solr core should be using.
      *
      * @return An object representing the created/opened core.
      *
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
      */
-    private Core openCore(Case theCase) throws KeywordSearchModuleException {
-        
-        // ELTODO REMOVE String indexDir = findLatestVersionIndexDir(Case.getCurrentCase()); // ELTODO
+    private Core openCore(Case theCase, Index index) throws KeywordSearchModuleException {
         
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
@@ -766,7 +739,7 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
         }
 
-        String dataDir = geCoreDataDirPath(theCase);
+        String dataDir = new File(index.getIndexPath()).getParent(); // "data dir" is the parent of the index directory // ELTODO make sure this is UNC
         String coreName = theCase.getTextIndexName();
         return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());
     }
