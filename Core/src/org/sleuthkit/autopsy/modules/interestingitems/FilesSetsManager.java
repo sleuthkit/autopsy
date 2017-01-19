@@ -101,27 +101,6 @@ public final class FilesSetsManager extends Observable {
     }
 
     /**
-     * @return the LEGACY_FILES_SET_DEFS_FILE_NAME
-     */
-    static String getLegacyFilesSetDefsFileName() {
-        return LEGACY_FILES_SET_DEFS_FILE_NAME;
-    }
-
-    /**
-     * @return the INTERESTING_FILES_SET_DEFS_NAME
-     */
-    static String getInterestingFilesSetDefsName() {
-        return INTERESTING_FILES_SET_DEFS_NAME;
-    }
-
-    /**
-     * @return the FILE_INGEST_FILTER_DEFS_NAME
-     */
-    public static String getFileIngestFilterDefsName() {
-        return FILE_INGEST_FILTER_DEFS_NAME;
-    }
-
-    /**
      * Get a list of default FileIngestFilters.
      *
      * @return a list of FilesSets which cover default options.
@@ -153,21 +132,6 @@ public final class FilesSetsManager extends Observable {
     }
 
     /**
-     * Gets a copy of the current ingest file set definitions with the default
-     * values.
-     *
-     * @return A map of FilesSet names to file ingest sets, possibly empty.
-     */
-    public Map<String, FilesSet> getFileIngestFiltersWithDefaults() throws FilesSetsManagerException {
-        Map<String, FilesSet> returnMap = new HashMap<>();
-        for (FilesSet fSet : getStandardFileIngestFilters()) {
-            returnMap.put(fSet.getName(), fSet);
-        }
-        returnMap.putAll(getFileIngestFilters());
-        return returnMap;
-    }
-
-    /**
      * Gets a copy of the current ingest file set definitions.
      *
      * The defaults are not included so that they will not show up in the
@@ -175,9 +139,9 @@ public final class FilesSetsManager extends Observable {
      *
      * @return A map of FilesSet names to file ingest sets, possibly empty.
      */
-    public Map<String, FilesSet> getFileIngestFilters() throws FilesSetsManagerException {
+    public Map<String, FilesSet> getCustomFileIngestFilters() throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            return FilesSetXML.readDefinitionsFile(getFileIngestFilterDefsName(), "");
+            return FilesSetXML.readDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, "");
         }
     }
 
@@ -203,7 +167,7 @@ public final class FilesSetsManager extends Observable {
      * @param filesSets A mapping of file ingest filters names to files sets,
      *                  used to enforce unique files set names.
      */
-    void setFileIngestFilter(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
+    void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
             FilesSetXML.writeDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, filesSets);
         }
@@ -310,7 +274,7 @@ public final class FilesSetsManager extends Observable {
             if (fileSetFile.exists()) {
                 try {
                     try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
-                        FilesSetSettings filesSetsSettings = (FilesSetSettings) in.readObject();
+                        InterestingFilesSetSettings filesSetsSettings = (InterestingFilesSetSettings) in.readObject();
                         return filesSetsSettings.getFilesSets();
                     }
                 } catch (IOException | ClassNotFoundException ex) {
@@ -628,7 +592,7 @@ public final class FilesSetsManager extends Observable {
         // definitions that ship with Autopsy and one for user definitions.
         static boolean writeDefinitionsFile(String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManagerException {
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), fileName).toString()))) {
-                out.writeObject(new FilesSetSettings(interestingFilesSets));
+                out.writeObject(new InterestingFilesSetSettings(interestingFilesSets));
             } catch (IOException ex) {
                 throw new FilesSetsManagerException(String.format("Failed to write settings to %s", fileName), ex);
             }

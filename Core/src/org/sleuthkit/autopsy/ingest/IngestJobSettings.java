@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import org.openide.util.Exceptions;
@@ -353,9 +354,13 @@ public class IngestJobSettings {
             ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, FilesSetsManager.getDefaultFilter().getName());
         }
         try {
-            this.fileIngestFilter = FilesSetsManager.getInstance()
-                    .getFileIngestFiltersWithDefaults()
-                    .get(ModuleSettings.getConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
+            Map<String,FilesSet> fileIngestFilters =  FilesSetsManager.getInstance()
+                    .getCustomFileIngestFilters();
+            for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()){
+                fileIngestFilters.put(fSet.getName(), fSet);
+            }
+            this.fileIngestFilter = fileIngestFilters.get(ModuleSettings.getConfigSetting(
+                    this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY));
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             this.fileIngestFilter = FilesSetsManager.getDefaultFilter();
             LOGGER.log(Level.SEVERE, "Failed to get file ingest filter from .properties file, default filter being used", ex); //NON-NLS

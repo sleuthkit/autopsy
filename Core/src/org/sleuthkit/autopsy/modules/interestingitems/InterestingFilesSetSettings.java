@@ -27,12 +27,12 @@ import java.util.Map;
  *
  * @author oliver
  */
-class FilesSetSettings implements Serializable {
+class InterestingFilesSetSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final Map<String, FilesSet> filesSets;
 
-    FilesSetSettings(Map<String, FilesSet> filesSets) {
+    InterestingFilesSetSettings(Map<String, FilesSet> filesSets) {
         this.filesSets = filesSets;
     }
 

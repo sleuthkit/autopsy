@@ -157,7 +157,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     public void saveSettings() {
         try {
             if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
-                FilesSetsManager.getInstance().setFileIngestFilter(this.filesSets);
+                FilesSetsManager.getInstance().setCustomFileIngestFilters(this.filesSets);
             } else {
                 FilesSetsManager.getInstance().setInterestingFilesSets(this.filesSets);
             }
@@ -186,7 +186,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Get a working copy of the interesting files set definitions and sort
             // by set name.
             if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
-                this.filesSets = new TreeMap<>(FilesSetsManager.getInstance().getFileIngestFilters());
+                this.filesSets = new TreeMap<>(FilesSetsManager.getInstance().getCustomFileIngestFilters());
             } else {
                 this.filesSets = new TreeMap<>(FilesSetsManager.getInstance().getInterestingFilesSets());
             }

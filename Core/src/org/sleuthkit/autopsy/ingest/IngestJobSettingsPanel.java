@@ -26,6 +26,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
@@ -44,7 +45,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
-import org.sleuthkit.autopsy.modules.interestingitems.FileIngestFilterDefsOptionsPanelController;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetPanel;
@@ -404,7 +404,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_pastJobsButtonActionPerformed
 
     private void fileIngestFilterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileIngestFilterComboBoxActionPerformed
-        if (fileIngestFilterComboBox.getSelectedItem().toString().equals(FilesSetPanel.NEW_FILE_INGEST_FILTER)) {
+        if (fileIngestFilterComboBox.getSelectedItem().toString().equals(FilesSetPanel.getCreateNewFileIngestFilterString())) {
             final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
             FilesSetDefsPanel fileIngestFilterPanel;
             fileIngestFilterPanel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS);
@@ -423,12 +423,16 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         } else if (evt.getActionCommand().equals("comboBoxChanged")) {
 
             try {
-                settings.setFileIngestFilter(FilesSetsManager.getInstance()
-                        .getFileIngestFiltersWithDefaults()
+                Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance()
+                        .getCustomFileIngestFilters();
+                for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
+                    fileIngestFilters.put(fSet.getName(), fSet);
+                }
+                settings.setFileIngestFilter(fileIngestFilters
                         .get(fileIngestFilterComboBox.getSelectedItem().toString()));
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
                 settings.setFileIngestFilter(FilesSetsManager.getDefaultFilter());
-                logger.log(Level.SEVERE, "Failed to get file ingest filter from combobox, default filter being used", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Failed to get file ingest filter from combobox selection, default filter being used", ex); //NON-NLS
             }
         }
     }//GEN-LAST:event_fileIngestFilterComboBoxActionPerformed
@@ -448,9 +452,9 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
             nameList.add(fSet.getName());
         }
-        nameList.add(FilesSetPanel.NEW_FILE_INGEST_FILTER);
+        nameList.add(FilesSetPanel.getCreateNewFileIngestFilterString());
         try {
-            for (FilesSet fSet : FilesSetsManager.getInstance().getFileIngestFilters().values()) {
+            for (FilesSet fSet : FilesSetsManager.getInstance().getCustomFileIngestFilters().values()) {
                 nameList.add(fSet.getName());
             }
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
