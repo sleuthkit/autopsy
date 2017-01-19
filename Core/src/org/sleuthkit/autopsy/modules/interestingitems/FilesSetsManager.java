@@ -65,13 +65,13 @@ public final class FilesSetsManager extends Observable {
     private static final Object INTERESTING_FILES_SET_LOCK = new Object();
     private static FilesSetsManager instance;
     private static final FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet(
-            Bundle.FilesSetsManager_AllFilesAndDirectories(), Bundle.FilesSetsManager_AllFilesAndDirectories(), false, true, new HashMap<String, Rule>() {
+            Bundle.FilesSetsManager_allFilesAndDirectories(), Bundle.FilesSetsManager_allFilesAndDirectories(), false, true, new HashMap<String, Rule>() {
         {
-            put(Bundle.FilesSetsManager_AllFilesAndDirectories(),
-                    new Rule(Bundle.FilesSetsManager_AllFilesAndDirectories(), null,
+            put(Bundle.FilesSetsManager_allFilesAndDirectories(),
+                    new Rule(Bundle.FilesSetsManager_allFilesAndDirectories(), null,
                             new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null));
         }
-    }); //WJS-TODO make this an @MESSAGES//NON-NLS
+    });
     private static final FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet(
             Bundle.FilesSetsManager_allFilesDirectoriesAndUnallocated(), Bundle.FilesSetsManager_allFilesDirectoriesAndUnallocated(),
             false, false, new HashMap<String, Rule>() {
@@ -80,7 +80,7 @@ public final class FilesSetsManager extends Observable {
                     new Rule(Bundle.FilesSetsManager_allFilesDirectoriesAndUnallocated(), null,
                             new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null));
         }
-    }); //WJS-TODO make this an @MESSAGES//NON-NLS
+    });
 
     /**
      * Gets the FilesSet definitions manager singleton.
@@ -158,7 +158,8 @@ public final class FilesSetsManager extends Observable {
             if (fileSetFile.exists()) {
                 try {
                     try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
-                        Map<String, FilesSet> filesSetsSettings = (Map<String, FilesSet>) in.readObject();
+                        @SuppressWarnings("unchecked")
+                        Map<String, FilesSet> filesSetsSettings = (Map<String, FilesSet>)in.readObject();
                         return filesSetsSettings;
                     }
                 } catch (IOException | ClassNotFoundException ex) {
