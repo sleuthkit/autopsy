@@ -185,6 +185,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 } 
                 else if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but not latest schema. it should be used in read-only mode and not be upgraded
+                    // ELTODO do we need to display a message to user here?
                     currentVersionIndex = indexToUpgrade;                   
                 }
                 else {
