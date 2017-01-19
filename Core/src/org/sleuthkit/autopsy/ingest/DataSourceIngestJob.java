@@ -333,7 +333,7 @@ final class DataSourceIngestJob {
     }
 
     /**
-     * Gets the Selected File Ingest Filter from settings.
+     * Gets the selected file ingest filter from settings.
      *
      * @return True or false.
      */

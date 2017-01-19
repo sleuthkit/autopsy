@@ -57,8 +57,8 @@ public class IngestJobSettings {
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
-    private static FilesSet ALL_FILES_INGEST_FILTER = new FilesSet("All Files", "All Files", false, true, Collections.emptyMap()); //NON-NLS
-    private static FilesSet ALL_AND_UNALLOC_FILES_INGEST_FILTER = new FilesSet("All Files and Unallocated Space", "All Files and Unallocated Space", false, false, Collections.emptyMap());  //NON-NLS
+    private static FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet("All Files and Directories", "All Files and Directories", false, true, Collections.emptyMap()); //NON-NLS
+    private static FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet("All Files, Directories, and Unallocated Space", "All Files, Directories, and Unallocated Space", false, false, Collections.emptyMap());  //NON-NLS
     private FilesSet fileIngestFilter;
     private final String executionContext;
     private final IngestType ingestType;
@@ -93,7 +93,7 @@ public class IngestJobSettings {
      * @return a list of FilesSets which cover default options.
      */
     public static List<FilesSet> getStandardFileIngestFilters() {
-        return Arrays.asList(ALL_AND_UNALLOC_FILES_INGEST_FILTER, ALL_FILES_INGEST_FILTER);
+        return Arrays.asList(FILES_DIRS_UNALLOC_INGEST_FILTER, FILES_DIRS_INGEST_FILTER);
     }
 
     /**
@@ -352,7 +352,7 @@ public class IngestJobSettings {
          * Restore the last used File Ingest Filter
          */
         if (ModuleSettings.settingExists(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY) == false) {
-            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, IngestJobSettings.ALL_AND_UNALLOC_FILES_INGEST_FILTER.getName());
+            ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, IngestJobSettings.FILES_DIRS_UNALLOC_INGEST_FILTER.getName());
         }
         try {
             this.fileIngestFilter = FilesSetsManager.getInstance()
