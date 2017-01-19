@@ -89,7 +89,6 @@ import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.modules.hashdatabase.SilentProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
@@ -426,7 +425,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     @Messages({
         "Case.creationException.illegalCaseName=Could not create case: case name contains illegal characters.",
-        "# {0} - exception message", "Case.creationException.couldNotCreateCase=Could not create case: {0}"
+        "# {0} - exception message", "Case.creationException.couldNotCreateCase=Could not create case: {0}",
+        "Case.creationMessage.acquiringLocks=Acquiring locks",
+        "Case.progressIndicatorTitle.creatingCase=Creating Case",
+        "Case.progressIndicatorCancelButton.cancelLabel=Cancel"
     })
     public static void createCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
 
@@ -437,7 +439,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         try {
             caseName = sanitizeCaseName(caseDisplayName);
         } catch (IllegalCaseNameException ex) {
-            throw new CaseActionException(Bundle.Case_creationException_iilegalCaseName(), ex);
+            throw new CaseActionException(Bundle.Case_creationException_illegalCaseName(), ex);
         }
         LOGGER.log(Level.INFO, "Attempting to create case {0} (display name = {1}) in directory = {2}", new Object[]{caseName, caseDisplayName, caseDir}); //NON-NLS
 
@@ -447,12 +449,12 @@ public class Case implements SleuthkitCase.ErrorObserver {
          */
         CancelButtonListener listener = new CancelButtonListener();
         ProgressIndicator progressIndicator;
-        if (RuntimeProperties.coreComponentsAreActive()) {
-            progressIndicator = new ModalDialogProgressIndicator("Creating Case", new String[]{"Cancel"}, "Cancel", null, listener); // RJCTODO: bundle message
+        if (RuntimeProperties.runningWithGUI()) {
+            progressIndicator = new ModalDialogProgressIndicator(Bundle.Case_progressIndicatorTitle_creatingCase(), new String[]{Bundle.Case_progressIndicatorCancelButton_cancelLabel()}, Bundle.Case_progressIndicatorCancelButton_cancelLabel(), null, listener);
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
-        progressIndicator.start("Acquiring locks"); // RJCTODO: Bundle message
+        progressIndicator.start(Bundle.Case_creationMessage_acquiringLocks());
 
         /*
          * Creating a case is always done in the same non-UI thread that will be
@@ -486,7 +488,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 }
                 return null;
             });
-            if (RuntimeProperties.coreComponentsAreActive()) {
+            if (RuntimeProperties.runningWithGUI()) {
                 listener.setCaseActionFuture(future);
                 ((ModalDialogProgressIndicator) progressIndicator).setVisible(true);
             }
@@ -509,7 +511,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             }
         } finally {
             progressIndicator.finish("");
-            if (RuntimeProperties.coreComponentsAreActive()) {
+            if (RuntimeProperties.runningWithGUI()) {
                 ((ModalDialogProgressIndicator) progressIndicator).setVisible(false);
             }
         }
@@ -1443,7 +1445,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
          * Check for the presence of the UI and do things that can only be done
          * with user interaction.
          */
-        if (RuntimeProperties.coreComponentsAreActive()) {
+        if (RuntimeProperties.runningWithGUI()) {
             /*
              * If the case database was upgraded for a new schema, notify the
              * user.
@@ -1710,7 +1712,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
             // clear the temp folder when the case is created / opened
             Case.clearTempFolder();
 
-            if (RuntimeProperties.coreComponentsAreActive()) {
+            if (RuntimeProperties.runningWithGUI()) {
                 // enable these menus
                 SwingUtilities.invokeLater(() -> {
                     CallableSystemAction.get(AddImageAction.class
@@ -1746,7 +1748,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
 
         } else { // case is closed
             SwingUtilities.invokeLater(() -> {
-                if (RuntimeProperties.coreComponentsAreActive()) {
+                if (RuntimeProperties.runningWithGUI()) {
 
                     // close all top components first
                     CoreComponentControl.closeCoreWindows();

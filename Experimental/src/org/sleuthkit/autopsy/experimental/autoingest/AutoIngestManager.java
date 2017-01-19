@@ -249,7 +249,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
         jobStatusPublishingExecutor.scheduleAtFixedRate(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
         eventPublisher.addSubscriber(EVENT_LIST, instance);
-        RuntimeProperties.setCoreComponentsActive(false);
+        RuntimeProperties.setRunningWithGUI(false);
         state = State.RUNNING;
         errorState = ErrorState.NONE;
     }

@@ -24,46 +24,55 @@ package org.sleuthkit.autopsy.core;
  */
 public class RuntimeProperties {
 
-    private static boolean coreComponentsActive = true;
-    private static boolean coreComponentsActiveSet = false;
+    private static boolean runningWithGUI = true;
+    private static boolean runningWithGUIFlagHasBeenSet = false;
 
     /**
-     * Sets or unsets a flag indicating whether or not the core Autopsy UI
-     * components and user interactions with those components via menus, message
-     * boxes, NetBeans progress handles, etc., are enabled.
-     * <p>
-     * This flag exists as a mechanism to allow use of Autopsy as a platform
-     * with the core Autopsy user interface disabled, until such time as the
-     * user interface is made separable and optional.
+     * Sets or unsets a flag indicating whether or not the application is
+     * running with a GUI. The flag can only be set once per application
+     * innvocation.
      *
-     * @param coreComponentsActive True or false.
+     * @param runningWithGUI True or false.
+     *
+     * @throws RuntimePropertiesException if the flag has already been set.
      */
-    public synchronized static void setCoreComponentsActive(boolean coreComponentsActive) {
-        if (!coreComponentsActiveSet) {
-            RuntimeProperties.coreComponentsActive = coreComponentsActive;
-            coreComponentsActiveSet = true;
+    public synchronized static void setRunningWithGUI(boolean runningWithGUI) throws RuntimePropertiesException {
+        if (!runningWithGUIFlagHasBeenSet) {
+            RuntimeProperties.runningWithGUI = runningWithGUI;
+            runningWithGUIFlagHasBeenSet = true;
+        } else {
+            throw new RuntimePropertiesException("The runningWithGUI flag has already been set and cannot be changed");
         }
     }
 
     /**
-     * Gets a flag indicating whether or not the core Autopsy UI components and
-     * user interactions with those components via menus, message boxes,
-     * NetBeans progress handles, etc., are enabled.
-     * <p>
-     * This flag exists as a mechanism to allow use of Autopsy as a platform
-     * with the core Autopsy user interface disabled, until such time as the
-     * user interface is made separable and optional.
+     * Gets a flag indicating whether or not the application is running with a
+     * GUI.
      *
      * @return True or false.
      */
-    public synchronized static boolean coreComponentsAreActive() {
-        return coreComponentsActive;
+    public synchronized static boolean runningWithGUI() {
+        return runningWithGUI;
     }
-    
+
     /**
      * Private constructor to prevent creation of instances of this class.
      */
     private RuntimeProperties() {
-        
+
     }
+
+    private final static class RuntimePropertiesException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        private RuntimePropertiesException(String message) {
+            super(message);
+        }
+
+        private RuntimePropertiesException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
+
 }

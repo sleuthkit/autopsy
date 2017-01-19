@@ -536,7 +536,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (RuntimeProperties.coreComponentsAreActive()) {
+        if (RuntimeProperties.runningWithGUI()) {
             String changed = evt.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
                 // When a case is closed, the old value of this property is the 

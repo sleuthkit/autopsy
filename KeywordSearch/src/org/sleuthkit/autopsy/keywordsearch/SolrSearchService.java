@@ -167,7 +167,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             // ELTODO not sure what to do when there are multiple old indexes. grab the first one?
             String oldIndexDir = indexDirs.get(0);
 
-            if (RuntimeProperties.coreComponentsAreActive()) {
+            if (RuntimeProperties.runningWithGUI()) {
                 //pop up a message box to indicate the restrictions on adding additional 
                 //text and performing regex searches and give the user the option to decline the upgrade
                 if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"), 

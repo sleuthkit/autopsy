@@ -16,11 +16,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.test;
 
+import java.util.logging.Level;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
 import org.sleuthkit.autopsy.corecomponentinterfaces.ProgressIndicator;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * An implementation of the Autopsy service interface used for test purposes.
@@ -28,16 +30,18 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.ProgressIndicator;
 @ServiceProvider(service = AutopsyService.class)
 public class TestAutopsyService implements AutopsyService {
 
+    private static final Logger LOGGER = Logger.getLogger(TestAutopsyService.class.getName());
+
     @Override
     public String getServiceName() {
-        return "TestService";
+        return "Test Autopsy Service";
     }
 
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progressIndicator = context.getProgressIndicator();
         try {
-            progressIndicator.start("Doing first task", 100);
+            progressIndicator.start("Doing first task...", 100);
             Thread.sleep(1000L);
             progressIndicator.progress(10);
             Thread.sleep(1000L);
@@ -58,14 +62,19 @@ public class TestAutopsyService implements AutopsyService {
             progressIndicator.progress(10);
             Thread.sleep(1000L);
             progressIndicator.progress(10);
-            progressIndicator.finish("First task completed");
-            progressIndicator.start("Doing second task");
+            progressIndicator.finish("First task completed.");
+            progressIndicator.start("Doing second task...");
             Thread.sleep(10000L);
+            progressIndicator.finish("Second task completed.");
         } catch (InterruptedException ex) {
-            progressIndicator.finish("Cancelling...");
-            try {
-                Thread.sleep(1000L);
-            } catch (InterruptedException ex1) {
+            LOGGER.log(Level.INFO, "Autopsy Test Service caught interrupt while working");
+            if (context.cancelRequested()) {
+                progressIndicator.finish("Cancelling...");
+                try {
+                    Thread.sleep(1000L);
+                } catch (InterruptedException ex1) {
+                    LOGGER.log(Level.INFO, "Autopsy Test Service caught interrupt while working");
+                }
             }
         }
     }

@@ -136,7 +136,7 @@ public class KeywordSearch {
                         server.closeCore();
                     } catch (Exception ex) {
                         logger.log(Level.SEVERE, String.format("Failed to close core for %s", closedCase.getCaseDirectory()), ex); //NON-NLS
-                        if (RuntimeProperties.coreComponentsAreActive()) {
+                        if (RuntimeProperties.runningWithGUI()) {
                             MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
                         }
                     }
@@ -151,7 +151,7 @@ public class KeywordSearch {
                         server.openCoreForCase(openedCase);
                     } catch (Exception ex) {
                         logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", openedCase.getCaseDirectory()), ex); //NON-NLS
-                        if (RuntimeProperties.coreComponentsAreActive()) {
+                        if (RuntimeProperties.runningWithGUI()) {
                             MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
                         }
                     }
