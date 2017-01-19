@@ -739,9 +739,8 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
         }
 
-        String dataDir = new File(index.getIndexPath()).getParent(); // "data dir" is the parent of the index directory // ELTODO make sure this is UNC
         String coreName = theCase.getTextIndexName();
-        return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());
+        return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, index, theCase.getCaseType());
     }
 
     /**
@@ -1088,7 +1087,7 @@ public class Server {
      * Creates/opens a Solr core (index) for a case.
      *
      * @param coreName The core name.
-     * @param dataDir  The data directory for the core.
+     * @param index    The text index object for the core.
      * @param caseType The type of the case (single-user or multi-user) for
      *                 which the core is being created/opened.
      *
@@ -1097,9 +1096,11 @@ public class Server {
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
      */
-    private Core openCore(String coreName, File dataDir, CaseType caseType) throws KeywordSearchModuleException {
+    private Core openCore(String coreName, Index index, CaseType caseType) throws KeywordSearchModuleException {
 
         try {
+            
+            File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory // ELTODO make sure this is UNC
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
             }
@@ -1142,8 +1143,7 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
             }
 
-            // ELTODO set solr and schema version of the core that is being loaded. Make that available via API.
-            return new Core(coreName, caseType);
+            return new Core(coreName, caseType, index);
 
         } catch (SolrServerException | SolrException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
@@ -1208,14 +1208,17 @@ public class Server {
         private final String name;
 
         private final CaseType caseType;
+        
+        private final Index textIndex;
 
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
         private final HttpSolrClient solrCore;
 
-        private Core(String name, CaseType caseType) {
+        private Core(String name, CaseType caseType, Index index) {
             this.name = name;
             this.caseType = caseType;
+            this.textIndex = index;
 
             this.solrCore = new Builder(currentSolrServer.getBaseURL() + "/" + name).build(); //NON-NLS
 
