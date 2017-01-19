@@ -60,8 +60,8 @@ public final class FilesSetsManager extends Observable {
     private static final Object FILE_INGEST_FILTER_LOCK = new Object();
     private static final Object INTERESTING_FILES_SET_LOCK = new Object();
     private static FilesSetsManager instance;
-    private static FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet("All Files and Directories", "All Files and Directories", false, true, Collections.emptyMap()); //NON-NLS
-    private static FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet("All Files, Directories, and Unallocated Space", "All Files, Directories, and Unallocated Space", false, false, Collections.emptyMap()); //NON-NLS
+    private static FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet("All Files and Directories", "All Files and Directories", false, true, Collections.emptyMap()); //WJS-TODO make this an @MESSAGES//NON-NLS
+    private static FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet("All Files, Directories, and Unallocated Space", "All Files, Directories, and Unallocated Space", false, false, Collections.emptyMap()); //WJS-TODO make this an @MESSAGES//NON-NLS
 
     /**
      * Gets the FilesSet definitions manager singleton.
@@ -167,7 +167,7 @@ public final class FilesSetsManager extends Observable {
      *
      * @return A map of FilesSet names to file ingest sets, possibly empty.
      */
-    Map<String, FilesSet> getFileIngestFilters() throws FilesSetsManagerException {
+    public Map<String, FilesSet> getFileIngestFilters() throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
             return FilesSetXML.readDefinitionsFile(getFileIngestFilterDefsName(), "");
         }

@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
@@ -66,12 +67,16 @@ public class IngestJobSettings {
     private final List<String> warnings;
 
     /**
-     * Gets the current FileIngestFilter saved in settings which is represented
-     * by a FilesSet
+     * Gets the last selected FileIngestFilter saved in settings which is represented
+     * by a FilesSet, if the last selected filter is null
+     * the default filter will be returned.
      *
      * @return FilesSet which represents the FileIngestFilter
      */
     FilesSet getFileIngestFilter() {
+        if (fileIngestFilter==null){
+            fileIngestFilter=FilesSetsManager.getDefaultFilter();
+        }
         return fileIngestFilter;
     }
 
@@ -221,10 +226,10 @@ public class IngestJobSettings {
      */
     boolean getProcessUnallocatedSpace() {
         /*
-         * Used to be a simple flag but the processUnallocated checkbox was changed 
-         * to a skip unallocated. This was due to the FileIngestFilters needing 
-         * a default value which did not skip unallocated files. This method 
-         * exists to maintain existing functionality.
+         * Used to be a simple flag but the processUnallocated checkbox was
+         * changed to a skip unallocated. This was due to the FileIngestFilters
+         * needing a default value which did not skip unallocated files. This
+         * method exists to maintain existing functionality.
          */
         boolean processUnallocated = true;
         if (!Objects.isNull(this.fileIngestFilter)) {

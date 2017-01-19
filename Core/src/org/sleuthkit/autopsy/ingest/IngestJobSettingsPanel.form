@@ -268,7 +268,7 @@
     <Component class="javax.swing.JComboBox" name="fileIngestFilterComboBox">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-          <Connection code="new DefaultComboBoxModel&lt;&gt;(controller.getComboBoxContents())" type="code"/>
+          <Connection code="new DefaultComboBoxModel&lt;&gt;(getComboBoxContents())" type="code"/>
         </Property>
       </Properties>
       <Events>

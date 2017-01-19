@@ -45,6 +45,9 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.IngestJobInfoPanel;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.modules.interestingitems.FileIngestFilterDefsOptionsPanelController;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetPanel;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.IngestJobInfo;
 import org.sleuthkit.datamodel.IngestModuleInfo;
@@ -66,7 +69,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     private final List<IngestModuleModel> modules = new ArrayList<>();
     private final IngestModulesTableModel tableModel = new IngestModulesTableModel();
     private IngestModuleModel selectedModule;
-    private FileIngestFilterDefsOptionsPanelController controller;
     private static final Logger logger = Logger.getLogger(IngestJobSettingsPanel.class.getName());
 
     /**
@@ -76,8 +78,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      */
     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
-        this.controller = new FileIngestFilterDefsOptionsPanelController();
-        controller.getComponent(controller.getLookup());
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             modules.add(new IngestModuleModel(moduleTemplate));
         }
@@ -95,8 +95,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
         this.dataSources.addAll(dataSources);
-        this.controller = new FileIngestFilterDefsOptionsPanelController();
-        controller.getComponent(controller.getLookup());
         try {
             SleuthkitCase skCase = Case.getCurrentCase().getSleuthkitCase();
             ingestJobs.addAll(skCase.getIngestJobs());
@@ -312,7 +310,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
         fileIngestFilterLabel.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.fileIngestFilterLabel.text")); // NOI18N
 
-        fileIngestFilterComboBox.setModel(new DefaultComboBoxModel<>(controller.getComboBoxContents()));
+        fileIngestFilterComboBox.setModel(new DefaultComboBoxModel<>(getComboBoxContents()));
         fileIngestFilterComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileIngestFilterComboBoxActionPerformed(evt);
@@ -406,15 +404,20 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_pastJobsButtonActionPerformed
 
     private void fileIngestFilterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fileIngestFilterComboBoxActionPerformed
-        if (fileIngestFilterComboBox.getSelectedItem().toString().equals(FileIngestFilterDefsOptionsPanelController.NEW_FILE_INGEST_FILTER)) {
+        if (fileIngestFilterComboBox.getSelectedItem().toString().equals(FilesSetPanel.NEW_FILE_INGEST_FILTER)) {
             final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
-            dialog.addApplyButtonListener((ActionEvent e) -> {
-                controller.applyChanges();
-                ((IngestModuleGlobalSettingsPanel) controller.getComponent(controller.getLookup())).saveSettings();
-                fileIngestFilterComboBox.setModel(new DefaultComboBoxModel<>(controller.getComboBoxContents()));
-                dialog.close();
-            });
-            dialog.display((IngestModuleGlobalSettingsPanel) controller.getComponent(controller.getLookup()));
+            FilesSetDefsPanel fileIngestFilterPanel;
+            fileIngestFilterPanel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS);
+            fileIngestFilterPanel.load();
+            dialog.addApplyButtonListener(
+                    (ActionEvent e) -> {
+                        fileIngestFilterPanel.store();
+                        fileIngestFilterComboBox.setModel(new DefaultComboBoxModel<>(getComboBoxContents()));
+                        dialog.close();
+                    }
+            );
+            dialog.display(fileIngestFilterPanel);
+
             fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
 
         } else if (evt.getActionCommand().equals("comboBoxChanged")) {
@@ -429,6 +432,32 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             }
         }
     }//GEN-LAST:event_fileIngestFilterComboBoxActionPerformed
+
+    /**
+     * Returns an array which will contain the names of all options which should
+     * exist in the "Run Ingest Modules On:" JCombobox
+     *
+     * Keeping the default File Ingest Filters and the saved one separate allows
+     * the default to always be first elements.
+     *
+     * @return -filterNames an array of all established filter names as well as
+     *         a Create New option
+     */
+    private String[] getComboBoxContents() {
+        ArrayList<String> nameList = new ArrayList<>();
+        for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
+            nameList.add(fSet.getName());
+        }
+        nameList.add(FilesSetPanel.NEW_FILE_INGEST_FILTER);
+        try {
+            for (FilesSet fSet : FilesSetsManager.getInstance().getFileIngestFilters().values()) {
+                nameList.add(fSet.getName());
+            }
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
+            logger.log(Level.SEVERE, "Failed to get user created file ingest filters for combo box, only default available for selection", ex); //NON-NLS
+        }
+        return nameList.toArray(new String[nameList.size()]);
+    }
 
     private void SelectAllModules(boolean set) {
         for (IngestModuleModel module : modules) {

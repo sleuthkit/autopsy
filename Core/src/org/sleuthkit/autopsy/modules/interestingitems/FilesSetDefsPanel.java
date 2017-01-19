@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 /**
  * A panel that allows a user to make interesting item definitions.
  */
-final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     @NbBundle.Messages({
         "FilesSetDefsPanel.bytes=Bytes",
@@ -53,7 +53,7 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
         "FilesSetDefsPanel.loadError=Error loading interesting files sets from file.",
         "FilesSetDefsPanel.saveError=Error saving interesting files sets to file."
     })
-    static enum PANEL_TYPE {
+    public static enum PANEL_TYPE {
         FILE_INGEST_FILTERS,
         INTERESTING_FILE_SETS
 
@@ -78,7 +78,7 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
     /**
      * Constructs an interesting item definitions panel.
      */
-    FilesSetDefsPanel(PANEL_TYPE panelType) {
+    public FilesSetDefsPanel(PANEL_TYPE panelType) {
         this.panelType = panelType;
         this.initComponents();
         this.customInit();
@@ -108,11 +108,6 @@ final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements
             this.skipsUnallocCheckbox.setVisible(false);
 
         }
-    }
-
-    Set<String> getKeys() {
-        load();
-        return filesSets.keySet();
     }
 
     @NbBundle.Messages({"FilesSetDefsPanel.Interesting.Title=Global Interesting Items Settings",

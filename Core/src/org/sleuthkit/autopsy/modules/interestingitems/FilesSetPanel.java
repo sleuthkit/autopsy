@@ -22,6 +22,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TYPE;
 
 /**
@@ -29,6 +30,8 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
  * definitions.
  */
 public class FilesSetPanel extends javax.swing.JPanel {
+
+    public static final String NEW_FILE_INGEST_FILTER = "Create new file ingest filter...";  //WJS-TODO make this an @MESSAGES
 
     @NbBundle.Messages("FilesSetPanel.ingest.title=File Ingest Filter")
     /**
@@ -88,7 +91,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
                     return false;
                 }
             }
-            if (this.nameTextField.getText().equals(FileIngestFilterDefsOptionsPanelController.NEW_FILE_INGEST_FILTER)) {
+            if (this.nameTextField.getText().equals(NEW_FILE_INGEST_FILTER)) {
                 NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                         NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.messages.filesSetsReservedName"),
                         NotifyDescriptor.WARNING_MESSAGE);
