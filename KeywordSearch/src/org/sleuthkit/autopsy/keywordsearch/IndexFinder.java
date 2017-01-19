@@ -153,7 +153,7 @@ class IndexFinder {
                 // if there is no SOLR_HOME:
                 // this will only work for Windows OS
                 if (!PlatformUtil.isWindowsOS()) {
-                    throw new AutopsyService.AutopsyServiceException("ELTODO");
+                    throw new AutopsyService.AutopsyServiceException("Creating a reference config set copy is currently a Windows-only feature");
                 }
                 // config set should be located in "C:/some/directory/AutopsyXYZ/autopsy/solr/solr/configsets/"
                 pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET).toFile();
@@ -163,7 +163,7 @@ class IndexFinder {
                     if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
                         logger.log(Level.WARNING, "Unable to locate KWS config set in order to create a reference copy"); //NON-NLS
                         return;
-                        // ELTODO This is NTH: throw new AutopsyService.AutopsyServiceException("ELTODO");
+                        // ELTODO This is NTH: throw new AutopsyService.AutopsyServiceException("Unable to locate the config set");
                     }
                 }
             }
@@ -296,7 +296,6 @@ class IndexFinder {
     }    
 
     String convertPathToUNC(String indexDir) {
-        // ELTODO do we need to do this when searching for old index?
         if (uncPathUtilities == null) {
             return indexDir;
         }

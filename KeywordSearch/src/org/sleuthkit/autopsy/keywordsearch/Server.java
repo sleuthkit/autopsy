@@ -1100,7 +1100,7 @@ public class Server {
 
         try {
             
-            File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory // ELTODO make sure this is UNC
+            File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
             }
