@@ -136,7 +136,7 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         } else if (!profile.getName().equals(profileNameField.getText())) {
             IngestProfile.renameProfile(profile.getName(), profileNameField.getText());
         }
-        profile = new IngestProfile(profileNameField.getText(), profileDescArea.getText(), profileNameField.getText());
+        profile = new IngestProfile(profileNameField.getText(), profileDescArea.getText(), ingestSettingsPanel.getSettings().getFileIngestFilter().getName());
         IngestProfile.saveProfile(profile);
         ingestSettingsPanel.getSettings().saveAs(profileNameField.getText());
     }

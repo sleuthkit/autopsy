@@ -23,10 +23,9 @@ public class IngestProfileList {
     private static final String PROFILE_FOLDER = "profiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
-    private static final String PROFILE_SELECTED_KEY = "Profile_Selected";
+    private static final String PROFILE_FILTER_KEY = "Profile_Filter";
     List<IngestProfile> profileList = null;
-    List<String> nameList = null;
-    private IngestProfile lastUsedProfile = null;
+    private static final Object PROFILE_LOCK = new Object();
 
     List<IngestProfile> getIngestProfileList() {
         if (profileList == null) {
@@ -35,40 +34,28 @@ public class IngestProfileList {
         return profileList;
     }
 
-    void readFilesFromDirectory() {
+    private void readFilesFromDirectory() {
+        synchronized (PROFILE_LOCK) {
+            File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
+            File[] directoryListing = dir.listFiles();
 
-        File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
-        System.out.println(dir.toString());  //WJS-TODO remove sout
-        File[] directoryListing = dir.listFiles();
-
-        if (directoryListing != null) {
-            profileList = new ArrayList<>();
-            nameList = new ArrayList<>();
-            for (File child : directoryListing) {
-                String name = child.getName().split("\\.")[0];
-                String context = PROFILE_FOLDER + File.separator + name;
-                // name = ModuleSettings.getConfigSetting(context, PROFILE_NAME_KEY);
-                System.out.println("-=-=-=-=-=-" + name);
-                nameList.add(name);
-                String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
-                System.out.println(desc);
-                String selected = ModuleSettings.getConfigSetting(context, PROFILE_SELECTED_KEY);
-                profileList.add(new IngestProfile(name, desc, selected));
+            if (directoryListing != null) {
+                profileList = new ArrayList<>();
+                for (File child : directoryListing) {
+                    String name = child.getName().split("\\.")[0];
+                    String context = PROFILE_FOLDER + File.separator + name;
+                    String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
+                    String fileIngestFilter = ModuleSettings.getConfigSetting(context, PROFILE_FILTER_KEY);
+                    profileList.add(new IngestProfile(name, desc, fileIngestFilter));
+                }
+            } else {
+                profileList = Collections.emptyList();
             }
-        } else {
-            profileList = Collections.emptyList();
         }
     }
 
     void loadProfileList() {
         readFilesFromDirectory();
-        lastUsedProfile = new IngestProfile("lastProfileUsed", "last used description here soon", "lastProfileUsed");
-        //WJS-TODO add saved profile list items to list;
-
-    }
-
-    IngestProfile getLastUsedProfile() {
-        return lastUsedProfile;
     }
 
     void saveProfileList() {
@@ -119,79 +106,75 @@ public class IngestProfileList {
         }
 
         static void deleteProfile(IngestProfile selectedProfile) {
-            try {
-                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, selectedProfile.getName() + ".properties"));
-                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + ".properties"));
-                FileUtils.deleteDirectory(IngestJobSettings.getSavedModuleSettingsFolder(selectedProfile.getName() + File.separator).toFile());
-            } catch (IOException ex) {
-                Exceptions.printStackTrace(ex);
+            synchronized (PROFILE_LOCK) {
+                try {
+                    Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, selectedProfile.getName() + ".properties"));
+                    Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + ".properties"));
+                    FileUtils.deleteDirectory(IngestJobSettings.getSavedModuleSettingsFolder(selectedProfile.getName() + File.separator).toFile());
+                } catch (IOException ex) {
+                    Exceptions.printStackTrace(ex);
+                }
             }
-
         }
 
         static void renameProfile(String oldName, String newName) {
             if (!oldName.equals(newName)) { //if renameProfile was called with the new name being the same as the old name, it is complete already
-                File oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, oldName + ".properties").toFile();
-                File newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, newName + ".properties").toFile();
-                oldFile.renameTo(newFile);
-                oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), oldName + ".properties").toFile();
-                newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), newName + ".properties").toFile();
-                oldFile.renameTo(newFile);
-                oldFile = IngestJobSettings.getSavedModuleSettingsFolder(oldName + File.separator).toFile();
-                newFile = IngestJobSettings.getSavedModuleSettingsFolder(newName + File.separator).toFile();
-                oldFile.renameTo(newFile);
+                synchronized (PROFILE_LOCK) {
+                    File oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, oldName + ".properties").toFile();
+                    File newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, newName + ".properties").toFile();
+                    oldFile.renameTo(newFile);
+                    oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), oldName + ".properties").toFile();
+                    newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), newName + ".properties").toFile();
+                    oldFile.renameTo(newFile);
+                    oldFile = IngestJobSettings.getSavedModuleSettingsFolder(oldName + File.separator).toFile();
+                    newFile = IngestJobSettings.getSavedModuleSettingsFolder(newName + File.separator).toFile();
+                    oldFile.renameTo(newFile);
+                }
             }
-
         }
 
         HashSet<String> getModuleNames(String key) {
-            if (ModuleSettings.settingExists(this.getName(), key) == false) {
-                ModuleSettings.setConfigSetting(this.getName(), key, "");
-            }
-            HashSet<String> moduleNames = new HashSet<>();
-            String modulesSetting = ModuleSettings.getConfigSetting(this.getName(), key);
-            if (!modulesSetting.isEmpty()) {
-                String[] settingNames = modulesSetting.split(", ");
-                for (String name : settingNames) {
-                    // Map some old core module names to the current core module names.
-                    switch (name) {
-                        case "Thunderbird Parser": //NON-NLS
-                        case "MBox Parser": //NON-NLS
-                            moduleNames.add("Email Parser"); //NON-NLS
-                            break;
-                        case "File Extension Mismatch Detection": //NON-NLS
-                            moduleNames.add("Extension Mismatch Detector"); //NON-NLS
-                            break;
-                        case "EWF Verify": //NON-NLS
-                        case "E01 Verify": //NON-NLS
-                            moduleNames.add("E01 Verifier"); //NON-NLS
-                            break;
-                        case "Archive Extractor": //NON-NLS
-                            moduleNames.add("Embedded File Extractor"); //NON-NLS
-                            break;
-                        default:
-                            moduleNames.add(name);
+            synchronized (PROFILE_LOCK) {
+                if (ModuleSettings.settingExists(this.getName(), key) == false) {
+                    ModuleSettings.setConfigSetting(this.getName(), key, "");
+                }
+                HashSet<String> moduleNames = new HashSet<>();
+                String modulesSetting = ModuleSettings.getConfigSetting(this.getName(), key);
+                if (!modulesSetting.isEmpty()) {
+                    String[] settingNames = modulesSetting.split(", ");
+                    for (String name : settingNames) {
+                        // Map some old core module names to the current core module names.
+                        switch (name) {
+                            case "Thunderbird Parser": //NON-NLS
+                            case "MBox Parser": //NON-NLS
+                                moduleNames.add("Email Parser"); //NON-NLS
+                                break;
+                            case "File Extension Mismatch Detection": //NON-NLS
+                                moduleNames.add("Extension Mismatch Detector"); //NON-NLS
+                                break;
+                            case "EWF Verify": //NON-NLS
+                            case "E01 Verify": //NON-NLS
+                                moduleNames.add("E01 Verifier"); //NON-NLS
+                                break;
+                            case "Archive Extractor": //NON-NLS
+                                moduleNames.add("Embedded File Extractor"); //NON-NLS
+                                break;
+                            default:
+                                moduleNames.add(name);
+                        }
                     }
                 }
+                return moduleNames;
             }
-            return moduleNames;
         }
 
-//        FilesSet getFileIngestFilter() {
-//            if (ModuleSettings.settingExists(this.name, key) == false) {
-//                ModuleSettings.setConfigSetting(this.name, key, "");
-//            }
-//            HashSet<String> moduleNames = new HashSet<>();
-//            String modulesSetting = ModuleSettings.getConfigSetting(this.name, key);
-//
-//        }
         static void saveProfile(IngestProfile profile) {
-            System.out.println("==============PNAME===========" + profile.getName());
-            String context = PROFILE_FOLDER + File.separator + profile.getName();
-
-            ModuleSettings.setConfigSetting(context, PROFILE_NAME_KEY, profile.getName());//WJS-TODO write name, desc, context
-            ModuleSettings.setConfigSetting(context, PROFILE_DESC_KEY, profile.getDescription());//WJS-TODO write name, desc, context
-            ModuleSettings.setConfigSetting(context, PROFILE_SELECTED_KEY, profile.getFileIngestFilter());//WJS-TODO write name, desc, context
+            synchronized (PROFILE_LOCK) {
+                String context = PROFILE_FOLDER + File.separator + profile.getName();
+                ModuleSettings.setConfigSetting(context, PROFILE_NAME_KEY, profile.getName());
+                ModuleSettings.setConfigSetting(context, PROFILE_DESC_KEY, profile.getDescription());
+                ModuleSettings.setConfigSetting(context, PROFILE_FILTER_KEY, profile.getFileIngestFilter());
+            }
         }
     }
 

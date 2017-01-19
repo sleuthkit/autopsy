@@ -11,8 +11,11 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
 class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
@@ -157,7 +160,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     .addComponent(fitlerDescLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filterNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGap(0, 0, 0)
                         .addComponent(filterNameText, javax.swing.GroupLayout.PREFERRED_SIZE, 208, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(selectedModulesLabel)
                     .addComponent(profileDescLabel))
@@ -306,6 +309,12 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             IngestProfile selectedProfile = ProfileSettingsPanel.this.profileList.getSelectedValue();
             if (selectedProfile != null) {
                 profileDescArea.setText(selectedProfile.getDescription());
+                filterNameText.setText(selectedProfile.getFileIngestFilter());
+                try {
+                   filterDescArea.setText(FilesSetsManager.getInstance().getFileIngestFiltersWithDefaults().get(selectedProfile.getFileIngestFilter()).getDescription());
+                } catch (FilesSetsManager.FilesSetsManagerException ex) {
+                   filterDescArea.setText("FAILED TO LOAD FILTER");
+                }
                 selectedModulesArea.setText("");
                 for (String moduleName : selectedProfile.getModuleNames(IngestProfile.ENABLED_MODULES_KEY)) {
                     selectedModulesArea.append(moduleName + "\n");// Populate the components that display the properties of the  selectedProfile.getModuleNames(IngestProfile.ENABLED_MODULES_KEY);
