@@ -118,7 +118,7 @@
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="ignoreKnownFilesCheckbox" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="skipsUnallocCheckbox" min="-2" pref="158" max="-2" attributes="0"/>
+                                      <Component id="ingoreUnallocCheckbox" min="-2" pref="158" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="jLabel5" alignment="0" min="-2" max="-2" attributes="0"/>
                                   <Component id="jLabel6" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -203,7 +203,7 @@
                                       <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
                                           <Component id="ignoreKnownFilesCheckbox" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="skipsUnallocCheckbox" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
+                                          <Component id="ingoreUnallocCheckbox" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace type="unrelated" min="-2" max="-2" attributes="0"/>
                                       <Component id="rulesListLabel" min="-2" max="-2" attributes="0"/>
@@ -828,13 +828,13 @@
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
             </Component>
-            <Component class="javax.swing.JCheckBox" name="skipsUnallocCheckbox">
+            <Component class="javax.swing.JCheckBox" name="ingoreUnallocCheckbox">
               <Properties>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetDefsPanel.skipsUnallocCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetDefsPanel.ingoreUnallocCheckbox.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetDefsPanel.skipsUnallocCheckbox.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetDefsPanel.ingoreUnallocCheckbox.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>

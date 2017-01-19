@@ -39,7 +39,8 @@ import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
-import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -60,9 +61,16 @@ public final class FilesSetsManager extends Observable {
     private static final Object FILE_INGEST_FILTER_LOCK = new Object();
     private static final Object INTERESTING_FILES_SET_LOCK = new Object();
     private static FilesSetsManager instance;
-    private static FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet("All Files and Directories", "All Files and Directories", false, true, Collections.emptyMap()); //WJS-TODO make this an @MESSAGES//NON-NLS
-    private static FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet("All Files, Directories, and Unallocated Space", "All Files, Directories, and Unallocated Space", false, false, Collections.emptyMap()); //WJS-TODO make this an @MESSAGES//NON-NLS
-
+    private static final FilesSet FILES_DIRS_INGEST_FILTER = new FilesSet(
+            "All Files and Directories", "All Files and Directories", false, true, new HashMap<String, Rule>(){{
+                put("All Files and Directories",new Rule("All Files and Directories", null ,new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null));
+            }}); //WJS-TODO make this an @MESSAGES//NON-NLS
+    private static final FilesSet FILES_DIRS_UNALLOC_INGEST_FILTER = new FilesSet(
+            "All Files, Directories, and Unallocated Space", "All Files, Directories, and Unallocated Space", 
+            false, false, new HashMap<String, Rule>(){{
+                put("All Files, Directories, and Unallocated Space",new Rule("All Files, Directories, and Unallocated Space", null ,new MetaTypeCondition(MetaTypeCondition.Type.ALL), null, null, null));
+                        }}); //WJS-TODO make this an @MESSAGES//NON-NLS
+  
     /**
      * Gets the FilesSet definitions manager singleton.
      */
@@ -221,7 +229,7 @@ public final class FilesSetsManager extends Observable {
         private static final String RULE_UUID_ATTR = "ruleUUID"; //NON-NLS
         private static final String DESC_ATTR = "description"; //NON-NLS 
         private static final String IGNORE_KNOWN_FILES_ATTR = "ignoreKnown"; //NON-NLS
-        private static final String SKIP_UNALLOCATED_SPACE = "skipUnallocated"; //NON-NLS
+        private static final String IGNORE_UNALLOCATED_SPACE = "ingoreUnallocated"; //NON-NLS
         private static final String TYPE_FILTER_ATTR = "typeFilter"; //NON-NLS
         private static final String PATH_FILTER_ATTR = "pathFilter"; //NON-NLS
         private static final String TYPE_FILTER_VALUE_FILES = "file"; //NON-NLS
@@ -345,10 +353,10 @@ public final class FilesSetsManager extends Observable {
 
             // The file set may or may not skip unallocated space. The default behavior
             // is not to skip it.
-            String skipUnallocated = setElem.getAttribute(FilesSetXML.SKIP_UNALLOCATED_SPACE);
-            boolean skipsUnallocatedSpace = false;
-            if (!skipUnallocated.isEmpty()) {
-                skipsUnallocatedSpace = Boolean.parseBoolean(skipUnallocated);
+            String ignoreUnallocated = setElem.getAttribute(FilesSetXML.IGNORE_UNALLOCATED_SPACE);
+            boolean ignoreUnallocatedSpace = false;
+            if (!ignoreUnallocated.isEmpty()) {
+                ignoreUnallocatedSpace = Boolean.parseBoolean(ignoreUnallocated);
             }
             // Read file name set membership rules, if any.
             FilesSetXML.unnamedLegacyRuleCounter = 1;
@@ -391,7 +399,7 @@ public final class FilesSetsManager extends Observable {
             // Make the files set. Note that degenerate sets with no rules are
             // allowed to facilitate the separation of set definition and rule
             // definitions. A set without rules is simply the empty set.
-            FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, skipsUnallocatedSpace, rules);
+            FilesSet set = new FilesSet(setName, description, ignoreKnownFiles, ignoreUnallocatedSpace, rules);
             filesSets.put(set.getName(), set);
         }
 

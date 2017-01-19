@@ -233,7 +233,7 @@ public class IngestJobSettings {
          */
         boolean processUnallocated = true;
         if (!Objects.isNull(this.fileIngestFilter)) {
-            processUnallocated = (this.fileIngestFilter.getSkipUnallocatedSpace() == false);
+            processUnallocated = (this.fileIngestFilter.ingoresUnallocatedSpace() == false);
         }
         return processUnallocated;
     }

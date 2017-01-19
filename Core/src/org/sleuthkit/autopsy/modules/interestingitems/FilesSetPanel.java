@@ -43,7 +43,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
             ignoreKnownFilesCheckbox.setVisible(false);
             org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ingest.nameLabel.text")); // NOI18N
         } else {
-            skipsUnallocCheckbox.setVisible(false);
+            ignoreUnallocCheckbox.setVisible(false);
         }
     }
 
@@ -57,12 +57,12 @@ public class FilesSetPanel extends javax.swing.JPanel {
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
             ignoreKnownFilesCheckbox.setVisible(false);
         } else {
-            skipsUnallocCheckbox.setVisible(false);
+            ignoreUnallocCheckbox.setVisible(false);
         }
         this.nameTextField.setText(filesSet.getName());
         this.descTextArea.setText(filesSet.getDescription());
         this.ignoreKnownFilesCheckbox.setSelected(filesSet.ignoresKnownFiles());
-        this.skipsUnallocCheckbox.setSelected(filesSet.getSkipUnallocatedSpace());
+        this.ignoreUnallocCheckbox.setSelected(filesSet.ingoresUnallocatedSpace());
     }
 
     /**
@@ -135,8 +135,8 @@ public class FilesSetPanel extends javax.swing.JPanel {
     /**
      *
      */
-    boolean getSkipUnallocatedSpace() {
-        return skipsUnallocCheckbox.isSelected();
+    boolean getFileSetIgnoresUnallocatedSpace() {
+        return ignoreUnallocCheckbox.isSelected();
     }
 
     /**
@@ -154,7 +154,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
         descScrollPanel = new javax.swing.JScrollPane();
         descTextArea = new javax.swing.JTextArea();
         ignoreKnownFilesCheckbox = new javax.swing.JCheckBox();
-        skipsUnallocCheckbox = new javax.swing.JCheckBox();
+        ignoreUnallocCheckbox = new javax.swing.JCheckBox();
 
         org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.interesting.nameLabel.text")); // NOI18N
 
@@ -183,8 +183,8 @@ public class FilesSetPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(ignoreKnownFilesCheckbox, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ignoreKnownFilesCheckbox.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(skipsUnallocCheckbox, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.skipsUnallocCheckbox.text")); // NOI18N
-        skipsUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.skipsUnallocCheckbox.toolTipText")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ignoreUnallocCheckbox, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ignoreUnallocCheckbox.text")); // NOI18N
+        ignoreUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ignoreUnallocCheckbox.toolTipText")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -202,7 +202,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(ignoreKnownFilesCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(skipsUnallocCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(ignoreUnallocCheckbox, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -217,7 +217,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ignoreKnownFilesCheckbox)
-                    .addComponent(skipsUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(ignoreUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -228,8 +228,8 @@ public class FilesSetPanel extends javax.swing.JPanel {
     private javax.swing.JScrollPane descScrollPanel;
     private javax.swing.JTextArea descTextArea;
     private javax.swing.JCheckBox ignoreKnownFilesCheckbox;
+    private javax.swing.JCheckBox ignoreUnallocCheckbox;
     private javax.swing.JLabel nameLabel;
     private javax.swing.JTextField nameTextField;
-    private javax.swing.JCheckBox skipsUnallocCheckbox;
     // End of variables declaration//GEN-END:variables
 }
