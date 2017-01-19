@@ -274,7 +274,7 @@ public final class FilesSetsManager extends Observable {
             if (fileSetFile.exists()) {
                 try {
                     try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
-                        InterestingFilesSetSettings filesSetsSettings = (InterestingFilesSetSettings) in.readObject();
+                        InterestingItemsFilesSetSettings filesSetsSettings = (InterestingItemsFilesSetSettings) in.readObject();
                         return filesSetsSettings.getFilesSets();
                     }
                 } catch (IOException | ClassNotFoundException ex) {
@@ -592,7 +592,7 @@ public final class FilesSetsManager extends Observable {
         // definitions that ship with Autopsy and one for user definitions.
         static boolean writeDefinitionsFile(String fileName, Map<String, FilesSet> interestingFilesSets) throws FilesSetsManagerException {
             try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), fileName).toString()))) {
-                out.writeObject(new InterestingFilesSetSettings(interestingFilesSets));
+                out.writeObject(new InterestingItemsFilesSetSettings(interestingFilesSets));
             } catch (IOException ex) {
                 throw new FilesSetsManagerException(String.format("Failed to write settings to %s", fileName), ex);
             }
