@@ -124,21 +124,19 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
             readBaseChunk();
             baseChunkSizeChars = currentChunk.length();
             readWindow();
-            reader.unread(currentWindow.toString().toCharArray());
+            if (endOfReaderReached) {
+                /* if we have reached the end of the content,we won't make
+                 * another overlapping chunk, so the length of the base chunk
+                 * can be extended                 * to the end. */
+                baseChunkSizeChars = currentChunk.length();
+            } else {
+                reader.unread(currentWindow.toString().toCharArray());
+            }
         } catch (IOException ioEx) {
             ex = ioEx;
         }
-
-        if (endOfReaderReached) {
-            /* if we have reached the end of the content,we won't make another
-             * overlapping chunk, so the base chunk can be extended to the end. */
-            baseChunkSizeChars = currentChunk.length();
-            System.out.println("chunksize: " + baseChunkSizeChars);
-            System.out.println("no window");
-        } else {
-            System.out.println("chunksize: " + baseChunkSizeChars);
-            System.out.println("window size: " + (currentChunk.length() - baseChunkSizeChars));
-        }
+        //add the window text to the current chunk.
+        currentChunk.append(currentWindow);
         //sanitize the text and return a Chunk object, that includes the base chunk length.
         return new Chunk(sanitizeToUTF8(currentChunk), baseChunkSizeChars);
     }
@@ -151,12 +149,9 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     private void readBaseChunk() throws IOException {
         //read the chunk until the minimum base chunk size
         readHelper(MINIMUM_BASE_CHUNK_SIZE, currentChunk);
-        System.out.println("base chunk 1: " + chunkSizeBytes);
 
         //keep reading until the maximum base chunk size or white space is reached.
         readToWhiteSpaceHelper(MAXIMUM_BASE_CHUNK_SIZE, currentChunk);
-        System.out.println("base chunk 2: " + chunkSizeBytes);
-
     }
 
     /**
@@ -166,15 +161,10 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      */
     private void readWindow() throws IOException {
         //read the window, leaving some room to look for white space to break at.
-//        int windowEnd = Math.min(MAX_TOTAL_CHUNK_SIZE - WHITE_SPACE_BUFFER_SIZE, chunkSizeBytes + 1024);
         readHelper(MAX_TOTAL_CHUNK_SIZE - WHITE_SPACE_BUFFER_SIZE, currentWindow);
-        System.out.println("window chunk 1: " + chunkSizeBytes);
 
         //keep reading until the max chunk size, or until whitespace is reached.
-//        windowEnd = Math.min(MAX_TOTAL_CHUNK_SIZE, chunkSizeBytes + 1024);
         readToWhiteSpaceHelper(MAX_TOTAL_CHUNK_SIZE, currentWindow);
-        System.out.println("window chunk 2: " + chunkSizeBytes);
-
     }
 
     private void readHelper(int maxBytes, StringBuilder currentSegment) throws IOException {
@@ -229,7 +219,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 final char ch = tempChunkBuf[0];
                 String chunkSegment;
                 if (Character.isHighSurrogate(ch)) {
-                    charsRead = reader.read(tempChunkBuf, 0, 1);
+                    charsRead = reader.read(tempChunkBuf, 1, 1);
                     if (charsRead == -1) {
                         currentSegment.append(ch);
                         chunkSizeBytes += new Character(ch).toString().getBytes(StandardCharsets.UTF_8).length;
@@ -237,7 +227,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                         endOfReaderReached = true;
                         return;
                     } else {
-                        chunkSegment = new String(new char[]{ch, tempChunkBuf[0]});
+                        chunkSegment = new String(tempChunkBuf, 0, 2);
                     }
                 } else {
                     chunkSegment = new String(tempChunkBuf, 0, 1);
@@ -246,8 +236,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 whitespaceFound = Character.isWhitespace(chunkSegment.codePointAt(0));
                 //add read chars to the chunk and update the length.
                 currentSegment.append(chunkSegment);
-                /* this is wrong once we are in the white space but should have
-                 * no negative effect */
+
                 chunkSizeBytes += chunkSegment.getBytes(StandardCharsets.UTF_8).length;
             }
         }
