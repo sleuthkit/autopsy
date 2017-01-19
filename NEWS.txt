@@ -1,22 +1,16 @@
 ---------------- VERSION 4.3.0  --------------
 Improvements:
-- Creation and analysis (e.g., keyword search) of virtual files for slack 
-space.
-- A preloader in an Android device image does not prevent adding the image as 
-a data source (reading of secondary GPT tables supported).
-- User can add data sources with no file systems or unsupported file systems 
-as "unallocated space image files" for carving, keyword search, etc.
-- File extension mismatch analysis can be configured to check all file types, 
-all file types except text files, or only multimedia and executable files.
-- Column order changes in table views are "sticky" for each type of tree view 
-item.
-- Tree view has new file types by MIME type sub tree.
-- User can bulk add list of keywords to a keyword list.
+- Support for slack space on files (as separate virtual files) to enable keyword searching and other analysis. 
+- Simple mode for the file extension mismatch module that focuses on only only multimedia and executable files to reduce false positives. 
+- New view in tree that shows the MIME types. 
 - Tagged items are highlighted in table views.
-- Toolbar button for Image/Video Gallery
-- New "Experimental" module (activate via Tools, Plugins) with auto ingest 
-feature.
+- Ordering of columns is saved when user changes them. 
+- Support for Android devices with preloaders (uses backup GPT)
+- Support for images with no file systems (all data is added as unallocated space)
+- User can bulk add list of keywords to a keyword list.
+- New "Experimental" module (activate via Tools, Plugins) with auto ingest feature.
 - Assorted bug fixes and minor enhancements. 
+
 
 ---------------- VERSION 4.2.0  --------------
 Improvements:
