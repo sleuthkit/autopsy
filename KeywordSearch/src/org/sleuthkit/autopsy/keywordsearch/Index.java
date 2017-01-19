@@ -23,15 +23,9 @@ package org.sleuthkit.autopsy.keywordsearch;
  */
 class Index {
     
-    private String indexPath;
-    private String schemaVersion;
-    private String solrVersion;
-    
-    Index() {
-        this.indexPath = "";
-        this.solrVersion = "";
-        this.schemaVersion = "";
-    }
+    private final String indexPath;
+    private final String schemaVersion;
+    private final String solrVersion;
     
     Index(String indexPath, String solrVersion, String schemaVersion) {
         this.indexPath = indexPath;
@@ -47,13 +41,6 @@ class Index {
     }
 
     /**
-     * @param indexPath the indexPath to set
-     */
-    void setIndexPath(String indexPath) {
-        this.indexPath = indexPath;
-    }
-
-    /**
      * @return the schemaVersion
      */
     String getSchemaVersion() {
@@ -61,24 +48,10 @@ class Index {
     }
 
     /**
-     * @param schemaVersion the schemaVersion to set
-     */
-    void setSchemaVersion(String schemaVersion) {
-        this.schemaVersion = schemaVersion;
-    }
-
-    /**
      * @return the solrVersion
      */
     String getSolrVersion() {
         return solrVersion;
-    }
-
-    /**
-     * @param solrVersion the solrVersion to set
-     */
-    void setSolrVersion(String solrVersion) {
-        this.solrVersion = solrVersion;
     }
     
     /**

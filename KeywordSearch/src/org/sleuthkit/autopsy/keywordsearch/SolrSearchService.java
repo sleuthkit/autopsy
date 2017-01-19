@@ -168,11 +168,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
-
-            if (!currentVersionIndex.isIndexDataPopulated()) {
+            if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
                 Index indexToUpgrade = IndexFinder.identifyIndexToUpgrade(indexes);
-                if (!indexToUpgrade.isIndexDataPopulated()) {
+                if (indexToUpgrade == null) {
                     // unable to find index that can be upgraded
                     throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
                 }
@@ -181,7 +180,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
                 if (indexSolrVersion > currentSolrVersion) {
                     // oops!
-                    throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
+                    throw new AutopsyServiceException("Unable to find index to use for Case open");
                 } 
                 else if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
@@ -220,9 +219,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     indexUpgrader.performIndexUpgrade(indexToUpgrade, context.getCase().getTempDirectory());
 
                     // set the upgraded index as the index to be used for this case
-                    currentVersionIndex.setIndexPath(newIndexDir);
-                    currentVersionIndex.setSolrVersion(IndexFinder.getCurrentSolrVersion());
-                    currentVersionIndex.setSchemaVersion(indexToUpgrade.getSchemaVersion());
+                    currentVersionIndex = new Index(newIndexDir, IndexFinder.getCurrentSolrVersion(), indexToUpgrade.getSchemaVersion());
                 }
             }
         }
