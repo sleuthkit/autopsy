@@ -184,9 +184,18 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
                 } 
                 else if (indexSolrVersion == currentSolrVersion) {
-                    // latest Solr version but not latest schema. it should be used in read-only mode and not be upgraded
-                    // ELTODO do we need to display a message to user here?
-                    currentVersionIndex = indexToUpgrade;                   
+                    // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
+                    if (RuntimeProperties.coreComponentsAreActive()) {
+                        // pop up a message box to indicate the read-only restrictions.
+                        if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"),
+                                NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
+                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                            // case open declined - throw exception
+                            throw new AutopsyServiceException("Case open declined by user");
+                        }
+                    }
+                    // proceed with case open
+                    currentVersionIndex = indexToUpgrade;
                 }
                 else {
                     // index needs to be upgraded to latest supported version of Solr
