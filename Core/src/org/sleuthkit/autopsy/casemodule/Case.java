@@ -1008,7 +1008,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The shared lock needs to be created on a special thread so it can be released
                     // from the same thread.
                     Future<Void> future = getCurrentCaseExecutor().submit(() -> {
-                        currentCaseLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseDir);
+                        currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseDir);
                         if (null == currentCaseLock) {
                             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
                         }
@@ -1019,7 +1019,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The exclusive lock uses the unique case name.
                     // This lock does not need to be on a special thread since it will be released before
                     // leaving this method
-                    exclusiveResourceLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
+                    exclusiveResourceLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
                             dbName, 12, TimeUnit.HOURS);
                     if (null == exclusiveResourceLock) {
                         throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
@@ -1269,7 +1269,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The shared lock needs to be created on a special thread so it can be released
                     // from the same thread.
                     Future<Void> future = getCurrentCaseExecutor().submit(() -> {
-                        currentCaseLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory());
+                        currentCaseLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory());
                         if (null == currentCaseLock) {
                             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));
                         }
@@ -1280,7 +1280,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     // The exclusive lock uses the unique case name
                     // This lock does not need to be on a special thread since it will be released before
                     // leaving this method
-                    exclusiveResourceLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
+                    exclusiveResourceLock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.RESOURCE, 
                             metadata.getCaseDatabaseName(), 12, TimeUnit.HOURS);
                     if (null == exclusiveResourceLock) {
                         throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.exception.errorLocking", CaseMetadata.getFileExtension()));

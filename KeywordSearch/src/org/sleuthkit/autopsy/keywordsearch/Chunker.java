@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2016 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
@@ -46,20 +59,13 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     private final PushbackReader reader;
     /** The local buffer of characters read from the Reader. */
     private final char[] tempChunkBuf = new char[READ_CHARS_BUFFER_SIZE];
-    /** number of chars read in the most recent read operation. */
-    private int charsRead = 0;
 
-    /** The text of the current chunk (so far). */
-    private StringBuilder currentChunk;
-    private StringBuilder currentWindow;
     /** the size in bytes of the chunk (so far). */
     private int chunkSizeBytes = 0;
-    /** the size in chars of the (base) chunk (so far). */
-    private int baseChunkSizeChars;
-
-    /** has the chunker reached the end of the Reader? If so, there are no more
+    /** Has the chunker reached the end of the Reader? If so, there are no more
      * chunks, and the current chunk does not need a window. */
     private boolean endOfReaderReached = false;
+    /** Store any exception encountered reading from the Reader. */
     private Exception ex;
 
     /**
@@ -68,6 +74,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
      * @param reader The content to chunk.
      */
     Chunker(Reader reader) {
+        //Using MAX_TOTAL_CHUNK_SIZE is safe but probably overkill.
         this.reader = new PushbackReader(reader, MAX_TOTAL_CHUNK_SIZE);
     }
 
@@ -76,10 +83,18 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return this;
     }
 
+    /**
+     * Has this Chunker encountered an exception reading from the Reader.
+     */
     boolean hasException() {
         return ex != null;
     }
 
+    /**
+     * Get the exception encountered reading from the Reader.
+     *
+     * @return The exception, or null if no exception was encountered.
+     */
     public Exception getException() {
         return ex;
     }
@@ -115,24 +130,28 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
             throw new NoSuchElementException("There are no more chunks.");
         }
         //reset state for the next chunk
-        currentChunk = new StringBuilder();
-        currentWindow = new StringBuilder();
+
         chunkSizeBytes = 0;
-        baseChunkSizeChars = 0;
+        int baseChunkSizeChars = 0;
+        StringBuilder currentChunk = new StringBuilder();
+        StringBuilder currentWindow = new StringBuilder();
 
         try {
-            readBaseChunk();
-            baseChunkSizeChars = currentChunk.length();
-            readWindow();
+            currentChunk.append(readBaseChunk());
+            baseChunkSizeChars = currentChunk.length(); //save the base chunk length
+            currentWindow.append(readWindow());
             if (endOfReaderReached) {
                 /* if we have reached the end of the content,we won't make
                  * another overlapping chunk, so the length of the base chunk
-                 * can be extended                 * to the end. */
+                 * can be extended to the end. */
                 baseChunkSizeChars = currentChunk.length();
             } else {
+                /* otherwise we will make another chunk, so unread the window */
                 reader.unread(currentWindow.toString().toCharArray());
             }
-        } catch (IOException ioEx) {
+        } catch (Exception ioEx) {
+            /* Save the exception, which will cause hasNext() to return false,
+             * and break any chunking loop in client code. */
             ex = ioEx;
         }
         //add the window text to the current chunk.
@@ -142,34 +161,46 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     }
 
     /**
-     * Read the base chunk from the reader, and attempt to break at whitespace.
+     * Read the base chunk from the reader, attempting to break at whitespace.
      *
      * @throws IOException if there is a problem reading from the reader.
      */
-    private void readBaseChunk() throws IOException {
+    private StringBuilder readBaseChunk() throws IOException {
+        StringBuilder currentChunk = new StringBuilder();
         //read the chunk until the minimum base chunk size
         readHelper(MINIMUM_BASE_CHUNK_SIZE, currentChunk);
 
         //keep reading until the maximum base chunk size or white space is reached.
         readToWhiteSpaceHelper(MAXIMUM_BASE_CHUNK_SIZE, currentChunk);
+        return currentChunk;
     }
 
     /**
-     * Read the window from the reader, and attempt to break at whitespace.
+     * Read the window from the reader, attempting to break at whitespace.
      *
      * @throws IOException if there is a problem reading from the reader.
      */
-    private void readWindow() throws IOException {
+    private StringBuilder readWindow() throws IOException {
+        StringBuilder currentWindow = new StringBuilder();
         //read the window, leaving some room to look for white space to break at.
         readHelper(MAX_TOTAL_CHUNK_SIZE - WHITE_SPACE_BUFFER_SIZE, currentWindow);
 
         //keep reading until the max chunk size, or until whitespace is reached.
         readToWhiteSpaceHelper(MAX_TOTAL_CHUNK_SIZE, currentWindow);
+        return currentWindow;
     }
 
+    /**
+     * Read until the maxBytes reached, or end of reader.
+     *
+     * @param maxBytes
+     * @param currentSegment
+     *
+     * @throws IOException
+     */
     private void readHelper(int maxBytes, StringBuilder currentSegment) throws IOException {
-
-        //read chars up to maxBytes,  or we reach the end of the reader.
+        int charsRead = 0;
+        //read chars up to maxBytes, or the end of the reader.
         while ((chunkSizeBytes < maxBytes)
                 && (endOfReaderReached == false)) {
             charsRead = reader.read(tempChunkBuf, 0, READ_CHARS_BUFFER_SIZE);
@@ -178,24 +209,25 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 endOfReaderReached = true;
                 return;
             } else {
-                //if the last charcter might be part of a surroate pair, unread it.
+                //if the last char might be part of a surroate pair, unread it.
                 final char lastChar = tempChunkBuf[charsRead - 1];
-                String chunkSegment;
                 if (Character.isHighSurrogate(lastChar)) {
                     charsRead--;
-                    chunkSegment = new String(tempChunkBuf, 0, charsRead);
                     reader.unread(lastChar);
-                } else {
-                    chunkSegment = new String(tempChunkBuf, 0, charsRead);
                 }
 
-                //add read chars to the chunk and update the length.
+                String chunkSegment = new String(tempChunkBuf, 0, charsRead);
+
+                //get the length in bytes of the read chars
                 int segmentSize = chunkSegment.getBytes(StandardCharsets.UTF_8).length;
 
+                //if it will not put us past maxBytes
                 if (chunkSizeBytes + segmentSize < maxBytes) {
+                    //add it to the chunk
                     currentSegment.append(chunkSegment);
                     chunkSizeBytes += segmentSize;
                 } else {
+                    //unread it, and break out of read loop.
                     reader.unread(tempChunkBuf, 0, charsRead);
                     return;
                 }
@@ -203,7 +235,16 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         }
     }
 
+    /**
+     * Read until the maxBytes reached, whitespace, or end of reader.
+     *
+     * @param maxBytes
+     * @param currentSegment
+     *
+     * @throws IOException
+     */
     private void readToWhiteSpaceHelper(int maxBytes, StringBuilder currentSegment) throws IOException {
+        int charsRead = 0;
         boolean whitespaceFound = false;
         //read 1 char at a time up to maxBytes, whitespaceFound, or we reach the end of the reader.
         while ((chunkSizeBytes < maxBytes)
@@ -221,22 +262,23 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 if (Character.isHighSurrogate(ch)) {
                     charsRead = reader.read(tempChunkBuf, 1, 1);
                     if (charsRead == -1) {
+                        //this is the last chunk, so include the unpaired surrogate
                         currentSegment.append(ch);
                         chunkSizeBytes += new Character(ch).toString().getBytes(StandardCharsets.UTF_8).length;
-                        //this is the last chunk
                         endOfReaderReached = true;
                         return;
                     } else {
+                        //use the surrogate pair in place of the unpaired surrogate.
                         chunkSegment = new String(tempChunkBuf, 0, 2);
                     }
                 } else {
+                    //one char
                     chunkSegment = new String(tempChunkBuf, 0, 1);
                 }
                 //check for whitespace.
                 whitespaceFound = Character.isWhitespace(chunkSegment.codePointAt(0));
                 //add read chars to the chunk and update the length.
                 currentSegment.append(chunkSegment);
-
                 chunkSizeBytes += chunkSegment.getBytes(StandardCharsets.UTF_8).length;
             }
         }
@@ -265,5 +307,4 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
             return chunksize;
         }
     }
-
 }

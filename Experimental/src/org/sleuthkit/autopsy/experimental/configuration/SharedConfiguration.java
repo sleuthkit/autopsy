@@ -160,7 +160,7 @@ public class SharedConfiguration {
 
         File remoteFolder = getSharedFolder();
 
-        try (Lock writeLock = CoordinationService.getServiceForNamespace(LOCK_ROOT).tryGetExclusiveLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
+        try (Lock writeLock = CoordinationService.getInstance(LOCK_ROOT).tryGetExclusiveLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
             if (writeLock == null) {
                 logger.log(Level.INFO, String.format("Failed to lock %s - another node is currently uploading or downloading configuration", remoteFolder.getAbsolutePath()));
                 return SharedConfigResult.LOCKED;
@@ -230,7 +230,7 @@ public class SharedConfiguration {
 
         File remoteFolder = getSharedFolder();
 
-        try (Lock readLock = CoordinationService.getServiceForNamespace(LOCK_ROOT).tryGetSharedLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
+        try (Lock readLock = CoordinationService.getInstance(LOCK_ROOT).tryGetSharedLock(CoordinationService.CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
             if (readLock == null) {
                 return SharedConfigResult.LOCKED;
             }
