@@ -150,9 +150,9 @@ public final class FilesSetsManager extends Observable {
             String filePathStr = filePath.toString();
             if (fileSetFile.exists()) {
                 try {
-                    try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
-                        FileIngestFiltersSerializable filesSetsSettings = (FileIngestFiltersSerializable)in.readObject();
-                        return filesSetsSettings.getFilesSets();
+                    try (final NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
+                        Map<String, FilesSet> filesSetsSettings = (Map<String, FilesSet>)in.readObject();
+                        return filesSetsSettings;
                     }
                 } catch (IOException | ClassNotFoundException ex) {
                     throw new FilesSetsManagerException(String.format("Failed to read settings from %s", filePathStr), ex);
@@ -187,35 +187,14 @@ public final class FilesSetsManager extends Observable {
      */
     void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            try (NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME).toString()))) {
-                out.writeObject(new FileIngestFiltersSerializable(filesSets));
+            try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME).toString()))) {
+                out.writeObject(filesSets);
             } catch (IOException ex) {
                 throw new FilesSetsManagerException(String.format("Failed to write settings to %s", FILE_INGEST_FILTER_DEFS_NAME), ex);
             }
         }
     }
-
-    /**
-     * Class for storage of FileIngestFilters as serialized objects.
-     */
-    private class FileIngestFiltersSerializable implements Serializable {
-        
-        
-        private static final long serialVersionUID = 1L;
-        private Map<String, FilesSet> filesSets;
-
-        FileIngestFiltersSerializable(Map<String, FilesSet> filesSets) {
-            this.filesSets = filesSets;
-        }
-
-        /**
-         * @return the filesSets
-         */
-        Map<String, FilesSet> getFilesSets() {
-            return filesSets;
-        }
-    }
-
+    
     public static class FilesSetsManagerException extends Exception {
 
         FilesSetsManagerException() {
