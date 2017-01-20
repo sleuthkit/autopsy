@@ -426,10 +426,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
     @Messages({
         "Case.creationException.illegalCaseName=Could not create case: case name contains illegal characters.",
         "# {0} - exception message", "Case.creationException.couldNotCreateCase=Could not create case: {0}",
-        "Case.creationMessage.acquiringLocks=Acquiring locks",
         "Case.progressIndicatorTitle.creatingCase=Creating Case",
-        "Case.progressIndicatorCancelButton.cancelLabel=Cancel"
-    })
+        "Case.progressIndicatorCancelButton.cancelLabel=Cancel",
+        "Case.progressMessage.preparingToCreateCase=Preparing to create case...",
+        "Case.progressMessage.acquiringLocks=Acquiring locks...",})
     public static void createCurrentCase(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
 
         /*
@@ -454,7 +454,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
-        progressIndicator.start(Bundle.Case_creationMessage_acquiringLocks());
+        progressIndicator.start(Bundle.Case_progressMessage_preparingToCreateCase());
 
         /*
          * Creating a case is always done in the same non-UI thread that will be
@@ -476,7 +476,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                      * exclusive case resources lock to allow only one node at a
                      * time to create/open/upgrade case resources.
                      */
-                    progressIndicator.start("Acquiring locks"); // RJCTODO: Bundle message
+                    progressIndicator.start(Bundle.Case_creationMessage_acquiringLocks());
                     try (CoordinationService.Lock nameLock = Case.acquireExclusiveCaseNameLock(caseName)) {
                         assert (null != nameLock);
                         acquireSharedCaseDirLock(caseDir);
@@ -505,7 +505,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
                  * CaseActionException with a user-friendly error message
                  * suitable for substitution in the error message below.
                  *
-                 * RJCTODO: Add TODO comment referencing JIRA
+                 * TODO (JIRA-2206): Update Case API to throw more specific
+                 * exceptions so that clients can display error messages based
+                 * on exception type rather than having localized log messages.
                  */
                 throw new CaseActionException(Bundle.Case_creationException_couldNotCreateCase(ex.getCause().getMessage()), ex);
             }
@@ -528,7 +530,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
      *                             exception.
      */
     @Messages({
-        "# {0} - exception message", "Case.openException.couldNotOpenCase=Could not open case: {0}"
+        "# {0} - exception message", "Case.openException.couldNotOpenCase=Could not open case: {0}",
+        "Case.progressIndicatorTitle.openingCase=Opening Case",        
+        "Case.progressMessage.preparingToOpenCase=Preparing to open case...",
     })
     public static void openCurrentCase(String caseMetadataFilePath) throws CaseActionException {
         LOGGER.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS
@@ -537,6 +541,19 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.open.exception.checkFile.msg", CaseMetadata.getFileExtension()));
             }
             CaseMetadata metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
+
+            /*
+             * Set up either a visual progress indicator or a logging progress
+             * indicator, depending on whether a GUI is present.
+             */
+            CancelButtonListener listener = new CancelButtonListener();
+            ProgressIndicator progressIndicator;
+            if (RuntimeProperties.runningWithGUI()) {
+                progressIndicator = new ModalDialogProgressIndicator(Bundle.Case_progressIndicatorTitle_openingCase(), new String[]{Bundle.Case_progressIndicatorCancelButton_cancelLabel()}, Bundle.Case_progressIndicatorCancelButton_cancelLabel(), null, listener);
+            } else {
+                progressIndicator = new LoggingProgressIndicator();
+            }
+            progressIndicator.start(Bundle.Case_progressMessage_preparingToOpenCase());
 
             /*
              * Creating a case is always done in the same non-UI thread that
