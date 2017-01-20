@@ -20,10 +20,7 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -101,33 +98,15 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     }
 
     private void populateMimeTypesComboBox() {
-        Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
-            fileTypesCollated.add(mediaType);
-        }
-
-        FileTypeDetector fileTypeDetector;
         try {
-            fileTypeDetector = new FileTypeDetector();
-            List<String> userDefinedFileTypes = fileTypeDetector.getUserDefinedTypes();
-            fileTypesCollated.addAll(userDefinedFileTypes);
-
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            List<String> mimeTypeList = FileTypeDetector.getDetectedTypes();
+            for (String type : mimeTypeList) {
+                mimeTypeComboBox.addItem(type);
+            }
+        } catch (FileTypeDetector.FileTypeDetectorGetTypesException ex) {
             logger.log(Level.SEVERE, "Unable to get user defined file types", ex);
         }
 
-        List<String> toSort = new ArrayList<>(fileTypesCollated);
-        toSort.sort((String string1, String string2) -> {
-            int result = String.CASE_INSENSITIVE_ORDER.compare(string1, string2);
-            if (result == 0) {
-                result = string1.compareTo(string2);
-            }
-            return result;
-        });
-
-        for (String file : toSort) {
-            mimeTypeComboBox.addItem(file);
-        }
         this.setOkButton();
     }
 

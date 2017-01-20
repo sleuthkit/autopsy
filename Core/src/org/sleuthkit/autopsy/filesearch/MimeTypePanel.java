@@ -19,9 +19,7 @@
 package org.sleuthkit.autopsy.filesearch;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -48,31 +46,15 @@ public class MimeTypePanel extends javax.swing.JPanel {
     }
 
     private String[] getMimeTypeArray() {
-        Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
-            fileTypesCollated.add(mediaType);
-        }
-
-        FileTypeDetector fileTypeDetector;
+        List<String> mimeTypeList = new ArrayList<>();
         try {
-            fileTypeDetector = new FileTypeDetector();
-            List<String> userDefinedFileTypes = fileTypeDetector.getUserDefinedTypes();
-            fileTypesCollated.addAll(userDefinedFileTypes);
-
-        } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
+            mimeTypeList = FileTypeDetector.getDetectedTypes();
+        } catch (FileTypeDetector.FileTypeDetectorGetTypesException ex) {
             logger.log(Level.SEVERE, "Unable to get user defined file types", ex);
         }
 
-        List<String> toSort = new ArrayList<>(fileTypesCollated);
-        toSort.sort((String string1, String string2) -> {
-            int result = String.CASE_INSENSITIVE_ORDER.compare(string1, string2);
-            if (result == 0) {
-                result = string1.compareTo(string2);
-            }
-            return result;
-        });
-        String[] mimeTypeArray = new String[toSort.size()];
-        return toSort.toArray(mimeTypeArray);
+        String[] mimeTypeArray = new String[mimeTypeList.size()];
+        return mimeTypeList.toArray(mimeTypeArray);
     }
 
     List<String> getMimeTypesSelected() {
