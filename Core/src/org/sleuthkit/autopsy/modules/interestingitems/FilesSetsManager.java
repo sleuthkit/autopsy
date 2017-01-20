@@ -151,6 +151,7 @@ public final class FilesSetsManager extends Observable {
             if (fileSetFile.exists()) {
                 try {
                     try (final NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
+                        @SuppressWarnings("unchecked")
                         Map<String, FilesSet> filesSetsSettings = (Map<String, FilesSet>)in.readObject();
                         return filesSetsSettings;
                     }
