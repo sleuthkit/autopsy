@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
-import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskData;
 
@@ -43,27 +42,29 @@ public final class FilesSet implements Serializable {
     private final String name;
     private final String description;
     private final boolean ignoreKnownFiles;
-    private final boolean skipUnallocatedSpace;
+    private final boolean ignoreUnallocatedSpace;
     private final Map<String, Rule> rules = new HashMap<>();
 
     /**
      * Constructs an interesting files set.
      *
-     * @param name             The name of the set.
-     * @param description      A description of the set, may be null.
-     * @param ignoreKnownFiles Whether or not to exclude known files from the
-     *                         set.
-     * @param rules            The rules that define the set. May be null, but a
-     *                         set with no rules is the empty set.
+     * @param name                   The name of the set.
+     * @param description            A description of the set, may be null.
+     * @param ignoreKnownFiles       Whether or not to exclude known files from
+     *                               the set.
+     * @param ignoreUnallocatedSpace Whether or not to exclude unallocated space
+     *                               from the set.
+     * @param rules                  The rules that define the set. May be null,
+     *                               but a set with no rules is the empty set.
      */
-    public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean skipUnallocatedSpace, Map<String, Rule> rules) {
+    public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean ignoreUnallocatedSpace, Map<String, Rule> rules) {
         if ((name == null) || (name.isEmpty())) {
             throw new IllegalArgumentException("Interesting files set name cannot be null or empty");
         }
         this.name = name;
         this.description = (description != null ? description : "");
         this.ignoreKnownFiles = ignoreKnownFiles;
-        this.skipUnallocatedSpace = skipUnallocatedSpace;
+        this.ignoreUnallocatedSpace = ignoreUnallocatedSpace;
         if (rules != null) {
             this.rules.putAll(rules);
         }
@@ -106,8 +107,8 @@ public final class FilesSet implements Serializable {
      * @return True if unallocated space should be processed, false if it should
      *         not be.
      */
-    public boolean getSkipUnallocatedSpace() {
-        return this.skipUnallocatedSpace;
+    public boolean ingoresUnallocatedSpace() {
+        return this.ignoreUnallocatedSpace;
     }
 
     /**
@@ -132,19 +133,13 @@ public final class FilesSet implements Serializable {
             return null;
         }
 
-        if ((this.skipUnallocatedSpace)
+        if ((this.ignoreUnallocatedSpace)
                 && (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                 || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
                 || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
             return null;
         }
-        //default filters have no rules and they need to pass this test,
-        //however a regular FilesSet with no rules should not pass any files
-        for (FilesSet defaultFilter : IngestJobSettings.getStandardFileIngestFilters()) {
-            if (name.equals(defaultFilter.getName())) {
-                return defaultFilter.getName();
-            }
-        }
+
         for (Rule rule : rules.values()) {
             if (rule.isSatisfied(file)) {
                 return rule.getName();
@@ -191,9 +186,6 @@ public final class FilesSet implements Serializable {
             this.uuid = UUID.randomUUID().toString();
             if (metaTypeCondition == null) {
                 throw new IllegalArgumentException("Interesting files set rule meta-type condition cannot be null");
-            }
-            if (pathCondition == null && fileNameCondition == null && mimeTypeCondition == null && fileSizeCondition == null) {
-                throw new IllegalArgumentException("Must have at least one condition on rule.");
             }
 
             this.ruleName = ruleName;

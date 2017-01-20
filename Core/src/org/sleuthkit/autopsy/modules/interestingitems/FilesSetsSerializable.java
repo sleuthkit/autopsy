@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,17 +22,16 @@ import java.io.Serializable;
 import java.util.Map;
 
 /**
- * A map of FilesSets for saving all the settings in FilesSetsManager in one
- * item.
- *
- * @author oliver
+ * Class for wrapping a map which stores FilesSets as values with a String key.
  */
-class FilesSetSettings implements Serializable {
+class FilesSetsSerializable implements Serializable {
 
+    
     private static final long serialVersionUID = 1L;
+    //By wrapping the map in this class we avoid warnings for unchecked casting when serializing
     private final Map<String, FilesSet> filesSets;
 
-    FilesSetSettings(Map<String, FilesSet> filesSets) {
+    FilesSetsSerializable(Map<String, FilesSet> filesSets) {
         this.filesSets = filesSets;
     }
 

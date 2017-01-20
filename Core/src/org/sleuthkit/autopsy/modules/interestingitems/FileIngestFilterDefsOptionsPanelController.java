@@ -21,14 +21,12 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 
 /**
  * Class for creating an FilesSetDefsPanel which will be used for configuring
@@ -39,7 +37,6 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
     private FilesSetDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
-    public final static String NEW_FILE_INGEST_FILTER = "Create new file ingest filter...";
     private static final Logger LOGGER = Logger.getLogger(FileIngestFilterDefsOptionsPanelController.class.getName());
 
     /**
@@ -51,27 +48,6 @@ public final class FileIngestFilterDefsOptionsPanelController extends OptionsPan
         changed = false;
     }
 
-    /**
-     * Returns an array which will contain the names of all options which should
-     * exist in the "Run Ingest Modules On:" JCombobox
-     *
-     * Keeping the default File Ingest Filters and the saved one seperate allows
-     * the default to always be first elements in
-     *
-     * @return -filterNames an array of all established filter names as well as
-     *         a Create New option
-     */
-    public String[] getComboBoxContents() {
-        ArrayList<String> nameList = new ArrayList<>();
-        for (FilesSet fSet : IngestJobSettings.getStandardFileIngestFilters()) {
-            nameList.add(fSet.getName());
-        }
-        nameList.add(NEW_FILE_INGEST_FILTER);
-        if (!(panel == null)) {
-            nameList.addAll(panel.getKeys());
-        }
-        return nameList.toArray(new String[nameList.size()]);
-    }
 
     /**
      * This method is called when both the Ok and Apply buttons are pressed. It

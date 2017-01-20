@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,8 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  * Options panel that allow users to set application preferences.
  */
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     AutopsyOptionsPanel() {
         initComponents();
