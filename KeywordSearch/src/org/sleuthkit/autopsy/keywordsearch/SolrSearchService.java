@@ -214,13 +214,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
                     String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade);
 
-                    // upgrade the existing index to the latest supported Solr version
-                    IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    indexUpgrader.performIndexUpgrade(indexToUpgrade, context.getCase().getTempDirectory());
-
-                    // set the upgraded index as the index to be used for this case
+                    // create new Index object to be used as the index for this case
                     currentVersionIndex = new Index(newIndexDir, IndexFinder.getCurrentSolrVersion(), indexToUpgrade.getSchemaVersion());
                     currentVersionIndex.setNewIndex(true);
+
+                    // upgrade the existing index to the latest supported Solr version
+                    IndexUpgrader indexUpgrader = new IndexUpgrader();
+                    indexUpgrader.performIndexUpgrade(currentVersionIndex, context.getCase().getTempDirectory());
                 }
             }
         }
