@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -151,9 +150,8 @@ public final class FilesSetsManager extends Observable {
             if (fileSetFile.exists()) {
                 try {
                     try (final NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, FilesSet> filesSetsSettings = (Map<String, FilesSet>)in.readObject();
-                        return filesSetsSettings;
+                        FilesSetsSerializable filesSetsSettings = (FilesSetsSerializable)in.readObject();
+                        return filesSetsSettings.getFilesSets();
                     }
                 } catch (IOException | ClassNotFoundException ex) {
                     throw new FilesSetsManagerException(String.format("Failed to read settings from %s", filePathStr), ex);
@@ -189,7 +187,7 @@ public final class FilesSetsManager extends Observable {
     void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
             try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME).toString()))) {
-                out.writeObject(filesSets);
+                out.writeObject(new FilesSetsSerializable(filesSets));
             } catch (IOException ex) {
                 throw new FilesSetsManagerException(String.format("Failed to write settings to %s", FILE_INGEST_FILTER_DEFS_NAME), ex);
             }
@@ -214,5 +212,4 @@ public final class FilesSetsManager extends Observable {
             super(cause);
         }
     }
-
 }
