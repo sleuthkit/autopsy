@@ -55,16 +55,6 @@ class Index {
     String getSolrVersion() {
         return solrVersion;
     }
-    
-    /**
-     * @param true if all Index fields are set, false otherwise
-     */
-    boolean isIndexDataPopulated() {
-        if (!this.indexPath.isEmpty() && !this.solrVersion.isEmpty() && !this.schemaVersion.isEmpty()) {
-            return true;
-        }
-        return false;
-    }
 
     /**
      * @return the newIndex
