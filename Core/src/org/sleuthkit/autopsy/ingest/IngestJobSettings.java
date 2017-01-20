@@ -157,8 +157,14 @@ public class IngestJobSettings {
         this.store();
     }
 
-    public void saveAs(String executionContext) {
+    /**
+     * Saves the settings with a new context name removing the old profile folder
+     * 
+     * @param executionContext will be used to name the new folder for storing the settings
+     */
+    void saveAs(String executionContext) {
         this.executionContext = executionContext;
+        this.createSavedModuleSettingsFolder();
         this.store();
     }
     

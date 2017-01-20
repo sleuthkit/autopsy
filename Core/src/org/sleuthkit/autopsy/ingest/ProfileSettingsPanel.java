@@ -6,12 +6,12 @@
 package org.sleuthkit.autopsy.ingest;
 
 //WJS-TODO hook up all labels and fields to bundle properties instead of plain text
+import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
@@ -19,6 +19,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
 class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
+    
     private final DefaultListModel<IngestProfile> profilesListModel = new DefaultListModel<>();
 
     /**
@@ -311,9 +312,13 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                 profileDescArea.setText(selectedProfile.getDescription());
                 filterNameText.setText(selectedProfile.getFileIngestFilter());
                 try {
-                   filterDescArea.setText(FilesSetsManager.getInstance().getFileIngestFiltersWithDefaults().get(selectedProfile.getFileIngestFilter()).getDescription());
+                    Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance().getCustomFileIngestFilters();
+                    for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
+                        fileIngestFilters.put(fSet.getName(), fSet);
+                    }
+                    filterDescArea.setText(fileIngestFilters.get(selectedProfile.getFileIngestFilter()).getDescription());
                 } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                   filterDescArea.setText("FAILED TO LOAD FILTER");
+                    filterDescArea.setText("FAILED TO LOAD FILTER");
                 }
                 selectedModulesArea.setText("");
                 for (String moduleName : selectedProfile.getModuleNames(IngestProfile.ENABLED_MODULES_KEY)) {
