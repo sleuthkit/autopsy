@@ -191,8 +191,7 @@ public class Server {
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
-    private UNCPathUtilities uncPathUtilities = null;
-    private static final String SOLR = "solr";
+   private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
 
     public enum CORE_EVT_STATES {
@@ -260,7 +259,6 @@ public class Server {
             }
         }
         currentCoreLock = new ReentrantReadWriteLock(true);
-        uncPathUtilities = new UNCPathUtilities();
 
         logger.log(Level.INFO, "Created Server instance using Java at {0}", javaHome); //NON-NLS
     }
