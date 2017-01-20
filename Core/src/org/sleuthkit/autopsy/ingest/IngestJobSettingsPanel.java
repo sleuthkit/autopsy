@@ -452,7 +452,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
             nameList.add(fSet.getName());
         }
-        nameList.add(FilesSetPanel.getCreateNewFileIngestFilterString());
         try {
             for (FilesSet fSet : FilesSetsManager.getInstance().getCustomFileIngestFilters().values()) {
                 nameList.add(fSet.getName());
@@ -460,6 +459,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             logger.log(Level.SEVERE, "Failed to get user created file ingest filters for combo box, only default available for selection", ex); //NON-NLS
         }
+        nameList.add(FilesSetPanel.getCreateNewFileIngestFilterString());
         return nameList.toArray(new String[nameList.size()]);
     }
 
