@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,19 +26,26 @@ import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(
-        categoryName = "#OptionsCategory_Name_InterestingItemDefinitions",
-        iconBase = "org/sleuthkit/autopsy/images/interesting_item_32x32.png",
-        keywords = "#OptionsCategory_Keywords_InterestingItemDefinitions",
-        keywordsCategory = "InterestingItemDefinitions",
+        categoryName = "#OptionsCategory_Name_FileIngestFilterDefinitions",
+        iconBase = "org/sleuthkit/autopsy/images/file_ingest_filter32x32.png",
+        keywords = "#OptionsCategory_Keywords_FileIngestFilterDefinitions",
+        keywordsCategory = "FileIngestFilterDefinitions",
         position = 7
 )
-public final class InterestingItemDefsOptionsPanelController extends OptionsPanelController {
+
+/**
+ * Class for creating an FilesSetDefsPanel which will be used for configuring
+ * the FileIngestFilter.
+ */
+public final class FileIngestFilterDefsOptionsPanelController extends OptionsPanelController {
 
     private FilesSetDefsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
+    private static final Logger LOGGER = Logger.getLogger(FileIngestFilterDefsOptionsPanelController.class.getName());
 
     /**
      * Component should load its data here.
@@ -48,6 +55,7 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
         getPanel().load();
         changed = false;
     }
+
 
     /**
      * This method is called when both the Ok and Apply buttons are pressed. It
@@ -113,9 +121,16 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
         pcs.removePropertyChangeListener(l);
     }
 
+    /**
+     * Creates an interestingItemsDefPanel that will be labeled to indicate it
+     * is for File Ingest Filter settings
+     *
+     * @return an FilesSetDefsPanel which has text and fields modified to
+     *         indicate it is for File Ingest Filtering.
+     */
     private FilesSetDefsPanel getPanel() {
         if (panel == null) {
-            panel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.INTERESTING_FILE_SETS);
+            panel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS);
             panel.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override
                 public void propertyChange(PropertyChangeEvent evt) {

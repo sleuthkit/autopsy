@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
@@ -70,7 +69,7 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
 
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        InterestingItemDefsPanel panel = new InterestingItemDefsPanel();
+        FilesSetDefsPanel panel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.INTERESTING_FILE_SETS);
         panel.load();
         return panel;
     }
@@ -84,10 +83,10 @@ final public class InterestingItemsIngestModuleFactory extends IngestModuleFacto
         // Doing so also keeps the serialization simple.
         List<String> enabledFilesSetNames = new ArrayList<>();
         try {
-            for (String name : InterestingItemDefsManager.getInstance().getInterestingFilesSets().keySet()) {
+            for (String name : FilesSetsManager.getInstance().getInterestingFilesSets().keySet()) {
                 enabledFilesSetNames.add(name);
             }
-        } catch (InterestingItemDefsManager.InterestingItemDefsManagerException ex) {
+        } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.InterestingItemsIngestModuleFactory_defaultSettingsError());
         }
         return new FilesIdentifierIngestJobSettings(enabledFilesSetNames);

@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * keyword was found and the file available to clients. Artifact keyword hits
  * also make the artifact available to clients.
  */
-class KeywordHit {
+class KeywordHit implements Comparable<KeywordHit> {
 
     private final String solrDocumentId;
     private final long solrObjectId;
@@ -150,4 +150,23 @@ class KeywordHit {
         return hash;
     }
 
+    @Override
+    public int compareTo(KeywordHit o) {
+        if (this.solrObjectId < o.solrObjectId) {
+            // Out object id is less than the other object id
+            return -1;
+        } else if (this.solrObjectId == o.solrObjectId) {
+            // Hits have same object id
+            if (this.chunkId < o.chunkId) {
+                // Our chunk id is lower than the other chunk id
+                return -1;
+            } else {
+                // Our chunk id is either greater than or equal to the other chunk id
+                return this.chunkId == o.chunkId ? 0 : 1;
+            }
+        } else {
+            // Our object id is greater than the other object id
+            return 1;
+        }
+    }
 }
