@@ -1355,40 +1355,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
 
         /*
-         * Create a unique keyword search index name, and create a standard
-         * (single-user) or unique (multi-user) case database name.
-         *
-         * TODO (JIRA-2207): The Case class should not be responsible for
-         * creating and storing (in the case metadata) unique text index names
-         * for Autopsy services. The SolrSearchService, for example, should
-         * handle this internally and deletion of Solr cores when a case is
-         * deleted should be refactored out of the AutoIngestManager.
+         * Create the case database.
          */
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
-        String indexName = caseName + "_" + dateFormat.format(date);
         String dbName = null;
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
-            dbName = indexName;
+            dbName = caseName + "_" + dateFormat.format(date);
         }
-
-        /*
-         * Create the case metadata (.aut) file.
-         *
-         * TODO (JIRA-2207): See above.
-         */
-        CaseMetadata metadata;
-        try {
-            metadata = new CaseMetadata(caseDir, caseType, caseName, caseDisplayName, caseNumber, examiner, dbName, indexName);
-        } catch (CaseMetadataException ex) {
-            throw new CaseActionException(Bundle.Case_creationException_couldNotCreateMetadataFile(), ex);
-        }
-
-        /*
-         * Create the case database.
-         */
         SleuthkitCase db = null;
         try {
             if (caseType == CaseType.SINGLE_USER_CASE) {
@@ -1413,6 +1389,16 @@ public class Case implements SleuthkitCase.ErrorObserver {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex); // RJCTODO
         }
 
+        /*
+         * Create the case metadata (.aut) file.
+         */
+        CaseMetadata metadata;
+        try {
+            metadata = new CaseMetadata(caseDir, caseType, caseName, caseDisplayName, caseNumber, examiner, dbName);
+        } catch (CaseMetadataException ex) {
+            throw new CaseActionException(Bundle.Case_creationException_couldNotCreateMetadataFile(), ex);
+        }
+        
         /*
          * Create the case and make it the current case.
          */

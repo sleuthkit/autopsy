@@ -52,7 +52,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
-    private static final String SERVICE_NAME = "Solr Keyword Search Service";
 
     ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
@@ -165,14 +164,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         if (indexes.isEmpty()) {
             // new case that doesn't have an existing index. create new index folder
             currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
+            currentVersionIndex.setNewIndex(true);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
-
-            if (!currentVersionIndex.isIndexDataPopulated()) {
+            if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
                 Index indexToUpgrade = IndexFinder.identifyIndexToUpgrade(indexes);
-                if (!indexToUpgrade.isIndexDataPopulated()) {
+                if (indexToUpgrade == null) {
                     // unable to find index that can be upgraded
                     throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
                 }
@@ -181,7 +180,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
                 if (indexSolrVersion > currentSolrVersion) {
                     // oops!
-                    throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
+                    throw new AutopsyServiceException("Unable to find index to use for Case open");
                 } 
                 else if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
@@ -217,12 +216,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    indexUpgrader.performIndexUpgrade(indexToUpgrade, context.getCase().getTempDirectory());
+                    indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
 
                     // set the upgraded index as the index to be used for this case
-                    currentVersionIndex.setIndexPath(newIndexDir);
-                    currentVersionIndex.setSolrVersion(IndexFinder.getCurrentSolrVersion());
-                    currentVersionIndex.setSchemaVersion(indexToUpgrade.getSchemaVersion());
+                    currentVersionIndex = new Index(newIndexDir, IndexFinder.getCurrentSolrVersion(), indexToUpgrade.getSchemaVersion());
+                    currentVersionIndex.setNewIndex(true);
                 }
             }
         }
@@ -236,9 +234,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
             }
         }
-
-        // ELTODO execute a test query
-        // ELTODO if failed, close the upgraded index?
     }
 
     /**
@@ -273,6 +268,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
     @Override
     public String getServiceName() {
-        return SERVICE_NAME;
+        return NbBundle.getMessage(this.getClass(), "SolrSearchService.ServiceName");
     }
 }

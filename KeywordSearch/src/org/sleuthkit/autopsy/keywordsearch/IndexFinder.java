@@ -73,7 +73,7 @@ class IndexFinder {
                 return index;
             }
         }
-        return new Index();
+        return null;
     }
     
     static Index createLatestVersionIndexDir(Case theCase) {
@@ -91,7 +91,7 @@ class IndexFinder {
             X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
             X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
          */
-        Index bestCandidateIndex = new Index();
+        Index bestCandidateIndex = null;
         double solrVerFound = 0.0;
         double schemaVerFound = 0.0;
         for (Index index : allIndexes) {

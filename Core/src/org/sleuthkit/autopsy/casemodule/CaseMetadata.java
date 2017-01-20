@@ -106,12 +106,11 @@ public final class CaseMetadata {
      * @param caseDatabase      For a single-user case, the full path to the
      *                          case database file. For a multi-user case, the
      *                          case database name.
-     * @param caseTextIndexName The text index name.
      *
      * @throws CaseMetadataException If the new case metadata file cannot be
      *                               created.
      */
-    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseDisplayName, String caseNumber, String examiner, String caseDatabase, String caseTextIndexName) throws CaseMetadataException {
+    CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseDisplayName, String caseNumber, String examiner, String caseDatabase) throws CaseMetadataException {
         metadataFilePath = Paths.get(caseDirectory, caseName + FILE_EXTENSION);
         this.caseType = caseType;
         this.caseName = caseName;
@@ -119,7 +118,6 @@ public final class CaseMetadata {
         this.caseNumber = caseNumber;
         this.examiner = examiner;
         this.caseDatabase = caseDatabase;
-        this.textIndexName = caseTextIndexName;
         createdByVersion = Version.getVersion();
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         writeToFile();
@@ -193,6 +191,22 @@ public final class CaseMetadata {
             throw ex;
         }
     }
+    
+    /**
+     * Sets the text index name.
+     *
+     * @param caseTextIndexName The text index name.
+     */
+    void setTextIndexName(String caseTextIndexName) throws CaseMetadataException {
+        String oldIndexName = caseTextIndexName;
+        this.textIndexName = caseTextIndexName;
+        try {
+            writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.textIndexName = oldIndexName;
+            throw ex;
+        }
+    }    
 
     /**
      * Gets the case display name.
