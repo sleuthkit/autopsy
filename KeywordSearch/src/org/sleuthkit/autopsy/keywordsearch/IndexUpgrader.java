@@ -44,10 +44,8 @@ class IndexUpgrader {
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
     
-    void performIndexUpgrade(Index indexToUpgrade, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
+    void performIndexUpgrade(String newIndexDir, Index indexToUpgrade, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
         // ELTODO Check for cancellation at whatever points are feasible
-
-        String newIndexDir = indexToUpgrade.getIndexPath();
 
         // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solrX_schema_Y/index
         File tmpDir = Paths.get(tempResultsDir, "IndexUpgrade").toFile(); //NON-NLS
