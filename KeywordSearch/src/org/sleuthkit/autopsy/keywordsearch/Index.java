@@ -23,34 +23,23 @@ package org.sleuthkit.autopsy.keywordsearch;
  */
 class Index {
     
-    private String indexPath;
-    private String schemaVersion;
-    private String solrVersion;
-    
-    Index() {
-        this.indexPath = "";
-        this.solrVersion = "";
-        this.schemaVersion = "";
-    }
+    private final String indexPath;
+    private final String schemaVersion;
+    private final String solrVersion;
+    private boolean newIndex;
     
     Index(String indexPath, String solrVersion, String schemaVersion) {
         this.indexPath = indexPath;
         this.solrVersion = solrVersion;
         this.schemaVersion = schemaVersion;
-    }
+        newIndex = false;
+    }   
 
     /**
      * @return the indexPath
      */
     String getIndexPath() {
         return indexPath;
-    }
-
-    /**
-     * @param indexPath the indexPath to set
-     */
-    void setIndexPath(String indexPath) {
-        this.indexPath = indexPath;
     }
 
     /**
@@ -61,13 +50,6 @@ class Index {
     }
 
     /**
-     * @param schemaVersion the schemaVersion to set
-     */
-    void setSchemaVersion(String schemaVersion) {
-        this.schemaVersion = schemaVersion;
-    }
-
-    /**
      * @return the solrVersion
      */
     String getSolrVersion() {
@@ -75,19 +57,16 @@ class Index {
     }
 
     /**
-     * @param solrVersion the solrVersion to set
+     * @return the newIndex
      */
-    void setSolrVersion(String solrVersion) {
-        this.solrVersion = solrVersion;
+    boolean isNewIndex() {
+        return newIndex;
     }
-    
+
     /**
-     * @param true if all Index fields are set, false otherwise
+     * @param newIndex the newIndex to set
      */
-    boolean isIndexDataPopulated() {
-        if (!this.indexPath.isEmpty() && !this.solrVersion.isEmpty() && !this.schemaVersion.isEmpty()) {
-            return true;
-        }
-        return false;
+    void setNewIndex(boolean newIndex) {
+        this.newIndex = newIndex;
     }
 }
