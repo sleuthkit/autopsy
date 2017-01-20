@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -580,8 +581,9 @@ public final class SearchRunner {
          * previously seen a hit for the keyword.
          * 
          * @param queryResult The results returned by a keyword search.
-         * @return The set of hits found by the most recent search for objects
-         * that have not previously had a hit.
+         * @return A unique set of hits found by the most recent search for objects
+         * that have not previously had a hit. The hits will be for the lowest
+         * numbered chunk associated with the object.
          *
          */
         private QueryResults filterResults(QueryResults queryResult) {
@@ -595,6 +597,10 @@ public final class SearchRunner {
                 // These are all of the hits across all objects for the most recent search.
                 // This may well include duplicates of hits we've seen in earlier periodic searches.
                 List<KeywordHit> queryTermResults = queryResult.getResults(keyword);
+
+                // Sort the hits for this keyword so that we are always 
+                // guaranteed to return the hit for the lowest chunk.
+                Collections.sort(queryTermResults);
 
                 // This will be used to build up the hits we haven't seen before
                 // for this keyword.
