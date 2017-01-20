@@ -29,7 +29,7 @@ import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
 public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     
 @NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Profile Description:",
-"ProfilePanel.profiles.profileNameLabel.text=Profile Name:"})
+"ProfilePanel.profileNameLabel.text=Profile Name:"})
         
     IngestJobSettingsPanel ingestSettingsPanel;
     IngestJobSettings tempSettings;
