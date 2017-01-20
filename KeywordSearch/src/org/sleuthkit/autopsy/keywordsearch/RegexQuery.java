@@ -217,6 +217,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         List<KeywordHit> hits = new ArrayList<>();
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
+        final Integer chunkSize = (Integer) solrDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
 
         String content = solrDoc.getOrDefault(Server.Schema.CONTENT_STR.toString(), "").toString(); //NON-NLS
 
@@ -241,6 +242,11 @@ final class RegexQuery implements KeywordSearchQuery {
 
         while (hitMatcher.find(offset)) {
             StringBuilder snippet = new StringBuilder();
+
+            if (hitMatcher.start() >= chunkSize) {
+                break;
+            }
+
             String hit = hitMatcher.group();
 
             // Back the matcher offset up by 1 character as it will have eaten
