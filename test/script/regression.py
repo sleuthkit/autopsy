@@ -187,6 +187,7 @@ class TestRunner(object):
             Errors.print_error(test_data.image_file + "\n")
             return
 
+        print("1" + test_data.get_db_path(DBType.OUTPUT) + "\n2" + test_data.get_db_dump_path(DBType.OUTPUT))
         logging.debug("--------------------")
         logging.debug(test_data.image_name)
         logging.debug("--------------------")
@@ -195,9 +196,9 @@ class TestRunner(object):
 
         # exit if .db was not created
         if not file_exists(test_data.get_db_path(DBType.OUTPUT)):
+            Errors.print_error(test_data.get_db_path(DBType.OUTPUT))
             Errors.print_error("Autopsy did not run properly; No .db file was created")
             sys.exit(1)
-
         try:
             # Dump the database before we diff or use it for rebuild
             TskDbDiff.dump_output_db(test_data.get_db_path(DBType.OUTPUT), test_data.get_db_dump_path(DBType.OUTPUT),
@@ -405,7 +406,7 @@ class TestRunner(object):
         test_data.ant = ["ant"]
         test_data.ant.append("-v")
         test_data.ant.append("-f")
-        test_data.ant.append(os.path.join("..","..","Testing","build.xml"))
+        test_data.ant.append(make_local_path(test_data.main_config.build_path))
         test_data.ant.append("regression-test")
         test_data.ant.append("-l")
         test_data.ant.append(test_data.antlog_dir)
@@ -418,6 +419,12 @@ class TestRunner(object):
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
+        # if need autopsyPlatform setup
+        if len(test_data.main_config.autopsyPlatform) > 0:
+            test_data.ant.append("-Dnbplatform.Autopsy_4.3.0.netbeans.dest.dir=" + test_data.main_config.autopsyPlatform)
+            test_data.ant.append("-Dnbplatform.default.harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
+            test_data.ant.append("-Dnbplatform.Autopsy_4.3.0.harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
+ 
         Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
         Errors.print_out("CMD: " + " ".join(test_data.ant))
         Errors.print_out("Starting test...\n")
@@ -549,6 +556,8 @@ class TestData(object):
         # Error tracking
         self.printerror = []
         self.printout = []
+        # autopsyPlatform
+        self.autopsyPlatform = str(self.main_config.autopsyPlatform)
 
     def ant_to_string(self):
         string = ""
@@ -671,7 +680,7 @@ class TestConfiguration(object):
             args: an Args, the command line arguments.
         """
         self.args = args
-        # Paths:
+        # Paths:  ???ZL: paths need to put into the config, without relative, or different relatiepath for different product
         self.output_parent_dir = make_path("..", "output", "results")
         if not dir_exists(self.output_parent_dir):
             os.chdir('..')
@@ -688,7 +697,7 @@ class TestConfiguration(object):
         self.known_bad_path = make_path(self.input_dir, "notablehashes.txt-md5.idx")
         self.keyword_path = make_path(self.input_dir, "notablekeywords.xml")
         self.nsrl_path = make_path(self.input_dir, "nsrl.txt-md5.idx")
-        self.build_path = make_path("..", "build.xml")
+        self.build_path = make_path("..", "build.xml")  #???ZL: build_path is not in use
         # Infinite Testing info
         timer = 0
         self.images = []
@@ -699,6 +708,8 @@ class TestConfiguration(object):
         # However it only seems to take about half this time
         # And it's very buggy, so we're being careful
         self.timeout = 24 * 60 * 60 * 1000 * 1000
+        # Set autopsyPlatform if provided
+        self.autopsyPlatform = ""
 
         if not self.args.single:
             self._load_config_file(self.args.config_file)
@@ -732,6 +743,9 @@ class TestConfiguration(object):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("timing"):
                 self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("autopsyPlatform"):
+                self.autopsyPlatform = parsed_config.getElementsByTagName("autopsyPlatform")[0].getAttribute("value").encode().decode("utf_8")
+
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
