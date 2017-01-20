@@ -36,31 +36,35 @@ import org.sleuthkit.datamodel.TskData;
  * Interesting files set definition objects are immutable, so they may be safely
  * published to multiple threads.
  */
-final class FilesSet implements Serializable {
+public final class FilesSet implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String name;
     private final String description;
     private final boolean ignoreKnownFiles;
+    private final boolean ignoreUnallocatedSpace;
     private final Map<String, Rule> rules = new HashMap<>();
 
     /**
      * Constructs an interesting files set.
      *
-     * @param name             The name of the set.
-     * @param description      A description of the set, may be null.
-     * @param ignoreKnownFiles Whether or not to exclude known files from the
-     *                         set.
-     * @param rules            The rules that define the set. May be null, but a
-     *                         set with no rules is the empty set.
+     * @param name                   The name of the set.
+     * @param description            A description of the set, may be null.
+     * @param ignoreKnownFiles       Whether or not to exclude known files from
+     *                               the set.
+     * @param ignoreUnallocatedSpace Whether or not to exclude unallocated space
+     *                               from the set.
+     * @param rules                  The rules that define the set. May be null,
+     *                               but a set with no rules is the empty set.
      */
-    FilesSet(String name, String description, boolean ignoreKnownFiles, Map<String, Rule> rules) {
+    public FilesSet(String name, String description, boolean ignoreKnownFiles, boolean ignoreUnallocatedSpace, Map<String, Rule> rules) {
         if ((name == null) || (name.isEmpty())) {
             throw new IllegalArgumentException("Interesting files set name cannot be null or empty");
         }
         this.name = name;
         this.description = (description != null ? description : "");
         this.ignoreKnownFiles = ignoreKnownFiles;
+        this.ignoreUnallocatedSpace = ignoreUnallocatedSpace;
         if (rules != null) {
             this.rules.putAll(rules);
         }
@@ -71,7 +75,7 @@ final class FilesSet implements Serializable {
      *
      * @return A name string.
      */
-    String getName() {
+    public String getName() {
         return this.name;
     }
 
@@ -98,6 +102,16 @@ final class FilesSet implements Serializable {
     }
 
     /**
+     * Returns whether or not this set of rules will process unallocated space.
+     *
+     * @return True if unallocated space should be processed, false if it should
+     *         not be.
+     */
+    public boolean ingoresUnallocatedSpace() {
+        return this.ignoreUnallocatedSpace;
+    }
+
+    /**
      * Gets a copy of the set membership rules of this interesting files set.
      *
      * @return A map of set membership rule names to rules, possibly empty.
@@ -114,10 +128,18 @@ final class FilesSet implements Serializable {
      * @return The name of the first set membership rule satisfied by the file,
      *         will be null if the file does not belong to the set.
      */
-    String fileIsMemberOf(AbstractFile file) {
+    public String fileIsMemberOf(AbstractFile file) {
         if ((this.ignoreKnownFiles) && (file.getKnown() == TskData.FileKnown.KNOWN)) {
             return null;
         }
+
+        if ((this.ignoreUnallocatedSpace)
+                && (file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
+                || file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS))) {
+            return null;
+        }
+
         for (Rule rule : rules.values()) {
             if (rule.isSatisfied(file)) {
                 return rule.getName();
@@ -164,9 +186,6 @@ final class FilesSet implements Serializable {
             this.uuid = UUID.randomUUID().toString();
             if (metaTypeCondition == null) {
                 throw new IllegalArgumentException("Interesting files set rule meta-type condition cannot be null");
-            }
-            if (pathCondition == null && fileNameCondition == null && mimeTypeCondition == null && fileSizeCondition == null) {
-                throw new IllegalArgumentException("Must have at least one condition on rule.");
             }
 
             this.ruleName = ruleName;
@@ -497,7 +516,8 @@ final class FilesSet implements Serializable {
 
                 FILES,
                 DIRECTORIES,
-                FILES_AND_DIRECTORIES
+                FILES_AND_DIRECTORIES,
+                ALL
             }
 
             private final Type type;
@@ -518,9 +538,13 @@ final class FilesSet implements Serializable {
                         return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG;
                     case DIRECTORIES:
                         return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR;
-                    default:
+                    case FILES_AND_DIRECTORIES:
                         return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG
                                 || file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR;
+                    case ALL:
+                        return true;  //Effectively ignores the metatype condition when All is selected.
+                    default:
+                        return true;
                 }
             }
 
