@@ -18,12 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,9 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import org.openide.util.NbBundle;
-import org.openide.util.io.NbObjectInputStream;
-import org.openide.util.io.NbObjectOutputStream;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet.Rule.MetaTypeCondition;
 
@@ -144,21 +135,7 @@ public final class FilesSetsManager extends Observable {
      */
     public Map<String, FilesSet> getCustomFileIngestFilters() throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            Path filePath = Paths.get(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME);
-            File fileSetFile = filePath.toFile();
-            String filePathStr = filePath.toString();
-            if (fileSetFile.exists()) {
-                try {
-                    try (final NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(filePathStr))) {
-                        FilesSetsSerializable filesSetsSettings = (FilesSetsSerializable)in.readObject();
-                        return filesSetsSettings.getFilesSets();
-                    }
-                } catch (IOException | ClassNotFoundException ex) {
-                    throw new FilesSetsManagerException(String.format("Failed to read settings from %s", filePathStr), ex);
-                }
-            } else {
-                return new HashMap<>();
-            }
+            return FileSetsDefinitions.readSerializedDefinitions(FILE_INGEST_FILTER_DEFS_NAME);
         }
     }
 
@@ -186,14 +163,10 @@ public final class FilesSetsManager extends Observable {
      */
     void setCustomFileIngestFilters(Map<String, FilesSet> filesSets) throws FilesSetsManagerException {
         synchronized (FILE_INGEST_FILTER_LOCK) {
-            try (final NbObjectOutputStream out = new NbObjectOutputStream(new FileOutputStream(Paths.get(PlatformUtil.getUserConfigDirectory(), FILE_INGEST_FILTER_DEFS_NAME).toString()))) {
-                out.writeObject(new FilesSetsSerializable(filesSets));
-            } catch (IOException ex) {
-                throw new FilesSetsManagerException(String.format("Failed to write settings to %s", FILE_INGEST_FILTER_DEFS_NAME), ex);
-            }
+            FileSetsDefinitions.writeDefinitionsFile(FILE_INGEST_FILTER_DEFS_NAME, filesSets);
         }
     }
-    
+
     public static class FilesSetsManagerException extends Exception {
 
         FilesSetsManagerException() {
