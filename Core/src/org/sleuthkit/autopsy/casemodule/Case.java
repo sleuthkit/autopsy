@@ -459,8 +459,9 @@ public class Case implements SleuthkitCase.ErrorObserver {
         /*
          * Creating a case is always done in the same non-UI thread that will be
          * used later to close the case. If the case is a multi-user case, this
-         * ensures that case directory lock is released in the same thread in
-         * which it was acquired, as is required by the coordination service.
+         * ensures that case directory lock that is held as long as the case is
+         * open is released in the same thread in which it was acquired, as is
+         * required by the coordination service.
          */
         try {
             Future<Void> future = getSingleThreadedExecutor().submit(() -> {
@@ -476,7 +477,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                      * exclusive case resources lock to allow only one node at a
                      * time to create/open/upgrade case resources.
                      */
-                    progressIndicator.start(Bundle.Case_creationMessage_acquiringLocks());
+                    progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
                     try (CoordinationService.Lock nameLock = Case.acquireExclusiveCaseNameLock(caseName)) {
                         assert (null != nameLock);
                         acquireSharedCaseDirLock(caseDir);
@@ -531,9 +532,8 @@ public class Case implements SleuthkitCase.ErrorObserver {
      */
     @Messages({
         "# {0} - exception message", "Case.openException.couldNotOpenCase=Could not open case: {0}",
-        "Case.progressIndicatorTitle.openingCase=Opening Case",        
-        "Case.progressMessage.preparingToOpenCase=Preparing to open case...",
-    })
+        "Case.progressIndicatorTitle.openingCase=Opening Case",
+        "Case.progressMessage.preparingToOpenCase=Preparing to open case...",})
     public static void openCurrentCase(String caseMetadataFilePath) throws CaseActionException {
         LOGGER.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS
         try {
@@ -556,11 +556,11 @@ public class Case implements SleuthkitCase.ErrorObserver {
             progressIndicator.start(Bundle.Case_progressMessage_preparingToOpenCase());
 
             /*
-             * Creating a case is always done in the same non-UI thread that
-             * will be used later to close the case. If the case is a multi-user
-             * case, this ensures that case directory lock is released in the
-             * same thread in which it was acquired, as is required by the
-             * coordination service.
+             * Opening a case is always done in the same non-UI thread that will
+             * be used later to close the case. If the case is a multi-user
+             * case, this ensures that case directory lock that is held as long
+             * as the case is open is released in the same thread in which it
+             * was acquired, as is required by the coordination service.
              */
             CaseType caseType = metadata.getCaseType();
             String caseName = metadata.getCaseName();
@@ -577,6 +577,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
                          * to allow only one node at a time to
                          * create/open/upgrade case resources.
                          */
+                        progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
                         acquireSharedCaseDirLock(metadata.getCaseDirectory());
                         try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseName())) {
                             assert (null != resourcesLock);
@@ -585,6 +586,10 @@ public class Case implements SleuthkitCase.ErrorObserver {
                     }
                     return null;
                 });
+                if (RuntimeProperties.runningWithGUI()) {
+                    listener.setCaseActionFuture(future);
+                    ((ModalDialogProgressIndicator) progressIndicator).setVisible(true);
+                }
                 future.get();
             } catch (InterruptedException | ExecutionException ex) {
                 if (CaseType.SINGLE_USER_CASE == caseType) {
@@ -602,21 +607,15 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 } else {
                     throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase("Interrupted during locks acquisition"), ex);
                 }
+            } finally {
+                progressIndicator.finish("");
+                if (RuntimeProperties.runningWithGUI()) {
+                    ((ModalDialogProgressIndicator) progressIndicator).setVisible(false);
+                }
             }
-
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase("Failed to access case metadata"), ex);
         }
-    }
-
-    /**
-     * Checks if case is currently open.
-     *
-     * @return True or false.
-     */
-    // RJCTODO: Deprecate this, it cannot work
-    public static boolean isCaseOpen() {
-        return currentCase != null;
     }
 
     /**
@@ -1973,6 +1972,17 @@ public class Case implements SleuthkitCase.ErrorObserver {
         openCurrentCase(caseMetadataFilePath);
     }
 
+    /**
+     * Checks if case is currently open.
+     *
+     * @return True or false.
+     * @deprecated Do not use, this method is not relaible.
+     */
+    @Deprecated
+    public static boolean isCaseOpen() {
+        return currentCase != null;
+    }
+    
     /**
      * Invokes the startup dialog window.
      *
