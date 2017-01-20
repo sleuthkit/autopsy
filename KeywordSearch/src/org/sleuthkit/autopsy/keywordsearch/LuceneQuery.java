@@ -215,15 +215,16 @@ class LuceneQuery implements KeywordSearchQuery {
 
             for (SolrDocument resultDoc : resultList) {
                 try {
+                    /* for each result, check that the first occurence of that
+                     * term is before the window. if all the ocurences start
+                     * within the window, don't record them for this chunk, they
+                     * will get picked up in the next one. */
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
-                    final String fileName = resultDoc.getFieldValue(Server.Schema.FILE_NAME.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
 
                     Integer startOffset = getStartOffset(termVectors, docId);
                     if (startOffset < chunkSize) {
                         matches.add(createKeywordtHit(highlightResponse, docId));
-                    } else {
-                        logger.log(Level.WARNING, fileName + ": " + getQueryString() + " found past chunksize " + chunkSize + ", at " + +startOffset);
                     }
                 } catch (TskException ex) {
                     return matches;
