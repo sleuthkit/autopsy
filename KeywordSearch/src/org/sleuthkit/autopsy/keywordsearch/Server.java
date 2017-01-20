@@ -65,6 +65,7 @@ import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -742,15 +743,7 @@ public class Server {
         }
 
         try {
-            CaseType caseType = theCase.getCaseType();
-            String coreName;
-            if (index.isNewIndex()) {
-                // come up with a new core name
-                coreName = createCoreName(theCase.getName());
-            } else {
-                // ELTODO get core name
-                coreName = "";
-            }
+            String coreName = getCoreName(index, theCase);
 
             File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
             if (!dataDir.exists()) {
@@ -771,7 +764,7 @@ public class Server {
 
                 // In single user mode, if there is a core.properties file already,
                 // we've hit a solr bug. Compensate by deleting it.
-                if (caseType == CaseType.SINGLE_USER_CASE) {
+                if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                     Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
                     if (corePropertiesFile.toFile().exists()) {
                         try {
@@ -795,13 +788,48 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
             }
 
-            return new Core(coreName, caseType, index);
+            return new Core(coreName, theCase.getCaseType(), index);
 
-        } catch (SolrServerException | SolrException | IOException ex) {
+        } catch (SolrServerException | SolrException | IOException | CaseMetadata.CaseMetadataException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
     }
     
+    /**
+     * Get or create a sanitized Solr core name. Stores the core name if needed.
+     *
+     * @param index   Index object
+     * @param theCase Case object
+     *
+     * @return The sanitized Solr core name
+     */
+    private String getCoreName(Index index, Case theCase) throws CaseMetadata.CaseMetadataException {
+        String coreName = "";
+        if (index.isNewIndex()) {
+            // come up with a new core name
+            coreName = createCoreName(theCase.getName());
+            // store the new core name
+            theCase.setTextIndexName(coreName);
+        } else {
+            // get core name
+            coreName = theCase.getTextIndexName();
+            if (coreName.isEmpty()) {
+                // come up with a new core name
+                coreName = createCoreName(theCase.getName());
+                // store the new core name
+                theCase.setTextIndexName(coreName);
+            }
+        }
+        return coreName;
+    }
+    
+    /**
+     * Create and sanitize a core name.
+     *
+     * @param caseName Case name
+     *
+     * @return The sanitized Solr core name
+     */
     private String createCoreName(String caseName) {
         if (caseName.isEmpty()) {
             caseName = DEFAULT_CORE_NAME;
@@ -809,7 +837,47 @@ public class Server {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
         String coreName = caseName + "_" + dateFormat.format(date);
-        return coreName;
+        return sanitizeCoreName(coreName);
+    }
+    
+    /**
+     * Sanitizes the case name for Solr cores.
+     *
+     * Solr:
+     * http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
+     * may not be / \ :
+     * Starting Solr6: core names must consist entirely of periods, underscores, hyphens, and alphanumerics as well not start with a hyphen. may not contain space characters.
+     *
+     * @param coreName A candidate core name.
+     *
+     * @return The sanitized core name.
+     */
+    static private String sanitizeCoreName(String coreName) {
+
+        String result;
+
+        // Remove all non-ASCII characters
+        result = coreName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
+
+        // Remove all control characters
+        result = result.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
+
+        // Remove spaces / \ : ? ' "
+        result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
+        
+        // Make it all lowercase
+        result = result.toLowerCase();
+
+        // Must not start with hyphen
+        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '-')) {
+            result = "_" + result;
+        }
+
+        if (result.isEmpty()) {
+            result = DEFAULT_CORE_NAME;
+        }
+
+        return result;
     }
 
     /**

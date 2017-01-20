@@ -662,6 +662,18 @@ public class Case implements SleuthkitCase.ErrorObserver {
     public String getTextIndexName() {
         return getCaseMetadata().getTextIndexName();
     }
+    
+    /**
+     * Sets the name of the keyword search index for the case.
+     *
+     * @param indexName The index name.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException
+     */
+    public void setTextIndexName(String indexName) throws CaseMetadataException {
+        caseMetadata.setTextIndexName(indexName);
+    }
 
     /**
      * Queries whether or not the case has data, i.e., whether or not at least
@@ -984,19 +996,17 @@ public class Case implements SleuthkitCase.ErrorObserver {
         }
 
         /*
-         * Sanitize the case name, create a unique keyword search index name,
-         * and create a standard (single-user) or unique (multi-user) case
-         * database name.
+         * Sanitize the case name, and create a standard (single-user) or 
+         * unique (multi-user) case database name.
          */
         String santizedCaseName = sanitizeCaseName(caseName);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
-        String indexName = santizedCaseName + "_" + dateFormat.format(date);
         String dbName = null;
         if (caseType == CaseType.SINGLE_USER_CASE) {
             dbName = caseDir + File.separator + "autopsy.db"; //NON-NLS
         } else if (caseType == CaseType.MULTI_USER_CASE) {
-            dbName = indexName;
+            dbName = santizedCaseName + "_" + dateFormat.format(date);
         }
         
         try{
@@ -1037,7 +1047,7 @@ public class Case implements SleuthkitCase.ErrorObserver {
              */
             CaseMetadata metadata;
             try {
-                metadata = new CaseMetadata(caseDir, caseType, caseName, caseNumber, examiner, dbName, indexName);
+                metadata = new CaseMetadata(caseDir, caseType, caseName, caseNumber, examiner, dbName);
             } catch (CaseMetadataException ex) {
                 throw new CaseActionException(Bundle.Case_creationException(), ex);
             }

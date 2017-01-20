@@ -196,6 +196,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     }
                     // proceed with case open
                     currentVersionIndex = indexToUpgrade;
+                    
+                    currentVersionIndex.setNewIndex(true);// ELTODO remove
                 }
                 else {
                     // index needs to be upgraded to latest supported version of Solr
