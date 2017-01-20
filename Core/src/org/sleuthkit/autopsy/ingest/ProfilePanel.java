@@ -19,18 +19,24 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetPanel;
+import static org.sleuthkit.autopsy.modules.interestingitems.FilesSetPanel.getCreateNewFileIngestFilterString;
+import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
 /**
  *
  * @author wschaefer
  */
 public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
-    
-@NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Profile Description:",
-"ProfilePanel.profileNameLabel.text=Profile Name:"})
-        
+
+    @NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Profile Description:",
+        "ProfilePanel.profileNameLabel.text=Profile Name:"})
+
     IngestJobSettingsPanel ingestSettingsPanel;
     IngestJobSettings tempSettings;
     IngestProfile profile;
@@ -160,5 +166,16 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     }
 
     public void load() {
+    }
+
+    boolean isValidDefinition() {
+        if (this.profileNameField.getText().isEmpty()) {
+            NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                    NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profilesMustBeNamed"),
+                    NotifyDescriptor.WARNING_MESSAGE);
+            DialogDisplayer.getDefault().notify(notifyDesc);
+            return false;
+        }
+        return true;
     }
 }

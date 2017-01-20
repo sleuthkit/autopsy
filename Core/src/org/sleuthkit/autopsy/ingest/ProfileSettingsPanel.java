@@ -273,17 +273,14 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             // Creating a new set definition.
             panel = new ProfilePanel();
         }
-        // Do a dialog box with the files set panel until the user either enters
-        // a valid definition or cancels. Note that the panel gives the user
-        // feedback when isValidDefinition() is called.
+        // Do a dialog box with the profilePanel till the user enters a name or chooses cancel
         int option = JOptionPane.OK_OPTION;
-        //    do {
+        do {
         option = JOptionPane.showConfirmDialog(null, panel,Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-//        } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
+        } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
             panel.saveSettings();
-            //this.resetComponents();
             load();
         }
 
