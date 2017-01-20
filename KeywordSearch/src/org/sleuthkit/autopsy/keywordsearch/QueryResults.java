@@ -131,7 +131,7 @@ class QueryResults {
                 subProgress.progress(keywordList.getName() + ": " + hitDisplayStr, unitProgress);
             }
 
-            for (KeywordHit hit : getOneHitPerObject(keyword)) {
+            for (KeywordHit hit : getResults(keyword)) {
                 String termString = keyword.getSearchTerm();
                 final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                 String snippet;
@@ -172,29 +172,6 @@ class QueryResults {
         }
 
         return newArtifacts;
-    }
-
-    /**
-     * Gets the first hit of the keyword.
-     *
-     * @param keyword
-     *
-     * @return Collection<KeywordHit> containing KeywordHits with lowest
-     *         SolrObjectID-ChunkID pairs.
-     */
-    private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
-
-        HashMap<Long, KeywordHit> hits = new HashMap<>();
-
-        // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
-        for (KeywordHit hit : getResults(keyword)) {
-            if (!hits.containsKey(hit.getSolrObjectId())) {
-                hits.put(hit.getSolrObjectId(), hit);
-            } else if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
-                hits.put(hit.getSolrObjectId(), hit);
-            }
-        }
-        return hits.values();
     }
 
     /**

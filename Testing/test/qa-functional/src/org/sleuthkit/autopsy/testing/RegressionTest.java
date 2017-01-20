@@ -299,10 +299,6 @@ public class RegressionTest extends TestCase {
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Data");
-        JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
-        if (Boolean.parseBoolean(System.getProperty("ignore_unalloc"))) {
-            jbco0.doClick();
-        }
         new Timeout("pausing", 10000).sleep(); // let things catch up
         wo.btNext().clickMouse();
     }
