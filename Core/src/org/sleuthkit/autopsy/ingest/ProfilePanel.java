@@ -1,11 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
 
 /**
@@ -13,11 +27,14 @@ import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
  * @author wschaefer
  */
 public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
-
+    
+@NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Profile Description:",
+"ProfilePanel.profiles.profileNameLabel.text=Profile Name:"})
+        
     IngestJobSettingsPanel ingestSettingsPanel;
     IngestJobSettings tempSettings;
     IngestProfile profile;
-    final static String NEW_PROFILE_NAME = "TemporaryNewProfile";
+    final static String NEW_PROFILE_NAME = "TemporaryNewProfile"; //WJS-TODO  Bundle @Messages
 
     /**
      * Creates new form ProfilePanel
@@ -61,15 +78,12 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         profileDescArea.setRows(5);
         profileDescArea.setWrapStyleWord(true);
         profileDescArea.setMinimumSize(new java.awt.Dimension(10, 22));
-        profileDescArea.setName(""); // NOI18N
         profileDescArea.setPreferredSize(new java.awt.Dimension(14, 40));
         profileDescPane.setViewportView(profileDescArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(profileDescLabel, org.openide.util.NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.profileDescLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(profileNameLabel, org.openide.util.NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.profileNameLabel.text")); // NOI18N
-
-        profileNameField.setText(org.openide.util.NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.profileNameField.text")); // NOI18N
 
         jPanel1.setLayout(new java.awt.BorderLayout());
 

@@ -1,24 +1,46 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.ingest;
 
-//WJS-TODO hook up all labels and fields to bundle properties instead of plain text
 import java.util.Map;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
 class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
-
+@NbBundle.Messages({"ProfileSettingsPanel.title=Profile Settings", 
+    "ProfileSettingsPanel.profileListLabel.text=Profiles:", 
+    "ProfileSettingsPanel.profileDescLabel.text=Profile Description:",
+    "ProfileSettingsPanel.filterNameLabel.text=Filter:",
+    "ProfileSettingsPanel.filterDescLabel.text=Filter Description:",
+    "ProfileSettingsPanel.selectedModulesLabel.text=Selected Ingest Modules:",
+    "ProfileSettingsPanel.newProfileButton.text=New Profile",
+    "ProfileSettingsPanel.editProfileButton.text=Edit Profile",
+    "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile"
+})
     
     private final DefaultListModel<IngestProfile> profilesListModel = new DefaultListModel<>();
 
@@ -52,7 +74,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         profileDescLabel = new javax.swing.JLabel();
         filterNameLabel = new javax.swing.JLabel();
         filterNameText = new javax.swing.JLabel();
-        fitlerDescLabel = new javax.swing.JLabel();
+        filterDescLabel = new javax.swing.JLabel();
         filterDescPane = new javax.swing.JScrollPane();
         filterDescArea = new javax.swing.JTextArea();
         selectedModulesPane = new javax.swing.JScrollPane();
@@ -100,20 +122,15 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         profileDescArea.setColumns(20);
         profileDescArea.setLineWrap(true);
         profileDescArea.setRows(5);
-        profileDescArea.setWrapStyleWord(true);
         profileDescArea.setMinimumSize(new java.awt.Dimension(10, 22));
-        profileDescArea.setName(""); // NOI18N
         profileDescArea.setPreferredSize(new java.awt.Dimension(14, 40));
         profileDescPane.setViewportView(profileDescArea);
-        profileDescArea.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.profileDescArea.AccessibleContext.accessibleName")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(profileDescLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.profileDescLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(filterNameLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.filterNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(filterNameText, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.filterNameText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(fitlerDescLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.fitlerDescLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(filterDescLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.filterDescLabel.text")); // NOI18N
 
         filterDescArea.setEditable(false);
         filterDescArea.setBackground(new java.awt.Color(240, 240, 240));
@@ -126,6 +143,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         selectedModulesArea.setEditable(false);
         selectedModulesArea.setBackground(new java.awt.Color(240, 240, 240));
         selectedModulesArea.setColumns(20);
+        selectedModulesArea.setLineWrap(true);
         selectedModulesArea.setRows(5);
         selectedModulesPane.setViewportView(selectedModulesArea);
 
@@ -149,7 +167,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(editProfileButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deleteProfileButton, javax.swing.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE)))))
+                                .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, Short.MAX_VALUE)))))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -158,7 +176,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                             .addComponent(filterDescPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 530, Short.MAX_VALUE)
                             .addComponent(profileDescPane, javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(selectedModulesPane, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addComponent(fitlerDescLabel)
+                    .addComponent(filterDescLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(filterNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
@@ -184,11 +202,11 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(profileDescPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(filterNameLabel)
-                            .addComponent(filterNameText))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(filterNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(filterNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(fitlerDescLabel)
+                        .addComponent(filterDescLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(filterDescPane, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
@@ -257,7 +275,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         // feedback when isValidDefinition() is called.
         int option = JOptionPane.OK_OPTION;
         //    do {
-        option = JOptionPane.showConfirmDialog(null, panel, "new profile title", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        option = JOptionPane.showConfirmDialog(null, panel,Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 //        } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
@@ -318,11 +336,11 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     }
                     filterDescArea.setText(fileIngestFilters.get(selectedProfile.getFileIngestFilter()).getDescription());
                 } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                    filterDescArea.setText("FAILED TO LOAD FILTER");
+                    filterDescArea.setText("FAILED TO LOAD FILTER"); //WJS-TODO remove this handle / handle error correctly? / make this Bundle prop
                 }
                 selectedModulesArea.setText("");
-                for (String moduleName : selectedProfile.getModuleNames(IngestProfile.ENABLED_MODULES_KEY)) {
-                    selectedModulesArea.append(moduleName + "\n");// Populate the components that display the properties of the  selectedProfile.getModuleNames(IngestProfile.ENABLED_MODULES_KEY);
+                for (String moduleName : selectedProfile.getModuleNames(IngestProfile.getEnabledModulesKey())) {
+                    selectedModulesArea.append(moduleName + "\n");
                 }
 
             }
@@ -335,10 +353,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private javax.swing.JButton deleteProfileButton;
     private javax.swing.JButton editProfileButton;
     private javax.swing.JTextArea filterDescArea;
+    private javax.swing.JLabel filterDescLabel;
     private javax.swing.JScrollPane filterDescPane;
     private javax.swing.JLabel filterNameLabel;
     private javax.swing.JLabel filterNameText;
-    private javax.swing.JLabel fitlerDescLabel;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JButton newProfileButton;
     private javax.swing.JTextArea profileDescArea;

@@ -38,16 +38,16 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     }
 
     private void customizeComponents() {
-        setName("Temporary Name");
+        setName("Temporary Name");  //WJS-TODO  Bundle @Messages
         filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
         settingsPanel = new IngestSettingsPanel();
         profilePanel = new ProfileSettingsPanel();
-        tabbedPane.insertTab("Settings", null,
-                settingsPanel, "Tootip 1", 0);
-        tabbedPane.insertTab("File Filters", null,
-                filterPanel, "Tooltip 2", 1);
-        tabbedPane.insertTab("Profiles", null,
-                profilePanel, "Tooltip 3", 2);
+        tabbedPane.insertTab("Settings", null, //WJS-TODO  Bundle @Messages
+                settingsPanel, "Tootip 1", 0); //WJS-TODO  Bundle @Messages
+        tabbedPane.insertTab("File Filters", null, //WJS-TODO  Bundle @Messages
+                filterPanel, "Tooltip 2", 1); //WJS-TODO  Bundle @Messages
+        tabbedPane.insertTab("Profiles", null, //WJS-TODO  Bundle @Messages
+                profilePanel, "Tooltip 3", 2); //WJS-TODO  Bundle @Messages
 
 
     }

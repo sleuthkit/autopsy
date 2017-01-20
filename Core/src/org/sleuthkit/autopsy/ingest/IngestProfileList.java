@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.ingest;
 
@@ -20,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 public class IngestProfileList {
 
-    private static final String PROFILE_FOLDER = "profiles";
+    private static final String PROFILE_FOLDER = "Profiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
@@ -67,11 +80,25 @@ public class IngestProfileList {
 
     static class IngestProfile {
 
-        static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
-        static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
+        private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
+        private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
         private final String name;
         private final String description;
-        private final String fileIngestFilter; //can this just be the name? //WJS-TODO replace with A list of selected/unselected ingest modules and runtime settings for the modules.
+        private final String fileIngestFilter;
+
+        /**
+         * @return the ENABLED_MODULES_KEY
+         */
+        static String getEnabledModulesKey() {
+            return ENABLED_MODULES_KEY;
+        }
+
+        /**
+         * @return the DISABLED_MODULES_KEY
+         */
+        static String getDisabledModulesKey() {
+            return DISABLED_MODULES_KEY;
+        }
 
         IngestProfile(String name, String desc, String selected) {
             this.name = name;
