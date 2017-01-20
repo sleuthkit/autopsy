@@ -52,7 +52,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
-    private static final String SERVICE_NAME = "Solr Keyword Search Service";
 
     ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
@@ -272,6 +271,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
     @Override
     public String getServiceName() {
-        return SERVICE_NAME;
+        return NbBundle.getMessage(this.getClass(), "SolrSearchService.ServiceName");
     }
 }
