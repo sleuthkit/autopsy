@@ -234,9 +234,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
             }
         }
-
-        // ELTODO execute a test query
-        // ELTODO if failed, close the upgraded index?
     }
 
     /**

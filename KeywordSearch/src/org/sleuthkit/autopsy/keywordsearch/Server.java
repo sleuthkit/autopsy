@@ -670,6 +670,14 @@ public class Server {
         currentCoreLock.writeLock().lock();
         try {
             currentCore = openCore(theCase, index);
+            
+            try {
+                // execute a test query. if it fails, an exception will be thrown
+                queryNumIndexedFiles();
+            } catch (NoOpenCoreException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+            }
+            
             serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
         } finally {
             currentCoreLock.writeLock().unlock();
