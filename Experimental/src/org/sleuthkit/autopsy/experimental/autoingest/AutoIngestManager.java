@@ -1892,7 +1892,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
             } finally {
                 try {
-                    caseForJob.closeCase();
+                    Case.closeCurrentCase();
                 } catch (CaseActionException ex) {
                     Manifest manifest = currentJob.getManifest();
                     throw new CaseManagementException(String.format("Error closing case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);

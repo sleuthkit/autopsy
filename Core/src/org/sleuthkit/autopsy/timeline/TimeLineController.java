@@ -453,8 +453,8 @@ public class TimeLineController {
                             TimeLineController.this.showFullRange();
                         } else {
                             //prompt user to pick specific event and time range
-                            ShowInTimelineDialog showInTimelineDilaog =
-                                    (file == null)
+                            ShowInTimelineDialog showInTimelineDilaog
+                                    = (file == null)
                                             ? new ShowInTimelineDialog(TimeLineController.this, artifact)
                                             : new ShowInTimelineDialog(TimeLineController.this, file);
                             Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
@@ -569,13 +569,16 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void showTimeLine(AbstractFile file, BlackboardArtifact artifact) {
         // listen for case changes (specifically images being added, and case changes).
-        if (Case.isCaseOpen() && !listeningToAutopsy) {
-            IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
-            IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
-            Case.addPropertyChangeListener(caseListener);
-            listeningToAutopsy = true;
+        try {
+            Case.getCurrentCase();
+            if (!listeningToAutopsy) {
+                IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
+                IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
+                Case.addPropertyChangeListener(caseListener);
+                listeningToAutopsy = true;
+            }
+        } catch (IllegalStateException ex) {
         }
-
         Platform.runLater(() -> promptForRebuild(file, artifact));
     }
 

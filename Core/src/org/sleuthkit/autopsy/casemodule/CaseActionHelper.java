@@ -60,6 +60,7 @@ class CaseActionHelper {
             }
         }
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        new T
         try {
             Case.closeCurrentCase();
         } catch (CaseActionException ex) {

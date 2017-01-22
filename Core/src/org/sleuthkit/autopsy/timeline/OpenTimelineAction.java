@@ -81,7 +81,12 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
          * disabled that check because if it is executed while a data source is
          * being added, it blocks the edt
          */
-        return Case.isCaseOpen() && FX_INITED;
+        try {
+            Case.getCurrentCase();
+            return FX_INITED;
+        } catch (IllegalStateException ex) {
+            return false;
+        }
     }
 
     @Override

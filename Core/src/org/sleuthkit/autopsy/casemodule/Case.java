@@ -54,7 +54,6 @@ import java.util.stream.Stream;
 import javax.annotation.concurrent.GuardedBy;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
@@ -124,6 +123,14 @@ public class Case {
     private static final int MIN_SECS_BETWEEN_TSK_ERROR_REPORTS = 60;
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS // RJCTODO
     private static final Logger LOGGER = Logger.getLogger(Case.class.getName());
+    private static final ExecutorService caseActionExecutor = Executors.newSingleThreadExecutor();
+
+    /*
+     * A single-threaded executor used to guarantee that the case directory lock
+     * for the current case is acquired and released in the same thread, as
+     * required by the coordination service.
+     */
+    private static ExecutorService caseLockingExecutor;
 
     /*
      * The following group of fields is state associated with the "current case"
@@ -148,13 +155,6 @@ public class Case {
      */
     @GuardedBy("Case.class")
     private static CoordinationService.Lock currentCaseDirLock; // RJCTODO: Move into case
-    /*
-     * A single-threaded executor used to guarantee that the case directory lock
-     * for the current case is acquired and released in the saem thread, as
-     * required by the coordination service.
-     */
-    @GuardedBy("Case.class")
-    private static ExecutorService singleThreadedExecutor;
     /*
      * The collaboration monitor for the current case. It is specific to the
      * current case because it uses an event channel with a name derived from
@@ -521,7 +521,7 @@ public class Case {
          * required by the coordination service.
          */
         try {
-            Future<Case> future = getSingleThreadedExecutor().submit(() -> {
+            Future<Case> innerFuture = getCaseLockingExecutor().submit(() -> {
                 Case newCase = new Case();
                 if (CaseType.SINGLE_USER_CASE == caseType) {
                     newCase.open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
@@ -553,17 +553,19 @@ public class Case {
                 return newCase;
             });
             if (RuntimeProperties.runningWithGUI()) {
-                listener.setCaseActionFuture(future);
-                ((ModalDialogProgressIndicator) progressIndicator).setVisible(true);
+                listener.setCaseActionFuture(innerFuture);
+                SwingUtilities.invokeLater(()
+                        -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
             }
-            currentCase = future.get();
+            currentCase = innerFuture.get();
             LOGGER.log(Level.INFO, "Created case {0} in directory = {1}", new Object[]{caseName, caseDir}); //NON-NLS
             if (RuntimeProperties.runningWithGUI()) {
                 updateGUIForCaseOpened();
             }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
+
         } catch (InterruptedException | ExecutionException ex) {
-            if (CaseType.SINGLE_USER_CASE == caseType) {
+            if (CaseType.MULTI_USER_CASE == caseType) {
                 releaseSharedCaseDirLock(caseName);
             }
             if (ex instanceof InterruptedException) {
@@ -571,13 +573,11 @@ public class Case {
             } else {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotCreateCase(ex.getCause().getMessage()), ex);
             }
-        } catch (Exception ex) {
-            // RJCTODO: Remove, why not catching NPE's?
-            ex.getMessage();
         } finally {
-            progressIndicator.finish(""); // RJCTODO: Is this right message?
+            progressIndicator.finish(""); // RJCTODO: Is this right message? Nope
             if (RuntimeProperties.runningWithGUI()) {
-                ((ModalDialogProgressIndicator) progressIndicator).setVisible(false);
+                SwingUtilities.invokeLater(()
+                        -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(false));
             }
         }
     }
@@ -645,7 +645,7 @@ public class Case {
             CaseType caseType = metadata.getCaseType();
             String caseName = metadata.getCaseName();
             try {
-                Future<Case> future = getSingleThreadedExecutor().submit(() -> {
+                Future<Case> future = getCaseLockingExecutor().submit(() -> {
                     Case openedCase = new Case();
                     if (CaseType.SINGLE_USER_CASE == caseType) {
                         openedCase.open(metadata, progressIndicator);
@@ -672,7 +672,8 @@ public class Case {
                 });
                 if (RuntimeProperties.runningWithGUI()) {
                     listener.setCaseActionFuture(future);
-                    ((ModalDialogProgressIndicator) progressIndicator).setVisible(true);
+                    SwingUtilities.invokeLater(()
+                            -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
                 }
                 future.get();
                 currentCase = future.get();
@@ -693,7 +694,8 @@ public class Case {
             } finally {
                 progressIndicator.finish(""); // RJCTODO: Is this right message?
                 if (RuntimeProperties.runningWithGUI()) {
-                    ((ModalDialogProgressIndicator) progressIndicator).setVisible(false);
+                    SwingUtilities.invokeLater(()
+                            -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(false));
                 }
             }
         } catch (CaseMetadataException ex) {
@@ -755,7 +757,7 @@ public class Case {
              * is open is released in the same thread in which it was acquired,
              * as is required by the coordination service.
              */
-            Future<Void> future = getSingleThreadedExecutor().submit(() -> {
+            Future<Void> future = getCaseLockingExecutor().submit(() -> {
                 if (CaseType.SINGLE_USER_CASE == currentCase.getCaseType()) {
                     currentCase.close(progressIndicator);
                 } else {
@@ -774,7 +776,8 @@ public class Case {
                 return null;
             });
             if (RuntimeProperties.runningWithGUI()) {
-                ((ModalDialogProgressIndicator) progressIndicator).setVisible(true);
+                SwingUtilities.invokeLater(()
+                        -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
             }
             future.get();
         } catch (InterruptedException | ExecutionException ex) {
@@ -785,10 +788,10 @@ public class Case {
             }
         } finally {
             currentCase = null;
-            progressIndicator.finish(""); // RJCTODO: Is this right message?
+            progressIndicator.finish(""); // RJCTODO: Is this right message? Nope
             if (RuntimeProperties.runningWithGUI()) {
-                updateGUIForCaseClosed();
-                ((ModalDialogProgressIndicator) progressIndicator).setVisible(false);
+                SwingUtilities.invokeLater(()
+                        -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(false));
             }
         }
     }
@@ -838,7 +841,7 @@ public class Case {
                 progressIndicator = new LoggingProgressIndicator();
             }
             progressIndicator.start(Bundle.Case_progressMessage_preparingToCloseCase());
-            Future<Void> future = getSingleThreadedExecutor().submit(() -> {
+            Future<Void> future = getCaseLockingExecutor().submit(() -> {
                 if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                     cleanupDeletedCase(metadata);
                 } else {
@@ -1047,7 +1050,7 @@ public class Case {
      * Use the main window of the desktop application to initialize the
      * application name. Should be called BEFORE any case is opened or created.
      */
-    private synchronized static void getAppNameFromMainWindow() {
+    private static void getAppNameFromMainWindow() {
         /*
          * This is tricky and fragile. What looks like lazy initialization of
          * the appName field is actually getting the application name from the
@@ -1326,12 +1329,11 @@ public class Case {
      *
      * @return The executor
      */
-    private synchronized static ExecutorService getSingleThreadedExecutor() {
-        if (null == singleThreadedExecutor) {
-            singleThreadedExecutor = Executors.newSingleThreadExecutor();
+    private static ExecutorService getCaseLockingExecutor() {
+        if (null == caseLockingExecutor) {
+            caseLockingExecutor = Executors.newSingleThreadExecutor();
         }
-        return singleThreadedExecutor;
-
+        return caseLockingExecutor;
     }
 
     /**
@@ -1548,6 +1550,17 @@ public class Case {
             LOGGER.log(Level.SEVERE, "Error getting data source time zones", ex); //NON-NLS
         }
         return timezones;
+    }
+
+    /**
+     * Sets the name of the keyword search index for the case.
+     *
+     * @param textIndexName The text index name.
+     *
+     * @throws CaseMetadataException
+     */
+    public void setTextIndexName(String textIndexName) throws CaseMetadataException {
+        getCaseMetadata().setTextIndexName(textIndexName);
     }
 
     /**

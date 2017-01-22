@@ -1173,7 +1173,4 @@ public class SingleUserCaseConverter {
         return DriverManager.getConnection("jdbc:sqlite:" + icd.getCaseInputFolder().resolve(AUTOPSY_DB_FILE).toString(), "", ""); //NON-NLS
     }
 
-    private SingleUserCaseConverter() {
-    }
-
 }

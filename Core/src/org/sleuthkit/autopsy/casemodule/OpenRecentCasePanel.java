@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -121,18 +122,22 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                 RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
                 StartupWindowProvider.getInstance().open();
             } else {
-                try {
-                    Case.openCurrentCase(casePath);
-                } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    JOptionPane.showMessageDialog(
-                            WindowManager.getDefault().getMainWindow(),
-                            ex.getMessage(), // Should be user-friendly
-                            NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                            JOptionPane.ERROR_MESSAGE);
-                    StartupWindowProvider.getInstance().open();
-                }
+                new Thread(() -> {
+                    try {
+                        Case.openCurrentCase(casePath);
+                    } catch (CaseActionException ex) {
+                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
+                        SwingUtilities.invokeLater(() -> {
+                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    ex.getMessage(), // Should be user-friendly
+                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                    JOptionPane.ERROR_MESSAGE);
+                            StartupWindowProvider.getInstance().open();
+                        });
+                    }
+                }).start();
             }
         }
     }

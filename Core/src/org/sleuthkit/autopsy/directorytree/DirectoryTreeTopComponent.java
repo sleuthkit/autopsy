@@ -490,7 +490,11 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public boolean canClose() {
-        return !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
+        try {
+            return Case.getCurrentCase().hasData() == false;
+        } catch (IllegalStateException ex) {
+            return true;
+        }
     }
 
     /**
@@ -614,12 +618,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @param newNodes
      */
     private void respondSelection(final Node[] oldNodes, final Node[] newNodes) {
-        if (!Case.isCaseOpen()) {
+        try {
+            Case.getCurrentCase();
+        } catch (IllegalStateException ex) {
             //handle in-between condition when case is being closed
             //and legacy selection events are pumped
-            return;
+            return;            
         }
-
+        
         // Some lock that prevents certain Node operations is set during the
         // ExplorerManager selection-change, so we must handle changes after the
         // selection-change event is processed.

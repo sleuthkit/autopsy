@@ -166,7 +166,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         List<String> timeZones = new ArrayList<>();
 
-        if (Case.isCaseOpen()) {
+        try {
             // get the latest case
             Case currentCase = Case.getCurrentCase(); // get the most updated case
 
@@ -195,6 +195,8 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                 String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
                 timeZones.add(item);
             }
+        } catch (IllegalStateException ex) {
+            // No current case.
         }
 
         return timeZones;
@@ -207,7 +209,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     public boolean isValid() {
-            return this.getComponent().isValidSearch();
+        return this.getComponent().isValidSearch();
     }
 
     /**
