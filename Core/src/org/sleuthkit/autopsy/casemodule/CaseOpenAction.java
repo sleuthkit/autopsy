@@ -27,9 +27,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -38,8 +35,6 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.ingest.IngestJob;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action that opens an existing case.
@@ -108,9 +103,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                             ex.getMessage(), // Should be user-friendly
                             NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
                             JOptionPane.ERROR_MESSAGE);
-                    if (!Case.isCaseOpen()) {
-                        StartupWindowProvider.getInstance().open();
-                    }
+                    StartupWindowProvider.getInstance().open();
                 }
             }
         }

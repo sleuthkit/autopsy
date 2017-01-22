@@ -119,11 +119,8 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                         NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                         JOptionPane.ERROR_MESSAGE);
                 RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
-                if (Case.isCaseOpen() == false) {
-                    StartupWindowProvider.getInstance().open();
-                }
+                StartupWindowProvider.getInstance().open();
             } else {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
                     Case.openCurrentCase(casePath);
                 } catch (CaseActionException ex) {
@@ -134,9 +131,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                             ex.getMessage(), // Should be user-friendly
                             NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
                             JOptionPane.ERROR_MESSAGE);
-                    if (!Case.isCaseOpen()) {
-                        StartupWindowProvider.getInstance().open();
-                    }
+                    StartupWindowProvider.getInstance().open();
                 }
             }
         }

@@ -140,12 +140,12 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
 
     private void showErrorNode(String errorMessage, AbstractFile file) {
         final Button externalViewerButton = new Button(Bundle.MediaViewImagePanel_externalViewerButton_text(), new ImageView(EXTERNAL));
-        externalViewerButton.setOnAction(actionEvent -> //fx ActionEvent
+        externalViewerButton.setOnAction(actionEvent
+                -> //fx ActionEvent
                 /*
                  * TODO: why is the name passed into the action constructor? it
                  * means we duplicate this string all over the place -jm
-                 */
-                new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
+                 */ new ExternalViewerAction(Bundle.MediaViewImagePanel_externalViewerButton_text(), new FileNode(file))
                 .actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "")) //Swing ActionEvent 
         );
 
@@ -172,10 +172,13 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             readImageTask = ImageUtils.newReadImageTask(file);
             readImageTask.setOnSucceeded(succeeded -> {
                 //Note that all error conditions are allready logged in readImageTask.succeeded()
-                if (!Case.isCaseOpen()) {
+                try {
+                    Case.getCurrentCase();
+                } catch (IllegalStateException ex) {
                     /*
-                     * handle in-between condition when case is being closed and
-                     * an image was previously selected
+                     * Thrown if the current case is closed, so handle
+                     * in-between condition when case is being closed and an
+                     * image was previously selected
                      *
                      * NOTE: I think this is unnecessary -jm
                      */
@@ -198,10 +201,13 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                 borderpane.setCursor(Cursor.DEFAULT);
             });
             readImageTask.setOnFailed(failed -> {
-                if (!Case.isCaseOpen()) {
+                try {
+                    Case.getCurrentCase();
+                } catch (IllegalStateException ex) {
                     /*
-                     * handle in-between condition when case is being closed and
-                     * an image was previously selected
+                     * Thrown if no current case. Handle in-between condition
+                     * when case is being closed and an image was previously
+                     * selected
                      *
                      * NOTE: I think this is unnecessary -jm
                      */

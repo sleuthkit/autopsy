@@ -42,11 +42,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An implementation of the KeywordSearchService interface that uses Solr for
  * text indexing and search.
  */
-@ServiceProviders(value={
-    @ServiceProvider(service=KeywordSearchService.class),
-    @ServiceProvider(service=AutopsyService.class)}
+@ServiceProviders(value = {
+    @ServiceProvider(service = KeywordSearchService.class),
+    @ServiceProvider(service = AutopsyService.class)}
 )
-public class SolrSearchService implements KeywordSearchService, AutopsyService  {
+public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
@@ -141,8 +141,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
     @Override
     public void close() throws IOException {
     }
-    
-     /**
+
+    /**
      *
      * @param context
      *
@@ -154,11 +154,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         /*
          * Autopsy service providers may not have case-level resources.
          */
-        
+
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
         IndexFinder indexFinder = new IndexFinder();
         List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
-        
+
         // check if index needs upgrade
         Index currentVersionIndex;
         if (indexes.isEmpty()) {
@@ -181,8 +181,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 if (indexSolrVersion > currentSolrVersion) {
                     // oops!
                     throw new AutopsyServiceException("Unable to find index to use for Case open");
-                } 
-                else if (indexSolrVersion == currentSolrVersion) {
+                } else if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
                     if (RuntimeProperties.runningWithGUI()) {
                         // pop up a message box to indicate the read-only restrictions.
@@ -195,8 +194,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     }
                     // proceed with case open
                     currentVersionIndex = indexToUpgrade;
-                }
-                else {
+                } else {
                     // index needs to be upgraded to latest supported version of Solr
                     if (RuntimeProperties.runningWithGUI()) {
                         //pop up a message box to indicate the restrictions on adding additional 
@@ -210,7 +208,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     }
 
                     // ELTODO Check for cancellation at whatever points are feasible
-                    
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
                     String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade);
 
@@ -224,15 +221,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 }
             }
         }
-                
+
         // open core
         try {
             KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
-            if (RuntimeProperties.runningWithGUI()) {
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
-            }
+            throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
         }
     }
 
@@ -251,11 +245,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         try {
             KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
             /*
-            * TODO (AUT-2084): The following code
-            * KeywordSearch.CaseChangeListener gambles that any
-            * BlackboardResultWriters (SwingWorkers) will complete
-            * in less than roughly two seconds
-            */
+             * TODO (AUT-2084): The following code
+             * KeywordSearch.CaseChangeListener gambles that any
+             * BlackboardResultWriters (SwingWorkers) will complete in less than
+             * roughly two seconds
+             */
             Thread.sleep(2000);
             KeywordSearch.getServer().closeCore();
         } catch (Exception ex) {

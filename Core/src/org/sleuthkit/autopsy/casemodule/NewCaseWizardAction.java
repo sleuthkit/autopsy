@@ -91,9 +91,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                                     NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"), //NON-NLS
                                     JOptionPane.ERROR_MESSAGE);
                             StartupWindowProvider.getInstance().close(); // RC: Why close and open?
-                            if (!Case.isCaseOpen()) {
                                 StartupWindowProvider.getInstance().open();
-                            }
                         });
                         doFailedCaseCleanup(wizardDescriptor);
                     }

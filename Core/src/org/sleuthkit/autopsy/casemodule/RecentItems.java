@@ -25,13 +25,9 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action listener that opens a recent case.
@@ -69,11 +65,9 @@ class RecentItems implements ActionListener {
                         NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                         JOptionPane.ERROR_MESSAGE);
                 RecentCases.getInstance().removeRecentCase(caseName, caseMetaDataFilePath);
-                if (Case.isCaseOpen() == false) {
-                    EventQueue.invokeLater(() -> {
-                        StartupWindowProvider.getInstance().open();
-                    });
-                }
+                EventQueue.invokeLater(() -> {
+                    StartupWindowProvider.getInstance().open();
+                });
             } else {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                 try {
@@ -86,9 +80,7 @@ class RecentItems implements ActionListener {
                             ex.getMessage(), // Should be user-friendly
                             NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
                             JOptionPane.ERROR_MESSAGE);
-                    if (!Case.isCaseOpen()) {
-                        StartupWindowProvider.getInstance().open();
-                    }
+                    StartupWindowProvider.getInstance().open();
                 }
             }
         }

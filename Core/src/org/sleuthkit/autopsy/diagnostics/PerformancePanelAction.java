@@ -38,6 +38,8 @@ import org.sleuthkit.autopsy.casemodule.Case;
 @ActionReference(path = "Menu/Help", position = 1437)
 public final class PerformancePanelAction extends CallableSystemAction {
 
+    private static final long serialVersionUID = 1L;
+
     @Override
     public void performAction() {
         JDialog dialog = new PerformancePanel();
@@ -46,7 +48,12 @@ public final class PerformancePanelAction extends CallableSystemAction {
     
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen();
+        try {
+            Case.getCurrentCase();
+            return true;
+        } catch (IllegalStateException ex) {
+            return false;
+        }
     }
 
     @Override

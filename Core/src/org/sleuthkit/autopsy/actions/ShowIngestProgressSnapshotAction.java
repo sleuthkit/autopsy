@@ -60,7 +60,12 @@ public final class ShowIngestProgressSnapshotAction extends CallableSystemAction
 
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen();
+        try {
+            Case.getCurrentCase();
+            return true;
+        } catch (IllegalStateException ex) {
+            return false;
+        }
     }
 
     @Override

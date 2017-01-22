@@ -349,7 +349,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (Case.isCaseOpen()) {
                 Case currentCase = Case.getCurrentCase();
 
                 // close the top component if there's no image in this case
@@ -440,7 +439,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     }
 
                 }
-            }
+        } catch (IllegalStateException ex) {
+            // Thrown if there is no current case
         } finally {
             this.setCursor(null);
         }

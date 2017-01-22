@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -314,7 +314,16 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
 
     @Override
     public boolean canClose() {
-        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
+        /*
+         * Only allow this window to be closed when there's no case opened or no
+         * data sources in the open case.
+         */
+        try {
+            return !this.isMain || Case.getCurrentCase().hasData() == false;
+        } catch (IllegalStateException ex) {
+            // Thrown if there is no current case.
+            return true;
+        }
     }
 
     /**

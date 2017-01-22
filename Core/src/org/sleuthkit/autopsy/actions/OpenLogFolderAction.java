@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2014-2015 Basis Technology Corp.
+ *
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -35,37 +35,46 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Action in menu to open the folder containing the log files
+ * Action to open the log subdirectory for the currently open case, or the log
+ * subdirectory of the user directory if there is no current case.
  */
-@ActionRegistration(
-        displayName = "#CTL_OpenLogFolder", iconInMenu = true)
+@ActionRegistration(displayName = "#CTL_OpenLogFolder", iconInMenu = true)
 @ActionReference(path = "Menu/Help", position = 1750)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenLogFolderAction", category = "Help")
 public final class OpenLogFolderAction implements ActionListener {
 
-    private static final Logger logger = Logger.getLogger(OpenLogFolderAction.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(OpenLogFolderAction.class.getName());
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        File logDir;
         try {
-            File logDir;
-            if (Case.isCaseOpen()) {
-                logDir = new File(Case.getCurrentCase().getLogDirectoryPath());
-            } else {
-                logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
-            }
+            Case currentCase = Case.getCurrentCase();
+            logDir = new File(currentCase.getLogDirectoryPath());
+        } catch (IllegalStateException ex) {
+            /*
+             * No open case.
+             */
+            logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
+        }
+
+        try {
             if (logDir.exists() == false) {
-                NotifyDescriptor d
-                        = new NotifyDescriptor.Message(
-                                NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
-                                NotifyDescriptor.ERROR_MESSAGE);
-                DialogDisplayer.getDefault().notify(d);
+                LOGGER.log(Level.SEVERE, String.format("The log subdirectory %s does not exist", logDir));
+                NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
+                        NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
+                        NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(notifyDescriptor);
             } else {
                 Desktop.getDesktop().open(logDir);
             }
         } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "OpenLogFolder.CouldNotOpenLogFolder"), ex); //NON-NLS
-
+            LOGGER.log(Level.SEVERE, String.format("Could not open log directory %s", logDir), ex);
+            NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
+                    NbBundle.getMessage(this.getClass(), "OpenLogFolder.CouldNotOpenLogFolder", logDir.getAbsolutePath()),
+                    NotifyDescriptor.ERROR_MESSAGE);
+            DialogDisplayer.getDefault().notify(notifyDescriptor);
         }
     }
+    
 }

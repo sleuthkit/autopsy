@@ -330,11 +330,11 @@ public class IngestManager {
 
                     // check whether a multi-user case is currently being processed
                     try {
-                        if (!Case.isCaseOpen() || Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
+                        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                             return;
                         }
                     } catch (IllegalStateException ignore) {
-                        // thorown by Case.getCurrentCase() when no case is open
+                        // Thrown by Case.getCurrentCase() when no case is open
                         return;
                     }
 

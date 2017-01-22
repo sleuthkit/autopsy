@@ -353,7 +353,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
     }//GEN-LAST:event_updateCaseNameButtonActionPerformed
 
     private void deleteCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCaseButtonActionPerformed
-        CallableSystemAction.get(CaseDeleteAction.class).actionPerformed(evt);
+        CallableSystemAction.get(DeleteCurrentCaseAction.class).actionPerformed(evt);
     }//GEN-LAST:event_deleteCaseButtonActionPerformed
 
     private void caseNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_caseNameTextFieldActionPerformed
