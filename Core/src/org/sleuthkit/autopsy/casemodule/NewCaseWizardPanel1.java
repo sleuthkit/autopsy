@@ -35,6 +35,7 @@ import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
@@ -175,7 +176,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
             if (createdDirectory != null && !createdDirectory.equals("")) {
                 logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory); //NON-NLS
-                Case.deleteCaseDirectory(new File(createdDirectory));
+                FileUtil.deleteDir(new File(createdDirectory));
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel1, ", e); //NON-NLS
@@ -298,7 +299,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
             // delete the folder if we already created the folder and the error shows up
             if (new File(caseDirPath).exists()) {
-                Case.deleteCaseDirectory(new File(caseDirPath));
+                FileUtil.deleteDir(new File(caseDirPath));
             }
 
             String errorMsg = NbBundle.getMessage(this.getClass(),

@@ -34,9 +34,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
-/**
- * RJCTODO
- */
 @Immutable
 @ServiceProvider(service = ManifestFileParser.class)
 public final class AutopsyManifestFileParser implements ManifestFileParser {
@@ -47,14 +44,6 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
     private static final String DEVICE_ID_XPATH = "/Manifest/Collection/Image/ID/text()";
     private static final String DATA_SOURCE_NAME_XPATH = "/Manifest/Collection/Image/Name/text()";
     
-
-    /**
-     * RJCTODO
-     *
-     * @param filePath
-     *
-     * @return
-     */
     @Override
     public boolean fileIsManifest(Path filePath) {
         boolean fileIsManifest = false;
@@ -71,15 +60,6 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
         return fileIsManifest;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param filePath
-     *
-     * @return
-     *
-     * @throws org.sleuthkit.autopsy.experimental.autoingest.ManifestFileParser.ManifestFileParserException
-     */
     @Override
     public Manifest parse(Path filePath) throws ManifestFileParserException {
         if (!fileIsManifest(filePath)) {
@@ -102,17 +82,6 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
         }
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param manifestFilePath
-     *
-     * @return
-     *
-     * @throws ParserConfigurationException
-     * @throws SAXException
-     * @throws IOException
-     */
     private Document createManifestDOM(Path manifestFilePath) throws ParserConfigurationException, SAXException, IOException {
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();

@@ -43,7 +43,9 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * An action that opens an existing case.
+ * An action that opens an existing case. It is associated with the Case/Open
+ * menu item via the layer.xml file, with a toolbar button, and with a button on
+ * the startup window.
  */
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction extends CallableSystemAction implements ActionListener {
@@ -82,8 +84,8 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
          */
         if (IngestManager.getInstance().isIngestRunning()) {
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"), // RJCTODO
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"), // RJCTODO
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"),
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION,
                     NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);
@@ -116,7 +118,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    Case.openCurrentCase(path);
+                    Case.openAsCurrentCase(path);
                     return null;
                 }
 

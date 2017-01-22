@@ -857,7 +857,7 @@ class ReportHTML implements TableReportModule {
                 iconPath = "favicon.ico";
             }
             index.append("<head>\n<title>").append(reportTitle).append(" ").append(
-                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getName())).append(
+                    NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getDisplayName())).append(
                     "</title>\n"); //NON-NLS
             index.append("<link rel=\"icon\" type=\"image/ico\" href=\"")
                     .append(iconPath).append("\" />\n"); //NON-NLS
@@ -1017,7 +1017,7 @@ class ReportHTML implements TableReportModule {
             Date date = new Date();
             String datetime = datetimeFormat.format(date);
 
-            String caseName = currentCase.getName();
+            String caseName = currentCase.getDisplayName();
             String caseNumber = currentCase.getNumber();
             String examiner = currentCase.getExaminer();
             int imagecount;

@@ -16,27 +16,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.framework;
 
 /**
- * RJCTODO
+ * A progress panel consisting of a message label and a progress bar.
  */
 class ProgressPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * RJCTODO
-     */
     ProgressPanel() {
         initComponents();
         this.progressBar.setMinimum(0);
     }
 
-    /**
-     * RJCTODO
-     * @param message 
-     */
     void setMessage(String message) {
         this.progressMessage.setText(message);
     } 

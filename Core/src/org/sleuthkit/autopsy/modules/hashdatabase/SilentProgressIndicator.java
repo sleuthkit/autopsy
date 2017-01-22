@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.modules.hashdatabase;
 
-import org.sleuthkit.autopsy.corecomponentinterfaces.ProgressIndicator;
+import org.sleuthkit.autopsy.framework.ProgressIndicator;
 
 /**
  * A "silent" or "null" progress indicator.

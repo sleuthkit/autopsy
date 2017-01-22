@@ -20,14 +20,14 @@ package org.sleuthkit.autopsy.test;
 
 import java.util.logging.Level;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
-import org.sleuthkit.autopsy.corecomponentinterfaces.ProgressIndicator;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.framework.AutopsyService;
+import org.sleuthkit.autopsy.framework.ProgressIndicator;
 
 /**
  * An implementation of the Autopsy service interface used for test purposes.
  */
-@ServiceProvider(service = AutopsyService.class)
+//@ServiceProvider(service = AutopsyService.class)
 public class TestAutopsyService implements AutopsyService {
 
     private static final Logger LOGGER = Logger.getLogger(TestAutopsyService.class.getName());

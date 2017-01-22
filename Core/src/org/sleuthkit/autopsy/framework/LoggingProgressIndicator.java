@@ -16,16 +16,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.framework;
 
 import java.util.logging.Level;
-import org.sleuthkit.autopsy.corecomponentinterfaces.ProgressIndicator;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * A progress indicator that writes progress to the Autopsy application log.
  */
-class LoggingProgressIndicator implements ProgressIndicator {
+public final class LoggingProgressIndicator implements ProgressIndicator {
 
     private final Logger LOGGER = Logger.getLogger(LoggingProgressIndicator.class.getName());
     private int totalWorkUnits;

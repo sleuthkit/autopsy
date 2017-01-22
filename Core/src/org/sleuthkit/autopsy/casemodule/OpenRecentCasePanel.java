@@ -124,7 +124,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             } else {
                 new Thread(() -> {
                     try {
-                        Case.openCurrentCase(casePath);
+                        Case.openAsCurrentCase(casePath);
                     } catch (CaseActionException ex) {
                         logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
                         SwingUtilities.invokeLater(() -> {

@@ -77,15 +77,15 @@ class CasePropertiesForm extends javax.swing.JPanel {
      */
     CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
         initComponents();
-        caseNameTextField.setText(currentCase.getName());
+        caseNameTextField.setText(currentCase.getDisplayName());
         String caseNumber = currentCase.getNumber();
-        if (!caseNumber.equals("")) {
+        if (!caseNumber.isEmpty()) {
             caseNumberField.setText(caseNumber);
         } else {
             caseNumberField.setText("N/A");
         }
         String examiner = currentCase.getExaminer();
-        if (!examiner.equals("")) {
+        if (!examiner.isEmpty()) {
             examinerField.setText(examiner);
         } else {
             examinerField.setText("N/A");
@@ -303,13 +303,13 @@ class CasePropertiesForm extends javax.swing.JPanel {
      * @param evt The action event
      */
     private void updateCaseNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCaseNameButtonActionPerformed
-        String oldCaseName = Case.getCurrentCase().getName();
+        String oldCaseName = Case.getCurrentCase().getDisplayName();
         String newCaseName = caseNameTextField.getText();
         // check if the old and new case name is not equal
         if (!oldCaseName.equals(newCaseName)) {
 
             // check if the case name is empty
-            if (newCaseName.trim().equals("")) {
+            if (newCaseName.trim().isEmpty()) {
                 JOptionPane.showMessageDialog(caller,
                         NbBundle.getMessage(this.getClass(),
                                 "CasePropertiesForm.updateCaseName.msgDlg.empty.msg"),

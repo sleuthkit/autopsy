@@ -22,6 +22,7 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -38,11 +39,12 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action to close the current case and pop up the start up window that
- * allows a user to open another case. 
+ * allows a user to open another case.
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
@@ -52,6 +54,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(CaseCloseAction.class.getName());
     private final JButton toolbarButton = new JButton();
 
     /**
@@ -77,8 +80,8 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
          */
         if (IngestManager.getInstance().isIngestRunning()) {
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"), // RJCTODO
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"), // RJCTODO
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"),
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"),
                     NotifyDescriptor.YES_NO_OPTION,
                     NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);
@@ -105,7 +108,7 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    // RJCTODO: Pop up error and log
+                    logger.log(Level.SEVERE, "Error closing the current case", ex);
                 }
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 StartupWindowProvider.getInstance().open();

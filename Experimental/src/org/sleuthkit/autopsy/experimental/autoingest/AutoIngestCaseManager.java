@@ -72,7 +72,6 @@ final class AutoIngestCaseManager {
          * this machine, but review mode is only for looking at cases created by
          * automated ingest.
          */
-        // RJCTODO: Write a story about this.
         FileObject root = FileUtil.getConfigRoot();
         FileObject openRecentCasesMenu = root.getFileObject("Menu/Case/OpenRecentCase");
         if (openRecentCasesMenu != null) {
@@ -108,7 +107,7 @@ final class AutoIngestCaseManager {
         /*
          * Open the case.
          */
-        Case.openCurrentCase(caseMetadataFilePath.toString());
+        Case.openAsCurrentCase(caseMetadataFilePath.toString());
 
         /**
          * Disable the add data source action in auto ingest examiner mode. This
@@ -117,7 +116,6 @@ final class AutoIngestCaseManager {
          * enables the menus on EDT by calling SwingUtilities.invokeLater(), we
          * have to do the same thing here to maintain the order of execution.
          */
-        // RJCTODO: Write a story about this.
         SwingUtilities.invokeLater(() -> {
             CallableSystemAction.get(AddImageAction.class).setEnabled(false);
         });

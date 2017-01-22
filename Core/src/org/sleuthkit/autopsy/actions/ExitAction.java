@@ -43,8 +43,7 @@ final public class ExitAction implements ActionListener {
             try {
                 Case.closeCurrentCase();
             } catch (CaseActionException ex) {
-                // RJCTODO: Pop up here
-                Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Error closing the current case", ex); //NON-NLS
+                Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Error closing the current case on exit", ex); //NON-NLS
             } finally {
                 LifecycleManager.getDefault().exit();
             }

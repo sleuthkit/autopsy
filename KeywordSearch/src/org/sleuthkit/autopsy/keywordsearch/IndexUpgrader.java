@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.lang.math.NumberUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
+import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;

@@ -192,7 +192,7 @@ final class AutoIngestJobLogger {
      *                                      to acquire an exclusive lock on the
      *                                      log file.
      */
-    void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException { // RJCTODO: Is this used now?
+    void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.WARNING, "Cancelled adding data source to case");
     }
     

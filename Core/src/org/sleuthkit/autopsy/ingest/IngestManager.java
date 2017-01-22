@@ -379,7 +379,7 @@ public class IngestManager {
              * Case.getTextIndexName() API.
              */
             Case openedCase = Case.getCurrentCase();
-            String channelPrefix = openedCase.getTextIndexName();
+            String channelPrefix = openedCase.getName();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
                 jobEventPublisher.openRemoteEventChannel(String.format(JOB_EVENT_CHANNEL_NAME, channelPrefix));
                 moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, channelPrefix));

@@ -46,7 +46,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public class Installer extends ModuleInstall {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(Installer.class.getName());
+    private static final Logger logger = Logger.getLogger(Installer.class.getName());
     private static Installer instance;
 
     public synchronized static Installer getDefault() {
@@ -82,10 +82,9 @@ public class Installer extends ModuleInstall {
                     final String caseFile = argsProcessor.getDefaultArg();
                     if (caseFile != null && !caseFile.isEmpty() && caseFile.endsWith(CaseMetadata.getFileExtension()) && new File(caseFile).exists()) { //NON-NLS
                         try {
-                            Case.openCurrentCase(caseFile);
+                            Case.openAsCurrentCase(caseFile);
                         } catch (CaseActionException ex) {
-                            // RJCTODO: SHould there be a popup here?
-                            LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
+                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
                         }
                         return;
                     }
@@ -105,7 +104,7 @@ public class Installer extends ModuleInstall {
         try {
             Case.closeCurrentCase();
         } catch (CaseActionException ex) {
-            LOGGER.log(Level.SEVERE, "Error closing current case", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error closing current case", ex); //NON-NLS
         }
     }
 
@@ -124,7 +123,7 @@ public class Installer extends ModuleInstall {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            LOGGER.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
+            logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
         }
 
         // Store the keys that deal with menu items
@@ -140,7 +139,7 @@ public class Installer extends ModuleInstall {
                 try {
                     UIManager.setLookAndFeel(info.getClassName());
                 } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-                    LOGGER.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
+                    logger.log(Level.WARNING, "Error setting OS-X look-and-feel", ex); //NON-NLS
                 }
                 break;
             }

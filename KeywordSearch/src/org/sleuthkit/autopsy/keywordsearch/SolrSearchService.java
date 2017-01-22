@@ -30,7 +30,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
+import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -55,6 +55,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
     ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
+    /**
+     * Adds an artifact to the keyword search text index as a concantenation of
+     * all of its attributes.
+     *
+     * @param artifact The artifact to index.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
         if (artifact == null) {
@@ -77,21 +85,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
-     * Checks if we can communicate with Solr using the passed-in host and port.
-     * Closes the connection upon exit. Throws if it cannot communicate with
-     * Solr.
+     * Tries to connect to the keyword search service.
      *
-     * When issues occur, it attempts to diagnose them by looking at the
-     * exception messages, returning the appropriate user-facing text for the
-     * exception received. This method expects the Exceptions messages to be in
-     * English and compares against English text.
+     * @param host The hostname or IP address of the service.
+     * @param port The port used by the service.
      *
-     * @param host the remote hostname or IP address of the Solr server
-     * @param port the remote port for Solr
-     *
-     * @throws
-     * org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException
-     *
+     * @throws KeywordSearchServiceException if cannot connect.
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
@@ -138,6 +137,24 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         }
     }
 
+    /**
+     * Deletes the keyword search text index for a case.
+     *
+     * @param textIndexName The text index name.
+     */
+    @Override
+    public void deleteTextIndex(String textIndexName) {
+        /*
+         * Send a core unload request to the Solr server, with the parameters
+         * that request deleting the index and the instance directory
+         * (deleteInstanceDir removes everything related to the core, the index
+         * directory, the configuration files, etc.) set to true.
+         */
+//        String url = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
+//        HttpSolrServer solrServer = new HttpSolrServer(url);
+//        org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(textIndexName, true, true, solrServer); 
+    }
+        
     @Override
     public void close() throws IOException {
     }

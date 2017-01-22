@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public class SingleUserCaseConverter {
 
-    static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS // RJCTODO    
+    private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS    
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
     private static final String DOTAUT = CaseMetadata.getFileExtension(); //NON-NLS
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
@@ -196,7 +196,7 @@ public class SingleUserCaseConverter {
         CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
                 CaseType.MULTI_USER_CASE,
                 icd.getNewCaseName(),
-                icd.getNewCaseName(), // RJCTODO
+                icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
                 oldCaseMetadata.getExaminer(),
                 dbName);

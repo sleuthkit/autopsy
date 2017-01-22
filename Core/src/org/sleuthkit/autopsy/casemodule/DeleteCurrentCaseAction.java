@@ -54,6 +54,7 @@ final class DeleteCurrentCaseAction extends CallableSystemAction {
         try {
             Case currentCase = Case.getCurrentCase();
             String caseName = currentCase.getName();
+            String caseDirectory = currentCase.getCaseDirectory();
 
             /*
              * Do a confirmation dialog and close the current case if the user
@@ -68,16 +69,15 @@ final class DeleteCurrentCaseAction extends CallableSystemAction {
                     NotifyDescriptor.NO_OPTION));
             if (null != response && DialogDescriptor.YES_OPTION == response) {
                 try {
-                    Case.deleteCurrentCase(); // RJCTODO: Test this!
+                    Case.deleteCurrentCase();
                 } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to delete case %s", caseName), ex);
+                    logger.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
                     JOptionPane.showMessageDialog(
                             null,
                             Bundle.Case_deleteCaseFailureMessageBox_message(ex.getMessage()),
                             Bundle.Case_deleteCaseFailureMessageBox_title(),
                             JOptionPane.ERROR_MESSAGE);
                 }
-                // RJCTODO: Fix this
                 // because the "Delete Case" button is in the "CaseProperties" window, we have to close that window when we delete the case.
                 CasePropertiesAction.closeCasePropertiesWindow();
             }

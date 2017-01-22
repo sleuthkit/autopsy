@@ -169,45 +169,10 @@ public final class CaseMetadata {
      *
      * @return The case display name.
      */
-    // RJCTODO: Deal with the change
     public String getCaseName() {
         return caseName;
     }
-
-    /**
-     * Sets the case display name. This does not change the name of the case
-     * directory, the case database, or the text index name.
-     *
-     * @param caseName A case display name.
-     */
-    // RJCTODO: Deal with the change, remove this
-    void setCaseName(String caseName) throws CaseMetadataException {
-        String oldCaseName = caseName;
-        this.caseName = caseName;
-        try {
-            writeToFile();
-        } catch (CaseMetadataException ex) {
-            this.caseName = oldCaseName;
-            throw ex;
-        }
-    }
     
-    /**
-     * Sets the text index name.
-     *
-     * @param caseTextIndexName The text index name.
-     */
-    void setTextIndexName(String caseTextIndexName) throws CaseMetadataException {
-        String oldIndexName = caseTextIndexName;
-        this.textIndexName = caseTextIndexName;
-        try {
-            writeToFile();
-        } catch (CaseMetadataException ex) {
-            this.textIndexName = oldIndexName;
-            throw ex;
-        }
-    }    
-
     /**
      * Gets the case display name.
      *
@@ -223,7 +188,6 @@ public final class CaseMetadata {
      *
      * @param caseName A case display name.
      */
-    // RJCTODO: Deal with the change
     void setCaseDisplayName(String caseName) throws CaseMetadataException {
         String oldCaseName = caseName;
         this.caseDisplayName = caseName;
@@ -282,6 +246,22 @@ public final class CaseMetadata {
         }
     }
 
+    /**
+     * Sets the text index name.
+     *
+     * @param caseTextIndexName The text index name.
+     */
+    void setTextIndexName(String caseTextIndexName) throws CaseMetadataException {
+        String oldIndexName = caseTextIndexName;
+        this.textIndexName = caseTextIndexName;
+        try {
+            writeToFile();
+        } catch (CaseMetadataException ex) {
+            this.textIndexName = oldIndexName;
+            throw ex;
+        }
+    }    
+    
     /**
      * Gets the text index name.
      *
@@ -349,7 +329,6 @@ public final class CaseMetadata {
      * @throws CaseMetadataException If there is an error writing to the case
      *                               metadata file.
      */
-    // RJCTODO: Should we have a backup copy of the file in case of error?
     private void writeToFile() throws CaseMetadataException {
         try {
             /*

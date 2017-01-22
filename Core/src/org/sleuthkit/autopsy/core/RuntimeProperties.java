@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,18 +59,33 @@ public class RuntimeProperties {
      * Private constructor to prevent creation of instances of this class.
      */
     private RuntimeProperties() {
-
     }
 
-    private final static class RuntimePropertiesException extends Exception {
+    /**
+     * Exception to throw if there is an error setting a runtime property.
+     */
+    public final static class RuntimePropertiesException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
-        private RuntimePropertiesException(String message) {
+        /**
+         * Constructor for an exception to throw if there is an error setting
+         * a runtime property.
+         *
+         * @param message The exception message.
+         */
+        public RuntimePropertiesException(String message) {
             super(message);
         }
 
-        private RuntimePropertiesException(String message, Throwable cause) {
+        /**
+         * Constructor for an exception to throw if there is an error setting
+         * a runtime property.
+         *
+         * @param message The exception message.
+         * @param cause   The cause of the error.
+         */
+        public RuntimePropertiesException(String message, Throwable cause) {
             super(message, cause);
         }
     }

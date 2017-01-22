@@ -25,14 +25,17 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * An action listener that opens a recent case.
- *
- * IMPORTANT: Must be called in the Swing Event Dispatch Thread (EDT).
+ * An action listener for a specific case, associated with a Recent Cases menu
+ * item for the case by a DynamicMenuContent content JMenuItem.
  */
 class RecentItems implements ActionListener {
 
@@ -41,7 +44,9 @@ class RecentItems implements ActionListener {
     private final String caseMetaDataFilePath;
 
     /**
-     * Constructs an action listener that opens a recent case.
+     * Constructs an action listener for a specific case, associated with a
+     * Recent Cases menu item for the case by a DynamicMenuContent content
+     * JMenuItem.
      *
      * @param caseName             The name of the case.
      * @param caseMetaDataFilePath The path to the case metadata file.
@@ -52,37 +57,42 @@ class RecentItems implements ActionListener {
     }
 
     /**
-     * Opens the recent case.
+     * Opens the case associated with the action.
      *
      * @param e the action event
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (CaseActionHelper.closeCaseAndContinueAction()) {
-            if (caseName.isEmpty() || caseMetaDataFilePath.isEmpty() || (!new File(caseMetaDataFilePath).exists())) {
-                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                        NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text", caseName),
-                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
-                        JOptionPane.ERROR_MESSAGE);
-                RecentCases.getInstance().removeRecentCase(caseName, caseMetaDataFilePath);
-                EventQueue.invokeLater(() -> {
-                    StartupWindowProvider.getInstance().open();
-                });
-            } else {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    Case.openCurrentCase(caseMetaDataFilePath);
-                } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    JOptionPane.showMessageDialog(
-                            WindowManager.getDefault().getMainWindow(),
-                            ex.getMessage(), // Should be user-friendly
-                            NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                            JOptionPane.ERROR_MESSAGE);
-                    StartupWindowProvider.getInstance().open();
-                }
+        /*
+         * If ingest is running, give the user the option to abort changing
+         * cases.
+         */
+        if (IngestManager.getInstance().isIngestRunning()) {
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"),
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"),
+                    NotifyDescriptor.YES_NO_OPTION,
+                    NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+            Object response = DialogDisplayer.getDefault().notify(descriptor);
+            if (DialogDescriptor.NO_OPTION == response) {
+                return;
             }
+        }
+
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        try {
+            Case.openAsCurrentCase(caseMetaDataFilePath);
+        } catch (CaseActionException ex) {
+            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
+            JOptionPane.showMessageDialog(
+                    WindowManager.getDefault().getMainWindow(),
+                    ex.getMessage(), // Should be user-friendly
+                    NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                    JOptionPane.ERROR_MESSAGE);
+            StartupWindowProvider.getInstance().open();
+        } finally {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }
     }
 }

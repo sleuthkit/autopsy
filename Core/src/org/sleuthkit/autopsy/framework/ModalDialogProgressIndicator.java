@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.framework;
 
 import java.awt.Dialog;
 import java.awt.event.ActionListener;
@@ -24,7 +24,7 @@ import javax.swing.SwingUtilities;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.util.HelpCtx;
-import org.sleuthkit.autopsy.corecomponentinterfaces.ProgressIndicator;
+import org.sleuthkit.autopsy.framework.ProgressIndicator;
 
 /**
  * A progress indicator that displays progress using a modal dialog with a
@@ -58,7 +58,7 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
     public ActionListener getListener() {
         return listener;
     }
-    
+
     @Override
     public void start(String message, int totalWorkUnits) {
         SwingUtilities.invokeLater(new Runnable() {
