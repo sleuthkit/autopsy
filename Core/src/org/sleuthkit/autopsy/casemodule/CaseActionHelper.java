@@ -42,7 +42,7 @@ class CaseActionHelper {
      * @param
      * @return True if the current case, if any, is closed, false otherwise.
      */
-    // RJCTODO: Be sure to test this!
+    // RJCTODO: Be sure to test this! Discard this class
     static boolean closeCaseAndContinueAction() {
         if (IngestManager.getInstance().isIngestRunning()) {
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
@@ -60,7 +60,6 @@ class CaseActionHelper {
             }
         }
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        new T
         try {
             Case.closeCurrentCase();
         } catch (CaseActionException ex) {

@@ -19,10 +19,16 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.SwingWorker;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -31,13 +37,12 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action to close the current case and pop up the start up window that
- * allows a user to open anothjer case. This action should only be enabled when
- * there is a current case.
- *
- * IMPORTANT: Must be called in the Swing Event Dispatch Thread (EDT).
+ * allows a user to open another case. 
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
@@ -66,9 +71,46 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (CaseActionHelper.closeCaseAndContinueAction()) {
-            StartupWindowProvider.getInstance().open();
+        /*
+         * If ingest is running, give the user the option to abort changing
+         * cases.
+         */
+        if (IngestManager.getInstance().isIngestRunning()) {
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"), // RJCTODO
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"), // RJCTODO
+                    NotifyDescriptor.YES_NO_OPTION,
+                    NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+            Object response = DialogDisplayer.getDefault().notify(descriptor);
+            if (DialogDescriptor.NO_OPTION == response) {
+                return;
+            }
         }
+
+        /*
+         * Close the case.
+         */
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                Case.closeCurrentCase();
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    // RJCTODO: Pop up error and log
+                }
+                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                StartupWindowProvider.getInstance().open();
+            }
+        }.execute();
     }
 
     /**

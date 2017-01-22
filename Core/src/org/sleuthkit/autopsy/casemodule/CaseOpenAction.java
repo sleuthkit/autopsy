@@ -22,11 +22,16 @@ import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import org.openide.DialogDescriptor;
+import org.openide.DialogDisplayer;
+import org.openide.NotifyDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -35,11 +40,10 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action that opens an existing case.
- *
- * IMPORTANT: Must be called in the Swing Event Dispatch Thread (EDT).
  */
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction extends CallableSystemAction implements ActionListener {
@@ -72,40 +76,67 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (CaseActionHelper.closeCaseAndContinueAction()) {
-
-            /**
-             * Pop up a file chooser to allow the user to select a case metadata
-             * file (.aut file).
-             */
-            int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
-            if (retval == JFileChooser.APPROVE_OPTION) {
-                /*
-                 * Close the startup window, if it is open.
-                 */
-                StartupWindowProvider.getInstance().close();
-
-                /*
-                 * Try to open the case associated with the case metadata file
-                 * the user selected.
-                 */
-                final String path = fileChooser.getSelectedFile().getPath();
-                String dirPath = fileChooser.getSelectedFile().getParent();
-                ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-                    Case.openCurrentCase(path);
-                } catch (CaseActionException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                    JOptionPane.showMessageDialog(
-                            WindowManager.getDefault().getMainWindow(),
-                            ex.getMessage(), // Should be user-friendly
-                            NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                            JOptionPane.ERROR_MESSAGE);
-                    StartupWindowProvider.getInstance().open();
-                }
+        /*
+         * If ingest is running, give the user the option to abort changing
+         * cases.
+         */
+        if (IngestManager.getInstance().isIngestRunning()) {
+            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"), // RJCTODO
+                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"), // RJCTODO
+                    NotifyDescriptor.YES_NO_OPTION,
+                    NotifyDescriptor.WARNING_MESSAGE);
+            descriptor.setValue(NotifyDescriptor.NO_OPTION);
+            Object response = DialogDisplayer.getDefault().notify(descriptor);
+            if (DialogDescriptor.NO_OPTION == response) {
+                return;
             }
+        }
+
+        /**
+         * Pop up a file chooser to allow the user to select a case metadata
+         * file (.aut file).
+         */
+        int retval = fileChooser.showOpenDialog(WindowManager.getDefault().getMainWindow());
+        if (retval == JFileChooser.APPROVE_OPTION) {
+            /*
+             * Close the startup window, if it is open.
+             */
+            StartupWindowProvider.getInstance().close();
+
+            /*
+             * Try to open the case associated with the case metadata file the
+             * user selected.
+             */
+            final String path = fileChooser.getSelectedFile().getPath();
+            String dirPath = fileChooser.getSelectedFile().getParent();
+            ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE, dirPath.substring(0, dirPath.lastIndexOf(File.separator)));
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            new SwingWorker<Void, Void>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
+                    Case.openCurrentCase(path);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                    } catch (InterruptedException | ExecutionException ex) {
+                        LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        JOptionPane.showMessageDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                ex.getMessage(), // Should be user-friendly
+                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                JOptionPane.ERROR_MESSAGE);
+                        StartupWindowProvider.getInstance().open();
+                    }
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+            }.execute();
         }
     }
 

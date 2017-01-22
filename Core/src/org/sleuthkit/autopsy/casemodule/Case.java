@@ -749,6 +749,7 @@ public class Case {
         }
         progressIndicator.start(Bundle.Case_progressMessage_preparingToCloseCase());
 
+//                LOGGER.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS RJCTOD
         try {
             /*
              * Closing a case is always done in the same non-UI thread that
@@ -772,7 +773,6 @@ public class Case {
                         releaseSharedCaseDirLock(caseName);
                     }
                 }
-                currentCase = null;
                 return null;
             });
             if (RuntimeProperties.runningWithGUI()) {
@@ -780,11 +780,16 @@ public class Case {
                         -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
             }
             future.get();
+//            LOGGER.log(Level.INFO, "Closed case {0} in directory = {1}", new Object[]{metadata.getCaseName(), metadata.getCaseDirectory()}); //NON-NLS    RJCTODO            
+            if (RuntimeProperties.runningWithGUI()) {
+                updateGUIForCaseClosed();
+            }
+            eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
         } catch (InterruptedException | ExecutionException ex) {
             if (ex instanceof ExecutionException) {
-                throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase(ex.getCause().getMessage()), ex);
+                throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase(ex.getCause().getMessage()), ex); // RJCTODO
             } else {
-                throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase("Interrupted during locks acquisition"), ex);
+                throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase("Interrupted during locks acquisition"), ex); // RJCTODO
             }
         } finally {
             currentCase = null;
