@@ -162,9 +162,9 @@ final class RegexQuery implements KeywordSearchQuery {
 
         // Set the fields we want to have returned by the query.
         if (KeywordSearchSettings.getShowSnippets()) {
-            solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString());
+            solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString(), Server.Schema.CHUNK_SIZE.toString());
         } else {
-            solrQuery.setFields(Server.Schema.ID.toString());
+            solrQuery.setFields(Server.Schema.ID.toString(), Server.Schema.CHUNK_SIZE.toString());
         }
         filters.stream()
                 .map(KeywordQueryFilter::toString)
