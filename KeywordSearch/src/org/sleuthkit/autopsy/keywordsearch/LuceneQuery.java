@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -222,7 +223,7 @@ class LuceneQuery implements KeywordSearchQuery {
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
 
-                    Integer startOffset = getStartOffset(termVectors, docId);
+                    Integer startOffset = getFirstOffset(termVectors, docId);
                     if (startOffset < chunkSize) {
                         matches.add(createKeywordtHit(highlightResponse, docId));
                     }
@@ -235,15 +236,14 @@ class LuceneQuery implements KeywordSearchQuery {
         return matches;
     }
 
-    private Integer getStartOffset(SimpleOrderedMap<?> termVectors, final String docId) {
+    private Integer getFirstOffset(SimpleOrderedMap<?> termVectors, final String docId) {
         SimpleOrderedMap<?> docTermVector = (SimpleOrderedMap<?>) termVectors.get(docId);
         SimpleOrderedMap<?> fieldVector = (field == null)
                 ? (SimpleOrderedMap< ?>) docTermVector.get(Server.Schema.TEXT.toString())
                 : (SimpleOrderedMap<?>) docTermVector.get(field);
-        SimpleOrderedMap<?> termInfo = (SimpleOrderedMap<?>) fieldVector.get(getQueryString());
+        SimpleOrderedMap<?> termInfo = (SimpleOrderedMap<?>) fieldVector.get(StringUtils.strip(getQueryString().toLowerCase(), "\""));
         SimpleOrderedMap<?> offsets = (SimpleOrderedMap<?>) termInfo.get("offsets");
-        Integer startOffset = (Integer) offsets.get("start");
-        return startOffset;
+        return (Integer) offsets.get("start");
     }
 
     /**
@@ -270,18 +270,24 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
 
-//        q.setFields(Server.Schema.ID.toString());
         q.addSort(Server.Schema.ID.toString(), SolrQuery.ORDER.asc);
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
         }
 
+        //use Term Vector Request Handler to get term vectors with offsets.
+        //They are used to exclude hits that start inside the chunk window.
         q.setRequestHandler("/tvrh");
         q.setParam("tv", true);
+        q.setParam("tv.df", false);
+        q.setParam("tv.offsets", true);
+        q.setParam("tv.positions", false);
+        q.setParam("tv.payloads", false);
+        q.setParam("tv.tf", false);
+        q.setParam("tv.tf_idf", false);
         if (field != null) {
             q.setParam("tv.fl", field);
         }
-        q.setParam("tv.all", true);
 
         if (snippets) {
             q.addHighlightField(Server.Schema.TEXT.toString());
@@ -328,7 +334,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * return snippet preview context
      *
      * @param query        the keyword query for text to highlight. Lucene
-     *                     special cahrs should already be escaped.
+     *                     special chars should already be escaped.
      * @param solrObjectId The Solr object id associated with the file or
      *                     artifact
      * @param isRegex      whether the query is a regular expression (different
@@ -346,7 +352,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * return snippet preview context
      *
      * @param query        the keyword query for text to highlight. Lucene
-     *                     special cahrs should already be escaped.
+     *                     special chars should already be escaped.
      * @param solrObjectId Solr object id associated with the hit
      * @param chunkID      chunk id associated with the content hit, or 0 if no
      *                     chunks
