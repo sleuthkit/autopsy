@@ -19,10 +19,11 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
+import java.util.TreeMap;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
+import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 
 /**
  * Panel to display options for profile creation.
@@ -60,6 +61,9 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         jPanel1.add(ingestSettingsPanel, 0);
     }
 
+    String getProfileName(){
+        return profileNameField.getText();
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -183,6 +187,7 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
             DialogDisplayer.getDefault().notify(notifyDesc);
             return false;
         }
+        
         return true;
     }
 }

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.Map;
+import java.util.TreeMap;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
@@ -26,7 +27,8 @@ import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
@@ -41,7 +43,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         "ProfileSettingsPanel.newProfileButton.text=New Profile",
         "ProfileSettingsPanel.editProfileButton.text=Edit Profile",
         "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile",
-        "ProfileSettingsPanel.messages.filterLoadFailed=Failed to load file ingest filter"
+        "ProfileSettingsPanel.messages.filterLoadFailed=Failed to load file ingest filter",
+        "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text=Profile with name {0} already exists."
     })
 
     private final DefaultListModel<IngestProfile> profilesListModel = new DefaultListModel<>();
@@ -311,6 +314,15 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             option = JOptionPane.showConfirmDialog(null, panel, Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
+        TreeMap<String, IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
+        
+        if (profileMap.containsKey(panel.getProfileName()) && selectedProfile == null) {
+            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                    "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text",
+                    panel.getProfileName()));
+            return;
+        }
+        
         if (option == JOptionPane.OK_OPTION) {
             panel.saveSettings();
             load();
@@ -335,9 +347,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     public void load() {
         int currentIndex = profileList.getSelectedIndex();
         profilesListModel.clear();
-        IngestProfileList iList = new IngestProfileList();
-        iList.loadProfileList();
-        for (IngestProfile profile : iList.getProfileList()) {
+        IngestProfileMap profileMap = new IngestProfileMap();
+        for (IngestProfile profile : profileMap.getIngestProfileMap().values()) {
             profilesListModel.addElement(profile);
         }
         if (newProfileButton.isEnabled()) {

@@ -22,29 +22,33 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.TreeMap;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
-class IngestProfileList {
+class IngestProfileMap {
 
     private static final String PROFILE_FOLDER = "Profiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
-    private List<IngestProfile> profileList = null;
+    private TreeMap<String, IngestProfile> profileMap = null;
     private static final Object PROFILE_LOCK = new Object();
 
-    List<IngestProfile> getIngestProfileList() {
-        if (profileList == null) {
+    /**
+     * Gets the collection of profiles which currently exist.
+     *
+     * @return profileList
+     */
+    TreeMap<String, IngestProfile> getIngestProfileMap() {
+        if (profileMap == null) {
             loadProfileList();
         }
-        return profileList;
+        return profileMap;
     }
 
     /**
@@ -55,17 +59,15 @@ class IngestProfileList {
             File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
             File[] directoryListing = dir.listFiles();
 
+            profileMap = new TreeMap<>();
             if (directoryListing != null) {
-                profileList = new ArrayList<>();
                 for (File child : directoryListing) {
                     String name = child.getName().split("\\.")[0];
                     String context = PROFILE_FOLDER + File.separator + name;
                     String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
                     String fileIngestFilter = ModuleSettings.getConfigSetting(context, PROFILE_FILTER_KEY);
-                    profileList.add(new IngestProfile(name, desc, fileIngestFilter));
+                    profileMap.put(name, new IngestProfile(name, desc, fileIngestFilter));
                 }
-            } else {
-                profileList = Collections.emptyList();
             }
         }
     }
@@ -78,20 +80,11 @@ class IngestProfileList {
     }
 
     /**
-     * Gets the list of profiles which currently exist.
-     *
-     * @return profileList
-     */
-    List<IngestProfile> getProfileList() {
-        return this.profileList;
-    }
-
-    /**
      * Saves the list of profiles which currently exist to disk.
      */
     void saveProfileList() {
         //save last used profile
-        for (IngestProfile profile : getIngestProfileList()) {
+        for (IngestProfile profile : getIngestProfileMap().values()) {
             IngestProfile.saveProfile(profile);
         }
     }
