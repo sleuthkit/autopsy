@@ -36,7 +36,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
@@ -67,7 +66,7 @@ class TikaTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public Reader getReader(AbstractFile sourceFile) throws IngesterException, MissingResourceException {
+    public Reader getReader(AbstractFile sourceFile) throws TextExtractorException, MissingResourceException {
         ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
 
         Metadata metadata = new Metadata();
@@ -81,12 +80,12 @@ class TikaTextExtractor extends FileTextExtractor {
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
-            throw new IngesterException(msg);
+            throw new TextExtractorException(msg, te);
         } catch (Exception ex) {
             KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, ex);
-            throw new IngesterException(msg, ex);
+            throw new TextExtractorException(msg, ex);
         }
     }
 
