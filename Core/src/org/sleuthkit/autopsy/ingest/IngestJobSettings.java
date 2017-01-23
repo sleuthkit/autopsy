@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,6 +57,15 @@ public class IngestJobSettings {
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
+
+    /**
+     * @return the ENABLED_MODULES_KEY
+     */
+    static String getEnabledModulesKey() {
+        return ENABLED_MODULES_KEY;
+    }
+    
+    
     private FilesSet fileIngestFilter;
     private String executionContext;
     private final IngestType ingestType;
@@ -510,8 +519,8 @@ public class IngestJobSettings {
                 disabledModuleNames.add(moduleName);
             }
         }
-        ModuleSettings.setConfigSetting(this.executionContext, ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
-        ModuleSettings.setConfigSetting(this.executionContext, DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
+        ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(enabledModuleNames));
+        ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.DISABLED_MODULES_KEY, makeCommaSeparatedValuesList(disabledModuleNames));
 
         /**
          * Save the last used File Ingest Filter setting for this context.

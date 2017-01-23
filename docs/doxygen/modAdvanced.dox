@@ -34,6 +34,7 @@ Autopsy will generate events as the application runs and modules may want to lis
 - Case change events occur when a case is opened, closed, or changed.  The org.sleuthkit.autopsy.casemodule.Case.addPropertyChangeListener() method can be used for this.
 - IngestManager events occur when new results are available. The org.sleuthkit.autopsy.ingest.IngestManager.addPropertyChangeListener() method can be used for this.
 
+Preventing a user from modifying settings during ingest can be accomplished by listening for Ingest Job Events, and when there is an event setting the enabled status of those settings based off the opposite of IngestManager.getInstance().isIngestRunning(), which returns a boolean.
 
 
 */

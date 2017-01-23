@@ -75,6 +75,9 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
         this.ingestWarningLabel.setVisible(false);
     }
 
+    /**
+     * Load the existing settings.
+     */
     void load() {
         numberOfFileIngestThreadsComboBox.setSelectedItem(UserPreferences.numberOfFileIngestThreads());
         if (UserPreferences.getIsTimeOutEnabled()) {
@@ -92,6 +95,9 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
         }
     }
 
+    /**
+     * Store the existing settings.
+     */
     void store() {
         UserPreferences.setNumberOfFileIngestThreads((Integer) numberOfFileIngestThreadsComboBox.getSelectedItem());
 
@@ -107,6 +113,11 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
         return true;
     }
 
+    /**
+     * Enable or Disable buttons based on whether Ingest is running.
+     * 
+     * @param isEnabled 
+     */
     void enableButtons(boolean isEnabled){
         numberOfFileIngestThreadsComboBox.setEnabled(isEnabled);
         jFormattedTextFieldProcTimeOutHrs.setEnabled(isEnabled);

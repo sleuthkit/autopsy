@@ -24,10 +24,8 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
 
-
 /**
- *
- * @author wschaefer
+ * Panel to display options for profile creation.
  */
 public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
@@ -39,7 +37,7 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     IngestJobSettingsPanel ingestSettingsPanel;
     IngestJobSettings tempSettings;
     IngestProfile profile;
-    final static String NEW_PROFILE_NAME =  NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText"); 
+    final static String NEW_PROFILE_NAME = NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText");
 
     /**
      * Creates new form ProfilePanel
@@ -148,6 +146,9 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     private javax.swing.JLabel profileNameLabel;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Save a new or edited profile.
+     */
     @Override
     public void saveSettings() {
         if (profile == null) {
@@ -160,6 +161,9 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         ingestSettingsPanel.getSettings().saveAs(profileNameField.getText());
     }
 
+    /**
+     * Save a new or edited profile.
+     */
     public void store() {
         saveSettings();
     }
@@ -167,6 +171,10 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     public void load() {
     }
 
+    /**
+     * Checks that information entered constitutes a valid ingest profile.
+     * @return true for valid, false for invalid.
+     */
     boolean isValidDefinition() {
         if (this.profileNameField.getText().isEmpty()) {
             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(

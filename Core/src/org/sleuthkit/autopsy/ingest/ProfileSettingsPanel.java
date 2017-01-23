@@ -258,6 +258,11 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteProfileButtonActionPerformed
 
+    /**
+     * Enable / disable buttons, so they can be disabled while ingest is running.
+     * 
+     * @param isEnabled 
+     */
     void enableButtons(boolean isEnabled) {
         newProfileButton.setEnabled(isEnabled);
         editProfileButton.setEnabled(isEnabled);
@@ -265,6 +270,9 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         ingestWarningLabel.setVisible(!isEnabled);
     }
 
+    /**
+     * Refresh displayed information.
+     */
     private void resetComponents() {
         if (!this.profilesListModel.isEmpty()) {
             this.profileList.setSelectedIndex(0);
@@ -282,6 +290,11 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_editProfileButtonActionPerformed
 
+    /**
+     * Open a dialog for the the creation or modification of a profile.  
+     * 
+     * @param selectedProfile 
+     */
     private void doProfileDialog(IngestProfile selectedProfile) {
         // Create a files set defintion panle.
         ProfilePanel panel;
@@ -315,6 +328,9 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
     }
 
+    /**
+     * Load the stored profile information. 
+     */
     @Override
     public void load() {
         int currentIndex = profileList.getSelectedIndex();

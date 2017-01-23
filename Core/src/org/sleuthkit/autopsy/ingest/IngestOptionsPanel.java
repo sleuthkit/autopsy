@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,14 +30,15 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
  * Global options panel for keyword searching.
  */
 class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
-@NbBundle.Messages({"IngestOptionsPanel.settingsTab.text=Settings",
-  "IngestOptionsPanel.settingsTab.toolTipText=Settings regarding resources available to ingest.",
-  "IngestOptionsPanel.fileFiltersTab.text=File Filters",
-  "IngestOptionsPanel.fileFiltersTab.toolTipText=Settings for creating and editing ingest file filters.",
-  "IngestOptionsPanel.profilesTab.text=Profiles",
-  "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles.",
-  "IngestOptionsPanel.title.text=Ingest Options"
-})
+
+    @NbBundle.Messages({"IngestOptionsPanel.settingsTab.text=Settings",
+        "IngestOptionsPanel.settingsTab.toolTipText=Settings regarding resources available to ingest.",
+        "IngestOptionsPanel.fileFiltersTab.text=File Filters",
+        "IngestOptionsPanel.fileFiltersTab.toolTipText=Settings for creating and editing ingest file filters.",
+        "IngestOptionsPanel.profilesTab.text=Profiles",
+        "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles.",
+        "IngestOptionsPanel.title.text=Ingest Options"
+    })
     private FilesSetDefsPanel filterPanel;
     private IngestSettingsPanel settingsPanel;
     private ProfileSettingsPanel profilePanel;
@@ -48,35 +49,32 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
      * type definitions are in use.
      */
     IngestJobEventPropertyChangeListener ingestJobEventsListener;
-    
+
     IngestOptionsPanel() {
         initComponents();
         customizeComponents();
     }
 
     private void customizeComponents() {
-        setName(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.title.text")); 
+        setName(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.title.text"));
         filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
         settingsPanel = new IngestSettingsPanel();
         profilePanel = new ProfileSettingsPanel();
-        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.text") , null, 
-                settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), 0); 
-        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.text"), null, 
-                filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 1); 
-        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null, 
-                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 2); 
+        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.text"), null,
+                settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), 0);
+        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.text"), null,
+                filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 1);
+        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null,
+                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 2);
         addIngestJobEventsListener();
     }
-    
-       /**
+
+    /**
      * Add a property change listener that listens to ingest job events to
      * disable the buttons on the panel if ingest is running. This is done to
      * prevent changes to user-defined types while the type definitions are in
      * use.
      */
-    // TODO: Disabling during ingest would not be necessary if the file ingest
-    // modules obtained and shared a per data source ingest job snapshot of the
-    // file type definitions.    
     private void addIngestJobEventsListener() {
         ingestJobEventsListener = new IngestJobEventPropertyChangeListener();
         IngestManager.getInstance().addIngestJobEventListener(ingestJobEventsListener);
@@ -97,16 +95,23 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
             });
         }
     }
-    
-    private void enableTabs(){
+
+    /**
+     * Disables tabs and options inside of tabs during Ingest, and re-enables
+     * them after Ingest is complete or cancelled.
+     */
+    private void enableTabs() {
         boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
         tabbedPane.setEnabled(!ingestIsRunning);
         settingsPanel.enableButtons(!ingestIsRunning);
         profilePanel.enableButtons(!ingestIsRunning);
         filterPanel.enableButtons(!ingestIsRunning);
-    
+
     }
-    
+
+    /**
+     * @inheritDoc
+     */
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
         filterPanel.addPropertyChangeListener(l);
@@ -114,6 +119,9 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         profilePanel.addPropertyChangeListener(l);
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
         filterPanel.removePropertyChangeListener(l);
@@ -121,6 +129,9 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         profilePanel.removePropertyChangeListener(l);
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public void saveSettings() {
         filterPanel.store();
@@ -128,11 +139,17 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         profilePanel.store();
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public void store() {
         saveSettings();
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
     public void load() {
         filterPanel.load();
@@ -143,9 +160,14 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     boolean valid() {
         return true;
     }
-    
-    void cancel(){
+
+    /**
+     * Method called when the cancel button is clicked.
+     */
+    void cancel() {
+        //doesn't need to do anything
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

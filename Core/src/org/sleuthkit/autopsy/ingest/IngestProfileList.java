@@ -47,6 +47,9 @@ class IngestProfileList {
         return profileList;
     }
 
+    /**
+     * Read the stored profile definitions from their directory.
+     */
     private void readFilesFromDirectory() {
         synchronized (PROFILE_LOCK) {
             File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
@@ -67,14 +70,25 @@ class IngestProfileList {
         }
     }
 
+    /**
+     * Loads the list of profiles from disk.
+     */
     void loadProfileList() {
         readFilesFromDirectory();
     }
-    
-    List<IngestProfile> getProfileList(){
+
+    /**
+     * Gets the list of profiles which currently exist.
+     *
+     * @return profileList
+     */
+    List<IngestProfile> getProfileList() {
         return this.profileList;
     }
 
+    /**
+     * Saves the list of profiles which currently exist to disk.
+     */
     void saveProfileList() {
         //save last used profile
         for (IngestProfile profile : getIngestProfileList()) {
@@ -82,26 +96,24 @@ class IngestProfileList {
         }
     }
 
+    /**
+     * An individual Ingest Profile, consists of a name, a description, and a
+     * FileIngestFilter. The name can be used to find the ModuleSettings for
+     * this profile.
+     */
     static class IngestProfile {
 
-        private static final String ENABLED_MODULES_KEY = "Enabled_Ingest_Modules"; //NON-NLS
-        private static final String DISABLED_MODULES_KEY = "Disabled_Ingest_Modules"; //NON-NLS
         private final String name;
         private final String description;
         private final String fileIngestFilter;
 
         /**
+         * The key for Enabled ingest modules
+         *
          * @return the ENABLED_MODULES_KEY
          */
         static String getEnabledModulesKey() {
-            return ENABLED_MODULES_KEY;
-        }
-
-        /**
-         * @return the DISABLED_MODULES_KEY
-         */
-        static String getDisabledModulesKey() {
-            return DISABLED_MODULES_KEY;
+            return IngestJobSettings.getEnabledModulesKey();
         }
 
         IngestProfile(String name, String desc, String selected) {
@@ -110,12 +122,19 @@ class IngestProfileList {
             this.fileIngestFilter = selected;
         }
 
+        /**
+         * The string value of an IngestProfile is simply its name
+         *
+         * @return getName();
+         */
         @Override
         public String toString() {
             return getName();
         }
 
         /**
+         * The unique name field for this Ingest Profile.
+         *
          * @return the name
          */
         String getName() {
@@ -123,6 +142,8 @@ class IngestProfileList {
         }
 
         /**
+         * The optional user defined description of this Ingest Profile.
+         *
          * @return the description
          */
         String getDescription() {
@@ -130,12 +151,19 @@ class IngestProfileList {
         }
 
         /**
+         * The file ingest filter which was selected to be used.
+         *
          * @return the fileIngestFilter
          */
         String getFileIngestFilter() {
             return fileIngestFilter;
         }
 
+        /**
+         * Deletes all of the files which are currently storing a profile.
+         *
+         * @param selectedProfile
+         */
         static void deleteProfile(IngestProfile selectedProfile) {
             synchronized (PROFILE_LOCK) {
                 try {
@@ -148,6 +176,12 @@ class IngestProfileList {
             }
         }
 
+        /**
+         * Renames the files and directories associated with a profile
+         *
+         * @param oldName the name of the profile you want to rename
+         * @param newName the name which you want the profile to have
+         */
         static void renameProfile(String oldName, String newName) {
             if (!oldName.equals(newName)) { //if renameProfile was called with the new name being the same as the old name, it is complete already
                 synchronized (PROFILE_LOCK) {
@@ -164,6 +198,11 @@ class IngestProfileList {
             }
         }
 
+        /**
+         * Gets the module names for a given key.
+         *
+         * @param key The key string.
+         */
         HashSet<String> getModuleNames(String key) {
             synchronized (PROFILE_LOCK) {
                 if (ModuleSettings.settingExists(this.getName(), key) == false) {
@@ -199,6 +238,11 @@ class IngestProfileList {
             }
         }
 
+        /**
+         * Save a Ingest profile file in the profile folder.
+         *
+         * @param profile
+         */
         static void saveProfile(IngestProfile profile) {
             synchronized (PROFILE_LOCK) {
                 String context = PROFILE_FOLDER + File.separator + profile.getName();
