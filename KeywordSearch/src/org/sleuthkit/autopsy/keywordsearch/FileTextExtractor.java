@@ -95,7 +95,7 @@ abstract class FileTextExtractor implements TextExtractor< AbstractFile> {
     abstract boolean isSupported(AbstractFile file, String detectedFormat);
 
     @Override
-    public abstract Reader getReader(AbstractFile source) throws Ingester.IngesterException;
+    public abstract Reader getReader(AbstractFile source) throws TextExtractorException;
 
     @Override
     public long getID(AbstractFile source) {
