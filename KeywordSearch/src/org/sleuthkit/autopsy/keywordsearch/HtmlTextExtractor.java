@@ -65,7 +65,7 @@ class HtmlTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public Reader getReader(AbstractFile sourceFile) throws Ingester.IngesterException {
+    public Reader getReader(AbstractFile sourceFile) throws TextExtractorException {
         ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
 
         //Parse the stream with Jericho and put the results in a Reader
@@ -159,7 +159,7 @@ class HtmlTextExtractor extends FileTextExtractor {
             // All done, now make it a reader
             return new StringReader(stringBuilder.toString());
         } catch (IOException ex) {
-            throw new Ingester.IngesterException("Error extracting HTML from content.", ex);
+            throw new TextExtractorException("Error extracting HTML from content.", ex);
         }
     }
 
