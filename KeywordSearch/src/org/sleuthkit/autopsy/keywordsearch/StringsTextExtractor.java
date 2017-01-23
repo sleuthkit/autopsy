@@ -108,7 +108,7 @@ class StringsTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public InputStreamReader getReader(AbstractFile sourceFile) throws Ingester.IngesterException {
+    public InputStreamReader getReader(AbstractFile sourceFile) throws TextExtractorException {
         InputStream stringStream = getInputStream(sourceFile);
         return new InputStreamReader(stringStream, Server.DEFAULT_INDEXED_TEXT_CHARSET);
     }

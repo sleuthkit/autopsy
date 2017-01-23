@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,19 +20,17 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.apache.solr.common.util.SimpleOrderedMap;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -40,7 +38,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -206,6 +203,7 @@ class LuceneQuery implements KeywordSearchQuery {
         response = solrServer.query(q, METHOD.POST);
 
         resultList = response.getResults();
+        SimpleOrderedMap<?> termVectors = (SimpleOrderedMap) response.getResponse().get("termVectors");
 
         // objectId_chunk -> "text" -> List of previews
         highlightResponse = response.getHighlighting();
@@ -216,24 +214,36 @@ class LuceneQuery implements KeywordSearchQuery {
 
             allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
 
-            SleuthkitCase sleuthkitCase;
-            try {
-                sleuthkitCase = Case.getCurrentCase().getSleuthkitCase();
-            } catch (IllegalStateException ex) {
-                //no case open, must be just closed
-                return matches;
-            }
             for (SolrDocument resultDoc : resultList) {
-                KeywordHit contentHit;
                 try {
-                    contentHit = createKeywordtHit(resultDoc, highlightResponse, sleuthkitCase);
+                    /* for each result, check that the first occurence of that
+                     * term is before the window. if all the ocurences start
+                     * within the window, don't record them for this chunk, they
+                     * will get picked up in the next one. */
+                    final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
+                    final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
+
+                    Integer startOffset = getFirstOffset(termVectors, docId);
+                    if (startOffset < chunkSize) {
+                        matches.add(createKeywordtHit(highlightResponse, docId));
+                    }
                 } catch (TskException ex) {
                     return matches;
                 }
-                matches.add(contentHit);
+
             }
         }
         return matches;
+    }
+
+    private Integer getFirstOffset(SimpleOrderedMap<?> termVectors, final String docId) {
+        SimpleOrderedMap<?> docTermVector = (SimpleOrderedMap<?>) termVectors.get(docId);
+        SimpleOrderedMap<?> fieldVector = (field == null)
+                ? (SimpleOrderedMap< ?>) docTermVector.get(Server.Schema.TEXT.toString())
+                : (SimpleOrderedMap<?>) docTermVector.get(field);
+        SimpleOrderedMap<?> termInfo = (SimpleOrderedMap<?>) fieldVector.get(StringUtils.strip(getQueryString().toLowerCase(), "\""));
+        SimpleOrderedMap<?> offsets = (SimpleOrderedMap<?>) termInfo.get("offsets");
+        return (Integer) offsets.get("start");
     }
 
     /**
@@ -247,7 +257,7 @@ class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
         // Wrap the query string in quotes if this is a literal search term.
-        String theQueryStr = keyword.searchTermIsLiteral() 
+        String theQueryStr = keyword.searchTermIsLiteral()
                 ? KeywordSearchUtil.quoteQuery(keywordStringEscaped) : keywordStringEscaped;
 
         // Run the query against an optional alternative field. 
@@ -260,10 +270,23 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
 
-        q.setFields(Server.Schema.ID.toString());
         q.addSort(Server.Schema.ID.toString(), SolrQuery.ORDER.asc);
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
+        }
+
+        //use Term Vector Request Handler to get term vectors with offsets.
+        //They are used to exclude hits that start inside the chunk window.
+        q.setRequestHandler("/tvrh");
+        q.setParam("tv", true);
+        q.setParam("tv.df", false);
+        q.setParam("tv.offsets", true);
+        q.setParam("tv.positions", false);
+        q.setParam("tv.payloads", false);
+        q.setParam("tv.tf", false);
+        q.setParam("tv.tf_idf", false);
+        if (field != null) {
+            q.setParam("tv.fl", field);
         }
 
         if (snippets) {
@@ -290,12 +313,11 @@ class LuceneQuery implements KeywordSearchQuery {
         return q;
     }
 
-    private KeywordHit createKeywordtHit(SolrDocument solrDoc, Map<String, Map<String, List<String>>> highlightResponse, SleuthkitCase caseDb) throws TskException {
+    private KeywordHit createKeywordtHit(Map<String, Map<String, List<String>>> highlightResponse, String docId) throws TskException {
         /**
          * Get the first snippet from the document if keyword search is
          * configured to use snippets.
          */
-        final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         String snippet = "";
         if (KeywordSearchSettings.getShowSnippets()) {
             List<String> snippetList = highlightResponse.get(docId).get(Server.Schema.TEXT.toString());
@@ -304,6 +326,7 @@ class LuceneQuery implements KeywordSearchQuery {
                 snippet = EscapeUtil.unEscapeHtml(snippetList.get(0)).trim();
             }
         }
+
         return new KeywordHit(docId, snippet);
     }
 
@@ -311,7 +334,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * return snippet preview context
      *
      * @param query        the keyword query for text to highlight. Lucene
-     *                     special cahrs should already be escaped.
+     *                     special chars should already be escaped.
      * @param solrObjectId The Solr object id associated with the file or
      *                     artifact
      * @param isRegex      whether the query is a regular expression (different
@@ -329,7 +352,7 @@ class LuceneQuery implements KeywordSearchQuery {
      * return snippet preview context
      *
      * @param query        the keyword query for text to highlight. Lucene
-     *                     special cahrs should already be escaped.
+     *                     special chars should already be escaped.
      * @param solrObjectId Solr object id associated with the hit
      * @param chunkID      chunk id associated with the content hit, or 0 if no
      *                     chunks

@@ -36,9 +36,11 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -63,6 +65,7 @@ import org.openide.modules.Places;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -188,8 +191,7 @@ public class Server {
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
-    private UNCPathUtilities uncPathUtilities = null;
-    private static final String SOLR = "solr";
+   private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
 
     public enum CORE_EVT_STATES {
@@ -257,7 +259,6 @@ public class Server {
             }
         }
         currentCoreLock = new ReentrantReadWriteLock(true);
-        uncPathUtilities = new UNCPathUtilities();
 
         logger.log(Level.INFO, "Created Server instance using Java at {0}", javaHome); //NON-NLS
     }
@@ -658,15 +659,23 @@ public class Server {
      * Creates/opens a Solr core (index) for a case.
      *
      * @param theCase The case for which the core is to be created/opened.
-     *
+     * @param index The text index that the Solr core should be using.
      *
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
      */
-    void openCoreForCase(Case theCase) throws KeywordSearchModuleException {
+    void openCoreForCase(Case theCase, Index index) throws KeywordSearchModuleException {
         currentCoreLock.writeLock().lock();
         try {
-            currentCore = openCore(theCase);
+            currentCore = openCore(theCase, index);
+            
+            try {
+                // execute a test query. if it fails, an exception will be thrown
+                queryNumIndexedFiles();
+            } catch (NoOpenCoreException ex) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+            }
+            
             serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
         } finally {
             currentCoreLock.writeLock().unlock();
@@ -710,48 +719,21 @@ public class Server {
     }
 
     /**
-     * Get index dir location for the case
-     *
-     * @param theCase the case to get index dir for
-     *
-     * @return absolute path to index dir
-     */
-    String geCoreDataDirPath(Case theCase) {
-        // ELTODO this method is going to be removed
-        String indexDir = theCase.getModuleDirectory() + File.separator + "keywordsearch" + File.separator + "data"; //NON-NLS
-        if (uncPathUtilities != null) {
-            // if we can check for UNC paths, do so, otherwise just return the indexDir
-            String result = uncPathUtilities.mappedDriveToUNC(indexDir);
-            if (result == null) {
-                uncPathUtilities.rescanDrives();
-                result = uncPathUtilities.mappedDriveToUNC(indexDir);
-            }
-            if (result == null) {
-                return indexDir;
-            }
-            return result;
-        }
-        return indexDir;
-    }
-
-
-    /**
      * ** end single-case specific methods ***
      */
     /**
      * Creates/opens a Solr core (index) for a case.
      *
      * @param theCase The case for which the core is to be created/opened.
+     * @param index The text index that the Solr core should be using.
      *
      * @return An object representing the created/opened core.
      *
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
      */
-    private Core openCore(Case theCase) throws KeywordSearchModuleException {
-        
-        // ELTODO REMOVE String indexDir = findLatestVersionIndexDir(Case.getCurrentCase()); // ELTODO
-        
+    private Core openCore(Case theCase, Index index) throws KeywordSearchModuleException {
+
         try {
             if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
                 currentSolrServer = this.localSolrServer;
@@ -766,9 +748,142 @@ public class Server {
             throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
         }
 
-        String dataDir = geCoreDataDirPath(theCase);
-        String coreName = theCase.getTextIndexName();
-        return this.openCore(coreName.isEmpty() ? DEFAULT_CORE_NAME : coreName, new File(dataDir), theCase.getCaseType());
+        try {
+            String coreName = getCoreName(index, theCase);
+
+            File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
+            if (!dataDir.exists()) {
+                dataDir.mkdirs();
+            }
+
+            if (!this.isRunning()) {
+                logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
+            }
+
+            if (!coreIsLoaded(coreName)) {
+                /*
+                 * The core either does not exist or it is not loaded. Make a
+                 * request that will cause the core to be created if it does not
+                 * exist or loaded if it already exists.
+                 */
+
+                // In single user mode, if there is a core.properties file already,
+                // we've hit a solr bug. Compensate by deleting it.
+                if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                    Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
+                    if (corePropertiesFile.toFile().exists()) {
+                        try {
+                            corePropertiesFile.toFile().delete();
+                        } catch (Exception ex) {
+                            logger.log(Level.INFO, "Could not delete pre-existing core.properties prior to opening the core."); //NON-NLS
+                        }
+                    }
+                }
+
+                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
+                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
+                createCoreRequest.setCoreName(coreName);
+                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
+                createCoreRequest.setIsLoadOnStartup(false);
+                createCoreRequest.setIsTransient(true);
+                currentSolrServer.request(createCoreRequest);
+            }
+
+            if (!coreIndexFolderExists(coreName)) {
+                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
+            }
+
+            return new Core(coreName, theCase.getCaseType(), index);
+
+        } catch (SolrServerException | SolrException | IOException | CaseMetadata.CaseMetadataException ex) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+        }
+    }
+    
+    /**
+     * Get or create a sanitized Solr core name. Stores the core name if needed.
+     *
+     * @param index   Index object
+     * @param theCase Case object
+     *
+     * @return The sanitized Solr core name
+     */
+    private String getCoreName(Index index, Case theCase) throws CaseMetadata.CaseMetadataException {
+        String coreName = "";
+        if (index.isNewIndex()) {
+            // come up with a new core name
+            coreName = createCoreName(theCase.getName());
+            // store the new core name
+            theCase.setTextIndexName(coreName);
+        } else {
+            // get core name
+            coreName = theCase.getTextIndexName();
+            if (coreName.isEmpty()) {
+                // come up with a new core name
+                coreName = createCoreName(theCase.getName());
+                // store the new core name
+                theCase.setTextIndexName(coreName);
+            }
+        }
+        return coreName;
+    }
+    
+    /**
+     * Create and sanitize a core name.
+     *
+     * @param caseName Case name
+     *
+     * @return The sanitized Solr core name
+     */
+    private String createCoreName(String caseName) {
+        if (caseName.isEmpty()) {
+            caseName = DEFAULT_CORE_NAME;
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        Date date = new Date();
+        String coreName = caseName + "_" + dateFormat.format(date);
+        return sanitizeCoreName(coreName);
+    }
+    
+    /**
+     * Sanitizes the case name for Solr cores.
+     *
+     * Solr:
+     * http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
+     * may not be / \ :
+     * Starting Solr6: core names must consist entirely of periods, underscores, hyphens, and alphanumerics as well not start with a hyphen. may not contain space characters.
+     *
+     * @param coreName A candidate core name.
+     *
+     * @return The sanitized core name.
+     */
+    static private String sanitizeCoreName(String coreName) {
+
+        String result;
+
+        // Remove all non-ASCII characters
+        result = coreName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
+
+        // Remove all control characters
+        result = result.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
+
+        // Remove spaces / \ : ? ' "
+        result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
+        
+        // Make it all lowercase
+        result = result.toLowerCase();
+
+        // Must not start with hyphen
+        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '-')) {
+            result = "_" + result;
+        }
+
+        if (result.isEmpty()) {
+            result = DEFAULT_CORE_NAME;
+        }
+
+        return result;
     }
 
     /**
@@ -1112,72 +1227,6 @@ public class Server {
     }
 
     /**
-     * Creates/opens a Solr core (index) for a case.
-     *
-     * @param coreName The core name.
-     * @param dataDir  The data directory for the core.
-     * @param caseType The type of the case (single-user or multi-user) for
-     *                 which the core is being created/opened.
-     *
-     * @return An object representing the created/opened core.
-     *
-     * @throws KeywordSearchModuleException If an error occurs while
-     *                                      creating/opening the core.
-     */
-    private Core openCore(String coreName, File dataDir, CaseType caseType) throws KeywordSearchModuleException {
-
-        try {
-            if (!dataDir.exists()) {
-                dataDir.mkdirs();
-            }
-
-            if (!this.isRunning()) {
-                logger.log(Level.SEVERE, "Core create/open requested, but server not yet running"); //NON-NLS
-                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
-            }
-
-            if (!coreIsLoaded(coreName)) {
-                /*
-                 * The core either does not exist or it is not loaded. Make a
-                 * request that will cause the core to be created if it does not
-                 * exist or loaded if it already exists.
-                 */
-
-                // In single user mode, if there is a core.properties file already,
-                // we've hit a solr bug. Compensate by deleting it.
-                if (caseType == CaseType.SINGLE_USER_CASE) {
-                    Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
-                    if (corePropertiesFile.toFile().exists()) {
-                        try {
-                            corePropertiesFile.toFile().delete();
-                        } catch (Exception ex) {
-                            logger.log(Level.INFO, "Could not delete pre-existing core.properties prior to opening the core."); //NON-NLS
-                        }
-                    }
-                }
-
-                CoreAdminRequest.Create createCoreRequest = new CoreAdminRequest.Create();
-                createCoreRequest.setDataDir(dataDir.getAbsolutePath());
-                createCoreRequest.setCoreName(coreName);
-                createCoreRequest.setConfigSet("AutopsyConfig"); //NON-NLS
-                createCoreRequest.setIsLoadOnStartup(false);
-                createCoreRequest.setIsTransient(true);
-                currentSolrServer.request(createCoreRequest);
-            }
-
-            if (!coreIndexFolderExists(coreName)) {
-                throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
-            }
-
-            // ELTODO set solr and schema version of the core that is being loaded. Make that available via API.
-            return new Core(coreName, caseType);
-
-        } catch (SolrServerException | SolrException | IOException ex) {
-            throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
-        }
-    }
-
-    /**
      * Attempts to connect to the given Solr server.
      *
      * @param solrServer
@@ -1235,14 +1284,17 @@ public class Server {
         private final String name;
 
         private final CaseType caseType;
+        
+        private final Index textIndex;
 
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
         private final HttpSolrClient solrCore;
 
-        private Core(String name, CaseType caseType) {
+        private Core(String name, CaseType caseType, Index index) {
             this.name = name;
             this.caseType = caseType;
+            this.textIndex = index;
 
             this.solrCore = new Builder(currentSolrServer.getBaseURL() + "/" + name).build(); //NON-NLS
 

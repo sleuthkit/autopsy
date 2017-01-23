@@ -176,7 +176,6 @@ public class SingleUserCaseConverter {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss"); //NON-NLS
         Date date = new Date();
         String dbName = Case.sanitizeCaseName(icd.getNewCaseName()) + "_" + dateFormat.format(date); //NON-NLS
-        String solrName = dbName;
         icd.setPostgreSQLDbName(dbName);
 
         // Copy items to new hostname folder structure
@@ -197,7 +196,7 @@ public class SingleUserCaseConverter {
                 icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
                 oldCaseMetadata.getExaminer(),
-                dbName, solrName);
+                dbName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
         newCaseMetadata.setCreatedByVersion(oldCaseMetadata.getCreatedByVersion());

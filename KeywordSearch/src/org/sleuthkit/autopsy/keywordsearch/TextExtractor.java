@@ -30,7 +30,6 @@ import org.sleuthkit.datamodel.SleuthkitVisitableItem;
  */
 interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
 
-
     /**
      * Is this extractor configured such that no extraction will/should be done?
      *
@@ -46,7 +45,6 @@ interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
      */
     abstract void logWarning(String msg, Exception ex);
 
-
     /**
      * Get a reader that over the text extracted from the given source.
      *
@@ -57,7 +55,7 @@ interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
      *
      * @throws org.sleuthkit.autopsy.keywordsearch.Ingester.IngesterException
      */
-    abstract Reader getReader(TextSource source) throws Ingester.IngesterException;
+    abstract Reader getReader(TextSource source) throws TextExtractorException;
 
     /**
      * Get the 'object' id of the given source.
@@ -76,4 +74,15 @@ interface TextExtractor< TextSource extends SleuthkitVisitableItem> {
      * @return
      */
     abstract String getName(TextSource source);
+
+    class TextExtractorException extends Exception {
+
+        public TextExtractorException(String message) {
+            super(message);
+        }
+
+        public TextExtractorException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 }
