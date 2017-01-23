@@ -101,6 +101,9 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     private void enableTabs(){
         boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
         tabbedPane.setEnabled(!ingestIsRunning);
+        settingsPanel.enableButtons(!ingestIsRunning);
+        profilePanel.enableButtons(!ingestIsRunning);
+    
     }
     
     @Override

@@ -52,6 +52,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         initComponents();
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
+        ingestWarningLabel.setVisible(false);
     }
 
     /**
@@ -81,6 +82,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         selectedModulesPane = new javax.swing.JScrollPane();
         selectedModulesArea = new javax.swing.JTextArea();
         selectedModulesLabel = new javax.swing.JLabel();
+        ingestWarningLabel = new javax.swing.JLabel();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -150,6 +152,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         org.openide.awt.Mnemonics.setLocalizedText(selectedModulesLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.selectedModulesLabel.text")); // NOI18N
 
+        ingestWarningLabel.setFont(ingestWarningLabel.getFont().deriveFont(ingestWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.ingestWarningLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -172,12 +178,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(10, 10, 10)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(filterDescPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 530, Short.MAX_VALUE)
-                            .addComponent(profileDescPane, javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(selectedModulesPane, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(filterNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(filterNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -186,7 +186,16 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                             .addComponent(filterDescLabel)
                             .addComponent(selectedModulesLabel)
                             .addComponent(profileDescLabel))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(10, 10, 10)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(ingestWarningLabel)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(filterDescPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 530, Short.MAX_VALUE)
+                            .addComponent(profileDescPane, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(selectedModulesPane, javax.swing.GroupLayout.Alignment.TRAILING))))
                 .addGap(14, 14, 14))
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -222,7 +231,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(deleteProfileButton))
+                    .addComponent(deleteProfileButton)
+                    .addComponent(ingestWarningLabel))
                 .addContainerGap())
             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -246,7 +256,14 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         this.resetComponents();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteProfileButtonActionPerformed
-
+   
+    void enableButtons(boolean isEnabled){
+        newProfileButton.setEnabled(isEnabled);
+        editProfileButton.setEnabled(isEnabled);
+        deleteProfileButton.setEnabled(isEnabled);
+        ingestWarningLabel.setVisible(!isEnabled);       
+    }
+    
     private void resetComponents() {
         if (!this.profilesListModel.isEmpty()) {
             this.profileList.setSelectedIndex(0);
@@ -358,6 +375,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private javax.swing.JScrollPane filterDescPane;
     private javax.swing.JLabel filterNameLabel;
     private javax.swing.JLabel filterNameText;
+    private javax.swing.JLabel ingestWarningLabel;
     private javax.swing.JSeparator jSeparator1;
     private javax.swing.JButton newProfileButton;
     private javax.swing.JTextArea profileDescArea;
