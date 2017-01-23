@@ -18,7 +18,10 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.EventQueue;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TYPE;
@@ -27,31 +30,79 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
  * Global options panel for keyword searching.
  */
 class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
-
+@NbBundle.Messages({"IngestOptionsPanel.settingsTab.text=Settings",
+  "IngestOptionsPanel.settingsTab.toolTipText=Settings regarding resources available to ingest.",
+  "IngestOptionsPanel.fileFiltersTab.text=File Filters",
+  "IngestOptionsPanel.fileFiltersTab.toolTipText=Settings for creating and editing ingest file filters.",
+  "IngestOptionsPanel.profilesTab.text=Profiles",
+  "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles.",
+  "IngestOptionsPanel.title.text=Ingest Options"
+})
     private FilesSetDefsPanel filterPanel;
     private IngestSettingsPanel settingsPanel;
     private ProfileSettingsPanel profilePanel;
-
+    /**
+     * This panel implements a property change listener that listens to ingest
+     * job events so it can disable the buttons on the panel if ingest is
+     * running. This is done to prevent changes to user-defined types while the
+     * type definitions are in use.
+     */
+    IngestJobEventPropertyChangeListener ingestJobEventsListener;
+    
     IngestOptionsPanel() {
         initComponents();
         customizeComponents();
     }
 
     private void customizeComponents() {
-        setName("Temporary Name");  //WJS-TODO  Bundle @Messages
+        setName(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.title.text")); 
         filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
         settingsPanel = new IngestSettingsPanel();
         profilePanel = new ProfileSettingsPanel();
-        tabbedPane.insertTab("Settings", null, //WJS-TODO  Bundle @Messages
-                settingsPanel, "Tootip 1", 0); //WJS-TODO  Bundle @Messages
-        tabbedPane.insertTab("File Filters", null, //WJS-TODO  Bundle @Messages
-                filterPanel, "Tooltip 2", 1); //WJS-TODO  Bundle @Messages
-        tabbedPane.insertTab("Profiles", null, //WJS-TODO  Bundle @Messages
-                profilePanel, "Tooltip 3", 2); //WJS-TODO  Bundle @Messages
-
-
+        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.text") , null, 
+                settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), 0); 
+        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.text"), null, 
+                filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 1); 
+        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null, 
+                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 2); 
+        addIngestJobEventsListener();
+    }
+    
+       /**
+     * Add a property change listener that listens to ingest job events to
+     * disable the buttons on the panel if ingest is running. This is done to
+     * prevent changes to user-defined types while the type definitions are in
+     * use.
+     */
+    // TODO: Disabling during ingest would not be necessary if the file ingest
+    // modules obtained and shared a per data source ingest job snapshot of the
+    // file type definitions.    
+    private void addIngestJobEventsListener() {
+        ingestJobEventsListener = new IngestJobEventPropertyChangeListener();
+        IngestManager.getInstance().addIngestJobEventListener(ingestJobEventsListener);
     }
 
+    /**
+     * A property change listener that listens to ingest job events.
+     */
+    private class IngestJobEventPropertyChangeListener implements PropertyChangeListener {
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            EventQueue.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    enableTabs();
+                }
+            });
+        }
+    }
+    
+    private void enableTabs(){
+        boolean ingestIsRunning = IngestManager.getInstance().isIngestRunning();
+        tabbedPane.setEnabled(!ingestIsRunning);
+    }
+    
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
         filterPanel.addPropertyChangeListener(l);

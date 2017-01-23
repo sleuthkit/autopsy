@@ -39,7 +39,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     "ProfileSettingsPanel.selectedModulesLabel.text=Selected Ingest Modules:",
     "ProfileSettingsPanel.newProfileButton.text=New Profile",
     "ProfileSettingsPanel.editProfileButton.text=Edit Profile",
-    "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile"
+    "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile",
+    "ProfileSettingsPanel.messages.filterLoadFailed=Failed to load file ingest filter"
 })
     
     private final DefaultListModel<IngestProfile> profilesListModel = new DefaultListModel<>();
@@ -336,7 +337,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     }
                     filterDescArea.setText(fileIngestFilters.get(selectedProfile.getFileIngestFilter()).getDescription());
                 } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                    filterDescArea.setText("FAILED TO LOAD FILTER"); //WJS-TODO remove this handle / handle error correctly? / make this Bundle prop
+                    filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed")); 
                 }
                 selectedModulesArea.setText("");
                 for (String moduleName : selectedProfile.getModuleNames(IngestProfile.getEnabledModulesKey())) {

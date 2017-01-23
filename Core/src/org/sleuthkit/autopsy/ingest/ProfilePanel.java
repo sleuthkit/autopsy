@@ -23,10 +23,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfileList.IngestProfile;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesSetPanel;
-import static org.sleuthkit.autopsy.modules.interestingitems.FilesSetPanel.getCreateNewFileIngestFilterString;
-import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
+
 
 /**
  *
@@ -35,12 +32,14 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     @NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Profile Description:",
-        "ProfilePanel.profileNameLabel.text=Profile Name:"})
+        "ProfilePanel.profileNameLabel.text=Profile Name:",
+        "ProfilePanel.newProfileText=NewEmptyProfile",
+        "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named."})
 
     IngestJobSettingsPanel ingestSettingsPanel;
     IngestJobSettings tempSettings;
     IngestProfile profile;
-    final static String NEW_PROFILE_NAME = "TemporaryNewProfile"; //WJS-TODO  Bundle @Messages
+    final static String NEW_PROFILE_NAME =  NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText"); 
 
     /**
      * Creates new form ProfilePanel
