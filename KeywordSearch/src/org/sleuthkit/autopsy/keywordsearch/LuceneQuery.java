@@ -30,7 +30,6 @@ import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
-import org.apache.solr.common.util.SimpleOrderedMap;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
@@ -203,10 +202,10 @@ class LuceneQuery implements KeywordSearchQuery {
         response = solrServer.query(q, METHOD.POST);
 
         resultList = response.getResults();
-        SimpleOrderedMap<?> termVectors = (SimpleOrderedMap) response.getResponse().get("termVectors");
-
         // objectId_chunk -> "text" -> List of previews
         highlightResponse = response.getHighlighting();
+
+        final String strippedQueryString = StringUtils.strip(getQueryString(), "\"");
 
         // cycle through results in sets of MAX_RESULTS
         for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
@@ -222,28 +221,18 @@ class LuceneQuery implements KeywordSearchQuery {
                      * will get picked up in the next one. */
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
+                    final String content_str = resultDoc.get(Server.Schema.CONTENT_STR.toString()).toString();
 
-                    Integer startOffset = getFirstOffset(termVectors, docId);
-                    if (startOffset < chunkSize) {
+                    Integer firstOccurence = content_str.indexOf(strippedQueryString);
+                    if (firstOccurence < chunkSize) {
                         matches.add(createKeywordtHit(highlightResponse, docId));
                     }
                 } catch (TskException ex) {
                     return matches;
                 }
-
             }
         }
         return matches;
-    }
-
-    private Integer getFirstOffset(SimpleOrderedMap<?> termVectors, final String docId) {
-        SimpleOrderedMap<?> docTermVector = (SimpleOrderedMap<?>) termVectors.get(docId);
-        SimpleOrderedMap<?> fieldVector = (field == null)
-                ? (SimpleOrderedMap< ?>) docTermVector.get(Server.Schema.TEXT.toString())
-                : (SimpleOrderedMap<?>) docTermVector.get(field);
-        SimpleOrderedMap<?> termInfo = (SimpleOrderedMap<?>) fieldVector.get(StringUtils.strip(getQueryString().toLowerCase(), "\""));
-        SimpleOrderedMap<?> offsets = (SimpleOrderedMap<?>) termInfo.get("offsets");
-        return (Integer) offsets.get("start");
     }
 
     /**
@@ -270,23 +259,12 @@ class LuceneQuery implements KeywordSearchQuery {
         q.setQuery(theQueryStr);
         q.setRows(MAX_RESULTS);
 
+        q.setFields(Server.Schema.ID.toString(),
+                Server.Schema.CHUNK_SIZE.toString(),
+                Server.Schema.CONTENT_STR.toString());
         q.addSort(Server.Schema.ID.toString(), SolrQuery.ORDER.asc);
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
-        }
-
-        //use Term Vector Request Handler to get term vectors with offsets.
-        //They are used to exclude hits that start inside the chunk window.
-        q.setRequestHandler("/tvrh");
-        q.setParam("tv", true);
-        q.setParam("tv.df", false);
-        q.setParam("tv.offsets", true);
-        q.setParam("tv.positions", false);
-        q.setParam("tv.payloads", false);
-        q.setParam("tv.tf", false);
-        q.setParam("tv.tf_idf", false);
-        if (field != null) {
-            q.setParam("tv.fl", field);
         }
 
         if (snippets) {
