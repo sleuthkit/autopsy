@@ -31,18 +31,19 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
 class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
-@NbBundle.Messages({"ProfileSettingsPanel.title=Profile Settings", 
-    "ProfileSettingsPanel.profileListLabel.text=Profiles:", 
-    "ProfileSettingsPanel.profileDescLabel.text=Profile Description:",
-    "ProfileSettingsPanel.filterNameLabel.text=Filter:",
-    "ProfileSettingsPanel.filterDescLabel.text=Filter Description:",
-    "ProfileSettingsPanel.selectedModulesLabel.text=Selected Ingest Modules:",
-    "ProfileSettingsPanel.newProfileButton.text=New Profile",
-    "ProfileSettingsPanel.editProfileButton.text=Edit Profile",
-    "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile",
-    "ProfileSettingsPanel.messages.filterLoadFailed=Failed to load file ingest filter"
-})
-    
+
+    @NbBundle.Messages({"ProfileSettingsPanel.title=Profile Settings",
+        "ProfileSettingsPanel.profileListLabel.text=Profiles:",
+        "ProfileSettingsPanel.profileDescLabel.text=Profile Description:",
+        "ProfileSettingsPanel.filterNameLabel.text=Filter:",
+        "ProfileSettingsPanel.filterDescLabel.text=Filter Description:",
+        "ProfileSettingsPanel.selectedModulesLabel.text=Selected Ingest Modules:",
+        "ProfileSettingsPanel.newProfileButton.text=New Profile",
+        "ProfileSettingsPanel.editProfileButton.text=Edit Profile",
+        "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile",
+        "ProfileSettingsPanel.messages.filterLoadFailed=Failed to load file ingest filter"
+    })
+
     private final DefaultListModel<IngestProfile> profilesListModel = new DefaultListModel<>();
 
     /**
@@ -256,14 +257,14 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         this.resetComponents();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteProfileButtonActionPerformed
-   
-    void enableButtons(boolean isEnabled){
+
+    void enableButtons(boolean isEnabled) {
         newProfileButton.setEnabled(isEnabled);
         editProfileButton.setEnabled(isEnabled);
         deleteProfileButton.setEnabled(isEnabled);
-        ingestWarningLabel.setVisible(!isEnabled);       
+        ingestWarningLabel.setVisible(!isEnabled);
     }
-    
+
     private void resetComponents() {
         if (!this.profilesListModel.isEmpty()) {
             this.profileList.setSelectedIndex(0);
@@ -294,7 +295,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         // Do a dialog box with the profilePanel till the user enters a name or chooses cancel
         int option = JOptionPane.OK_OPTION;
         do {
-        option = JOptionPane.showConfirmDialog(null, panel,Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.showConfirmDialog(null, panel, Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
@@ -320,15 +321,17 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         profilesListModel.clear();
         IngestProfileList iList = new IngestProfileList();
         iList.loadProfileList();
-        for (IngestProfile profile : iList.profileList) {
+        for (IngestProfile profile : iList.getProfileList()) {
             profilesListModel.addElement(profile);
         }
-        if (profilesListModel.isEmpty()) {
-            editProfileButton.setEnabled(false);
-            deleteProfileButton.setEnabled(false);
-        } else {
-            editProfileButton.setEnabled(true);
-            deleteProfileButton.setEnabled(true);
+        if (newProfileButton.isEnabled()) {
+            if (profilesListModel.isEmpty()) {
+                editProfileButton.setEnabled(false);
+                deleteProfileButton.setEnabled(false);
+            } else {
+                editProfileButton.setEnabled(true);
+                deleteProfileButton.setEnabled(true);
+            }
         }
         profileList.setSelectedIndex(currentIndex);
     }
@@ -354,7 +357,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     }
                     filterDescArea.setText(fileIngestFilters.get(selectedProfile.getFileIngestFilter()).getDescription());
                 } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                    filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed")); 
+                    filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed"));
                 }
                 selectedModulesArea.setText("");
                 for (String moduleName : selectedProfile.getModuleNames(IngestProfile.getEnabledModulesKey())) {

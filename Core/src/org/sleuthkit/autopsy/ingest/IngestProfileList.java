@@ -31,13 +31,13 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
-public class IngestProfileList {
+class IngestProfileList {
 
     private static final String PROFILE_FOLDER = "Profiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
-    List<IngestProfile> profileList = null;
+    private List<IngestProfile> profileList = null;
     private static final Object PROFILE_LOCK = new Object();
 
     List<IngestProfile> getIngestProfileList() {
@@ -69,6 +69,10 @@ public class IngestProfileList {
 
     void loadProfileList() {
         readFilesFromDirectory();
+    }
+    
+    List<IngestProfile> getProfileList(){
+        return this.profileList;
     }
 
     void saveProfileList() {
