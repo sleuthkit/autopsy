@@ -86,7 +86,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setsList.addListSelectionListener(new FilesSetDefsPanel.SetsListSelectionListener());
         this.rulesList.setModel(rulesListModel);
         this.rulesList.addListSelectionListener(new FilesSetDefsPanel.RulesListSelectionListener());
-
+        this.ingestWarningLabel.setVisible(false); 
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {  //Hide the mimetype settings when this is displaying FileSet rules instead of interesting item rules
             this.mimeTypeComboBox.setVisible(false);
             this.jLabel7.setVisible(false);
@@ -167,7 +167,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         }
     }
 
-    void enableButtons(boolean isEnabled) {
+    public void enableButtons(boolean isEnabled) {
         newRuleButton.setEnabled(isEnabled);
         newSetButton.setEnabled(isEnabled);
         editRuleButton.setEnabled(isEnabled);

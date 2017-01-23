@@ -103,6 +103,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         tabbedPane.setEnabled(!ingestIsRunning);
         settingsPanel.enableButtons(!ingestIsRunning);
         profilePanel.enableButtons(!ingestIsRunning);
+        filterPanel.enableButtons(!ingestIsRunning);
     
     }
     
