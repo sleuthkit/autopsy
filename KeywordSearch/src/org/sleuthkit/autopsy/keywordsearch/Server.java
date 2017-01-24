@@ -696,6 +696,19 @@ public class Server {
         }
     }
 
+    Index getIndexInfo() throws KeywordSearchModuleException {
+        currentCoreLock.readLock().lock();
+        try {
+            if (null != currentCore) {
+                return currentCore.getIndexInfo();
+            } else {
+                throw new KeywordSearchModuleException("Cannot get text index info, no core is open");
+            }
+        } finally {
+            currentCoreLock.readLock().unlock();
+        }        
+    }
+    
     void closeCore() throws KeywordSearchModuleException {
         currentCoreLock.writeLock().lock();
         try {
@@ -1320,6 +1333,10 @@ public class Server {
             return name;
         }
 
+        private Index getIndexInfo() {
+            return this.textIndex;
+        }
+        
         private QueryResponse query(SolrQuery sq) throws SolrServerException, IOException {
             return solrCore.query(sq);
         }
