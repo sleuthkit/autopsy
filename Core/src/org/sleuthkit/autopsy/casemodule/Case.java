@@ -58,6 +58,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
@@ -1279,7 +1280,8 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
-
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+                
                 /*
                  * Add the case to the recent cases tracker that supplies a list
                  * of recent cases to the recent cases menu item and the
@@ -1325,7 +1327,8 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
-
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+                
                 /*
                  * Clear the notifications in the notfier component in the lower
                  * right hand corner of the main application window.

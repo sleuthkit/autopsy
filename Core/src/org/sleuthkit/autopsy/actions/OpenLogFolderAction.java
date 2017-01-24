@@ -48,7 +48,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 public final class OpenLogFolderAction implements ActionListener {
 
     private static final Logger logger = Logger.getLogger(OpenLogFolderAction.class.getName());
-
+    
     @Override
     public void actionPerformed(ActionEvent e) {
         File logDir;

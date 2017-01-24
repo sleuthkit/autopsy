@@ -52,6 +52,8 @@ import org.sleuthkit.datamodel.Image;
 
 /**
  * An action that invokes the Add Data Source wizard.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.AddImageAction")
 @ActionRegistration(displayName = "#CTL_AddImage", lazy = false)
@@ -103,7 +105,11 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             }
         });
 
-        this.setEnabled(false); // disable this action class
+        /*
+         * Disable this action until a case is opened. Currently, the Case class
+         * enables the action.
+         */
+        this.setEnabled(false);
     }
 
     @Override
@@ -118,7 +124,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             }
         }
 
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));        
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         iterator = new AddImageWizardIterator(this);
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
@@ -131,7 +137,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         Dimension d = dialog.getSize();
         dialog.setSize(SIZE);
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));        
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         dialog.setVisible(true);
         dialog.toFront();
 

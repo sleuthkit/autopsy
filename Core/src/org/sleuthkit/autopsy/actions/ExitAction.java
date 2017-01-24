@@ -40,14 +40,16 @@ final public class ExitAction implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new Thread(() -> {
-            try {
-                Case.closeCurrentCase();
-            } catch (CaseActionException ex) {
-                Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Error closing the current case on exit", ex); //NON-NLS
-            } finally {
-                LifecycleManager.getDefault().exit();
-            }
-        }).start();
+        if (IngestRunningCheck.checkAndConfirmProceed()) {
+            new Thread(() -> {
+                try {
+                    Case.closeCurrentCase();
+                } catch (CaseActionException ex) {
+                    Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Error closing the current case on exit", ex); //NON-NLS
+                } finally {
+                    LifecycleManager.getDefault().exit();
+                }
+            }).start();
+        }
     }
 }

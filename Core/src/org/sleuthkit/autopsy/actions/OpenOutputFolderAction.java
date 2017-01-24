@@ -43,13 +43,21 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  *
  * This action should only be invoked in the event dispatch thread (EDT).
  */
-@ActionRegistration(displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy = true)
+@ActionRegistration(displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy = false)
 @ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenOutputFolderAction.class.getName());
+    
+    public OpenOutputFolderAction() {
+        /*
+         * Initially disabled. The Case class enables this action when a case is
+         * opened and disables it when a case is closed.
+         */
+        this.setEnabled(false);
+    }
 
     @Override
     public void performAction() {
