@@ -30,6 +30,11 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 
+/**
+ * The action associated with assorted Run Ingest Modules menu items.
+ * 
+ * This action should only be invoked in the event dispatch thread (EDT).
+ */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.ingest.RunIngestAction")
 @ActionRegistration(displayName = "#CTL_RunIngestAction", lazy = false)
 @Messages("CTL_RunIngestAction=Run Ingest")
@@ -45,6 +50,9 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         return action;
     }
 
+    private RunIngestAction() {
+    }
+    
     @Override
     public void performAction() {
         getMenuPresenter();

@@ -51,14 +51,6 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenOutputFolderAction.class.getName());
     
-    public OpenOutputFolderAction() {
-        /*
-         * Initially disabled. The Case class enables this action when a case is
-         * opened and disables it when a case is closed.
-         */
-        this.setEnabled(false);
-    }
-
     @Override
     public void performAction() {
         File outputDir;

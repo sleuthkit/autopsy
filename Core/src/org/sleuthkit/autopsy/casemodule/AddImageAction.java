@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,6 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -46,8 +45,8 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
@@ -57,13 +56,13 @@ import org.sleuthkit.datamodel.Image;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.AddImageAction")
 @ActionRegistration(displayName = "#CTL_AddImage", lazy = false)
-@ActionReferences(value = {
-    @ActionReference(path = "Toolbars/Case", position = 100)})
+@ActionReferences(value = {@ActionReference(path = "Toolbars/Case", position = 100)})
 @ServiceProvider(service = AddImageAction.class)
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
-    static final Dimension SIZE = new Dimension(875, 550);
+    private static final Dimension SIZE = new Dimension(875, 550);
+    private final ChangeSupport cleanupSupport = new ChangeSupport(this);
 
     // Keys into the WizardDescriptor properties that pass information between stages of the wizard
     // <TYPE>: <DESCRIPTION>
@@ -114,36 +113,30 @@ public final class AddImageAction extends CallableSystemAction implements Presen
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (IngestManager.getInstance().isIngestRunning()) {
-            final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
-            if (JOptionPane.showConfirmDialog(null, msg,
-                    NbBundle.getMessage(this.getClass(),
-                            "AddImageAction.ingestConfig.ongoingIngest.title"),
-                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
-                return;
+        String optionsDlgTitle = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.title");
+        String optionsDlgMessage = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
+        if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            iterator = new AddImageWizardIterator(this);
+            wizardDescriptor = new WizardDescriptor(iterator);
+            wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
+            wizardDescriptor.putProperty(NAME, e);
+            wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
+
+            if (dialog != null) {
+                dialog.setVisible(false); // hide the old one
             }
+            dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
+            Dimension d = dialog.getSize();
+            dialog.setSize(SIZE);
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            dialog.setVisible(true);
+            dialog.toFront();
+
+            // Do any cleanup that needs to happen (potentially: stopping the
+            //add-image process, reverting an image)
+            runCleanupTasks();
         }
-
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        iterator = new AddImageWizardIterator(this);
-        wizardDescriptor = new WizardDescriptor(iterator);
-        wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
-        wizardDescriptor.putProperty(NAME, e);
-        wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
-
-        if (dialog != null) {
-            dialog.setVisible(false); // hide the old one
-        }
-        dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
-        Dimension d = dialog.getSize();
-        dialog.setSize(SIZE);
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        dialog.setVisible(true);
-        dialog.toFront();
-
-        // Do any cleanup that needs to happen (potentially: stopping the
-        //add-image process, reverting an image)
-        runCleanupTasks();
     }
 
     /**
@@ -233,8 +226,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     public void requestFocusButton(String buttonText) {
         // get all buttons on this wizard panel
         Object[] wizardButtons = wizardDescriptor.getOptions();
-        for (int i = 0; i < wizardButtons.length; i++) {
-            JButton tempButton = (JButton) wizardButtons[i];
+        for (Object wizardButton : wizardButtons) {
+            JButton tempButton = (JButton) wizardButton;
             if (tempButton.getText().equals(buttonText)) {
                 tempButton.setDefaultCapable(true);
                 tempButton.requestFocus();
@@ -250,8 +243,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     private void runCleanupTasks() {
         cleanupSupport.fireChange();
     }
-
-    ChangeSupport cleanupSupport = new ChangeSupport(this);
 
     /**
      * Instances of this class implement the cleanup() method to run cleanup

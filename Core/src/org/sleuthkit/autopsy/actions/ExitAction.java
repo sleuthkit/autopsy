@@ -25,6 +25,7 @@ import org.openide.LifecycleManager;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -38,9 +39,14 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ActionID(id = "org.sleuthkit.autopsy.casemodule.ExitAction", category = "Case")
 final public class ExitAction implements ActionListener {
 
+    @NbBundle.Messages({
+        "ExitAction.confirmationDialog.title=Ingest is Running",
+        "ExitAction.confirmationDialog.message=Ingest is running, are you sure you want to exit?"
+
+    })
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (IngestRunningCheck.checkAndConfirmProceed()) {
+        if (IngestRunningCheck.checkAndConfirmProceed(Bundle.ExitAction_confirmationDialog_title(), Bundle.ExitAction_confirmationDialog_message())) {
             new Thread(() -> {
                 try {
                     Case.closeCurrentCase();

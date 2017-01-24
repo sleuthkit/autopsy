@@ -23,22 +23,20 @@ import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * An action listener for a specific case, associated with a Recent Cases menu
  * item for the case by a DynamicMenuContent content JMenuItem.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 class RecentItems implements ActionListener {
 
     private static final Logger logger = Logger.getLogger(RecentItems.class.getName());
-    private final String caseName;
     private final String caseMetaDataFilePath;
 
     /**
@@ -50,7 +48,6 @@ class RecentItems implements ActionListener {
      * @param caseMetaDataFilePath The path to the case metadata file.
      */
     RecentItems(String caseName, String caseMetaDataFilePath) {
-        this.caseName = caseName;
         this.caseMetaDataFilePath = caseMetaDataFilePath;
     }
 
@@ -61,40 +58,24 @@ class RecentItems implements ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        /*
-         * If ingest is running, give the user the option to abort changing
-         * cases.
-         */
-        if (IngestManager.getInstance().isIngestRunning()) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"),
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"),
-                    NotifyDescriptor.YES_NO_OPTION,
-                    NotifyDescriptor.WARNING_MESSAGE);
-            descriptor.setValue(NotifyDescriptor.NO_OPTION);
-            Object response = DialogDisplayer.getDefault().notify(descriptor);
-            if (DialogDescriptor.NO_OPTION == response) {
-                return;
-            }
+        String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
+        String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
+        if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            new Thread(() -> {
+                try {
+                    Case.openAsCurrentCase(caseMetaDataFilePath);
+                } catch (CaseActionException ex) {
+                    logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
+                    SwingUtilities.invokeLater(() -> {
+                        JOptionPane.showMessageDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                ex.getMessage(),
+                                NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                JOptionPane.ERROR_MESSAGE);
+                        StartupWindowProvider.getInstance().open();
+                    });
+                }
+            }).start();
         }
-
-        /*
-         * Open the case.
-         */
-        new Thread(() -> {
-            try {
-                Case.openAsCurrentCase(caseMetaDataFilePath);
-            } catch (CaseActionException ex) {
-                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(
-                            WindowManager.getDefault().getMainWindow(),
-                            ex.getMessage(),
-                            NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                            JOptionPane.ERROR_MESSAGE);
-                    StartupWindowProvider.getInstance().open();
-                });
-            }
-        }).start();
     }
 }

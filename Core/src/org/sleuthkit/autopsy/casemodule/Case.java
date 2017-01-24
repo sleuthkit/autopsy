@@ -95,6 +95,7 @@ import org.sleuthkit.autopsy.framework.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.framework.ProgressIndicator;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.RunIngestAction;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -1280,7 +1281,7 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
-                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);                
                 
                 /*
                  * Add the case to the recent cases tracker that supplies a list

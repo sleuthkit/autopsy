@@ -27,9 +27,6 @@ import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
@@ -39,8 +36,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * The action associated with the Case/Close Case menu item and the Close Case
@@ -51,7 +48,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
-@ActionReferences(value = {@ActionReference(path = "Toolbars/Case", position = 104)})
+@ActionReferences(value = {
+    @ActionReference(path = "Toolbars/Case", position = 104)})
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
@@ -76,46 +74,30 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        /*
-         * If ingest is running, give the user the option to abort changing
-         * cases.
-         */
-        if (IngestManager.getInstance().isIngestRunning()) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"),
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"),
-                    NotifyDescriptor.YES_NO_OPTION,
-                    NotifyDescriptor.WARNING_MESSAGE);
-            descriptor.setValue(NotifyDescriptor.NO_OPTION);
-            Object response = DialogDisplayer.getDefault().notify(descriptor);
-            if (DialogDescriptor.NO_OPTION == response) {
-                return;
-            }
-        }
+        String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
+        String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
+        if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            new SwingWorker<Void, Void>() {
 
-        /*
-         * Close the case.
-         */
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                Case.closeCurrentCase();
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.SEVERE, "Error closing the current case", ex);
+                @Override
+                protected Void doInBackground() throws Exception {
+                    Case.closeCurrentCase();
+                    return null;
                 }
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                StartupWindowProvider.getInstance().open();
-            }
-        }.execute();
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                    } catch (InterruptedException | ExecutionException ex) {
+                        logger.log(Level.SEVERE, "Error closing the current case", ex);
+                    }
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    StartupWindowProvider.getInstance().open();
+                }
+            }.execute();
+        }
     }
 
     /**

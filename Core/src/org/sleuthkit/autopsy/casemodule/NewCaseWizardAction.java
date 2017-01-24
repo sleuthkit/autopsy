@@ -28,24 +28,24 @@ import java.util.logging.Level;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
-import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * The action associated with the Case/New Case menu item, t toolbar button, and
  * the button in the start up window that allows users to open cases action. It
  * runs first the New Case wizard, then the Add Data Source wizard.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 final class NewCaseWizardAction extends CallableSystemAction {
 
@@ -55,23 +55,11 @@ final class NewCaseWizardAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        /*
-         * If ingest is running, give the user the option to abort changing
-         * cases.
-         */
-        if (IngestManager.getInstance().isIngestRunning()) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"),
-                    NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title"),
-                    NotifyDescriptor.YES_NO_OPTION,
-                    NotifyDescriptor.WARNING_MESSAGE);
-            descriptor.setValue(NotifyDescriptor.NO_OPTION);
-            Object response = DialogDisplayer.getDefault().notify(descriptor);
-            if (DialogDescriptor.NO_OPTION == response) {
-                return;
-            }
+        String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
+        String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
+        if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            runNewCaseWizard();
         }
-        runNewCaseWizard();
     }
 
     private void runNewCaseWizard() {

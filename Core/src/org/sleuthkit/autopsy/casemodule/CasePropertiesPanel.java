@@ -35,13 +35,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * A panel that allows the user to view various properties of the current case
  * and change the display name of the case.
  */
-class CasePropertiesForm extends javax.swing.JPanel {
+class CasePropertiesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
     private Case current = null;
     private static JPanel caller;    // panel for error
 
-    CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
+    CasePropertiesPanel(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
         initComponents();
         caseNameTextField.setText(currentCase.getDisplayName());
         String caseNumber = currentCase.getNumber();
@@ -118,19 +118,19 @@ class CasePropertiesForm extends javax.swing.JPanel {
         jScrollPane1.setViewportView(jTextArea1);
 
         caseNameLabel.setFont(caseNameLabel.getFont().deriveFont(caseNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNameLabel.text")); // NOI18N
+        caseNameLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNameLabel.text")); // NOI18N
 
         crDateLabel.setFont(crDateLabel.getFont().deriveFont(crDateLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        crDateLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.crDateLabel.text")); // NOI18N
+        crDateLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.crDateLabel.text")); // NOI18N
 
         caseDirLabel.setFont(caseDirLabel.getFont().deriveFont(caseDirLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseDirLabel.text")); // NOI18N
+        caseDirLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseDirLabel.text")); // NOI18N
 
         caseNameTextField.setFont(caseNameTextField.getFont().deriveFont(caseNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNameTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNameTextField.text")); // NOI18N
+        caseNameTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNameTextField.text")); // NOI18N
 
         updateCaseNameButton.setFont(updateCaseNameButton.getFont().deriveFont(updateCaseNameButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        updateCaseNameButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.updateCaseNameButton.text")); // NOI18N
+        updateCaseNameButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.updateCaseNameButton.text")); // NOI18N
         updateCaseNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 updateCaseNameButtonActionPerformed(evt);
@@ -138,7 +138,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
         });
 
         deleteCaseButton.setFont(deleteCaseButton.getFont().deriveFont(deleteCaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        deleteCaseButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.deleteCaseButton.text")); // NOI18N
+        deleteCaseButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.deleteCaseButton.text")); // NOI18N
         deleteCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteCaseButtonActionPerformed(evt);
@@ -146,16 +146,16 @@ class CasePropertiesForm extends javax.swing.JPanel {
         });
 
         caseNumberLabel.setFont(caseNumberLabel.getFont().deriveFont(caseNumberLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNumberLabel.text")); // NOI18N
+        caseNumberLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.caseNumberLabel.text")); // NOI18N
 
         examinerLabel.setFont(examinerLabel.getFont().deriveFont(examinerLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        examinerLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.examinerLabel.text")); // NOI18N
+        examinerLabel.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.examinerLabel.text")); // NOI18N
 
         lbDbType.setFont(lbDbType.getFont().deriveFont(lbDbType.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        lbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.lbDbType.text")); // NOI18N
+        lbDbType.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbDbType.text")); // NOI18N
 
         lbDbName.setFont(lbDbName.getFont().deriveFont(lbDbName.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        lbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.lbDbName.text")); // NOI18N
+        lbDbName.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.lbDbName.text")); // NOI18N
 
         caseDirField.setMinimumSize(new java.awt.Dimension(25, 14));
 
@@ -307,7 +307,7 @@ class CasePropertiesForm extends javax.swing.JPanel {
                         try {
                             current.updateCaseName(oldCaseName, oldPath, newCaseName, oldPath);
                         } catch (CaseActionException ex) {
-                            Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex); //NON-NLS
+                            Logger.getLogger(CasePropertiesPanel.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex); //NON-NLS
                         }
                     }
                 }

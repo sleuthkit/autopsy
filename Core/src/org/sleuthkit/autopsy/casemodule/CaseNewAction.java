@@ -29,6 +29,8 @@ import org.openide.util.lookup.ServiceProvider;
  * The action associated with the Case/New Case menu item and the Create New
  * Case button of the start up window that allows a user to open a case. It
  * invokes the New Case wizard.
+ * 
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ServiceProvider(service = CaseNewActionInterface.class)
 public final class CaseNewAction extends CallableSystemAction implements CaseNewActionInterface {

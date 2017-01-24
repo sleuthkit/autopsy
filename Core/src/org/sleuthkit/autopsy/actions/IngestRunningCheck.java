@@ -8,7 +8,6 @@ package org.sleuthkit.autopsy.actions;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -23,18 +22,18 @@ public class IngestRunningCheck {
      * they want to proceed with whatever operation was initiated (e.g., closing
      * the case).
      *
+     * @param optionsDlgTitle   The title for the options dialog used to confirm
+     *                          the iser's intentions.
+     * @param optionsDlgMessage The message for the options dialog used to
+     *                          confirm the iser's intentions.
+     *
      * @return True to proceed, false otherwise.
      */
-    @Messages({
-        "IngestRunningCheck.confirmationDialog.title=Ingest is Running",
-        "IngestRunningCheck.confirmationDialog.message=Ingest is running, are you sure you want to proceed?"
-
-    })
-    public static boolean checkAndConfirmProceed() {
+    public static boolean checkAndConfirmProceed(String optionsDlgTitle, String optionsDlgMessage) {
         if (IngestManager.getInstance().isIngestRunning()) {
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    Bundle.IngestRunningCheck_confirmationDialog_message(),
-                    Bundle.IngestRunningCheck_confirmationDialog_title(),
+                    optionsDlgMessage,
+                    optionsDlgTitle,
                     NotifyDescriptor.YES_NO_OPTION,
                     NotifyDescriptor.WARNING_MESSAGE);
             descriptor.setValue(NotifyDescriptor.NO_OPTION);

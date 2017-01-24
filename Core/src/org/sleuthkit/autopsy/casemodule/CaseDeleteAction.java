@@ -36,6 +36,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * The action associated with the Delete button of the Case Properties panel. It
  * deletes the current case.
+ * 
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 final class CaseDeleteAction extends CallableSystemAction {
 
