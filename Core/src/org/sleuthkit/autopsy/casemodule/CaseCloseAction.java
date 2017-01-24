@@ -46,6 +46,8 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * The action associated with the Case/Close Case menu item and the Close Case
  * toolbar button. It closes the current case and pops up the start up window
  * that allows a user to open another case.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)

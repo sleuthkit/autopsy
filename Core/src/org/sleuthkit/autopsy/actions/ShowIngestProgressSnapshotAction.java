@@ -32,6 +32,8 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 /**
  * The action associated with the Help/Get Ingest Progress Snapshot menu item.
  * It opens a the Ingest Progress Snapshot dialog.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionID(category = "Help", id = "org.sleuthkit.autopsy.actions.ShowIngestProgressSnapshotAction")
 @ActionRegistration(displayName = "#CTL_ShowIngestProgressSnapshotAction", lazy = false)
@@ -44,7 +46,7 @@ public final class ShowIngestProgressSnapshotAction extends CallableSystemAction
 
     @Override
     public void performAction() {
-        IngestProgressSnapshotDialog dialog = new IngestProgressSnapshotDialog();
+        new IngestProgressSnapshotDialog();
     }
 
     @Override

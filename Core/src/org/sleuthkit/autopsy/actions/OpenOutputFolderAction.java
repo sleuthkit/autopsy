@@ -40,6 +40,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * case. If the case is a single-user case, this is the case directory. If the
  * case is a multi-user case, this is a subdirectory of the case directory
  * specific to the host machine.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionRegistration(displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy = true)
 @ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)

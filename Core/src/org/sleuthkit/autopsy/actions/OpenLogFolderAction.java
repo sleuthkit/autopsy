@@ -36,8 +36,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * The action associated with the Help/Open Log Folder menu item. It opens a
- * file explorer window for the log subdirectory for the currently open case, or
- * the log subdirectory of the user directory if there is no current case.
+ * file explorer window for either the log subdirectory for the currently open
+ * case, or the log subdirectory of the user directory, if there is no current
+ * case.
+ * 
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionRegistration(displayName = "#CTL_OpenLogFolder", iconInMenu = true)
 @ActionReference(path = "Menu/Help", position = 1750)
@@ -51,11 +54,15 @@ public final class OpenLogFolderAction implements ActionListener {
         File logDir;
         if (Case.isCaseOpen()) {
             try {
+                /*
+                 * Open the log directory for the case.
+                 */
                 Case currentCase = Case.getCurrentCase();
                 logDir = new File(currentCase.getLogDirectoryPath());
             } catch (IllegalStateException ex) {
                 /*
-                 * The case 
+                 * There is no open case, open the application level log
+                 * directory.
                  */
                 logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
             }
@@ -64,14 +71,14 @@ public final class OpenLogFolderAction implements ActionListener {
         }
 
         try {
-            if (logDir.exists() == false) {
-                logger.log(Level.SEVERE, String.format("The log subdirectory %s does not exist", logDir));
+            if (logDir.exists()) {
+                Desktop.getDesktop().open(logDir);
+            } else {
+                logger.log(Level.SEVERE, String.format("The log directory %s does not exist", logDir));
                 NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
                         NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
                         NotifyDescriptor.ERROR_MESSAGE);
                 DialogDisplayer.getDefault().notify(notifyDescriptor);
-            } else {
-                Desktop.getDesktop().open(logDir);
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, String.format("Could not open log directory %s", logDir), ex);

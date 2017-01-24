@@ -811,12 +811,11 @@ public class Case {
              * thrown.
              */
             logger.log(Level.INFO, "Closed case with metadata file path {0}", currentCase.getCaseMetadata().getFilePath()); //NON-NLS
-            Case closedCase = currentCase;
+            eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), currentCase, null));
             currentCase = null;
             if (RuntimeProperties.runningWithGUI()) {
                 updateGUIForCaseClosed();
             }
-            eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), closedCase, null));
             progressIndicator.finish(Bundle.Case_progressMessage_finshing());
             if (RuntimeProperties.runningWithGUI()) {
                 SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(false));
