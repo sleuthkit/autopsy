@@ -228,10 +228,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         try {
             KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
-            if (RuntimeProperties.coreComponentsAreActive()) {
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
-            }
+            throw new AutopsyServiceException("Failed to open or create core for " + context.getCase().getCaseDirectory(), ex);
         }
     }
 
@@ -258,10 +255,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
             Thread.sleep(2000);
             KeywordSearch.getServer().closeCore();
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
-            if (RuntimeProperties.coreComponentsAreActive()) {
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
-            }
+            throw new AutopsyServiceException("Failed to close core for " + context.getCase().getCaseDirectory(), ex);
         }
     }
 
