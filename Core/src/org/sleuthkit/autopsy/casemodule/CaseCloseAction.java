@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,31 +19,32 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.SwingWorker;
-import org.openide.util.HelpCtx;
-import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
-import org.openide.util.actions.Presenter;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
-import java.util.logging.Level;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
-import org.openide.windows.WindowManager;
-import java.awt.Cursor;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionReferences;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.actions.Presenter;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * The action to close the current Case. This class should be disabled on
- * creation and it will be enabled on new case creation or case opened.
+ * The action associated with the Case/Close Case menu item and the Close Case
+ * toolbar button. It closes the current case and pops up the start up window
+ * that allows a user to open another case.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
@@ -51,87 +52,66 @@ import org.openide.awt.ActionRegistration;
     @ActionReference(path = "Toolbars/Case", position = 104)})
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
-    JButton toolbarButton = new JButton();
+    private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(CaseCloseAction.class.getName());
+    private final JButton toolbarButton = new JButton();
 
     /**
-     * The constructor for this class
+     * Constructs the action associated with the Case/Close Case menu item and
+     * the Close Case toolbar button.
      */
     public CaseCloseAction() {
-        putValue("iconBase", "org/sleuthkit/autopsy/images/close-icon.png"); // put the icon NON-NLS
-        putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); // put the action Name
-
-        // set action of the toolbar button
+        putValue("iconBase", "org/sleuthkit/autopsy/images/close-icon.png"); //NON-NLS
+        putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); //NON-NLS
         toolbarButton.addActionListener(CaseCloseAction.this::actionPerformed);
-
         this.setEnabled(false);
     }
 
     /**
-     * Closes the current opened case.
+     * Closes the current case.
      *
-     * @param e the action event for this method
+     * @param e The action event.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+        String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
+        String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
+        if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            new SwingWorker<Void, Void>() {
 
-        // if ingest is ongoing, warn and get confirmaion before opening a different case
-        if (IngestManager.getInstance().isIngestRunning()) {
-            // show the confirmation first to close the current case and open the "New Case" wizard panel
-            String closeCurrentCase = NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning");
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(closeCurrentCase,
-                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
-                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-            descriptor.setValue(NotifyDescriptor.NO_OPTION);
-
-            Object res = DialogDisplayer.getDefault().notify(descriptor);
-            if (res != null && res == DialogDescriptor.YES_OPTION) {
-                try {
-                    Case.getCurrentCase().closeCase(); // close the current case
-                } catch (Exception ex) {
-                    Logger.getLogger(NewCaseWizardAction.class.getName()).log(Level.WARNING, "Error closing case.", ex); //NON-NLS
+                @Override
+                protected Void doInBackground() throws Exception {
+                    Case.closeCurrentCase();
+                    return null;
                 }
-            } else {
-                return;
-            }
-        }
 
-        if (Case.isCaseOpen() == false) {
-            return;
-        }
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                try {
-                    Case result = Case.getCurrentCase();
-                    result.closeCase();
-                } catch (CaseActionException | IllegalStateException unused) {
-                    // Already logged.
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                    } catch (InterruptedException | ExecutionException ex) {
+                        logger.log(Level.SEVERE, "Error closing the current case", ex);
+                    }
+                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    StartupWindowProvider.getInstance().open();
                 }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                StartupWindowProvider.getInstance().open();
-            }
-        }.execute();
+            }.execute();
+        }
     }
 
     /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
-     * instead of this method.
+     * Closes the current case.
      */
     @Override
     public void performAction() {
+        actionPerformed(null);
     }
 
     /**
-     * Gets the name of this action. This may be presented as an item in a menu.
+     * Gets the action name.
      *
-     * @return actionName
+     * @return The action name.
      */
     @Override
     public String getName() {
@@ -139,9 +119,9 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Gets the HelpCtx associated with implementing object
+     * Gets the help context.
      *
-     * @return HelpCtx or HelpCtx.DEFAULT_HELP
+     * @return The help context.
      */
     @Override
     public HelpCtx getHelpCtx() {
@@ -149,9 +129,9 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Returns the toolbar component of this action
+     * Returns the toolbar component of this action.
      *
-     * @return component the toolbar button
+     * @return The toolbar button
      */
     @Override
     public Component getToolbarPresenter() {

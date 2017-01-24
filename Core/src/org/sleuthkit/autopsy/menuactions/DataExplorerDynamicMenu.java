@@ -53,10 +53,11 @@ class DataExplorerDynamicMenu extends JMenuItem implements DynamicMenuContent {
             JMenuItem item = new JMenuItem(explorerWin.getName());
             item.addActionListener(new OpenTopComponentAction(explorerWin));
 
-            if (!Case.isCaseOpen() || Case.getCurrentCase().hasData() == false) {
+            try {
+                Case currentCase = Case.getCurrentCase();
+                item.setEnabled(currentCase.hasData());
+            } catch (IllegalStateException ex) {
                 item.setEnabled(false); // disable the menu when no case is opened
-            } else {
-                item.setEnabled(true); // enable the menu if the case is opened or created
             }
 
             comps[i++] = item;
