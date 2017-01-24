@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,14 +30,8 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 
-@ActionID(
-        category = "Tools",
-        id = "org.sleuthkit.autopsy.ingest.RunIngestAction"
-)
-@ActionRegistration(
-        displayName = "#CTL_RunIngestAction",
-        lazy = false
-)
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.ingest.RunIngestAction")
+@ActionRegistration(displayName = "#CTL_RunIngestAction", lazy = false)
 @Messages("CTL_RunIngestAction=Run Ingest")
 public final class RunIngestAction extends CallableSystemAction implements Presenter.Menu, ActionListener {
 
@@ -80,11 +74,6 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     
     @Override
     public boolean isEnabled() {
-        try {
-            Case.getCurrentCase();
-            return true;
-        } catch (IllegalStateException ex) {
-            return false;
-        }
+        return Case.isCaseOpen() && Case.getCurrentCase().hasData();        
     }
 }

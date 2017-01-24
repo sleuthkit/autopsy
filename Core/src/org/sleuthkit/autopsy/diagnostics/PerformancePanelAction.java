@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,14 +27,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 
-@ActionID(
-        category = "Help",
-        id = "org.sleuthkit.autopsy.diagnostics.PerformancePanelAction"
-)
-@ActionRegistration(
-        displayName = "#CTL_PerformancePanelAction",
-        lazy=true
-)
+@ActionID(category = "Help", id = "org.sleuthkit.autopsy.diagnostics.PerformancePanelAction")
+@ActionRegistration(displayName = "#CTL_PerformancePanelAction", lazy = true)
 @ActionReference(path = "Menu/Help", position = 1437)
 public final class PerformancePanelAction extends CallableSystemAction {
 
@@ -45,15 +39,10 @@ public final class PerformancePanelAction extends CallableSystemAction {
         JDialog dialog = new PerformancePanel();
         dialog.setVisible(true);
     }
-    
+
     @Override
     public boolean isEnabled() {
-        try {
-            Case.getCurrentCase();
-            return true;
-        } catch (IllegalStateException ex) {
-            return false;
-        }
+        return Case.isCaseOpen();
     }
 
     @Override
@@ -63,8 +52,9 @@ public final class PerformancePanelAction extends CallableSystemAction {
 
     @Override
     public boolean asynchronous() {
-        return false; // run on edt
+        return false;
     }
+
     @Override
     public String getName() {
         return NbBundle.getMessage(PerformancePanelAction.class, "CTL_PerformancePanelAction");

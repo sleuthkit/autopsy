@@ -569,15 +569,11 @@ public class TimeLineController {
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     void showTimeLine(AbstractFile file, BlackboardArtifact artifact) {
         // listen for case changes (specifically images being added, and case changes).
-        try {
-            Case.getCurrentCase();
-            if (!listeningToAutopsy) {
-                IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
-                IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
-                Case.addPropertyChangeListener(caseListener);
-                listeningToAutopsy = true;
-            }
-        } catch (IllegalStateException ex) {
+        if (Case.isCaseOpen() && !listeningToAutopsy) {
+            IngestManager.getInstance().addIngestModuleEventListener(ingestModuleListener);
+            IngestManager.getInstance().addIngestJobEventListener(ingestJobListener);
+            Case.addPropertyChangeListener(caseListener);
+            listeningToAutopsy = true;
         }
         Platform.runLater(() -> promptForRebuild(file, artifact));
     }

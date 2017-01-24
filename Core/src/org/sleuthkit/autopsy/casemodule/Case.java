@@ -2215,7 +2215,7 @@ public class Case {
      *                             exception will have a user-friendly message
      *                             and may be a wrapper for a lower-level
      *                             exception.
-     * @deprecated
+     * @deprecated Use createAsCurrentCase instead.
      */
     @Deprecated
     public static void create(String caseDir, String caseDisplayName, String caseNumber, String examiner) throws CaseActionException {
@@ -2240,7 +2240,7 @@ public class Case {
      *                             exception will have a user-friendly message
      *                             and may be a wrapper for a lower-level
      *                             exception.
-     * @deprecated
+     * @deprecated Use createAsCurrentCase instead.
      */
     @Deprecated
     public static void create(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
@@ -2256,13 +2256,27 @@ public class Case {
      *                             exception will have a user-friendly message
      *                             and may be a wrapper for a lower-level
      *                             exception.
-     * @deprecated
+     * @deprecated Use openAsCurrentCase instead.
      */
     @Deprecated
     public static void open(String caseMetadataFilePath) throws CaseActionException {
         openAsCurrentCase(caseMetadataFilePath);
     }
 
+/**
+     * Closes this Autopsy case.
+     *
+     * @throws CaseActionException if there is a problem closing the case. The
+     *                             exception will have a user-friendly message
+     *                             and may be a wrapper for a lower-level
+     *                             exception.
+     * @deprecated Use closeCurrentCase instead.
+     */
+    @Deprecated
+    public void closeCase() throws CaseActionException {
+        closeCurrentCase();
+    }    
+    
     /**
      * Invokes the startup dialog window.
      *
@@ -2381,6 +2395,10 @@ public class Case {
      * @param imgId    The ID of the image.
      * @param timeZone The time zone of the image.
      *
+     * @return
+     *
+     * @throws org.sleuthkit.autopsy.casemodule.CaseActionException
+     *
      * @deprecated As of release 4.0
      */
     @Deprecated
@@ -2389,7 +2407,7 @@ public class Case {
             Image newDataSource = caseDb.getImageById(imgId);
             notifyDataSourceAdded(newDataSource, UUID.randomUUID());
             return newDataSource;
-        } catch (Exception ex) {
+        } catch (TskCoreException ex) {
             throw new CaseActionException(NbBundle.getMessage(this.getClass(), "Case.addImg.exception.msg"), ex);
         }
     }

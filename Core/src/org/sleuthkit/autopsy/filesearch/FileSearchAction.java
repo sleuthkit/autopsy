@@ -34,12 +34,7 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
 
     FileSearchAction() {
         super();
-        try {
-            Case.getCurrentCase();
-            setEnabled(true);
-        } catch (IllegalStateException ex) {
-            setEnabled(false);
-        }
+        setEnabled(Case.isCaseOpen());
         Case.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {

@@ -110,9 +110,7 @@ public class FXVideoPanel extends MediaViewVideoPanel {
         if (file.equals(currentFile)) {
             return;
         }
-        try {
-            Case.getCurrentCase();
-        } catch (IllegalStateException ex) {
+        if (!Case.isCaseOpen()) {
             //handle in-between condition when case is being closed
             //and an image was previously selected
             return;

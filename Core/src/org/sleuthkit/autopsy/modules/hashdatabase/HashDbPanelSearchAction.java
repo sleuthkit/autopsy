@@ -42,12 +42,7 @@ class HashDbPanelSearchAction extends CallableSystemAction {
 
     HashDbPanelSearchAction() {
         super();
-        try {
-            Case.getCurrentCase();
-            setEnabled(true);
-        } catch (IllegalStateException ex) {
-            setEnabled(false);
-        }
+        setEnabled(Case.isCaseOpen());
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override

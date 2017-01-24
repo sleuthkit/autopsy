@@ -164,16 +164,11 @@ public final class DataContentTopComponent extends TopComponent implements DataC
     @Override
     public boolean canClose() {
         /*
-         * Only allow this window to be closed when there's no case opened or no
-         * data sources in the open case.
+         * If this is the main content viewers top component in the bottom of
+         * the main window, only it to be closed when there's no case opened or
+         * no data sources in the open case.
          */
-        // 
-        try {
-            return !this.isDefault || Case.getCurrentCase().hasData() == false;
-        } catch (IllegalStateException ex) {
-            // Thrown if there is no current case.
-            return true;
-        }
+        return (!this.isDefault) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
     }
 
     @Override
@@ -196,8 +191,8 @@ public final class DataContentTopComponent extends TopComponent implements DataC
      */
     public static List<DataContentTopComponent> getNewWindowList() {
         return newWindowList;
-    }    
-    
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

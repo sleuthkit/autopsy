@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -171,14 +171,10 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
             }
             readImageTask = ImageUtils.newReadImageTask(file);
             readImageTask.setOnSucceeded(succeeded -> {
-                //Note that all error conditions are allready logged in readImageTask.succeeded()
-                try {
-                    Case.getCurrentCase();
-                } catch (IllegalStateException ex) {
+                if (!Case.isCaseOpen()) {
                     /*
-                     * Thrown if the current case is closed, so handle
-                     * in-between condition when case is being closed and an
-                     * image was previously selected
+                     * Handle the in-between condition when case is being closed
+                     * and an image was previously selected
                      *
                      * NOTE: I think this is unnecessary -jm
                      */
@@ -201,13 +197,10 @@ public class MediaViewImagePanel extends JPanel implements DataContentViewerMedi
                 borderpane.setCursor(Cursor.DEFAULT);
             });
             readImageTask.setOnFailed(failed -> {
-                try {
-                    Case.getCurrentCase();
-                } catch (IllegalStateException ex) {
+                if (!Case.isCaseOpen()) {
                     /*
-                     * Thrown if no current case. Handle in-between condition
-                     * when case is being closed and an image was previously
-                     * selected
+                     * Handle in-between condition when case is being closed and
+                     * an image was previously selected
                      *
                      * NOTE: I think this is unnecessary -jm
                      */

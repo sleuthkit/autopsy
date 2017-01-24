@@ -58,8 +58,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
     private static TimeLineController timeLineController = null;
 
     private final JButton toolbarButton = new JButton(getName(),
-          new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
-
+            new ImageIcon(getClass().getResource("images/btn_icon_timeline_colorized_26.png"))); //NON-NLS
 
     /**
      * Invalidate the reference to the controller so that a new one will be
@@ -81,12 +80,7 @@ public final class OpenTimelineAction extends CallableSystemAction implements Pr
          * disabled that check because if it is executed while a data source is
          * being added, it blocks the edt
          */
-        try {
-            Case.getCurrentCase();
-            return FX_INITED;
-        } catch (IllegalStateException ex) {
-            return false;
-        }
+        return Case.isCaseOpen() && FX_INITED;
     }
 
     @Override

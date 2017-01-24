@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Cursor;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -128,7 +127,6 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     } catch (CaseActionException ex) {
                         logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
                         SwingUtilities.invokeLater(() -> {
-                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                             JOptionPane.showMessageDialog(
                                     WindowManager.getDefault().getMainWindow(),
                                     ex.getMessage(), // Should be user-friendly

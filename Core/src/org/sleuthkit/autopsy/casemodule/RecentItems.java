@@ -18,13 +18,11 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.Cursor;
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -80,19 +78,23 @@ class RecentItems implements ActionListener {
             }
         }
 
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            Case.openAsCurrentCase(caseMetaDataFilePath);
-        } catch (CaseActionException ex) {
-            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
-            JOptionPane.showMessageDialog(
-                    WindowManager.getDefault().getMainWindow(),
-                    ex.getMessage(), // Should be user-friendly
-                    NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                    JOptionPane.ERROR_MESSAGE);
-            StartupWindowProvider.getInstance().open();
-        } finally {
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
+        /*
+         * Open the case.
+         */
+        new Thread(() -> {
+            try {
+                Case.openAsCurrentCase(caseMetaDataFilePath);
+            } catch (CaseActionException ex) {
+                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
+                SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(
+                            WindowManager.getDefault().getMainWindow(),
+                            ex.getMessage(),
+                            NbBundle.getMessage(RecentItems.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                            JOptionPane.ERROR_MESSAGE);
+                    StartupWindowProvider.getInstance().open();
+                });
+            }
+        }).start();
     }
 }

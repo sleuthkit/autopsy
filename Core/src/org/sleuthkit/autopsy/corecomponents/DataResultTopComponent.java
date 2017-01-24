@@ -315,15 +315,11 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
     @Override
     public boolean canClose() {
         /*
-         * Only allow this window to be closed when there's no case opened or no
+         * If this is the results top component in the upper right of the main
+         * window, only allow it to be closed when there's no case opened or no
          * data sources in the open case.
          */
-        try {
-            return !this.isMain || Case.getCurrentCase().hasData() == false;
-        } catch (IllegalStateException ex) {
-            // Thrown if there is no current case.
-            return true;
-        }
+        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
     }
 
     /**

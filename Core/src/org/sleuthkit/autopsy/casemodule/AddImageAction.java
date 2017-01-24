@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -44,25 +45,23 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * The action to add an image to the current Case. This action should be
- * disabled on creation and it will be enabled on new case creation or case
- * opened.
- *
- * @author jantonius
+ * An action that invokes the Add Data Source wizard.
  */
-// TODO: need annotation because there's a "Lookup.getDefault().lookup(AddImageAction.class)"
-// used in AddImageWizardPanel1 (among other places). It really shouldn't be done like that.
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.AddImageAction")
 @ActionRegistration(displayName = "#CTL_AddImage", lazy = false)
 @ActionReferences(value = {
     @ActionReference(path = "Toolbars/Case", position = 100)})
 @ServiceProvider(service = AddImageAction.class)
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
+
+    private static final long serialVersionUID = 1L;
+    static final Dimension SIZE = new Dimension(875, 550);
 
     // Keys into the WizardDescriptor properties that pass information between stages of the wizard
     // <TYPE>: <DESCRIPTION>
@@ -84,15 +83,13 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
 
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
-    static final Dimension SIZE = new Dimension(875, 550);
-
     private WizardDescriptor wizardDescriptor;
     private WizardDescriptor.Iterator<WizardDescriptor> iterator;
     private Dialog dialog;
-    private JButton toolbarButton = new JButton();
+    private final JButton toolbarButton = new JButton();
 
     /**
-     * The constructor for AddImageAction class
+     * Constructs an action that invokes the Add Data Source wizard.
      */
     public AddImageAction() {
         putValue(Action.NAME, NbBundle.getMessage(AddImageAction.class, "CTL_AddImage")); // set the action Name
@@ -109,11 +106,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         this.setEnabled(false); // disable this action class
     }
 
-    /**
-     * Pop-up the "Add Image" wizard panel.
-     *
-     * @param e
-     */
     @Override
     public void actionPerformed(ActionEvent e) {
         if (IngestManager.getInstance().isIngestRunning()) {
@@ -126,6 +118,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             }
         }
 
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));        
         iterator = new AddImageWizardIterator(this);
         wizardDescriptor = new WizardDescriptor(iterator);
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
@@ -138,6 +131,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
         Dimension d = dialog.getSize();
         dialog.setSize(SIZE);
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));        
         dialog.setVisible(true);
         dialog.toFront();
 
@@ -172,12 +166,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         void runTask(Image newImage);
     }
 
-    /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
-     * instead of this method.
-     */
     @Override
     public void performAction() {
+        actionPerformed(null);
     }
 
     /**
@@ -191,9 +182,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Gets the HelpCtx associated with implementing object
+     * Gets the help context for this action.
      *
-     * @return HelpCtx or HelpCtx.DEFAULT_HELP
+     * @return The help context.
      */
     @Override
     public HelpCtx getHelpCtx() {
@@ -201,9 +192,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Returns the toolbar component of this action
+     * Gets the toolbar component for this action.
      *
-     * @return component the toolbar button
+     * @return The toolbar button
      */
     @Override
     public Component getToolbarPresenter() {
@@ -214,7 +205,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Set this action to be enabled/disabled
+     * Enables and disables this action.
      *
      * @param value whether to enable this action or not
      */

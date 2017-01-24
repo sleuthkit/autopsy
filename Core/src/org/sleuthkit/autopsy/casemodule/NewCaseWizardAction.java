@@ -43,7 +43,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * An action that creates and runs the new case wizard.
+ * The action associated with the Case/New Case menu item, t toolbar button, and
+ * the button in the start up window that allows users to open cases action. It
+ * runs first the New Case wizard, then the Add Data Source wizard.
  */
 final class NewCaseWizardAction extends CallableSystemAction {
 
@@ -57,7 +59,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
          * If ingest is running, give the user the option to abort changing
          * cases.
          */
-        // Is this right here?
         if (IngestManager.getInstance().isIngestRunning()) {
             NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
                     NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning"),
@@ -98,6 +99,11 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 protected void done() {
                     try {
                         get();
+                        /*
+                         * Run the Add Data Source wizard by invoking the Add
+                         * Data Source wizard.
+                         */
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
                     } catch (InterruptedException | ExecutionException ex) {

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -94,7 +94,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         } catch (ParseException ex) {
             // for now, no need to show the error message to the user here
         }
-        if (!startDateValue.equals("")) {
+        if (!startDateValue.isEmpty()) {
             if (startDate != null) {
                 fromDate = startDate.getTimeInMillis() / 1000; // divided by 1000 because we want to get the seconds, not miliseconds
             }
@@ -114,7 +114,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         } catch (ParseException ex) {
             // for now, no need to show the error message to the user here
         }
-        if (!endDateValue.equals("")) {
+        if (!endDateValue.isEmpty()) {
             if (endDate != null) {
                 toDate = endDate.getTimeInMillis() / 1000; // divided by 1000 because we want to get the seconds, not miliseconds
             }
