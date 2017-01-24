@@ -166,6 +166,9 @@ public final class CoordinationService {
      * in the namespace managed by this coordination service. Blocks until the
      * lock is obtained or the time out expires.
      *
+     * IMPORTANT: The lock needs to be released in the same thread in which it
+     * is acquired.
+     *
      * @param category The desired category in the namespace.
      * @param nodePath The node path to use as the basis for the lock.
      * @param timeOut  Length of the time out.
@@ -201,6 +204,9 @@ public final class CoordinationService {
      * in the namespace managed by this coordination service. Returns
      * immediately if the lock can not be acquired.
      *
+     * IMPORTANT: The lock needs to be released in the same thread in which it
+     * is acquired.
+     *
      * @param category The desired category in the namespace.
      * @param nodePath The node path to use as the basis for the lock.
      *
@@ -226,6 +232,9 @@ public final class CoordinationService {
      * Tries to get a shared lock on a node path appended to a category path in
      * the namespace managed by this coordination service. Blocks until the lock
      * is obtained or the time out expires.
+     *
+     * IMPORTANT: The lock needs to be released in the same thread in which it
+     * is acquired.
      *
      * @param category The desired category in the namespace.
      * @param nodePath The node path to use as the basis for the lock.
@@ -261,6 +270,9 @@ public final class CoordinationService {
      * Tries to get a shared lock on a node path appended to a category path in
      * the namespace managed by this coordination service. Returns immediately
      * if the lock can not be acquired.
+     *
+     * IMPORTANT: The lock needs to be released in the same thread in which it
+     * is acquired.
      *
      * @param category The desired category in the namespace.
      * @param nodePath The node path to use as the basis for the lock.

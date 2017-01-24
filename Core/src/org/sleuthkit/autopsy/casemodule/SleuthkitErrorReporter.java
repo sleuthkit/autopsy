@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,51 +18,43 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
- * This class enables capturing errors and batching them for reporting on a
- * no-more-than-x number of seconds basis. When created, you specify the minimum
- * time between user notifications. When the time between notifications has
- * expired, the next error encountered will cause a report to be shown to the
- * user.
+ * Acts as a bridge between the Sleuthkit Java bindings classes and Autopsy by
+ * implementing the SleuthkitCase$ErrorObserver interface. All errors are
+ * written to the Autopsy logs. If a GUI is running, errors are also batched up
+ * and reported periodically to the user via the notification area in the lower
+ * right hand corner of the main application window.
  */
-class IntervalErrorReportData {
+class SleuthkitErrorReporter implements SleuthkitCase.ErrorObserver {
 
-    private final Case currentCase;
+    private static final Logger LOGGER = Logger.getLogger(SleuthkitErrorReporter.class.getName());
+    private final int milliSecondsBetweenReports;
+    private final String message;
     private long newProblems;
     private long totalProblems;
     private long lastReportedDate;
-    private final int milliSecondsBetweenReports;
-    private final String message;
 
     /**
      * Create a new IntervalErrorReprotData instance and subscribe for TSK error
      * notifications for the current case.
      *
-     * @param currentCase           Case for which TSK errors should be tracked
-     *                              and displayed.
      * @param secondsBetweenReports Minimum number of seconds between reports.
      *                              It will not warn more frequently than this.
      * @param message               The message that will be shown when warning
-     *                              the user
+     *                              the user.
      */
-    IntervalErrorReportData(Case currentCase, int secondsBetweenReports, String message) {
+    SleuthkitErrorReporter(int secondsBetweenReports, String message) {
         this.newProblems = 0;
         this.totalProblems = 0;
         this.lastReportedDate = 0; // arm the first warning by choosing zero
         this.milliSecondsBetweenReports = secondsBetweenReports * 1000;  // convert to milliseconds
         this.message = message;
-        this.currentCase = currentCase;
-        this.currentCase.getSleuthkitCase().addErrorObserver(this.currentCase);
-    }
-    
-    /**
-     * Un-subscribe from TSK error notifications for current case.
-     */
-    void shutdown() {
-        this.currentCase.getSleuthkitCase().removeErrorObserver(this.currentCase);
     }
 
     /**
@@ -73,18 +65,19 @@ class IntervalErrorReportData {
      * @param context      The context in which the error occurred.
      * @param errorMessage A description of the error that occurred.
      */
-    void addProblems(String context, String errorMessage) {
+    @Override
+    public void receiveError(String context, String errorMessage) {
+        LOGGER.log(Level.SEVERE, String.format("%s error in the SleuthKit layer: %s", context, errorMessage));
         this.newProblems += 1;
         this.totalProblems += newProblems;
-
         long currentTimeStamp = System.currentTimeMillis();
         if ((currentTimeStamp - lastReportedDate) > milliSecondsBetweenReports) {
             this.lastReportedDate = currentTimeStamp;
             MessageNotifyUtil.Notify.error(message, context + ", " + errorMessage + " "
                     + this.newProblems + " "
-                    + NbBundle.getMessage(IntervalErrorReportData.class, "IntervalErrorReport.NewIssues")
+                    + NbBundle.getMessage(SleuthkitErrorReporter.class, "IntervalErrorReport.NewIssues")
                     + " " + this.totalProblems + " "
-                    + NbBundle.getMessage(IntervalErrorReportData.class, "IntervalErrorReport.TotalIssues")
+                    + NbBundle.getMessage(SleuthkitErrorReporter.class, "IntervalErrorReport.TotalIssues")
                     + ".");
             this.newProblems = 0;
         }

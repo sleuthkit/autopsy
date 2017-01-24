@@ -69,7 +69,7 @@ final class PathUtils {
      *
      * @return A list of the output case folder paths.
      */
-    static List<Path> findCaseFolders(Path folderToSearch) { // RJCTODO: Rename
+    static List<Path> findCaseFolders(Path folderToSearch) {
         File searchFolder = new File(folderToSearch.toString());
         if (!searchFolder.isDirectory()) {
             return Collections.emptyList();
@@ -135,7 +135,7 @@ final class PathUtils {
      *
      * @return A case folder path with a time stamp suffix.
      */
-    static Path createCaseFolderPath(Path caseFoldersPath, String caseName) { // RJCTODO: Rename
+    static Path createCaseFolderPath(Path caseFoldersPath, String caseName) {
         String folderName = caseName + "_" + TimeStampUtils.createTimeStamp();
         return Paths.get(caseFoldersPath.toString(), folderName);
     }

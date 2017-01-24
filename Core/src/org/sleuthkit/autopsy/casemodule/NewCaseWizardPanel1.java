@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,9 +23,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.DialogDescriptor;
@@ -34,7 +31,10 @@ import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.WizardValidationException;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
@@ -101,7 +101,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         // fireChangeEvent();
         // and uncomment the complicated stuff below.
     }
-    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Adds a listener to changes of the panel's validity.
@@ -134,7 +134,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
-            it = new HashSet<ChangeListener>(listeners).iterator();
+            it = new HashSet<>(listeners).iterator();
         }
         ChangeEvent ev = new ChangeEvent(this);
         while (it.hasNext()) {
@@ -167,15 +167,15 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        NewCaseVisualPanel1 component = getComponent();
+        NewCaseVisualPanel1 panel = getComponent();
         try {
             String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, PROP_BASECASE);
-            component.setCaseParentDir(lastBaseDirectory);
-            component.readSettings();
+            panel.setCaseParentDir(lastBaseDirectory);
+            panel.readSettings();
             createdDirectory = (String) settings.getProperty("createdDirectory"); //NON-NLS
-            if (createdDirectory != null && !createdDirectory.equals("")) {
-                logger.log(Level.INFO, "Deleting a case dir in readSettings(): " + createdDirectory); //NON-NLS
-                Case.deleteCaseDirectory(new File(createdDirectory));
+            if (createdDirectory != null && !createdDirectory.isEmpty()) {
+                logger.log(Level.INFO, "Deleting a case dir in readSettings(): {0}", createdDirectory); //NON-NLS
+                FileUtil.deleteDir(new File(createdDirectory));
             }
         } catch (Exception e) {
             logger.log(Level.WARNING, "Could not read wizard settings in NewCaseWizardPanel1, ", e); //NON-NLS
@@ -242,7 +242,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                             // if user says yes
                             try {
                                 createDirectory(caseDirPath, getComponent().getCaseType());
-                            } catch (Exception ex) {
+                            } catch (WizardValidationException ex) {
                                 String errorMsg = NbBundle.getMessage(this.getClass(),
                                         "NewCaseWizardPanel1.validate.errMsg.cantCreateParDir.msg",
                                         caseParentDir);
@@ -259,7 +259,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                     } else {
                         try {
                             createDirectory(caseDirPath, getComponent().getCaseType());
-                        } catch (Exception ex) {
+                        } catch (WizardValidationException ex) {
                             String errorMsg = NbBundle
                                     .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.cantCreateDir");
                             logger.log(Level.WARNING, errorMsg, ex);
@@ -298,7 +298,7 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
             // delete the folder if we already created the folder and the error shows up
             if (new File(caseDirPath).exists()) {
-                Case.deleteCaseDirectory(new File(caseDirPath));
+                FileUtil.deleteDir(new File(caseDirPath));
             }
 
             String errorMsg = NbBundle.getMessage(this.getClass(),
@@ -316,7 +316,6 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
                 logger.log(Level.WARNING, "Startup window didn't close as expected.", ex); //NON-NLS
 
             }
-
         }
     }
 }

@@ -93,7 +93,7 @@ class ReportGenerator {
         DateFormat dateFormat = new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss");
         Date date = new Date();
         String dateNoTime = dateFormat.format(date);
-        this.reportPath = currentCase.getReportDirectory() + File.separator + currentCase.getName() + " " + dateNoTime + File.separator;
+        this.reportPath = currentCase.getReportDirectory() + File.separator + currentCase.getDisplayName() + " " + dateNoTime + File.separator;
 
         this.errorList = new ArrayList<>();
 
