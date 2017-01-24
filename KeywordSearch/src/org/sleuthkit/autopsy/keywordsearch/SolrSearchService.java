@@ -230,11 +230,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
-
-                    // set the upgraded index as the index to be used for this case
-                    currentVersionIndex = new Index(newIndexDir, IndexFinder.getCurrentSolrVersion(), indexToUpgrade.getSchemaVersion());
-                    currentVersionIndex.setNewIndex(true);
+                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
+                    if (currentVersionIndex == null) {
+                        throw new AutopsyServiceException("Unable to upgrade index to the latest version of Solr");
+                    }
                 }
             }
         }
@@ -250,9 +249,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     /**
      *
      * @param context
-     *
-     * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
+     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
@@ -270,10 +267,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             Thread.sleep(2000);
             KeywordSearch.getServer().closeCore();
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
-            if (RuntimeProperties.runningWithGUI()) {
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
-            }
+            throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
     }
 

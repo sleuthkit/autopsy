@@ -44,30 +44,37 @@ class IndexUpgrader {
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
     
-    void performIndexUpgrade(String newIndexDir, Index indexToUpgrade, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
+    Index performIndexUpgrade(String newIndexDir, Index indexToUpgrade, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
         // ELTODO Check for cancellation at whatever points are feasible
 
         // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solrX_schema_Y/index
         File tmpDir = Paths.get(tempResultsDir, "IndexUpgrade").toFile(); //NON-NLS
         tmpDir.mkdirs();
 
+        Index upgradedIndex;
         double currentSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
         try {
             // upgrade from Solr 4 to 5
             currentSolrVersion = upgradeSolrIndexVersion4to5(currentSolrVersion, newIndexDir, tempResultsDir);
             // upgrade from Solr 5 to 6
             currentSolrVersion = upgradeSolrIndexVersion5to6(currentSolrVersion, newIndexDir, tempResultsDir);
+            
+            // create upgraded index object
+            upgradedIndex = new Index(newIndexDir, Double.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion());
+            upgradedIndex.setNewIndex(true);
         } catch (Exception ex) {
             // catch-all firewall for exceptions thrown by Solr upgrade tools
             throw new AutopsyService.AutopsyServiceException("Exception while running Solr index upgrade in " + newIndexDir, ex); //NON-NLS
         } finally {
             if (currentSolrVersion != NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
                 // upgrade did not complete, delete the new index directories
+                upgradedIndex = null;
                 if (!new File(newIndexDir).delete()) {
                     logger.log(Level.SEVERE, "Unable to delete folder {0}", newIndexDir); //NON-NLS
                 }
             }
         }
+        return upgradedIndex;
     }
     
     /**
