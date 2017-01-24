@@ -216,11 +216,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
-
-                    // set the upgraded index as the index to be used for this case
-                    currentVersionIndex = new Index(newIndexDir, IndexFinder.getCurrentSolrVersion(), indexToUpgrade.getSchemaVersion());
-                    currentVersionIndex.setNewIndex(true);
+                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
+                    if (currentVersionIndex == null) {
+                        throw new AutopsyServiceException("Unable to upgrade index to the latest version of Solr");
+                    }
                 }
             }
         }
