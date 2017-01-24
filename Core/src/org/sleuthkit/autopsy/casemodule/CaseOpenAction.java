@@ -43,21 +43,25 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * An action that opens an existing case. It is associated with the Case/Open
- * menu item via the layer.xml file, with a toolbar button, and with a button on
- * the startup window.
+ * The action associated with the Case/Open Case menu item via the layer.xml
+ * file, a toolbar button, and the Create New Case button of the start up window
+ * that allows a user to open a case. It opens an existing case.
  */
 @ServiceProvider(service = CaseOpenAction.class)
 public final class CaseOpenAction extends CallableSystemAction implements ActionListener {
 
-    private static final Logger LOGGER = Logger.getLogger(CaseOpenAction.class.getName());
-    private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private static final long serialVersionUID = 1L;
+    private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
+    private static final Logger logger = Logger.getLogger(CaseOpenAction.class.getName());
     private final JFileChooser fileChooser = new JFileChooser();
     private final FileFilter caseMetadataFileFilter;
 
     /**
-     * Constructs an action that opens an existing case.
+     * Constructs the action associated with the Case/Open Case menu item via
+     * the layer.xml file, a toolbar button, and the Create New Case button of
+     * the start up window that allows a user to open a case. It opens an
+     * existing case.
+     *
      */
     public CaseOpenAction() {
         caseMetadataFileFilter = new FileNameExtensionFilter(NbBundle.getMessage(CaseOpenAction.class, "CaseOpenAction.autFilter.title", Version.getName(), CaseMetadata.getFileExtension()), CaseMetadata.getFileExtension().substring(1));
@@ -127,7 +131,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                     try {
                         get();
                     } catch (InterruptedException | ExecutionException ex) {
-                        LOGGER.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
+                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
                         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         JOptionPane.showMessageDialog(
                                 WindowManager.getDefault().getMainWindow(),
@@ -144,6 +148,7 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
 
     @Override
     public void performAction() {
+        actionPerformed(null);
     }
 
     @Override

@@ -35,16 +35,19 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Action to open the subdirectory of the current case that contains the output
- * files.
+ * The action associated with the Tools/Open Output Folder menu item. It opens a
+ * file explorer window for the root output directory for the currently open
+ * case. If the case is a single-user case, this is the case directory. If the
+ * case is a multi-user case, this is a subdirectory of the case directory
+ * specific to the host machine.
  */
 @ActionRegistration(displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy = true)
 @ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction extends CallableSystemAction {
 
-    private static final Logger LOGGER = Logger.getLogger(OpenOutputFolderAction.class.getName());
     private static final long serialVersionUID = 1L;
+    private static final Logger logger = Logger.getLogger(OpenOutputFolderAction.class.getName());
 
     @Override
     public void performAction() {
@@ -56,7 +59,7 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
                 try {
                     Desktop.getDesktop().open(outputDir);
                 } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to open output folder %s", outputDir), ex); //NON-NLS
+                    logger.log(Level.SEVERE, String.format("Failed to open output folder %s", outputDir), ex); //NON-NLS
                     NotifyDescriptor descriptor = new NotifyDescriptor.Message(
                             NbBundle.getMessage(this.getClass(), "OpenOutputFolder.CouldNotOpenOutputFolder", outputDir.getAbsolutePath()), NotifyDescriptor.ERROR_MESSAGE);
                     DialogDisplayer.getDefault().notify(descriptor);
@@ -67,19 +70,14 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
                 DialogDisplayer.getDefault().notify(descriptor);
             }
         } catch (IllegalStateException ex) {
-            LOGGER.log(Level.SEVERE, "OpenOutputFolderAction enabled with no current case", ex); //NON-NLS
+            logger.log(Level.SEVERE, "OpenOutputFolderAction enabled with no current case", ex); //NON-NLS
             JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
         }
     }
 
     @Override
     public boolean isEnabled() {
-        try {
-            Case.getCurrentCase();
-            return true;
-        } catch (IllegalStateException ex) {
-            return false;
-        }
+        return Case.isCaseOpen();
     }
 
     @Override

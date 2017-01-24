@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,14 +17,9 @@
  * limitations under the License.
  */
 
- /*
- * CasePropertiesForm.java
- *
- * Created on Mar 14, 2011, 1:48:20 PM
- */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.io.File;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
@@ -37,44 +32,15 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * The form where user can change / update the properties of the current case
- * metadata.
+ * A panel that allows the user to view various properties of the current case
+ * and change the display name of the case.
  */
 class CasePropertiesForm extends javax.swing.JPanel {
-    
+
     private static final long serialVersionUID = 1L;
-    
     private Case current = null;
     private static JPanel caller;    // panel for error
 
-    // Shrink a path to fit in targetLength (if necessary), by replaceing part
-    // of the path with "...". Ex: "C:\Users\bob\...\folder\other\Image.img"
-    private String shrinkPath(String path, int targetLength) {
-        if (path.length() > targetLength) {
-            String fill = "...";
-            
-            int partsLength = targetLength - fill.length();
-            
-            String front = path.substring(0, partsLength / 4);
-            int frontSep = front.lastIndexOf(File.separatorChar);
-            if (frontSep != -1) {
-                front = front.substring(0, frontSep + 1);
-            }
-            
-            String back = path.substring(partsLength * 3 / 4);
-            int backSep = back.indexOf(File.separatorChar);
-            if (backSep != -1) {
-                back = back.substring(backSep);
-            }
-            return back + fill + front;
-        } else {
-            return path;
-        }
-    }
-
-    /**
-     * Creates new form CasePropertiesForm
-     */
     CasePropertiesForm(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
         initComponents();
         caseNameTextField.setText(currentCase.getDisplayName());
@@ -93,10 +59,10 @@ class CasePropertiesForm extends javax.swing.JPanel {
         crDateField.setText(crDate);
         caseDirField.setText(caseDir);
         current = currentCase;
-        
+
         CaseMetadata caseMetadata = currentCase.getCaseMetadata();
         if (caseMetadata.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-            dbNameField.setText(caseMetadata.getCaseDatabasePath());
+            dbNameField.setText(Paths.get(caseMetadata.getCaseDirectory(), caseMetadata.getCaseDatabaseName()).toString());
         } else {
             dbNameField.setText(caseMetadata.getCaseDatabaseName());
         }
@@ -162,11 +128,6 @@ class CasePropertiesForm extends javax.swing.JPanel {
 
         caseNameTextField.setFont(caseNameTextField.getFont().deriveFont(caseNameTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         caseNameTextField.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.caseNameTextField.text")); // NOI18N
-        caseNameTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                caseNameTextFieldActionPerformed(evt);
-            }
-        });
 
         updateCaseNameButton.setFont(updateCaseNameButton.getFont().deriveFont(updateCaseNameButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         updateCaseNameButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesForm.class, "CasePropertiesForm.updateCaseNameButton.text")); // NOI18N
@@ -318,34 +279,36 @@ class CasePropertiesForm extends javax.swing.JPanel {
                         JOptionPane.ERROR_MESSAGE);
             } else // check if case Name contain one of this following symbol:
             //  \ / : * ? " < > |
-            if (newCaseName.contains("\\") || newCaseName.contains("/") || newCaseName.contains(":")
-                    || newCaseName.contains("*") || newCaseName.contains("?") || newCaseName.contains("\"")
-                    || newCaseName.contains("<") || newCaseName.contains(">") || newCaseName.contains("|")) {
-                String errorMsg = NbBundle
-                        .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.msg");
-                JOptionPane.showMessageDialog(caller, errorMsg,
-                        NbBundle.getMessage(this.getClass(),
-                                "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.title"),
-                        JOptionPane.ERROR_MESSAGE);
-            } else {
-                // ask for the confirmation first
-                String confMsg = NbBundle
-                        .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.confMsg.msg", oldCaseName,
-                                newCaseName);
-                NotifyDescriptor d = new NotifyDescriptor.Confirmation(confMsg,
-                        NbBundle.getMessage(this.getClass(),
-                                "CasePropertiesForm.updateCaseName.confMsg.title"),
-                        NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-                d.setValue(NotifyDescriptor.NO_OPTION);
-                
-                Object res = DialogDisplayer.getDefault().notify(d);
-                if (res != null && res == DialogDescriptor.YES_OPTION) {
-                    // if user select "Yes"
-                    String oldPath = current.getCaseMetadata().getFilePath().toString();
-                    try {
-                        current.updateCaseName(oldCaseName, oldPath, newCaseName, oldPath);
-                    } catch (Exception ex) {
-                        Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex); //NON-NLS
+            {
+                if (newCaseName.contains("\\") || newCaseName.contains("/") || newCaseName.contains(":")
+                        || newCaseName.contains("*") || newCaseName.contains("?") || newCaseName.contains("\"")
+                        || newCaseName.contains("<") || newCaseName.contains(">") || newCaseName.contains("|")) {
+                    String errorMsg = NbBundle
+                            .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.msg");
+                    JOptionPane.showMessageDialog(caller, errorMsg,
+                            NbBundle.getMessage(this.getClass(),
+                                    "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.title"),
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    // ask for the confirmation first
+                    String confMsg = NbBundle
+                            .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.confMsg.msg", oldCaseName,
+                                    newCaseName);
+                    NotifyDescriptor d = new NotifyDescriptor.Confirmation(confMsg,
+                            NbBundle.getMessage(this.getClass(),
+                                    "CasePropertiesForm.updateCaseName.confMsg.title"),
+                            NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
+                    d.setValue(NotifyDescriptor.NO_OPTION);
+
+                    Object res = DialogDisplayer.getDefault().notify(d);
+                    if (res != null && res == DialogDescriptor.YES_OPTION) {
+                        // if user select "Yes"
+                        String oldPath = current.getCaseMetadata().getFilePath().toString();
+                        try {
+                            current.updateCaseName(oldCaseName, oldPath, newCaseName, oldPath);
+                        } catch (CaseActionException ex) {
+                            Logger.getLogger(CasePropertiesForm.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex); //NON-NLS
+                        }
                     }
                 }
             }
@@ -353,12 +316,8 @@ class CasePropertiesForm extends javax.swing.JPanel {
     }//GEN-LAST:event_updateCaseNameButtonActionPerformed
 
     private void deleteCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCaseButtonActionPerformed
-        CallableSystemAction.get(DeleteCurrentCaseAction.class).actionPerformed(evt);
+        CallableSystemAction.get(CaseDeleteAction.class).actionPerformed(evt);
     }//GEN-LAST:event_deleteCaseButtonActionPerformed
-
-    private void caseNameTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_caseNameTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_caseNameTextFieldActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

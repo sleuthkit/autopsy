@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2014 Basis Technology Corp.
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,19 +29,18 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 
-@ActionID(
-        category = "Help",
-        id = "org.sleuthkit.autopsy.actions.ShowIngestProgressSnapshotAction"
-)
-@ActionRegistration(
-        displayName = "#CTL_ShowIngestProgressSnapshotAction",
-        lazy = false
-)
+/**
+ * The action associated with the Help/Get Ingest Progress Snapshot menu item.
+ * It opens a the Ingest Progress Snapshot dialog.
+ */
+@ActionID(category = "Help", id = "org.sleuthkit.autopsy.actions.ShowIngestProgressSnapshotAction")
+@ActionRegistration(displayName = "#CTL_ShowIngestProgressSnapshotAction", lazy = false)
 @ActionReference(path = "Menu/Help", position = 1125)
 @Messages("CTL_ShowIngestProgressSnapshotAction=Ingest Status Details")
 public final class ShowIngestProgressSnapshotAction extends CallableSystemAction implements ActionListener {
 
     private static final String ACTION_NAME = NbBundle.getMessage(ShowIngestProgressSnapshotAction.class, "ShowIngestProgressSnapshotAction.actionName.text");
+    private static final long serialVersionUID = 1L;
 
     @Override
     public void performAction() {
@@ -60,16 +59,11 @@ public final class ShowIngestProgressSnapshotAction extends CallableSystemAction
 
     @Override
     public boolean isEnabled() {
-        try {
-            Case.getCurrentCase();
-            return true;
-        } catch (IllegalStateException ex) {
-            return false;
-        }
+        return Case.isCaseOpen();
     }
 
     @Override
     public boolean asynchronous() {
-        return false; // run on edt
+        return false;
     }
 }

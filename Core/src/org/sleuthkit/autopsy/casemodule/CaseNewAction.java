@@ -26,9 +26,9 @@ import org.openide.util.actions.SystemAction;
 import org.openide.util.lookup.ServiceProvider;
 
 /**
- * The action to create a new case. This action class is always enabled.
- *
- * IMPORTANT: Must be called in the Swing Event Dispatch Thread (EDT).
+ * The action associated with the Case/New Case menu item and the Create New
+ * Case button of the start up window that allows a user to open a case. It
+ * invokes the New Case wizard.
  */
 @ServiceProvider(service = CaseNewActionInterface.class)
 public final class CaseNewAction extends CallableSystemAction implements CaseNewActionInterface {
@@ -42,6 +42,7 @@ public final class CaseNewAction extends CallableSystemAction implements CaseNew
 
     @Override
     public void performAction() {
+        actionPerformed(null);
     }
 
     @Override

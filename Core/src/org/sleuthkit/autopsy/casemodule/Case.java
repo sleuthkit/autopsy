@@ -128,9 +128,10 @@ public class Case {
 
     /*
      * The application name, used to make the title of the main application
-     * window [application] name when there is no open case and [application
-     * name]-[curent case display name] when there is an open case. Initialized
-     * by getting the main window title before a case has been opened.
+     * window [application name] when there is no open case and [curent case
+     * display name] - [application name] when there is an open case.
+     * Initialized by getting the main window title before a case has been
+     * opened.
      *
      * TODO (JIRA-2231): Make the application name a RuntimeProperties item set
      * by Installers.
@@ -749,9 +750,9 @@ public class Case {
         if (RuntimeProperties.runningWithGUI()) {
             progressIndicator = new ModalDialogProgressIndicator(
                     Bundle.Case_progressIndicatorTitle_closingCase(),
-                    new String[]{Bundle.Case_progressIndicatorCancelButton_label()}, 
-                    Bundle.Case_progressIndicatorCancelButton_label(), 
-                    null, 
+                    new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
+                    Bundle.Case_progressIndicatorCancelButton_label(),
+                    null,
                     listener);
         } else {
             progressIndicator = new LoggingProgressIndicator();
@@ -873,10 +874,10 @@ public class Case {
             ProgressIndicator progressIndicator;
             if (RuntimeProperties.runningWithGUI()) {
                 progressIndicator = new ModalDialogProgressIndicator(
-                        Bundle.Case_progressIndicatorTitle_deletingCase(), 
-                        new String[]{Bundle.Case_progressIndicatorCancelButton_label()}, 
-                        Bundle.Case_progressIndicatorCancelButton_label(), 
-                        null, 
+                        Bundle.Case_progressIndicatorTitle_deletingCase(),
+                        new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
+                        Bundle.Case_progressIndicatorCancelButton_label(),
+                        null,
                         listener);
             } else {
                 progressIndicator = new LoggingProgressIndicator();
@@ -891,7 +892,7 @@ public class Case {
                      * cannot be deleted if another node has it open.
                      */
                     progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
-                    try (CoordinationService.Lock dirLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDatabasePath())) {
+                    try (CoordinationService.Lock dirLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory())) {
                         assert (null != dirLock);
 
                         /*
@@ -1277,7 +1278,7 @@ public class Case {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
-                CallableSystemAction.get(DeleteCurrentCaseAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
 
                 /*
@@ -1296,8 +1297,8 @@ public class Case {
                 }
 
                 /*
-                 * Reset the main window title to be [application name] - [case
-                 * name], instead of just the application name.
+                 * Reset the main window title to be [curent case display name]
+                 * - [application name], instead of just the application name.
                  */
                 addCaseNameToMainWindowTitle(currentCase.getDisplayName());
             });
@@ -1323,7 +1324,7 @@ public class Case {
                 CallableSystemAction.get(AddImageAction.class).setEnabled(false);
                 CallableSystemAction.get(CaseCloseAction.class).setEnabled(false);
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(false);
-                CallableSystemAction.get(DeleteCurrentCaseAction.class).setEnabled(false);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
 
                 /*
@@ -1334,7 +1335,7 @@ public class Case {
 
                 /*
                  * Reset the main window title to be just the application name,
-                 * instead of [application name] - [case name].
+                 * instead of [curent case display name] - [application name].
                  */
                 Frame mainWindow = WindowManager.getDefault().getMainWindow();
                 mainWindow.setTitle(appName);
@@ -1786,7 +1787,7 @@ public class Case {
 
     /**
      * Updates the case display name name.
-     * 
+     *
      * @param oldCaseName The old case name.
      * @param oldPath     The old path name.
      * @param newCaseName The new case name.
@@ -1873,10 +1874,21 @@ public class Case {
         progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseDatabase());
         String dbName = null;
         try {
-            if (caseType == CaseType.SINGLE_USER_CASE) {
-                dbName = Paths.get(caseDir, SINGLE_USER_CASE_DB_NAME).toString();
-                this.caseDb = SleuthkitCase.newCase(dbName);
-            } else if (caseType == CaseType.MULTI_USER_CASE) {
+            if (CaseType.SINGLE_USER_CASE == caseType) {
+                /*
+                 * For single-user cases, the case database is a SQLite database
+                 * with a fixed name and is physically located in the root of
+                 * the case directory.
+                 */
+                dbName = SINGLE_USER_CASE_DB_NAME;
+                this.caseDb = SleuthkitCase.newCase(Paths.get(caseDir, SINGLE_USER_CASE_DB_NAME).toString());
+            } else if (CaseType.MULTI_USER_CASE == caseType) {
+                /*
+                 * For multi-user cases, the case database is a PostgreSQL
+                 * database with a name consiting of the case name with a time
+                 * stamp suffix and is physically located on the database
+                 * server.
+                 */
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
                 Date date = new Date();
                 dbName = caseName + "_" + dateFormat.format(date);
@@ -1924,7 +1936,7 @@ public class Case {
         try {
             progressIndicator.progress(Bundle.Case_progressMessage_openingCaseDatabase());
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                this.caseDb = SleuthkitCase.openCase(metadata.getCaseDatabasePath());
+                this.caseDb = SleuthkitCase.openCase(Paths.get(metadata.getCaseDirectory(), metadata.getCaseDatabaseName()).toString());
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 try {
                     this.caseDb = SleuthkitCase.openCase(metadata.getCaseDatabaseName(), UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());

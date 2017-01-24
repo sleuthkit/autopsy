@@ -54,11 +54,11 @@ public final class CaseMetadata {
     private static final String FILE_EXTENSION = ".aut";
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
     private static final String SCHEMA_VERSION_ONE = "1.0";
-    private static final String SCHEMA_VERSION_TWO = "2";
+    private static final String SCHEMA_VERSION_TWO = "2.0";
     private final static String AUTOPSY_VERSION_ELEMENT_NAME = "AutopsyCreatedVersion"; //NON-NLS
     private final static String CASE_DATABASE_NAME_ELEMENT_NAME = "DatabaseName"; //NON-NLS
     private final static String TEXT_INDEX_NAME_ELEMENT = "TextIndexName"; //NON-NLS
-    private static final String CURRENT_SCHEMA_VERSION = "2.0";
+    private static final String CURRENT_SCHEMA_VERSION = "3.0";
     private final static String ROOT_ELEMENT_NAME = "AutopsyCase"; //NON-NLS
     private final static String SCHEMA_VERSION_ELEMENT_NAME = "SchemaVersion"; //NON-NLS
     private final static String CREATED_DATE_ELEMENT_NAME = "CreatedDate"; //NON-NLS
@@ -67,6 +67,7 @@ public final class CaseMetadata {
     private final static String AUTOPSY_SAVED_BY_ELEMENT_NAME = "SavedByAutopsyVersion"; //NON-NLS
     private final static String CASE_ELEMENT_NAME = "Case"; //NON-NLS
     private final static String CASE_NAME_ELEMENT_NAME = "Name"; //NON-NLS
+    private final static String CASE_DISPLAY_NAME_ELEMENT_NAME = "DisplayName"; //NON-NLS
     private final static String CASE_NUMBER_ELEMENT_NAME = "Number"; //NON-NLS
     private final static String EXAMINER_ELEMENT_NAME = "Examiner"; //NON-NLS
     private final static String CASE_TYPE_ELEMENT_NAME = "CaseType"; //NON-NLS
@@ -78,7 +79,7 @@ public final class CaseMetadata {
     private String caseDisplayName;
     private String caseNumber;
     private String examiner;
-    private String caseDatabase;
+    private String caseDatabaseName;
     private String textIndexName;
     private String createdDate;
     private String createdByVersion;
@@ -96,16 +97,16 @@ public final class CaseMetadata {
      * Constructs an object that provides access to the case metadata stored in
      * a new case metadata file that is created using the supplied metadata.
      *
-     * @param caseDirectory     The case directory.
-     * @param caseType          The type of case.
-     * @param caseName          The immutable name of the case.
-     * @param caseDisplayName   The display name of the case, can be changed by
-     *                          a user.
-     * @param caseNumber        The case number.
-     * @param examiner          The name of the case examiner.
-     * @param caseDatabase      For a single-user case, the full path to the
-     *                          case database file. For a multi-user case, the
-     *                          case database name.
+     * @param caseDirectory   The case directory.
+     * @param caseType        The type of case.
+     * @param caseName        The immutable name of the case.
+     * @param caseDisplayName The display name of the case, can be changed by a
+     *                        user.
+     * @param caseNumber      The case number.
+     * @param examiner        The name of the case examiner.
+     * @param caseDatabase    For a single-user case, the full path to the case
+     *                        database file. For a multi-user case, the case
+     *                        database name.
      *
      * @throws CaseMetadataException If the new case metadata file cannot be
      *                               created.
@@ -117,7 +118,7 @@ public final class CaseMetadata {
         this.caseDisplayName = caseDisplayName;
         this.caseNumber = caseNumber;
         this.examiner = examiner;
-        this.caseDatabase = caseDatabase;
+        this.caseDatabaseName = caseDatabase;
         createdByVersion = Version.getVersion();
         createdDate = CaseMetadata.DATE_FORMAT.format(new Date());
         writeToFile();
@@ -172,7 +173,7 @@ public final class CaseMetadata {
     public String getCaseName() {
         return caseName;
     }
-    
+
     /**
      * Gets the case display name.
      *
@@ -181,7 +182,7 @@ public final class CaseMetadata {
     public String getCaseDisplayName() {
         return this.caseDisplayName;
     }
-    
+
     /**
      * Sets the case display name. This does not change the name of the case
      * directory, the case database, or the text index name.
@@ -198,7 +199,7 @@ public final class CaseMetadata {
             throw ex;
         }
     }
-    
+
     /**
      * Gets the case number.
      *
@@ -218,32 +219,12 @@ public final class CaseMetadata {
     }
 
     /**
-     * Gets the name of the case case database.
+     * Gets the name of the case database.
      *
      * @return The case database name.
      */
     public String getCaseDatabaseName() {
-        if (caseType == Case.CaseType.MULTI_USER_CASE) {
-            return caseDatabase;
-        } else {
-            return Paths.get(caseDatabase).getFileName().toString();
-        }
-    }
-
-    /**
-     * Gets the full path to the case database file if the case is a single-user
-     * case.
-     *
-     * @return The full path to the case database file for a single-user case.
-     *
-     * @throws UnsupportedOperationException If called for a multi-user case.
-     */
-    public String getCaseDatabasePath() throws UnsupportedOperationException {
-        if (caseType == Case.CaseType.SINGLE_USER_CASE) {
-            return caseDatabase;
-        } else {
-            throw new UnsupportedOperationException();
-        }
+        return caseDatabaseName;
     }
 
     /**
@@ -260,8 +241,8 @@ public final class CaseMetadata {
             this.textIndexName = oldIndexName;
             throw ex;
         }
-    }    
-    
+    }
+
     /**
      * Gets the text index name.
      *
@@ -383,10 +364,11 @@ public final class CaseMetadata {
          * Create the children of the case element.
          */
         createChildElement(doc, caseElement, CASE_NAME_ELEMENT_NAME, caseName);
+        createChildElement(doc, caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, caseDisplayName);
         createChildElement(doc, caseElement, CASE_NUMBER_ELEMENT_NAME, caseNumber);
         createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, examiner);
         createChildElement(doc, caseElement, CASE_TYPE_ELEMENT_NAME, caseType.toString());
-        createChildElement(doc, caseElement, CASE_DATABASE_ELEMENT_NAME, caseDatabase);
+        createChildElement(doc, caseElement, CASE_DATABASE_ELEMENT_NAME, caseDatabaseName);
         createChildElement(doc, caseElement, TEXT_INDEX_ELEMENT, textIndexName);
     }
 
@@ -444,6 +426,11 @@ public final class CaseMetadata {
             }
             Element caseElement = (Element) caseElements.item(0);
             this.caseName = getElementTextContent(caseElement, CASE_NAME_ELEMENT_NAME, true);
+            if (schemaVersion.equals(SCHEMA_VERSION_ONE) || schemaVersion.equals(SCHEMA_VERSION_TWO)) {
+                this.caseDisplayName = caseName;
+            } else {
+                this.caseDisplayName = getElementTextContent(caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, true);
+            }
             this.caseNumber = getElementTextContent(caseElement, CASE_NUMBER_ELEMENT_NAME, false);
             this.examiner = getElementTextContent(caseElement, EXAMINER_ELEMENT_NAME, false);
             this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
@@ -451,10 +438,10 @@ public final class CaseMetadata {
                 throw new CaseMetadataException("Case metadata file corrupted");
             }
             if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
-                this.caseDatabase = getElementTextContent(caseElement, CASE_DATABASE_NAME_ELEMENT_NAME, true);
+                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_NAME_ELEMENT_NAME, true);
                 this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, true);
             } else {
-                this.caseDatabase = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
+                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
                 this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, true);
             }
 
@@ -508,6 +495,24 @@ public final class CaseMetadata {
 
         private CaseMetadataException(String message, Throwable cause) {
             super(message, cause);
+        }
+    }
+
+    /**
+     * Gets the full path to the case database file if the case is a single-user
+     * case.
+     *
+     * @return The full path to the case database file for a single-user case.
+     *
+     * @throws UnsupportedOperationException If called for a multi-user case.
+     * @deprecated
+     */
+    @Deprecated
+    public String getCaseDatabasePath() throws UnsupportedOperationException {
+        if (Case.CaseType.SINGLE_USER_CASE == caseType) {
+            return Paths.get(getCaseDirectory(), caseDatabaseName).toString();
+        } else {
+            throw new UnsupportedOperationException();
         }
     }
 

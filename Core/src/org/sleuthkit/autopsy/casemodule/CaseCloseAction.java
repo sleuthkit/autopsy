@@ -43,14 +43,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
- * An action to close the current case and pop up the start up window that
- * allows a user to open another case.
+ * The action associated with the Case/Close Case menu item and the Close Case
+ * toolbar button. It closes the current case and pops up the start up window
+ * that allows a user to open another case.
  */
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.CaseCloseAction")
 @ActionRegistration(displayName = "#CTL_CaseCloseAct", lazy = false)
-@ActionReferences(value = {
-    @ActionReference(path = "Toolbars/Case", position = 104)
-})
+@ActionReferences(value = {@ActionReference(path = "Toolbars/Case", position = 104)})
 public final class CaseCloseAction extends CallableSystemAction implements Presenter.Toolbar {
 
     private static final long serialVersionUID = 1L;
@@ -58,19 +57,20 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
     private final JButton toolbarButton = new JButton();
 
     /**
-     * The constructor for this class
+     * Constructs the action associated with the Case/Close Case menu item and
+     * the Close Case toolbar button.
      */
     public CaseCloseAction() {
-        putValue("iconBase", "org/sleuthkit/autopsy/images/close-icon.png"); // put the icon NON-NLS
-        putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); // put the action Name
+        putValue("iconBase", "org/sleuthkit/autopsy/images/close-icon.png"); //NON-NLS
+        putValue(Action.NAME, NbBundle.getMessage(CaseCloseAction.class, "CTL_CaseCloseAct")); //NON-NLS
         toolbarButton.addActionListener(CaseCloseAction.this::actionPerformed);
         this.setEnabled(false);
     }
 
     /**
-     * Closes the current opened case.
+     * Closes the current case.
      *
-     * @param e the action event for this method
+     * @param e The action event.
      */
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -117,17 +117,17 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
-     * instead of this method.
+     * Closes the current case.
      */
     @Override
     public void performAction() {
+        actionPerformed(null);
     }
 
     /**
-     * Gets the name of this action. This may be presented as an item in a menu.
+     * Gets the action name.
      *
-     * @return actionName
+     * @return The action name.
      */
     @Override
     public String getName() {
@@ -135,9 +135,9 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Gets the HelpCtx associated with implementing object
+     * Gets the help context.
      *
-     * @return HelpCtx or HelpCtx.DEFAULT_HELP
+     * @return The help context.
      */
     @Override
     public HelpCtx getHelpCtx() {
@@ -145,9 +145,9 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
     }
 
     /**
-     * Returns the toolbar component of this action
+     * Returns the toolbar component of this action.
      *
-     * @return component the toolbar button
+     * @return The toolbar button
      */
     @Override
     public Component getToolbarPresenter() {

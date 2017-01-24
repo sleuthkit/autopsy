@@ -30,7 +30,8 @@ import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * An action wired in to the Case/Exit menu item.
+ * The action associated with the Case/Exit menu item. It closes the current
+ * case, if any, and shuts down the application.
  */
 @ActionRegistration(displayName = "Exit", iconInMenu = true)
 @ActionReference(path = "Menu/Case", position = 1000, separatorBefore = 999)

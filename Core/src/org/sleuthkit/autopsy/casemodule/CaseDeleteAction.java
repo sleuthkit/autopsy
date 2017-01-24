@@ -19,9 +19,11 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -32,15 +34,16 @@ import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * An action to delete the current case.
+ * The action associated with the Delete button of the Case Properties panel. It
+ * deletes the current case.
  */
-final class DeleteCurrentCaseAction extends CallableSystemAction {
+final class CaseDeleteAction extends CallableSystemAction {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = Logger.getLogger(DeleteCurrentCaseAction.class.getName());
+    private static final Logger logger = Logger.getLogger(CaseDeleteAction.class.getName());
 
-    DeleteCurrentCaseAction() { // Should pass in caller
-        putValue(Action.NAME, NbBundle.getMessage(DeleteCurrentCaseAction.class, "CTL_CaseDeleteAction"));
+    CaseDeleteAction() {
+        putValue(Action.NAME, NbBundle.getMessage(CaseDeleteAction.class, "CTL_CaseDeleteAction"));
         this.setEnabled(false);
     }
 
@@ -68,18 +71,34 @@ final class DeleteCurrentCaseAction extends CallableSystemAction {
                     null,
                     NotifyDescriptor.NO_OPTION));
             if (null != response && DialogDescriptor.YES_OPTION == response) {
-                try {
-                    Case.deleteCurrentCase();
-                } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
-                    JOptionPane.showMessageDialog(
-                            null,
-                            Bundle.Case_deleteCaseFailureMessageBox_message(ex.getMessage()),
-                            Bundle.Case_deleteCaseFailureMessageBox_title(),
-                            JOptionPane.ERROR_MESSAGE);
-                }
-                // because the "Delete Case" button is in the "CaseProperties" window, we have to close that window when we delete the case.
-                CasePropertiesAction.closeCasePropertiesWindow();
+
+                new SwingWorker<Void, Void>() {
+
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        Case.deleteCurrentCase();
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            get();
+                        } catch (InterruptedException | ExecutionException ex) {
+                            logger.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
+                            JOptionPane.showMessageDialog(
+                                    null,
+                                    Bundle.Case_deleteCaseFailureMessageBox_message(ex.getMessage()),
+                                    Bundle.Case_deleteCaseFailureMessageBox_title(),
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                        /*
+                         * Close the Case Properties dialog that is the parent
+                         * of the Delete button that invokes this action.
+                         */
+                        CasePropertiesAction.closeCasePropertiesWindow();
+                    }
+                }.execute();
             }
         } catch (IllegalStateException ex) {
             logger.log(Level.SEVERE, "Case delete action called with no current case", ex);
@@ -92,7 +111,7 @@ final class DeleteCurrentCaseAction extends CallableSystemAction {
 
     @Override
     public String getName() {
-        return NbBundle.getMessage(DeleteCurrentCaseAction.class, "CTL_CaseDeleteAction");
+        return NbBundle.getMessage(CaseDeleteAction.class, "CTL_CaseDeleteAction");
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2017 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,32 +35,37 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Action to open the log subdirectory for the currently open case, or the log
- * subdirectory of the user directory if there is no current case.
+ * The action associated with the Help/Open Log Folder menu item. It opens a
+ * file explorer window for the log subdirectory for the currently open case, or
+ * the log subdirectory of the user directory if there is no current case.
  */
 @ActionRegistration(displayName = "#CTL_OpenLogFolder", iconInMenu = true)
 @ActionReference(path = "Menu/Help", position = 1750)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenLogFolderAction", category = "Help")
 public final class OpenLogFolderAction implements ActionListener {
 
-    private static final Logger LOGGER = Logger.getLogger(OpenLogFolderAction.class.getName());
+    private static final Logger logger = Logger.getLogger(OpenLogFolderAction.class.getName());
 
     @Override
     public void actionPerformed(ActionEvent e) {
         File logDir;
-        try {
-            Case currentCase = Case.getCurrentCase();
-            logDir = new File(currentCase.getLogDirectoryPath());
-        } catch (IllegalStateException ex) {
-            /*
-             * No open case.
-             */
+        if (Case.isCaseOpen()) {
+            try {
+                Case currentCase = Case.getCurrentCase();
+                logDir = new File(currentCase.getLogDirectoryPath());
+            } catch (IllegalStateException ex) {
+                /*
+                 * The case 
+                 */
+                logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
+            }
+        } else {
             logDir = new File(Places.getUserDirectory().getAbsolutePath() + File.separator + "var" + File.separator + "log");
         }
 
         try {
             if (logDir.exists() == false) {
-                LOGGER.log(Level.SEVERE, String.format("The log subdirectory %s does not exist", logDir));
+                logger.log(Level.SEVERE, String.format("The log subdirectory %s does not exist", logDir));
                 NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
                         NbBundle.getMessage(this.getClass(), "OpenLogFolder.error1", logDir.getAbsolutePath()),
                         NotifyDescriptor.ERROR_MESSAGE);
@@ -69,12 +74,12 @@ public final class OpenLogFolderAction implements ActionListener {
                 Desktop.getDesktop().open(logDir);
             }
         } catch (IOException ex) {
-            LOGGER.log(Level.SEVERE, String.format("Could not open log directory %s", logDir), ex);
+            logger.log(Level.SEVERE, String.format("Could not open log directory %s", logDir), ex);
             NotifyDescriptor notifyDescriptor = new NotifyDescriptor.Message(
                     NbBundle.getMessage(this.getClass(), "OpenLogFolder.CouldNotOpenLogFolder", logDir.getAbsolutePath()),
                     NotifyDescriptor.ERROR_MESSAGE);
             DialogDisplayer.getDefault().notify(notifyDescriptor);
         }
     }
-    
+
 }
