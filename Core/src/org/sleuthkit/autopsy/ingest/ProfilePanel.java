@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
-import java.util.TreeMap;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
@@ -47,6 +46,7 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         initComponents();
         tempSettings = new IngestJobSettings(NEW_PROFILE_NAME);
         ingestSettingsPanel = new IngestJobSettingsPanel(tempSettings);
+        ingestSettingsPanel.setPastJobsButtonVisible(false);
         jPanel1.add(ingestSettingsPanel, 0);
 
     }
@@ -58,6 +58,7 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         profileNameField.setText(profile.getName());
         tempSettings = new IngestJobSettings(selectedProfile.getName());
         ingestSettingsPanel = new IngestJobSettingsPanel(tempSettings);
+        ingestSettingsPanel.setPastJobsButtonVisible(false);
         jPanel1.add(ingestSettingsPanel, 0);
     }
 
