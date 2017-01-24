@@ -446,6 +446,16 @@ public final class CaseMetadata {
             }
 
             /*
+             * Fix up the case database name due to a bug that for a time caused
+             * the absolute paths of single-user case databases to be stored.
+             */
+            Path possibleAbsoluteCaseDbPath = Paths.get(this.caseDatabaseName);
+            if (possibleAbsoluteCaseDbPath.getNameCount() > 1) {
+                Path caseDirectoryPath = Paths.get(getCaseDirectory());
+                this.caseDatabaseName = caseDirectoryPath.relativize(possibleAbsoluteCaseDbPath).toString();
+            }
+
+            /*
              * Update the file to the current schema, if necessary.
              */
             if (!schemaVersion.equals(CURRENT_SCHEMA_VERSION)) {
