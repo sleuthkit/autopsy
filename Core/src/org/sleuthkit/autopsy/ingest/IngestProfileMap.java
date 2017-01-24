@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 class IngestProfileMap {
 
-    private static final String PROFILE_FOLDER = "Profiles";
+    private static final String PROFILE_FOLDER = "IngestProfiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
