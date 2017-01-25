@@ -223,8 +223,8 @@ class LuceneQuery implements KeywordSearchQuery {
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
                     final String content_str = resultDoc.get(Server.Schema.CONTENT_STR.toString()).toString();
 
-                    Integer firstOccurence = content_str.indexOf(strippedQueryString);
-                    if (firstOccurence < chunkSize) {
+                    int firstOccurence = content_str.indexOf(strippedQueryString);
+                    if (chunkSize != null && firstOccurence < chunkSize) {
                         matches.add(createKeywordtHit(highlightResponse, docId));
                     }
                 } catch (TskException ex) {
