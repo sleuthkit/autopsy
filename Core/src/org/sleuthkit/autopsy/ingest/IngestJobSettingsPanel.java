@@ -84,6 +84,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
         fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
+        this.setName("Configure Ingest Modules");
     }
 
     /**

@@ -99,7 +99,7 @@ public final class RunIngestModulesDialog extends JDialog {
         /**
          * Center the dialog.
          */
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();;
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
 
         /**
          * Get the default or saved ingest job settings for this context and use

@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.TreeMap;
 import org.apache.commons.io.FileUtils;
@@ -30,7 +29,7 @@ import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
-class IngestProfileMap {
+public class IngestProfileMap {
 
     private static final String PROFILE_FOLDER = "IngestProfiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
@@ -44,7 +43,7 @@ class IngestProfileMap {
      *
      * @return profileList
      */
-    TreeMap<String, IngestProfile> getIngestProfileMap() {
+    public TreeMap<String, IngestProfile> getIngestProfileMap() {
         if (profileMap == null) {
             loadProfileList();
         }
@@ -94,7 +93,7 @@ class IngestProfileMap {
      * FileIngestFilter. The name can be used to find the ModuleSettings for
      * this profile.
      */
-    static class IngestProfile {
+   public static class IngestProfile {
 
         private final String name;
         private final String description;

@@ -120,7 +120,7 @@ public class IngestJobSettings {
     /**
      * Constructs an ingest job settings object for a given execution context.
      * Examples of execution contexts include the add data source wizard and the
-     * run ingest modules dialog. Different execution conterxts may have
+     * run ingest modules dialog. Different execution contexts may have
      * different ingest job settings.
      *
      * @param executionContext The ingest execution context identifier.
@@ -137,7 +137,7 @@ public class IngestJobSettings {
     /**
      * Constructs an ingest job settings object for a given context. Examples of
      * execution contexts include the add data source wizard and the run ingest
-     * modules dialog. Different execution conterxts may have different ingest
+     * modules dialog. Different execution contexts may have different ingest
      * job settings.
      *
      * @param context    The context identifier string.

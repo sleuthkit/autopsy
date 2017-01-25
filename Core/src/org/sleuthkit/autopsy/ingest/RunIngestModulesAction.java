@@ -19,8 +19,12 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.event.ActionEvent;
+import java.text.MessageFormat;
 import java.util.Collections;
 import javax.swing.AbstractAction;
+import org.openide.DialogDisplayer;
+import org.openide.WizardDescriptor;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModuleWizardWizardIterator;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 
@@ -47,7 +51,11 @@ final class RunIngestModulesAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(dataSource));
-        ingestDialog.display();
+        WizardDescriptor wiz = new WizardDescriptor(new RunIngestModuleWizardWizardIterator());
+        // {0} will be replaced by WizardDescriptor.Panel.getComponent().getName()
+        wiz.setTitleFormat(new MessageFormat("{0}"));
+        wiz.setTitle("Run Ingest Modules");
+        if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
+        }
     }
 }
