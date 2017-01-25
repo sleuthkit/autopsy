@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -94,7 +94,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         } catch (ParseException ex) {
             // for now, no need to show the error message to the user here
         }
-        if (!startDateValue.equals("")) {
+        if (!startDateValue.isEmpty()) {
             if (startDate != null) {
                 fromDate = startDate.getTimeInMillis() / 1000; // divided by 1000 because we want to get the seconds, not miliseconds
             }
@@ -114,7 +114,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         } catch (ParseException ex) {
             // for now, no need to show the error message to the user here
         }
-        if (!endDateValue.equals("")) {
+        if (!endDateValue.isEmpty()) {
             if (endDate != null) {
                 toDate = endDate.getTimeInMillis() / 1000; // divided by 1000 because we want to get the seconds, not miliseconds
             }
@@ -166,7 +166,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
         List<String> timeZones = new ArrayList<>();
 
-        if (Case.isCaseOpen()) {
+        try {
             // get the latest case
             Case currentCase = Case.getCurrentCase(); // get the most updated case
 
@@ -195,6 +195,8 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
                 String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
                 timeZones.add(item);
             }
+        } catch (IllegalStateException ex) {
+            // No current case.
         }
 
         return timeZones;
@@ -207,7 +209,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     @Override
     public boolean isValid() {
-            return this.getComponent().isValidSearch();
+        return this.getComponent().isValidSearch();
     }
 
     /**

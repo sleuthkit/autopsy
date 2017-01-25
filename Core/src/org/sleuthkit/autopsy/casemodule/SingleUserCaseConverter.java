@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,19 +34,21 @@ import java.util.Date;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Import a case from single-user to multi-user.
+ * 
+ * DO NOT USE, NEEDS TO BE UPDATED
  */
 public class SingleUserCaseConverter {
 
+    private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS    
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
     private static final String DOTAUT = CaseMetadata.getFileExtension(); //NON-NLS
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
@@ -193,6 +195,7 @@ public class SingleUserCaseConverter {
         // Create new .aut file
         CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
                 CaseType.MULTI_USER_CASE,
+                icd.getNewCaseName(),
                 icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
                 oldCaseMetadata.getExaminer(),

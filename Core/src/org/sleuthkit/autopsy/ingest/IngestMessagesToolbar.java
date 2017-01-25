@@ -130,7 +130,7 @@ class IngestMessagesToolbar extends javax.swing.JPanel {
 
         Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                setEnabled(evt.getNewValue() != null && RuntimeProperties.coreComponentsAreActive());
+                setEnabled(evt.getNewValue() != null && RuntimeProperties.runningWithGUI());
             }
         });
     }

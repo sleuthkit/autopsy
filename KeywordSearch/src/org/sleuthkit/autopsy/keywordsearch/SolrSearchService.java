@@ -30,7 +30,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService;
+import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -42,11 +42,11 @@ import org.sleuthkit.datamodel.TskCoreException;
  * An implementation of the KeywordSearchService interface that uses Solr for
  * text indexing and search.
  */
-@ServiceProviders(value={
-    @ServiceProvider(service=KeywordSearchService.class),
-    @ServiceProvider(service=AutopsyService.class)}
+@ServiceProviders(value = {
+    @ServiceProvider(service = KeywordSearchService.class),
+    @ServiceProvider(service = AutopsyService.class)}
 )
-public class SolrSearchService implements KeywordSearchService, AutopsyService  {
+public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
@@ -55,6 +55,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
 
     ArtifactTextExtractor extractor = new ArtifactTextExtractor();
 
+    /**
+     * Adds an artifact to the keyword search text index as a concantenation of
+     * all of its attributes.
+     *
+     * @param artifact The artifact to index.
+     *
+     * @throws org.sleuthkit.datamodel.TskCoreException
+     */
     @Override
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException {
         if (artifact == null) {
@@ -77,21 +85,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
     }
 
     /**
-     * Checks if we can communicate with Solr using the passed-in host and port.
-     * Closes the connection upon exit. Throws if it cannot communicate with
-     * Solr.
+     * Tries to connect to the keyword search service.
      *
-     * When issues occur, it attempts to diagnose them by looking at the
-     * exception messages, returning the appropriate user-facing text for the
-     * exception received. This method expects the Exceptions messages to be in
-     * English and compares against English text.
+     * @param host The hostname or IP address of the service.
+     * @param port The port used by the service.
      *
-     * @param host the remote hostname or IP address of the Solr server
-     * @param port the remote port for Solr
-     *
-     * @throws
-     * org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException
-     *
+     * @throws KeywordSearchServiceException if cannot connect.
      */
     @Override
     public void tryConnect(String host, int port) throws KeywordSearchServiceException {
@@ -138,11 +137,29 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         }
     }
 
+    /**
+     * Deletes the keyword search text index for a case.
+     *
+     * @param textIndexName The text index name.
+     */
+    @Override
+    public void deleteTextIndex(String textIndexName) {
+        /*
+         * Send a core unload request to the Solr server, with the parameters
+         * that request deleting the index and the instance directory
+         * (deleteInstanceDir removes everything related to the core, the index
+         * directory, the configuration files, etc.) set to true.
+         */
+//        String url = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
+//        HttpSolrServer solrServer = new HttpSolrServer(url);
+//        org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(textIndexName, true, true, solrServer); 
+    }
+        
     @Override
     public void close() throws IOException {
     }
-    
-     /**
+
+    /**
      *
      * @param context
      *
@@ -154,11 +171,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         /*
          * Autopsy service providers may not have case-level resources.
          */
-        
+
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
         IndexFinder indexFinder = new IndexFinder();
         List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
-        
+
         // check if index needs upgrade
         Index currentVersionIndex;
         if (indexes.isEmpty()) {
@@ -181,10 +198,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                 if (indexSolrVersion > currentSolrVersion) {
                     // oops!
                     throw new AutopsyServiceException("Unable to find index to use for Case open");
-                } 
-                else if (indexSolrVersion == currentSolrVersion) {
+                } else if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
-                    if (RuntimeProperties.coreComponentsAreActive()) {
+                    if (RuntimeProperties.runningWithGUI()) {
                         // pop up a message box to indicate the read-only restrictions.
                         if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"),
                                 NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
@@ -195,10 +211,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     }
                     // proceed with case open
                     currentVersionIndex = indexToUpgrade;
-                }
-                else {
+                } else {
                     // index needs to be upgraded to latest supported version of Solr
-                    if (RuntimeProperties.coreComponentsAreActive()) {
+                    if (RuntimeProperties.runningWithGUI()) {
                         //pop up a message box to indicate the restrictions on adding additional 
                         //text and performing regex searches and give the user the option to decline the upgrade
                         if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"),
@@ -210,38 +225,31 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
                     }
 
                     // ELTODO Check for cancellation at whatever points are feasible
-                    
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
                     String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade);
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
-
-                    // set the upgraded index as the index to be used for this case
-                    currentVersionIndex = new Index(newIndexDir, IndexFinder.getCurrentSolrVersion(), indexToUpgrade.getSchemaVersion());
-                    currentVersionIndex.setNewIndex(true);
+                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
+                    if (currentVersionIndex == null) {
+                        throw new AutopsyServiceException("Unable to upgrade index to the latest version of Solr");
+                    }
                 }
             }
         }
-                
+
         // open core
         try {
             KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
-            if (RuntimeProperties.coreComponentsAreActive()) {
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.openCore.notification.msg"), ex.getMessage());
-            }
+            throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
         }
     }
 
     /**
      *
      * @param context
-     *
-     * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
+     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
@@ -251,18 +259,15 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService  
         try {
             KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
             /*
-            * TODO (AUT-2084): The following code
-            * KeywordSearch.CaseChangeListener gambles that any
-            * BlackboardResultWriters (SwingWorkers) will complete
-            * in less than roughly two seconds
-            */
+             * TODO (AUT-2084): The following code
+             * KeywordSearch.CaseChangeListener gambles that any
+             * BlackboardResultWriters (SwingWorkers) will complete in less than
+             * roughly two seconds
+             */
             Thread.sleep(2000);
             KeywordSearch.getServer().closeCore();
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex); //NON-NLS
-            if (RuntimeProperties.coreComponentsAreActive()) {
-                MessageNotifyUtil.Notify.error(NbBundle.getMessage(KeywordSearch.class, "KeywordSearch.closeCore.notification.msg"), ex.getMessage());
-            }
+            throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
     }
 

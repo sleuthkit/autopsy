@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,13 +30,13 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import org.apache.commons.lang.ArrayUtils;
+import org.openide.filesystems.FileUtil;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
-import org.openide.filesystems.FileUtil;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * The action in this class is to clear the list of "Recent Cases". The
@@ -45,14 +45,13 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  */
 final class RecentCases extends CallableSystemAction implements Presenter.Menu {
 
-    static final int LENGTH = 6;
-    static final String NAME_PROP_KEY = "LBL_RecentCase_Name"; //NON-NLS
-    static final String PATH_PROP_KEY = "LBL_RecentCase_Path"; //NON-NLS
-    static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
-
-    private final static RecentCases INSTANCE = new RecentCases();
-
-    private Deque<RecentCase> recentCases; // newest case is last case
+    private static final long serialVersionUID = 1L;
+    private static final int LENGTH = 6;
+    private static final String NAME_PROP_KEY = "LBL_RecentCase_Name"; //NON-NLS
+    private static final String PATH_PROP_KEY = "LBL_RecentCase_Path"; //NON-NLS
+    private static final RecentCase BLANK_RECENTCASE = new RecentCase("", "");
+    private final static RecentCases instance = new RecentCases();
+    private final Deque<RecentCase> recentCases; // newest case is last case
 
     /**
      * Gets the instance of the RecentCases singleton.
@@ -61,8 +60,8 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
      * @return INSTANCE the RecentCases singleton
      */
     static public RecentCases getInstance() {
-        INSTANCE.refreshRecentCases();
-        return INSTANCE;
+        instance.refreshRecentCases();
+        return instance;
     }
 
     /**
@@ -84,7 +83,7 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
         }
 
         // Load recentCases from properties
-        recentCases = new LinkedList<RecentCase>();
+        recentCases = new LinkedList<>();
 
         for (int i = 0; i < LENGTH; i++) {
             final RecentCase rc = new RecentCase(getName(i), getPath(i));
@@ -256,7 +255,7 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        UpdateRecentCases.hasRecentCase = false;
+        UpdateRecentCases.setHasRecentCase(false);
 
         recentCases.clear();
 
@@ -375,7 +374,7 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
         int i = 0;
         String currentCaseName = null;
         try {
-            currentCaseName = Case.getCurrentCase().getName();
+            currentCaseName = Case.getCurrentCase().getDisplayName();
         } catch (IllegalStateException ex) {
             // in case there is no current case.
         }

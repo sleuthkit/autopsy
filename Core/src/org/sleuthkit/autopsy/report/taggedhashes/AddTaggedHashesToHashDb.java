@@ -90,7 +90,7 @@ public class AddTaggedHashesToHashDb implements GeneralReportModule {
                         if (content instanceof AbstractFile) {
                             if (null != ((AbstractFile) content).getMd5Hash()) {
                                 try {
-                                    hashSet.addHashes(tag.getContent(), Case.getCurrentCase().getName());
+                                    hashSet.addHashes(tag.getContent(), Case.getCurrentCase().getDisplayName());
                                 } catch (TskCoreException ex) {
                                     Logger.getLogger(AddTaggedHashesToHashDb.class.getName()).log(Level.SEVERE, "Error adding hash for obj_id = " + tag.getContent().getId() + " to hash database " + hashSet.getHashSetName(), ex);
                                     failedExports.add(tag.getContent().getName());

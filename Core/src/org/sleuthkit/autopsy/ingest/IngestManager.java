@@ -330,11 +330,11 @@ public class IngestManager {
 
                     // check whether a multi-user case is currently being processed
                     try {
-                        if (!Case.isCaseOpen() || Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
+                        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                             return;
                         }
                     } catch (IllegalStateException ignore) {
-                        // thorown by Case.getCurrentCase() when no case is open
+                        // Thrown by Case.getCurrentCase() when no case is open
                         return;
                     }
 
@@ -343,7 +343,7 @@ public class IngestManager {
                     logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
 
                     // display notification if running interactively
-                    if (isIngestRunning() && RuntimeProperties.coreComponentsAreActive()) {
+                    if (isIngestRunning() && RuntimeProperties.runningWithGUI()) {
                         EventQueue.invokeLater(new Runnable() {
                             @Override
                             public void run() {
@@ -379,7 +379,7 @@ public class IngestManager {
              * Case.getTextIndexName() API.
              */
             Case openedCase = Case.getCurrentCase();
-            String channelPrefix = openedCase.getTextIndexName();
+            String channelPrefix = openedCase.getName();
             if (Case.CaseType.MULTI_USER_CASE == openedCase.getCaseType()) {
                 jobEventPublisher.openRemoteEventChannel(String.format(JOB_EVENT_CHANNEL_NAME, channelPrefix));
                 moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, channelPrefix));
@@ -396,18 +396,6 @@ public class IngestManager {
         moduleEventPublisher.closeRemoteEventChannel();
         this.jobCreationIsEnabled = false;
         clearIngestMessageBox();
-    }
-
-    /**
-     * Deprecated, use RuntimeProperties.setCoreComponentsActive instead.
-     *
-     * @param runInteractively True or false
-     *
-     * @deprecated
-     */
-    @Deprecated
-    public synchronized void setRunInteractively(boolean runInteractively) {
-        RuntimeProperties.setCoreComponentsActive(runInteractively);
     }
 
     /**
@@ -428,7 +416,7 @@ public class IngestManager {
      */
     void postIngestMessage(IngestMessage message) {
         synchronized (this.ingestMessageBoxLock) {
-            if (ingestMessageBox != null && RuntimeProperties.coreComponentsAreActive()) {
+            if (ingestMessageBox != null && RuntimeProperties.runningWithGUI()) {
                 if (message.getMessageType() != IngestMessage.MessageType.ERROR && message.getMessageType() != IngestMessage.MessageType.WARNING) {
                     ingestMessageBox.displayMessage(message);
                 } else {
@@ -475,7 +463,7 @@ public class IngestManager {
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
+            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
             if (job.hasIngestPipeline()) {
                 long taskId = nextThreadId.incrementAndGet();
                 Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobTask(taskId, job));
@@ -497,7 +485,7 @@ public class IngestManager {
      */
     public synchronized IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
         if (this.jobCreationIsEnabled) {
-            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.coreComponentsAreActive());
+            IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
             if (job.hasIngestPipeline()) {
                 return this.startIngestJob(job); // Start job
             }
@@ -543,7 +531,7 @@ public class IngestManager {
                 try {
                     if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
                         // display notification if running interactively
-                        if (RuntimeProperties.coreComponentsAreActive()) {
+                        if (RuntimeProperties.runningWithGUI()) {
                             EventQueue.invokeLater(new Runnable() {
                                 @Override
                                 public void run() {
@@ -582,7 +570,7 @@ public class IngestManager {
                     logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
                 }
                 IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
-                if (RuntimeProperties.coreComponentsAreActive()) {
+                if (RuntimeProperties.runningWithGUI()) {
                     final StringBuilder message = new StringBuilder();
                     message.append(Bundle.IngestManager_startupErr_dlgMsg()).append("\n");
                     message.append(Bundle.IngestManager_startupErr_dlgSolution()).append("\n\n");
@@ -966,7 +954,7 @@ public class IngestManager {
                     return null;
                 }
 
-                if (RuntimeProperties.coreComponentsAreActive()) {
+                if (RuntimeProperties.runningWithGUI()) {
                     final String displayName = NbBundle.getMessage(this.getClass(), "IngestManager.StartIngestJobsTask.run.displayName");
                     this.progress = ProgressHandle.createHandle(displayName, new Cancellable() {
                         @Override

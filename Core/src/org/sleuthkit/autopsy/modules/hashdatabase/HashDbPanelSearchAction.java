@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,13 +36,13 @@ import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationCleanDialog;
  */
 class HashDbPanelSearchAction extends CallableSystemAction {
 
+    private static final long serialVersionUID = 1L;
     static final String ACTION_NAME = NbBundle.getMessage(HashDbPanelSearchAction.class, "HashDbPanelSearchAction.actionName");
     private static HashDbPanelSearchAction instance = null;
 
     HashDbPanelSearchAction() {
         super();
-        setEnabled(Case.isCaseOpen()); //no guarantee listener executed, so check here
-
+        setEnabled(Case.isCaseOpen());
         Case.addPropertyChangeListener(new PropertyChangeListener() {
 
             @Override

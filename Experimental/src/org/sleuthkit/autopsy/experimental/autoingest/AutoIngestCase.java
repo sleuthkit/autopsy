@@ -46,7 +46,6 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
      *
      * @param caseDirectoryPath The case directory path.
      */
-    // RJCTODO: Throw instead of reporting error, let client decide what to do.
     AutoIngestCase(Path caseDirectoryPath) {
         this.caseDirectoryPath = caseDirectoryPath;
         caseName = PathUtils.caseNameFromCaseDirectoryPath(caseDirectoryPath);
@@ -100,7 +99,6 @@ class AutoIngestCase implements Comparable<AutoIngestCase> {
      *
      * @return The last accessed date.
      */
-    // RJCTODO: Throw instead of reporting error, let client decide what to do.
     Date getLastAccessedDate() {
         try {
             BasicFileAttributes fileAttrs = Files.readAttributes(metadataFilePath, BasicFileAttributes.class);

@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -114,6 +115,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     /**
      * Records the ingest status for a given file for a given ingest job. Used
      * for final statistics at the end of the job.
+     *
      * @param ingestJobId id of ingest job
      * @param fileId      id of file
      * @param status      ingest status of the file
@@ -140,6 +142,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      * retrieves settings, keyword lists to run on
      *
      */
+    @Messages({
+        "KeywordSearchIngestModule.startupMessage.failedToGetIndexSchema=Failed to get schema version for text index.",
+        "# {0} - schema version number", "KeywordSearchIngestModule.startupMessage.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index."
+    })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         initialized = false;
@@ -152,10 +158,20 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         try {
+            Index indexInfo = server.getIndexInfo();
+            if (!IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion())) {
+                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_indexSchemaNotSupported(indexInfo.getSchemaVersion()));                
+            }
+        } catch (KeywordSearchModuleException ex) {
+            throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_failedToGetIndexSchema(), ex);
+        }
+
+        try {
             fileTypeDetector = new FileTypeDetector();
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
             throw new IngestModuleException(Bundle.CannotRunFileTypeDetection(), ex);
         }
+
         ingester = Ingester.getDefault();
         this.context = context;
 
