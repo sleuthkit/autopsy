@@ -243,6 +243,7 @@ final class RegexQuery implements KeywordSearchQuery {
         while (hitMatcher.find(offset)) {
             StringBuilder snippet = new StringBuilder();
 
+            //"parent" entries in the index don't have chunk size, so just accept those hits
             if (chunkSize != null && hitMatcher.start() >= chunkSize) {
                 break;
             }
