@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.framework.ProgressIndicator;
 /**
  * An implementation of the Autopsy service interface used for test purposes.
  */
-@ServiceProvider(service = AutopsyService.class)
+//@ServiceProvider(service = AutopsyService.class)
 public class TestAutopsyService implements AutopsyService {
 
     private static final Logger logger = Logger.getLogger(TestAutopsyService.class.getName());
@@ -41,8 +41,8 @@ public class TestAutopsyService implements AutopsyService {
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progressIndicator = context.getProgressIndicator();
         try {
-            logger.log(Level.INFO, "Test Autopsy Service started first task");
-            progressIndicator.start("Test Autopsy Service doing first task...", 100);
+            progressIndicator.start("Test Autopsy Service doing first task...");
+            logger.log(Level.INFO, "Test Autopsy Service simulating work on first task");
             Thread.sleep(1000L);
             progressIndicator.progress(20);
             Thread.sleep(1000L);
@@ -54,18 +54,17 @@ public class TestAutopsyService implements AutopsyService {
             Thread.sleep(1000L);
             progressIndicator.progress(100);
             progressIndicator.finish("First task completed by Test Autopsy Service.");
-            logger.log(Level.INFO, "Test Autopsy Service completed first task");
-            logger.log(Level.INFO, "Test Autopsy Service started second task");
             progressIndicator.start("Test Autopsy Service doing second task...");
             for (int i = 0; i < 10000; ++i) {
+                logger.log(Level.INFO, "Test Autopsy Service simulating work on second task");
                 if (context.cancelRequested()) {
-                    logger.log(Level.INFO, "Autopsy Test Service cancelled while doing second task, cancel requested = {0}", context.cancelRequested());
+                    logger.log(Level.INFO, "Test Autopsy Service cancelled while doing second task, cancel requested = {0}", context.cancelRequested());
+                    break;
                 }
             }
             progressIndicator.finish("Second task completed by Test Autopsy Service.");
-            logger.log(Level.INFO, "Second task completed by Test Autopsy Service");
         } catch (InterruptedException ex) {
-            logger.log(Level.INFO, "Autopsy Test Service interrupted (cancelled) while doing first task, cancel requested = {0}", context.cancelRequested());
+            logger.log(Level.INFO, "Test Autopsy Service interrupted (cancelled) while doing first task, cancel requested = {0}", context.cancelRequested());
         }
     }
 

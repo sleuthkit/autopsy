@@ -127,6 +127,7 @@ public class Case {
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
+    private static Frame mainFrame;
 
     /*
      * The application name, used to make the title of the main application
@@ -444,10 +445,11 @@ public class Case {
      */
     @Messages({
         "# {0} - exception message", "Case.exceptionMessage.wrapperMessage={0}",
+        "Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window.",
         "Case.exceptionMessage.illegalCaseName=Case name contains illegal characters.",
         "Case.exceptionMessage.cancelled=Cancelled by user.",
         "Case.progressIndicatorTitle.creatingCase=Creating Case",
-        "Case.progressIndicatorCancelButton.label=Cancelled",
+        "Case.progressIndicatorCancelButton.label=Cancel",
         "Case.progressMessage.preparing=Preparing...",
         "Case.progressMessage.acquiringLocks=Acquiring locks...",
         "Case.progressMessage.finshing=Finishing..."
@@ -456,13 +458,18 @@ public class Case {
         /*
          * If running with the desktop GUI, this needs to be done before any
          * cases are created or opened so that the application name can be
-         * captured before a case name is added to the title.
+         * captured before a case name is added to the title. The main window is
+         * also needed in this method for popping up progress indicator dialogs.
          *
          * TODO (JIRA-2231): Make the application name a RuntimeProperties item
          * set by an Installer.
          */
         if (RuntimeProperties.runningWithGUI()) {
-            getAppNameFromMainWindow();
+            try {
+                getMainWindowAndAppName();
+            } catch (InterruptedException | InvocationTargetException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_cannotLocateMainWindow()), ex);
+            }
         }
 
         /*
@@ -480,23 +487,25 @@ public class Case {
         try {
             caseName = sanitizeCaseName(caseDisplayName);
         } catch (IllegalCaseNameException ex) {
-            throw new CaseActionException(Bundle.Case_creationException_couldNotCreateCase(Bundle.Case_exceptionMessage_illegalCaseName()), ex);
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_illegalCaseName()), ex);
         }
 
         /*
          * Set up either a GUI progress indicator or a logging progress
          * indicator.
          */
-        CancelButtonListener listener = new CancelButtonListener();
+        final CancelButtonListener listener = new CancelButtonListener();
         ProgressIndicator progressIndicator;
         if (RuntimeProperties.runningWithGUI()) {
-            progressIndicator = new ModalDialogProgressIndicator(Bundle.Case_progressIndicatorTitle_creatingCase(), new String[]{Bundle.Case_progressIndicatorCancelButton_label()}, Bundle.Case_progressIndicatorCancelButton_label(), null, listener);
+            progressIndicator = new ModalDialogProgressIndicator(
+                    mainFrame,
+                    Bundle.Case_progressIndicatorTitle_creatingCase(),
+                    new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
+                    Bundle.Case_progressIndicatorCancelButton_label(),
+                    listener);
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
-        Case newCase = new Case();
-        CaseContext caseContext = new CaseContext(newCase, progressIndicator);
-        listener.setCaseContext(caseContext);
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
 
         /*
@@ -506,6 +515,7 @@ public class Case {
          * open is released in the same thread in which it was acquired, as is
          * required by the coordination service.
          */
+        Case newCase = new Case();
         Future<Case> future = getCaseLockingExecutor().submit(() -> {
             if (CaseType.SINGLE_USER_CASE == caseType) {
                 newCase.open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
@@ -604,13 +614,18 @@ public class Case {
         /*
          * If running with the desktop GUI, this needs to be done before any
          * cases are created or opened so that the application name can be
-         * captured before a case name is added to the title.
+         * captured before a case name is added to the title. The main window is
+         * also needed in this method for popping up progress indicator dialogs.
          *
          * TODO (JIRA-2231): Make the application name a RuntimeProperties item
          * set by an Installer.
          */
         if (RuntimeProperties.runningWithGUI()) {
-            getAppNameFromMainWindow();
+            try {
+                getMainWindowAndAppName();
+            } catch (InterruptedException | InvocationTargetException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_cannotLocateMainWindow()), ex);
+            }
         }
 
         /*
@@ -634,13 +649,16 @@ public class Case {
         CancelButtonListener listener = new CancelButtonListener();
         ProgressIndicator progressIndicator;
         if (RuntimeProperties.runningWithGUI()) {
-            progressIndicator = new ModalDialogProgressIndicator(Bundle.Case_progressIndicatorTitle_openingCase(), new String[]{Bundle.Case_progressIndicatorCancelButton_label()}, Bundle.Case_progressIndicatorCancelButton_label(), null, listener);
+            progressIndicator = new ModalDialogProgressIndicator(
+                    mainFrame,
+                    Bundle.Case_progressIndicatorTitle_openingCase(),
+                    new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
+                    Bundle.Case_progressIndicatorCancelButton_label(),
+                    listener);
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
         Case caseToOpen = new Case();
-        CaseContext caseContext = new CaseContext(caseToOpen, progressIndicator);
-        listener.setCaseContext(caseContext);
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
 
         /*
@@ -768,20 +786,14 @@ public class Case {
          * Set up either a GUI progress indicator or a logging progress
          * indicator.
          */
-        CancelButtonListener listener = new CancelButtonListener();
         ProgressIndicator progressIndicator;
         if (RuntimeProperties.runningWithGUI()) {
             progressIndicator = new ModalDialogProgressIndicator(
-                    Bundle.Case_progressIndicatorTitle_closingCase(),
-                    new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
-                    Bundle.Case_progressIndicatorCancelButton_label(),
-                    null,
-                    listener);
+                    mainFrame,
+                    Bundle.Case_progressIndicatorTitle_closingCase());
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
-        CaseContext caseContext = new CaseContext(currentCase, progressIndicator);
-        listener.setCaseContext(caseContext);
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
 
         /*
@@ -822,7 +834,6 @@ public class Case {
          * the progress indicator visible to the user.
          */
         if (RuntimeProperties.runningWithGUI()) {
-            listener.setCaseActionFuture(future);
             SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
         }
 
@@ -897,15 +908,11 @@ public class Case {
          * Set up either a GUI progress indicator or a logging progress
          * indicator.
          */
-        CancelButtonListener listener = new CancelButtonListener();
         ProgressIndicator progressIndicator;
         if (RuntimeProperties.runningWithGUI()) {
             progressIndicator = new ModalDialogProgressIndicator(
-                    Bundle.Case_progressIndicatorTitle_deletingCase(),
-                    new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
-                    Bundle.Case_progressIndicatorCancelButton_label(),
-                    null,
-                    listener);
+                    mainFrame,
+                    Bundle.Case_progressIndicatorTitle_deletingCase());
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
@@ -1113,28 +1120,27 @@ public class Case {
     }
 
     /**
-     * Use the main window of the desktop application to initialize the
-     * application name. Should be called BEFORE any case is opened or created.
+     * Gets a reference to the main window of the desktop application to use to
+     * parent pop ups and initializes the application name for use in changing
+     * the main window title. Should be called BEFORE any case is opened or
+     * created.
      */
-    private static void getAppNameFromMainWindow() {
-        /*
-         * This is tricky and fragile. What looks like lazy initialization of
-         * the appName field is actually getting the application name from the
-         * main window title BEFORE a case has been opened and a case name has
-         * been included in the title. It is also very specific to the desktop
-         * GUI.
-         *
-         * TODO (JIRA-2231): Make the application name a RuntimeProperties item
-         * set by Installers.
-         */
-        if (RuntimeProperties.runningWithGUI() && (null == appName || appName.isEmpty())) {
-            try {
-                SwingUtilities.invokeAndWait(() -> {
-                    appName = WindowManager.getDefault().getMainWindow().getTitle();
-                });
-            } catch (InterruptedException | InvocationTargetException ex) {
-                logger.log(Level.SEVERE, "Unexpected exception getting main window title", ex);
-            }
+    private static void getMainWindowAndAppName() throws InterruptedException, InvocationTargetException {
+        if (RuntimeProperties.runningWithGUI() && null == mainFrame) {
+            SwingUtilities.invokeAndWait(() -> {
+                mainFrame = WindowManager.getDefault().getMainWindow();
+                /*
+                 * This is tricky and fragile. What looks like lazy
+                 * initialization of the appName field is actually getting the
+                 * application name from the main window title BEFORE a case has
+                 * been opened and a case name has been included in the title.
+                 * It is also very specific to the desktop GUI.
+                 *
+                 * TODO (JIRA-2231): Make the application name a
+                 * RuntimeProperties item set by Installers.
+                 */
+                appName = mainFrame.getTitle();
+            });
         }
     }
 
@@ -2032,6 +2038,12 @@ public class Case {
          */
         progressIndicator.progress(Bundle.Case_progressMessage_openingApplicationServiceResources());
         AutopsyService.CaseContext context = new AutopsyService.CaseContext(this, progressIndicator);
+        if (RuntimeProperties.runningWithGUI()) {
+            ActionListener buttonListener = ((ModalDialogProgressIndicator)progressIndicator).getButtonListener();
+            if (null != buttonListener) {
+                ((CancelButtonListener)buttonListener).setCaseContext(context);
+            }
+        }
         for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
             try {
                 service.openCaseResources(context);
