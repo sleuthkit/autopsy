@@ -136,12 +136,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
-     * Deletes the Solr core for a case.
+     * Deletes Solr core for a case.
      *
      * @param coreName The core name.
      */
     @Override
-    public void deleteKeywordSearchCore(String coreName) throws KeywordSearchServiceException {
+    public void deleteTextIndex(String coreName) throws KeywordSearchServiceException {
         KeywordSearch.getServer().deleteCore(coreName); 
     }
         

@@ -749,6 +749,8 @@ public class Server {
          * that request deleting the index and the instance directory
          * (deleteInstanceDir removes everything related to the core, the index
          * directory, the configuration files, etc.) set to true.
+         * NOTE: this method doesn't delete the actual Solr index directory. That is 
+         * done as part of deleting case output directory.
          */
                 
         // check whether the core we are deleting is the currently open core

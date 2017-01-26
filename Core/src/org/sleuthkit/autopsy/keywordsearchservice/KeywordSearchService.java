@@ -50,12 +50,12 @@ public interface KeywordSearchService extends Closeable {
     public void indexArtifact(BlackboardArtifact artifact) throws TskCoreException;
 
     /**
-     * Deletes the keyword search core (including text index) for a case.
+     * Deletes the keyword search text index for a case.
      *
-     * @param coreName The core name.
+     * @param textIndexName The text index name.
      * 
      * @throws KeywordSearchServiceException if unable to delete.
      */
-    public void deleteKeywordSearchCore(String coreName) throws KeywordSearchServiceException;
+    public void deleteTextIndex(String textIndexName) throws KeywordSearchServiceException;
 
 }
