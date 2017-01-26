@@ -901,7 +901,7 @@ public class Case {
                          */
                         progressIndicator.start(Bundle.Case_progressMessage_deletingTextIndex());
                         for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
-                            searchService.deleteTextIndex(metadata.getTextIndexName());
+                            searchService.deleteKeywordSearchCore(metadata.getTextIndexName());
                         }
 
                         if (CaseType.MULTI_USER_CASE == metadata.getCaseType()) {

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.logging.Level;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -32,7 +31,6 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -138,21 +136,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
-     * Deletes the keyword search text index for a case.
+     * Deletes the Solr core for a case.
      *
-     * @param textIndexName The text index name.
+     * @param coreName The core name.
      */
     @Override
-    public void deleteTextIndex(String textIndexName) {
-        /*
-         * Send a core unload request to the Solr server, with the parameters
-         * that request deleting the index and the instance directory
-         * (deleteInstanceDir removes everything related to the core, the index
-         * directory, the configuration files, etc.) set to true.
-         */
-//        String url = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
-//        HttpSolrServer solrServer = new HttpSolrServer(url);
-//        org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(textIndexName, true, true, solrServer); 
+    public void deleteKeywordSearchCore(String coreName) throws KeywordSearchServiceException {
+        KeywordSearch.getServer().deleteCore(coreName); 
     }
         
     @Override
@@ -162,9 +152,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     /**
      *
      * @param context
-     *
-     * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
+     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     @Override
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
