@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearchservice;
 
 import java.io.Closeable;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -41,7 +40,7 @@ public interface KeywordSearchService extends Closeable {
     public void tryConnect(String host, int port) throws KeywordSearchServiceException;
 
     /**
-     * Adds an artifact to the keyword search text index as a concantenation of
+     * Adds an artifact to the keyword search text index as a concatenation of
      * all of its attributes.
      *
      * @param artifact The artifact to index.
@@ -54,7 +53,9 @@ public interface KeywordSearchService extends Closeable {
      * Deletes the keyword search text index for a case.
      *
      * @param textIndexName The text index name.
+     * 
+     * @throws KeywordSearchServiceException if unable to delete.
      */
-    public void deleteTextIndex(String textIndexName);
+    public void deleteTextIndex(String textIndexName) throws KeywordSearchServiceException;
 
 }
