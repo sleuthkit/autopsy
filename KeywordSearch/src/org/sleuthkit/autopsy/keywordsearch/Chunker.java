@@ -40,7 +40,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
     //Chunking algorithm paramaters-------------------------------------//
     /** the maximum size of a chunk, including the window. */
-    private static final int MAX_TOTAL_CHUNK_SIZE = 32766; //bytes
+    private static final int MAX_TOTAL_CHUNK_SIZE = 32760; //bytes
     /** the minimum to read before we start the process of looking for
      * whitespace to break at and creating an overlapping window. */
     private static final int MINIMUM_BASE_CHUNK_SIZE = 30 * 1024; //bytes

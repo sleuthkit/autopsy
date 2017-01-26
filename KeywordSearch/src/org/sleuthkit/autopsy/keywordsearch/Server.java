@@ -62,6 +62,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -70,7 +71,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
+import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -734,6 +735,49 @@ public class Server {
     /**
      * ** end single-case specific methods ***
      */
+    
+    /**
+     * Deletes the keyword search core for a case.
+     *
+     * @param coreName The core name.
+     */
+    @NbBundle.Messages({
+        "# {0} - core name", "Server.deleteCore.exception.msg=Failed to delete Solr core {0}",})
+    void deleteCore(String coreName) throws KeywordSearchServiceException {
+        /*
+         * Send a core unload request to the Solr server, with the parameters
+         * that request deleting the index and the instance directory
+         * (deleteInstanceDir removes everything related to the core, the index
+         * directory, the configuration files, etc.) set to true.
+         * NOTE: this method doesn't delete the actual Solr index directory. That is 
+         * done as part of deleting case output directory.
+         */
+                
+        // check whether the core we are deleting is the currently open core
+        currentCoreLock.readLock().lock();
+        try {
+            if (null != currentCore) {
+                if (currentCore.getName().equals(coreName)) {
+                    // close current core first
+                    closeCore();
+                }
+            }
+        } catch (KeywordSearchModuleException ex) {
+            throw new KeywordSearchServiceException(NbBundle.getMessage(Server.class, "Server.close.exception.msg"), ex);
+        } finally {
+            currentCoreLock.readLock().unlock();
+        }
+             
+        try {
+            HttpSolrClient solrServer = new Builder("http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr").build(); //NON-NLS
+            connectToSolrServer(solrServer);
+            org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer); 
+        } catch (SolrServerException | IOException ex) {
+            throw new KeywordSearchServiceException(Bundle.Server_deleteCore_exception_msg(coreName), ex);
+        }
+    }
+
+    
     /**
      * Creates/opens a Solr core (index) for a case.
      *

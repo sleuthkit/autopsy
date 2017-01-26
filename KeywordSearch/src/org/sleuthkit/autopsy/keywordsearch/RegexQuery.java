@@ -86,6 +86,17 @@ final class RegexQuery implements KeywordSearchQuery {
     // against the Schema.TEXT field later.
     private static final String BOUNDARY_CHARS = "[\\s\\[\\]\\(\\)\\,\\\"\\\'\\!\\?\\.\\/\\:\\;\\=\\<\\>\\^\\{\\}]"; //NON-NLS
 
+    // Lucene regular expressions do not support the following Java predefined
+    // and POSIX character classes. There are other valid Java character classes
+    // that are not supported by Lucene but we do not check for all of them.
+    // See https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+    // for Java regex syntax.
+    // See https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html
+    // for Lucene syntax.
+    // We use \p as a shortcut for all of the character classes of the form \p{XXX}.
+    private static final CharSequence[] UNSUPPORTED_CHARS = {"\\d", "\\D", "\\w", "\\W", "\\s", "\\S", "\\n", 
+        "\\t", "\\r", "\\f", "\\a", "\\e", "\\v", "\\V", "\\h", "\\H", "\\p"}; //NON-NLS
+
     private boolean queryStringContainsWildcardPrefix = false;
     private boolean queryStringContainsWildcardSuffix = false;
 
@@ -116,13 +127,22 @@ final class RegexQuery implements KeywordSearchQuery {
 
     @Override
     public boolean validate() {
-        // For now, we are performing Java regex validation even though Lucene
-        // regex syntax is a small subset 
         if (keywordString.isEmpty()) {
             return false;
         }
         try {
-            Pattern.compile(keywordString);
+            // First we perform regular Java regex validation to catch errors.
+            Pattern.compile(keywordString, Pattern.UNICODE_CHARACTER_CLASS);
+
+            // Then we check for the set of Java predefined and POSIX character
+            // classes. While they are valid Lucene regex characters, they will
+            // behave differently than users may expect. E.g. the regex \d\d\d 
+            // will not find 3 digits but will instead find a sequence of 3 'd's.
+            for (CharSequence c : UNSUPPORTED_CHARS) {
+                if (keywordString.contains(c)) {
+                    return false;
+                }
+            }
             return true;
         } catch (IllegalArgumentException ex) {
             return false;
@@ -243,7 +263,8 @@ final class RegexQuery implements KeywordSearchQuery {
         while (hitMatcher.find(offset)) {
             StringBuilder snippet = new StringBuilder();
 
-            if (hitMatcher.start() >= chunkSize) {
+            //"parent" entries in the index don't have chunk size, so just accept those hits
+            if (chunkSize != null && hitMatcher.start() >= chunkSize) {
                 break;
             }
 
@@ -254,9 +275,6 @@ final class RegexQuery implements KeywordSearchQuery {
             // This was causing us to miss hits that appeared consecutively in the
             // input where they were separated by a single boundary character.
             offset = hitMatcher.end() - 1;
-
-            // Remove leading and trailing whitespace.
-            hit = hit.trim();
 
             // Remove any remaining leading and trailing boundary characters.
             if (!queryStringContainsWildcardPrefix) {

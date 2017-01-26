@@ -23,8 +23,10 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -221,11 +223,19 @@ class LuceneQuery implements KeywordSearchQuery {
                      * will get picked up in the next one. */
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
-                    final String content_str = resultDoc.get(Server.Schema.CONTENT_STR.toString()).toString();
+                    String content_str = Objects.toString(resultDoc.get(Server.Schema.CONTENT_STR.toString()), null);
 
-                    Integer firstOccurence = content_str.indexOf(strippedQueryString);
-                    if (firstOccurence < chunkSize) {
+                    double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
+                    if (indexSchemaVersion < 2.0) {
+                        //old schema versions don't support chunk_size or the content_str fields, so just accept hits
                         matches.add(createKeywordtHit(highlightResponse, docId));
+                    } else {
+                        //for new schemas, check that the hit is before the chunk/window boundary.
+                        int firstOccurence = StringUtils.indexOf(content_str, strippedQueryString);
+                        //there is no chunksize field for "parent" entries in the index
+                        if (chunkSize != null && firstOccurence < chunkSize) {
+                            matches.add(createKeywordtHit(highlightResponse, docId));
+                        }
                     }
                 } catch (TskException ex) {
                     return matches;
