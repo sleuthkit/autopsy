@@ -24,7 +24,6 @@ import javax.swing.SwingUtilities;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.util.HelpCtx;
-import org.sleuthkit.autopsy.framework.ProgressIndicator;
 
 /**
  * A progress indicator that displays progress using a modal dialog with a
@@ -51,6 +50,18 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
         dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
     }
 
+   public ModalDialogProgressIndicator(String title, HelpCtx helpCtx) {
+        progressPanel = new ProgressPanel();
+        DialogDescriptor dialogDescriptor = new DialogDescriptor(
+                progressPanel,
+                title,
+                true,
+                DialogDescriptor.NO_OPTION,
+                null,
+                null);
+        dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);       
+   }
+    
     public void setVisible(boolean isVisible) {
         this.dialog.setVisible(isVisible);
     }

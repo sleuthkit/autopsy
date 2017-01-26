@@ -43,6 +43,7 @@ import java.util.MissingResourceException;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -95,7 +96,6 @@ import org.sleuthkit.autopsy.framework.ModalDialogProgressIndicator;
 import org.sleuthkit.autopsy.framework.ProgressIndicator;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.RunIngestAction;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
@@ -443,11 +443,11 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "# {0} - exception message", "Case.creationException.couldNotCreateCase=Could not create case: {0}",
+        "# {0} - exception message", "Case.exceptionMessage.wrapperMessage={0}",
         "Case.exceptionMessage.illegalCaseName=Case name contains illegal characters.",
-        "Case.exceptionMessage.lockAcquisitionInterrupted=Acquiring locks was interrupted.",
+        "Case.exceptionMessage.cancelled=Cancelled by user.",
         "Case.progressIndicatorTitle.creatingCase=Creating Case",
-        "Case.progressIndicatorCancelButton.label=Cancel",
+        "Case.progressIndicatorCancelButton.label=Cancelled",
         "Case.progressMessage.preparing=Preparing...",
         "Case.progressMessage.acquiringLocks=Acquiring locks...",
         "Case.progressMessage.finshing=Finishing..."
@@ -482,7 +482,6 @@ public class Case {
         } catch (IllegalCaseNameException ex) {
             throw new CaseActionException(Bundle.Case_creationException_couldNotCreateCase(Bundle.Case_exceptionMessage_illegalCaseName()), ex);
         }
-        logger.log(Level.INFO, "Attempting to create case {0} (display name = {1}) in directory = {2}", new Object[]{caseName, caseDisplayName, caseDir}); //NON-NLS
 
         /*
          * Set up either a GUI progress indicator or a logging progress
@@ -507,52 +506,63 @@ public class Case {
          * open is released in the same thread in which it was acquired, as is
          * required by the coordination service.
          */
-        try {
-            Future<Case> future = getCaseLockingExecutor().submit(() -> {
-                if (CaseType.SINGLE_USER_CASE == caseType) {
-                    newCase.open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
-                } else {
+        Future<Case> future = getCaseLockingExecutor().submit(() -> {
+            if (CaseType.SINGLE_USER_CASE == caseType) {
+                newCase.open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
+            } else {
+                /*
+                 * First, acquire an exclusive case name lock to prevent two
+                 * nodes from creating the same case at the same time.
+                 */
+                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                try (CoordinationService.Lock nameLock = Case.acquireExclusiveCaseNameLock(caseName)) {
+                    assert (null != nameLock);
                     /*
-                     * First, acquire an exclusive case name lock to prevent two
-                     * nodes from creating the same case at the same time.
+                     * Next, acquire a shared case directory lock that will be
+                     * held as long as this node has this case open. This will
+                     * prevent deletion of the case by another node.
                      */
-                    progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
-                    try (CoordinationService.Lock nameLock = Case.acquireExclusiveCaseNameLock(caseName)) {
-                        assert (null != nameLock);
-                        /*
-                         * Next, acquire a shared case directory lock that will
-                         * be held as long as this node has this case open. This
-                         * will prevent deletion of the case by another node.
-                         */
-                        acquireSharedCaseDirLock(caseDir);
-                        /*
-                         * Finally, acquire an exclusive case resources lock to
-                         * ensure only one node at a time can
-                         * create/open/upgrade/close the case resources.
-                         */
-                        try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseName)) {
-                            assert (null != resourcesLock);
-                            try {
-                                newCase.open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
-                            } catch (CaseActionException ex) {
-                                /*
-                                 * Release the case directory lock immediately
-                                 * if there was a problem opening the case.
-                                 */
-                                if (CaseType.MULTI_USER_CASE == caseType) {
-                                    releaseSharedCaseDirLock(caseName);
-                                }
-                                throw ex;
+                    acquireSharedCaseDirLock(caseDir);
+                    /*
+                     * Finally, acquire an exclusive case resources lock to
+                     * ensure only one node at a time can
+                     * create/open/upgrade/close the case resources.
+                     */
+                    try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseName)) {
+                        assert (null != resourcesLock);
+                        try {
+                            newCase.open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
+                        } catch (CaseActionException ex) {
+                            /*
+                             * Release the case directory lock immediately if
+                             * there was a problem opening the case.
+                             */
+                            if (CaseType.MULTI_USER_CASE == caseType) {
+                                releaseSharedCaseDirLock(caseName);
                             }
+                            throw ex;
                         }
                     }
                 }
-                return newCase;
-            });
-            if (RuntimeProperties.runningWithGUI()) {
-                listener.setCaseActionFuture(future);
-                SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
             }
+            return newCase;
+        });
+
+        /*
+         * If running with a GUI, give the future for the case creation task to
+         * the cancel button listener for the GUI progress indicator and make
+         * the progress indicator visible to the user.
+         */
+        if (RuntimeProperties.runningWithGUI()) {
+            listener.setCaseActionFuture(future);
+            SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
+        }
+
+        /*
+         * Wait for the case creation task to finish.
+         */
+        try {
+            logger.log(Level.INFO, "Attempting to create case {0} (display name = {1}) in directory = {2}", new Object[]{caseName, caseDisplayName, caseDir}); //NON-NLS            
             currentCase = future.get();
             logger.log(Level.INFO, "Created case {0} in directory = {1}", new Object[]{caseName, caseDir}); //NON-NLS
             if (RuntimeProperties.runningWithGUI()) {
@@ -560,12 +570,12 @@ public class Case {
             }
             eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
 
-        } catch (InterruptedException | ExecutionException ex) {
-            if (ex instanceof InterruptedException) {
-                throw new CaseActionException(Bundle.Case_creationException_couldNotCreateCase(Bundle.Case_exceptionMessage_lockAcquisitionInterrupted()), ex);
-            } else {
-                throw new CaseActionException(Bundle.Case_creationException_couldNotCreateCase(ex.getCause().getMessage()), ex);
-            }
+        } catch (InterruptedException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getMessage()), ex);
+        } catch (ExecutionException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getCause().getMessage()), ex);
+        } catch (CancellationException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_cancelled(), ex);
         } finally {
             progressIndicator.finish(Bundle.Case_progressMessage_finshing());
             if (RuntimeProperties.runningWithGUI()) {
@@ -589,6 +599,7 @@ public class Case {
         "Case.progressIndicatorTitle.openingCase=Opening Case",
         "Case.exceptionMessage.failedToReadMetadata=Failed to read metadata."
     })
+
     public static void openAsCurrentCase(String caseMetadataFilePath) throws CaseActionException {
         /*
          * If running with the desktop GUI, this needs to be done before any
@@ -609,96 +620,106 @@ public class Case {
             closeCurrentCase();
         }
 
-        logger.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS
+        CaseMetadata metadata;
         try {
-            CaseMetadata metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
-
-            /*
-             * Set up either a GUI progress indicator or a logging progress
-             * indicator.
-             */
-            CancelButtonListener listener = new CancelButtonListener();
-            ProgressIndicator progressIndicator;
-            if (RuntimeProperties.runningWithGUI()) {
-                progressIndicator = new ModalDialogProgressIndicator(Bundle.Case_progressIndicatorTitle_openingCase(), new String[]{Bundle.Case_progressIndicatorCancelButton_label()}, Bundle.Case_progressIndicatorCancelButton_label(), null, listener);
-            } else {
-                progressIndicator = new LoggingProgressIndicator();
-            }
-            Case caseToOpen = new Case();
-            CaseContext caseContext = new CaseContext(caseToOpen, progressIndicator);
-            listener.setCaseContext(caseContext);
-            progressIndicator.start(Bundle.Case_progressMessage_preparing());
-
-            /*
-             * Opening a case is always done in the same non-UI thread that will
-             * be used later to close the case. If the case is a multi-user
-             * case, this ensures that case directory lock that is held as long
-             * as the case is open is released in the same thread in which it
-             * was acquired, as is required by the coordination service.
-             */
-            CaseType caseType = metadata.getCaseType();
-            String caseName = metadata.getCaseName();
-            try {
-                Future<Case> future = getCaseLockingExecutor().submit(() -> {
-                    if (CaseType.SINGLE_USER_CASE == caseType) {
-                        caseToOpen.open(metadata, progressIndicator);
-                    } else {
-                        /*
-                         * First, acquire a shared case directory lock that will
-                         * be held as long as this node has this case open, in
-                         * order to prevent deletion of the case by another
-                         * node.
-                         */
-                        progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
-                        acquireSharedCaseDirLock(metadata.getCaseDirectory());
-                        /*
-                         * Next, acquire an exclusive case resources lock to
-                         * ensure only one node at a time can
-                         * create/open/upgrade/close case resources.
-                         */
-                        try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseName())) {
-                            assert (null != resourcesLock);
-                            try {
-                                caseToOpen.open(metadata, progressIndicator);
-                            } catch (CaseActionException ex) {
-                                /*
-                                 * Release the case directory lock immediately
-                                 * if there was a problem opening the case.
-                                 */
-                                if (CaseType.MULTI_USER_CASE == caseType) {
-                                    releaseSharedCaseDirLock(caseName);
-                                }
-                                throw ex;
-                            }
-                        }
-                    }
-                    return caseToOpen;
-                });
-                if (RuntimeProperties.runningWithGUI()) {
-                    listener.setCaseActionFuture(future);
-                    SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
-                }
-                future.get();
-                currentCase = future.get();
-                logger.log(Level.INFO, "Opened case with metadata file path {0}", caseMetadataFilePath); //NON-NLS                
-                if (RuntimeProperties.runningWithGUI()) {
-                    updateGUIForCaseOpened();
-                }
-                eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
-            } catch (InterruptedException | ExecutionException ex) {
-                if (ex instanceof ExecutionException) {
-                    throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase(ex.getCause().getMessage()), ex);
-                } else {
-                    throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase(Bundle.Case_exceptionMessage_lockAcquisitionInterrupted()), ex);
-                }
-            } finally {
-                progressIndicator.finish(Bundle.Case_progressMessage_finshing());
-                if (RuntimeProperties.runningWithGUI()) {
-                    SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(false));
-                }
-            }
+            metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_openException_couldNotOpenCase(Bundle.Case_exceptionMessage_failedToReadMetadata()), ex);
+        }
+
+        /*
+         * Set up either a GUI progress indicator or a logging progress
+         * indicator.
+         */
+        CancelButtonListener listener = new CancelButtonListener();
+        ProgressIndicator progressIndicator;
+        if (RuntimeProperties.runningWithGUI()) {
+            progressIndicator = new ModalDialogProgressIndicator(Bundle.Case_progressIndicatorTitle_openingCase(), new String[]{Bundle.Case_progressIndicatorCancelButton_label()}, Bundle.Case_progressIndicatorCancelButton_label(), null, listener);
+        } else {
+            progressIndicator = new LoggingProgressIndicator();
+        }
+        Case caseToOpen = new Case();
+        CaseContext caseContext = new CaseContext(caseToOpen, progressIndicator);
+        listener.setCaseContext(caseContext);
+        progressIndicator.start(Bundle.Case_progressMessage_preparing());
+
+        /*
+         * Opening a case is always done in the same non-UI thread that will be
+         * used later to close the case. If the case is a multi-user case, this
+         * ensures that case directory lock that is held as long as the case is
+         * open is released in the same thread in which it was acquired, as is
+         * required by the coordination service.
+         */
+        CaseType caseType = metadata.getCaseType();
+        String caseName = metadata.getCaseName();
+        Future<Case> future = getCaseLockingExecutor().submit(() -> {
+            if (CaseType.SINGLE_USER_CASE == caseType) {
+                caseToOpen.open(metadata, progressIndicator);
+            } else {
+                /*
+                 * First, acquire a shared case directory lock that will be held
+                 * as long as this node has this case open, in order to prevent
+                 * deletion of the case by another node.
+                 */
+                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                acquireSharedCaseDirLock(metadata.getCaseDirectory());
+                /*
+                 * Next, acquire an exclusive case resources lock to ensure only
+                 * one node at a time can create/open/upgrade/close case
+                 * resources.
+                 */
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(metadata.getCaseName())) {
+                    assert (null != resourcesLock);
+                    try {
+                        caseToOpen.open(metadata, progressIndicator);
+                    } catch (CaseActionException ex) {
+                        /*
+                         * Release the case directory lock immediately if there
+                         * was a problem opening the case.
+                         */
+                        if (CaseType.MULTI_USER_CASE == caseType) {
+                            releaseSharedCaseDirLock(caseName);
+                        }
+                        throw ex;
+                    }
+                }
+            }
+            return caseToOpen;
+        });
+
+        /*
+         * If running with a GUI, give the future for the case opening task to
+         * the cancel button listener for the GUI progress indicator and make
+         * the progress indicator visible to the user.
+         */
+        if (RuntimeProperties.runningWithGUI()) {
+            listener.setCaseActionFuture(future);
+            SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
+        }
+
+        /*
+         * Wait for the case opening task to finish.
+         */
+        try {
+            logger.log(Level.INFO, "Opening case with metadata file path {0}", caseMetadataFilePath); //NON-NLS
+            currentCase = future.get();
+            logger.log(Level.INFO, "Opened case with metadata file path {0}", caseMetadataFilePath); //NON-NLS                
+            if (RuntimeProperties.runningWithGUI()) {
+                updateGUIForCaseOpened();
+            }
+            eventPublisher.publishLocally(new AutopsyEvent(Events.CURRENT_CASE.toString(), null, currentCase));
+
+        } catch (InterruptedException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getMessage()), ex);
+        } catch (ExecutionException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getCause().getMessage()), ex);
+        } catch (CancellationException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_cancelled(), ex);
+        } finally {
+            progressIndicator.finish(Bundle.Case_progressMessage_finshing());
+            if (RuntimeProperties.runningWithGUI()) {
+                SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(false));
+            }
         }
     }
 
@@ -763,50 +784,57 @@ public class Case {
         listener.setCaseContext(caseContext);
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
 
-        logger.log(Level.INFO, "Closing case with metadata file path {0}", currentCase.getCaseMetadata().getFilePath()); //NON-NLS
-        try {
-            /*
-             * Closing a case is always done in the same non-UI thread that
-             * opened/created the case. If the case is a multi-user case, this
-             * ensures that case directory lock that is held as long as the case
-             * is open is released in the same thread in which it was acquired,
-             * as is required by the coordination service.
-             */
-            Future<Void> future = getCaseLockingExecutor().submit(() -> {
-                if (CaseType.SINGLE_USER_CASE == currentCase.getCaseType()) {
-                    currentCase.close(progressIndicator);
-                } else {
-                    String caseName = currentCase.getCaseMetadata().getCaseName();
-                    /*
-                     * Acquire an exclusive case resources lock to ensure only
-                     * one node at a time can create/open/upgrade/close the case
-                     * resources.
-                     */
-                    progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
-                    try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(currentCase.getName())) {
-                        assert (null != resourcesLock);
-                        currentCase.close(progressIndicator);
-                    } finally {
-                        /*
-                         * Always release the case directory lock that was
-                         * acquired when the case was opened.
-                         */
-                        releaseSharedCaseDirLock(caseName);
-                    }
-                }
-                return null;
-            });
-            if (RuntimeProperties.runningWithGUI()) {
-                listener.setCaseActionFuture(future);
-                SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
-            }
-            future.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            if (ex instanceof ExecutionException) {
-                throw new CaseActionException(Bundle.Case_closeException_couldNotCloseCase(ex.getCause().getMessage()), ex);
+        /*
+         * Closing a case is always done in the same non-UI thread that
+         * opened/created the case. If the case is a multi-user case, this
+         * ensures that case directory lock that is held as long as the case is
+         * open is released in the same thread in which it was acquired, as is
+         * required by the coordination service.
+         */
+        Future<Void> future = getCaseLockingExecutor().submit(() -> {
+            if (CaseType.SINGLE_USER_CASE == currentCase.getCaseType()) {
+                currentCase.close(progressIndicator);
             } else {
-                throw new CaseActionException(Bundle.Case_closeException_couldNotCloseCase(Bundle.Case_exceptionMessage_lockAcquisitionInterrupted()), ex);
+                String caseName = currentCase.getCaseMetadata().getCaseName();
+                /*
+                 * Acquire an exclusive case resources lock to ensure only one
+                 * node at a time can create/open/upgrade/close the case
+                 * resources.
+                 */
+                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(currentCase.getName())) {
+                    assert (null != resourcesLock);
+                    currentCase.close(progressIndicator);
+                } finally {
+                    /*
+                     * Always release the case directory lock that was acquired
+                     * when the case was opened.
+                     */
+                    releaseSharedCaseDirLock(caseName);
+                }
             }
+            return null;
+        });
+
+        /*
+         * If running with a GUI, give the future for the case closing task to
+         * the cancel button listener for the GUI progress indicator and make
+         * the progress indicator visible to the user.
+         */
+        if (RuntimeProperties.runningWithGUI()) {
+            listener.setCaseActionFuture(future);
+            SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
+        }
+
+        try {
+            logger.log(Level.INFO, "Closing case with metadata file path {0}", currentCase.getCaseMetadata().getFilePath()); //NON-NLS
+            future.get();
+        } catch (InterruptedException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getMessage()), ex);
+        } catch (ExecutionException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getCause().getMessage()), ex);
+        } catch (CancellationException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_cancelled(), ex);
         } finally {
             /*
              * The case is no longer the current case, even if an exception was
@@ -865,75 +893,76 @@ public class Case {
             throw new CaseActionException(Bundle.Case_deleteException_couldNotDeleteCase(Bundle.Case_exceptionMessage_cannotDeleteCurrentCase()));
         }
 
-        logger.log(Level.INFO, "Deleting case with metadata file path {0}", metadata.getFilePath()); //NON-NLS
-        try {
-            /*
-             * Set up either a GUI progress indicator or a logging progress
-             * indicator.
-             */
-            CancelButtonListener listener = new CancelButtonListener();
-            ProgressIndicator progressIndicator;
-            if (RuntimeProperties.runningWithGUI()) {
-                progressIndicator = new ModalDialogProgressIndicator(
-                        Bundle.Case_progressIndicatorTitle_deletingCase(),
-                        new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
-                        Bundle.Case_progressIndicatorCancelButton_label(),
-                        null,
-                        listener);
+        /*
+         * Set up either a GUI progress indicator or a logging progress
+         * indicator.
+         */
+        CancelButtonListener listener = new CancelButtonListener();
+        ProgressIndicator progressIndicator;
+        if (RuntimeProperties.runningWithGUI()) {
+            progressIndicator = new ModalDialogProgressIndicator(
+                    Bundle.Case_progressIndicatorTitle_deletingCase(),
+                    new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
+                    Bundle.Case_progressIndicatorCancelButton_label(),
+                    null,
+                    listener);
+        } else {
+            progressIndicator = new LoggingProgressIndicator();
+        }
+        progressIndicator.start(Bundle.Case_progressMessage_preparing());
+
+        Future<Void> future = getCaseLockingExecutor().submit(() -> {
+            if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
+                cleanupDeletedCase(metadata, progressIndicator);
             } else {
-                progressIndicator = new LoggingProgressIndicator();
-            }
-            progressIndicator.start(Bundle.Case_progressMessage_preparing());
-            Future<Void> future = getCaseLockingExecutor().submit(() -> {
-                if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
-                    cleanupDeletedCase(metadata, progressIndicator);
-                } else {
+                /*
+                 * First, acquire an exclusive case directory lock. The case
+                 * cannot be deleted if another node has it open.
+                 */
+                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                try (CoordinationService.Lock dirLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory())) {
+                    assert (null != dirLock);
+
                     /*
-                     * First, acquire an exclusive case directory lock. The case
-                     * cannot be deleted if another node has it open.
+                     * Delete the text index.
                      */
-                    progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
-                    try (CoordinationService.Lock dirLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory())) {
-                        assert (null != dirLock);
-
-                        /*
-                         * Delete the text index.
-                         */
-                        progressIndicator.start(Bundle.Case_progressMessage_deletingTextIndex());
-                        for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
-                            searchService.deleteTextIndex(metadata.getTextIndexName());
-                        }
-
-                        if (CaseType.MULTI_USER_CASE == metadata.getCaseType()) {
-                            /*
-                             * Delete the case database from the database
-                             * server. The case database for a single-user case
-                             * is in the case directory and will be deleted whe
-                             * it is deleted.
-                             */
-                            progressIndicator.start(Bundle.Case_progressMessage_deletingCaseDatabase());
-                            CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
-                            Class.forName("org.postgresql.Driver"); //NON-NLS
-                            try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
-                                    Statement statement = connection.createStatement();) {
-                                String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
-                                statement.execute(deleteCommand);
-                            }
-                        }
-
-                        cleanupDeletedCase(metadata, progressIndicator);
+                    progressIndicator.start(Bundle.Case_progressMessage_deletingTextIndex());
+                    for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
+                        searchService.deleteTextIndex(metadata.getTextIndexName());
                     }
+
+                    if (CaseType.MULTI_USER_CASE == metadata.getCaseType()) {
+                        /*
+                         * Delete the case database from the database server.
+                         * The case database for a single-user case is in the
+                         * case directory and will be deleted whe it is deleted.
+                         */
+                        progressIndicator.start(Bundle.Case_progressMessage_deletingCaseDatabase());
+                        CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
+                        Class.forName("org.postgresql.Driver"); //NON-NLS
+                        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
+                                Statement statement = connection.createStatement();) {
+                            String deleteCommand = "DROP DATABASE \"" + metadata.getCaseDatabaseName() + "\""; //NON-NLS
+                            statement.execute(deleteCommand);
+                        }
+                    }
+
+                    cleanupDeletedCase(metadata, progressIndicator);
                 }
-                return null;
-            });
-            logger.log(Level.INFO, "Deleted case with metadata file path {0}", metadata.getFilePath()); //NON-NLS            
-            future.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            if (ex instanceof ExecutionException) {
-                throw new CaseActionException(Bundle.Case_deleteException_couldNotDeleteCase(ex.getCause().getMessage()), ex);
-            } else {
-                throw new CaseActionException(Bundle.Case_deleteException_couldNotDeleteCase(Bundle.Case_exceptionMessage_lockAcquisitionInterrupted()), ex);
             }
+            return null;
+        });
+
+        try {
+            logger.log(Level.INFO, "Deleting case with metadata file path {0}", metadata.getFilePath()); //NON-NLS
+            future.get();
+            logger.log(Level.INFO, "Deleted case with metadata file path {0}", metadata.getFilePath()); //NON-NLS            
+        } catch (InterruptedException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getMessage()), ex);
+        } catch (ExecutionException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getCause().getMessage()), ex);
+        } catch (CancellationException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_cancelled(), ex);
         }
     }
 
@@ -1281,8 +1310,8 @@ public class Case {
                 CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
-                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);                
-                
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
+
                 /*
                  * Add the case to the recent cases tracker that supplies a list
                  * of recent cases to the recent cases menu item and the
@@ -1329,7 +1358,7 @@ public class Case {
                 CallableSystemAction.get(CaseDeleteAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenTimelineAction.class).setEnabled(false);
                 CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
-                
+
                 /*
                  * Clear the notifications in the notfier component in the lower
                  * right hand corner of the main application window.
@@ -2266,7 +2295,7 @@ public class Case {
         openAsCurrentCase(caseMetadataFilePath);
     }
 
-/**
+    /**
      * Closes this Autopsy case.
      *
      * @throws CaseActionException if there is a problem closing the case. The
@@ -2278,8 +2307,8 @@ public class Case {
     @Deprecated
     public void closeCase() throws CaseActionException {
         closeCurrentCase();
-    }    
-    
+    }
+
     /**
      * Invokes the startup dialog window.
      *

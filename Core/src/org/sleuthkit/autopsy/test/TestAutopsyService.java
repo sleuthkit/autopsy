@@ -27,10 +27,10 @@ import org.sleuthkit.autopsy.framework.ProgressIndicator;
 /**
  * An implementation of the Autopsy service interface used for test purposes.
  */
-//@ServiceProvider(service = AutopsyService.class)
+@ServiceProvider(service = AutopsyService.class)
 public class TestAutopsyService implements AutopsyService {
 
-    private static final Logger LOGGER = Logger.getLogger(TestAutopsyService.class.getName());
+    private static final Logger logger = Logger.getLogger(TestAutopsyService.class.getName());
 
     @Override
     public String getServiceName() {
@@ -41,41 +41,31 @@ public class TestAutopsyService implements AutopsyService {
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progressIndicator = context.getProgressIndicator();
         try {
-            progressIndicator.start("Doing first task...", 100);
+            logger.log(Level.INFO, "Test Autopsy Service started first task");
+            progressIndicator.start("Test Autopsy Service doing first task...", 100);
             Thread.sleep(1000L);
-            progressIndicator.progress(10);
+            progressIndicator.progress(20);
             Thread.sleep(1000L);
-            progressIndicator.progress(10);
+            progressIndicator.progress(40);
             Thread.sleep(1000L);
-            progressIndicator.progress(10);
+            progressIndicator.progress(60);
             Thread.sleep(1000L);
-            progressIndicator.progress(10);
+            progressIndicator.progress(80);
             Thread.sleep(1000L);
-            progressIndicator.progress(10);
-            Thread.sleep(1000L);
-            progressIndicator.progress(10);
-            Thread.sleep(1000L);
-            progressIndicator.progress(10);
-            Thread.sleep(1000L);
-            progressIndicator.progress(10);
-            Thread.sleep(1000L);
-            progressIndicator.progress(10);
-            Thread.sleep(1000L);
-            progressIndicator.progress(10);
-            progressIndicator.finish("First task completed.");
-            progressIndicator.start("Doing second task...");
-            Thread.sleep(10000L);
-            progressIndicator.finish("Second task completed.");
-        } catch (InterruptedException ex) {
-            LOGGER.log(Level.INFO, "Autopsy Test Service caught interrupt while working");
-            if (context.cancelRequested()) {
-                progressIndicator.finish("Cancelling...");
-                try {
-                    Thread.sleep(1000L);
-                } catch (InterruptedException ex1) {
-                    LOGGER.log(Level.INFO, "Autopsy Test Service caught interrupt while working");
+            progressIndicator.progress(100);
+            progressIndicator.finish("First task completed by Test Autopsy Service.");
+            logger.log(Level.INFO, "Test Autopsy Service completed first task");
+            logger.log(Level.INFO, "Test Autopsy Service started second task");
+            progressIndicator.start("Test Autopsy Service doing second task...");
+            for (int i = 0; i < 10000; ++i) {
+                if (context.cancelRequested()) {
+                    logger.log(Level.INFO, "Autopsy Test Service cancelled while doing second task, cancel requested = {0}", context.cancelRequested());
                 }
             }
+            progressIndicator.finish("Second task completed by Test Autopsy Service.");
+            logger.log(Level.INFO, "Second task completed by Test Autopsy Service");
+        } catch (InterruptedException ex) {
+            logger.log(Level.INFO, "Autopsy Test Service interrupted (cancelled) while doing first task, cancel requested = {0}", context.cancelRequested());
         }
     }
 
