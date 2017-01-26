@@ -741,6 +741,8 @@ public class Server {
      *
      * @param coreName The core name.
      */
+    @NbBundle.Messages({
+        "# {0} - core name", "Server.deleteCore.exception.msg=Failed to delete Solr core {0}",})
     void deleteCore(String coreName) throws KeywordSearchServiceException {
         /*
          * Send a core unload request to the Solr server, with the parameters
@@ -754,6 +756,7 @@ public class Server {
         try {
             if (null != currentCore) {
                 if (currentCore.getName().equals(coreName)) {
+                    // close current core first
                     closeCore();
                 }
             }
@@ -768,7 +771,7 @@ public class Server {
             connectToSolrServer(solrServer);
             org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer); 
         } catch (SolrServerException | IOException ex) {
-            throw new KeywordSearchServiceException(NbBundle.getMessage(Server.class, "Server.deleteCore.exception.msg"), ex);
+            throw new KeywordSearchServiceException(Bundle.Server_deleteCore_exception_msg(coreName), ex);
         }
     }
 
