@@ -91,7 +91,10 @@ public class RegressionTest extends TestCase {
      * @return escaped path the the file/directory location.
      */
     private static String getEscapedPath(String path) {
-        if (path.startsWith("\\")) {
+        if (path.startsWith("\\\\")) { //already has escaped to \\\\NetworkLocation
+            return path;
+        }
+        else if (path.startsWith("\\")) {
             return "\\" + path;
         } else {
             return path;
