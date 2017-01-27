@@ -705,7 +705,6 @@ class TestConfiguration(object):
         # However it only seems to take about half this time
         # And it's very buggy, so we're being careful
         self.timeout = 24 * 60 * 60 * 1000 * 1000
-        # Set autopsyPlatform if provided
         self.autopsyPlatform = ""
 
         if not self.args.single:
