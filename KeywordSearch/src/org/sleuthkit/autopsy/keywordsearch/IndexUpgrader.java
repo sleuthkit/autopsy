@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.framework.ProgressIndicator;
+import static org.sleuthkit.autopsy.keywordsearch.SolrSearchService.checkCancellation;
 
 /**
  * This class handles the task of upgrading old indexes to the latest supported
@@ -50,19 +51,29 @@ class IndexUpgrader {
         "SolrSearch.upgrade4to5.msg=Upgrading existing text index from Solr 4 to Solr 5",
         "SolrSearch.upgrade5to6.msg=Upgrading existing text index from Solr 5 to Solr 6",
         "SolrSearch.upgradeFailed.msg=Upgrade of existing Solr text index failed, deleting temporary directories",})    
-    Index performIndexUpgrade(String newIndexDir, Index indexToUpgrade, String tempResultsDir, ProgressIndicator progress, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
-        // ELTODO Check for cancellation at whatever points are feasible
+    Index performIndexUpgrade(String newIndexDir, Index indexToUpgrade, AutopsyService.CaseContext context, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
 
+        ProgressIndicator progress = context.getProgressIndicator();
+        
         // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solrX_schema_Y/index
+        String tempResultsDir = context.getCase().getTempDirectory();
         File tmpDir = Paths.get(tempResultsDir, "IndexUpgrade").toFile(); //NON-NLS
         tmpDir.mkdirs();
 
         Index upgradedIndex;
         double currentSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
         try {
+            
+            // Check for cancellation at whatever points are feasible
+            checkCancellation(context);
+            
             // upgrade from Solr 4 to 5
             progress.progress(Bundle.SolrSearch_upgrade4to5_msg(), numCompletedWorkUnits++);
             currentSolrVersion = upgradeSolrIndexVersion4to5(currentSolrVersion, newIndexDir, tempResultsDir);
+
+            // Check for cancellation at whatever points are feasible
+            checkCancellation(context);
+            
             // upgrade from Solr 5 to 6
             progress.progress(Bundle.SolrSearch_upgrade5to6_msg(), numCompletedWorkUnits++);
             currentSolrVersion = upgradeSolrIndexVersion5to6(currentSolrVersion, newIndexDir, tempResultsDir);

@@ -151,9 +151,26 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
+     * Checks whether user has requested to cancel Solr core open/create/upgrade
+     * process. Throws exception if cancellation was requested.
+     *
+     * @param context CaseContext object
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     */
+    static void checkCancellation(CaseContext context) throws AutopsyServiceException {
+        if (context.cancelRequested()) {
+            throw new AutopsyServiceException("Cancellation requested by user");
+        }
+    }
+
+    /**
      *
      * @param context
-     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     @Override
     @NbBundle.Messages({
@@ -170,11 +187,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         ProgressIndicator progress = context.getProgressIndicator();
         int totalNumProgressUnits = 7;
         int progressUnitsCompleted = 1;
-        
+
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
         progress.start(Bundle.SolrSearch_findingIndexes_msg(), totalNumProgressUnits);
         IndexFinder indexFinder = new IndexFinder();
         List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
+
+        // Check for cancellation at whatever points are feasible
+        checkCancellation(context);
 
         // check if index needs upgrade
         Index currentVersionIndex;
@@ -194,6 +214,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // unable to find index that can be upgraded
                     throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
                 }
+
+                // Check for cancellation at whatever points are feasible
+                checkCancellation(context);
 
                 double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
                 double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
@@ -226,14 +249,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         }
                     }
 
-                    // ELTODO Check for cancellation at whatever points are feasible
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade, progress, progressUnitsCompleted);
+                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade, context, progressUnitsCompleted);
                     progressUnitsCompleted += 2; // add progress increments for copying existing index and config set
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory(), progress, progressUnitsCompleted);
+                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context, progressUnitsCompleted);
                     if (currentVersionIndex == null) {
                         throw new AutopsyServiceException("Unable to upgrade index to the latest version of Solr");
                     }
@@ -241,6 +263,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             }
         }
 
+        // Check for cancellation at whatever points are feasible
+        checkCancellation(context);
+        
         // open core
         try {
             progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);

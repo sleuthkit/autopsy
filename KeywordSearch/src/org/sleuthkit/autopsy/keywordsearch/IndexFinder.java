@@ -37,6 +37,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.framework.ProgressIndicator;
+import static org.sleuthkit.autopsy.keywordsearch.SolrSearchService.checkCancellation;
 
 /**
  * This class handles the task of finding and identifying KWS index folders.
@@ -113,10 +114,19 @@ class IndexFinder {
     @NbBundle.Messages({
         "SolrSearch.copyIndex.msg=Copying existing text index",
         "SolrSearch.copyConfigSet.msg=Copying Solr config set",})
-    String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade, ProgressIndicator progress, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
+    String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade, AutopsyService.CaseContext context, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
+        
+        ProgressIndicator progress = context.getProgressIndicator();
+        
+        // Check for cancellation at whatever points are feasible
+        checkCancellation(context);
+        
         // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
         progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits++);
         String newIndexDir = copyExistingIndex(theCase, indexToUpgrade);
+
+        // Check for cancellation at whatever points are feasible
+        checkCancellation(context);
 
         // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
         progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits++);
