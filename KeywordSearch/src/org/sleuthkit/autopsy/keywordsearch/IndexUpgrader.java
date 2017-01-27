@@ -47,10 +47,23 @@ class IndexUpgrader {
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
 
+    /**
+     * Perform Solr text index upgrade to the latest supported version of Solr.
+     *
+     * @param newIndexDir Full path to directory of Solr index to be upgraded
+     * @param indexToUpgrade Index object of the existing Solr index
+     * @param context AutopsyService.CaseContext object
+     * @param numCompletedWorkUnits Number of completed progress units so far
+     *
+     * @return Index object of the upgraded index
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     */
     @NbBundle.Messages({
         "SolrSearch.upgrade4to5.msg=Upgrading existing text index from Solr 4 to Solr 5",
         "SolrSearch.upgrade5to6.msg=Upgrading existing text index from Solr 5 to Solr 6",
-        "SolrSearch.upgradeFailed.msg=Upgrade of existing Solr text index failed, deleting temporary directories",})    
+        "SolrSearch.upgradeFailed.msg=Upgrade of existing Solr text index failed, deleting temporary directories",})
     Index performIndexUpgrade(String newIndexDir, Index indexToUpgrade, AutopsyService.CaseContext context, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
 
         ProgressIndicator progress = context.getProgressIndicator();
@@ -67,16 +80,19 @@ class IndexUpgrader {
             // Check for cancellation at whatever points are feasible
             checkCancellation(context);
             
+            // create process terminator that will monitor the cancellation flag
+            UserCancelledProcessTerminator terminatior = new UserCancelledProcessTerminator(context);
+            
             // upgrade from Solr 4 to 5
             progress.progress(Bundle.SolrSearch_upgrade4to5_msg(), numCompletedWorkUnits++);
-            currentSolrVersion = upgradeSolrIndexVersion4to5(currentSolrVersion, newIndexDir, tempResultsDir);
+            currentSolrVersion = upgradeSolrIndexVersion4to5(currentSolrVersion, newIndexDir, tempResultsDir, terminatior);
 
             // Check for cancellation at whatever points are feasible
             checkCancellation(context);
             
             // upgrade from Solr 5 to 6
             progress.progress(Bundle.SolrSearch_upgrade5to6_msg(), numCompletedWorkUnits++);
-            currentSolrVersion = upgradeSolrIndexVersion5to6(currentSolrVersion, newIndexDir, tempResultsDir);
+            currentSolrVersion = upgradeSolrIndexVersion5to6(currentSolrVersion, newIndexDir, tempResultsDir, terminatior);
             
             // create upgraded index object
             upgradedIndex = new Index(newIndexDir, Double.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion());
@@ -103,10 +119,11 @@ class IndexUpgrader {
      * @param currentIndexVersion Current Solr index version
      * @param solr4IndexPath Full path to Solr v4 index directory
      * @param tempResultsDir Path to directory where to store log output
+     * @param terminatior Implementation of ExecUtil.ProcessTerminator to terminate upgrade process
      *
      * @return The new Solr index version.
      */
-    private double upgradeSolrIndexVersion4to5(double currentIndexVersion, String solr4IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    private double upgradeSolrIndexVersion4to5(double currentIndexVersion, String solr4IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminatior) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
 
         if (currentIndexVersion != 4.0) {
             return currentIndexVersion;
@@ -139,7 +156,7 @@ class IndexUpgrader {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         processBuilder.redirectOutput(new File(outputFileFullPath));
         processBuilder.redirectError(new File(errFileFullPath));
-        ExecUtil.execute(processBuilder);
+        ExecUtil.execute(processBuilder, terminatior);
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
@@ -152,10 +169,11 @@ class IndexUpgrader {
      * @param currentIndexVersion Current Solr index version
      * @param solr5IndexPath Full path to Solr v5 index directory
      * @param tempResultsDir Path to directory where to store log output
+     * @param terminatior Implementation of ExecUtil.ProcessTerminator to terminate upgrade process
      *
      * @return The new Solr index version.
      */
-    private double upgradeSolrIndexVersion5to6(double currentIndexVersion, String solr5IndexPath, String tempResultsDir) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    private double upgradeSolrIndexVersion5to6(double currentIndexVersion, String solr5IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminatior) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
         if (currentIndexVersion != 5.0) {
             return currentIndexVersion;
         }
@@ -187,11 +205,30 @@ class IndexUpgrader {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         processBuilder.redirectOutput(new File(outputFileFullPath));
         processBuilder.redirectError(new File(errFileFullPath));
-        ExecUtil.execute(processBuilder);
+        ExecUtil.execute(processBuilder, terminatior);
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
         return 6.0;
     }
     
+    /**
+     * Process terminator that can be used to kill Solr index upgrade processes 
+     * if a user has requested to cancel the upgrade.
+     */
+    private class UserCancelledProcessTerminator implements ExecUtil.ProcessTerminator {
+
+        AutopsyService.CaseContext context = null;
+        UserCancelledProcessTerminator(AutopsyService.CaseContext context) {
+            this.context = context;
+        }
+        
+        @Override
+        public boolean shouldTerminateProcess() {
+            if (context.cancelRequested()) {
+                return true;
+            }
+            return false;
+        }        
+    }
 }

@@ -185,7 +185,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
          */
 
         ProgressIndicator progress = context.getProgressIndicator();
-        int totalNumProgressUnits = 7;
+        int totalNumProgressUnits = 8;
         int progressUnitsCompleted = 1;
 
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
@@ -250,7 +250,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     }
 
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade, context, progressUnitsCompleted);
+                    String newIndexDir = indexFinder.copyIndexAndConfigSet(indexToUpgrade, context, progressUnitsCompleted);
                     progressUnitsCompleted += 2; // add progress increments for copying existing index and config set
 
                     // upgrade the existing index to the latest supported Solr version

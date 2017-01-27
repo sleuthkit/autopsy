@@ -111,10 +111,22 @@ class IndexFinder {
         return bestCandidateIndex;
     }
 
+    /**
+     * Creates a copy of an existing Solr index as well as a reference copy of Solr config set.
+     * 
+     * @param indexToUpgrade Index object to create a copy of
+     * @param context AutopsyService.CaseContext object
+     * @param numCompletedWorkUnits Number of completed progress units so far
+     *
+     * @return
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     */
     @NbBundle.Messages({
         "SolrSearch.copyIndex.msg=Copying existing text index",
         "SolrSearch.copyConfigSet.msg=Copying Solr config set",})
-    String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade, AutopsyService.CaseContext context, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
+    String copyIndexAndConfigSet(Index indexToUpgrade, AutopsyService.CaseContext context, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
         
         ProgressIndicator progress = context.getProgressIndicator();
         
@@ -123,7 +135,7 @@ class IndexFinder {
         
         // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
         progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits++);
-        String newIndexDir = copyExistingIndex(theCase, indexToUpgrade);
+        String newIndexDir = copyExistingIndex(context.getCase(), indexToUpgrade);
 
         // Check for cancellation at whatever points are feasible
         checkCancellation(context);
@@ -180,7 +192,6 @@ class IndexFinder {
                     if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
                         logger.log(Level.WARNING, "Unable to locate KWS config set in order to create a reference copy"); //NON-NLS
                         return;
-                        // ELTODO This is NTH: throw new AutopsyService.AutopsyServiceException("Unable to locate the config set");
                     }
                 }
             }
