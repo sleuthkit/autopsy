@@ -187,7 +187,6 @@ class TestRunner(object):
             Errors.print_error(test_data.image_file + "\n")
             return
 
-        print("1" + test_data.get_db_path(DBType.OUTPUT) + "\n2" + test_data.get_db_dump_path(DBType.OUTPUT))
         logging.debug("--------------------")
         logging.debug(test_data.image_name)
         logging.debug("--------------------")
@@ -196,7 +195,6 @@ class TestRunner(object):
 
         # exit if .db was not created
         if not file_exists(test_data.get_db_path(DBType.OUTPUT)):
-            Errors.print_error(test_data.get_db_path(DBType.OUTPUT))
             Errors.print_error("Autopsy did not run properly; No .db file was created")
             sys.exit(1)
         try:
@@ -680,7 +678,6 @@ class TestConfiguration(object):
             args: an Args, the command line arguments.
         """
         self.args = args
-        # Paths:  ???ZL: paths need to put into the config, without relative, or different relatiepath for different product
         self.output_parent_dir = make_path("..", "output", "results")
         if not dir_exists(self.output_parent_dir):
             os.chdir('..')
@@ -697,7 +694,7 @@ class TestConfiguration(object):
         self.known_bad_path = make_path(self.input_dir, "notablehashes.txt-md5.idx")
         self.keyword_path = make_path(self.input_dir, "notablekeywords.xml")
         self.nsrl_path = make_path(self.input_dir, "nsrl.txt-md5.idx")
-        self.build_path = make_path("..", "build.xml")  #???ZL: build_path is not in use
+        self.build_path = make_path("..", "build.xml") 
         # Infinite Testing info
         timer = 0
         self.images = []
