@@ -30,11 +30,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.framework.ProgressIndicator;
 
 /**
  * This class handles the task of finding and identifying KWS index folders.
@@ -108,11 +110,16 @@ class IndexFinder {
         return bestCandidateIndex;
     }
 
-    String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
+    @NbBundle.Messages({
+        "SolrSearch.copyIndex.msg=Copying existing text index",
+        "SolrSearch.copyConfigSet.msg=Copying Solr config set",})
+    String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade, ProgressIndicator progress, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
         // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
+        progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits++);
         String newIndexDir = copyExistingIndex(theCase, indexToUpgrade);
 
         // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
+        progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits++);
         createReferenceConfigSetCopy(new File(newIndexDir).getParent());
         
         return newIndexDir;

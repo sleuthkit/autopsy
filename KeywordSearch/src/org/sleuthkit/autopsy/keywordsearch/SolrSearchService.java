@@ -31,6 +31,7 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.framework.ProgressIndicator;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -155,12 +156,23 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     @Override
+    @NbBundle.Messages({
+        "SolrSearch.findingIndexes.msg=Looking for existing text index directories",
+        "SolrSearch.creatingNewIndex.msg=Creating new text index",
+        "SolrSearch.indentifyingIndex.msg=Identifying text index for upgrade",
+        "SolrSearch.openCore.msg=Creating/Opening text index",
+        "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
          * Autopsy service providers may not have case-level resources.
          */
 
+        ProgressIndicator progress = context.getProgressIndicator();
+        int totalNumProgressUnits = 7;
+        int progressUnitsCompleted = 1;
+        
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
+        progress.start(Bundle.SolrSearch_findingIndexes_msg(), totalNumProgressUnits);
         IndexFinder indexFinder = new IndexFinder();
         List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
 
@@ -168,10 +180,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         Index currentVersionIndex;
         if (indexes.isEmpty()) {
             // new case that doesn't have an existing index. create new index folder
+            progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted++);
             currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
             currentVersionIndex.setNewIndex(true);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
+            progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted++);
             currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
             if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
@@ -214,11 +228,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
                     // ELTODO Check for cancellation at whatever points are feasible
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade);
+                    String newIndexDir = indexFinder.copyIndexAndConfigSet(context.getCase(), indexToUpgrade, progress, progressUnitsCompleted);
+                    progressUnitsCompleted += 2; // add progress increments for copying existing index and config set
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory());
+                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context.getCase().getTempDirectory(), progress, progressUnitsCompleted);
                     if (currentVersionIndex == null) {
                         throw new AutopsyServiceException("Unable to upgrade index to the latest version of Solr");
                     }
@@ -228,10 +243,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         // open core
         try {
+            progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
             KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
         } catch (Exception ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
         }
+        
+        progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }
 
     /**

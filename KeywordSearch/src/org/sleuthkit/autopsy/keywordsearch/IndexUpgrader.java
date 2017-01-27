@@ -26,10 +26,12 @@ import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.lang.math.NumberUtils;
 import org.openide.modules.InstalledFileLocator;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.framework.ProgressIndicator;
 
 /**
  * This class handles the task of upgrading old indexes to the latest supported
@@ -43,8 +45,12 @@ class IndexUpgrader {
     IndexUpgrader() {
         JAVA_PATH = PlatformUtil.getJavaPath();
     }
-    
-    Index performIndexUpgrade(String newIndexDir, Index indexToUpgrade, String tempResultsDir) throws AutopsyService.AutopsyServiceException {
+
+    @NbBundle.Messages({
+        "SolrSearch.upgrade4to5.msg=Upgrading existing text index from Solr 4 to Solr 5",
+        "SolrSearch.upgrade5to6.msg=Upgrading existing text index from Solr 5 to Solr 6",
+        "SolrSearch.upgradeFailed.msg=Upgrade of existing Solr text index failed, deleting temporary directories",})    
+    Index performIndexUpgrade(String newIndexDir, Index indexToUpgrade, String tempResultsDir, ProgressIndicator progress, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
         // ELTODO Check for cancellation at whatever points are feasible
 
         // Run the upgrade tools on the contents (core) in ModuleOutput/keywordsearch/data/solrX_schema_Y/index
@@ -55,8 +61,10 @@ class IndexUpgrader {
         double currentSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
         try {
             // upgrade from Solr 4 to 5
+            progress.progress(Bundle.SolrSearch_upgrade4to5_msg(), numCompletedWorkUnits++);
             currentSolrVersion = upgradeSolrIndexVersion4to5(currentSolrVersion, newIndexDir, tempResultsDir);
             // upgrade from Solr 5 to 6
+            progress.progress(Bundle.SolrSearch_upgrade5to6_msg(), numCompletedWorkUnits++);
             currentSolrVersion = upgradeSolrIndexVersion5to6(currentSolrVersion, newIndexDir, tempResultsDir);
             
             // create upgraded index object
@@ -68,6 +76,7 @@ class IndexUpgrader {
         } finally {
             if (currentSolrVersion != NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
                 // upgrade did not complete, delete the new index directories
+                progress.progress(Bundle.SolrSearch_upgradeFailed_msg(), numCompletedWorkUnits);
                 upgradedIndex = null;
                 if (!new File(newIndexDir).delete()) {
                     logger.log(Level.SEVERE, "Unable to delete folder {0}", newIndexDir); //NON-NLS
