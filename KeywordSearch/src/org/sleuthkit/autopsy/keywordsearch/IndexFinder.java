@@ -30,11 +30,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.framework.ProgressIndicator;
+import static org.sleuthkit.autopsy.keywordsearch.SolrSearchService.checkCancellation;
 
 /**
  * This class handles the task of finding and identifying KWS index folders.
@@ -108,11 +111,37 @@ class IndexFinder {
         return bestCandidateIndex;
     }
 
-    String copyIndexAndConfigSet(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
+    /**
+     * Creates a copy of an existing Solr index as well as a reference copy of Solr config set.
+     * 
+     * @param indexToUpgrade Index object to create a copy of
+     * @param context AutopsyService.CaseContext object
+     * @param numCompletedWorkUnits Number of completed progress units so far
+     *
+     * @return
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     */
+    @NbBundle.Messages({
+        "SolrSearch.copyIndex.msg=Copying existing text index",
+        "SolrSearch.copyConfigSet.msg=Copying Solr config set",})
+    String copyIndexAndConfigSet(Index indexToUpgrade, AutopsyService.CaseContext context, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
+        
+        ProgressIndicator progress = context.getProgressIndicator();
+        
+        // Check for cancellation at whatever points are feasible
+        checkCancellation(context);
+        
         // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
-        String newIndexDir = copyExistingIndex(theCase, indexToUpgrade);
+        progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits++);
+        String newIndexDir = copyExistingIndex(context.getCase(), indexToUpgrade);
+
+        // Check for cancellation at whatever points are feasible
+        checkCancellation(context);
 
         // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
+        progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits++);
         createReferenceConfigSetCopy(new File(newIndexDir).getParent());
         
         return newIndexDir;
@@ -163,7 +192,6 @@ class IndexFinder {
                     if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
                         logger.log(Level.WARNING, "Unable to locate KWS config set in order to create a reference copy"); //NON-NLS
                         return;
-                        // ELTODO This is NTH: throw new AutopsyService.AutopsyServiceException("Unable to locate the config set");
                     }
                 }
             }

@@ -49,9 +49,7 @@ public interface AutopsyService {
      * @param context The case context which includes things such as the case, a
      *                progress indicator for the operation, a cancellation
      *                request flag, etc.
-     *
-     * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
+     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     default void openCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
@@ -65,9 +63,7 @@ public interface AutopsyService {
      * @param context The case context which includes things such as the case, a
      *                progress indicator for the operation, a cancellation
      *                request flag, etc.
-     *
-     * @throws
-     * org.sleuthkit.autopsy.corecomponentinterfaces.AutopsyService.AutopsyServiceException
+     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     default void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
