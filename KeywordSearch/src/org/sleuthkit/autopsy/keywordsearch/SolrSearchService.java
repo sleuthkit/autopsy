@@ -18,10 +18,17 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.util.List;
 import java.util.MissingResourceException;
+import java.util.logging.Level;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
@@ -29,8 +36,8 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
-import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.framework.ProgressIndicator;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
@@ -47,12 +54,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 )
 public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
-    private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
-
-    ArtifactTextExtractor extractor = new ArtifactTextExtractor();
+    private static final Logger logger = Logger.getLogger(SolrSearchService.class.getName());
 
     /**
      * Adds an artifact to the keyword search text index as a concantenation of
@@ -77,7 +82,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         try {
             ingester.indexMetaDataOnly(artifact);
-            ingester.indexText(extractor, artifact, null);
+            ingester.indexText(new ArtifactTextExtractor(), artifact, null);
         } catch (Ingester.IngesterException ex) {
             throw new TskCoreException(ex.getCause().getMessage(), ex);
         }
@@ -143,31 +148,17 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     public void deleteTextIndex(String coreName) throws KeywordSearchServiceException {
-        KeywordSearch.getServer().deleteCore(coreName); 
+        KeywordSearch.getServer().deleteCore(coreName);
     }
-        
+
     @Override
     public void close() throws IOException {
     }
 
     /**
-     * Checks whether user has requested to cancel Solr core open/create/upgrade
-     * process. Throws exception if cancellation was requested.
+     * Creates/opens/upgrades the Solr core/text index for a case
      *
-     * @param context CaseContext object
-     *
-     * @throws
-     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
-     */
-    static void checkCancellation(CaseContext context) throws AutopsyServiceException {
-        if (context.cancelRequested()) {
-            throw new AutopsyServiceException("Cancellation requested by user");
-        }
-    }
-
-    /**
-     *
-     * @param context
+     * @param context The case context.
      *
      * @throws
      * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
@@ -180,10 +171,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.openCore.msg=Creating/Opening text index",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
-        /*
-         * Autopsy service providers may not have case-level resources.
-         */
-
         ProgressIndicator progress = context.getProgressIndicator();
         int totalNumProgressUnits = 8;
         int progressUnitsCompleted = 1;
@@ -192,20 +179,22 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         progress.start(Bundle.SolrSearch_findingIndexes_msg(), totalNumProgressUnits);
         IndexFinder indexFinder = new IndexFinder();
         List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
-
-        // Check for cancellation at whatever points are feasible
-        checkCancellation(context);
+        if (context.cancelRequested()) {
+            return;
+        }
 
         // check if index needs upgrade
         Index currentVersionIndex;
         if (indexes.isEmpty()) {
             // new case that doesn't have an existing index. create new index folder
-            progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted++);
+            progressUnitsCompleted++;
+            progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
             currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
             currentVersionIndex.setNewIndex(true);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
-            progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted++);
+            progressUnitsCompleted++;
+            progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
             currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
             if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
@@ -215,8 +204,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     throw new AutopsyServiceException("Unable to find index that can be upgraded to the latest version of Solr");
                 }
 
-                // Check for cancellation at whatever points are feasible
-                checkCancellation(context);
+                if (context.cancelRequested()) {
+                    return;
+                }
 
                 double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
                 double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
@@ -227,11 +217,20 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
                     if (RuntimeProperties.runningWithGUI()) {
                         // pop up a message box to indicate the read-only restrictions.
-                        if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"),
+                        JOptionPane optionPane = new JOptionPane(
                                 NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
-                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                            // case open declined - throw exception
-                            throw new AutopsyServiceException("Case open declined by user");
+                                JOptionPane.WARNING_MESSAGE,
+                                JOptionPane.OK_OPTION);
+                        try {
+                            SwingUtilities.invokeAndWait(() -> {
+                                JDialog dialog = optionPane.createDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"));
+                                dialog.setVisible(true);
+                            });
+                        } catch (InterruptedException ex) {
+                            // Cancelled
+                            return;
+                        } catch (InvocationTargetException ex) {
+                            throw new AutopsyServiceException("Error displaying limited search features warning dialog", ex);
                         }
                     }
                     // proceed with case open
@@ -240,64 +239,109 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // index needs to be upgraded to latest supported version of Solr
                     if (RuntimeProperties.runningWithGUI()) {
                         //pop up a message box to indicate the restrictions on adding additional 
-                        //text and performing regex searches and give the user the option to decline the upgrade
-                        if (!KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"),
+                        //text and performing regex searches
+                        JOptionPane optionPane = new JOptionPane(
                                 NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"),
-                                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                            // upgrade declined - throw exception
-                            throw new AutopsyServiceException("Index upgrade was declined by user");
+                                JOptionPane.WARNING_MESSAGE,
+                                JOptionPane.YES_NO_OPTION);
+                        try {
+                            SwingUtilities.invokeAndWait(() -> {
+                                JDialog dialog = optionPane.createDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"));
+                                dialog.setVisible(true);
+                            });
+                        } catch (InterruptedException ex) {
+                            // Cancelled
+                            return;
+                        } catch (InvocationTargetException ex) {
+                            throw new AutopsyServiceException("Error displaying upgrade confirmation dialog", ex);
+                        }
+                        Object response = optionPane.getValue();
+                        if (JOptionPane.NO_OPTION == (int) response) {
+                            return;
                         }
                     }
 
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    String newIndexDir = indexFinder.copyIndexAndConfigSet(indexToUpgrade, context, progressUnitsCompleted);
+                    String newIndexDirPath = indexFinder.copyIndexAndConfigSet(indexToUpgrade, context, progressUnitsCompleted);
+                    File newIndexDir = new File(newIndexDirPath);
+                    if (context.cancelRequested()) {
+                        try {
+                            if (newIndexDir.exists()) {
+                                FileUtils.deleteDirectory(newIndexDir);
+                            }
+                        } catch (IOException ex) {
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
+                        }
+                        return;
+                    }
                     progressUnitsCompleted += 2; // add progress increments for copying existing index and config set
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDir, indexToUpgrade, context, progressUnitsCompleted);
+                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDirPath, indexToUpgrade, context, progressUnitsCompleted);
+                    if (context.cancelRequested()) {
+                        try {
+                            if (newIndexDir.exists()) {
+                                FileUtils.deleteDirectory(newIndexDir);
+                            }
+                        } catch (IOException ex) {
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
+                        }
+                        return;
+                    }
                     if (currentVersionIndex == null) {
+                        try {
+                            if (newIndexDir.exists()) {
+                                FileUtils.deleteDirectory(newIndexDir);
+                            }
+                        } catch (IOException ex) {
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
+                        }
                         throw new AutopsyServiceException("Unable to upgrade index to the latest version of Solr");
                     }
                 }
             }
         }
 
-        // Check for cancellation at whatever points are feasible
-        checkCancellation(context);
-        
+        if (context.cancelRequested()) {
+            return;
+        }
+
         // open core
         try {
             progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
             KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
-        } catch (Exception ex) {
+        } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
         }
-        
+
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }
 
     /**
      *
      * @param context
-     * @throws org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     *
+     * @throws
+     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
-         * Autopsy service providers may not have case-level resources.
+         * TODO (AUT-2084): The following code KeywordSearch.CaseChangeListener
+         * gambles that any BlackboardResultWriters (SwingWorkers) will complete
+         * in less than roughly two seconds.
          */
+        KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
         try {
-            KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
-            /*
-             * TODO (AUT-2084): The following code
-             * KeywordSearch.CaseChangeListener gambles that any
-             * BlackboardResultWriters (SwingWorkers) will complete in less than
-             * roughly two seconds
-             */
             Thread.sleep(2000);
+        } catch (InterruptedException ex) {
+            logger.log(Level.SEVERE, "Interrupted while waiting for BlackboardResultWriters to terminate", ex);
+        }
+
+        try {
             KeywordSearch.getServer().closeCore();
-        } catch (Exception ex) {
+        } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
     }

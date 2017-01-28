@@ -152,7 +152,7 @@ public class Case {
      */
     private static Case currentCase;
     private static CoordinationService.Lock currentCaseDirLock;
-    private static ExecutorService caseLockingExecutor;
+    private static ExecutorService caseLockingExecutor = Executors.newSingleThreadExecutor();
 
     /*
      * Case instance data.
@@ -161,7 +161,7 @@ public class Case {
     private SleuthkitCase caseDb;
     private SleuthkitErrorReporter sleuthkitErrorReporter;
     private CollaborationMonitor collaborationMonitor;
-    private Services services;
+    private Services caseServices;
     private boolean hasDataSources;
 
     /**
@@ -516,7 +516,7 @@ public class Case {
          * required by the coordination service.
          */
         Case newCase = new Case();
-        Future<Case> future = getCaseLockingExecutor().submit(() -> {
+        Future<Case> future = caseLockingExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == caseType) {
                 newCase.open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
             } else {
@@ -597,6 +597,9 @@ public class Case {
     /**
      * Opens an existing case and makes it the current case.
      *
+     * IMPORTANT: This method should not be called in the event dispatch thread
+     * (EDT).
+     *
      * @param caseMetadataFilePath The path of the case metadata (.aut) file.
      *
      * @throws CaseActionException if there is a problem opening the case. The
@@ -609,25 +612,7 @@ public class Case {
         "Case.progressIndicatorTitle.openingCase=Opening Case",
         "Case.exceptionMessage.failedToReadMetadata=Failed to read metadata."
     })
-
     public static void openAsCurrentCase(String caseMetadataFilePath) throws CaseActionException {
-        /*
-         * If running with the desktop GUI, this needs to be done before any
-         * cases are created or opened so that the application name can be
-         * captured before a case name is added to the title. The main window is
-         * also needed in this method for popping up progress indicator dialogs.
-         *
-         * TODO (JIRA-2231): Make the application name a RuntimeProperties item
-         * set by an Installer.
-         */
-        if (RuntimeProperties.runningWithGUI()) {
-            try {
-                getMainWindowAndAppName();
-            } catch (InterruptedException | InvocationTargetException ex) {
-                throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_cannotLocateMainWindow()), ex);
-            }
-        }
-
         /*
          * If another case is open, close it.
          */
@@ -635,6 +620,9 @@ public class Case {
             closeCurrentCase();
         }
 
+        /*
+         * Read the contents of the case metadata file.
+         */
         CaseMetadata metadata;
         try {
             metadata = new CaseMetadata(Paths.get(caseMetadataFilePath));
@@ -649,6 +637,11 @@ public class Case {
         CancelButtonListener listener = new CancelButtonListener();
         ProgressIndicator progressIndicator;
         if (RuntimeProperties.runningWithGUI()) {
+            try {
+                getMainWindowAndAppName();
+            } catch (InterruptedException | InvocationTargetException ex) {
+                throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_cannotLocateMainWindow()), ex);
+            }
             progressIndicator = new ModalDialogProgressIndicator(
                     mainFrame,
                     Bundle.Case_progressIndicatorTitle_openingCase(),
@@ -658,19 +651,19 @@ public class Case {
         } else {
             progressIndicator = new LoggingProgressIndicator();
         }
-        Case caseToOpen = new Case();
-        progressIndicator.start(Bundle.Case_progressMessage_preparing());
 
         /*
-         * Opening a case is always done in the same non-UI thread that will be
-         * used later to close the case. If the case is a multi-user case, this
-         * ensures that case directory lock that is held as long as the case is
-         * open is released in the same thread in which it was acquired, as is
-         * required by the coordination service.
+         * Opening the case in the same thread that will be used later to close
+         * the case. If the case is a multi-user case, this ensures that case
+         * directory lock that is held as long as the case is open is released
+         * in the same thread in which it was acquired, as is required by the
+         * coordination service.
          */
         CaseType caseType = metadata.getCaseType();
         String caseName = metadata.getCaseName();
-        Future<Case> future = getCaseLockingExecutor().submit(() -> {
+        Case caseToOpen = new Case();
+        progressIndicator.start(Bundle.Case_progressMessage_preparing());
+        Future<Case> future = caseLockingExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == caseType) {
                 caseToOpen.open(metadata, progressIndicator);
             } else {
@@ -803,7 +796,7 @@ public class Case {
          * open is released in the same thread in which it was acquired, as is
          * required by the coordination service.
          */
-        Future<Void> future = getCaseLockingExecutor().submit(() -> {
+        Future<Void> future = caseLockingExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == currentCase.getCaseType()) {
                 currentCase.close(progressIndicator);
             } else {
@@ -918,7 +911,7 @@ public class Case {
         }
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
 
-        Future<Void> future = getCaseLockingExecutor().submit(() -> {
+        Future<Void> future = caseLockingExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 cleanupDeletedCase(metadata, progressIndicator);
             } else {
@@ -1122,7 +1115,7 @@ public class Case {
     /**
      * Gets a reference to the main window of the desktop application to use to
      * parent pop ups and initializes the application name for use in changing
-     * the main window title. Should be called BEFORE any case is opened or
+     * the main window title. MUST be called BEFORE any case is opened or
      * created.
      */
     private static void getMainWindowAndAppName() throws InterruptedException, InvocationTargetException {
@@ -1394,19 +1387,6 @@ public class Case {
     }
 
     /**
-     * Get the single thread executor for the current case, creating it if
-     * necessary.
-     *
-     * @return The executor
-     */
-    private static ExecutorService getCaseLockingExecutor() {
-        if (null == caseLockingExecutor) {
-            caseLockingExecutor = Executors.newSingleThreadExecutor();
-        }
-        return caseLockingExecutor;
-    }
-
-    /**
      * Empties the temp subdirectory for the current case.
      */
     private static void clearTempSubDir(String tempSubDirPath) {
@@ -1440,7 +1420,7 @@ public class Case {
      * @return The case services manager.
      */
     public Services getServices() {
-        return services;
+        return caseServices;
     }
 
     /**
@@ -2001,12 +1981,10 @@ public class Case {
         "Case.progressMessage.switchingLogDirectory=Switching log directory...",
         "Case.progressMessage.settingUpTskErrorReporting=Setting up SleuthKit error reporting...",
         "Case.progressMessage.openingCaseLevelServices=Opening case-level services...",
-        "Case.progressMessage.openingApplicationServiceResources=Opening case-specific application service resources...",
+        "Case.progressMessage.openingApplicationServiceResources=Opening application service case resources...",
         "Case.progressMessage.settingUpNetworkCommunications=Setting up network communications...",
-        "# {0} - service name", "# {1} - exception message", "Case.servicesException.serviceResourcesOpenError=Could not open case resources for {0} service: {1}",
-        "# {0} - service name", "Case.servicesException.notificationTitle={0} Service Error"
     })
-    private void open(ProgressIndicator progressIndicator) {
+    private void open(ProgressIndicator progressIndicator) throws CaseActionException {
         /*
          * Switch to writing to the application logs in the logs subdirectory.
          */
@@ -2030,35 +2008,14 @@ public class Case {
          * Open the case-level services.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_openingCaseLevelServices());
-        this.services = new Services(this.caseDb);
+        this.caseServices = new Services(this.caseDb);
 
         /*
          * Allow any registered application services to open any resources
          * specific to this case.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_openingApplicationServiceResources());
-        AutopsyService.CaseContext context = new AutopsyService.CaseContext(this, progressIndicator);
-        if (RuntimeProperties.runningWithGUI()) {
-            ActionListener buttonListener = ((ModalDialogProgressIndicator)progressIndicator).getButtonListener();
-            if (null != buttonListener) {
-                ((CancelButtonListener)buttonListener).setCaseContext(context);
-            }
-        }
-        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
-            try {
-                service.openCaseResources(context);
-            } catch (AutopsyService.AutopsyServiceException ex) {
-                /*
-                 * The case-specific application service resources are not
-                 * essential. Log an error and notify the user, but do not
-                 * throw.
-                 */
-                Case.logger.log(Level.SEVERE, String.format("%s service failed to open case resources", service.getServiceName()), ex);
-                if (RuntimeProperties.runningWithGUI()) {
-                    SwingUtilities.invokeLater(() -> MessageNotifyUtil.Notify.error(Bundle.Case_servicesException_notificationTitle(service.getServiceName()), Bundle.Case_servicesException_serviceResourcesOpenError(service.getServiceName(), ex.getLocalizedMessage())));
-                }
-            }
-        }
+        openAppServiceCaseResources();
 
         /*
          * If this case is a multi-user case, set up for communication with
@@ -2081,7 +2038,91 @@ public class Case {
                 }
             }
         }
+    }
 
+    @Messages({
+        "# {0} - serviceName", "Case.serviceTaskProgressIndicator.title={0} Opening Case Resources",
+        "# {0} - service name", "Case.servicesException.notificationTitle={0} Error",
+        "# {0} - service name", "Case.servicesException.serviceResourcesOpenCancelled=Opening case resources for {0} cancelled",
+        "# {0} - service name", "# {1} - exception message", "Case.servicesException.serviceResourcesOpenError=Could not open case resources for {0} service: {1}"
+    })
+    private void openAppServiceCaseResources() throws CaseActionException {
+        /*
+         * Allow any registered application services to open any resources
+         * specific to this case. Each service gets its own independently
+         * cancellable task, and thus its own task progress indicator.
+         */
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        for (AutopsyService service : Lookup.getDefault().lookupAll(AutopsyService.class)) {
+            CancelButtonListener buttonListener = new CancelButtonListener();
+            ProgressIndicator progressIndicator;
+            if (RuntimeProperties.runningWithGUI()) {
+                progressIndicator = new ModalDialogProgressIndicator(
+                        mainFrame,
+                        Bundle.Case_serviceTaskProgressIndicator_title(service.getServiceName()),
+                        new String[]{Bundle.Case_progressIndicatorCancelButton_label()},
+                        Bundle.Case_progressIndicatorCancelButton_label(),
+                        buttonListener);
+            } else {
+                progressIndicator = new LoggingProgressIndicator();
+            }
+            progressIndicator.start(Bundle.Case_progressMessage_preparing());
+            AutopsyService.CaseContext context = new AutopsyService.CaseContext(this, progressIndicator);
+            if (RuntimeProperties.runningWithGUI()) {
+                buttonListener.setCaseContext(context);
+            }
+            Future<Void> future = executor.submit(() -> {
+                service.openCaseResources(context);
+                return null;
+            });
+            if (RuntimeProperties.runningWithGUI()) {
+                buttonListener.setCaseActionFuture(future);
+                SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(true));
+            }            
+            try {
+                // RJCTODO: Logging?
+                future.get();
+            } catch (InterruptedException ex) {
+                /*
+                 * RJCTODO: Disable/enable button on main progress indicator
+                 */
+                Case.logger.log(Level.SEVERE, String.format("Unexpected interrupt while waiting on %s service to open case resources", service.getServiceName()), ex);
+            
+            } catch (CancellationException ex) {
+                /*
+                 * The case-specific application service resources are not
+                 * essential. Log an error and notify the user if running the
+                 * desktop GUI, but do not throw.
+                 */
+                Case.logger.log(Level.WARNING, String.format("%s service opening of case resources cancelled", service.getServiceName()));
+                if (RuntimeProperties.runningWithGUI()) {
+                    SwingUtilities.invokeLater(() -> MessageNotifyUtil.Notify.warn(
+                            Bundle.Case_servicesException_notificationTitle(service.getServiceName()), 
+                            Bundle.Case_servicesException_serviceResourcesOpenCancelled(service.getServiceName())));
+                }
+            } catch (ExecutionException ex) {
+                /*
+                 * The case-specific application service resources are not
+                 * essential. Log an error and notify the user if running the
+                 * desktop GUI, but do not throw.
+                 */
+                Case.logger.log(Level.SEVERE, String.format("%s service failed to open case resources", service.getServiceName()), ex);
+                if (RuntimeProperties.runningWithGUI()) {
+                    SwingUtilities.invokeLater(() -> MessageNotifyUtil.Notify.error(
+                            Bundle.Case_servicesException_notificationTitle(service.getServiceName()), 
+                            Bundle.Case_servicesException_serviceResourcesOpenError(service.getServiceName(), ex.getLocalizedMessage())));
+                }
+            } finally {
+                progressIndicator.finish(Bundle.Case_progressMessage_finshing());
+                if (RuntimeProperties.runningWithGUI()) {
+                    SwingUtilities.invokeLater(() -> ((ModalDialogProgressIndicator) progressIndicator).setVisible(false));
+                }
+            }
+        }
+        /*
+         * No tasks left, simply shut down the executor.
+         */
+        executor.shutdown();
     }
 
     /**
@@ -2099,7 +2140,9 @@ public class Case {
         "Case.progressMessage.closingCaseDatabase=Closing case database...",
         "Case.progressMessage.tearingDownTskErrorReporting=Tearing down SleuthKit error reporting..."
     })
-    private void close(ProgressIndicator progressIndicator) {
+
+    private void close(ProgressIndicator progressIndicator
+    ) {
         /*
          * Cancel all ingest jobs.
          *

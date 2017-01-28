@@ -32,19 +32,18 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
+import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.framework.ProgressIndicator;
-import static org.sleuthkit.autopsy.keywordsearch.SolrSearchService.checkCancellation;
 
 /**
  * This class handles the task of finding and identifying KWS index folders.
  */
 class IndexFinder {
 
-    private static final Logger logger = Logger.getLogger(IndexFinder.class.getName()); 
+    private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
     private final UNCPathUtilities uncPathUtilities;
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
@@ -55,7 +54,7 @@ class IndexFinder {
     // If SOLR_HOME environment variable doesn't exist, try these relative paths to find Solr config sets:
     private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
     private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
-    
+
     IndexFinder() {
         uncPathUtilities = new UNCPathUtilities();
     }
@@ -78,7 +77,7 @@ class IndexFinder {
         }
         return null;
     }
-    
+
     static Index createLatestVersionIndexDir(Case theCase) {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
         // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
@@ -86,13 +85,15 @@ class IndexFinder {
         targetDirPath.mkdirs();
         return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION);
     }
-    
+
     static Index identifyIndexToUpgrade(List<Index> allIndexes) {
-        /* NOTE: All of the following paths are valid multi-user index paths:
-            (Solr 4, schema 1.8) X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+        /*
+         * NOTE: All of the following paths are valid multi-user index paths:
+         * (Solr 4, schema 1.8)
+         * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
          */
         Index bestCandidateIndex = null;
         double solrVerFound = 0.0;
@@ -105,20 +106,22 @@ class IndexFinder {
                     bestCandidateIndex = index;
                     solrVerFound = NumberUtils.toDouble(index.getSolrVersion());
                     schemaVerFound = NumberUtils.toDouble(index.getSchemaVersion());
-                }                
+                }
             }
         }
         return bestCandidateIndex;
     }
 
     /**
-     * Creates a copy of an existing Solr index as well as a reference copy of Solr config set.
-     * 
-     * @param indexToUpgrade Index object to create a copy of
-     * @param context AutopsyService.CaseContext object
+     * Creates a copy of an existing Solr index as well as a reference copy of
+     * Solr config set.
+     *
+     * @param indexToUpgrade        Index object to create a copy of
+     * @param context               AutopsyService.CaseContext object
      * @param numCompletedWorkUnits Number of completed progress units so far
      *
-     * @return
+     * @return The absolute path of the new Solr index directory or null if
+     *         cancelled.
      *
      * @throws
      * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
@@ -126,25 +129,45 @@ class IndexFinder {
     @NbBundle.Messages({
         "SolrSearch.copyIndex.msg=Copying existing text index",
         "SolrSearch.copyConfigSet.msg=Copying Solr config set",})
-    String copyIndexAndConfigSet(Index indexToUpgrade, AutopsyService.CaseContext context, int numCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
-        
-        ProgressIndicator progress = context.getProgressIndicator();
-        
-        // Check for cancellation at whatever points are feasible
-        checkCancellation(context);
-        
-        // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
-        progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits++);
-        String newIndexDir = copyExistingIndex(context.getCase(), indexToUpgrade);
+    String copyIndexAndConfigSet(Index indexToUpgrade, AutopsyService.CaseContext context, int startNumCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
 
-        // Check for cancellation at whatever points are feasible
-        checkCancellation(context);
+        int numCompletedWorkUnits = startNumCompletedWorkUnits;
+        ProgressIndicator progress = context.getProgressIndicator();
+
+        if (context.cancelRequested()) {
+            return null;
+        }
+
+        // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
+        numCompletedWorkUnits++;
+        progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits);
+        String newIndexDirPath = copyExistingIndex(context.getCase(), indexToUpgrade);
+        File newIndexDir = new File(newIndexDirPath);
+
+        if (context.cancelRequested()) {
+            try {
+                FileUtils.deleteDirectory(newIndexDir);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
+            }
+            return null;
+        }
 
         // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
-        progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits++);
-        createReferenceConfigSetCopy(new File(newIndexDir).getParent());
-        
-        return newIndexDir;
+        numCompletedWorkUnits++;
+        progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits);
+        createReferenceConfigSetCopy(newIndexDir.getParent());
+
+        if (context.cancelRequested()) {
+            try {
+                FileUtils.deleteDirectory(newIndexDir);
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
+            }
+            return null;
+        }
+
+        return newIndexDirPath;
     }
 
     private static String copyExistingIndex(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
@@ -209,9 +232,9 @@ class IndexFinder {
     }
 
     /**
-     * Find index directory location(s) for the case. This is done via subdirectory
-     * search of all existing "ModuleOutput/node_name/keywordsearch/data/"
-     * folders.
+     * Find index directory location(s) for the case. This is done via
+     * subdirectory search of all existing
+     * "ModuleOutput/node_name/keywordsearch/data/" folders.
      *
      * @param theCase the case to get index dir for
      *
@@ -223,11 +246,12 @@ class IndexFinder {
         if (theCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             // multi user cases contain a subfolder for each node that participated in case ingest or review.
             // Any one (but only one!) of those subfolders may contain the actual index.
-            /* NOTE: All of the following paths are valid multi-user index paths:
-            X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+            /*
+             * NOTE: All of the following paths are valid multi-user index
+             * paths: X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
              */
 
             // get a list of all folder's contents
@@ -236,7 +260,7 @@ class IndexFinder {
                 // decipher "ModuleOutput" directory name from module output path 
                 // (e.g. X:\Case\ingest4\ModuleOutput\) because there is no other way to get it...
                 String moduleOutDirName = new File(theCase.getModuleDirectory()).getName();
-                
+
                 // scan all topLevelOutputDir subfolders for presence of non-empty "/ModuleOutput/keywordsearch/data/" folder
                 for (File item : contents) {
                     File path = Paths.get(item.getAbsolutePath(), moduleOutDirName, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
@@ -248,11 +272,12 @@ class IndexFinder {
             }
         } else {
             // single user case
-            /* NOTE: All of the following paths are valid single user index paths:
-            X:\Case\ModuleOutput\keywordsearch\data\index
-            X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-            X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-            X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+            /*
+             * NOTE: All of the following paths are valid single user index
+             * paths: X:\Case\ModuleOutput\keywordsearch\data\index
+             * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+             * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+             * X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
              */
             File path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
             // must be a non-empty directory
@@ -276,13 +301,15 @@ class IndexFinder {
         }
         return indexes;
     }
-    
+
     String getSolrVersionFromIndexPath(String path) {
-        /* NOTE: All of the following paths are valid multi-user index paths:
-            (Solr 4, schema 1.8) X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+        /*
+         * NOTE: All of the following paths are valid multi-user index paths:
+         * (Solr 4, schema 1.8)
+         * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
          */
         File file = new File(path);
         // sanity check - must be "index" folder
@@ -294,18 +321,20 @@ class IndexFinder {
         if (parentFolderName.equals(KWS_DATA_FOLDER_NAME)) {
             // this is a Solr4 path, e.g. X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
             return "4";
-        } 
-        
+        }
+
         // extract Solr version if name matches "solrX_schema_Y" format
         return getSolrVersionFromIndexFolderName(parentFolderName);
     }
-    
+
     String getSchemaVersionFromIndexPath(String path) {
-        /* NOTE: All of the following paths are valid multi-user index paths:
-            (Solr 4, schema 1.8) X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-            X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+        /*
+         * NOTE: All of the following paths are valid multi-user index paths:
+         * (Solr 4, schema 1.8)
+         * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
          */
         File file = new File(path);
         // sanity check - must be "index" folder
@@ -317,11 +346,11 @@ class IndexFinder {
         if (parentFolderName.equals(KWS_DATA_FOLDER_NAME)) {
             // this is a Solr 4 schema 1.8 path, e.g. X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
             return "1.8";
-        } 
-        
+        }
+
         // extract schema version if name matches "solrX_schema_Y" format
         return getSchemaVersionFromIndexFolderName(parentFolderName);
-    }    
+    }
 
     String convertPathToUNC(String indexDir) {
         if (uncPathUtilities == null) {
@@ -362,15 +391,16 @@ class IndexFinder {
     }
 
     private static List<String> containsValidIndexFolders(String path) {
-        /* NOTE: All of the following paths are valid index paths:
-        X:\Case\ModuleOutput\keywordsearch\data\index
-        X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-        X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-        X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-        X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+        /*
+         * NOTE: All of the following paths are valid index paths:
+         * X:\Case\ModuleOutput\keywordsearch\data\index
+         * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+         * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+         * X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
          */
 
         List<String> indexFolders = new ArrayList<>();
@@ -415,7 +445,7 @@ class IndexFinder {
         Matcher m = INDEX_FOLDER_NAME_PATTERN.matcher(inputString);
         return m.find();
     }
-    
+
     /**
      * Gets Solr version number if index folder name matches the standard
      *
@@ -430,7 +460,7 @@ class IndexFinder {
         }
         return "";
     }
-    
+
     /**
      * Gets Solr schema version number if index folder name matches the standard
      *
@@ -444,5 +474,5 @@ class IndexFinder {
             return m.group(2);
         }
         return "";
-    }     
+    }
 }
