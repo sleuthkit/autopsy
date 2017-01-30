@@ -268,13 +268,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
                     String newIndexDirPath = indexFinder.copyIndexAndConfigSet(indexToUpgrade, context, progressUnitsCompleted);
-                    File newIndexDir = new File(newIndexDirPath);
-                    File newindexVersionDir = newIndexDir.getParentFile();
+                    File newIndexVersionDir = new File(newIndexDirPath).getParentFile();
                     if (context.cancelRequested()) {
                         try {
-                            FileUtils.deleteDirectory(newindexVersionDir);
+                            FileUtils.deleteDirectory(newIndexVersionDir);
                         } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newindexVersionDir), ex);
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
                         }
                         return;
                     }
@@ -285,9 +284,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDirPath, indexToUpgrade, context, progressUnitsCompleted);
                     if (currentVersionIndex == null) {
                         try {
-                            FileUtils.deleteDirectory(newindexVersionDir);
+                            FileUtils.deleteDirectory(newIndexVersionDir);
                         } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newindexVersionDir), ex);
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
                         }
                     }
                 }

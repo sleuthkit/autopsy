@@ -50,7 +50,7 @@ class IndexFinder {
     private static final String INDEX_FOLDER_NAME = "index";
     private static final String CURRENT_SOLR_VERSION = "6";
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
-    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr(\\d{1,2})_schema_(\\d{1,2}\\.\\d{1,2})$");
+    private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr(\\d{1,2})_schema(\\d{1,2}\\.\\d{1,2})$");
     // If SOLR_HOME environment variable doesn't exist, try these relative paths to find Solr config sets:
     private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
     private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
@@ -68,7 +68,7 @@ class IndexFinder {
     }
 
     static Index findLatestVersionIndexDir(List<Index> allIndexes) {
-        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
+        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + CURRENT_SOLR_SCHEMA_VERSION;
         for (Index index : allIndexes) {
             String path = index.getIndexPath();
             if (path.contains(indexFolderName)) {
@@ -79,8 +79,8 @@ class IndexFinder {
     }
 
     static Index createLatestVersionIndexDir(Case theCase) {
-        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + CURRENT_SOLR_SCHEMA_VERSION;
-        // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
+        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + CURRENT_SOLR_SCHEMA_VERSION;
+        // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
         File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
         targetDirPath.mkdirs();
         return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION);
@@ -91,9 +91,9 @@ class IndexFinder {
          * NOTE: All of the following paths are valid multi-user index paths:
          * (Solr 4, schema 1.8)
          * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema2.0\index
          */
         Index bestCandidateIndex = null;
         double solrVerFound = 0.0;
@@ -138,7 +138,7 @@ class IndexFinder {
             return null;
         }
 
-        // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schema_Y/index
+        // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schemaY/index
         numCompletedWorkUnits++;
         progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits);
         String newIndexDirPath = copyExistingIndex(context.getCase(), indexToUpgrade);
@@ -148,7 +148,7 @@ class IndexFinder {
             return null;
         }
 
-        // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schema_Y/configset
+        // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schemaY/configset
         numCompletedWorkUnits++;
         progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits);
         createReferenceConfigSetCopy(newIndexDir.getParent());
@@ -162,9 +162,9 @@ class IndexFinder {
 
     private static String copyExistingIndex(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
         // folder name for the upgraded index should be latest Solr version BUT schema verion of the existing index
-        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema_" + indexToUpgrade.getSchemaVersion();
+        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + indexToUpgrade.getSchemaVersion();
         try {
-            // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schema_Y\index"
+            // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
             File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
             if (targetDirPath.exists()) {
                 // targetDirPath should not exist, at least the target directory should be empty
@@ -239,9 +239,9 @@ class IndexFinder {
             /*
              * NOTE: All of the following paths are valid multi-user index
              * paths: X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema2.0\index
+             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema1.8\index
+             * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema2.0\index
              */
 
             // get a list of all folder's contents
@@ -265,9 +265,9 @@ class IndexFinder {
             /*
              * NOTE: All of the following paths are valid single user index
              * paths: X:\Case\ModuleOutput\keywordsearch\data\index
-             * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-             * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-             * X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+             * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema2.0\index
+             * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema1.8\index
+             * X:\Case\ModuleOutput\keywordsearch\data\solr7_schema2.0\index
              */
             File path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME).toFile(); //NON-NLS
             // must be a non-empty directory
@@ -297,9 +297,9 @@ class IndexFinder {
          * NOTE: All of the following paths are valid multi-user index paths:
          * (Solr 4, schema 1.8)
          * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema2.0\index
          */
         File file = new File(path);
         // sanity check - must be "index" folder
@@ -313,7 +313,7 @@ class IndexFinder {
             return "4";
         }
 
-        // extract Solr version if name matches "solrX_schema_Y" format
+        // extract Solr version if name matches "solrX_schemaY" format
         return getSolrVersionFromIndexFolderName(parentFolderName);
     }
 
@@ -322,9 +322,9 @@ class IndexFinder {
          * NOTE: All of the following paths are valid multi-user index paths:
          * (Solr 4, schema 1.8)
          * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema2.0\index
          */
         File file = new File(path);
         // sanity check - must be "index" folder
@@ -338,7 +338,7 @@ class IndexFinder {
             return "1.8";
         }
 
-        // extract schema version if name matches "solrX_schema_Y" format
+        // extract schema version if name matches "solrX_schemaY" format
         return getSchemaVersionFromIndexFolderName(parentFolderName);
     }
 
@@ -384,13 +384,13 @@ class IndexFinder {
         /*
          * NOTE: All of the following paths are valid index paths:
          * X:\Case\ModuleOutput\keywordsearch\data\index
-         * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-         * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-         * X:\Case\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema2.0\index
+         * X:\Case\ModuleOutput\keywordsearch\data\solr6_schema1.8\index
+         * X:\Case\ModuleOutput\keywordsearch\data\solr7_schema2.0\index
          * X:\Case\ingest4\ModuleOutput\keywordsearch\data\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_2.0\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema_1.8\index
-         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema_2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema2.0\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr6_schema1.8\index
+         * X:\Case\ingest4\ModuleOutput\keywordsearch\data\solr7_schema2.0\index
          */
 
         List<String> indexFolders = new ArrayList<>();
@@ -404,7 +404,7 @@ class IndexFinder {
                 continue;
             }
 
-            // check if the folder matches "solrX_schema_Y" patern
+            // check if the folder matches "solrX_schemaY" patern
             if (matchesIndexFolderNameStandard(item.getName())) {
                 File nextLevelIndexFolder = Paths.get(item.getAbsolutePath(), INDEX_FOLDER_NAME).toFile();
                 // look for "index" sub-folder one level deeper
