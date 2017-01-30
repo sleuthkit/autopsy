@@ -39,8 +39,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TYPE;
 
 /**
- * A panel that allows a user to create and edit files set
- * membership rules.
+ * A panel that allows a user to create and edit files set membership rules.
  */
 final class FilesSetRulePanel extends javax.swing.JPanel {
 
@@ -67,7 +66,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * Constructs a files set rule panel in create rule mode.
      */
     FilesSetRulePanel(JButton okButton, JButton cancelButton, PANEL_TYPE panelType) {
-        initComponents(); 
+        initComponents();
         populateComponentsWithDefaultValues();
         if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
@@ -77,7 +76,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             equalitySymbolComboBox.setVisible(false);
             fileSizeSpinner.setVisible(false);
             jLabel1.setVisible(false);
-            
             allRadioButton.setSelected(true);  //Force selection of the all option when doing File Ingest Filter Rules
             filesRadioButton.setVisible(false);
             dirsRadioButton.setVisible(false);
@@ -87,7 +85,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         } else {
             populateMimeTypesComboBox();
         }
-      
+
         this.setButtons(okButton, cancelButton);
     }
 
@@ -305,8 +303,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     /**
      * Returns whether or not the data entered in the panel constitutes a valid
-     * files set membership rule definition, displaying a dialog
-     * explaining the deficiency if the definition is invalid.
+     * files set membership rule definition, displaying a dialog explaining the
+     * deficiency if the definition is invalid.
      *
      * @return True if the definition is valid, false otherwise.
      */
