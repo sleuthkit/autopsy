@@ -173,6 +173,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.findingIndexes.msg=Looking for existing text index directories",
         "SolrSearch.creatingNewIndex.msg=Creating new text index",
         "SolrSearch.indentifyingIndex.msg=Identifying text index for upgrade",
+        "SolrSearch.copyIndex.msg=Copying existing text index",
         "SolrSearch.openCore.msg=Creating/Opening text index",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
@@ -267,7 +268,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     }
 
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    String newIndexDirPath = indexFinder.copyIndexAndConfigSet(indexToUpgrade, context, progressUnitsCompleted);
+                    progressUnitsCompleted++;
+                    progress.progress(Bundle.SolrSearch_copyIndex_msg(), progressUnitsCompleted);
+                    String newIndexDirPath = IndexFinder.copyExistingIndex(indexToUpgrade, context);
                     File newIndexVersionDir = new File(newIndexDirPath).getParentFile();
                     if (context.cancelRequested()) {
                         try {
@@ -277,7 +280,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         }
                         return;
                     }
-                    progressUnitsCompleted ++; // add progress increment for copying existing index
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();

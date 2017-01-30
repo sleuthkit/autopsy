@@ -25,18 +25,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.framework.AutopsyService;
-import org.sleuthkit.autopsy.framework.ProgressIndicator;
 
 /**
  * This class handles the task of finding and identifying KWS index folders.
@@ -51,9 +47,6 @@ class IndexFinder {
     private static final String CURRENT_SOLR_VERSION = "6";
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
     private static final Pattern INDEX_FOLDER_NAME_PATTERN = Pattern.compile("^solr(\\d{1,2})_schema(\\d{1,2}\\.\\d{1,2})$");
-    // If SOLR_HOME environment variable doesn't exist, try these relative paths to find Solr config sets:
-    private static final String RELATIVE_PATH_TO_CONFIG_SET = "autopsy/solr/solr/configsets/";
-    private static final String RELATIVE_PATH_TO_CONFIG_SET_2 = "release/solr/solr/configsets/";
 
     IndexFinder() {
         uncPathUtilities = new UNCPathUtilities();
@@ -113,64 +106,22 @@ class IndexFinder {
     }
 
     /**
-     * Creates a copy of an existing Solr index as well as a reference copy of
-     * Solr config set. 
+     * Creates a copy of an existing Solr index. 
      *
      * @param indexToUpgrade        Index object to create a copy of
      * @param context               AutopsyService.CaseContext object
-     * @param numCompletedWorkUnits Number of completed progress units so far
      *
-     * @return The absolute path of the new Solr index directory or null if
-     *         cancelled.
+     * @return The absolute path of the new Solr index directory
      *
      * @throws
      * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
      */
-    @NbBundle.Messages({
-        "SolrSearch.copyIndex.msg=Copying existing text index",
-        "SolrSearch.copyConfigSet.msg=Copying Solr config set",})
-    String copyIndexAndConfigSet(Index indexToUpgrade, AutopsyService.CaseContext context, int startNumCompletedWorkUnits) throws AutopsyService.AutopsyServiceException {
-
-        int numCompletedWorkUnits = startNumCompletedWorkUnits;
-        ProgressIndicator progress = context.getProgressIndicator();
-
-        if (context.cancelRequested()) {
-            return null;
-        }
-
-        // Copy the "old" index into ModuleOutput/keywordsearch/data/solrX_schemaY/index
-        numCompletedWorkUnits++;
-        progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits);
-        String newIndexDirPath = copyExistingIndex(context.getCase(), indexToUpgrade);
-        if (context.cancelRequested()) {
-            return null;
-        }
-
-        // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schemaY/configset
-        /* NOTE: this functionality is NTH. It does find an existing Solr config set and creates
-        a reference copy of it. However, in all likelihood the found config set is going to be from 
-        the latest verison of Solr and schema. Therefore there is no use in creating a copy of it for the existing "old" index. 
-        The idea was to find and save a copy of the "old" config set so that it could potentially be used to load the "old" index. 
-        Therefore we decided to comment it out.
-        
-        numCompletedWorkUnits++;
-        File newIndexDir = new File(newIndexDirPath);
-        progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits);
-        createReferenceConfigSetCopy(newIndexDir.getParent());
-
-        if (context.cancelRequested()) {
-            return null;
-        }*/
-
-        return newIndexDirPath;
-    }
-
-    private static String copyExistingIndex(Case theCase, Index indexToUpgrade) throws AutopsyService.AutopsyServiceException {
+    static String copyExistingIndex(Index indexToUpgrade, AutopsyService.CaseContext context) throws AutopsyService.AutopsyServiceException {
         // folder name for the upgraded index should be latest Solr version BUT schema verion of the existing index
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + indexToUpgrade.getSchemaVersion();
         try {
             // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
-            File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
+            File targetDirPath = Paths.get(context.getCase().getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
             if (targetDirPath.exists()) {
                 // targetDirPath should not exist, at least the target directory should be empty
                 List<File> contents = getAllContentsInFolder(targetDirPath.getAbsolutePath());
@@ -184,46 +135,6 @@ class IndexFinder {
             return targetDirPath.getAbsolutePath();
         } catch (AutopsyService.AutopsyServiceException | IOException ex) {
             throw new AutopsyService.AutopsyServiceException("Error occurred while creating a copy of keyword search index", ex);
-        }
-    }
-
-    // ELTODO This functionality is NTH:
-    private void createReferenceConfigSetCopy(String indexPath) {
-        File pathToConfigSet = new File("");
-        try {
-            // See if there is SOLR_HOME environment variable first
-            String solrHome = System.getenv("SOLR_HOME");
-            if (solrHome != null && !solrHome.isEmpty()) {
-                // ELTODO pathToConfigSet = 
-                return; // ELTODO remove
-            } else {
-                // if there is no SOLR_HOME:
-                // this will only work for Windows OS
-                if (!PlatformUtil.isWindowsOS()) {
-                    throw new AutopsyService.AutopsyServiceException("Creating a reference config set copy is currently a Windows-only feature");
-                }
-                // config set should be located in "C:/some/directory/AutopsyXYZ/autopsy/solr/solr/configsets/"
-                pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET).toFile();
-                if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
-                    // try the "release/solr/solr/configsets/" folder instead
-                    pathToConfigSet = Paths.get(System.getProperty("user.dir"), RELATIVE_PATH_TO_CONFIG_SET_2).toFile();
-                    if (!pathToConfigSet.exists() || !pathToConfigSet.isDirectory()) {
-                        logger.log(Level.WARNING, "Unable to locate KWS config set in order to create a reference copy"); //NON-NLS
-                        return;
-                    }
-                }
-            }
-            File targetDirPath = new File(indexPath); //NON-NLS
-            if (!targetDirPath.exists()) {
-                targetDirPath.mkdirs();
-            }
-            // copy config set 
-            if (!pathToConfigSet.getAbsolutePath().isEmpty() && pathToConfigSet.exists()) {
-                FileUtils.copyDirectory(pathToConfigSet, new File(indexPath));
-            }
-        } catch (AutopsyService.AutopsyServiceException | IOException ex) {
-            // This feature is a NTH so don't re-throw 
-            logger.log(Level.SEVERE, "Exception while creating a reference copy of Solr config set"); //NON-NLS
         }
     }
 
