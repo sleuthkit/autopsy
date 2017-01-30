@@ -97,6 +97,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             this.jLabel8.setVisible(false);
             this.equalitySignComboBox.setVisible(false);
             this.ignoreKnownFilesCheckbox.setVisible(false);
+            this.jLabel2.setVisible(false);
+            this.filesRadioButton.setVisible(false);
+            this.dirsRadioButton.setVisible(false);
+            this.allRadioButton.setVisible(false);
             this.jTextArea1.setText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ingest.jTextArea1.text")); // NOI18N
             org.openide.awt.Mnemonics.setLocalizedText(setsListLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ingest.setsListLabel.text")); // NOI18N
             org.openide.awt.Mnemonics.setLocalizedText(editSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ingest.editSetButton.text")); // NOI18N
@@ -331,7 +335,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         FilesSetDefsPanel.this.dirsRadioButton.setSelected(true);
                         break;
                     case FILES_AND_DIRECTORIES:
-                        FilesSetDefsPanel.this.bothRadioButton.setSelected(true);
+                        FilesSetDefsPanel.this.allRadioButton.setSelected(true);
                         break;
                 }
                 if (pathCondition != null) {
@@ -544,7 +548,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         fileNameRegexCheckbox = new javax.swing.JCheckBox();
         separator = new javax.swing.JSeparator();
         setsListLabel = new javax.swing.JLabel();
-        bothRadioButton = new javax.swing.JRadioButton();
+        allRadioButton = new javax.swing.JRadioButton();
         deleteSetButton = new javax.swing.JButton();
         deleteRuleButton = new javax.swing.JButton();
         newSetButton = new javax.swing.JButton();
@@ -673,10 +677,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setsListLabel.setFont(setsListLabel.getFont().deriveFont(setsListLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(setsListLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.setsListLabel.text")); // NOI18N
 
-        typeButtonGroup.add(bothRadioButton);
-        bothRadioButton.setFont(bothRadioButton.getFont().deriveFont(bothRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(bothRadioButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.bothRadioButton.text")); // NOI18N
-        bothRadioButton.setEnabled(false);
+        typeButtonGroup.add(allRadioButton);
+        allRadioButton.setFont(allRadioButton.getFont().deriveFont(allRadioButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(allRadioButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.allRadioButton.text")); // NOI18N
+        allRadioButton.setEnabled(false);
 
         deleteSetButton.setFont(deleteSetButton.getFont().deriveFont(deleteSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
@@ -785,7 +789,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(dirsRadioButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(bothRadioButton))
+                        .addComponent(allRadioButton))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(105, 105, 105)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -895,7 +899,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                     .addComponent(jLabel2)
                                     .addComponent(filesRadioButton)
                                     .addComponent(dirsRadioButton)
-                                    .addComponent(bothRadioButton))
+                                    .addComponent(allRadioButton))
                                 .addGap(16, 16, 16)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel3)
@@ -997,7 +1001,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JRadioButton bothRadioButton;
+    private javax.swing.JRadioButton allRadioButton;
     private javax.swing.JButton deleteRuleButton;
     private javax.swing.JButton deleteSetButton;
     private javax.swing.JRadioButton dirsRadioButton;

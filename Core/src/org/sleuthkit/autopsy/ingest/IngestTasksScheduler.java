@@ -370,7 +370,7 @@ final class IngestTasksScheduler {
                             // first appearance of this task in the queues.
                             this.tasksInProgress.add(childTask);
                             this.directoryTasks.add(childTask);
-                        } else if (shouldEnqueueFileTask(childTask)) {
+                        } else if (shouldEnqueueTerminalFileTask(childTask)) {
                             // Found a file, put the task directly into the
                             // pending file tasks queue. 
                             this.tasksInProgress.add(childTask);
@@ -382,6 +382,26 @@ final class IngestTasksScheduler {
                 String errorMessage = String.format("An error occurred getting the children of %s", directory.getName()); //NON-NLS
                 logger.log(Level.SEVERE, errorMessage, ex);
             }
+        }
+    }
+
+    
+    /**
+     * Check whether a file task with no children should be enqueued by checking 
+     * if the file meets any of the rules of the selected file ingest filter.
+     */
+    private static boolean shouldEnqueueTerminalFileTask(final FileIngestTask task) {
+        final AbstractFile file = task.getFile();
+        
+        /**
+         * Check if the file is a member of the file ingest filter that is being
+         * applied to the current run of ingest, checks if unallocated space
+         * should be processed inside call to fileIsMemberOf
+         */
+        if (task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null) {
+            return false;
+        } else {
+            return shouldEnqueueFileTask(task);
         }
     }
 
@@ -401,15 +421,6 @@ final class IngestTasksScheduler {
         // or current directory.
         String fileName = file.getName();
         if (fileName.equals(".") || fileName.equals("..")) {
-            return false;
-        }
-
-        /**
-         * Check if the file is a member of the file ingest filter that is being
-         * applied to the current run of ingest, checks if unallocated space
-         * should be processed inside call to fileIsMemberOf
-         */
-        if ((task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file)) == null) {
             return false;
         }
 

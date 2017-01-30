@@ -67,7 +67,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * Constructs a files set rule panel in create rule mode.
      */
     FilesSetRulePanel(JButton okButton, JButton cancelButton, PANEL_TYPE panelType) {
-        initComponents();
+        initComponents(); 
+        populateComponentsWithDefaultValues();
         if (panelType == FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS) { //Hide the mimetype settings when this is displaying a FileSet rule instead of a interesting item rule
             mimeTypeComboBox.setVisible(false);
             mimeCheck.setVisible(false);
@@ -75,12 +76,18 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             fileSizeCheck.setVisible(false);
             equalitySymbolComboBox.setVisible(false);
             fileSizeSpinner.setVisible(false);
+            jLabel1.setVisible(false);
+            
+            allRadioButton.setSelected(true);  //Force selection of the all option when doing File Ingest Filter Rules
+            filesRadioButton.setVisible(false);
+            dirsRadioButton.setVisible(false);
+            allRadioButton.setVisible(false);
             org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ingest.jLabel5.text")); // NOI18N
 
         } else {
             populateMimeTypesComboBox();
         }
-        populateComponentsWithDefaultValues();
+      
         this.setButtons(okButton, cancelButton);
     }
 
@@ -98,6 +105,9 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             fileSizeCheck.setVisible(false);
             equalitySymbolComboBox.setVisible(false);
             fileSizeSpinner.setVisible(false);
+            filesRadioButton.setVisible(false);
+            dirsRadioButton.setVisible(false);
+            allRadioButton.setVisible(false);
         } else {
             populateMimeTypesComboBox();
             populateMimeConditionComponents(rule);
