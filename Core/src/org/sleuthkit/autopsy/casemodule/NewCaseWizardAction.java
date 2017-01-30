@@ -91,7 +91,6 @@ final class NewCaseWizardAction extends CallableSystemAction {
                          * Run the Add Data Source wizard by invoking the Add
                          * Data Source wizard.
                          */
-                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
                     } catch (InterruptedException | ExecutionException ex) {
@@ -110,6 +109,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 }
             }.execute();
         } else {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             new Thread(() -> {
                 doFailedCaseCleanup(wizardDescriptor);
             }).start();

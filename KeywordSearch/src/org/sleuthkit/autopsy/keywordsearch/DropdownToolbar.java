@@ -159,49 +159,44 @@ class DropdownToolbar extends javax.swing.JPanel {
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                 dropPanel.clearSearchBox();
                 if (RuntimeProperties.runningWithGUI() || null == evt.getNewValue()) {
-                    Server server = KeywordSearch.getServer();
-                    if (server.coreIsOpen()) {
-                        try {
-                            Index indexInfo = server.getIndexInfo();
-                            listsButton.setEnabled(IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion()));
+                    try {
+                        Server server = KeywordSearch.getServer();
+                        Index indexInfo = server.getIndexInfo();
+                        if (server.coreIsOpen() && IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
+                            boolean schemaIsCurrent = IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion());
+                            listsButton.setEnabled(schemaIsCurrent);
                             searchDropButton.setEnabled(true);
-                            dropPanel.setRegexSearchEnabled(IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion()));
+                            dropPanel.setRegexSearchEnabled(schemaIsCurrent);
                             active = true;
-                        } catch (KeywordSearchModuleException ex) {
+                        } else {
                             searchDropButton.setEnabled(false);
                             listsButton.setEnabled(false);
                             active = false;
                         }
-                    } else {
+                    } catch (KeywordSearchModuleException ex) {
+                        logger.log(Level.SEVERE, "Error getting text index info", ex); //NON-NLS
                         searchDropButton.setEnabled(false);
                         listsButton.setEnabled(false);
                         active = false;
                     }
-                } else {
-                    searchDropButton.setEnabled(false);
-                    listsButton.setEnabled(false);
-                    active = false;
-                }
-            } else if (changed.equals(Server.CORE_EVT)) {
-                final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
-                switch (state) {
-                    case STARTED:
-                        try {
-                            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-                            KeywordSearch.fireNumIndexedFilesChange(null, numIndexedFiles);
-                        } catch (NoOpenCoreException ex) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, {0}", ex); //NON-NLS
-                        } catch (KeywordSearchModuleException se) {
-                            logger.log(Level.SEVERE, "Error executing Solr query, {0}", se.getMessage()); //NON-NLS
-                        }
-                        break;
-                    case STOPPED:
-                        break;
-                    default:
+                } else if (changed.equals(Server.CORE_EVT)) {
+                    final Server.CORE_EVT_STATES state = (Server.CORE_EVT_STATES) evt.getNewValue();
+                    switch (state) {
+                        case STARTED:
+                            try {
+                                final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
+                                KeywordSearch.fireNumIndexedFilesChange(null, numIndexedFiles);
+                            } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+                                logger.log(Level.SEVERE, "Error executing Solr query", ex); //NON-NLS
+                            }
+                            break;
+                        case STOPPED:
+                            break;
+                        default:
+                    }
                 }
             }
         }
-
     }
 
     /**

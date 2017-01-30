@@ -144,7 +144,8 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      */
     @Messages({
         "KeywordSearchIngestModule.startupMessage.failedToGetIndexSchema=Failed to get schema version for text index.",
-        "# {0} - schema version number", "KeywordSearchIngestModule.startupMessage.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index."
+        "# {0} - Solr version number", "KeywordSearchIngestModule.startupException.indexSolrVersionNotSupported=Adding text no longer supported for Solr version {0} of the text index.",
+        "# {0} - schema version number", "KeywordSearchIngestModule.startupException.indexSchemaNotSupported=Adding text no longer supported for schema version {0} of the text index."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -159,8 +160,11 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         try {
             Index indexInfo = server.getIndexInfo();
+            if (!IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
+                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSolrVersionNotSupported(indexInfo.getSolrVersion()));                                
+            }
             if (!IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion())) {
-                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_indexSchemaNotSupported(indexInfo.getSchemaVersion()));                
+                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));                
             }
         } catch (KeywordSearchModuleException ex) {
             throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_failedToGetIndexSchema(), ex);

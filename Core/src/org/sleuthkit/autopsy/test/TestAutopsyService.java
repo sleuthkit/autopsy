@@ -27,7 +27,7 @@ import org.sleuthkit.autopsy.framework.ProgressIndicator;
 /**
  * An implementation of the Autopsy service interface used for test purposes.
  */
-@ServiceProvider(service = AutopsyService.class)
+//@ServiceProvider(service = AutopsyService.class)
 public class TestAutopsyService implements AutopsyService {
 
     private static final Logger logger = Logger.getLogger(TestAutopsyService.class.getName());

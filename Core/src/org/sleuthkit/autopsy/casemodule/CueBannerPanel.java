@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,34 +18,41 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import java.awt.*;
+import java.awt.Dialog;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 
-/**
- *
+/*
+ * The panel in the default Autopsy startup window.
  */
 public class CueBannerPanel extends javax.swing.JPanel {
 
-    final private static String title = NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.title.text");
-    final private static JFrame frame = new JFrame(title);
-    final static JDialog recentCasesWindow = new JDialog(frame, title, true); // to make the popUp Window to be modal
+    private static final long serialVersionUID = 1L;
+    /*
+     * This is field is static for the sake of the closeOpenRecentCasesWindow
+     * method.
+     */
+    private static JDialog recentCasesWindow;
 
-    // for error handling
-    private static JPanel caller = new JPanel();
+    public static void closeOpenRecentCasesWindow() {
+        if (null != recentCasesWindow) {
+            recentCasesWindow.setVisible(false);
+        }
+    }
 
     public CueBannerPanel() {
         initComponents();
-        refresh();
+        customizeComponents();
+        enableComponents();
     }
 
     public CueBannerPanel(String welcomeLogo) {
@@ -55,7 +62,53 @@ public class CueBannerPanel extends javax.swing.JPanel {
             ImageIcon icon = new ImageIcon(cl.getResource(welcomeLogo));
             autopsyLogo.setIcon(icon);
         }
-        refresh();
+        customizeComponents();
+        enableComponents();
+    }
+
+    public void setCloseButtonActionListener(ActionListener e) {
+        closeButton.addActionListener(e);
+    }
+
+    public void setCloseButtonText(String text) {
+        closeButton.setText(text);
+    }
+
+    public void refresh() {
+        enableComponents();
+    }
+
+    private void customizeComponents() {
+        recentCasesWindow = new JDialog(
+                WindowManager.getDefault().getMainWindow(),
+                NbBundle.getMessage(CueBannerPanel.class, "CueBannerPanel.title.text"),
+                Dialog.ModalityType.APPLICATION_MODAL);
+        recentCasesWindow.setSize(new Dimension(750, 400));
+        recentCasesWindow.getRootPane().registerKeyboardAction(
+                e -> {
+                    recentCasesWindow.setVisible(false);
+                },
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        OpenRecentCasePanel recentCasesPanel = OpenRecentCasePanel.getInstance();
+        recentCasesPanel.setCloseButtonActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                recentCasesWindow.setVisible(false);
+            }
+        });
+        recentCasesWindow.add(recentCasesPanel);
+        recentCasesWindow.pack();
+        recentCasesWindow.setResizable(false);
+    }
+
+    private void enableComponents() {
+        if (RecentCases.getInstance().getTotalRecentCases() == 0) {
+            openRecentButton.setEnabled(false);
+            openRecentLabel.setEnabled(false);
+        } else {
+            openRecentButton.setEnabled(true);
+            openRecentLabel.setEnabled(true);
+        }
     }
 
     /**
@@ -180,15 +233,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    public void refresh() {
-        if (RecentCases.getInstance().getTotalRecentCases() == 0) {
-            openRecentButton.setEnabled(false);
-            openRecentLabel.setEnabled(false);
-        } else {
-            openRecentButton.setEnabled(true);
-            openRecentLabel.setEnabled(true);
-        }
-    }
     private void newCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newCaseButtonActionPerformed
         Lookup.getDefault().lookup(CaseNewActionInterface.class).actionPerformed(evt);
     }//GEN-LAST:event_newCaseButtonActionPerformed
@@ -198,37 +242,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_openCaseButtonActionPerformed
 
     private void openRecentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentButtonActionPerformed
-
-        // open the recent cases dialog
-        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-
-        // set the popUp window / JFrame
-        recentCasesWindow.setSize(750, 400);
-
-        int w = recentCasesWindow.getSize().width;
-        int h = recentCasesWindow.getSize().height;
-
-        // set the location of the popUp Window on the center of the screen
-        recentCasesWindow.setLocation((screenDimension.width - w) / 2, (screenDimension.height - h) / 2);
-        recentCasesWindow.setLocationRelativeTo(this);
-        recentCasesWindow.getRootPane().registerKeyboardAction(e -> {
-            recentCasesWindow.dispose();
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-
-        OpenRecentCasePanel welcomeWindow = OpenRecentCasePanel.getInstance();
-
-        // add the command to close the window to the button on the Volume Detail Panel
-        welcomeWindow.setCloseButtonActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                recentCasesWindow.dispose();
-            }
-        });
-
-        recentCasesWindow.add(welcomeWindow);
-        recentCasesWindow.pack();
-        recentCasesWindow.setResizable(false);
-        recentCasesWindow.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+        recentCasesWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentButtonActionPerformed
 
@@ -244,29 +258,4 @@ public class CueBannerPanel extends javax.swing.JPanel {
     private javax.swing.JLabel openRecentLabel;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Sets the Close button action listener.
-     *
-     * @param e the action listener
-     */
-    public void setCloseButtonActionListener(ActionListener e) {
-        closeButton.addActionListener(e);
-    }
-
-    /**
-     * Sets the Close button label (default is "Close").
-     *
-     * @param text The new label for the button.
-     */
-    public void setCloseButtonText(String text) {
-        closeButton.setText(text);
-    }
-
-    /**
-     * Close the open recent cases window.
-     */
-    public static void closeOpenRecentCasesWindow() {
-        //startupWindow.setVisible(false);
-        recentCasesWindow.dispose();
-    }
 }

@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.util.Exceptions;
@@ -105,20 +106,20 @@ class IndexUpgrader {
             // create upgraded index object
             upgradedIndex = new Index(newIndexDir, Double.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion());
             upgradedIndex.setNewIndex(true);
+            return upgradedIndex;
+
         } catch (Exception ex) {
             // catch-all firewall for exceptions thrown by Solr upgrade tools
-            throw new AutopsyService.AutopsyServiceException("Exception while running Solr index upgrade in " + newIndexDir, ex); //NON-NLS
-        } finally {
-            if (currentSolrVersion != NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion())) {
-                // upgrade did not complete, delete the new index directories
-                progress.progress(Bundle.SolrSearch_upgradeFailed_msg(), numCompletedWorkUnits);
-                upgradedIndex = null;
-                if (!new File(newIndexDir).delete()) {
-                    logger.log(Level.SEVERE, "Unable to delete folder {0}", newIndexDir); //NON-NLS
-                }
+            // upgrade did not complete, delete the new index directories
+            progress.progress(Bundle.SolrSearch_upgradeFailed_msg(), numCompletedWorkUnits);
+            File newindexVersionDir = new File(newIndexDir).getParentFile();
+            try {
+                FileUtils.deleteDirectory(newindexVersionDir);
+            } catch (IOException exx) {
+                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade failed", newindexVersionDir), exx);
             }
+            throw new AutopsyService.AutopsyServiceException("Exception while running Solr index upgrade in " + newIndexDir, ex); //NON-NLS
         }
-        return upgradedIndex;
     }
 
     /**

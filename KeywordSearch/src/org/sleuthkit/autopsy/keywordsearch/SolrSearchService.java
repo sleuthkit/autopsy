@@ -155,6 +155,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     public void close() throws IOException {
     }
 
+    @Override
+    public String getServiceName() {
+        return NbBundle.getMessage(this.getClass(), "SolrSearchService.ServiceName");
+    }
+
     /**
      * Creates/opens/upgrades the Solr core/text index for a case
      *
@@ -220,7 +225,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         JOptionPane optionPane = new JOptionPane(
                                 NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.msg"),
                                 JOptionPane.WARNING_MESSAGE,
-                                JOptionPane.OK_OPTION);
+                                JOptionPane.DEFAULT_OPTION);
                         try {
                             SwingUtilities.invokeAndWait(() -> {
                                 JDialog dialog = optionPane.createDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexReadOnlyDialog.title"));
@@ -264,13 +269,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
                     String newIndexDirPath = indexFinder.copyIndexAndConfigSet(indexToUpgrade, context, progressUnitsCompleted);
                     File newIndexDir = new File(newIndexDirPath);
+                    File newindexVersionDir = newIndexDir.getParentFile();
                     if (context.cancelRequested()) {
                         try {
-                            if (newIndexDir.exists()) {
-                                FileUtils.deleteDirectory(newIndexDir);
-                            }
+                            FileUtils.deleteDirectory(newindexVersionDir);
                         } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newindexVersionDir), ex);
                         }
                         return;
                     }
@@ -279,32 +283,15 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
                     currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDirPath, indexToUpgrade, context, progressUnitsCompleted);
-                    if (context.cancelRequested()) {
-                        try {
-                            if (newIndexDir.exists()) {
-                                FileUtils.deleteDirectory(newIndexDir);
-                            }
-                        } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
-                        }
-                        return;
-                    }
                     if (currentVersionIndex == null) {
                         try {
-                            if (newIndexDir.exists()) {
-                                FileUtils.deleteDirectory(newIndexDir);
-                            }
+                            FileUtils.deleteDirectory(newindexVersionDir);
                         } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newindexVersionDir), ex);
                         }
-                        throw new AutopsyServiceException("Unable to upgrade index to the latest version of Solr");
                     }
                 }
             }
-        }
-
-        if (context.cancelRequested()) {
-            return;
         }
 
         // open core
@@ -330,13 +317,14 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         /*
          * TODO (AUT-2084): The following code KeywordSearch.CaseChangeListener
          * gambles that any BlackboardResultWriters (SwingWorkers) will complete
-         * in less than roughly two seconds.
+         * in less than roughly two seconds. This stuff should be reworked using
+         * an ExecutorService and tasks with Futures.
          */
         KeywordSearchResultFactory.BlackboardResultWriter.stopAllWriters();
         try {
             Thread.sleep(2000);
         } catch (InterruptedException ex) {
-            logger.log(Level.SEVERE, "Interrupted while waiting for BlackboardResultWriters to terminate", ex);
+            logger.log(Level.SEVERE, "Unexpected interrupt while waiting for BlackboardResultWriters to terminate", ex);
         }
 
         try {
@@ -344,10 +332,5 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
-    }
-
-    @Override
-    public String getServiceName() {
-        return NbBundle.getMessage(this.getClass(), "SolrSearchService.ServiceName");
     }
 }

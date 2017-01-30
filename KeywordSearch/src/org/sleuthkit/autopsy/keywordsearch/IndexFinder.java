@@ -145,11 +145,6 @@ class IndexFinder {
         File newIndexDir = new File(newIndexDirPath);
 
         if (context.cancelRequested()) {
-            try {
-                FileUtils.deleteDirectory(newIndexDir);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
-            }
             return null;
         }
 
@@ -159,11 +154,6 @@ class IndexFinder {
         createReferenceConfigSetCopy(newIndexDir.getParent());
 
         if (context.cancelRequested()) {
-            try {
-                FileUtils.deleteDirectory(newIndexDir);
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexDirPath), ex);
-            }
             return null;
         }
 

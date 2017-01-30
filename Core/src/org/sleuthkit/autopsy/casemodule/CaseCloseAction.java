@@ -38,6 +38,7 @@ import org.openide.util.actions.Presenter;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * The action associated with the Case/Close Case menu item and the Close Case
@@ -90,8 +91,11 @@ public final class CaseCloseAction extends CallableSystemAction implements Prese
                 protected void done() {
                     try {
                         get();
-                    } catch (InterruptedException | ExecutionException ex) {
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.SEVERE, "Unexpected interrupt closing the current case", ex);
+                    } catch (ExecutionException ex) {
                         logger.log(Level.SEVERE, "Error closing the current case", ex);
+                        MessageNotifyUtil.Message.error(Bundle.Case_closeException_couldNotCloseCase(ex.getMessage()));                        
                     }
                     WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     StartupWindowProvider.getInstance().open();

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -392,6 +392,11 @@ public class IngestManager {
     }
 
     synchronized void handleCaseClosed() {
+        /*
+         * TODO (JIRA-2227): IngestManager should wait for cancelled ingest jobs
+         * to complete when a case is closed.
+         */
+        this.cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
         jobEventPublisher.closeRemoteEventChannel();
         moduleEventPublisher.closeRemoteEventChannel();
         this.jobCreationIsEnabled = false;
@@ -473,9 +478,9 @@ public class IngestManager {
     }
 
     /**
-     * Starts an ingest job that will process a collection of data sources.
-     * This is intended to be used in an auto-ingest context and will fail
-     * if no ingest modules are enabled.
+     * Starts an ingest job that will process a collection of data sources. This
+     * is intended to be used in an auto-ingest context and will fail if no
+     * ingest modules are enabled.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
