@@ -177,7 +177,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progress = context.getProgressIndicator();
-        int totalNumProgressUnits = 8;
+        int totalNumProgressUnits = 7;
         int progressUnitsCompleted = 1;
 
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
@@ -277,7 +277,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         }
                         return;
                     }
-                    progressUnitsCompleted += 2; // add progress increments for copying existing index and config set
+                    progressUnitsCompleted ++; // add progress increment for copying existing index
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();

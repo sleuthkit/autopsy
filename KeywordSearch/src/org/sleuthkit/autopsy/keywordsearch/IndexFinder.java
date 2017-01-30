@@ -114,7 +114,7 @@ class IndexFinder {
 
     /**
      * Creates a copy of an existing Solr index as well as a reference copy of
-     * Solr config set.
+     * Solr config set. 
      *
      * @param indexToUpgrade        Index object to create a copy of
      * @param context               AutopsyService.CaseContext object
@@ -142,20 +142,25 @@ class IndexFinder {
         numCompletedWorkUnits++;
         progress.progress(Bundle.SolrSearch_copyIndex_msg(), numCompletedWorkUnits);
         String newIndexDirPath = copyExistingIndex(context.getCase(), indexToUpgrade);
-        File newIndexDir = new File(newIndexDirPath);
-
         if (context.cancelRequested()) {
             return null;
         }
 
         // Make a “reference copy” of the configset and place it in ModuleOutput/keywordsearch/data/solrX_schemaY/configset
+        /* NOTE: this functionality is NTH. It does find an existing Solr config set and creates
+        a reference copy of it. However, in all likelihood the found config set is going to be from 
+        the latest verison of Solr and schema. Therefore there is no use in creating a copy of it for the existing "old" index. 
+        The idea was to find and save a copy of the "old" config set so that it could potentially be used to load the "old" index. 
+        Therefore we decided to comment it out.
+        
         numCompletedWorkUnits++;
+        File newIndexDir = new File(newIndexDirPath);
         progress.progress(Bundle.SolrSearch_copyConfigSet_msg(), numCompletedWorkUnits);
         createReferenceConfigSetCopy(newIndexDir.getParent());
 
         if (context.cancelRequested()) {
             return null;
-        }
+        }*/
 
         return newIndexDirPath;
     }
@@ -218,6 +223,7 @@ class IndexFinder {
             }
         } catch (AutopsyService.AutopsyServiceException | IOException ex) {
             // This feature is a NTH so don't re-throw 
+            logger.log(Level.SEVERE, "Exception while creating a reference copy of Solr config set"); //NON-NLS
         }
     }
 
