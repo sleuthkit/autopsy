@@ -77,7 +77,7 @@ class IndexUpgrader {
         tmpDir.mkdirs();
 
         Index upgradedIndex;
-        double currentSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
+        int currentSolrVersion = NumberUtils.toInt(indexToUpgrade.getSolrVersion());
         try {
 
             if (context.cancelRequested()) {
@@ -104,7 +104,7 @@ class IndexUpgrader {
             }
 
             // create upgraded index object
-            upgradedIndex = new Index(newIndexDir, Double.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion());
+            upgradedIndex = new Index(newIndexDir, Integer.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion());
             upgradedIndex.setNewIndex(true);
             return upgradedIndex;
 
@@ -112,11 +112,11 @@ class IndexUpgrader {
             // catch-all firewall for exceptions thrown by Solr upgrade tools
             // upgrade did not complete, delete the new index directories
             progress.progress(Bundle.SolrSearch_upgradeFailed_msg(), numCompletedWorkUnits);
-            File newindexVersionDir = new File(newIndexDir).getParentFile();
+            File newIndexVersionDir = new File(newIndexDir).getParentFile();
             try {
-                FileUtils.deleteDirectory(newindexVersionDir);
+                FileUtils.deleteDirectory(newIndexVersionDir);
             } catch (IOException exx) {
-                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade failed", newindexVersionDir), exx);
+                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade failed", newIndexVersionDir), exx);
             }
             throw new AutopsyService.AutopsyServiceException("Exception while running Solr index upgrade in " + newIndexDir, ex); //NON-NLS
         }
@@ -133,9 +133,9 @@ class IndexUpgrader {
      *
      * @return The new Solr index version.
      */
-    private double upgradeSolrIndexVersion4to5(double currentIndexVersion, String solr4IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminator) throws AutopsyService.AutopsyServiceException {
+    private int upgradeSolrIndexVersion4to5(int currentIndexVersion, String solr4IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminator) throws AutopsyService.AutopsyServiceException {
 
-        if (currentIndexVersion != 4.0) {
+        if (currentIndexVersion != 4) {
             return currentIndexVersion;
         }
         String outputFileName = "output.txt";
@@ -174,7 +174,7 @@ class IndexUpgrader {
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-5.5.1.jar;lucene-backward-codecs-5.5.1.jar;lucene-codecs-5.5.1.jar;lucene-analyzers-common-5.5.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return 5.0;
+        return 5;
     }
 
     /**
@@ -188,8 +188,8 @@ class IndexUpgrader {
      *
      * @return The new Solr index version.
      */
-    private double upgradeSolrIndexVersion5to6(double currentIndexVersion, String solr5IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminatior) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
-        if (currentIndexVersion != 5.0) {
+    private int upgradeSolrIndexVersion5to6(int currentIndexVersion, String solr5IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminatior) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+        if (currentIndexVersion != 5) {
             return currentIndexVersion;
         }
         String outputFileName = "output.txt";
@@ -224,7 +224,7 @@ class IndexUpgrader {
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index
-        return 6.0;
+        return 6;
     }
 
     /**

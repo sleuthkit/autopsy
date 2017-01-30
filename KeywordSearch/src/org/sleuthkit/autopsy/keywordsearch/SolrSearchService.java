@@ -173,11 +173,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.findingIndexes.msg=Looking for existing text index directories",
         "SolrSearch.creatingNewIndex.msg=Creating new text index",
         "SolrSearch.indentifyingIndex.msg=Identifying text index for upgrade",
+        "SolrSearch.copyIndex.msg=Copying existing text index",
         "SolrSearch.openCore.msg=Creating/Opening text index",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progress = context.getProgressIndicator();
-        int totalNumProgressUnits = 8;
+        int totalNumProgressUnits = 7;
         int progressUnitsCompleted = 1;
 
         // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
@@ -267,27 +268,27 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     }
 
                     // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    String newIndexDirPath = indexFinder.copyIndexAndConfigSet(indexToUpgrade, context, progressUnitsCompleted);
-                    File newIndexDir = new File(newIndexDirPath);
-                    File newindexVersionDir = newIndexDir.getParentFile();
+                    progressUnitsCompleted++;
+                    progress.progress(Bundle.SolrSearch_copyIndex_msg(), progressUnitsCompleted);
+                    String newIndexDirPath = IndexFinder.copyExistingIndex(indexToUpgrade, context);
+                    File newIndexVersionDir = new File(newIndexDirPath).getParentFile();
                     if (context.cancelRequested()) {
                         try {
-                            FileUtils.deleteDirectory(newindexVersionDir);
+                            FileUtils.deleteDirectory(newIndexVersionDir);
                         } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newindexVersionDir), ex);
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
                         }
                         return;
                     }
-                    progressUnitsCompleted += 2; // add progress increments for copying existing index and config set
 
                     // upgrade the existing index to the latest supported Solr version
                     IndexUpgrader indexUpgrader = new IndexUpgrader();
                     currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDirPath, indexToUpgrade, context, progressUnitsCompleted);
                     if (currentVersionIndex == null) {
                         try {
-                            FileUtils.deleteDirectory(newindexVersionDir);
+                            FileUtils.deleteDirectory(newIndexVersionDir);
                         } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newindexVersionDir), ex);
+                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
                         }
                     }
                 }
