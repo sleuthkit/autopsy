@@ -348,7 +348,7 @@ final class IngestTasksScheduler {
             // Try to add the most recently added directory from the 
             // directory tasks queue to the pending file tasks queue. 
             FileIngestTask directoryTask = this.directoryTasks.remove(this.directoryTasks.size() - 1);
-            if (shouldEnqueueFileTask(directoryTask)) {
+            if (shouldEnqueueTerminalFileTask(directoryTask)) {
                 addToPendingFileTasksQueue(directoryTask);
             } else {
                 this.tasksInProgress.remove(directoryTask);

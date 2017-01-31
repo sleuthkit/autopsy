@@ -28,8 +28,9 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
  * definitions.
  */
 public class FilesSetPanel extends javax.swing.JPanel {
- @NbBundle.Messages({"FilesSetPanel.ingest.title=File Ingest Filter", "FilesSetPanel.ingest.createNewFilter=Create new file ingest filter..."})
- 
+
+    @NbBundle.Messages({"FilesSetPanel.ingest.title=File Ingest Filter", "FilesSetPanel.ingest.createNewFilter=Create/Edit file ingest filter(s)..."})
+
     private static final String CREATE_NEW_FILE_INGEST_FILTER = Bundle.FilesSetPanel_ingest_createNewFilter();
 
     /**
@@ -39,7 +40,6 @@ public class FilesSetPanel extends javax.swing.JPanel {
         return CREATE_NEW_FILE_INGEST_FILTER;
     }
 
-   
     /**
      * Construct a files set panel in create mode.
      */

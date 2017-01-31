@@ -556,7 +556,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private void setComponentsForSearchType() {
         if (!this.filesRadioButton.isSelected()) {
             this.fullNameRadioButton.setSelected(true);
-            this.extensionRadioButton.setEnabled(false);
+
             this.mimeTypeComboBox.setEnabled(false);
             this.mimeTypeComboBox.setSelectedIndex(0);
             this.equalitySymbolComboBox.setEnabled(false);
@@ -567,6 +567,11 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             this.fileSizeCheck.setSelected(false);
             this.mimeCheck.setEnabled(false);
             this.mimeCheck.setSelected(false);
+            if (this.filesRadioButton.isVisible()) {  //If the filesRadioButton is not visibile then we can let the user do extension based rules
+                this.extensionRadioButton.setEnabled(false);
+            } else {
+                this.extensionRadioButton.setEnabled(true);
+            }
 
         } else {
             if (this.nameCheck.isSelected()) {
@@ -838,6 +843,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             this.nameTextField.setEnabled(true);
             this.fullNameRadioButton.setEnabled(true);
             if (this.filesRadioButton.isSelected()) {
+                this.extensionRadioButton.setEnabled(true);
+            } else if (!this.filesRadioButton.isVisible()) {  //If the filesRadioButton is not visibile then we can let the user do extension based rules
                 this.extensionRadioButton.setEnabled(true);
             }
             this.nameRegexCheckbox.setEnabled(true);
