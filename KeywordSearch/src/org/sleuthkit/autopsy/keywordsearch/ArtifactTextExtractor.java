@@ -39,6 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * artifact's attributes.
  */
 class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
+
     static final private Logger logger = Logger.getLogger(ArtifactTextExtractor.class.getName());
 
     /**
@@ -82,26 +83,31 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
     }
 
     @Override
-     public boolean isDisabled() {
+    public boolean isDisabled() {
         return false;
-     }
+    }
 
-     @Override
-     public void logWarning(final String msg, Exception ex) {
+    @Override
+    public void logWarning(final String msg, Exception ex) {
         logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
-    private InputStream getInputStream(BlackboardArtifact artifact) {
+    private InputStream getInputStream(BlackboardArtifact artifact) throws TextExtractorException {
         // Concatenate the string values of all attributes into a single
         // "content" string to be indexed.
         StringBuilder artifactContents = new StringBuilder();
 
+        Content dataSource = null;
         try {
-            Content dataSource = getDataSource(artifact);
-            if (dataSource == null) {
-                return null;
-            }
+            dataSource = getDataSource(artifact);
+        } catch (TskCoreException tskCoreException) {
+            throw new TextExtractorException("Unable to get datasource for artifact: " + artifact.toString(), tskCoreException);
+        }
+        if (dataSource == null) {
+            throw new TextExtractorException("Datasource was null for artifact: " + artifact.toString());
+        }
 
+        try {
             for (BlackboardAttribute attribute : artifact.getAttributes()) {
                 artifactContents.append(attribute.getAttributeType().getDisplayName());
                 artifactContents.append(" : ");
@@ -119,18 +125,15 @@ class ArtifactTextExtractor implements TextExtractor<BlackboardArtifact> {
                 }
                 artifactContents.append(System.lineSeparator());
             }
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "There was a problem getting the atributes for artifact " + artifact.getArtifactID(), ex);
-            return null;
+        } catch (TskCoreException tskCoreException) {
+            throw new TextExtractorException("Unable to get attributes for artifact: " + artifact.toString(), tskCoreException);
         }
-        if (artifactContents.length() == 0) {
-            return null;
-        }
+
         return IOUtils.toInputStream(artifactContents, StandardCharsets.UTF_8);
     }
 
     @Override
-    public Reader getReader(BlackboardArtifact source) throws Ingester.IngesterException {
+    public Reader getReader(BlackboardArtifact source) throws TextExtractorException {
         return new InputStreamReader(getInputStream(source), StandardCharsets.UTF_8);
     }
 
