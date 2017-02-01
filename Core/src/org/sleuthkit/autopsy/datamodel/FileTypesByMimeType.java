@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,8 +76,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     }
 
     /*
-         * The pcl is in the class because it has the easiest mechanisms to add
-         * and remove itself during its life cycles.
+     * The pcl is in the class because it has the easiest mechanisms to add and
+     * remove itself during its life cycles.
      */
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
         String eventType = evt.getPropertyName();
@@ -109,7 +109,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * Retrieve the media types by retrieving the keyset from the hashmap.
      *
      * @return mediaTypes - a list of strings representing all distinct media
-     * types of files for this case
+     *         types of files for this case
      */
     private List<String> getMediaTypeList() {
         synchronized (existingMimeTypes) {
@@ -130,7 +130,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         allDistinctMimeTypesQuery.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(","); //NON-NLS
         allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
         allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
-        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
+        if (!UserPreferences.hideSlackFilesInViewsTree()) {
+            allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
+        }
         allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
         synchronized (existingMimeTypes) {
             existingMimeTypes.clear();
@@ -180,8 +182,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * empty.
      *
      * @param node the Node which you wish to check.
+     *
      * @return True if originNode is an instance of ByMimeTypeNode and is empty,
-     * false otherwise.
+     *         false otherwise.
      */
     public static boolean isEmptyMimeTypeNode(Node node) {
         boolean isEmptyMimeNode = false;
@@ -348,7 +351,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * of files which it represents.
          *
          * @param mimeType - the complete MimeType, needed for accurate query
-         * results
+         *                 results
          */
         private void updateDisplayName(String mimeType) {
 
@@ -403,7 +406,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * Get children count without actually loading all nodes
          *
          * @return count(*) - the number of items that will be shown in this
-         * items Directory Listing
+         *         items Directory Listing
          */
         private long calculateItems(SleuthkitCase sleuthkitCase, String mime_type) {
             try {
@@ -420,7 +423,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * which match this mime type and their information.
          *
          * @param list - will contain all files and their attributes from the
-         * tsk_files table where mime_type matches the one specified
+         *             tsk_files table where mime_type matches the one specified
+         *
          * @return true
          */
         @Override
@@ -441,8 +445,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * tsk_files.
          *
          * @param mimeType - the complete mimetype of the file mediatype/subtype
+         *
          * @return query.toString - portion of SQL query which will follow a
-         * WHERE clause.
+         *         WHERE clause.
          */
         private String createQuery(String mime_type) {
             StringBuilder query = new StringBuilder();
@@ -450,7 +455,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             query.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(",");  //NON-NLS
             query.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
             query.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
-            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
+            if (!UserPreferences.hideSlackFilesInViewsTree()) {
+                query.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
+            }
             query.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
             if (UserPreferences.hideKnownFilesInViewsTree()) {
                 query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
@@ -469,6 +476,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * each file
          *
          * @param key
+         *
          * @return
          */
         @Override
@@ -498,12 +506,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 public LocalFileNode visit(LocalFile lf) {
                     return new LocalFileNode(lf);
                 }
-                
+
                 @Override
                 public SlackFileNode visit(SlackFile sf) {
                     return new SlackFileNode(sf, false);
                 }
-                
+
                 @Override
                 protected AbstractNode defaultVisit(Content di) {
                     throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(), "FileTypeChildren.exception.notSupported.msg", di.toString()));
