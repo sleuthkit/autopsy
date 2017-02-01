@@ -54,16 +54,16 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * The RegexQuery class supports issuing regular expression queries
- * against a Lucene index. It relies on the fact that content is
- * stored in it's original form in a "string" field (Server.Schema.CONTENT_STR).
- * To indicate to Lucene that these are regular expression queries, the query
- * string must be surrounded by '/' characters. Additionally, the characters
- * ".*" need to be added both before and after the search term to get hits
- * in the middle of text.
+ * The RegexQuery class supports issuing regular expression queries against a
+ * Lucene index. It relies on the fact that content is stored in it's original
+ * form in a "string" field (Server.Schema.CONTENT_STR). To indicate to Lucene
+ * that these are regular expression queries, the query string must be
+ * surrounded by '/' characters. Additionally, the characters ".*" need to be
+ * added both before and after the search term to get hits in the middle of
+ * text.
  *
- * Regular expression syntax supported by Lucene is not the same as Java
- * regular expression syntax. The Lucene syntax is documented here:
+ * Regular expression syntax supported by Lucene is not the same as Java regular
+ * expression syntax. The Lucene syntax is documented here:
  *
  * https://lucene.apache.org/core/5_0_0/core/org/apache/lucene/util/automaton/RegExp.html
  */
@@ -94,7 +94,7 @@ final class RegexQuery implements KeywordSearchQuery {
     // See https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html
     // for Lucene syntax.
     // We use \p as a shortcut for all of the character classes of the form \p{XXX}.
-    private static final CharSequence[] UNSUPPORTED_CHARS = {"\\d", "\\D", "\\w", "\\W", "\\s", "\\S", "\\n", 
+    private static final CharSequence[] UNSUPPORTED_CHARS = {"\\d", "\\D", "\\w", "\\W", "\\s", "\\S", "\\n",
         "\\t", "\\r", "\\f", "\\a", "\\e", "\\v", "\\V", "\\h", "\\H", "\\p"}; //NON-NLS
 
     private boolean queryStringContainsWildcardPrefix = false;
@@ -160,19 +160,18 @@ final class RegexQuery implements KeywordSearchQuery {
 
         /**
          * The provided regular expression may include wildcards at the
-         * beginning and/or end. These wildcards are used to indicate that
-         * the user wants to find hits for the regex that are embedded
-         * within other characters. For example, if we are given .*127.0.0.1.*
-         * as a regular expression, this will produce hits for:
-         * (a) " 127.0.0.1 " as a standalone token (surrounded by whitespace).
-         * (b) "abc127.0.0.1def" where the IP address is surrounded by other characters.
+         * beginning and/or end. These wildcards are used to indicate that the
+         * user wants to find hits for the regex that are embedded within other
+         * characters. For example, if we are given .*127.0.0.1.* as a regular
+         * expression, this will produce hits for: (a) " 127.0.0.1 " as a
+         * standalone token (surrounded by whitespace). (b) "abc127.0.0.1def"
+         * where the IP address is surrounded by other characters.
          *
          * If we are given this type of regex, we do not need to add our own
          * wildcards to anchor the query. Otherwise, we need to add wildcard
          * anchors because Lucene string regex searches default to using ^ and $
          * to match the entire string.
          */
-
         // We construct the query by surrounding it with slashes (to indicate it is
         // a regular expression search) and .* as anchors (if the query doesn't
         // already have them).
@@ -193,7 +192,7 @@ final class RegexQuery implements KeywordSearchQuery {
         solrQuery.setRows(MAX_RESULTS);
         // Setting the sort order is necessary for cursor based paging to work.
         solrQuery.setSort(SortClause.asc(Server.Schema.ID.toString()));
-        
+
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;
         SolrDocumentList resultList = null;
         boolean allResultsProcessed = false;
@@ -214,7 +213,7 @@ final class RegexQuery implements KeywordSearchQuery {
                         //
                     }
                 }
-                
+
                 String nextCursorMark = response.getNextCursorMark();
                 if (cursorMark.equals(nextCursorMark)) {
                     allResultsProcessed = true;
@@ -225,7 +224,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             }
         }
-        
+
         for (Keyword k : hitsMultMap.keySet()) {
             results.addResult(k, hitsMultMap.get(k));
         }
@@ -239,7 +238,7 @@ final class RegexQuery implements KeywordSearchQuery {
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         final Integer chunkSize = (Integer) solrDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
 
-        String content = solrDoc.getOrDefault(Server.Schema.CONTENT_STR.toString(), "").toString(); //NON-NLS
+        ArrayList<String> content_str = (ArrayList<String>) solrDoc.get(Server.Schema.CONTENT_STR.toString());
 
         // By default, we create keyword hits on whitespace or punctuation character boundaries.
         // Having a set of well defined boundary characters produces hits that can
@@ -248,8 +247,8 @@ final class RegexQuery implements KeywordSearchQuery {
         // This behavior can be overridden by the user if they give us a search string
         // with .* at either the start and/or end of the string. This basically tells us find
         // all hits instead of the ones surrounded by one of our boundary characters.
-        String keywordTokenRegex =
-                // If the given search string starts with .*, we ignore our default
+        String keywordTokenRegex
+                = // If the given search string starts with .*, we ignore our default
                 // boundary prefix characters
                 (queryStringContainsWildcardPrefix ? "" : BOUNDARY_CHARS) //NON-NLS
                 + keywordString
@@ -257,63 +256,65 @@ final class RegexQuery implements KeywordSearchQuery {
                 // boundary suffix characters
                 + (queryStringContainsWildcardSuffix ? "" : BOUNDARY_CHARS); //NON-NLS
 
-        Matcher hitMatcher = Pattern.compile(keywordTokenRegex).matcher(content);
-        int offset = 0;
+        for (String content : content_str) {
+            Matcher hitMatcher = Pattern.compile(keywordTokenRegex).matcher(content);
+            int offset = 0;
 
-        while (hitMatcher.find(offset)) {
-            StringBuilder snippet = new StringBuilder();
+            while (hitMatcher.find(offset)) {
+                StringBuilder snippet = new StringBuilder();
 
-            //"parent" entries in the index don't have chunk size, so just accept those hits
-            if (chunkSize != null && hitMatcher.start() >= chunkSize) {
-                break;
-            }
+                //"parent" entries in the index don't have chunk size, so just accept those hits
+                if (chunkSize != null && hitMatcher.start() >= chunkSize) {
+                    break;
+                }
 
-            String hit = hitMatcher.group();
+                String hit = hitMatcher.group();
 
-            // Back the matcher offset up by 1 character as it will have eaten
-            // a single space/newline/other boundary character at the end of the hit.
-            // This was causing us to miss hits that appeared consecutively in the
-            // input where they were separated by a single boundary character.
-            offset = hitMatcher.end() - 1;
+                // Back the matcher offset up by 1 character as it will have eaten
+                // a single space/newline/other boundary character at the end of the hit.
+                // This was causing us to miss hits that appeared consecutively in the
+                // input where they were separated by a single boundary character.
+                offset = hitMatcher.end() - 1;
 
-            // Remove any remaining leading and trailing boundary characters.
-            if (!queryStringContainsWildcardPrefix) {
-                hit = hit.replaceAll("^" + BOUNDARY_CHARS, ""); //NON-NLS
-            }
-            if (!queryStringContainsWildcardSuffix) {
-                hit = hit.replaceAll(BOUNDARY_CHARS + "$", ""); //NON-NLS
-            }
+                // Remove any remaining leading and trailing boundary characters.
+                if (!queryStringContainsWildcardPrefix) {
+                    hit = hit.replaceAll("^" + BOUNDARY_CHARS, ""); //NON-NLS
+                }
+                if (!queryStringContainsWildcardSuffix) {
+                    hit = hit.replaceAll(BOUNDARY_CHARS + "$", ""); //NON-NLS
+                }
 
-            /*
-             * If searching for credit card account numbers, do a Luhn check
-             * on the term and discard it if it does not pass.
-             */
-            if (keyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-                Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-                if (ccnMatcher.find()) {
-                    final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
-                    if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                /*
+                 * If searching for credit card account numbers, do a Luhn check
+                 * on the term and discard it if it does not pass.
+                 */
+                if (keyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+                    Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
+                    if (ccnMatcher.find()) {
+                        final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
+                        if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                            continue;
+                        }
+                    } else {
                         continue;
                     }
-                } else {
-                    continue;
                 }
-            }
 
-            /**
-             * Get the snippet from the document if keyword search is configured
-             * to use snippets.
-             */
-            if (KeywordSearchSettings.getShowSnippets()) {
-                int maxIndex = content.length() - 1;
-                snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start() + 1)));
-                snippet.appendCodePoint(171);
-                snippet.append(hit);
-                snippet.appendCodePoint(171);
-                snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end() - 1), Integer.min(maxIndex, hitMatcher.end() + 20)));
-            }
+                /**
+                 * Get the snippet from the document if keyword search is
+                 * configured to use snippets.
+                 */
+                if (KeywordSearchSettings.getShowSnippets()) {
+                    int maxIndex = content.length() - 1;
+                    snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start() + 1)));
+                    snippet.appendCodePoint(171);
+                    snippet.append(hit);
+                    snippet.appendCodePoint(171);
+                    snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end() - 1), Integer.min(maxIndex, hitMatcher.end() + 20)));
+                }
 
-            hits.add(new KeywordHit(docId, snippet.toString(), hit));
+                hits.add(new KeywordHit(docId, snippet.toString(), hit));
+            }
         }
         return hits;
     }

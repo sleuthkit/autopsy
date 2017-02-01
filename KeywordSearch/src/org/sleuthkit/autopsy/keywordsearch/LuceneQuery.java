@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -223,18 +222,21 @@ class LuceneQuery implements KeywordSearchQuery {
                      * will get picked up in the next one. */
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
-                    String content_str = Objects.toString(resultDoc.get(Server.Schema.CONTENT_STR.toString()), null);
+                    final ArrayList<String> get = (ArrayList<String>) resultDoc.get(Server.Schema.CONTENT_STR.toString());
 
                     double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
                     if (indexSchemaVersion < 2.0) {
                         //old schema versions don't support chunk_size or the content_str fields, so just accept hits
                         matches.add(createKeywordtHit(highlightResponse, docId));
                     } else {
-                        //for new schemas, check that the hit is before the chunk/window boundary.
-                        int firstOccurence = StringUtils.indexOf(content_str, strippedQueryString);
-                        //there is no chunksize field for "parent" entries in the index
-                        if (chunkSize != null && firstOccurence < chunkSize) {
-                            matches.add(createKeywordtHit(highlightResponse, docId));
+                        //check against file name and actual content seperately.
+                        for (String content_str : get) {
+                            //for new schemas, check that the hit is before the chunk/window boundary.
+                            int firstOccurence = StringUtils.indexOf(content_str, strippedQueryString);
+                            //there is no chunksize field for "parent" entries in the index
+                            if (chunkSize != null && firstOccurence > -1 && firstOccurence < chunkSize) {
+                                matches.add(createKeywordtHit(highlightResponse, docId));
+                            }
                         }
                     }
                 } catch (TskException ex) {
