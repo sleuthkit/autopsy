@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -129,6 +130,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         allDistinctMimeTypesQuery.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(","); //NON-NLS
         allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
         allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
+        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
         allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
         synchronized (existingMimeTypes) {
             existingMimeTypes.clear();
@@ -448,6 +450,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             query.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(",");  //NON-NLS
             query.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
             query.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
+            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
             query.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
             if (UserPreferences.hideKnownFilesInViewsTree()) {
                 query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
@@ -495,7 +498,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 public LocalFileNode visit(LocalFile lf) {
                     return new LocalFileNode(lf);
                 }
-
+                
+                @Override
+                public SlackFileNode visit(SlackFile sf) {
+                    return new SlackFileNode(sf, false);
+                }
+                
                 @Override
                 protected AbstractNode defaultVisit(Content di) {
                     throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(), "FileTypeChildren.exception.notSupported.msg", di.toString()));
