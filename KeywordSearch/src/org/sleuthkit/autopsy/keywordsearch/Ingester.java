@@ -178,6 +178,7 @@ class Ingester {
             //after all chunks, index just the meta data, including the  numChunks, of the parent file
             fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
             fields.put(Server.Schema.ID.toString(), Long.toString(sourceID)); //reset id field to base document id
+           fields.remove(Server.Schema.CHUNK_SIZE.toString());
             indexChunk(null, sourceName, fields);
         }
 
