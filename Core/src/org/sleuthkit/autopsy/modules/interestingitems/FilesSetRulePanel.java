@@ -39,8 +39,7 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TYPE;
 
 /**
- * A panel that allows a user to create and edit files set
- * membership rules.
+ * A panel that allows a user to create and edit files set membership rules.
  */
 final class FilesSetRulePanel extends javax.swing.JPanel {
 
@@ -75,6 +74,10 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             fileSizeCheck.setVisible(false);
             equalitySymbolComboBox.setVisible(false);
             fileSizeSpinner.setVisible(false);
+            jLabel1.setVisible(false);
+            filesRadioButton.setVisible(false);
+            dirsRadioButton.setVisible(false);
+            allRadioButton.setVisible(false);
             org.openide.awt.Mnemonics.setLocalizedText(jLabel5, org.openide.util.NbBundle.getMessage(FilesSetRulePanel.class, "FilesSetRulePanel.ingest.jLabel5.text")); // NOI18N
 
         } else {
@@ -98,6 +101,10 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             fileSizeCheck.setVisible(false);
             equalitySymbolComboBox.setVisible(false);
             fileSizeSpinner.setVisible(false);
+            jLabel1.setVisible(false);
+            filesRadioButton.setVisible(false);
+            dirsRadioButton.setVisible(false);
+            allRadioButton.setVisible(false);
         } else {
             populateMimeTypesComboBox();
             populateMimeConditionComponents(rule);
@@ -295,8 +302,8 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
 
     /**
      * Returns whether or not the data entered in the panel constitutes a valid
-     * files set membership rule definition, displaying a dialog
-     * explaining the deficiency if the definition is invalid.
+     * files set membership rule definition, displaying a dialog explaining the
+     * deficiency if the definition is invalid.
      *
      * @return True if the definition is valid, false otherwise.
      */
@@ -559,7 +566,6 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
             this.fileSizeCheck.setSelected(false);
             this.mimeCheck.setEnabled(false);
             this.mimeCheck.setSelected(false);
-
         } else {
             if (this.nameCheck.isSelected()) {
                 this.extensionRadioButton.setEnabled(true);

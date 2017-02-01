@@ -130,7 +130,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
         final boolean modifiedChecked = panel.getModifiedCheckBox().isSelected();
         final boolean changedChecked = panel.getChangedCheckBox().isSelected();
         final boolean accessedChecked = panel.getAccessedCheckBox().isSelected();
-        final boolean createdChecked = panel.getAccessedCheckBox().isSelected();
+        final boolean createdChecked = panel.getCreatedCheckBox().isSelected();
 
         if (modifiedChecked || changedChecked || accessedChecked || createdChecked) {
 
