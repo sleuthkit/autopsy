@@ -56,15 +56,12 @@ final class RunIngestModulesAction extends AbstractAction {
         // {0} will be replaced by WizardDescriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle("Run Ingest Modules");
-         System.out.println("GONNA GET EXECUTION CONTEXT ");
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
-            //WJS-TODO figure out how to get the context / profile name out of the wizard after finish is selected.
             String executionContext = (String)wiz.getProperty("executionContext"); //NON-NLS
-            System.out.println("EXECUTION CONTEXT " + executionContext);
-//            IngestJobSettings ingestJobSettings = new IngestJobSettings(executionContext);
-//            ingestJobSettings.save();
-//            showWarnings(ingestJobSettings);
-//            IngestManager.getInstance().queueIngestJob(Collections.<Content>singletonList(dataSource), ingestJobSettings);
+            IngestJobSettings ingestJobSettings = new IngestJobSettings(executionContext);
+            ingestJobSettings.save();
+            showWarnings(ingestJobSettings);
+            IngestManager.getInstance().queueIngestJob(Collections.<Content>singletonList(dataSource), ingestJobSettings);
         }
     }
 
