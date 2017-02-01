@@ -32,9 +32,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.framework.AutopsyService;
@@ -300,6 +302,13 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
+        } 
+
+        try {
+            // store the new core name
+            context.getCase().setTextIndexName(currentVersionIndex.getIndexName());
+        } catch (CaseMetadata.CaseMetadataException ex) {
+            throw new AutopsyServiceException("Failed to save core name in case metadata file", ex);
         }
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);

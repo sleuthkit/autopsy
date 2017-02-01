@@ -174,7 +174,6 @@ public class Server {
     //max content size we can send to Solr
     public static final long MAX_CONTENT_SIZE = 1L * 31 * 1024 * 1024;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private static final String DEFAULT_CORE_NAME = "coreCase"; //NON-NLS
     public static final String CORE_EVT = "CORE_EVT"; //NON-NLS
     @Deprecated
     public static final char ID_CHUNK_SEP = '_';
@@ -816,7 +815,7 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
-            String coreName = getCoreName(theCase);
+            String coreName = index.getIndexName();
             if (!coreIsLoaded(coreName)) {
                 /*
                  * The core either does not exist or it is not loaded. Make a
@@ -855,82 +854,6 @@ public class Server {
         } catch (SolrServerException | SolrException | IOException | CaseMetadata.CaseMetadataException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
-    }
-    
-    /**
-     * Get or create a sanitized Solr core name. Stores the core name if needed.
-     *
-     * @param theCase Case object
-     *
-     * @return The sanitized Solr core name
-     */
-    private String getCoreName(Case theCase) throws CaseMetadata.CaseMetadataException {
-        // get core name
-        String coreName = theCase.getTextIndexName();
-        if (coreName == null || coreName.isEmpty()) {
-            // come up with a new core name
-            coreName = createCoreName(theCase.getName());
-            // store the new core name
-            theCase.setTextIndexName(coreName);
-        }
-        return coreName;
-    }
-    
-    /**
-     * Create and sanitize a core name.
-     *
-     * @param caseName Case name
-     *
-     * @return The sanitized Solr core name
-     */
-    private String createCoreName(String caseName) {
-        if (caseName.isEmpty()) {
-            caseName = DEFAULT_CORE_NAME;
-        }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        Date date = new Date();
-        String coreName = caseName + "_" + dateFormat.format(date);
-        return sanitizeCoreName(coreName);
-    }
-    
-    /**
-     * Sanitizes the case name for Solr cores.
-     *
-     * Solr:
-     * http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
-     * may not be / \ :
-     * Starting Solr6: core names must consist entirely of periods, underscores, hyphens, and alphanumerics as well not start with a hyphen. may not contain space characters.
-     *
-     * @param coreName A candidate core name.
-     *
-     * @return The sanitized core name.
-     */
-    static private String sanitizeCoreName(String coreName) {
-
-        String result;
-
-        // Remove all non-ASCII characters
-        result = coreName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
-
-        // Remove all control characters
-        result = result.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
-
-        // Remove spaces / \ : ? ' "
-        result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
-        
-        // Make it all lowercase
-        result = result.toLowerCase();
-
-        // Must not start with hyphen
-        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '-')) {
-            result = "_" + result;
-        }
-
-        if (result.isEmpty()) {
-            result = DEFAULT_CORE_NAME;
-        }
-
-        return result;
     }
 
     /**
