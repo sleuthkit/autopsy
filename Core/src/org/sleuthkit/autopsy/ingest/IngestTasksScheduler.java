@@ -400,6 +400,7 @@ final class IngestTasksScheduler {
         // Skip the task if the file is actually the pseudo-file for the parent
         // or current directory.
         String fileName = file.getName();
+
         if (fileName.equals(".") || fileName.equals("..")) {
             return false;
         }
@@ -409,7 +410,7 @@ final class IngestTasksScheduler {
          * applied to the current run of ingest, checks if unallocated space
          * should be processed inside call to fileIsMemberOf
          */
-        if ((task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file)) == null) {
+        if (file.isFile() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null) {
             return false;
         }
 
