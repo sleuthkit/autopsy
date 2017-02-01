@@ -65,6 +65,7 @@ public class RunIngestModuleWizardWizardPanel1 extends ShortCircuitableWizardPan
         for (ChangeListener l : ls) {
             l.stateChanged(ev);
         }
+        
     }
 
     @Override
@@ -88,7 +89,8 @@ public class RunIngestModuleWizardWizardPanel1 extends ShortCircuitableWizardPan
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        // use wiz.putProperty to remember current panel state
+        System.out.println("STORING EXECUTION CONTEXT" + component.selectedProfile);
+        wiz.putProperty("executionContext", component.selectedProfile); //NON-NLS
     }
 
 }

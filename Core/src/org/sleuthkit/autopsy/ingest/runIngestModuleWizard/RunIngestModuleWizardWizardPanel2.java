@@ -26,11 +26,11 @@ public class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPan
     @Override
     public IngestJobSettingsPanel getComponent() {
         if (ingestJobSettingsPanel == null) {
-            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings("org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModuleAction"));
+            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModuleWizardWizardIterator.getDefaultContext()));
         }
         return ingestJobSettingsPanel;
     }
-
+    
     @Override
     public HelpCtx getHelp() {
         // Show no Help button for this panel:

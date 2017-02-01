@@ -17,19 +17,27 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 
 public final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
+    private final static String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModuleAction";
+
     private int index;
 
     private List<ShortCircuitableWizardPanel> panels;
 
-    
+    /**
+     * @return the DEFAULT_CONTEXT
+     */
+    static String getDefaultContext() {
+        return DEFAULT_CONTEXT;
+    }
+
     private List<ShortCircuitableWizardPanel> getPanels() {
         if (panels == null) {
-            panels = new ArrayList<ShortCircuitableWizardPanel>();
-             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
-             if (!profileMap.isEmpty()) {
-                  panels.add(new RunIngestModuleWizardWizardPanel1());
-             }
-            
+            panels = new ArrayList<>();
+            TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
+            if (!profileMap.isEmpty()) {
+                panels.add(new RunIngestModuleWizardWizardPanel1());
+            }
+
             panels.add(new RunIngestModuleWizardWizardPanel2());
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
@@ -56,7 +64,7 @@ public final class RunIngestModuleWizardWizardIterator implements WizardDescript
 
     @Override
     public String name() {
-        return "";
+        return index + 1 + ". from " + getPanels().size();
     }
 
     @Override

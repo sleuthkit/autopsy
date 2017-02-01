@@ -21,12 +21,13 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.event.ActionEvent;
 import java.text.MessageFormat;
 import java.util.Collections;
+import java.util.List;
 import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModuleWizardWizardIterator;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Image;
 
 /**
  * This class is used to add the action to the run ingest modules menu item.
@@ -36,7 +37,7 @@ import org.sleuthkit.datamodel.Image;
 final class RunIngestModulesAction extends AbstractAction {
 
     Content dataSource;
-
+    
     /**
      * the constructor
      */
@@ -55,7 +56,26 @@ final class RunIngestModulesAction extends AbstractAction {
         // {0} will be replaced by WizardDescriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle("Run Ingest Modules");
+         System.out.println("GONNA GET EXECUTION CONTEXT ");
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
+            //WJS-TODO figure out how to get the context / profile name out of the wizard after finish is selected.
+            String executionContext = (String)wiz.getProperty("executionContext"); //NON-NLS
+            System.out.println("EXECUTION CONTEXT " + executionContext);
+//            IngestJobSettings ingestJobSettings = new IngestJobSettings(executionContext);
+//            ingestJobSettings.save();
+//            showWarnings(ingestJobSettings);
+//            IngestManager.getInstance().queueIngestJob(Collections.<Content>singletonList(dataSource), ingestJobSettings);
+        }
+    }
+
+    private static void showWarnings(IngestJobSettings ingestJobSettings) {
+        List<String> warnings = ingestJobSettings.getWarnings();
+        if (warnings.isEmpty() == false) {
+            StringBuilder warningMessage = new StringBuilder();
+            for (String warning : warnings) {
+                warningMessage.append(warning).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warningMessage.toString());
         }
     }
 }
