@@ -71,7 +71,7 @@ public final class RunIngestModulesAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        WizardDescriptor wiz = new WizardDescriptor(new RunIngestModuleWizardWizardIterator());
+        WizardDescriptor wiz = new WizardDescriptor(new RunIngestModuleWizardIterator());
         // {0} will be replaced by WizardDescriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle(Bundle.RunIngestModulesAction_name());

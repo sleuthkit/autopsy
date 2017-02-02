@@ -26,7 +26,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
-class RunIngestModuleWizardWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
+class RunIngestModuleWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
 
     private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1);
     private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
@@ -47,7 +47,7 @@ class RunIngestModuleWizardWizardPanel1 extends EarlyFinishWizardDescriptorPanel
         if (component == null) {
             if (ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null
                     || ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
-                lastProfileUsed = RunIngestModuleWizardWizardIterator.getDefaultContext();
+                lastProfileUsed = RunIngestModuleWizardIterator.getDefaultContext();
             } else {
                 lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
             }

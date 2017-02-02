@@ -28,7 +28,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 
-final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+final class RunIngestModuleWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private final static String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleAction";
 
@@ -48,10 +48,10 @@ final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iter
             panels = new ArrayList<>();
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
             if (!profileMap.isEmpty()) {
-                panels.add(new RunIngestModuleWizardWizardPanel1());
+                panels.add(new RunIngestModuleWizardPanel1());
             }
 
-            panels.add(new RunIngestModuleWizardWizardPanel2());
+            panels.add(new RunIngestModuleWizardPanel2());
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();

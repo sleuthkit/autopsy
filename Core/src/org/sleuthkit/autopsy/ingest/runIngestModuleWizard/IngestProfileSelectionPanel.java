@@ -41,7 +41,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
 
     private static final String CUSTOM_SETTINGS_DISPLAY_NAME = "Custom Settings";
     private static final String CUSTOM_SETTINGS_DESCRIPTION = "configure individual module settings in next step of wizard";  //WJS-TODO these should be @Message
-    private final RunIngestModuleWizardWizardPanel1 wizardPanel;
+    private final RunIngestModuleWizardPanel1 wizardPanel;
     private String selectedProfile;
     private List<IngestProfile> profiles = Collections.emptyList();
 
@@ -51,7 +51,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      * @param panel               - the WizardPanel which contains this panel
      * @param lastSelectedProfile - the profile that will be selected initially
      */
-    IngestProfileSelectionPanel(RunIngestModuleWizardWizardPanel1 panel, String lastSelectedProfile) {
+    IngestProfileSelectionPanel(RunIngestModuleWizardPanel1 panel, String lastSelectedProfile) {
         initComponents();
         //WJS-TODO figure out how to get width of writable area, if text length greater than width. Trim text to width minus 3 chars in length and then add ... to the end
         wizardPanel = panel;
@@ -75,7 +75,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      */
     private void populateListOfCheckboxes() {
         profiles = getProfiles();
-        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, RunIngestModuleWizardWizardIterator.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION);
+        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, RunIngestModuleWizardIterator.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION);
         for (IngestProfile profile : profiles) {
             addRadioButton(profile.toString(), profile.toString(), profile.getDescription());
         }
@@ -243,7 +243,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
             }
         }
         boolean wasLastPanel = isLastPanel;
-        if (selectedProfile.equals(RunIngestModuleWizardWizardIterator.getDefaultContext())) {
+        if (selectedProfile.equals(RunIngestModuleWizardIterator.getDefaultContext())) {
             isLastPanel = false;
         } else {
             isLastPanel = true;

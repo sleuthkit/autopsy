@@ -24,7 +24,7 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
-class RunIngestModuleWizardWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
+class RunIngestModuleWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
 
     /**
      * f
@@ -41,7 +41,7 @@ class RunIngestModuleWizardWizardPanel2 extends EarlyFinishWizardDescriptorPanel
     @Override
     public IngestJobSettingsPanel getComponent() {
         if (ingestJobSettingsPanel == null) {
-            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModuleWizardWizardIterator.getDefaultContext()));
+            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModuleWizardIterator.getDefaultContext()));
         }
         return ingestJobSettingsPanel;
     }
@@ -81,7 +81,7 @@ class RunIngestModuleWizardWizardPanel2 extends EarlyFinishWizardDescriptorPanel
     public void storeSettings(WizardDescriptor wiz) {
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
-         wiz.putProperty("executionContext", RunIngestModuleWizardWizardIterator.getDefaultContext()); //NON-NLS
+         wiz.putProperty("executionContext", RunIngestModuleWizardIterator.getDefaultContext()); //NON-NLS
     }
 
 }
