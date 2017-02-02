@@ -222,7 +222,7 @@ class LuceneQuery implements KeywordSearchQuery {
                      * will get picked up in the next one. */
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
-                    final ArrayList<String> get = (ArrayList<String>) resultDoc.get(Server.Schema.CONTENT_STR.toString());
+                    final Collection<Object> content = resultDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
 
                     double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
                     if (indexSchemaVersion < 2.0) {
@@ -230,11 +230,12 @@ class LuceneQuery implements KeywordSearchQuery {
                         matches.add(createKeywordtHit(highlightResponse, docId));
                     } else {
                         //check against file name and actual content seperately.
-                        for (String content_str : get) {
+                        for (Object content_obj : content) {
+                            String content_str = (String) content_obj;
                             //for new schemas, check that the hit is before the chunk/window boundary.
-                            int firstOccurence = StringUtils.indexOf(content_str, strippedQueryString);
+                            int firstOccurence = StringUtils.indexOf(content_str.toLowerCase(), strippedQueryString.toLowerCase());
                             //there is no chunksize field for "parent" entries in the index
-                            if (chunkSize != null && firstOccurence > -1 && firstOccurence < chunkSize) {
+                            if (chunkSize == null || chunkSize == 0 || (firstOccurence > -1 && firstOccurence < chunkSize)) {
                                 matches.add(createKeywordtHit(highlightResponse, docId));
                             }
                         }
