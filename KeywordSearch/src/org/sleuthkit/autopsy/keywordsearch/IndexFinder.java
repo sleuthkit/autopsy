@@ -76,7 +76,7 @@ class IndexFinder {
         // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
         File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
         targetDirPath.mkdirs();
-        return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION);
+        return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION, theCase.getTextIndexName(), theCase.getName());
     }
 
     static Index identifyIndexToUpgrade(List<Index> allIndexes) {
@@ -201,7 +201,7 @@ class IndexFinder {
                 String solrVersion = getSolrVersionFromIndexPath(validPath);
                 String schemaVersion = getSchemaVersionFromIndexPath(validPath);
                 if (!validPath.isEmpty() && !solrVersion.isEmpty() && !schemaVersion.isEmpty()) {
-                    indexes.add(new Index(convertPathToUNC(validPath), solrVersion, schemaVersion));
+                    indexes.add(new Index(convertPathToUNC(validPath), solrVersion, schemaVersion, theCase.getTextIndexName(), theCase.getName()));
                     // there can be multiple index folders (e.g. current version and "old" version) so keep looking
                 }
             }

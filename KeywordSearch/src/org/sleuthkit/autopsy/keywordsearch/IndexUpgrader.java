@@ -104,7 +104,7 @@ class IndexUpgrader {
             }
 
             // create upgraded index object
-            upgradedIndex = new Index(newIndexDir, Integer.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion());
+            upgradedIndex = new Index(newIndexDir, Integer.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion(), context.getCase().getTextIndexName(), context.getCase().getName());
             return upgradedIndex;
 
         } catch (Exception ex) {

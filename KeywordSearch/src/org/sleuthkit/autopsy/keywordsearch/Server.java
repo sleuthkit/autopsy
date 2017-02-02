@@ -851,7 +851,7 @@ public class Server {
 
             return new Core(coreName, theCase.getCaseType(), index);
 
-        } catch (SolrServerException | SolrException | IOException | CaseMetadata.CaseMetadataException ex) {
+        } catch (SolrServerException | SolrException | IOException ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
     }
