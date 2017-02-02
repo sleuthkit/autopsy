@@ -238,7 +238,7 @@ final class RegexQuery implements KeywordSearchQuery {
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
         final Integer chunkSize = (Integer) solrDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
 
-        ArrayList<String> content_str = (ArrayList<String>) solrDoc.get(Server.Schema.CONTENT_STR.toString());
+        final Collection<Object> content_str = solrDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
 
         // By default, we create keyword hits on whitespace or punctuation character boundaries.
         // Having a set of well defined boundary characters produces hits that can
@@ -250,13 +250,14 @@ final class RegexQuery implements KeywordSearchQuery {
         String keywordTokenRegex
                 = // If the given search string starts with .*, we ignore our default
                 // boundary prefix characters
-                (queryStringContainsWildcardPrefix ? "" : BOUNDARY_CHARS) //NON-NLS
+                (queryStringContainsWildcardPrefix ? "" : "(^|" + BOUNDARY_CHARS + ")") //NON-NLS
                 + keywordString
                 // If the given search string ends with .*, we ignore our default
                 // boundary suffix characters
-                + (queryStringContainsWildcardSuffix ? "" : BOUNDARY_CHARS); //NON-NLS
+                + (queryStringContainsWildcardSuffix ? "" : "($|" + BOUNDARY_CHARS + ")"); //NON-NLS
 
-        for (String content : content_str) {
+        for (Object content_obj : content_str) {
+            String content = (String) content_obj;
             Matcher hitMatcher = Pattern.compile(keywordTokenRegex).matcher(content);
             int offset = 0;
 
