@@ -306,8 +306,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         try {
             // store the new core name
-            context.getCase().setTextIndexName(currentVersionIndex.getIndexName());
-        } catch (CaseMetadata.CaseMetadataException ex) {
+            IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), currentVersionIndex);
+        } catch (IndexMetadata.TextIndexMetadataException ex) {
             throw new AutopsyServiceException("Failed to save core name in case metadata file", ex);
         }
 

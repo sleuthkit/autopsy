@@ -25,7 +25,8 @@ import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
@@ -52,21 +53,24 @@ public class IndexMetadata {
     private final static String SCHEMA_VERSION_ELEMENT_NAME = "SchemaVersion"; //NON-NLS
     private final static String SOLR_VERSION_ELEMENT_NAME = "SolrVersion"; //NON-NLS
     private final static String TEXT_INDEX_PATH_ELEMENT_NAME = "TextIndexPath"; //NON-NLS
-    private String coreName;
-    private String textIndexPath;
-    private String solrVersion;
-    private String schemaVersion;    
+    private List<Index> indexes = new ArrayList<>();
     
     IndexMetadata(String caseDirectory, Index index) throws TextIndexMetadataException {
         metadataFilePath = Paths.get(caseDirectory, metadataFileName);
-        this.coreName = index.getIndexName();
-        this.solrVersion = index.getSolrVersion();
-        this.schemaVersion = index.getSchemaVersion();
-        this.textIndexPath = index.getIndexPath();
+        indexes.add(index);
         writeToFile();
     }
     
+    IndexMetadata(String caseDirectory, List<Index> indexes) throws TextIndexMetadataException {
+        metadataFilePath = Paths.get(caseDirectory, metadataFileName);
+        this.indexes = indexes;
+        writeToFile();
+    }
     
+    void addIndex(Index index) throws TextIndexMetadataException {
+        indexes.add(index);
+        writeToFile();
+    }
     
     /**
      * Writes the case metadata to the metadata file.
@@ -108,7 +112,7 @@ public class IndexMetadata {
     }
 
     /*
-     * Creates an XML DOM from the case metadata.
+     * Creates an XML DOM from the text index metadata.
      */
     private void createXMLDOM(Document doc) {
         /*
@@ -116,23 +120,18 @@ public class IndexMetadata {
          */
         Element rootElement = doc.createElement(ROOT_ELEMENT_NAME);
         doc.appendChild(rootElement);
-        createChildElement(doc, rootElement, CORE_NAME_ELEMENT_NAME, createdDate);
-        createChildElement(doc, rootElement, SOLR_VERSION_ELEMENT_NAME, DATE_FORMAT.format(new Date()));
-        createChildElement(doc, rootElement, SCHEMA_VERSION_ELEMENT_NAME, CURRENT_SCHEMA_VERSION);
-        createChildElement(doc, rootElement, TEXT_INDEX_PATH_ELEMENT_NAME, createdByVersion);
-        Element caseElement = doc.createElement(CORE_ELEMENT_NAME);
-        rootElement.appendChild(caseElement);
 
         /*
-         * Create the children of the case element.
+         * Create the children of the Solr cores element.
          */
-        createChildElement(doc, caseElement, CASE_NAME_ELEMENT_NAME, caseName);
-        createChildElement(doc, caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, caseDisplayName);
-        createChildElement(doc, caseElement, CASE_NUMBER_ELEMENT_NAME, caseNumber);
-        createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, examiner);
-        createChildElement(doc, caseElement, CASE_TYPE_ELEMENT_NAME, caseType.toString());
-        createChildElement(doc, caseElement, CASE_DATABASE_ELEMENT_NAME, caseDatabaseName);
-        createChildElement(doc, caseElement, TEXT_INDEX_ELEMENT, textIndexName);
+        for (Index index : indexes) {
+            Element coreElement = doc.createElement(CORE_ELEMENT_NAME);
+            rootElement.appendChild(coreElement);
+            createChildElement(doc, coreElement, CORE_NAME_ELEMENT_NAME, index.getIndexName());
+            createChildElement(doc, coreElement, SOLR_VERSION_ELEMENT_NAME, index.getSolrVersion());
+            createChildElement(doc, coreElement, SCHEMA_VERSION_ELEMENT_NAME, index.getSchemaVersion());
+            createChildElement(doc, coreElement, TEXT_INDEX_PATH_ELEMENT_NAME, index.getIndexPath());
+        }
     }
     
     /**
