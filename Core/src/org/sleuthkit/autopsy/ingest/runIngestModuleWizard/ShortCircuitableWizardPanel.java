@@ -8,11 +8,10 @@ package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 import org.openide.WizardDescriptor;
 
 /**
- *
+ * Abstract class for exten
  * 
  */
-
-public abstract class ShortCircuitableWizardPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+abstract class ShortCircuitableWizardPanel implements WizardDescriptor.Panel<WizardDescriptor> {
     
     boolean shouldCheckForNext(){
         return true;

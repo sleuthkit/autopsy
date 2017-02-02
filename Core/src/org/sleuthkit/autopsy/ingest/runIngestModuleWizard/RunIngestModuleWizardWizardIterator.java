@@ -15,7 +15,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 
-public final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private final static String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleAction";
 
@@ -26,7 +26,7 @@ public final class RunIngestModuleWizardWizardIterator implements WizardDescript
     /**
      * @return the DEFAULT_CONTEXT
      */
-    public static String getDefaultContext() {
+    static String getDefaultContext() {
         return DEFAULT_CONTEXT;
     }
 
