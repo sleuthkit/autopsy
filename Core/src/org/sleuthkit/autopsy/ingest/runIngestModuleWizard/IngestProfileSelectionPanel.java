@@ -33,16 +33,23 @@ import org.sleuthkit.autopsy.ingest.IngestOptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 
+/**
+ * Visual panel for the choosing of ingest profiles by the user when running
+ * ingest.
+ */
 final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
 
     private static final String CUSTOM_SETTINGS_DISPLAY_NAME = "Custom Settings";
     private static final String CUSTOM_SETTINGS_DESCRIPTION = "configure individual module settings in next step of wizard";  //WJS-TODO these should be @Message
     private final RunIngestModuleWizardWizardPanel1 wizardPanel;
     private String selectedProfile;
-    private List<IngestProfile> elements = Collections.emptyList();
+    private List<IngestProfile> profiles = Collections.emptyList();
 
     /**
-     * Creates new form runIngestModuleWizardVisualPanel1
+     * Creates new IngestProfileSelectionPanel
+     *
+     * @param panel               - the WizardPanel which contains this panel
+     * @param lastSelectedProfile - the profile that will be selected initially
      */
     IngestProfileSelectionPanel(RunIngestModuleWizardWizardPanel1 panel, String lastSelectedProfile) {
         initComponents();
@@ -50,24 +57,42 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;
         populateListOfCheckboxes();
-
+        this.setName("Ingest Profile Selection");  //WJS-TODO @Messages this
     }
 
+    /**
+     * Returns the profile that is currently selected in this panel
+     *
+     * @return selectedProfile
+     */
     String getLastSelectedProfile() {
         return selectedProfile;
     }
 
+    /**
+     * Adds a radio button for custom settings as well as one for each profile
+     * that has been created to the panel containing them.
+     */
     private void populateListOfCheckboxes() {
-        elements = getElements();
+        profiles = getProfiles();
         addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, RunIngestModuleWizardWizardIterator.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION);
-        for (IngestProfile profile : elements) {
+        for (IngestProfile profile : profiles) {
             addRadioButton(profile.toString(), profile.toString(), profile.getDescription());
         }
     }
 
+    /**
+     * Creates and configures a single radio button before adding it to both the
+     * button group and the panel.
+     *
+     * @param profileDisplayName - the name of the profile the user should see
+     * @param profileContextName - the name the profile will be recognized as
+     *                           programmatically
+     * @param profileDesc        - the description of the profile
+     */
     private void addRadioButton(String profileDisplayName, String profileContextName, String profileDesc) {
         String displayText = profileDisplayName + " - " + profileDesc;
-        int width = jScrollPane1.getWidth();
+        int width = profileListScrollPane.getWidth();
         if (width > 3) {
             if (displayText.length() > width) {
                 String ellipses = "...";
@@ -84,26 +109,28 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
             myRadio.setSelected(true);
         }
 
-        buttonGroup1.add(myRadio);
-        jPanel1.add(myRadio);
+        profileListButtonGroup.add(myRadio);
+        profileListPanel.add(myRadio);
 
     }
 
-    @Override
-    public String getName() {
-        return "Ingest Profile Selection";  //WJS-TODO @Messages this
-    }
-
-    private List<IngestProfile> getElements() {
-        if (elements.isEmpty()) {
-            fetchListContents();
+    /**
+     * Getter for the list of profiles
+     * @return profiles
+     */
+    private List<IngestProfile> getProfiles() {
+        if (profiles.isEmpty()) {
+            fetchProfileList();
         }
-        return elements;
+        return profiles;
     }
 
+    /**
+     * Remove everything from the list of checkboxes.
+     */
     private void clearListOfCheckBoxes() {
-        buttonGroup1 = new javax.swing.ButtonGroup();
-        jPanel1.removeAll();
+        profileListButtonGroup = new javax.swing.ButtonGroup();
+        profileListPanel.removeAll();
     }
 
     /**
@@ -114,29 +141,29 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
-        jButton1 = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        jPanel1 = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
+        profileListButtonGroup = new javax.swing.ButtonGroup();
+        ingestSettingsButton = new javax.swing.JButton();
+        profileListScrollPane = new javax.swing.JScrollPane();
+        profileListPanel = new javax.swing.JPanel();
+        profileListLabel = new javax.swing.JLabel();
 
         setMaximumSize(new java.awt.Dimension(5750, 3000));
         setPreferredSize(new java.awt.Dimension(625, 450));
 
-        org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(IngestProfileSelectionPanel.class, "IngestProfileSelectionPanel.jButton1.text")); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(ingestSettingsButton, org.openide.util.NbBundle.getMessage(IngestProfileSelectionPanel.class, "IngestProfileSelectionPanel.ingestSettingsButton.text")); // NOI18N
+        ingestSettingsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                ingestSettingsButtonActionPerformed(evt);
             }
         });
 
-        jScrollPane1.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        profileListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-        jPanel1.setAutoscrolls(true);
-        jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.PAGE_AXIS));
-        jScrollPane1.setViewportView(jPanel1);
+        profileListPanel.setAutoscrolls(true);
+        profileListPanel.setLayout(new javax.swing.BoxLayout(profileListPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        profileListScrollPane.setViewportView(profileListPanel);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(IngestProfileSelectionPanel.class, "IngestProfileSelectionPanel.jLabel1.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(profileListLabel, org.openide.util.NbBundle.getMessage(IngestProfileSelectionPanel.class, "IngestProfileSelectionPanel.profileListLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -145,11 +172,11 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1)
+                    .addComponent(profileListScrollPane)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(ingestSettingsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(profileListLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 523, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -157,16 +184,22 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(profileListLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
+                .addComponent(profileListScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jButton1)
+                .addComponent(ingestSettingsButton)
                 .addGap(18, 18, 18))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    /**
+     * Opens up a dialog with an IngestOptionsPanel so the user can modify any 
+     * settings from that options panel. 
+     * 
+     * @param evt the button press
+     */
+    private void ingestSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestSettingsButtonActionPerformed
         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
         IngestOptionsPanel ingestOptions = new IngestOptionsPanel();
         ingestOptions.load();
@@ -174,46 +207,56 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
                 (ActionEvent e) -> {
                     ingestOptions.store();
                     clearListOfCheckBoxes();
-                    fetchListContents();
-                    jPanel1.revalidate();
-                    jPanel1.repaint();
+                    fetchProfileList();
+                    profileListPanel.revalidate();
+                    profileListPanel.repaint();
                     populateListOfCheckboxes();
                     dialog.close();
                 }
         );
         dialog.display(ingestOptions);
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }//GEN-LAST:event_ingestSettingsButtonActionPerformed
 
-    boolean hasNextPanel = true;
+    boolean isLastPanel = false;
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JButton ingestSettingsButton;
+    private javax.swing.ButtonGroup profileListButtonGroup;
+    private javax.swing.JLabel profileListLabel;
+    private javax.swing.JPanel profileListPanel;
+    private javax.swing.JScrollPane profileListScrollPane;
     // End of variables declaration//GEN-END:variables
 
+    /**
+     * Listens for changes and checks the currently selected radio button
+     * if custom settings button is enabled it enables the next button,
+     * otherwise it enables the Finish button.
+     * 
+     * @param e 
+     */
     @Override
     public void itemStateChanged(ItemEvent e) {
-        for (Component rButton : jPanel1.getComponents()) {
+        for (Component rButton : profileListPanel.getComponents()) {
             JRadioButton jrb = (JRadioButton) rButton;
             if (jrb.isSelected()) {
                 selectedProfile = jrb.getName();
                 break;
             }
         }
-        boolean hadNextPanel = hasNextPanel;
+        boolean wasLastPanel = isLastPanel;
         if (selectedProfile.equals(RunIngestModuleWizardWizardIterator.getDefaultContext())) {
-            hasNextPanel = true;
+            isLastPanel = false;
         } else {
-            hasNextPanel = false;
+            isLastPanel = true;
         }
         wizardPanel.fireChangeEvent();
-        this.firePropertyChange("LAST_ENABLED", hadNextPanel, hasNextPanel); //NON-NLS
+        this.firePropertyChange("LAST_ENABLED", wasLastPanel, isLastPanel); //NON-NLS
     }
 
-    private void fetchListContents() {
-        elements = new ArrayList<>();
-        elements.addAll(new IngestProfileMap().getIngestProfileMap().values());
+    /**
+     * Get all the currently existing ingest profiles.
+     */
+    private void fetchProfileList() {
+        profiles = new ArrayList<>();
+        profiles.addAll(new IngestProfileMap().getIngestProfileMap().values());
     }
 }

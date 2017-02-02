@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
@@ -21,7 +34,7 @@ final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iter
 
     private int index;
 
-    private List<ShortCircuitableWizardPanel> panels;
+    private List<EarlyFinishWizardDescriptorPanel> panels;
 
     /**
      * @return the DEFAULT_CONTEXT
@@ -30,7 +43,7 @@ final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iter
         return DEFAULT_CONTEXT;
     }
 
-    private List<ShortCircuitableWizardPanel> getPanels() {
+    private List<EarlyFinishWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
@@ -58,7 +71,7 @@ final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iter
     }
 
     @Override
-    public ShortCircuitableWizardPanel current() {
+    public EarlyFinishWizardDescriptorPanel current() {
         return getPanels().get(index);
     }
 
@@ -69,7 +82,7 @@ final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iter
 
     @Override
     public boolean hasNext() {
-        return (index < getPanels().size() - 1) && current().shouldCheckForNext();
+        return (index < getPanels().size() - 1) && !current().isLastPanel();
     }
 
     @Override
