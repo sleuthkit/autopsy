@@ -40,13 +40,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extractor of text from TIKA supported AbstractFile content. Extracted text
- * will be divided into chunks and indexed with Solr. Protects against Tika
- * parser hangs (for unexpected/corrupt content) using a timeout mechanism. If
- * Tika extraction succeeds, chunks are indexed with Solr.
- *
- * This Tika extraction/chunking utility is useful for large files of Tika
- * parsers-supported content type.
+ * Extracts text from Tika supported AbstractFile content. Protects against Tika
+ * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
 class TikaTextExtractor extends FileTextExtractor {
 
@@ -90,12 +85,12 @@ class TikaTextExtractor extends FileTextExtractor {
     }
 
     /**
-     * Get a CharSource that wraps a formated representation of the given
+     * Gets a CharSource that wraps a formated representation of the given
      * Metadata.
      *
      * @param metadata The Metadata to wrap as a CharSource
      *
-     * @returna CharSource for the given MetaData
+     * @return A CharSource for the given MetaData
      */
     static private CharSource getMetaDataCharSource(Metadata metadata) {
         return CharSource.wrap(
@@ -121,9 +116,6 @@ class TikaTextExtractor extends FileTextExtractor {
 
             return false;
         }
-
-        //TODO might need to add more mime-types to ignore
-        //then accept all formats supported by Tika
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
 

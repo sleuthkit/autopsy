@@ -29,9 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.concurrent.Immutable;
 
-/**
- * RJCTODO
- */
 @Immutable
 public final class Manifest implements Serializable {
 
@@ -43,17 +40,6 @@ public final class Manifest implements Serializable {
     private final String dataSourcePath;
     private final Map<String, String> manifestProperties;
 
-    /**
-     * RJCTODO
-     *
-     * @param manifestFilePath
-     * @param caseName
-     * @param deviceId
-     * @param dataSourcePath
-     * @param manifestProperties
-     *
-     * @throws IOException
-     */
     public Manifest(Path manifestFilePath, String caseName, String deviceId, Path dataSourcePath, Map<String, String> manifestProperties) throws IOException {
         this.filePath = manifestFilePath.toString();
         BasicFileAttributes attrs = Files.readAttributes(manifestFilePath, BasicFileAttributes.class);
@@ -64,65 +50,30 @@ public final class Manifest implements Serializable {
         this.manifestProperties = new HashMap<>(manifestProperties);
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     public Path getFilePath() {
         return Paths.get(this.filePath);
     }
 
-    /**
-     * RJCTODO
-     * 
-     * @return
-     * @throws IOException 
-     */
     public Date getDateFileCreated() {
         return this.dateFileCreated;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     public String getCaseName() {
         return caseName;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     public String getDeviceId() {
         return deviceId;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     public Path getDataSourcePath() {
         return Paths.get(dataSourcePath);
     }
 
-    /**
-     * RJCTODO
-     * @return 
-     */
     public String getDataSourceFileName() {
         return Paths.get(dataSourcePath).getFileName().toString();
     }
     
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     public Map<String, String> getManifestProperties() {
         return new HashMap<>(manifestProperties);
     }

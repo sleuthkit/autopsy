@@ -61,7 +61,7 @@ class AccountsText implements IndexedText {
     private static final String INSERT_POSTFIX = "'></a>$0"; //$0 will insert current regex match  //NON-NLS
     private static final Pattern ANCHOR_DETECTION_PATTERN = Pattern.compile(HIGHLIGHT_PRE);
 
-    private static final String HIGHLIGHT_FIELD = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+    private static final String HIGHLIGHT_FIELD = LuceneQuery.HIGHLIGHT_FIELD;
 
     private final Server solrServer;
     private final String solrDocumentId;

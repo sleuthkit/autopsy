@@ -38,8 +38,17 @@ class KeywordHit implements Comparable<KeywordHit> {
     private final String snippet;
     private final Content content;
     private final BlackboardArtifact artifact;
+    private final String hit;
+
+    public String getHit() {
+        return hit;
+    }
 
     KeywordHit(String solrDocumentId, String snippet) throws TskCoreException {
+        this(solrDocumentId, snippet, null);
+    }
+
+    KeywordHit(String solrDocumentId, String snippet, String hit) throws TskCoreException {
         /**
          * Store the Solr document id.
          */
@@ -83,6 +92,7 @@ class KeywordHit implements Comparable<KeywordHit> {
          * Store the text snippet.
          */
         this.snippet = snippet;
+        this.hit = hit;
     }
 
     String getSolrDocumentId() {

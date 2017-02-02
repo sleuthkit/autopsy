@@ -238,8 +238,8 @@
                 <binary-origin>release/modules/ext/asm-all-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-javadoc.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-6.2.1-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-6.2.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-3.10-beta2.jar</runtime-relative-path>
@@ -278,8 +278,8 @@
                 <binary-origin>release/modules/ext/org.osgi.core-4.0.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpclient-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpclient-4.3.1.jar</binary-origin>
+                <runtime-relative-path>ext/httpclient-4.4.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-4.4.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/isoparser-1.0-RC-1.jar</runtime-relative-path>
@@ -310,8 +310,8 @@
                 <binary-origin>release/modules/ext/org.apache.felix.scr.generator-1.1.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-6.2.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-6.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/poi-scratchpad-3.10-beta2.jar</runtime-relative-path>
@@ -326,16 +326,20 @@
                 <binary-origin>release/modules/ext/vorbis-java-core-0.1-tests.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-io-2.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-io-2.3.jar</binary-origin>
+                <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-io-2.5.jar</binary-origin>
             </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-codec-1.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-codec-1.5.jar</binary-origin>
+            </class-path-extension>            
             <class-path-extension>
                 <runtime-relative-path>ext/jericho-html-3.3-sources.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jericho-html-3.3-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1-sources.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-6.2.1-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-6.2.1-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/juniversalchardet-1.0.3.jar</runtime-relative-path>
@@ -346,24 +350,28 @@
                 <binary-origin>release/modules/ext/org.apache.felix.scr.annotations-1.6.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/noggit-0.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/noggit-0.5.jar</binary-origin>
+                <runtime-relative-path>ext/noggit-0.6.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/noggit-0.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-core-0.7.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/apache-mime4j-core-0.7.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpmime-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpmime-4.3.1.jar</binary-origin>
+                <runtime-relative-path>ext/httpmime-4.4.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpmime-4.4.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/qdox-1.12.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/qdox-1.12.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpcore-4.3.jar</binary-origin>
+                <runtime-relative-path>ext/httpcore-4.4.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.4.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-validator-1.5.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-validator-1.5.1.jar</runtime-relative-path>

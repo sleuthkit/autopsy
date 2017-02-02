@@ -34,7 +34,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
- * TextExtractor that extracts raw strings from an AbstractFile.
+ * Extracts raw strings from AbstractFile content.
  */
 class StringsTextExtractor extends FileTextExtractor {
 
@@ -47,6 +47,7 @@ class StringsTextExtractor extends FileTextExtractor {
         EXTRACT_UTF16, ///< extract UTF16 text, true/false
         EXTRACT_UTF8, ///< extract UTF8 text, true/false
     };
+    
     private final List<SCRIPT> extractScripts = new ArrayList<>();
     private Map<String, String> extractOptions = new HashMap<>();
 

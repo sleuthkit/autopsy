@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,17 +30,22 @@ import org.openide.util.actions.SystemAction;
  */
 class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
 
-    int length;
-    static boolean hasRecentCase = false;
+    private static final long serialVersionUID = 1L;
+    private static int NUM_CASES_TO_DISPLAY;
+    private static boolean hasRecentCase = false;
 
     /**
      * the constructor
      */
     UpdateRecentCases() {
         // display last 5 cases.
-        length = RecentCases.LENGTH - 1;
+        NUM_CASES_TO_DISPLAY = 5;
     }
 
+    static void setHasRecentCase(boolean value) {
+        hasRecentCase = value;
+    }
+    
     /**
      * Creates main menu/popup menu items. Null values will be later replaced by
      * JSeparators. This method is called for popups and for menus. It's called
@@ -53,10 +58,10 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
     public JComponent[] getMenuPresenters() {
         String[] caseName = RecentCases.getInstance().getRecentCaseNames();
         String[] casePath = RecentCases.getInstance().getRecentCasePaths();
-        JComponent[] comps = new JComponent[length + 2]; // + 2 for separator and clear menu
+        JComponent[] comps = new JComponent[NUM_CASES_TO_DISPLAY + 2]; // + 2 for separator and clear menu
 
         // if it has the recent menus, add them to the component list
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < NUM_CASES_TO_DISPLAY; i++) {
             if ((!caseName[i].equals(""))) {
                 JMenuItem menuItem = new JMenuItem(caseName[i]);
                 menuItem.setActionCommand(caseName[i].toUpperCase());
@@ -68,11 +73,11 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
 
         // if it has recent case, create clear menu
         if (hasRecentCase) {
-            comps[length] = new JSeparator();
+            comps[NUM_CASES_TO_DISPLAY] = new JSeparator();
             JMenuItem clearMenu = new JMenuItem(
                     NbBundle.getMessage(UpdateRecentCases.class, "UpdateRecentCases.menuItem.clearRecentCases.text"));
             clearMenu.addActionListener(SystemAction.get(RecentCases.class));
-            comps[length + 1] = clearMenu;
+            comps[NUM_CASES_TO_DISPLAY + 1] = clearMenu;
         } // otherwise, just create a disabled empty menu
         else {
             comps = new JComponent[1];
@@ -85,17 +90,15 @@ class UpdateRecentCases extends JMenuItem implements DynamicMenuContent {
     }
 
     /**
-     * Updates main menu presenters. This method is called only by the main menu
-     * processing.
+     * Updates the Recent Cases menu items. 
      *
-     * @param jcs the previously used menu items returned by previous call to
-     *            getMenuPresenters() or synchMenuPresenters()
+     * @param menuItems A set of Recent Case menu items to be updated.
      *
-     * @return menu a new set of items to show in menu. Can be either an updated
-     *         old set of instances or a completely new one.
+     * @return A updated set of recent case menu items to show in the Recent
+     *         Cases menu.
      */
     @Override
-    public JComponent[] synchMenuPresenters(JComponent[] jcs) {
+    public JComponent[] synchMenuPresenters(JComponent[] menuItems) {
         return getMenuPresenters();
     }
 }

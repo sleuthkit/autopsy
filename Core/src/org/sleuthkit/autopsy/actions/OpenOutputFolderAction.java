@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2015 Basis Technology Corp.
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,37 +35,45 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Action in menu to open the folder containing the output files
+ * The action associated with the Tools/Open Output Folder menu item. It opens a
+ * file explorer window for the root output directory for the currently open
+ * case. If the case is a single-user case, this is the case directory. If the
+ * case is a multi-user case, this is a subdirectory of the case directory
+ * specific to the host machine.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
-@ActionRegistration(
-        displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy=true)
+@ActionRegistration(displayName = "#CTL_OpenOutputFolder", iconInMenu = true, lazy = false)
 @ActionReference(path = "Menu/Tools", position = 1850, separatorBefore = 1849)
 @ActionID(id = "org.sleuthkit.autopsy.actions.OpenOutputFolderAction", category = "Help")
 public final class OpenOutputFolderAction extends CallableSystemAction {
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(OpenOutputFolderAction.class.getName());
-
+    
     @Override
     public void performAction() {
-
+        File outputDir;
         try {
-            File outputDir;
-            if (Case.isCaseOpen()) {
-                outputDir = new File(Case.getCurrentCase().getOutputDirectory());
-                if (outputDir.exists() == false) {
-                    NotifyDescriptor d
-                            = new NotifyDescriptor.Message(NbBundle.getMessage(this.getClass(),
-                                    "OpenOutputFolder.error1", outputDir.getAbsolutePath()),
-                                    NotifyDescriptor.ERROR_MESSAGE);
-                    DialogDisplayer.getDefault().notify(d);
-                } else {
+            Case currentCase = Case.getCurrentCase();
+            outputDir = new File(currentCase.getOutputDirectory());
+            if (outputDir.exists()) {
+                try {
                     Desktop.getDesktop().open(outputDir);
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, String.format("Failed to open output folder %s", outputDir), ex); //NON-NLS
+                    NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+                            NbBundle.getMessage(this.getClass(), "OpenOutputFolder.CouldNotOpenOutputFolder", outputDir.getAbsolutePath()), NotifyDescriptor.ERROR_MESSAGE);
+                    DialogDisplayer.getDefault().notify(descriptor);
                 }
             } else {
-                JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
+                NotifyDescriptor descriptor = new NotifyDescriptor.Message(
+                        NbBundle.getMessage(this.getClass(), "OpenOutputFolder.error1", outputDir.getAbsolutePath()), NotifyDescriptor.ERROR_MESSAGE);
+                DialogDisplayer.getDefault().notify(descriptor);
             }
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.CouldNotOpenOutputFolder"), ex); //NON-NLS
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "OpenOutputFolderAction enabled with no current case", ex); //NON-NLS
+            JOptionPane.showMessageDialog(null, NbBundle.getMessage(this.getClass(), "OpenOutputFolder.noCaseOpen"));
         }
     }
 
@@ -81,8 +89,9 @@ public final class OpenOutputFolderAction extends CallableSystemAction {
 
     @Override
     public boolean asynchronous() {
-        return false; // run on edt
+        return false;
     }
+
     @Override
     public String getName() {
         return NbBundle.getMessage(OpenOutputFolderAction.class, "CTL_OpenOutputFolder");
