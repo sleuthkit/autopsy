@@ -27,6 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Result;
@@ -36,9 +38,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * Provides access to the text index metadata stored in the index metadata file.
@@ -73,9 +79,32 @@ public class IndexMetadata {
     }
     
     /**
+     * Constructs an object that provides access to the text index metadata stored in
+     * an existing text index metadata file.
+     *
+     * @param metadataFilePath The full path to the text index metadata file.
+     *
+     * @throws TextIndexMetadataException If the new text index metadata file cannot be
+     *                               read.
+     */
+    public IndexMetadata(Path metadataFilePath) throws TextIndexMetadataException {
+        this.metadataFilePath = metadataFilePath;
+        readFromFile();
+    }
+
+    /**
+     * Gets the full path to the case metadata file.
+     *
+     * @return The path to the metadata file
+     */
+    Path getFilePath() {
+        return metadataFilePath;
+    }
+    
+    /**
      * Writes the case metadata to the metadata file.
      *
-     * @throws CaseMetadataException If there is an error writing to the case
+     * @throws TextIndexMetadataException If there is an error writing to the case
      *                               metadata file.
      */
     private void writeToFile() throws TextIndexMetadataException {
@@ -147,6 +176,111 @@ public class IndexMetadata {
         Element element = doc.createElement(elementName);
         element.appendChild(doc.createTextNode(elementContent));
         parentElement.appendChild(element);
+    }
+    
+    
+    /**
+     * Reads the case metadata from the metadata file.
+     *
+     * @throws TextIndexMetadataException If there is an error reading from the case
+     *                               metadata file.
+     */
+    private void readFromFile() throws TextIndexMetadataException {
+        try {
+            /*
+             * Parse the file into an XML DOM and get the root element.
+             */
+            DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            Document doc = builder.parse(metadataFilePath.toFile());
+            doc.getDocumentElement().normalize();
+            Element rootElement = doc.getDocumentElement();
+            if (!rootElement.getNodeName().equals(ROOT_ELEMENT_NAME)) {
+                throw new TextIndexMetadataException("Case metadata file corrupted");
+            }
+
+            /*
+             * Get the content of the relevant children of the root element.
+             */
+            String schemaVersion = getElementTextContent(rootElement, SCHEMA_VERSION_ELEMENT_NAME, true);
+            this.createdDate = getElementTextContent(rootElement, CREATED_DATE_ELEMENT_NAME, true);
+            if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
+                this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_VERSION_ELEMENT_NAME, true);
+            } else {
+                this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_BY_ELEMENT_NAME, true);
+            }
+
+            /*
+             * Get the content of the children of the case element.
+             */
+            NodeList caseElements = doc.getElementsByTagName(CASE_ELEMENT_NAME);
+            if (caseElements.getLength() == 0) {
+                throw new TextIndexMetadataException("Case metadata file corrupted");
+            }
+            Element caseElement = (Element) caseElements.item(0);
+            this.caseName = getElementTextContent(caseElement, CASE_NAME_ELEMENT_NAME, true);
+            if (schemaVersion.equals(SCHEMA_VERSION_ONE) || schemaVersion.equals(SCHEMA_VERSION_TWO)) {
+                this.caseDisplayName = caseName;
+            } else {
+                this.caseDisplayName = getElementTextContent(caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, true);
+            }
+            this.caseNumber = getElementTextContent(caseElement, CASE_NUMBER_ELEMENT_NAME, false);
+            this.examiner = getElementTextContent(caseElement, EXAMINER_ELEMENT_NAME, false);
+            this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
+            if (null == this.caseType) {
+                throw new TextIndexMetadataException("Case metadata file corrupted");
+            }
+            if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
+                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_NAME_ELEMENT_NAME, true);
+                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, true);
+            } else {
+                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
+                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, true);
+            }
+
+            /*
+             * Fix up the case database name due to a bug that for a time caused
+             * the absolute paths of single-user case databases to be stored.
+             */
+            Path possibleAbsoluteCaseDbPath = Paths.get(this.caseDatabaseName);
+            if (possibleAbsoluteCaseDbPath.getNameCount() > 1) {
+                Path caseDirectoryPath = Paths.get(getCaseDirectory());
+                this.caseDatabaseName = caseDirectoryPath.relativize(possibleAbsoluteCaseDbPath).toString();
+            }
+
+            /*
+             * Update the file to the current schema, if necessary.
+             */
+            if (!schemaVersion.equals(CURRENT_SCHEMA_VERSION)) {
+                writeToFile();
+            }
+
+        } catch (ParserConfigurationException | SAXException | IOException ex) {
+            throw new TextIndexMetadataException(String.format("Error reading from case metadata file %s", metadataFilePath), ex);
+        }
+    }
+
+    /**
+     * Gets the text content of an XML element.
+     *
+     * @param parentElement     The parent element.
+     * @param elementName       The element name.
+     * @param contentIsRequired Whether or not the content is required.
+     *
+     * @return The text content, may be empty if not required.
+     *
+     * @throws TextIndexMetadataException If the element is missing or content is
+     *                               required and it is empty.
+     */
+    private String getElementTextContent(Element parentElement, String elementName, boolean contentIsRequired) throws TextIndexMetadataException {
+        NodeList elementsList = parentElement.getElementsByTagName(elementName);
+        if (elementsList.getLength() == 0) {
+            throw new TextIndexMetadataException(String.format("Missing %s element from case metadata file %s", elementName, metadataFilePath));
+        }
+        String textContent = elementsList.item(0).getTextContent();
+        if (textContent.isEmpty() && contentIsRequired) {
+            throw new TextIndexMetadataException(String.format("Empty %s element in case metadata file %s", elementName, metadataFilePath));
+        }
+        return textContent;
     }    
 
     /**
