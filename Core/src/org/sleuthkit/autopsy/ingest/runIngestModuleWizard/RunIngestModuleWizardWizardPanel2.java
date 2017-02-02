@@ -11,7 +11,7 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
-public class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPanel {
+class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPanel {
 
     /**
      * f

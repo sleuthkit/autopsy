@@ -1,11 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -14,56 +28,82 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
+import org.sleuthkit.autopsy.ingest.IngestOptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 
-public final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
+final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
 
-    private static final String CUSTOM_SETTINGS_TEXT = "Custom Settings - configure individual module settings";
-    RunIngestModuleWizardWizardPanel1 wizardPanel;
-    String selectedProfile;
-    List<IngestProfile> elements = Collections.emptyList();
+    private static final String CUSTOM_SETTINGS_DISPLAY_NAME = "Custom Settings";
+    private static final String CUSTOM_SETTINGS_DESCRIPTION = "configure individual module settings in next step of wizard";  //WJS-TODO these should be @Message
+    private final RunIngestModuleWizardWizardPanel1 wizardPanel;
+    private String selectedProfile;
+    private List<IngestProfile> elements = Collections.emptyList();
 
     /**
      * Creates new form runIngestModuleWizardVisualPanel1
      */
-    public IngestProfileSelectionPanel(RunIngestModuleWizardWizardPanel1 panel) {
+    IngestProfileSelectionPanel(RunIngestModuleWizardWizardPanel1 panel, String lastSelectedProfile) {
         initComponents();
         //WJS-TODO figure out how to get width of writable area, if text length greater than width. Trim text to width minus 3 chars in length and then add ... to the end
         wizardPanel = panel;
+        selectedProfile = lastSelectedProfile;
+        populateListOfCheckboxes();
+
+    }
+
+    String getLastSelectedProfile() {
+        return selectedProfile;
+    }
+
+    private void populateListOfCheckboxes() {
         elements = getElements();
-        customSettings = new JRadioButton(CUSTOM_SETTINGS_TEXT, true);
-        customSettings.setName(RunIngestModuleWizardWizardIterator.getDefaultContext());
-
-        customSettings.setRolloverEnabled(true);
-        customSettings.setToolTipText(CUSTOM_SETTINGS_TEXT);
-        buttonGroup1.add(customSettings);
-        jPanel1.add(customSettings);
-
-        selectedProfile = customSettings.getName();
-        String tempDescription = "REPLACE THIS WITH DESCRIPTION";
-
+        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, RunIngestModuleWizardWizardIterator.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION);
         for (IngestProfile profile : elements) {
-            JRadioButton myRadio = new JRadioButton(profile.toString() + tempDescription);
-            myRadio.setName(profile.toString());
-            myRadio.setToolTipText(tempDescription);
-            myRadio.addItemListener(this);
-            buttonGroup1.add(myRadio);
-            jPanel1.add(myRadio);
+            addRadioButton(profile.toString(), profile.toString(), profile.getDescription());
         }
+    }
+
+    private void addRadioButton(String profileDisplayName, String profileContextName, String profileDesc) {
+        String displayText = profileDisplayName + " - " + profileDesc;
+        int width = jScrollPane1.getWidth();
+        if (width > 3) {
+            if (displayText.length() > width) {
+                String ellipses = "...";
+                displayText = displayText.substring(0, width - ellipses.length()) + ellipses;
+            }
+        } else {
+            System.out.println("NOT KNOWN BEFORE DRAWN USE DIFFERENT WAY TO GET WIDTH");  //WJS-TODO remove this when working
+        }
+        JRadioButton myRadio = new JRadioButton(displayText); //NON-NLS
+        myRadio.setName(profileContextName);
+        myRadio.setToolTipText(profileDesc);
+        myRadio.addItemListener(this);
+        if (profileContextName.equals(selectedProfile)) {
+            myRadio.setSelected(true);
+        }
+
+        buttonGroup1.add(myRadio);
+        jPanel1.add(myRadio);
 
     }
 
     @Override
     public String getName() {
-        return "Ingest Profile Selection";
+        return "Ingest Profile Selection";  //WJS-TODO @Messages this
     }
 
-    List<IngestProfile> getElements() {
+    private List<IngestProfile> getElements() {
         if (elements.isEmpty()) {
             fetchListContents();
         }
         return elements;
+    }
+
+    private void clearListOfCheckBoxes() {
+        buttonGroup1 = new javax.swing.ButtonGroup();
+        jPanel1.removeAll();
     }
 
     /**
@@ -80,7 +120,15 @@ public final class IngestProfileSelectionPanel extends JPanel implements ItemLis
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
 
+        setMaximumSize(new java.awt.Dimension(5750, 3000));
+        setPreferredSize(new java.awt.Dimension(625, 450));
+
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(IngestProfileSelectionPanel.class, "IngestProfileSelectionPanel.jButton1.text")); // NOI18N
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         jScrollPane1.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -118,8 +166,25 @@ public final class IngestProfileSelectionPanel extends JPanel implements ItemLis
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
+        IngestOptionsPanel ingestOptions = new IngestOptionsPanel();
+        ingestOptions.load();
+        dialog.addApplyButtonListener(
+                (ActionEvent e) -> {
+                    ingestOptions.store();
+                    clearListOfCheckBoxes();
+                    fetchListContents();
+                    jPanel1.revalidate();
+                    jPanel1.repaint();
+                    populateListOfCheckboxes();
+                    dialog.close();
+                }
+        );
+        dialog.display(ingestOptions);
+    }//GEN-LAST:event_jButton1ActionPerformed
+
     boolean hasNextPanel = true;
-    private JRadioButton customSettings;
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton jButton1;
@@ -137,18 +202,18 @@ public final class IngestProfileSelectionPanel extends JPanel implements ItemLis
                 break;
             }
         }
-
         boolean hadNextPanel = hasNextPanel;
-        hasNextPanel = !hasNextPanel;
-        System.out.println(
-                "SWITCHED VALUES, VALUE NOW:" + hasNextPanel);
+        if (selectedProfile.equals(RunIngestModuleWizardWizardIterator.getDefaultContext())) {
+            hasNextPanel = true;
+        } else {
+            hasNextPanel = false;
+        }
         wizardPanel.fireChangeEvent();
-        this.firePropertyChange(
-                "LAST_ENABLED", hadNextPanel, hasNextPanel);
+        this.firePropertyChange("LAST_ENABLED", hadNextPanel, hasNextPanel); //NON-NLS
     }
 
     private void fetchListContents() {
-        elements = new ArrayList<IngestProfile>();
+        elements = new ArrayList<>();
         elements.addAll(new IngestProfileMap().getIngestProfileMap().values());
     }
 }

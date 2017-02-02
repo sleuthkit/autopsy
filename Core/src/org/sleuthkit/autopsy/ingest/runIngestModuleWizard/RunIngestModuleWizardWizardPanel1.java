@@ -11,15 +11,19 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
-public class RunIngestModuleWizardWizardPanel1 extends ShortCircuitableWizardPanel {
+class RunIngestModuleWizardWizardPanel1 extends ShortCircuitableWizardPanel {
 
     private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1);
+    private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
+    private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private IngestProfileSelectionPanel component;
+    private String lastProfileUsed;
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -28,7 +32,13 @@ public class RunIngestModuleWizardWizardPanel1 extends ShortCircuitableWizardPan
     @Override
     public IngestProfileSelectionPanel getComponent() {
         if (component == null) {
-            component = new IngestProfileSelectionPanel(this);
+            if (ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null
+                    || ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
+                lastProfileUsed = RunIngestModuleWizardWizardIterator.getDefaultContext();
+            } else {
+                lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
+            }
+            component = new IngestProfileSelectionPanel(this, lastProfileUsed);
         }
         return component;
     }
@@ -65,7 +75,6 @@ public class RunIngestModuleWizardWizardPanel1 extends ShortCircuitableWizardPan
         for (ChangeListener l : ls) {
             l.stateChanged(ev);
         }
-        
     }
 
     @Override
@@ -84,13 +93,13 @@ public class RunIngestModuleWizardWizardPanel1 extends ShortCircuitableWizardPan
 
     @Override
     public void readSettings(WizardDescriptor wiz) {
-        // use wiz.getProperty to retrieve previous panel state
     }
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        System.out.println("STORING EXECUTION CONTEXT" + component.selectedProfile);
-        wiz.putProperty("executionContext", component.selectedProfile); //NON-NLS
+        lastProfileUsed = component.getLastSelectedProfile();
+        wiz.putProperty("executionContext", lastProfileUsed); //NON-NLS
+        ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME, lastProfileUsed);
     }
 
 }

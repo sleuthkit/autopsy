@@ -138,7 +138,7 @@ public class IngestProfileMap {
          *
          * @return the description
          */
-        String getDescription() {
+        public String getDescription() {
             return description;
         }
 
