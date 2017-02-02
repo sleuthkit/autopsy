@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
@@ -26,8 +27,6 @@ import org.openide.awt.DynamicMenuContent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.Image;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -61,7 +60,7 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
             String action = dataSources.get(i).getName();
             JMenuItem menuItem = new JMenuItem(action);
             menuItem.setActionCommand(action.toUpperCase());
-            menuItem.addActionListener(new RunIngestModulesAction(dataSources.get(i)));
+            menuItem.addActionListener(new RunIngestModulesAction(Collections.<Content>singletonList(dataSources.get(i))));
             comps[i] = menuItem;
         }
         // If no dataSources are open, create a disabled empty menu

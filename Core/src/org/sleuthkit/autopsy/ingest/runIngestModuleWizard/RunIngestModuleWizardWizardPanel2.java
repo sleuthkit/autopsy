@@ -11,11 +11,13 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
-public class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPanel  {
+public class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPanel {
 
-    /**f
- The visual ingestJobSettingsPanel that displays this panel. If you need to access the
- ingestJobSettingsPanel from this class, just use getComponent().
+    /**
+     * f
+     * The visual ingestJobSettingsPanel that displays this panel. If you need
+     * to access the ingestJobSettingsPanel from this class, just use
+     * getComponent().
      */
     private IngestJobSettingsPanel ingestJobSettingsPanel;
 
@@ -30,7 +32,7 @@ public class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPan
         }
         return ingestJobSettingsPanel;
     }
-    
+
     @Override
     public HelpCtx getHelp() {
         // Show no Help button for this panel:
@@ -48,7 +50,7 @@ public class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPan
         // use ChangeSupport to implement add/removeChangeListener below.
         // WizardDescriptor.ERROR/WARNING/INFORMATION_MESSAGE will also be useful.
     }
-    
+
     @Override
     public void addChangeListener(ChangeListener l) {
     }
@@ -64,7 +66,9 @@ public class RunIngestModuleWizardWizardPanel2 extends ShortCircuitableWizardPan
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        // use wiz.putProperty to remember current panel state
+        IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
+        ingestJobSettings.save();
+         wiz.putProperty("executionContext", RunIngestModuleWizardWizardIterator.getDefaultContext()); //NON-NLS
     }
 
 }

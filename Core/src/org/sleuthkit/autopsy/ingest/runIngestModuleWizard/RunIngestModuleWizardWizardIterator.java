@@ -17,7 +17,7 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 
 public final class RunIngestModuleWizardWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
-    private final static String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModuleAction";
+    private final static String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleAction";
 
     private int index;
 
@@ -26,7 +26,7 @@ public final class RunIngestModuleWizardWizardIterator implements WizardDescript
     /**
      * @return the DEFAULT_CONTEXT
      */
-    static String getDefaultContext() {
+    public static String getDefaultContext() {
         return DEFAULT_CONTEXT;
     }
 

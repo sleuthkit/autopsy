@@ -18,12 +18,9 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
@@ -33,7 +30,7 @@ import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
-import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
+import org.sleuthkit.autopsy.ingest.RunIngestModulesAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
@@ -108,14 +105,7 @@ class DirectoryTreeFilterNode extends FilterNode {
             Directory dir = this.getLookup().lookup(Directory.class);
             if (dir != null) {
                 actions.add(ExtractAction.getInstance());
-                actions.add(new AbstractAction(
-                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(dir);
-                                ingestDialog.display();
-                            }
-                        });
+                actions.add(new RunIngestModulesAction(dir));
             }
 
             final Image img = this.getLookup().lookup(Image.class);
@@ -138,14 +128,7 @@ class DirectoryTreeFilterNode extends FilterNode {
             if (img != null || isRootVD) {
                 actions.add(new FileSearchAction(
                         NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
-                actions.add(new AbstractAction(
-                        NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.runIngestMods.text")) {
-                            @Override
-                            public void actionPerformed(ActionEvent e) {
-                                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
-                                ingestDialog.display();
-                            }
-                        });
+                actions.add(new RunIngestModulesAction(dir));
             }
         }
 

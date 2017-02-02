@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.awt.event.ActionEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -27,7 +26,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
@@ -38,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
+import org.sleuthkit.autopsy.ingest.RunIngestModulesAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -100,14 +98,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         actions.add(null); // creates a menu separator
         actions.add(new FileSearchAction(
                 Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
-        actions.add(new AbstractAction(
-                Bundle.VirtualDirectoryNode_action_runIngestMods_text()) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
-                ingestDialog.display();
-            }
-        });
+        actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actions.addAll(ContextMenuExtensionPoint.getActions());
         return actions.toArray(new Action[0]);
     }
