@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.keywordsearch.Chunker.Chunk;
 @NotThreadSafe
 class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
 
+    //local references to standard encodings
     private static final Charset UTF_16 = StandardCharsets.UTF_16;
     private static final Charset UTF_8 = StandardCharsets.UTF_8;
 
@@ -88,7 +89,10 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
     }
 
     /**
-     * Has this Chunker encountered an exception reading from the Reader.
+     * Has this Chunker encountered an exception reading from the Reader?
+     *
+     *
+     * @return True if this Chunker encountered an exception.
      */
     boolean hasException() {
         return ex != null;
@@ -128,6 +132,25 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         return sb;
     }
 
+    /**
+     * Cleanup invalid codepoint sequences by replacing them with the default
+     * replacement character: U+FFFD / �.
+     *
+     * @param s The string to cleanup.
+     *
+     * @return A StringBuilder with the same content as s but where all invalid
+     *         code     *         points have been replaced.
+     */
+    private static StringBuilder replaceInvalidUTF16(String s) {
+        /* encode the string to UTF-16 which does the replcement, see
+         * Charset.encode(), then decode back to a StringBuilder. */
+        return new StringBuilder(UTF_16.decode(UTF_16.encode(s)));
+    }
+
+    private static StringBuilder sanitize(String s) {
+        return sanitizeToUTF8(replaceInvalidUTF16(s));
+    }
+
     @Override
     public Chunk next() {
         if (hasNext() == false) {
@@ -161,7 +184,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
         //add the window text to the current chunk.
         currentChunk.append(currentWindow);
         //sanitize the text and return a Chunk object, that includes the base chunk length.
-        return new Chunk(sanitizeToUTF8(currentChunk), baseChunkSizeChars, chunkSizeBytes);
+        return new Chunk(currentChunk, baseChunkSizeChars, chunkSizeBytes);
     }
 
     /**
@@ -220,10 +243,11 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                     reader.unread(lastChar);
                 }
 
-                String chunkSegment = stripInvalidUTF16(new String(tempChunkBuf, 0, charsRead));
+                //cleanup any invalid utf-16 sequences
+                StringBuilder chunkSegment = sanitize(new String(tempChunkBuf, 0, charsRead));
 
-                //get the length in bytes of the read chars
-                int segmentSize = chunkSegment.getBytes(UTF_8).length;
+                //get the length in utf8 bytes of the read chars
+                int segmentSize = chunkSegment.toString().getBytes(UTF_8).length;
 
                 //if it will not put us past maxBytes
                 if (chunkSizeBytes + segmentSize < maxBytes) {
@@ -237,10 +261,6 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 }
             }
         }
-    }
-
-    private static String stripInvalidUTF16(String chunkSegment) {
-        return UTF_16.decode(UTF_16.encode(chunkSegment)).toString();
     }
 
     /**
@@ -268,25 +288,28 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
                 final char ch = tempChunkBuf[0];
                 String chunkSegment;
                 if (Character.isHighSurrogate(ch)) {
+                    //read another char into the buffer.
                     charsRead = reader.read(tempChunkBuf, 1, 1);
                     if (charsRead == -1) {
-                        //this is the last chunk, so drop the unpaired surrogate
+                        //this is the last chunk, so just drop the unpaired surrogate
                         endOfReaderReached = true;
                         return;
                     } else {
-                        //use the surrogate pair in place of the unpaired surrogate.
+                        //try to use the pair together.
                         chunkSegment = new String(tempChunkBuf, 0, 2);
                     }
                 } else {
                     //one char
                     chunkSegment = new String(tempChunkBuf, 0, 1);
                 }
-                chunkSegment = stripInvalidUTF16(chunkSegment);
+
+                //cleanup any invalid utf-16 sequences
+                StringBuilder sanitizedChunkSegment = sanitize(chunkSegment);
                 //check for whitespace.
-                whitespaceFound = Character.isWhitespace(chunkSegment.codePointAt(0));
+                whitespaceFound = Character.isWhitespace(sanitizedChunkSegment.codePointAt(0));
                 //add read chars to the chunk and update the length.
-                currentChunk.append(chunkSegment);
-                chunkSizeBytes += chunkSegment.getBytes(UTF_8).length;
+                currentChunk.append(sanitizedChunkSegment);
+                chunkSizeBytes += sanitizedChunkSegment.toString().getBytes(UTF_8).length;
             }
         }
     }
