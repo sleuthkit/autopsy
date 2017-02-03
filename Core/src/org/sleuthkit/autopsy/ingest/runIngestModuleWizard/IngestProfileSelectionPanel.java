@@ -46,7 +46,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     
     private static final String CUSTOM_SETTINGS_DISPLAY_NAME = Bundle.IngestProfileSelectionPanel_customSettings_name();
     private static final String CUSTOM_SETTINGS_DESCRIPTION = Bundle.IngestProfileSelectionPanel_customSettings_description();  
-    private final RunIngestModulesWizardPanel1 wizardPanel;
+    private final IngestProfileSelectionWizardPanel wizardPanel;
     private String selectedProfile;
     private List<IngestProfile> profiles = Collections.emptyList();
 
@@ -56,7 +56,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      * @param panel               - the WizardPanel which contains this panel
      * @param lastSelectedProfile - the profile that will be selected initially
      */
-    IngestProfileSelectionPanel(RunIngestModulesWizardPanel1 panel, String lastSelectedProfile) {
+    IngestProfileSelectionPanel(IngestProfileSelectionWizardPanel panel, String lastSelectedProfile) {
         initComponents();
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;

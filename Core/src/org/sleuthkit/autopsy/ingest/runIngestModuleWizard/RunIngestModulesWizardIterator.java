@@ -36,7 +36,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
 
     private int index;
 
-    private List<EarlyFinishWizardDescriptorPanel> panels;
+    private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> panels;
 
     /**
      * Gets the list of panels used by this wizard for iterating over. 
@@ -44,15 +44,15 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
      * 
      * @return panels - the list of of WizardDescriptor panels
      */
-    private List<EarlyFinishWizardDescriptorPanel> getPanels() {
+    private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
             if (!profileMap.isEmpty()) {
-                panels.add(new RunIngestModulesWizardPanel1());
+                panels.add(new IngestProfileSelectionWizardPanel());
             }
 
-            panels.add(new RunIngestModulesWizardPanel2());
+            panels.add(new IngestModulesConfigWizardPanel());
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -72,7 +72,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     }
 
     @Override
-    public EarlyFinishWizardDescriptorPanel current() {
+    public WizardDescriptor.FinishablePanel<WizardDescriptor> current() {
         return getPanels().get(index);
     }
 
@@ -84,7 +84,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
    
     @Override
     public boolean hasNext() {
-        return (index < getPanels().size() - 1) && !current().skipRemainingPanels();
+        return (index < getPanels().size() - 1) && !current().isFinishPanel();
     }
 
     @Override

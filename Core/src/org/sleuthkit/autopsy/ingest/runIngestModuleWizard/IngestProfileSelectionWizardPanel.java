@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * selection panel and is only created when profiles exist.
  *
  */
-class RunIngestModulesWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
+class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
     private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
@@ -60,19 +60,7 @@ class RunIngestModulesWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
         }
         return component;
     }
-
-    /**
-     * Returns whether or not this should be considered the last panel of the
-     * wizard.  Returns true when a profile is selected, and false when 
-     * custom settings is selected.
-     * 
-     * @return true or false
-     */
-    @Override
-    boolean skipRemainingPanels() {
-        return component.isLastPanel;
-    }
-
+    
     @Override
     public HelpCtx getHelp() {
         // Show no Help button for this panel:
@@ -122,6 +110,11 @@ class RunIngestModulesWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
         lastProfileUsed = component.getLastSelectedProfile();
         wiz.putProperty("executionContext", lastProfileUsed); //NON-NLS
         ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME, lastProfileUsed);
+    }
+
+    @Override
+    public boolean isFinishPanel() {
+        return component.isLastPanel;
     }
 
 }
