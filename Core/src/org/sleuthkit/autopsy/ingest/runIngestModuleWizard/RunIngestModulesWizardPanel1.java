@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 class RunIngestModulesWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
 
-    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1);
+    private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
     /**

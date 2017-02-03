@@ -44,15 +44,17 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         "ProfileSettingsPanel.editProfileButton.text=Edit Profile",
         "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile",
         "ProfileSettingsPanel.messages.filterLoadFailed=Failed to load file ingest filter",
+        "# {0} - profile name",
         "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text=Profile with name {0} already exists."
     })
 
-    private final DefaultListModel<IngestProfile> profilesListModel = new DefaultListModel<>();
+    private final DefaultListModel<IngestProfile> profilesListModel;
 
     /**
      * Creates new form ProfileOptionsPanel
      */
     ProfileSettingsPanel() {
+        this.profilesListModel = new DefaultListModel<>();
         initComponents();
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());

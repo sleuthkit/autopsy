@@ -58,7 +58,6 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      */
     IngestProfileSelectionPanel(RunIngestModulesWizardPanel1 panel, String lastSelectedProfile) {
         initComponents();
-        //WJS-TODO figure out how to get width of writable area, if text length greater than width. Trim text to width minus 3 chars in length and then add ... to the end
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;
         populateListOfCheckboxes();
@@ -97,7 +96,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      */
     private void addRadioButton(String profileDisplayName, String profileContextName, String profileDesc) {
         String displayText = profileDisplayName + " - " + profileDesc;
-        JRadioButton myRadio = new JRadioButton(displayText); //NON-NLS
+        JRadioButton myRadio = new JRadioButton(displayText);
         myRadio.setName(profileContextName);
         myRadio.setToolTipText(profileDesc);
         myRadio.addItemListener(this);
@@ -239,11 +238,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
             }
         }
         boolean wasLastPanel = isLastPanel;
-        if (selectedProfile.equals(RunIngestModulesAction.getDefaultContext())) {
-            isLastPanel = false;
-        } else {
-            isLastPanel = true;
-        }
+        isLastPanel = !selectedProfile.equals(RunIngestModulesAction.getDefaultContext());
         wizardPanel.fireChangeEvent();
         this.firePropertyChange("LAST_ENABLED", wasLastPanel, isLastPanel); //NON-NLS
     }
