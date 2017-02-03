@@ -26,6 +26,11 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
+/**
+ * The first wizard panel of the run ingest modules wizard. Displays the profile
+ * selection panel and is only created when profiles exist.
+ *
+ */
 class RunIngestModuleWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
 
     private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1);
@@ -47,7 +52,7 @@ class RunIngestModuleWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
         if (component == null) {
             if (ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null
                     || ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
-                lastProfileUsed = RunIngestModuleWizardIterator.getDefaultContext();
+                lastProfileUsed = RunIngestModulesAction.getDefaultContext();
             } else {
                 lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
             }
@@ -56,8 +61,15 @@ class RunIngestModuleWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
         return component;
     }
 
+    /**
+     * Returns whether or not this should be considered the last panel of the
+     * wizard.  Returns true when a profile is selected, and false when 
+     * custom settings is selected.
+     * 
+     * @return true or false
+     */
     @Override
-    boolean isLastPanel() {
+    boolean skipRemainingPanels() {
         return component.isLastPanel;
     }
 
@@ -71,12 +83,11 @@ class RunIngestModuleWizardPanel1 extends EarlyFinishWizardDescriptorPanel {
     public boolean isValid() {
         // If it is always OK to press Next or Finish, then:
         return true;
-        // If it depends on some condition (form filled out...) and
-        // this condition changes (last form field filled in...) then
-        // use ChangeSupport to implement add/removeChangeListener below.
-        // WizardDescriptor.ERROR/WARNING/INFORMATION_MESSAGE will also be useful.
     }
 
+    /**
+     * Fires a change event to notify listeners that changes have taken place.
+     */
     protected final void fireChangeEvent() {
         Set<ChangeListener> ls;
         synchronized (listeners) {

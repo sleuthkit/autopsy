@@ -28,21 +28,22 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 
+/**
+ * Iterator class for creating a wizard for run ingest modules.
+ *
+ */
 final class RunIngestModuleWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
-
-    private final static String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleAction";
 
     private int index;
 
     private List<EarlyFinishWizardDescriptorPanel> panels;
 
     /**
-     * @return the DEFAULT_CONTEXT
+     * Gets the list of panels used by this wizard for iterating over. 
+     * Constructing it when it is null.
+     * 
+     * @return panels - the list of of WizardDescriptor panels
      */
-    static String getDefaultContext() {
-        return DEFAULT_CONTEXT;
-    }
-
     private List<EarlyFinishWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
@@ -80,9 +81,10 @@ final class RunIngestModuleWizardIterator implements WizardDescriptor.Iterator<W
         return index + 1 + ". from " + getPanels().size();
     }
 
+   
     @Override
     public boolean hasNext() {
-        return (index < getPanels().size() - 1) && !current().isLastPanel();
+        return (index < getPanels().size() - 1) && !current().skipRemainingPanels();
     }
 
     @Override

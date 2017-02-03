@@ -75,7 +75,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      */
     private void populateListOfCheckboxes() {
         profiles = getProfiles();
-        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, RunIngestModuleWizardIterator.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION);
+        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, RunIngestModulesAction.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION);
         for (IngestProfile profile : profiles) {
             addRadioButton(profile.toString(), profile.toString(), profile.getDescription());
         }
@@ -243,7 +243,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
             }
         }
         boolean wasLastPanel = isLastPanel;
-        if (selectedProfile.equals(RunIngestModuleWizardIterator.getDefaultContext())) {
+        if (selectedProfile.equals(RunIngestModulesAction.getDefaultContext())) {
             isLastPanel = false;
         } else {
             isLastPanel = true;

@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 import org.openide.WizardDescriptor;
 
 /**
- * An abstract class which provides providing a method which can be checked by 
+ * An abstract class providing a method which can be checked by 
  * the iterator containing panels of this type. So that Wizards containing these
  * panels can enable finish before the last panel.
  */
@@ -32,7 +32,7 @@ abstract class EarlyFinishWizardDescriptorPanel implements WizardDescriptor.Pane
      * 
      * @return true or false
      */
-    boolean isLastPanel(){
+    boolean skipRemainingPanels(){
         /*
          * This class should be overriden by any panel that might want to 
          * enable the finish button early for its wizard.

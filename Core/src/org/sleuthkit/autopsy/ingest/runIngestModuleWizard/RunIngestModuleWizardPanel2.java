@@ -27,7 +27,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 class RunIngestModuleWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
 
     /**
-     * f
      * The visual ingestJobSettingsPanel that displays this panel. If you need
      * to access the ingestJobSettingsPanel from this class, just use
      * getComponent().
@@ -41,7 +40,7 @@ class RunIngestModuleWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
     @Override
     public IngestJobSettingsPanel getComponent() {
         if (ingestJobSettingsPanel == null) {
-            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModuleWizardIterator.getDefaultContext()));
+            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModulesAction.getDefaultContext()));
         }
         return ingestJobSettingsPanel;
     }
@@ -50,18 +49,12 @@ class RunIngestModuleWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
     public HelpCtx getHelp() {
         // Show no Help button for this panel:
         return HelpCtx.DEFAULT_HELP;
-        // If you have context help:
-        // return new HelpCtx("help.key.here");
     }
 
     @Override
     public boolean isValid() {
         // If it is always OK to press Next or Finish, then:
         return true;
-        // If it depends on some condition (form filled out...) and
-        // this condition changes (last form field filled in...) then
-        // use ChangeSupport to implement add/removeChangeListener below.
-        // WizardDescriptor.ERROR/WARNING/INFORMATION_MESSAGE will also be useful.
     }
 
     @Override
@@ -74,14 +67,13 @@ class RunIngestModuleWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
 
     @Override
     public void readSettings(WizardDescriptor wiz) {
-        // use wiz.getProperty to retrieve previous panel state
     }
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
-         wiz.putProperty("executionContext", RunIngestModuleWizardIterator.getDefaultContext()); //NON-NLS
+         wiz.putProperty("executionContext", RunIngestModulesAction.getDefaultContext()); //NON-NLS
     }
 
 }

@@ -39,15 +39,29 @@ import org.sleuthkit.datamodel.Directory;
  * modules.
  */
 public final class RunIngestModulesAction extends AbstractAction {
-
+   
     @Messages("RunIngestModulesAction.name=Run Ingest Modules")
             
+    private static final String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleAction";
+
+    /**
+     * Returns the name of the default context which will be used when profiles are not available.
+     * 
+     * @return the DEFAULT_CONTEXT
+     */
+    static String getDefaultContext() {
+        return DEFAULT_CONTEXT;
+    }
+
+   
     private final List<Content> dataSources = new ArrayList<>();
     private final IngestJobSettings.IngestType ingestType;
     
     /**
-     * the constructor
-     * @param dataSources
+     * Creates an action which will make a run ingest modules wizard when it 
+     * is performed.
+     * 
+     * @param dataSources - the data sources you want to run ingest on
      */
     public RunIngestModulesAction(List<Content> dataSources) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
@@ -56,8 +70,10 @@ public final class RunIngestModulesAction extends AbstractAction {
     }
     
     /**
-     * the constructor
-     * @param dir
+     * Creates an action which will make a run ingest modules wizard when it 
+     * is performed.
+     * 
+     * @param dir - the directory you want to run ingest on
      */
     public RunIngestModulesAction(Directory dir) {
         this.putValue(Action.NAME, Bundle.RunIngestModulesAction_name());
@@ -65,7 +81,7 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.ingestType = IngestJobSettings.IngestType.FILES_ONLY;
     }
     /**
-     * Runs the ingest modules wizard on the data source.
+     * Opens a run ingest modules wizard with the list of data sources.
      *
      * @param e the action event
      */
@@ -84,6 +100,11 @@ public final class RunIngestModulesAction extends AbstractAction {
         }
     }
 
+    /**
+     * Display any warnings that the ingestJobSettings have.
+     * 
+     * @param ingestJobSettings 
+     */
     private static void showWarnings(IngestJobSettings ingestJobSettings) {
         List<String> warnings = ingestJobSettings.getWarnings();
         if (warnings.isEmpty() == false) {
