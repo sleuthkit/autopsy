@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap;
  * Iterator class for creating a wizard for run ingest modules.
  *
  */
-final class RunIngestModuleWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
+final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private int index;
 
@@ -49,10 +49,10 @@ final class RunIngestModuleWizardIterator implements WizardDescriptor.Iterator<W
             panels = new ArrayList<>();
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
             if (!profileMap.isEmpty()) {
-                panels.add(new RunIngestModuleWizardPanel1());
+                panels.add(new RunIngestModulesWizardPanel1());
             }
 
-            panels.add(new RunIngestModuleWizardPanel2());
+            panels.add(new RunIngestModulesWizardPanel2());
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();

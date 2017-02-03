@@ -28,6 +28,7 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.ingest.IngestOptionsPanel;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap;
@@ -39,9 +40,13 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
  */
 final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
 
-    private static final String CUSTOM_SETTINGS_DISPLAY_NAME = "Custom Settings";
-    private static final String CUSTOM_SETTINGS_DESCRIPTION = "configure individual module settings in next step of wizard";  //WJS-TODO these should be @Message
-    private final RunIngestModuleWizardPanel1 wizardPanel;
+    @Messages({"IngestProfileSelectionPanel.customSettings.name=Custom Settings", 
+        "IngestProfileSelectionPanel.name=Ingest Profile Selection",
+        "IngestProfileSelectionPanel.customSettings.description=configure individual module settings in next step of wizard"})
+    
+    private static final String CUSTOM_SETTINGS_DISPLAY_NAME = Bundle.IngestProfileSelectionPanel_customSettings_name();
+    private static final String CUSTOM_SETTINGS_DESCRIPTION = Bundle.IngestProfileSelectionPanel_customSettings_description();  
+    private final RunIngestModulesWizardPanel1 wizardPanel;
     private String selectedProfile;
     private List<IngestProfile> profiles = Collections.emptyList();
 
@@ -51,13 +56,13 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      * @param panel               - the WizardPanel which contains this panel
      * @param lastSelectedProfile - the profile that will be selected initially
      */
-    IngestProfileSelectionPanel(RunIngestModuleWizardPanel1 panel, String lastSelectedProfile) {
+    IngestProfileSelectionPanel(RunIngestModulesWizardPanel1 panel, String lastSelectedProfile) {
         initComponents();
         //WJS-TODO figure out how to get width of writable area, if text length greater than width. Trim text to width minus 3 chars in length and then add ... to the end
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;
         populateListOfCheckboxes();
-        this.setName("Ingest Profile Selection");  //WJS-TODO @Messages this
+        this.setName(Bundle.IngestProfileSelectionPanel_name());
     }
 
     /**
@@ -92,15 +97,6 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      */
     private void addRadioButton(String profileDisplayName, String profileContextName, String profileDesc) {
         String displayText = profileDisplayName + " - " + profileDesc;
-        int width = profileListScrollPane.getWidth();
-        if (width > 3) {
-            if (displayText.length() > width) {
-                String ellipses = "...";
-                displayText = displayText.substring(0, width - ellipses.length()) + ellipses;
-            }
-        } else {
-            System.out.println("NOT KNOWN BEFORE DRAWN USE DIFFERENT WAY TO GET WIDTH");  //WJS-TODO remove this when working
-        }
         JRadioButton myRadio = new JRadioButton(displayText); //NON-NLS
         myRadio.setName(profileContextName);
         myRadio.setToolTipText(profileDesc);

@@ -24,7 +24,7 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
-class RunIngestModuleWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
+class RunIngestModulesWizardPanel2 extends EarlyFinishWizardDescriptorPanel {
 
     /**
      * The visual ingestJobSettingsPanel that displays this panel. If you need
