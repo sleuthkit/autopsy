@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -177,7 +177,10 @@ class Ingester {
         } finally {
             //after all chunks, index just the meta data, including the  numChunks, of the parent file
             fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID)); //reset id field to base document id
+            //reset id field to base document id
+            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
+            //"parent" docs don't have chunk_size
+            fields.remove(Server.Schema.CHUNK_SIZE.toString());
             indexChunk(null, sourceName, fields);
         }
 
