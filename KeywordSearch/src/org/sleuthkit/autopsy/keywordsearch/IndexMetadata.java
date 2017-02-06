@@ -87,6 +87,9 @@ public class IndexMetadata {
      */
     IndexMetadata(String caseDirectory) throws TextIndexMetadataException {
         this.metadataFilePath = Paths.get(caseDirectory, metadataFileName);
+        if (!this.metadataFilePath.toFile().exists()) {
+            throw new TextIndexMetadataException(String.format("Text index metadata file doesn't exist: %s", metadataFilePath));
+        }
         readFromFile();
     }
     

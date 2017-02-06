@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
@@ -173,6 +174,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     @NbBundle.Messages({
+        "SolrSearch.readingIndexes.msg=Reading text index metadata file",
         "SolrSearch.findingIndexes.msg=Looking for existing text index directories",
         "SolrSearch.creatingNewIndex.msg=Creating new text index",
         "SolrSearch.indentifyingIndex.msg=Identifying text index for upgrade",
@@ -181,13 +183,27 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progress = context.getProgressIndicator();
-        int totalNumProgressUnits = 7;
+        int totalNumProgressUnits = 8;
         int progressUnitsCompleted = 1;
+    
+        List<Index> indexes = new ArrayList<>();
+        try {
+            // if index metadata file exists, get list of excisting Solr cores for this case
+            progress.start(Bundle.SolrSearch_readingIndexes_msg(), totalNumProgressUnits);
+            IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory());
+            indexes = indexMetadata.getIndexes();
+        } catch (IndexMetadata.TextIndexMetadataException ex) {
+            logger.log(Level.WARNING, String.format("Unable to read text index metadata file"), ex);
+        }
 
-        // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        progress.start(Bundle.SolrSearch_findingIndexes_msg(), totalNumProgressUnits);
-        IndexFinder indexFinder = new IndexFinder();
-        List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
+        if (indexes.isEmpty()) {
+            // do a case subdirectory search to check for the existence of "old" KWS indexes that can be upgraded
+            progressUnitsCompleted++;
+            progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
+            IndexFinder indexFinder = new IndexFinder();
+            indexes = indexFinder.findAllIndexDirs(context.getCase());
+        }
+        
         if (context.cancelRequested()) {
             return;
         }
@@ -312,13 +328,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } 
 
         try {
-            // store the new core name
+            // update text index metadata file
             IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), indexes);
-            
-            // ELTODO remove
-            IndexMetadata ind = new IndexMetadata(context.getCase().getCaseDirectory());
         } catch (IndexMetadata.TextIndexMetadataException ex) {
-            throw new AutopsyServiceException("Failed to save core name in case metadata file", ex);
+            throw new AutopsyServiceException("Failed to save Solr core info in text index metadata file", ex);
         }
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
