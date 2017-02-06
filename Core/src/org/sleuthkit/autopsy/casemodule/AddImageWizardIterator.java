@@ -22,10 +22,13 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.TreeMap;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.ingest.IngestProfileMap;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
 
 /**
  * The iterator class for the "Add Image" wizard panel. This class is used to
@@ -36,6 +39,8 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private int index = 0;
     private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
     private AddImageAction action;
+    private int progressPanelIndex;
+    private int profileSelectionIndex;
 
     AddImageWizardIterator(AddImageAction action) {
         this.action = action;
@@ -53,11 +58,17 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
 
             AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
-
+            IngestProfileSelectionWizardPanel profileSelectionPanel = new IngestProfileSelectionWizardPanel(AddImageWizardIngestConfigPanel.class.getCanonicalName());
             panels.add(dsPanel);
+            TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
+            if (!profileMap.isEmpty()) {
+                panels.add(profileSelectionPanel);
+            }
+
             panels.add(ingestConfigPanel);
             panels.add(progressPanel);
-
+            progressPanelIndex = panels.indexOf(progressPanel);  //Doing programatically incase more panels added
+            profileSelectionIndex = panels.indexOf(profileSelectionPanel); //will be -1 if it wasn't added
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -146,7 +157,16 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
+        int lastIndex = index;
+        boolean canBeSkipPanel = false;
+        if (lastIndex==profileSelectionIndex ) {
+            canBeSkipPanel = ((IngestProfileSelectionWizardPanel)current()).isFinishPanel();
+        }
         index++;
+        if (lastIndex==profileSelectionIndex && canBeSkipPanel){
+            ((AddImageWizardIngestConfigPanel)current()).skippingThisPanel();
+            nextPanel();
+        }
     }
 
     /**
@@ -158,7 +178,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (!hasPrevious()) {
             throw new NoSuchElementException();
         }
-        if (index == 2) {
+        if (index == progressPanelIndex) {
             index--;
         }
         index--;

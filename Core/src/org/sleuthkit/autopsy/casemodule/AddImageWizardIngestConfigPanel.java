@@ -35,6 +35,7 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
@@ -46,16 +47,16 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * TODO: review this for dead code. think about moving logic of adding image to
  * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
-class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
 
-    private final IngestJobSettingsPanel ingestJobSettingsPanel;
+    private IngestJobSettingsPanel ingestJobSettingsPanel;
 
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private Component component = null;
-
+    private String lastProfileUsed = AddImageWizardIngestConfigPanel.class.getCanonicalName();
     private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
     private boolean ingested = false;
     private boolean readyToIngest = false;
@@ -76,8 +77,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
 
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
         showWarnings(ingestJobSettings);
+        System.out.println("LAST PROFILE USED CREATE: " + lastProfileUsed);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
     }
 
@@ -160,6 +162,17 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS  //WJS-TODO remove these copies, leaving copies in IngestProfileSelectionWizardPanel
+        String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
+        if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null)
+                && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
+            lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
+            System.out.println("LAST PROFILE USED READ: " + lastProfileUsed);
+        }
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
+        showWarnings(ingestJobSettings);
+        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+        component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
         JButton cancel = new JButton(
                 NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text"));
         cancel.setEnabled(false);
@@ -171,7 +184,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
 
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules
-        startDataSourceProcessing(settings);
+        startDataSourceProcessing();
     }
 
     /**
@@ -185,7 +198,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
+        System.out.println("LAST PROFILE USED STORE: " + lastProfileUsed);
         ingestJobSettings.save();
         showWarnings(ingestJobSettings);
 
@@ -205,6 +220,22 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         }
     }
 
+    void skippingThisPanel() {
+        String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS  //WJS-TODO remove these copies, leaving copies in IngestProfileSelectionWizardPanel
+        String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
+        if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null)
+                && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
+            lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
+            System.out.println("LAST PROFILE USED READ: " + lastProfileUsed);
+        }
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
+        showWarnings(ingestJobSettings);
+        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+        component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
+        readyToIngest = true;
+        startDataSourceProcessing();
+    }
+
     /**
      * Start ingest after verifying we have a new image, we are ready to ingest,
      * and we haven't already ingested.
@@ -221,7 +252,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * Starts the Data source processing by kicking off the selected
      * DataSourceProcessor
      */
-    private void startDataSourceProcessing(WizardDescriptor settings) {
+    private void startDataSourceProcessing() {
         final UUID dataSourceId = UUID.randomUUID();
 
         // Add a cleanup task to interrupt the background process if the
@@ -323,5 +354,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
             cancelled = false;
         }
 
+    }
+
+    @Override
+    public boolean isFinishPanel() {
+        return false;
     }
 }

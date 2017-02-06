@@ -76,7 +76,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
      *
      * @param settings The initial settings for the ingest job.
      */
-    public IngestJobSettingsPanel(IngestJobSettings settings) {
+     public IngestJobSettingsPanel(IngestJobSettings settings) {
         this.settings = settings;
         for (IngestModuleTemplate moduleTemplate : settings.getIngestModuleTemplates()) {
             modules.add(new IngestModuleModel(moduleTemplate));

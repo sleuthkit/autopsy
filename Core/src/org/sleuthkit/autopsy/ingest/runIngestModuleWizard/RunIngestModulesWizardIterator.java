@@ -35,8 +35,9 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private int index;
+    private int profilePanelIndex;
 
-    private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> panels;
+    private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
 
     /**
      * Gets the list of panels used by this wizard for iterating over. 
@@ -44,15 +45,17 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
      * 
      * @return panels - the list of of WizardDescriptor panels
      */
-    private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> getPanels() {
+    private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
+            IngestProfileSelectionWizardPanel profilePanel = new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext());
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
             if (!profileMap.isEmpty()) {
-                panels.add(new IngestProfileSelectionWizardPanel());
+                panels.add(profilePanel);
             }
 
             panels.add(new IngestModulesConfigWizardPanel());
+            profilePanelIndex=panels.indexOf(profilePanel);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -72,7 +75,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     }
 
     @Override
-    public WizardDescriptor.FinishablePanel<WizardDescriptor> current() {
+    public WizardDescriptor.Panel<WizardDescriptor> current() {
         return getPanels().get(index);
     }
 
@@ -84,7 +87,8 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
    
     @Override
     public boolean hasNext() {
-        return (index < getPanels().size() - 1) && !current().isFinishPanel();
+        return (index < getPanels().size() - 1 && 
+                !(index == profilePanelIndex && ((IngestProfileSelectionWizardPanel)current()).isFinishPanel()));
     }
 
     @Override

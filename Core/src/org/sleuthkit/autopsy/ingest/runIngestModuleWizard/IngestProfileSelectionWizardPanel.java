@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * selection panel and is only created when profiles exist.
  *
  */
-class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+public class IngestProfileSelectionWizardPanel implements WizardDescriptor.Panel<WizardDescriptor> {
 
     private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
@@ -42,6 +42,18 @@ class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePa
      */
     private IngestProfileSelectionPanel component;
     private String lastProfileUsed;
+    private final String defaultContext;
+
+    public IngestProfileSelectionWizardPanel(String defaultContext) {
+        this.defaultContext = defaultContext;
+    }
+
+    /**
+     * @return the defaultContext
+     */
+    String getDefaultContext() {
+        return defaultContext;
+    }
 
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
@@ -50,17 +62,17 @@ class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePa
     @Override
     public IngestProfileSelectionPanel getComponent() {
         if (component == null) {
-            if (ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null
-                    || ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
-                lastProfileUsed = RunIngestModulesAction.getDefaultContext();
-            } else {
+            if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null)
+                    && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
                 lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
+            } else {
+                lastProfileUsed = getDefaultContext();
             }
             component = new IngestProfileSelectionPanel(this, lastProfileUsed);
         }
         return component;
     }
-    
+
     @Override
     public HelpCtx getHelp() {
         // Show no Help button for this panel:
@@ -110,9 +122,9 @@ class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePa
         lastProfileUsed = component.getLastSelectedProfile();
         wiz.putProperty("executionContext", lastProfileUsed); //NON-NLS
         ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME, lastProfileUsed);
+        System.out.println("STORED LAST PROFILE USED AS: " + lastProfileUsed);
     }
 
-    @Override
     public boolean isFinishPanel() {
         return component.isLastPanel;
     }
