@@ -56,7 +56,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     private static final Logger LOGGER = Logger.getLogger(TermsComponentQuery.class.getName());
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     private static final String SEARCH_HANDLER = "/terms"; //NON-NLS
-    private static final String SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
+    private static final String SEARCH_FIELD = Server.Schema.TEXT.toString();
     private static final int TERMS_SEARCH_TIMEOUT = 90 * 1000; // Milliseconds
     private static final String CASE_INSENSITIVE = "case_insensitive"; //NON-NLS
     private static final boolean DEBUG_FLAG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
