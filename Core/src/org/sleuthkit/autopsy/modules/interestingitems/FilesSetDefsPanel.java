@@ -65,6 +65,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private final JButton cancelButton = new JButton("Cancel");
     private final PANEL_TYPE panelType;
     private final String ruleDialogTitle;
+    private boolean canBeEnabled = true;
 
     // The following is a map of interesting files set names to interesting
     // files set definitions. It is a snapshot of the files set definitions
@@ -86,7 +87,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setsList.addListSelectionListener(new FilesSetDefsPanel.SetsListSelectionListener());
         this.rulesList.setModel(rulesListModel);
         this.rulesList.addListSelectionListener(new FilesSetDefsPanel.RulesListSelectionListener());
-
+        this.ingestWarningLabel.setVisible(false); 
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {  //Hide the mimetype settings when this is displaying FileSet rules instead of interesting item rules
             this.mimeTypeComboBox.setVisible(false);
             this.jLabel7.setVisible(false);
@@ -171,6 +172,17 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         }
     }
 
+    public void enableButtons(boolean isEnabled) {
+        canBeEnabled = isEnabled;
+        newRuleButton.setEnabled(isEnabled);
+        newSetButton.setEnabled(isEnabled);
+        editRuleButton.setEnabled(isEnabled);
+        editSetButton.setEnabled(isEnabled);
+        deleteRuleButton.setEnabled(isEnabled);
+        deleteSetButton.setEnabled(isEnabled);
+        ingestWarningLabel.setVisible(!isEnabled);
+    }
+
     /**
      * @inheritDoc
      */
@@ -224,7 +236,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setDescriptionTextArea.setText("");
         this.ignoreKnownFilesCheckbox.setSelected(true);
         this.ingoreUnallocCheckbox.setSelected(true);
-        this.newSetButton.setEnabled(true);
+        this.newSetButton.setEnabled(true && canBeEnabled);
         this.editSetButton.setEnabled(false);
         this.deleteSetButton.setEnabled(false);
     }
@@ -244,7 +256,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.equalitySignComboBox.setSelectedIndex(2);
         this.fileSizeUnitComboBox.setSelectedIndex(1);
         this.fileSizeSpinner.setValue(0);
-        this.newRuleButton.setEnabled(!this.setsListModel.isEmpty());
+        this.newRuleButton.setEnabled(!this.setsListModel.isEmpty() && canBeEnabled);
         this.editRuleButton.setEnabled(false);
         this.deleteRuleButton.setEnabled(false);
     }
@@ -273,9 +285,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSetDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
                 FilesSetDefsPanel.this.ingoreUnallocCheckbox.setSelected(selectedSet.ingoresUnallocatedSpace());
                 // Enable the new, edit and delete set buttons.
-                FilesSetDefsPanel.this.newSetButton.setEnabled(true);
-                FilesSetDefsPanel.this.editSetButton.setEnabled(true);
-                FilesSetDefsPanel.this.deleteSetButton.setEnabled(true);
+                FilesSetDefsPanel.this.newSetButton.setEnabled(true && canBeEnabled);
+                FilesSetDefsPanel.this.editSetButton.setEnabled(true && canBeEnabled);
+                FilesSetDefsPanel.this.deleteSetButton.setEnabled(true && canBeEnabled);
 
                 // Populate the rule definitions list, sorted by name.
                 TreeMap<String, FilesSet.Rule> rules = new TreeMap<>(selectedSet.getRules());
@@ -361,9 +373,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 }
 
                 // Enable the new, edit and delete rule buttons.
-                FilesSetDefsPanel.this.newRuleButton.setEnabled(true);
-                FilesSetDefsPanel.this.editRuleButton.setEnabled(true);
-                FilesSetDefsPanel.this.deleteRuleButton.setEnabled(true);
+                FilesSetDefsPanel.this.newRuleButton.setEnabled(true && canBeEnabled);
+                FilesSetDefsPanel.this.editRuleButton.setEnabled(true && canBeEnabled);
+                FilesSetDefsPanel.this.deleteRuleButton.setEnabled(true && canBeEnabled);
             } else {
                 FilesSetDefsPanel.this.resetRuleComponents();
             }
@@ -566,6 +578,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         fileSizeSpinner = new javax.swing.JSpinner();
         fileSizeUnitComboBox = new javax.swing.JComboBox<String>();
         ingoreUnallocCheckbox = new javax.swing.JCheckBox();
+        ingestWarningLabel = new javax.swing.JLabel();
 
         setFont(getFont().deriveFont(getFont().getStyle() & ~java.awt.Font.BOLD, 11));
 
@@ -764,6 +777,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         ingoreUnallocCheckbox.setToolTipText(org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ingoreUnallocCheckbox.toolTipText")); // NOI18N
         ingoreUnallocCheckbox.setEnabled(false);
 
+        ingestWarningLabel.setFont(ingestWarningLabel.getFont().deriveFont(ingestWarningLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        ingestWarningLabel.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/modules/hashdatabase/warning16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ingestWarningLabel, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.ingestWarningLabel.text")); // NOI18N
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -815,8 +832,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                 .addComponent(ignoreKnownFilesCheckbox)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(ingoreUnallocCheckbox, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel6)))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel5)
+                                    .addComponent(jLabel6))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(ingestWarningLabel))))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(29, 29, 29)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -874,10 +895,15 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                                     .addComponent(editSetButton)
                                     .addComponent(deleteSetButton)))
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel6)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel5)
-                                .addGap(1, 1, 1)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel6)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(jLabel5)
+                                        .addGap(1, 1, 1))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                        .addComponent(ingestWarningLabel)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                                 .addComponent(setDescScrollPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(6, 6, 6)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1017,6 +1043,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private javax.swing.JComboBox<String> fileSizeUnitComboBox;
     private javax.swing.JRadioButton filesRadioButton;
     private javax.swing.JCheckBox ignoreKnownFilesCheckbox;
+    private javax.swing.JLabel ingestWarningLabel;
     private javax.swing.JCheckBox ingoreUnallocCheckbox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;

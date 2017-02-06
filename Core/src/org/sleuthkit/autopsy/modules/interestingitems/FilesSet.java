@@ -84,7 +84,7 @@ public final class FilesSet implements Serializable {
      *
      * @return A description string, possibly the empty string.
      */
-    String getDescription() {
+    public String getDescription() {
         return this.description;
     }
 
