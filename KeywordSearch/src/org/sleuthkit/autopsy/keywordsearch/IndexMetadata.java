@@ -52,7 +52,6 @@ public class IndexMetadata {
     private final Path metadataFilePath;
     private final String metadataFileName = "SolrCore.properties";
     private final static String ROOT_ELEMENT_NAME = "SolrCores"; //NON-NLS
-    private final static String NUM_CORES_ELEMENT_NAME = "NumberOfCore"; //NON-NLS
     private final static String CORE_ELEMENT_NAME = "Core"; //NON-NLS
     private final static String CORE_NAME_ELEMENT_NAME = "CoreName"; //NON-NLS
     private final static String SCHEMA_VERSION_ELEMENT_NAME = "SchemaVersion"; //NON-NLS
@@ -81,13 +80,13 @@ public class IndexMetadata {
      * Constructs an object that provides access to the text index metadata stored in
      * an existing text index metadata file.
      *
-     * @param metadataFilePath The full path to the text index metadata file.
+     * @param caseDirectory The full path to the top level case output folder.
      *
      * @throws TextIndexMetadataException If the new text index metadata file cannot be
      *                               read.
      */
-    public IndexMetadata(Path metadataFilePath) throws TextIndexMetadataException {
-        this.metadataFilePath = metadataFilePath;
+    public IndexMetadata(String caseDirectory) throws TextIndexMetadataException {
+        this.metadataFilePath = Paths.get(caseDirectory, metadataFileName);
         readFromFile();
     }
 
@@ -148,7 +147,6 @@ public class IndexMetadata {
          */
         Element rootElement = doc.createElement(ROOT_ELEMENT_NAME);        
         doc.appendChild(rootElement);
-       // ELTODO REMOVE createChildElement(doc, rootElement, NUM_CORES_ELEMENT_NAME, Integer.toString(indexes.size()));
 
         /*
          * Create the children of the Solr cores element.

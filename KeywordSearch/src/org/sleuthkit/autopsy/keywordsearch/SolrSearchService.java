@@ -193,12 +193,15 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         }
 
         // check if index needs upgrade
-        Index currentVersionIndex;
+        Index currentVersionIndex = null;
         if (indexes.isEmpty()) {
             // new case that doesn't have an existing index. create new index folder
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
             currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
+
+            // add current index to the list of indexes that exist for this case
+            indexes.add(currentVersionIndex);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             progressUnitsCompleted++;
@@ -293,6 +296,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                             logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
                         }
                     }
+                    
+                    // add current index to the list of indexes that exist for this case
+                    indexes.add(currentVersionIndex);
                 }
             }
         }
@@ -307,11 +313,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         try {
             // store the new core name
-            indexes.add(currentVersionIndex);
             IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), indexes);
             
             // ELTODO remove
-            IndexMetadata ind = new IndexMetadata(indexMetadata.getFilePath());
+            IndexMetadata ind = new IndexMetadata(context.getCase().getCaseDirectory());
         } catch (IndexMetadata.TextIndexMetadataException ex) {
             throw new AutopsyServiceException("Failed to save core name in case metadata file", ex);
         }
