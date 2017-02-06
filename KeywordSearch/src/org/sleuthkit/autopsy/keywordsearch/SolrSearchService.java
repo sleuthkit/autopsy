@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
@@ -306,7 +307,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         try {
             // store the new core name
-            IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), currentVersionIndex);
+            indexes.add(currentVersionIndex);
+            IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), indexes);
+            
+            // ELTODO remove
+            IndexMetadata ind = new IndexMetadata(indexMetadata.getFilePath());
         } catch (IndexMetadata.TextIndexMetadataException ex) {
             throw new AutopsyServiceException("Failed to save core name in case metadata file", ex);
         }

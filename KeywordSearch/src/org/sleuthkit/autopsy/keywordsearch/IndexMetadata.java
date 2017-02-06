@@ -38,8 +38,6 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -54,6 +52,7 @@ public class IndexMetadata {
     private final Path metadataFilePath;
     private final String metadataFileName = "SolrCore.properties";
     private final static String ROOT_ELEMENT_NAME = "SolrCores"; //NON-NLS
+    private final static String NUM_CORES_ELEMENT_NAME = "NumberOfCore"; //NON-NLS
     private final static String CORE_ELEMENT_NAME = "Core"; //NON-NLS
     private final static String CORE_NAME_ELEMENT_NAME = "CoreName"; //NON-NLS
     private final static String SCHEMA_VERSION_ELEMENT_NAME = "SchemaVersion"; //NON-NLS
@@ -147,8 +146,9 @@ public class IndexMetadata {
         /*
          * Create the root element and its children.
          */
-        Element rootElement = doc.createElement(ROOT_ELEMENT_NAME);
+        Element rootElement = doc.createElement(ROOT_ELEMENT_NAME);        
         doc.appendChild(rootElement);
+       // ELTODO REMOVE createChildElement(doc, rootElement, NUM_CORES_ELEMENT_NAME, Integer.toString(indexes.size()));
 
         /*
          * Create the children of the Solr cores element.
@@ -199,59 +199,22 @@ public class IndexMetadata {
             }
 
             /*
-             * Get the content of the relevant children of the root element.
-             */
-            String schemaVersion = getElementTextContent(rootElement, SCHEMA_VERSION_ELEMENT_NAME, true);
-            this.createdDate = getElementTextContent(rootElement, CREATED_DATE_ELEMENT_NAME, true);
-            if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
-                this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_VERSION_ELEMENT_NAME, true);
-            } else {
-                this.createdByVersion = getElementTextContent(rootElement, AUTOPSY_CREATED_BY_ELEMENT_NAME, true);
-            }
-
-            /*
              * Get the content of the children of the case element.
              */
-            NodeList caseElements = doc.getElementsByTagName(CASE_ELEMENT_NAME);
-            if (caseElements.getLength() == 0) {
+            NodeList coreElements = doc.getElementsByTagName(CORE_ELEMENT_NAME);
+            if (coreElements.getLength() == 0) {
                 throw new TextIndexMetadataException("Case metadata file corrupted");
             }
-            Element caseElement = (Element) caseElements.item(0);
-            this.caseName = getElementTextContent(caseElement, CASE_NAME_ELEMENT_NAME, true);
-            if (schemaVersion.equals(SCHEMA_VERSION_ONE) || schemaVersion.equals(SCHEMA_VERSION_TWO)) {
-                this.caseDisplayName = caseName;
-            } else {
-                this.caseDisplayName = getElementTextContent(caseElement, CASE_DISPLAY_NAME_ELEMENT_NAME, true);
-            }
-            this.caseNumber = getElementTextContent(caseElement, CASE_NUMBER_ELEMENT_NAME, false);
-            this.examiner = getElementTextContent(caseElement, EXAMINER_ELEMENT_NAME, false);
-            this.caseType = Case.CaseType.fromString(getElementTextContent(caseElement, CASE_TYPE_ELEMENT_NAME, true));
-            if (null == this.caseType) {
-                throw new TextIndexMetadataException("Case metadata file corrupted");
-            }
-            if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
-                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_NAME_ELEMENT_NAME, true);
-                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, true);
-            } else {
-                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
-                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, true);
-            }
-
-            /*
-             * Fix up the case database name due to a bug that for a time caused
-             * the absolute paths of single-user case databases to be stored.
-             */
-            Path possibleAbsoluteCaseDbPath = Paths.get(this.caseDatabaseName);
-            if (possibleAbsoluteCaseDbPath.getNameCount() > 1) {
-                Path caseDirectoryPath = Paths.get(getCaseDirectory());
-                this.caseDatabaseName = caseDirectoryPath.relativize(possibleAbsoluteCaseDbPath).toString();
-            }
-
-            /*
-             * Update the file to the current schema, if necessary.
-             */
-            if (!schemaVersion.equals(CURRENT_SCHEMA_VERSION)) {
-                writeToFile();
+            int coreIndx = 0;
+            while (coreIndx < coreElements.getLength()) {
+                Element coreElement = (Element) coreElements.item(coreIndx);
+                String coreName = getElementTextContent(coreElement, CORE_NAME_ELEMENT_NAME, true);
+                String solrVersion = getElementTextContent(coreElement, SOLR_VERSION_ELEMENT_NAME, true);
+                String schemaVersion = getElementTextContent(coreElement, SCHEMA_VERSION_ELEMENT_NAME, true);
+                String textIndexPath = getElementTextContent(coreElement, TEXT_INDEX_PATH_ELEMENT_NAME, true);
+                Index index = new Index(textIndexPath, solrVersion, schemaVersion, coreName, "");
+                indexes.add(index);
+                coreIndx++;
             }
 
         } catch (ParserConfigurationException | SAXException | IOException ex) {
