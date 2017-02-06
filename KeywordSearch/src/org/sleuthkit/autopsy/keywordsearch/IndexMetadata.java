@@ -85,18 +85,13 @@ public class IndexMetadata {
      * @throws TextIndexMetadataException If the new text index metadata file cannot be
      *                               read.
      */
-    public IndexMetadata(String caseDirectory) throws TextIndexMetadataException {
+    IndexMetadata(String caseDirectory) throws TextIndexMetadataException {
         this.metadataFilePath = Paths.get(caseDirectory, metadataFileName);
         readFromFile();
     }
-
-    /**
-     * Gets the full path to the case metadata file.
-     *
-     * @return The path to the metadata file
-     */
-    Path getFilePath() {
-        return metadataFilePath;
+    
+    List<Index> getIndexes() {
+        return indexes;
     }
     
     /**
