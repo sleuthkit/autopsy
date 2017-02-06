@@ -439,10 +439,10 @@ public final class CaseMetadata {
             }
             if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
                 this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_NAME_ELEMENT_NAME, true);
-                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, true);
+                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, false);
             } else {
                 this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
-                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, true);
+                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, false);
             }
 
             /*
