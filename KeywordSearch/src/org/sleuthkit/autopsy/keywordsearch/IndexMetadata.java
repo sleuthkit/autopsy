@@ -98,9 +98,9 @@ public class IndexMetadata {
     }
     
     /**
-     * Writes the case metadata to the metadata file.
+     * Writes the text index metadata to the metadata file.
      *
-     * @throws TextIndexMetadataException If there is an error writing to the case
+     * @throws TextIndexMetadataException If there is an error writing to the text index
      *                               metadata file.
      */
     private void writeToFile() throws TextIndexMetadataException {
@@ -132,7 +132,7 @@ public class IndexMetadata {
             }
 
         } catch (ParserConfigurationException | TransformerException | IOException ex) {
-            throw new TextIndexMetadataException(String.format("Error writing to case metadata file %s", metadataFilePath), ex);
+            throw new TextIndexMetadataException(String.format("Error writing to text index metadata file %s", metadataFilePath), ex);
         }
     }
 
@@ -160,7 +160,7 @@ public class IndexMetadata {
     }
     
     /**
-     * Creates an XML element for the case metadata XML DOM.
+     * Creates an XML element for the text index metadata XML DOM.
      *
      * @param doc            The document.
      * @param parentElement  The parent element of the element to be created.
@@ -176,9 +176,9 @@ public class IndexMetadata {
     
     
     /**
-     * Reads the case metadata from the metadata file.
+     * Reads the text index metadata from the metadata file.
      *
-     * @throws TextIndexMetadataException If there is an error reading from the case
+     * @throws TextIndexMetadataException If there is an error reading from the text index
      *                               metadata file.
      */
     private void readFromFile() throws TextIndexMetadataException {
@@ -191,15 +191,15 @@ public class IndexMetadata {
             doc.getDocumentElement().normalize();
             Element rootElement = doc.getDocumentElement();
             if (!rootElement.getNodeName().equals(ROOT_ELEMENT_NAME)) {
-                throw new TextIndexMetadataException("Case metadata file corrupted");
+                throw new TextIndexMetadataException("Text index metadata file corrupted");
             }
 
             /*
-             * Get the content of the children of the case element.
+             * Get the content of the children of the core element.
              */
             NodeList coreElements = doc.getElementsByTagName(CORE_ELEMENT_NAME);
             if (coreElements.getLength() == 0) {
-                throw new TextIndexMetadataException("Case metadata file corrupted");
+                throw new TextIndexMetadataException("Text index metadata file corrupted");
             }
             int coreIndx = 0;
             while (coreIndx < coreElements.getLength()) {
@@ -214,7 +214,7 @@ public class IndexMetadata {
             }
 
         } catch (ParserConfigurationException | SAXException | IOException ex) {
-            throw new TextIndexMetadataException(String.format("Error reading from case metadata file %s", metadataFilePath), ex);
+            throw new TextIndexMetadataException(String.format("Error reading from text index metadata file %s", metadataFilePath), ex);
         }
     }
 
@@ -233,11 +233,11 @@ public class IndexMetadata {
     private String getElementTextContent(Element parentElement, String elementName, boolean contentIsRequired) throws TextIndexMetadataException {
         NodeList elementsList = parentElement.getElementsByTagName(elementName);
         if (elementsList.getLength() == 0) {
-            throw new TextIndexMetadataException(String.format("Missing %s element from case metadata file %s", elementName, metadataFilePath));
+            throw new TextIndexMetadataException(String.format("Missing %s element from text index metadata file %s", elementName, metadataFilePath));
         }
         String textContent = elementsList.item(0).getTextContent();
         if (textContent.isEmpty() && contentIsRequired) {
-            throw new TextIndexMetadataException(String.format("Empty %s element in case metadata file %s", elementName, metadataFilePath));
+            throw new TextIndexMetadataException(String.format("Empty %s element in text index metadata file %s", elementName, metadataFilePath));
         }
         return textContent;
     }    
