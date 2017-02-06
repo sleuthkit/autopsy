@@ -35,9 +35,8 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private int index;
-    private int profilePanelIndex;
-
-    private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
+    private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
+    private List<ShortcutWizardDescriptorPanel> panels;
 
     /**
      * Gets the list of panels used by this wizard for iterating over. 
@@ -45,17 +44,16 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
      * 
      * @return panels - the list of of WizardDescriptor panels
      */
-    private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
+    private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
-            IngestProfileSelectionWizardPanel profilePanel = new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext());
+            IngestProfileSelectionWizardPanel profilePanel = new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME);
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
             if (!profileMap.isEmpty()) {
                 panels.add(profilePanel);
             }
 
             panels.add(new IngestModulesConfigWizardPanel());
-            profilePanelIndex=panels.indexOf(profilePanel);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -75,7 +73,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     }
 
     @Override
-    public WizardDescriptor.Panel<WizardDescriptor> current() {
+    public ShortcutWizardDescriptorPanel current() {
         return getPanels().get(index);
     }
 
@@ -88,7 +86,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     @Override
     public boolean hasNext() {
         return (index < getPanels().size() - 1 && 
-                !(index == profilePanelIndex && ((IngestProfileSelectionWizardPanel)current()).isFinishPanel()));
+                !(current().panelEnablesSkipping() && current().skipNextPanel()));
     }
 
     @Override

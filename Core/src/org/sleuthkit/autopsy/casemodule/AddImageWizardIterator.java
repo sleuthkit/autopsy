@@ -29,6 +29,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
  * The iterator class for the "Add Image" wizard panel. This class is used to
@@ -37,11 +38,11 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelection
 class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private int index = 0;
-    private List<WizardDescriptor.Panel<WizardDescriptor>> panels;
+    private List<ShortcutWizardDescriptorPanel> panels;
     private AddImageAction action;
     private int progressPanelIndex;
-    private int profileSelectionIndex;
-
+    private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
+    
     AddImageWizardIterator(AddImageAction action) {
         this.action = action;
     }
@@ -50,25 +51,23 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
      * Initialize panels representing individual wizard's steps and sets various
      * properties for them influencing wizard appearance.
      */
-    private List<WizardDescriptor.Panel<WizardDescriptor>> getPanels() {
+    private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
-            panels = new ArrayList<WizardDescriptor.Panel<WizardDescriptor>>();
+            panels = new ArrayList<>();
 
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
 
             AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
-            IngestProfileSelectionWizardPanel profileSelectionPanel = new IngestProfileSelectionWizardPanel(AddImageWizardIngestConfigPanel.class.getCanonicalName());
+            IngestProfileSelectionWizardPanel profileSelectionPanel = new IngestProfileSelectionWizardPanel(AddImageWizardIngestConfigPanel.class.getCanonicalName(), getPropLastprofileName());
             panels.add(dsPanel);
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
             if (!profileMap.isEmpty()) {
                 panels.add(profileSelectionPanel);
             }
-
             panels.add(ingestConfigPanel);
             panels.add(progressPanel);
-            progressPanelIndex = panels.indexOf(progressPanel);  //Doing programatically incase more panels added
-            profileSelectionIndex = panels.indexOf(profileSelectionPanel); //will be -1 if it wasn't added
+            progressPanelIndex = panels.indexOf(progressPanel);  //Doing programatically because number of panels is variable
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -101,14 +100,32 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     public int getIndex() {
         return index;
     }
+    
+    /**
+     * Gets the name of the property which stores the name of the last profile used by 
+     * the Add Image Wizard.
+     * 
+     * @return the PROP_LASTPROFILE_NAME
+     */
+    static String getPropLastprofileName() {
+        return PROP_LASTPROFILE_NAME;
+    }
 
+        /**
+     * @return the PROP_LASTPROFILE_NAME
+     */
+    static String getPROP_LASTPROFILE_NAME() {
+        return PROP_LASTPROFILE_NAME;
+    }
+
+    
     /**
      * Gets the current panel.
      *
      * @return panel the current panel
      */
     @Override
-    public WizardDescriptor.Panel<WizardDescriptor> current() {
+    public ShortcutWizardDescriptorPanel current() {
         if (panels != null) {
             return panels.get(index);
         } else {
@@ -157,14 +174,12 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        int lastIndex = index;
-        boolean canBeSkipPanel = false;
-        if (lastIndex==profileSelectionIndex ) {
-            canBeSkipPanel = ((IngestProfileSelectionWizardPanel)current()).isFinishPanel();
-        }
+      
+        boolean panelEnablesSkipping = current().panelEnablesSkipping();
+        boolean skipNextPanel = current().skipNextPanel();
         index++;
-        if (lastIndex==profileSelectionIndex && canBeSkipPanel){
-            ((AddImageWizardIngestConfigPanel)current()).skippingThisPanel();
+        if (panelEnablesSkipping && skipNextPanel){
+            current().processThisPanelBeforeSkipped();
             nextPanel();
         }
     }

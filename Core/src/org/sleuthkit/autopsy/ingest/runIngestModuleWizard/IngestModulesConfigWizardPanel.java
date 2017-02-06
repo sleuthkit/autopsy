@@ -24,7 +24,7 @@ import org.openide.util.HelpCtx;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
-class IngestModulesConfigWizardPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+class IngestModulesConfigWizardPanel extends ShortcutWizardDescriptorPanel {
 
     /**
      * The visual ingestJobSettingsPanel that displays this panel. If you need
@@ -74,11 +74,6 @@ class IngestModulesConfigWizardPanel implements WizardDescriptor.FinishablePanel
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
          wiz.putProperty("executionContext", RunIngestModulesAction.getDefaultContext()); //NON-NLS
-    }
-
-    @Override
-    public boolean isFinishPanel() {
-        return true;
     }
 
 }

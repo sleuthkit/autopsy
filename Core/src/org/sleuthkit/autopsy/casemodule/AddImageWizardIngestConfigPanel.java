@@ -40,6 +40,8 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
@@ -47,7 +49,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * TODO: review this for dead code. think about moving logic of adding image to
  * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
-class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
 
     private IngestJobSettingsPanel ingestJobSettingsPanel;
 
@@ -60,7 +62,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePane
     private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
     private boolean ingested = false;
     private boolean readyToIngest = false;
-
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupTask;
 
@@ -79,7 +80,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePane
 
         IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
         showWarnings(ingestJobSettings);
-        System.out.println("LAST PROFILE USED CREATE: " + lastProfileUsed);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
     }
 
@@ -162,12 +162,9 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePane
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS  //WJS-TODO remove these copies, leaving copies in IngestProfileSelectionWizardPanel
-        String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
-        if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null)
-                && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
-            lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
-            System.out.println("LAST PROFILE USED READ: " + lastProfileUsed);
+        if (!(ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()) == null)
+                && !ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()).isEmpty()) {
+            lastProfileUsed = ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName());
         }
         IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
         showWarnings(ingestJobSettings);
@@ -200,7 +197,6 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePane
     public void storeSettings(WizardDescriptor settings) {
 
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
-        System.out.println("LAST PROFILE USED STORE: " + lastProfileUsed);
         ingestJobSettings.save();
         showWarnings(ingestJobSettings);
 
@@ -220,13 +216,12 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePane
         }
     }
 
-    void skippingThisPanel() {
-        String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS  //WJS-TODO remove these copies, leaving copies in IngestProfileSelectionWizardPanel
-        String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
-        if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null)
-                && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
-            lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
-            System.out.println("LAST PROFILE USED READ: " + lastProfileUsed);
+    
+    @Override
+    public void processThisPanelBeforeSkipped() {
+        if (!(ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()) == null)
+                && !ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()).isEmpty()) {
+            lastProfileUsed = ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName());
         }
         IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
         showWarnings(ingestJobSettings);
@@ -354,10 +349,5 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.FinishablePane
             cancelled = false;
         }
 
-    }
-
-    @Override
-    public boolean isFinishPanel() {
-        return false;
     }
 }

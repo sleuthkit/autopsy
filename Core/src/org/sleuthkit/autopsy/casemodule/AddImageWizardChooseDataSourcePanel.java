@@ -33,12 +33,13 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
  * to add to Case, and pick the time zone.
  */
-class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.FinishablePanel<WizardDescriptor>, PropertyChangeListener {
+class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
 
     /**
      * The visual component that displays this panel. If you need to access the
@@ -231,10 +232,5 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Finishable
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         fireChangeEvent();
-    }
-
-    @Override
-    public boolean isFinishPanel() {
-        return false;
     }
 }

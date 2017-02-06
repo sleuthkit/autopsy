@@ -30,6 +30,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -39,7 +40,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
  * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
  * -jm)
  */
-class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
     /**
      * flag to indicate that the image adding process is finished and this panel
@@ -239,8 +240,4 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
         getComponent().showErrors(errorString, critical);
     }
 
-    @Override
-    public boolean isFinishPanel() {
-        return true;
-    }
 }

@@ -31,10 +31,11 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * selection panel and is only created when profiles exist.
  *
  */
-public class IngestProfileSelectionWizardPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorPanel {
+
+
 
     private final Set<ChangeListener> listeners = new HashSet<>(1);
-    private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
     /**
      * The visual component that displays this panel. If you need to access the
@@ -42,9 +43,11 @@ public class IngestProfileSelectionWizardPanel implements WizardDescriptor.Panel
      */
     private IngestProfileSelectionPanel component;
     private String lastProfileUsed;
+    private final String lastProfilePropertyName;
     private final String defaultContext;
 
-    public IngestProfileSelectionWizardPanel(String defaultContext) {
+    public IngestProfileSelectionWizardPanel(String defaultContext, String lastProfilePropertyName) {
+        this.lastProfilePropertyName = lastProfilePropertyName;
         this.defaultContext = defaultContext;
     }
 
@@ -54,7 +57,15 @@ public class IngestProfileSelectionWizardPanel implements WizardDescriptor.Panel
     String getDefaultContext() {
         return defaultContext;
     }
-
+    
+    /**
+     * Gets the name of the file which stores the last profile used properties.
+     * 
+     * @return the LAST_PROFILE_PROPERTIES_FILE
+     */
+    public static String getLastProfilePropertiesFile() {
+        return LAST_PROFILE_PROPERTIES_FILE;
+    }
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
     // but never displayed, or not all panels are displayed, it is better to
@@ -62,9 +73,9 @@ public class IngestProfileSelectionWizardPanel implements WizardDescriptor.Panel
     @Override
     public IngestProfileSelectionPanel getComponent() {
         if (component == null) {
-            if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null)
-                    && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
-                lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
+            if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName) == null)
+                    && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName).isEmpty()) {
+                lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName);
             } else {
                 lastProfileUsed = getDefaultContext();
             }
@@ -121,12 +132,16 @@ public class IngestProfileSelectionWizardPanel implements WizardDescriptor.Panel
     public void storeSettings(WizardDescriptor wiz) {
         lastProfileUsed = component.getLastSelectedProfile();
         wiz.putProperty("executionContext", lastProfileUsed); //NON-NLS
-        ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME, lastProfileUsed);
-        System.out.println("STORED LAST PROFILE USED AS: " + lastProfileUsed);
+        ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName, lastProfileUsed);
     }
 
-    public boolean isFinishPanel() {
+    @Override
+    public boolean skipNextPanel() {
         return component.isLastPanel;
     }
-
+    
+    @Override
+     public boolean panelEnablesSkipping(){
+         return true;
+     }
 }
