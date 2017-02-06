@@ -194,28 +194,29 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             indexes = indexMetadata.getIndexes();
         } catch (IndexMetadata.TextIndexMetadataException ex) {
             logger.log(Level.WARNING, String.format("Unable to read text index metadata file"), ex);
-        }
-
-        if (indexes.isEmpty()) {
-            // do a case subdirectory search to check for the existence of "old" KWS indexes that can be upgraded
+            
+            // do case subdirectory search to look for Solr 4 Schema 1.8 indexes that can be upgraded
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
             IndexFinder indexFinder = new IndexFinder();
-            indexes = indexFinder.findAllIndexDirs(context.getCase());
+            Index oldIndex = indexFinder.findOldIndexDir(context.getCase());
+            if (oldIndex != null) {
+                // add index to the list of indexes that exist for this case
+                indexes.add(oldIndex);
+            }
         }
         
         if (context.cancelRequested()) {
             return;
         }
 
-        // check if index needs upgrade
+        // check if we found an index that needs upgrade
         Index currentVersionIndex = null;
         if (indexes.isEmpty()) {
             // new case that doesn't have an existing index. create new index folder
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
             currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
-
             // add current index to the list of indexes that exist for this case
             indexes.add(currentVersionIndex);
         } else {
