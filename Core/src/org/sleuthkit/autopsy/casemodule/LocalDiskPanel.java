@@ -92,6 +92,7 @@ final class LocalDiskPanel extends JPanel {
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
         imageWriterErrorLabel.setText("");
+        imageWriterPathLabel.setText("");
     }
 
     /**
@@ -174,7 +175,7 @@ final class LocalDiskPanel extends JPanel {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(imageWriterPathLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(imageWriterErrorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 444, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(0, 12, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -200,7 +201,7 @@ final class LocalDiskPanel extends JPanel {
                     .addComponent(imageWriterPathLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(imageWriterErrorLabel)
-                .addContainerGap(63, Short.MAX_VALUE))
+                .addContainerGap(124, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -253,13 +254,12 @@ final class LocalDiskPanel extends JPanel {
     }
     
     private static String getDefaultImageWriterFolder(){
-        //return Paths.get(Case.getCurrentCase().getModuleDirectory(), "ImageWriter").toString();
-        return Paths.get(Case.getCurrentCase().getModuleDirectory()).toString(); // Don't want to commit in a broken state
+        return Paths.get(Case.getCurrentCase().getModuleDirectory(), "Image Writer").toString();
     }
     
     private void setPotentialImageWriterPath(LocalDisk disk){
         
-        File subDirectory = Paths.get(Case.getCurrentCase().getModuleDirectory(), "ImageWriter").toFile();
+        File subDirectory = Paths.get(getDefaultImageWriterFolder()).toFile();
         if (!subDirectory.exists()) {
             subDirectory.mkdirs();
         }
@@ -268,7 +268,6 @@ final class LocalDiskPanel extends JPanel {
         path += " " + System.currentTimeMillis();
         path += ".vhd";
         imageWriterPathLabel.setText(path);
-        //fullImageWriterPath = Paths.get(Case.getCurrentCase().getCaseDirectory(), path).toString();
         fullImageWriterPath = Paths.get(getDefaultImageWriterFolder(), path).toString();
     }
     
