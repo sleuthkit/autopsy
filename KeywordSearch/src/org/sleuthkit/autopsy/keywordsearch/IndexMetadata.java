@@ -47,10 +47,10 @@ import org.xml.sax.SAXException;
 /**
  * Provides access to the text index metadata stored in the index metadata file.
  */
-public class IndexMetadata {
+class IndexMetadata {
     
     private final Path metadataFilePath;
-    private final String metadataFileName = "SolrCore.properties";
+    private final String METADATA_FILE_NAME = "SolrCore.properties";
     private final static String ROOT_ELEMENT_NAME = "SolrCores"; //NON-NLS
     private final static String CORE_ELEMENT_NAME = "Core"; //NON-NLS
     private final static String CORE_NAME_ELEMENT_NAME = "CoreName"; //NON-NLS
@@ -60,13 +60,13 @@ public class IndexMetadata {
     private List<Index> indexes = new ArrayList<>();
     
     IndexMetadata(String caseDirectory, Index index) throws TextIndexMetadataException {
-        metadataFilePath = Paths.get(caseDirectory, metadataFileName);
+        metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
         indexes.add(index);
         writeToFile();
     }
     
     IndexMetadata(String caseDirectory, List<Index> indexes) throws TextIndexMetadataException {
-        metadataFilePath = Paths.get(caseDirectory, metadataFileName);
+        metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
         this.indexes = indexes;
         writeToFile();
     }
@@ -86,7 +86,7 @@ public class IndexMetadata {
      *                               read.
      */
     IndexMetadata(String caseDirectory) throws TextIndexMetadataException {
-        this.metadataFilePath = Paths.get(caseDirectory, metadataFileName);
+        this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
         if (!this.metadataFilePath.toFile().exists()) {
             throw new TextIndexMetadataException(String.format("Text index metadata file doesn't exist: %s", metadataFilePath));
         }

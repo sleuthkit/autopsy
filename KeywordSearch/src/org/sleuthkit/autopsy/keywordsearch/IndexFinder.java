@@ -68,12 +68,12 @@ class IndexFinder {
         return null;
     }
 
-    static Index createLatestVersionIndexDir(Case theCase) {
+    Index createLatestVersionIndexDir(Case theCase) {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + CURRENT_SOLR_SCHEMA_VERSION;
         // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
         File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
         targetDirPath.mkdirs();
-        return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION, theCase.getTextIndexName(), theCase.getName());
+        return new Index(convertPathToUNC(targetDirPath.getAbsolutePath()), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION, "", theCase.getName());
     }
 
     static Index identifyIndexToUpgrade(List<Index> allIndexes) {

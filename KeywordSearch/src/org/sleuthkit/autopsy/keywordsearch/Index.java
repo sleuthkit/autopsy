@@ -30,7 +30,7 @@ class Index {
     private final String schemaVersion;
     private final String solrVersion;
     private final String indexName;
-    private static final String DEFAULT_CORE_NAME = "coreCase"; //NON-NLS
+    private static final String DEFAULT_CORE_NAME = "text_index"; //NON-NLS
     
     Index(String indexPath, String solrVersion, String schemaVersion, String coreName, String caseName) {
         this.indexPath = indexPath;
@@ -51,9 +51,6 @@ class Index {
      * @return The sanitized Solr core name
      */
     private String createCoreName(String caseName) {
-        if (caseName.isEmpty()) {
-            caseName = DEFAULT_CORE_NAME;
-        }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
         String coreName = caseName + "_" + dateFormat.format(date);
