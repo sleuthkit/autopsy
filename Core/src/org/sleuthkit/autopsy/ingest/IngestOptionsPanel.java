@@ -21,6 +21,9 @@ package org.sleuthkit.autopsy.ingest;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.JTabbedPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel;
@@ -66,6 +69,21 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
                 filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 1);
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null,
                 profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 2);
+        //Listener for when tabbed panes are switched, because we can have two file filter definitions panels open at the same time
+        //we may wind up in a situation where the user has created and saved one in the profiles panel
+        //so we need to refresh the filterPanel in those cases before proceeding.
+        tabbedPane.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if (e.getSource() instanceof JTabbedPane) {
+                    profilePanel.shouldFiltersBeRefreshed();
+                    {
+                        filterPanel.load();
+                    }
+                }
+            }
+        });
+        
         addIngestJobEventsListener();
         enableTabs();
     }
@@ -135,6 +153,10 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
      */
     @Override
     public void saveSettings() {
+        //if a new filter was created in the profilePanel we don't want to save over it accidently
+        if (profilePanel.shouldFiltersBeRefreshed()) {
+            filterPanel.load();  
+        }
         filterPanel.store();
         settingsPanel.store();
         profilePanel.store();

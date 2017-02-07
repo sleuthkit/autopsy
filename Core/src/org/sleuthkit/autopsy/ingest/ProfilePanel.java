@@ -25,7 +25,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 
 /**
- * Panel to display options for profile creation.
+ * Panel to display options for profile creation and editing.
  */
 class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
@@ -35,7 +35,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named."})
 
     private final IngestJobSettingsPanel ingestSettingsPanel;
-    private final IngestJobSettings tempSettings;
+    private final IngestJobSettings settings;
     private IngestProfile profile;
     private final static String NEW_PROFILE_NAME = NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText");
 
@@ -44,8 +44,8 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
      */
     ProfilePanel() {
         initComponents();
-        tempSettings = new IngestJobSettings(NEW_PROFILE_NAME);
-        ingestSettingsPanel = new IngestJobSettingsPanel(tempSettings);
+        settings = new IngestJobSettings(NEW_PROFILE_NAME);
+        ingestSettingsPanel = new IngestJobSettingsPanel(settings);
         ingestSettingsPanel.setPastJobsButtonVisible(false);
         jPanel1.add(ingestSettingsPanel, 0);
 
@@ -56,14 +56,22 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         profile = selectedProfile;
         profileDescArea.setText(profile.getDescription());
         profileNameField.setText(profile.getName());
-        tempSettings = new IngestJobSettings(selectedProfile.getName());
-        ingestSettingsPanel = new IngestJobSettingsPanel(tempSettings);
+        settings = new IngestJobSettings(selectedProfile.getName());
+        ingestSettingsPanel = new IngestJobSettingsPanel(settings);
         ingestSettingsPanel.setPastJobsButtonVisible(false);
         jPanel1.add(ingestSettingsPanel, 0);
     }
 
     String getProfileName(){
         return profileNameField.getText();
+    }
+    
+    String getProfileDesc(){
+        return profileDescArea.getText();
+    }
+    
+    IngestJobSettings getSettings(){
+        return ingestSettingsPanel.getSettings();
     }
     /**
      * This method is called from within the constructor to initialize the form.
@@ -157,7 +165,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     @Override
     public void saveSettings() {
         if (profile == null) {
-            IngestProfile.renameProfile(tempSettings.getExecutionContext(), profileNameField.getText());
+            IngestProfile.renameProfile(settings.getExecutionContext(), profileNameField.getText());
         } else if (!profile.getName().equals(profileNameField.getText())) {
             IngestProfile.renameProfile(profile.getName(), profileNameField.getText());
         }

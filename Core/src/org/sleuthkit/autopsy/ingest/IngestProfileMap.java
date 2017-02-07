@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.TreeMap;
 import org.apache.commons.io.FileUtils;
@@ -109,10 +108,17 @@ class IngestProfileMap {
             return IngestJobSettings.getEnabledModulesKey();
         }
 
-        IngestProfile(String name, String desc, String selected) {
+        /**
+         * Creates a new IngestProfile
+         * 
+         * @param name - unique name of the profile
+         * @param desc - optional description of profile
+         * @param selectedFilter - the File Ingest Filter used for this profile
+         */
+        IngestProfile(String name, String desc, String selectedFilter) {
             this.name = name;
             this.description = desc;
-            this.fileIngestFilter = selected;
+            this.fileIngestFilter = selectedFilter;
         }
 
         /**
