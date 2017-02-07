@@ -252,12 +252,24 @@ final class LocalDiskPanel extends JPanel {
         return noFatOrphansCheckbox.isSelected();
     }
     
+    private static String getDefaultImageWriterFolder(){
+        //return Paths.get(Case.getCurrentCase().getModuleDirectory(), "ImageWriter").toString();
+        return Paths.get(Case.getCurrentCase().getModuleDirectory()).toString(); // Don't want to commit in a broken state
+    }
+    
     private void setPotentialImageWriterPath(LocalDisk disk){
+        
+        File subDirectory = Paths.get(Case.getCurrentCase().getModuleDirectory(), "ImageWriter").toFile();
+        if (!subDirectory.exists()) {
+            subDirectory.mkdirs();
+        }
+        
         String path = disk.getName().replaceAll("[:]", "");
         path += " " + System.currentTimeMillis();
         path += ".vhd";
         imageWriterPathLabel.setText(path);
-        fullImageWriterPath = Paths.get(Case.getCurrentCase().getCaseDirectory(), path).toString();
+        //fullImageWriterPath = Paths.get(Case.getCurrentCase().getCaseDirectory(), path).toString();
+        fullImageWriterPath = Paths.get(getDefaultImageWriterFolder(), path).toString();
     }
     
     private boolean imageWriterPathIsValid(){
