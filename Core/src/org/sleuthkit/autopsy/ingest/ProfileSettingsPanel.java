@@ -52,6 +52,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private TreeMap<String, IngestProfile> profiles;
     private ProfilePanel panel;
     private boolean filtersShouldBeRefreshed;
+
     /**
      * Creates new form ProfileOptionsPanel
      */
@@ -273,19 +274,19 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     }//GEN-LAST:event_deleteProfileButtonActionPerformed
 
     /**
-     * Returns whether there were possible changes to the filter list since the last time 
-     * this was called.
-     * 
-     * Resets value to false after being called. 
-     * 
+     * Returns whether there were possible changes to the filter list since the
+     * last time this was called.
+     *
+     * Resets value to false after being called.
+     *
      * @return true or false
      */
-    boolean shouldFiltersBeRefreshed(){
+    boolean shouldFiltersBeRefreshed() {
         boolean shouldRefresh = filtersShouldBeRefreshed;
         filtersShouldBeRefreshed = false;
         return shouldRefresh;
     }
-    
+
     /**
      * Enable / disable buttons, so they can be disabled while ingest is
      * running.
@@ -358,16 +359,16 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             option = JOptionPane.showConfirmDialog(null, panel, Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
-        // While adding new profile(selectedPRofile == null), if a profile with same name already exists, do not add to the profiles hashMap.
-        // In case of editing an existing profile(selectedProfile != null), following check is not performed.
-        if (this.profiles.containsKey(panel.getProfileName()) && selectedProfile == null) {
-            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
-                    "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text",
-                    panel.getProfileName()));
-            return;
-        }
         if (option == JOptionPane.OK_OPTION) {
-            this.saveSettings();
+            // While adding new profile(selectedPRofile == null), if a profile with same name already exists, do not add to the profiles hashMap.
+            // In case of editing an existing profile(selectedProfile != null), following check is not performed.
+            if (this.profiles.containsKey(panel.getProfileName()) && selectedProfile == null) {
+                MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                        "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text",
+                        panel.getProfileName()));
+                return;
+            }
+            panel.saveSettings();
             load();
         }
 
@@ -375,12 +376,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
     @Override
     public void saveSettings() {
-       this.store();
     }
 
     @Override
     public void store() {
-     panel.saveSettings();
     }
 
     /**
