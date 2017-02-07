@@ -67,6 +67,7 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null,
                 profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 2);
         addIngestJobEventsListener();
+        enableTabs();
     }
 
     /**
