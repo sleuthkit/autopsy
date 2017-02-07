@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -79,12 +79,6 @@ final class RegexQuery implements KeywordSearchQuery {
     static final private int MAX_RESULTS = 512;
     private boolean escaped;
     private String escapedQuery;
-
-    // These are the valid characters that can appear either before or after a
-    // keyword hit. We use these characters to try to turn the hit into a
-    // token that can be more readily matched when it comes to highlighting
-    // against the Schema.TEXT field later.
-    private static final String BOUNDARY_CHARS = "[\\s\\[\\]\\(\\)\\,\\\"\\\'\\!\\?\\.\\/\\:\\;\\=\\<\\>\\^\\{\\}]"; //NON-NLS
 
     // Lucene regular expressions do not support the following Java predefined
     // and POSIX character classes. There are other valid Java character classes
@@ -240,31 +234,17 @@ final class RegexQuery implements KeywordSearchQuery {
 
         final Collection<Object> content_str = solrDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
 
-        // By default, we create keyword hits on whitespace or punctuation character boundaries.
-        // Having a set of well defined boundary characters produces hits that can
-        // subsequently be matched for highlighting against the tokens produced by
-        // the standard tokenizer.
-        // This behavior can be overridden by the user if they give us a search string
-        // with .* at either the start and/or end of the string. This basically tells us find
-        // all hits instead of the ones surrounded by one of our boundary characters.
-        String keywordTokenRegex
-                = // If the given search string starts with .*, we ignore our default
-                // boundary prefix characters
-                (queryStringContainsWildcardPrefix ? "" : "(^|" + BOUNDARY_CHARS + ")") //NON-NLS
-                + keywordString
-                // If the given search string ends with .*, we ignore our default
-                // boundary suffix characters
-                + (queryStringContainsWildcardSuffix ? "" : "($|" + BOUNDARY_CHARS + ")"); //NON-NLS
-
         for (Object content_obj : content_str) {
             String content = (String) content_obj;
-            Matcher hitMatcher = Pattern.compile(keywordTokenRegex).matcher(content);
+            Matcher hitMatcher = Pattern.compile(keywordString).matcher(content);
             int offset = 0;
 
             while (hitMatcher.find(offset)) {
                 StringBuilder snippet = new StringBuilder();
 
-                //"parent" entries in the index don't have chunk size, so just accept those hits
+                // If the location of the hit is beyond this chunk (i.e. it
+                // exists in the overlap region), we skip the hit. It will
+                // show up again as a hit in the chunk following this one.
                 if (chunkSize != null && hitMatcher.start() >= chunkSize) {
                     break;
                 }
@@ -276,14 +256,6 @@ final class RegexQuery implements KeywordSearchQuery {
                 // This was causing us to miss hits that appeared consecutively in the
                 // input where they were separated by a single boundary character.
                 offset = hitMatcher.end() - 1;
-
-                // Remove any remaining leading and trailing boundary characters.
-                if (!queryStringContainsWildcardPrefix) {
-                    hit = hit.replaceAll("^" + BOUNDARY_CHARS, ""); //NON-NLS
-                }
-                if (!queryStringContainsWildcardSuffix) {
-                    hit = hit.replaceAll(BOUNDARY_CHARS + "$", ""); //NON-NLS
-                }
 
                 /*
                  * If searching for credit card account numbers, do a Luhn check
