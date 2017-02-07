@@ -133,8 +133,6 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
-        buttonGroup3 = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         jLabelNumThreads = new javax.swing.JLabel();
@@ -262,8 +260,6 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
     }//GEN-LAST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.ButtonGroup buttonGroup3;
     private javax.swing.JLabel ingestWarningLabel;
     private javax.swing.JCheckBox jCheckBoxEnableProcTimeout;
     private javax.swing.JFormattedTextField jFormattedTextFieldProcTimeOutHrs;
