@@ -23,6 +23,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -90,6 +91,7 @@ final class LocalDiskPanel extends JPanel {
         errorLabel.setVisible(false);
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
+        imageWriterErrorLabel.setText("");
     }
 
     /**
@@ -198,7 +200,7 @@ final class LocalDiskPanel extends JPanel {
                     .addComponent(imageWriterPathLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(imageWriterErrorLabel)
-                .addContainerGap(58, Short.MAX_VALUE))
+                .addContainerGap(63, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -251,21 +253,18 @@ final class LocalDiskPanel extends JPanel {
     }
     
     private void setPotentialImageWriterPath(LocalDisk disk){
-        System.out.println("\n\nsetPotentialImageWriterPath");
-        System.out.println("  name: " + disk.getName());
-        System.out.println("  path: " + disk.getPath());
         String path = disk.getName().replaceAll("[:]", "");
+        path += " " + System.currentTimeMillis();
         path += ".vhd";
-        System.out.println("  Output file: " + path);
         imageWriterPathLabel.setText(path);
-        fullImageWriterPath = Case.getCurrentCase().getCaseDirectory() + "\\" + path;
+        fullImageWriterPath = Paths.get(Case.getCurrentCase().getCaseDirectory(), path).toString();
     }
     
     private boolean imageWriterPathIsValid(){
         
         File f = new File(fullImageWriterPath);
         if(f.exists()) { 
-            this.imageWriterErrorLabel.setText("Error - file already exists");  // Put in bundle!!!!
+            imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterError.text"));
             return false;
         }
         imageWriterErrorLabel.setText("");
