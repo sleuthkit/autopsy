@@ -27,22 +27,22 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 /**
  * Panel to display options for profile creation.
  */
-public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
+class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     @NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Profile Description:",
         "ProfilePanel.profileNameLabel.text=Profile Name:",
         "ProfilePanel.newProfileText=NewEmptyProfile",
         "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named."})
 
-    IngestJobSettingsPanel ingestSettingsPanel;
-    IngestJobSettings tempSettings;
-    IngestProfile profile;
-    final static String NEW_PROFILE_NAME = NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText");
+    private final IngestJobSettingsPanel ingestSettingsPanel;
+    private final IngestJobSettings tempSettings;
+    private IngestProfile profile;
+    private final static String NEW_PROFILE_NAME = NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText");
 
     /**
      * Creates new form ProfilePanel
      */
-    public ProfilePanel() {
+    ProfilePanel() {
         initComponents();
         tempSettings = new IngestJobSettings(NEW_PROFILE_NAME);
         ingestSettingsPanel = new IngestJobSettingsPanel(tempSettings);
@@ -51,7 +51,7 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     }
 
-    public ProfilePanel(IngestProfile selectedProfile) {
+    ProfilePanel(IngestProfile selectedProfile) {
         initComponents();
         profile = selectedProfile;
         profileDescArea.setText(profile.getDescription());
@@ -169,11 +169,11 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     /**
      * Save a new or edited profile.
      */
-    public void store() {
+    void store() {
         saveSettings();
     }
 
-    public void load() {
+    void load() {
     }
 
     /**
