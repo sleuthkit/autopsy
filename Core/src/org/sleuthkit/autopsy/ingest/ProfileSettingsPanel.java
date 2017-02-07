@@ -258,6 +258,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private void deleteProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteProfileButtonActionPerformed
         IngestProfile selectedProfile = this.profileList.getSelectedValue();
         this.profilesListModel.removeElement(selectedProfile);
+        profiles.remove(selectedProfile.getName());
         IngestProfile.deleteProfile(selectedProfile);
 
         // Select the first of the remaining set definitions. This will cause
