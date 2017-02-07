@@ -67,6 +67,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null,
                 profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 2);
         addIngestJobEventsListener();
+        enableTabs();
     }
 
     /**
