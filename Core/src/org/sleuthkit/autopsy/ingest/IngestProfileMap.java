@@ -93,7 +93,7 @@ public class IngestProfileMap {
      * FileIngestFilter. The name can be used to find the ModuleSettings for
      * this profile.
      */
-   public static class IngestProfile {
+    public static class IngestProfile {
 
         private final String name;
         private final String description;
@@ -108,10 +108,17 @@ public class IngestProfileMap {
             return IngestJobSettings.getEnabledModulesKey();
         }
 
-        IngestProfile(String name, String desc, String selected) {
+        /**
+         * Creates a new IngestProfile
+         * 
+         * @param name - unique name of the profile
+         * @param desc - optional description of profile
+         * @param selectedFilter - the File Ingest Filter used for this profile
+         */
+        IngestProfile(String name, String desc, String selectedFilter) {
             this.name = name;
             this.description = desc;
-            this.fileIngestFilter = selected;
+            this.fileIngestFilter = selectedFilter;
         }
 
         /**
@@ -147,7 +154,7 @@ public class IngestProfileMap {
          *
          * @return the fileIngestFilter
          */
-        String getFileIngestFilter() {
+        public String getFileIngestFilter() {
             return fileIngestFilter;
         }
 

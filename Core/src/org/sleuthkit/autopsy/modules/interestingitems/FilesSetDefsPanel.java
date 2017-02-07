@@ -38,6 +38,8 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
+import org.sleuthkit.autopsy.ingest.IngestProfileMap;
+import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
@@ -45,7 +47,9 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
  */
 public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
-    @NbBundle.Messages({
+    @NbBundle.Messages({"# {0} - filter name",
+        "# {1} - profile name",
+        "FilesSetDefsPanel.ingest.fileFilterInUseError=The selected file filter, {0}, is being used by a profile, {1}, and cannot be deleted until after the profile.",
         "FilesSetDefsPanel.bytes=Bytes",
         "FilesSetDefsPanel.kiloBytes=Kilobytes",
         "FilesSetDefsPanel.megaBytes=Megabytes",
@@ -87,7 +91,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.setsList.addListSelectionListener(new FilesSetDefsPanel.SetsListSelectionListener());
         this.rulesList.setModel(rulesListModel);
         this.rulesList.addListSelectionListener(new FilesSetDefsPanel.RulesListSelectionListener());
-        this.ingestWarningLabel.setVisible(false); 
+        this.ingestWarningLabel.setVisible(false);
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {  //Hide the mimetype settings when this is displaying FileSet rules instead of interesting item rules
             this.mimeTypeComboBox.setVisible(false);
             this.jLabel7.setVisible(false);
@@ -998,9 +1002,19 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
     private void deleteSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSetButtonActionPerformed
         FilesSet selectedSet = this.setsList.getSelectedValue();
+        if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
+            for (IngestProfile profile : new IngestProfileMap().getIngestProfileMap().values()) {
+                if (profile.getFileIngestFilter().equals(selectedSet.getName())) {
+                    MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                            "FilesSetDefsPanel.ingest.fileFilterInUseError",
+                            selectedSet.getName(), profile.toString()));
+                    return;
+                }
+            }
+
+        }
         this.filesSets.remove(selectedSet.getName());
         this.setsListModel.removeElement(selectedSet);
-
         // Select the first of the remaining set definitions. This will cause
         // the selection listeners to repopulate the subordinate components.
         if (!this.filesSets.isEmpty()) {

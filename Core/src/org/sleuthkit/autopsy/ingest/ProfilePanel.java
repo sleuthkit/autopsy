@@ -19,52 +19,74 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
 
 /**
- * Panel to display options for profile creation.
+ * Panel to display options for profile creation and editing.
  */
-public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
+class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     @NbBundle.Messages({"ProfilePanel.profileDescLabel.text=Profile Description:",
         "ProfilePanel.profileNameLabel.text=Profile Name:",
         "ProfilePanel.newProfileText=NewEmptyProfile",
-        "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named."})
+        "ProfilePanel.messages.profilesMustBeNamed=Ingest profile must be named.",
+        "ProfilePanel.messages.profileNameContainsIllegalCharacter=Profile name contains an illegal character"})
 
-    IngestJobSettingsPanel ingestSettingsPanel;
-    IngestJobSettings tempSettings;
-    IngestProfile profile;
-    final static String NEW_PROFILE_NAME = NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText");
+    private final IngestJobSettingsPanel ingestSettingsPanel;
+    private final IngestJobSettings settings;
+    private IngestProfile profile;
+    private final static String NEW_PROFILE_NAME = NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.newProfileText");
+    private static final List<String> ILLEGAL_NAME_CHARS = Collections.unmodifiableList(new ArrayList<>(Arrays.asList("\\", "/", ":", "*", "?", "\"", "<", ">")));
 
     /**
      * Creates new form ProfilePanel
      */
-    public ProfilePanel() {
+    ProfilePanel() {
         initComponents();
-        tempSettings = new IngestJobSettings(NEW_PROFILE_NAME);
-        ingestSettingsPanel = new IngestJobSettingsPanel(tempSettings);
+        settings = new IngestJobSettings(NEW_PROFILE_NAME);
+        ingestSettingsPanel = new IngestJobSettingsPanel(settings);
         ingestSettingsPanel.setPastJobsButtonVisible(false);
         jPanel1.add(ingestSettingsPanel, 0);
 
     }
 
-    public ProfilePanel(IngestProfile selectedProfile) {
+    ProfilePanel(IngestProfile selectedProfile) {
         initComponents();
         profile = selectedProfile;
         profileDescArea.setText(profile.getDescription());
         profileNameField.setText(profile.getName());
-        tempSettings = new IngestJobSettings(selectedProfile.getName());
-        ingestSettingsPanel = new IngestJobSettingsPanel(tempSettings);
+        settings = new IngestJobSettings(selectedProfile.getName());
+        ingestSettingsPanel = new IngestJobSettingsPanel(settings);
         ingestSettingsPanel.setPastJobsButtonVisible(false);
         jPanel1.add(ingestSettingsPanel, 0);
     }
 
-    String getProfileName(){
-        return profileNameField.getText();
+    /**
+     * Get the name of the profile.
+     * 
+     * The name will not contain any trailing or leading spaces.
+     * 
+     * @return 
+     */
+    String getProfileName() {
+        return profileNameField.getText().trim();
     }
+
+    String getProfileDesc() {
+        return profileDescArea.getText();
+    }
+
+    IngestJobSettings getSettings() {
+        return ingestSettingsPanel.getSettings();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -157,38 +179,63 @@ public class ProfilePanel extends IngestModuleGlobalSettingsPanel {
     @Override
     public void saveSettings() {
         if (profile == null) {
-            IngestProfile.renameProfile(tempSettings.getExecutionContext(), profileNameField.getText());
-        } else if (!profile.getName().equals(profileNameField.getText())) {
-            IngestProfile.renameProfile(profile.getName(), profileNameField.getText());
+            IngestProfile.renameProfile(settings.getExecutionContext(), getProfileName());
+        } else if (!profile.getName().equals(getProfileName())) {
+            IngestProfile.renameProfile(profile.getName(), getProfileName());
         }
-        profile = new IngestProfile(profileNameField.getText(), profileDescArea.getText(), ingestSettingsPanel.getSettings().getFileIngestFilter().getName());
+        profile = new IngestProfile(getProfileName(), profileDescArea.getText(), ingestSettingsPanel.getSettings().getFileIngestFilter().getName());
         IngestProfile.saveProfile(profile);
-        ingestSettingsPanel.getSettings().saveAs(profileNameField.getText());
+        ingestSettingsPanel.getSettings().saveAs(getProfileName());
     }
 
     /**
      * Save a new or edited profile.
      */
-    public void store() {
+    void store() {
         saveSettings();
     }
 
-    public void load() {
+    void load() {
     }
 
     /**
      * Checks that information entered constitutes a valid ingest profile.
+     *
      * @return true for valid, false for invalid.
      */
     boolean isValidDefinition() {
-        if (this.profileNameField.getText().isEmpty()) {
+        if (getProfileName().isEmpty()) {
             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                     NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profilesMustBeNamed"),
                     NotifyDescriptor.WARNING_MESSAGE);
             DialogDisplayer.getDefault().notify(notifyDesc);
             return false;
         }
-        
+        if (!containsOnlyLegalChars(getProfileName(), ILLEGAL_NAME_CHARS)){
+             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+                    NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profileNameContainsIllegalCharacter"),
+                    NotifyDescriptor.WARNING_MESSAGE);
+            DialogDisplayer.getDefault().notify(notifyDesc);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Checks an input string for the use of illegal characters.
+     *
+     * @param toBeChecked  The input string.
+     * @param illegalChars The characters deemed to be illegal.
+     *
+     * @return True if the string does not contain illegal characters, false
+     *         otherwise.
+     */
+    private static boolean containsOnlyLegalChars(String toBeChecked, List<String> illegalChars) {
+        for (String illegalChar : illegalChars) {
+            if (toBeChecked.contains(illegalChar)) {
+                return false;
+            }
+        }
         return true;
     }
 }

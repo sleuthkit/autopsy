@@ -49,6 +49,9 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     })
 
     private final DefaultListModel<IngestProfile> profilesListModel;
+    private TreeMap<String, IngestProfile> profiles;
+    private ProfilePanel panel;
+    private boolean filtersShouldBeRefreshed;
 
     /**
      * Creates new form ProfileOptionsPanel
@@ -56,6 +59,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     ProfileSettingsPanel() {
         this.profilesListModel = new DefaultListModel<>();
         initComponents();
+        this.filtersShouldBeRefreshed = false;
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
         ingestWarningLabel.setVisible(false);
@@ -260,6 +264,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private void deleteProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteProfileButtonActionPerformed
         IngestProfile selectedProfile = this.profileList.getSelectedValue();
         this.profilesListModel.removeElement(selectedProfile);
+        profiles.remove(selectedProfile.getName());
         IngestProfile.deleteProfile(selectedProfile);
 
         // Select the first of the remaining set definitions. This will cause
@@ -269,9 +274,24 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     }//GEN-LAST:event_deleteProfileButtonActionPerformed
 
     /**
-     * Enable / disable buttons, so they can be disabled while ingest is running.
-     * 
-     * @param isEnabled 
+     * Returns whether there were possible changes to the filter list since the
+     * last time this was called.
+     *
+     * Resets value to false after being called.
+     *
+     * @return true or false
+     */
+    boolean shouldFiltersBeRefreshed() {
+        boolean shouldRefresh = filtersShouldBeRefreshed;
+        filtersShouldBeRefreshed = false;
+        return shouldRefresh;
+    }
+
+    /**
+     * Enable / disable buttons, so they can be disabled while ingest is
+     * running.
+     *
+     * @param isEnabled
      */
     void enableButtons(boolean isEnabled) {
         newProfileButton.setEnabled(isEnabled);
@@ -293,7 +313,26 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             this.filterNameText.setText("");
             this.selectedModulesArea.setText("");
         }
+        refreshEditDeleteButtons();
     }
+
+    /**
+     * When Ingest is not running this will changed enabled status of the edit
+     * and delete buttons to reflect their current availability.
+     */
+    private void refreshEditDeleteButtons() {
+        if (newProfileButton.isEnabled()) {
+            if (profilesListModel.isEmpty()) {
+                editProfileButton.setEnabled(false);
+                deleteProfileButton.setEnabled(false);
+            } else {
+                editProfileButton.setEnabled(true);
+                deleteProfileButton.setEnabled(true);
+            }
+        }
+    }
+
+
     private void editProfileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editProfileButtonActionPerformed
         IngestProfile selectedProfile = profileList.getSelectedValue();
         doProfileDialog(selectedProfile);
@@ -301,13 +340,12 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     }//GEN-LAST:event_editProfileButtonActionPerformed
 
     /**
-     * Open a dialog for the the creation or modification of a profile.  
-     * 
-     * @param selectedProfile 
+     * Open a dialog for the the creation or modification of a profile.
+     *
+     * @param selectedProfile
      */
     private void doProfileDialog(IngestProfile selectedProfile) {
-        // Create a files set defintion panle.
-        ProfilePanel panel;
+        // Create a files set defintion panel.
         if (selectedProfile != null) {
             // Editing an existing set definition.
             panel = new ProfilePanel(selectedProfile);
@@ -321,16 +359,15 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             option = JOptionPane.showConfirmDialog(null, panel, Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
-        TreeMap<String, IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
-        
-        if (profileMap.containsKey(panel.getProfileName()) && selectedProfile == null) {
-            MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
-                    "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text",
-                    panel.getProfileName()));
-            return;
-        }
-        
         if (option == JOptionPane.OK_OPTION) {
+            // While adding new profile(selectedPRofile == null), if a profile with same name already exists, do not add to the profiles hashMap.
+            // In case of editing an existing profile(selectedProfile != null), following check is not performed.
+            if (this.profiles.containsKey(panel.getProfileName()) && selectedProfile == null) {
+                MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
+                        "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text",
+                        panel.getProfileName()));
+                return;
+            }
             panel.saveSettings();
             load();
         }
@@ -339,35 +376,28 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
     @Override
     public void saveSettings() {
-
     }
 
     @Override
     public void store() {
-
     }
 
     /**
-     * Load the stored profile information. 
+     * Load the stored profile information.
      */
     @Override
     public void load() {
-        int currentIndex = profileList.getSelectedIndex();
-        profilesListModel.clear();
-        IngestProfileMap profileMap = new IngestProfileMap();
-        for (IngestProfile profile : profileMap.getIngestProfileMap().values()) {
+        int currentIndex = this.profileList.getSelectedIndex();
+        this.profilesListModel.clear();
+        this.profiles = new IngestProfileMap().getIngestProfileMap();
+        for (IngestProfile profile : this.profiles.values()) {
             profilesListModel.addElement(profile);
         }
-        if (newProfileButton.isEnabled()) {
-            if (profilesListModel.isEmpty()) {
-                editProfileButton.setEnabled(false);
-                deleteProfileButton.setEnabled(false);
-            } else {
-                editProfileButton.setEnabled(true);
-                deleteProfileButton.setEnabled(true);
-            }
+        if (currentIndex < 0 || currentIndex >= profilesListModel.getSize()) {
+            currentIndex = 0;
         }
-        profileList.setSelectedIndex(currentIndex);
+        refreshEditDeleteButtons();
+        this.profileList.setSelectedIndex(currentIndex);
     }
 
     private final class ProfileListSelectionListener implements ListSelectionListener {
@@ -377,7 +407,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             if (e.getValueIsAdjusting()) {
                 return;
             }
-
             // Get the selected interesting files set and populate the set
             // components.
             IngestProfile selectedProfile = ProfileSettingsPanel.this.profileList.getSelectedValue();
@@ -397,11 +426,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                 for (String moduleName : selectedProfile.getModuleNames(IngestProfile.getEnabledModulesKey())) {
                     selectedModulesArea.append(moduleName + "\n");
                 }
-
             }
-
         }
-
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
