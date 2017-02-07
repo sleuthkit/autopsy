@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2012-2015 Basis Technology Corp.
+ *
+ * Copyright 2012-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -397,22 +397,25 @@ final class IngestTasksScheduler {
     private static boolean shouldEnqueueFileTask(final FileIngestTask task) {
         final AbstractFile file = task.getFile();
 
-        // Skip the task if the file is an unallocated space file and the
-        // process unallocated space flag is not set for this job.
-        if (!task.getIngestJob().shouldProcessUnallocatedSpace()
-                && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)) {
-            return false;
-        }
-
         // Skip the task if the file is actually the pseudo-file for the parent
         // or current directory.
         String fileName = file.getName();
+
         if (fileName.equals(".") || fileName.equals("..")) {
             return false;
         }
 
-        // Skip the task if the file is one of a select group of special, large
-        // NTFS or FAT file system files.
+        /**
+         * Check if the file is a member of the file ingest filter that is being
+         * applied to the current run of ingest, checks if unallocated space
+         * should be processed inside call to fileIsMemberOf
+         */
+        if (file.isFile() && task.getIngestJob().getFileIngestFilter().fileIsMemberOf(file) == null) {
+            return false;
+        }
+
+// Skip the task if the file is one of a select group of special, large
+// NTFS or FAT file system files.
         if (file instanceof org.sleuthkit.datamodel.File) {
             final org.sleuthkit.datamodel.File f = (org.sleuthkit.datamodel.File) file;
 
@@ -522,6 +525,7 @@ final class IngestTasksScheduler {
      */
     synchronized IngestJobTasksSnapshot getTasksSnapshotForJob(long jobId) {
         return new IngestJobTasksSnapshot(jobId);
+
     }
 
     /**
@@ -555,12 +559,12 @@ final class IngestTasksScheduler {
             static final List<Pattern> MEDIUM_PRI_PATHS = new ArrayList<>();
 
             static final List<Pattern> HIGH_PRI_PATHS = new ArrayList<>();
+
             /*
              * prioritize root directory folders based on the assumption that we
              * are looking for user content. Other types of investigations may
              * want different priorities.
              */
-
             static /*
              * prioritize root directory folders based on the assumption that we
              * are looking for user content. Other types of investigations may

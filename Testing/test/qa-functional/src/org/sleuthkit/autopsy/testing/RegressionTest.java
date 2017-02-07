@@ -90,7 +90,10 @@ public class RegressionTest extends TestCase {
      * @return escaped path the the file/directory location.
      */
     private static String getEscapedPath(String path) {
-        if (path.startsWith("\\")) {
+        if (path.startsWith("\\\\")) { //already has escaped to \\\\NetworkLocation
+            return path;
+        }
+        else if (path.startsWith("\\")) {
             return "\\" + path;
         } else {
             return path;
@@ -299,10 +302,6 @@ public class RegressionTest extends TestCase {
         JButtonOperator jbo2 = new JButtonOperator(jdo, "OK", 0);
         jbo2.pushNoBlock();
         WizardOperator wo = new WizardOperator("Add Data");
-        JCheckBoxOperator jbco0 = new JCheckBoxOperator(wo, "Process Unallocated Space");
-        if (Boolean.parseBoolean(System.getProperty("ignore_unalloc"))) {
-            jbco0.doClick();
-        }
         new Timeout("pausing", 10000).sleep(); // let things catch up
         wo.btNext().clickMouse();
     }
