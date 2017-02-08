@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -117,7 +117,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
         newKeywordsButton.setEnabled(canAddWord);
 
-
         // items that need a non-empty list
         if ((currentKeywordList == null) || (currentKeywordList.getKeywords().isEmpty())) {
             deleteWordButton.setEnabled(false);
@@ -140,7 +139,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         keywordsLabel = new javax.swing.JLabel();
         newKeywordsButton = new javax.swing.JButton();
         deleteWordButton = new javax.swing.JButton();
-        jButton1 = new javax.swing.JButton();
+        editWordButton = new javax.swing.JButton();
 
         setMinimumSize(new java.awt.Dimension(0, 0));
 
@@ -182,8 +181,13 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             }
         });
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/edit16.png"))); // NOI18N
-        jButton1.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.jButton1.text")); // NOI18N
+        editWordButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/edit16.png"))); // NOI18N
+        editWordButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.editWordButton.text")); // NOI18N
+        editWordButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                editWordButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout listEditorPanelLayout = new javax.swing.GroupLayout(listEditorPanel);
         listEditorPanel.setLayout(listEditorPanelLayout);
@@ -205,14 +209,14 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                                         .addComponent(newKeywordsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(14, 14, 14)
-                                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(editWordButton, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(14, 14, 14)
                                         .addComponent(deleteWordButton, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
 
-        listEditorPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteWordButton, jButton1, newKeywordsButton});
+        listEditorPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteWordButton, editWordButton, newKeywordsButton});
 
         listEditorPanelLayout.setVerticalGroup(
             listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -225,7 +229,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 .addGroup(listEditorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteWordButton)
                     .addComponent(newKeywordsButton)
-                    .addComponent(jButton1))
+                    .addComponent(editWordButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestMessagesCheckbox)
                 .addGap(9, 9, 9))
@@ -265,24 +269,23 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     private void newKeywordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newKeywordsButtonActionPerformed
         String keywordsToRedisplay = "";
         AddKeywordsDialog dialog = new AddKeywordsDialog();
-        
+
         int goodCount;
         int dupeCount;
         int badCount = 1;  // Default to 1 so we enter the loop the first time
 
-        while(badCount > 0){
+        while (badCount > 0) {
             dialog.setInitialKeywordList(keywordsToRedisplay);
             dialog.display();
-            
+
             goodCount = 0;
             dupeCount = 0;
             badCount = 0;
             keywordsToRedisplay = "";
-            
-            if(!dialog.getKeywords().isEmpty()){
 
+            if (!dialog.getKeywords().isEmpty()) {
 
-                for(String newWord:dialog.getKeywords()){
+                for (String newWord : dialog.getKeywords()) {
                     if (newWord.isEmpty()) {
                         continue;
                     }
@@ -317,30 +320,30 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                 XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
 
-                if((badCount > 0) || (dupeCount > 0)){
+                if ((badCount > 0) || (dupeCount > 0)) {
                     // Display the error counts to the user
                     // The add keywords dialog will pop up again if any were invalid with any 
                     // invalid entries (valid entries and dupes will disappear)
-                    
+
                     String summary = "";
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO;
-                    if(goodCount > 0){
-                        if(goodCount > 1){
+                    if (goodCount > 0) {
+                        if (goodCount > 1) {
                             summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAddedPlural.text", goodCount) + "\n";
                         } else {
                             summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAdded.text", goodCount) + "\n";
                         }
                     }
-                    if(dupeCount > 0){
-                        if(dupeCount > 1){
+                    if (dupeCount > 0) {
+                        if (dupeCount > 1) {
                             summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkippedPlural.text", dupeCount) + "\n";
                         } else {
                             summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkipped.text", dupeCount) + "\n";
                         }
                         level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN;
                     }
-                    if(badCount > 0){
-                        if(badCount > 1){
+                    if (badCount > 0) {
+                        if (badCount > 1) {
                             summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrorsPlural.text", badCount) + "\n";
                         } else {
                             summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrors.text", badCount) + "\n";
@@ -356,10 +359,14 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         setButtonStates();
     }//GEN-LAST:event_newKeywordsButtonActionPerformed
 
+    private void editWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editWordButtonActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_editWordButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton deleteWordButton;
+    private javax.swing.JButton editWordButton;
     private javax.swing.JCheckBox ingestMessagesCheckbox;
-    private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable keywordTable;
     private javax.swing.JLabel keywordsLabel;

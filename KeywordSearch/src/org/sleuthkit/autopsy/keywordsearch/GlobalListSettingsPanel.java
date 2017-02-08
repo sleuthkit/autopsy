@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,63 +46,27 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
             public void actionPerformed(ActionEvent e) {
                 if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
                     String toDelete = editListPanel.getCurrentKeywordList().getName();
-                    editListPanel.setCurrentKeywordList(null);
-                    editListPanel.setButtonStates();
-                    XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
-                    deleter.deleteList(toDelete);
+                    deleteAction(toDelete);
                     listsManagementPanel.resync();
                 }
             }
         });
 
-        listsManagementPanel.addSaveButtonActionPerformed(new ActionListener() {
+        listsManagementPanel.addRenameButtonActionPerformed(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
-                        "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
-                KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
-
-                List<Keyword> keywords = currentKeywordList.getKeywords();
-                if (keywords.isEmpty()) {
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.keywordListEmptyErr"),
-                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-                    return;
+                String toDelete = editListPanel.getCurrentKeywordList().getName();
+                if (copyAction()){
+                    deleteAction(toDelete);
+                    listsManagementPanel.resync();
                 }
+            }
+        });
 
-                String listName = (String) JOptionPane.showInputDialog(
-                        null,
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
-                        FEATURE_NAME,
-                        JOptionPane.PLAIN_MESSAGE,
-                        null,
-                        null,
-                        currentKeywordList.getName());
-                if (listName == null || listName.trim().equals("")) {
-                    return;
-                }
-
-                XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
-                if (writer.listExists(listName) && writer.getList(listName).isEditable()) {
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-                    return;
-                }
-                boolean shouldAdd = false;
-                if (writer.listExists(listName)) {
-                    boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
-                            KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-                    if (replace) {
-                        shouldAdd = true;
-                    }
-
-                } else {
-                    shouldAdd = true;
-                }
-
-                if (shouldAdd) {
-                    writer.addList(listName, keywords);
-                    KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-                }
-
+        listsManagementPanel.addCopyButtonActionPerformed(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                copyAction();
                 listsManagementPanel.resync();
             }
         });
@@ -111,6 +75,66 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         mainSplitPane.setRightComponent(editListPanel);
         mainSplitPane.revalidate();
         mainSplitPane.repaint();
+    }
+
+    /**
+     * Delete the specified Keyword List
+     * 
+     * @param toDelete - the list to delete
+     */
+    private void deleteAction(String toDelete) {
+        editListPanel.setCurrentKeywordList(null);
+        editListPanel.setButtonStates();
+        XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
+        deleter.deleteList(toDelete);
+    }
+/**
+ * Duplicates the selected keyword list, returns whether or not the keyword list was duplicated.
+ * 
+ * @return true or false
+ */
+    private boolean copyAction() {
+        boolean shouldAdd = false;
+        final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
+                "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
+        KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
+
+        List<Keyword> keywords = currentKeywordList.getKeywords();
+
+        String listName = (String) JOptionPane.showInputDialog(
+                null,
+                NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
+                FEATURE_NAME,
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                currentKeywordList.getName());
+        if (listName == null || listName.trim().equals("")) {
+            return shouldAdd;
+        }
+
+        XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
+        if (writer.listExists(listName) && writer.getList(listName).isEditable()) {
+            KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+            return shouldAdd;
+        }
+
+        if (writer.listExists(listName)) {
+            boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
+                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+            if (replace) {
+                shouldAdd = true;
+            }
+
+        } else {
+            shouldAdd = true;
+        }
+
+        if (shouldAdd) {
+            writer.addList(listName, keywords);
+            KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+        }
+        return shouldAdd;
     }
 
     @Override
@@ -159,7 +183,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         rightPanel = new javax.swing.JPanel();
 
         mainSplitPane.setBorder(null);
-        mainSplitPane.setDividerLocation(287);
+        mainSplitPane.setDividerLocation(300);
         mainSplitPane.setDividerSize(1);
 
         leftPanel.setPreferredSize(new java.awt.Dimension(287, 327));
@@ -168,7 +192,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         leftPanel.setLayout(leftPanelLayout);
         leftPanelLayout.setHorizontalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 287, Short.MAX_VALUE)
+            .addGap(0, 300, Short.MAX_VALUE)
         );
         leftPanelLayout.setVerticalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -183,7 +207,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         rightPanel.setLayout(rightPanelLayout);
         rightPanelLayout.setHorizontalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 385, Short.MAX_VALUE)
+            .addGap(0, 372, Short.MAX_VALUE)
         );
         rightPanelLayout.setVerticalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

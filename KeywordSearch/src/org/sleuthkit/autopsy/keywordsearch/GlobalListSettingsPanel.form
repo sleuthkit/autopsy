@@ -41,7 +41,7 @@
             <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
               <Border info="null"/>
             </Property>
-            <Property name="dividerLocation" type="int" value="287"/>
+            <Property name="dividerLocation" type="int" value="300"/>
             <Property name="dividerSize" type="int" value="1"/>
           </Properties>
 
@@ -62,7 +62,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="287" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="300" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -87,7 +87,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <EmptySpace min="0" pref="385" max="32767" attributes="0"/>
+                      <EmptySpace min="0" pref="372" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
