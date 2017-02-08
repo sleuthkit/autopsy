@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -75,11 +75,13 @@ class TikaTextExtractor extends FileTextExtractor {
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
+            future.cancel(true);
             throw new TextExtractorException(msg, te);
         } catch (Exception ex) {
             KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, ex);
+            future.cancel(true);
             throw new TextExtractorException(msg, ex);
         }
     }
@@ -118,7 +120,6 @@ class TikaTextExtractor extends FileTextExtractor {
         }
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
-
 
     @Override
     public boolean isDisabled() {
