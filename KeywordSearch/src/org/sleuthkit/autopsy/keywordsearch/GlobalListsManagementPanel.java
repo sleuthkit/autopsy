@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
  * A panel to manage all keyword lists created/imported in Autopsy.
@@ -56,7 +58,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         listsTable.setTableHeader(null);
         listsTable.setShowHorizontalLines(false);
         listsTable.setShowVerticalLines(false);
-
+        exportButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.exportToFile"));
+        copyListButton.setToolTipText(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.customizeComponents.saveCurrentWIthNewNameToolTip"));
         listsTable.getParent().setBackground(listsTable.getBackground());
 
         listsTable.setCellSelectionEnabled(false);
@@ -87,6 +90,38 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
          */
     }
 
+    void addDeleteButtonActionPerformed(ActionListener l) {
+        deleteListButton.addActionListener(l);
+    }
+
+    void addSaveButtonActionPerformed(ActionListener l) {
+        copyListButton.addActionListener(l);
+    }
+
+    void setButtonStates() {
+        String currentKeywordList = null;
+        boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
+        boolean isListSelected = currentKeywordList != null;
+
+        // items that only need a selected list
+        boolean canEditList = ((isListSelected == true) && (isIngestRunning == false));
+
+        // items that need an unlocked list w/out ingest running || (currentKeywordList.isEditable())
+        boolean isListLocked = ((isListSelected == false));
+        boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
+        deleteListButton.setEnabled(canAddWord);
+
+        // items that need a non-empty list|| (currentKeywordList.getKeywords().isEmpty())
+        if ((currentKeywordList == null) ) {
+            copyListButton.setEnabled(false);
+            exportButton.setEnabled(false);
+        } else {
+            copyListButton.setEnabled(true);
+            exportButton.setEnabled(true);
+            // We do not set deleteWordButton because it will be set by the list select model code when a word is selected.
+        }
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -101,6 +136,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         newListButton = new javax.swing.JButton();
         importButton = new javax.swing.JButton();
         keywordListsLabel = new javax.swing.JLabel();
+        exportButton = new javax.swing.JButton();
+        copyListButton = new javax.swing.JButton();
+        deleteListButton = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         setMinimumSize(new java.awt.Dimension(250, 0));
 
@@ -118,6 +157,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
         newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.newListButton.text")); // NOI18N
+        newListButton.setIconTextGap(2);
+        newListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newListButtonActionPerformed(evt);
@@ -126,6 +167,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N
         importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.importButton.text")); // NOI18N
+        importButton.setIconTextGap(2);
+        importButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importButtonActionPerformed(evt);
@@ -134,6 +177,41 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         keywordListsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.keywordListsLabel.text")); // NOI18N
 
+        exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/export16.png"))); // NOI18N
+        exportButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.exportButton.text")); // NOI18N
+        exportButton.setIconTextGap(2);
+        exportButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        exportButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportButtonActionPerformed(evt);
+            }
+        });
+
+        copyListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N
+        copyListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.copyListButton.text")); // NOI18N
+        copyListButton.setIconTextGap(2);
+        copyListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        copyListButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                copyListButtonActionPerformed(evt);
+            }
+        });
+
+        deleteListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
+        deleteListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.deleteListButton.text")); // NOI18N
+        deleteListButton.setIconTextGap(2);
+        deleteListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        deleteListButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteListButtonActionPerformed(evt);
+            }
+        });
+
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/edit16.png"))); // NOI18N
+        jButton1.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.jButton1.text")); // NOI18N
+        jButton1.setIconTextGap(2);
+        jButton1.setMargin(new java.awt.Insets(2, 2, 2, 2));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -141,30 +219,50 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(keywordListsLabel)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 114, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(copyListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jButton1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 75, Short.MAX_VALUE)
+                                    .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
+                                .addGap(6, 6, 6)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(deleteListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copyListButton, deleteListButton, exportButton, importButton, jButton1, newListButton});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(keywordListsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 355, Short.MAX_VALUE)
-                .addGap(5, 5, 5)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 329, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
-                    .addComponent(importButton))
+                    .addComponent(deleteListButton)
+                    .addComponent(jButton1))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(copyListButton)
+                    .addComponent(importButton)
+                    .addComponent(exportButton))
                 .addContainerGap())
         );
+
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {copyListButton, deleteListButton, exportButton, importButton, jButton1, newListButton});
+
     }// </editor-fold>//GEN-END:initComponents
 
     private void newListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newListButtonActionPerformed
@@ -321,8 +419,71 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         tableModel.resync();
     }//GEN-LAST:event_listsTableKeyPressed
 
+    private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
+
+        final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
+                "KeywordSearchEditListPanel.exportButtonAction.featureName.text");
+
+        JFileChooser chooser = new JFileChooser();
+        final String EXTENSION = "xml"; //NON-NLS
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileFilterLabel"), EXTENSION);
+        chooser.setFileFilter(filter);//currentKeywordList.getName()
+        chooser.setSelectedFile(new File("nameWJS-TODO"));
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+        int returnVal = chooser.showSaveDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File selFile = chooser.getSelectedFile();
+            if (selFile == null) {
+                return;
+            }
+
+            //force append extension if not given
+            String fileAbs = selFile.getAbsolutePath();
+            if (!fileAbs.endsWith("." + EXTENSION)) {
+                fileAbs = fileAbs + "." + EXTENSION;
+                selFile = new File(fileAbs);
+            }
+
+            boolean shouldWrite = true;
+            if (selFile.exists()) {
+                shouldWrite = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME,
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileExistPrompt",
+                                selFile.getName()), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+            }
+            if (!shouldWrite) {
+                return;
+            }
+
+            XmlKeywordSearchList reader = XmlKeywordSearchList.getCurrent();
+
+            List<KeywordList> toWrite = new ArrayList<>();//currentKeywordList.getName()
+            toWrite.add(reader.getList("nameWJS-TODO"));
+            final XmlKeywordSearchList exporter = new XmlKeywordSearchList(fileAbs);
+            boolean written = exporter.saveLists(toWrite);
+            if (written) {
+                KeywordSearchUtil.displayDialog(FEATURE_NAME,
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListExportedMsg"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            }
+        }
+    }//GEN-LAST:event_exportButtonActionPerformed
+
+    private void copyListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyListButtonActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_copyListButtonActionPerformed
+
+    private void deleteListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteListButtonActionPerformed
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_deleteListButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton copyListButton;
+    private javax.swing.JButton deleteListButton;
+    private javax.swing.JButton exportButton;
     private javax.swing.JButton importButton;
+    private javax.swing.JButton jButton1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel keywordListsLabel;
     private javax.swing.JTable listsTable;
