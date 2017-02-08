@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -62,7 +62,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     private static final boolean DEBUG_FLAG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
     private static final int MAX_TERMS_QUERY_RESULTS = 20000;
     private final KeywordList keywordList;
-    private final Keyword keyword;
+    private final Keyword originalKeyword;
     private String searchTerm;
     private boolean searchTermIsEscaped;
     private final List<KeywordQueryFilter> filters = new ArrayList<>(); // THIS APPEARS TO BE UNUSED
@@ -135,7 +135,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     // if needed, here in the constructor?
     TermsComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
-        this.keyword = keyword;
+        this.originalKeyword = keyword;
         this.searchTerm = keyword.getSearchTerm();
     }
 
@@ -158,7 +158,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      */
     @Override
     public String getQueryString() {
-        return keyword.getSearchTerm();
+        return originalKeyword.getSearchTerm();
     }
 
     /**
@@ -187,7 +187,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      */
     @Override
     public void escape() {
-        searchTerm = Pattern.quote(keyword.getSearchTerm());
+        searchTerm = Pattern.quote(originalKeyword.getSearchTerm());
         searchTermIsEscaped = true;
     }
 
@@ -286,7 +286,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * If searching for credit card account numbers, do a Luhn check on
              * the term and discard it if it does not pass.
              */
-            if (keyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 Matcher matcher = CREDIT_CARD_NUM_PATTERN.matcher(term.getTerm());
                 matcher.find();
                 final String ccn = CharMatcher.anyOf(" -").removeFrom(matcher.group("ccn"));
@@ -321,7 +321,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     /**
      * Converts the keyword hits for a given search term into artifacts.
      *
-     * @param searchTerm The search term.
+     * @param foundKeyword The keyword that was found by the search.
      * @param hit        The keyword hit.
      * @param snippet    The document snippet that contains the hit
      * @param listName   The name of the keyword list that contained the keyword
@@ -335,7 +335,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     // TODO: Are we actually making meaningful use of the KeywordCachedArtifact
     // class?
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String searchTerm, KeywordHit hit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         /*
          * Create either a "plain vanilla" keyword hit artifact with keyword and
          * regex attributes, or a credit card account artifact with attributes
@@ -344,9 +344,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
          */
         BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        if (keyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, searchTerm));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getSearchTerm()));
+        if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
             try {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
@@ -439,6 +439,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
 
+        // TermsComponentQuery is now being used exclusively for substring searches.
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+        
         try {
             newArtifact.addAttributes(attributes);
             KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);

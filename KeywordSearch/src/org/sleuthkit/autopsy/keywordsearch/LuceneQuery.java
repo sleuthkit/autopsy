@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private final String keywordString; //original unescaped query
     private String keywordStringEscaped;
     private boolean isEscaped;
-    private Keyword keyword = null;
+    private Keyword originalKeyword = null;
     private KeywordList keywordList = null;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
@@ -67,7 +67,7 @@ class LuceneQuery implements KeywordSearchQuery {
      */
     public LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
-        this.keyword = keyword;
+        this.originalKeyword = keyword;
 
         // @@@ BC: Long-term, we should try to get rid of this string and use only the
         // keyword object.  Refactoring did not make its way through this yet.
@@ -134,7 +134,7 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String termHit, KeywordHit hit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
@@ -151,7 +151,7 @@ class LuceneQuery implements KeywordSearchQuery {
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, termHit));
+        attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
         if ((listName != null) && (listName.equals("") == false)) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME, listName));
         }
@@ -159,10 +159,16 @@ class LuceneQuery implements KeywordSearchQuery {
         //bogus - workaround the dir tree table issue
         //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID(), MODULE_NAME, "", ""));
         //selector
-        if (keyword != null) {
-            BlackboardAttribute.ATTRIBUTE_TYPE selType = keyword.getArtifactAttributeType();
+        if (originalKeyword != null) {
+            BlackboardAttribute.ATTRIBUTE_TYPE selType = originalKeyword.getArtifactAttributeType();
             if (selType != null) {
-                attributes.add(new BlackboardAttribute(selType, MODULE_NAME, termHit));
+                attributes.add(new BlackboardAttribute(selType, MODULE_NAME, foundKeyword.getSearchTerm()));
+            }
+
+            if (originalKeyword.searchTermIsWholeWord()) {
+                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.LITERAL.ordinal()));
+            } else {
+                attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
             }
         }
 
@@ -259,7 +265,7 @@ class LuceneQuery implements KeywordSearchQuery {
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
         // Wrap the query string in quotes if this is a literal search term.
-        String theQueryStr = keyword.searchTermIsLiteral()
+        String theQueryStr = originalKeyword.searchTermIsLiteral()
                 ? KeywordSearchUtil.quoteQuery(keywordStringEscaped) : keywordStringEscaped;
 
         // Run the query against an optional alternative field. 
