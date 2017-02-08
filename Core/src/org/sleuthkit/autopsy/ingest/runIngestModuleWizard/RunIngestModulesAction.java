@@ -41,8 +41,9 @@ import org.sleuthkit.datamodel.Directory;
 public final class RunIngestModulesAction extends AbstractAction {
    
     @Messages("RunIngestModulesAction.name=Run Ingest Modules")
-            
-    private static final String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.runIngestModuleAction";
+    
+    //'dialog' context name required so existing settings do not need to be reconfigured 
+    private static final String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
 
     /**
      * Returns the name of the default context which will be used when profiles are not available.
