@@ -59,16 +59,8 @@ public class Solr5IndexUpgrade {
         
         Directory dir = FSDirectory.open(new File(solr4path).toPath());
         
-        /*
-        // upgrade from Solr 5 to Solr 6
-        IndexWriterConfig config;
-        //Analyzer analyzer = new StandardAnalyzer();
-        config = new IndexWriterConfig();
-        config.setCodec(new Lucene62Codec());
-        //IndexWriter writer = new IndexWriter(dir, config);
-        IndexUpgrader upgrader = new IndexUpgrader(dir, config, true);
-        upgrader.upgrade();*/
-        
+
+        // upgrade from Solr 5 to Solr 6        
         IndexWriterConfig iwc = new IndexWriterConfig(new KeywordAnalyzer());
         iwc.setMergePolicy(new UpgradeIndexMergePolicy(iwc.getMergePolicy()));
         IndexWriter w = new IndexWriter(dir, iwc);
