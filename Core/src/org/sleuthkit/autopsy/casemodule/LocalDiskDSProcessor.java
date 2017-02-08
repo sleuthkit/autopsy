@@ -54,6 +54,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
     private String deviceId;
     private String drivePath;
     private String timeZone;
+    private String imageWriterPath = "";
     private boolean ignoreFatOrphanFiles;
     private boolean setDataSourceOptionsCalled;
 
@@ -137,8 +138,11 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
             drivePath = configPanel.getContentPaths();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
+            if(configPanel.getImageWriterEnabled()){
+                imageWriterPath = configPanel.getImageWriterPath();
+            }
         }
-        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterPath, progressMonitor, callback);
         new Thread(addDiskTask).start();
     }
 
@@ -164,7 +168,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      * @param callback             Callback to call when processing is done.
      */
     public void run(String deviceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callback);
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterPath, progressMonitor, callback);
         new Thread(addDiskTask).start();
     }
 

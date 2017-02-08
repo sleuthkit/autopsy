@@ -22,6 +22,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -56,6 +58,7 @@ final class LocalDiskPanel extends JPanel {
     private static final long serialVersionUID = 1L;
     private List<LocalDisk> disks;
     private LocalDiskModel model;
+    private String fullImageWriterPath = "";
     private boolean enableNext = false;
 
     /**
@@ -88,6 +91,8 @@ final class LocalDiskPanel extends JPanel {
         errorLabel.setVisible(false);
         errorLabel.setText("");
         diskComboBox.setEnabled(false);
+        imageWriterErrorLabel.setText("");
+        imageWriterPathLabel.setText("");
     }
 
     /**
@@ -106,6 +111,10 @@ final class LocalDiskPanel extends JPanel {
         timeZoneComboBox = new javax.swing.JComboBox<>();
         noFatOrphansCheckbox = new javax.swing.JCheckBox();
         descLabel = new javax.swing.JLabel();
+        copyImageCheckbox = new javax.swing.JCheckBox();
+        imageWriterPathLabel = new javax.swing.JLabel();
+        imageWriterPathDescLabel = new javax.swing.JLabel();
+        imageWriterErrorLabel = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(485, 65));
@@ -132,6 +141,16 @@ final class LocalDiskPanel extends JPanel {
         descLabel.setFont(descLabel.getFont().deriveFont(descLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(descLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.descLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(copyImageCheckbox, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.copyImageCheckbox.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(imageWriterPathLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.imageWriterPathLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(imageWriterPathDescLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.imageWriterPathDescLabel.text")); // NOI18N
+
+        imageWriterErrorLabel.setFont(imageWriterErrorLabel.getFont().deriveFont(imageWriterErrorLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        imageWriterErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        org.openide.awt.Mnemonics.setLocalizedText(imageWriterErrorLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.imageWriterErrorLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -146,10 +165,17 @@ final class LocalDiskPanel extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(timeZoneComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(noFatOrphansCheckbox)
+                    .addComponent(copyImageCheckbox)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(21, 21, 21)
-                        .addComponent(descLabel)))
-                .addGap(0, 102, Short.MAX_VALUE))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(descLabel)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(imageWriterPathDescLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(imageWriterPathLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(imageWriterErrorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 444, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -167,14 +193,26 @@ final class LocalDiskPanel extends JPanel {
                 .addComponent(noFatOrphansCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(descLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(copyImageCheckbox)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(imageWriterPathDescLabel)
+                    .addComponent(imageWriterPathLabel))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(imageWriterErrorLabel)
+                .addContainerGap(124, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JCheckBox copyImageCheckbox;
     private javax.swing.JLabel descLabel;
     private javax.swing.JComboBox<LocalDisk> diskComboBox;
     private javax.swing.JLabel diskLabel;
     private javax.swing.JLabel errorLabel;
+    private javax.swing.JLabel imageWriterErrorLabel;
+    private javax.swing.JLabel imageWriterPathDescLabel;
+    private javax.swing.JLabel imageWriterPathLabel;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
@@ -214,6 +252,43 @@ final class LocalDiskPanel extends JPanel {
     boolean getNoFatOrphans() {
         return noFatOrphansCheckbox.isSelected();
     }
+    
+    private static String getDefaultImageWriterFolder(){
+        return Paths.get(Case.getCurrentCase().getModuleDirectory(), "Image Writer").toString();
+    }
+    
+    private void setPotentialImageWriterPath(LocalDisk disk){
+        
+        File subDirectory = Paths.get(getDefaultImageWriterFolder()).toFile();
+        if (!subDirectory.exists()) {
+            subDirectory.mkdirs();
+        }
+        
+        String path = disk.getName().replaceAll("[:]", "");
+        path += " " + System.currentTimeMillis();
+        path += ".vhd";
+        imageWriterPathLabel.setText(path);
+        fullImageWriterPath = Paths.get(getDefaultImageWriterFolder(), path).toString();
+    }
+    
+    private boolean imageWriterPathIsValid(){
+        
+        File f = new File(fullImageWriterPath);
+        if(f.exists()) { 
+            imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterError.text"));
+            return false;
+        }
+        imageWriterErrorLabel.setText("");
+        return true;
+    }
+    
+    boolean getImageWriterEnabled(){
+        return copyImageCheckbox.isSelected();
+    }
+    
+    String getImageWriterPath(){
+        return fullImageWriterPath;
+    }
 
     /**
      * Should we enable the wizard's next button? Always return true because we
@@ -222,6 +297,11 @@ final class LocalDiskPanel extends JPanel {
      * @return true
      */
     public boolean validatePanel() {
+        if(copyImageCheckbox.isSelected() &&
+                ! imageWriterPathIsValid()){
+            return false;
+        }
+        
         return enableNext;
     }
 
@@ -318,6 +398,7 @@ final class LocalDiskPanel extends JPanel {
             if (ready) {
                 selected = (LocalDisk) anItem;
                 enableNext = true;
+                setPotentialImageWriterPath((LocalDisk) selected);
 
                 try {
                     firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
