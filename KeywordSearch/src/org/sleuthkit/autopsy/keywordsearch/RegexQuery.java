@@ -24,8 +24,10 @@ import com.google.common.collect.ListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,12 +75,14 @@ final class RegexQuery implements KeywordSearchQuery {
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
 
     private final KeywordList keywordList;
-    private final Keyword keyword;
+    private final Keyword originalKeyword; // The regular expression originalKeyword used to perform the search.
     private String field = Server.Schema.CONTENT_STR.toString();
     private final String keywordString;
     static final private int MAX_RESULTS = 512;
     private boolean escaped;
     private String escapedQuery;
+
+    private final ListMultimap<Keyword, KeywordHit> hitsMultiMap = ArrayListMultimap.create();
 
     // Lucene regular expressions do not support the following Java predefined
     // and POSIX character classes. There are other valid Java character classes
@@ -102,7 +106,7 @@ final class RegexQuery implements KeywordSearchQuery {
      */
     RegexQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
-        this.keyword = keyword;
+        this.originalKeyword = keyword;
         this.keywordString = keyword.getSearchTerm();
 
         if (this.keywordString.startsWith(".*")) {
@@ -146,8 +150,6 @@ final class RegexQuery implements KeywordSearchQuery {
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
         QueryResults results = new QueryResults(this, keywordList);
-
-        ListMultimap<Keyword, KeywordHit> hitsMultMap = ArrayListMultimap.create();
 
         final Server solrServer = KeywordSearch.getServer();
         SolrQuery solrQuery = new SolrQuery();
@@ -201,7 +203,7 @@ final class RegexQuery implements KeywordSearchQuery {
                     try {
                         List<KeywordHit> keywordHits = createKeywordHits(resultDoc);
                         for (KeywordHit hit : keywordHits) {
-                            hitsMultMap.put(new Keyword(hit.getHit(), true), hit);
+                            hitsMultiMap.put(new Keyword(hit.getHit(), true), hit);
                         }
                     } catch (TskException ex) {
                         //
@@ -219,8 +221,8 @@ final class RegexQuery implements KeywordSearchQuery {
             }
         }
 
-        for (Keyword k : hitsMultMap.keySet()) {
-            results.addResult(k, hitsMultMap.get(k));
+        for (Keyword k : hitsMultiMap.keySet()) {
+            results.addResult(k, hitsMultiMap.get(k));
         }
 
         return results;
@@ -234,9 +236,10 @@ final class RegexQuery implements KeywordSearchQuery {
 
         final Collection<Object> content_str = solrDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
 
+        final Pattern pattern = Pattern.compile(keywordString);
         for (Object content_obj : content_str) {
             String content = (String) content_obj;
-            Matcher hitMatcher = Pattern.compile(keywordString).matcher(content);
+            Matcher hitMatcher = pattern.matcher(content);
             int offset = 0;
 
             while (hitMatcher.find(offset)) {
@@ -251,17 +254,13 @@ final class RegexQuery implements KeywordSearchQuery {
 
                 String hit = hitMatcher.group();
 
-                // Back the matcher offset up by 1 character as it will have eaten
-                // a single space/newline/other boundary character at the end of the hit.
-                // This was causing us to miss hits that appeared consecutively in the
-                // input where they were separated by a single boundary character.
-                offset = hitMatcher.end() - 1;
+                offset = hitMatcher.end();
 
                 /*
                  * If searching for credit card account numbers, do a Luhn check
                  * on the term and discard it if it does not pass.
                  */
-                if (keyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+                if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                     Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
                     if (ccnMatcher.find()) {
                         final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
@@ -279,11 +278,11 @@ final class RegexQuery implements KeywordSearchQuery {
                  */
                 if (KeywordSearchSettings.getShowSnippets()) {
                     int maxIndex = content.length() - 1;
-                    snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start() + 1)));
+                    snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
                     snippet.appendCodePoint(171);
                     snippet.append(hit);
                     snippet.appendCodePoint(171);
-                    snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end() - 1), Integer.min(maxIndex, hitMatcher.end() + 20)));
+                    snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
                 }
 
                 hits.add(new KeywordHit(docId, snippet.toString(), hit));
@@ -326,7 +325,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
     @Override
     public String getQueryString() {
-        return keyword.getSearchTerm();
+        return originalKeyword.getSearchTerm();
     }
 
     @Override
@@ -338,9 +337,31 @@ final class RegexQuery implements KeywordSearchQuery {
     }
 
     /**
+     * Get a unique, comma separated list of document ids that match the given hit
+     * for the same object.
+     * @param keyword The keyword object that resulted in one or more hits.
+     * @param hit The specific hit for which we want to identify all other chunks
+     * that match the keyword
+     * @return A comma separated list of unique document ids.
+     */
+    private String getDocumentIds(Keyword keyword, KeywordHit hit) {
+        Set<String> documentIds = new HashSet<>();
+
+        for (KeywordHit h : hitsMultiMap.get(keyword)) {
+            // Add the document id only if it is for the same object as the
+            // given hit and we haven't already seen it.
+            if (h.getSolrObjectId() == hit.getSolrObjectId() && !documentIds.contains(h.getSolrDocumentId())) {
+                documentIds.add(h.getSolrDocumentId());
+            }
+        }
+
+        return StringUtils.join(documentIds, ",");
+    }
+
+    /**
      * Converts the keyword hits for a given search term into artifacts.
      *
-     * @param searchTerm The search term.
+     * @param foundKeyword The keyword that was found by the regex search.
      * @param hit        The keyword hit.
      * @param snippet    The document snippet that contains the hit
      * @param listName   The name of the keyword list that contained the keyword
@@ -354,7 +375,7 @@ final class RegexQuery implements KeywordSearchQuery {
     // TODO: Are we actually making meaningful use of the KeywordCachedArtifact
     // class?
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String searchTerm, KeywordHit hit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         /*
          * Create either a "plain vanilla" keyword hit artifact with keyword and
          * regex attributes, or a credit card account artifact with attributes
@@ -363,9 +384,9 @@ final class RegexQuery implements KeywordSearchQuery {
          */
         BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        if (keyword.getArtifactAttributeType() != BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, searchTerm));
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getSearchTerm()));
+        if (originalKeyword.getArtifactAttributeType() != BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
             try {
                 newArtifact = hit.getContent().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
@@ -391,9 +412,9 @@ final class RegexQuery implements KeywordSearchQuery {
             final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
             if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
                 if (hit.isArtifactHit()) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifact().getArtifactID())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifact().getArtifactID())); //NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContent().getId())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContent().getId())); //NON-NLS
                 }
                 return null;
             }
@@ -457,6 +478,11 @@ final class RegexQuery implements KeywordSearchQuery {
         if (hit.isArtifactHit()) {
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
+
+        // Add comma separated list of document ids that had a hit for this file/artifact.
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS, MODULE_NAME, getDocumentIds(foundKeyword, hit)));
+
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
 
         try {
             newArtifact.addAttributes(attributes);
