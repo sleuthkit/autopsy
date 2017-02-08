@@ -50,6 +50,7 @@ import org.xml.sax.SAXException;
 class IndexMetadata {
     
     private final Path metadataFilePath;
+    private final Path caseDirectoryPath;
     private final String METADATA_FILE_NAME = "SolrCore.properties";
     private final static String ROOT_ELEMENT_NAME = "SolrCores"; //NON-NLS
     private final static String CORE_ELEMENT_NAME = "Core"; //NON-NLS
@@ -60,19 +61,21 @@ class IndexMetadata {
     private List<Index> indexes = new ArrayList<>();
     
     IndexMetadata(String caseDirectory, Index index) throws TextIndexMetadataException {
-        metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
-        indexes.add(index);
+        this.caseDirectoryPath = Paths.get(caseDirectory);
+        this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
+        this.indexes.add(index);
         writeToFile();
     }
     
     IndexMetadata(String caseDirectory, List<Index> indexes) throws TextIndexMetadataException {
-        metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
+        this.caseDirectoryPath = Paths.get(caseDirectory);
+        this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
         this.indexes = indexes;
         writeToFile();
     }
     
     void addIndex(Index index) throws TextIndexMetadataException {
-        indexes.add(index);
+        this.indexes.add(index);
         writeToFile();
     }
     
@@ -86,6 +89,7 @@ class IndexMetadata {
      *                               read.
      */
     IndexMetadata(String caseDirectory) throws TextIndexMetadataException {
+        this.caseDirectoryPath = Paths.get(caseDirectory);
         this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
         if (!this.metadataFilePath.toFile().exists()) {
             throw new TextIndexMetadataException(String.format("Text index metadata file doesn't exist: %s", metadataFilePath));
@@ -155,7 +159,8 @@ class IndexMetadata {
             createChildElement(doc, coreElement, CORE_NAME_ELEMENT_NAME, index.getIndexName());
             createChildElement(doc, coreElement, SOLR_VERSION_ELEMENT_NAME, index.getSolrVersion());
             createChildElement(doc, coreElement, SCHEMA_VERSION_ELEMENT_NAME, index.getSchemaVersion());
-            createChildElement(doc, coreElement, TEXT_INDEX_PATH_ELEMENT_NAME, index.getIndexPath());
+            Path relativePath = caseDirectoryPath.relativize(Paths.get(index.getIndexPath()));
+            createChildElement(doc, coreElement, TEXT_INDEX_PATH_ELEMENT_NAME, relativePath.toString());
         }
     }
     
@@ -207,8 +212,9 @@ class IndexMetadata {
                 String coreName = getElementTextContent(coreElement, CORE_NAME_ELEMENT_NAME, true);
                 String solrVersion = getElementTextContent(coreElement, SOLR_VERSION_ELEMENT_NAME, true);
                 String schemaVersion = getElementTextContent(coreElement, SCHEMA_VERSION_ELEMENT_NAME, true);
-                String textIndexPath = getElementTextContent(coreElement, TEXT_INDEX_PATH_ELEMENT_NAME, true);
-                Index index = new Index(textIndexPath, solrVersion, schemaVersion, coreName, "");
+                String relativeTextIndexPath = getElementTextContent(coreElement, TEXT_INDEX_PATH_ELEMENT_NAME, true);
+                Path absoluteDatabasePath = caseDirectoryPath.resolve(relativeTextIndexPath);
+                Index index = new Index(absoluteDatabasePath.toString(), solrVersion, schemaVersion, coreName, "");
                 indexes.add(index);
                 coreIndx++;
             }

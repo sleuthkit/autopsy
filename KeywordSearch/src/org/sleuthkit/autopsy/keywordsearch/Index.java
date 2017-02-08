@@ -20,20 +20,22 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 
 /**
  * This class encapsulates KWS index data.
  */
-class Index {
+final class Index {
     
     private final String indexPath;
     private final String schemaVersion;
     private final String solrVersion;
     private final String indexName;
     private static final String DEFAULT_CORE_NAME = "text_index"; //NON-NLS
+    private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
     
     Index(String indexPath, String solrVersion, String schemaVersion, String coreName, String caseName) {
-        this.indexPath = indexPath;
+        this.indexPath = convertPathToUNC(indexPath);
         this.solrVersion = solrVersion;
         this.schemaVersion = schemaVersion;
         if (coreName == null || coreName.isEmpty()) {
@@ -96,6 +98,23 @@ class Index {
 
         return result;
     }
+
+    String convertPathToUNC(String indexDir) {
+        if (uncPathUtilities == null) {
+            return indexDir;
+        }
+        // if we can check for UNC paths, do so, otherwise just return the indexDir
+        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        if (result == null) {
+            uncPathUtilities.rescanDrives();
+            result = uncPathUtilities.mappedDriveToUNC(indexDir);
+        }
+        if (result == null) {
+            return indexDir;
+        }
+        return result;
+    }
+
     /**
      * @return the indexPath
      */

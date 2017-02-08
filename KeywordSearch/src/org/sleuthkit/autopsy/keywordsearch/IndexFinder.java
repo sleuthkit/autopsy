@@ -29,7 +29,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 
 /**
@@ -38,16 +37,11 @@ import org.sleuthkit.autopsy.framework.AutopsyService;
 class IndexFinder {
 
     private static final Logger logger = Logger.getLogger(IndexFinder.class.getName());
-    private final UNCPathUtilities uncPathUtilities;
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
     private static final String CURRENT_SOLR_VERSION = "6";
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
-
-    IndexFinder() {
-        uncPathUtilities = new UNCPathUtilities();
-    }
 
     static String getCurrentSolrVersion() {
         return CURRENT_SOLR_VERSION;
@@ -68,12 +62,12 @@ class IndexFinder {
         return null;
     }
 
-    Index createLatestVersionIndexDir(Case theCase) {
+    static Index createLatestVersionIndexDir(Case theCase) {
         String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + CURRENT_SOLR_SCHEMA_VERSION;
         // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
         File targetDirPath = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
         targetDirPath.mkdirs();
-        return new Index(convertPathToUNC(targetDirPath.getAbsolutePath()), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION, "", theCase.getName());
+        return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION, "", theCase.getName());
     }
 
     static Index identifyIndexToUpgrade(List<Index> allIndexes) {
@@ -144,7 +138,7 @@ class IndexFinder {
      *
      * @return List of Index objects for each found index directory
      */
-    Index findOldIndexDir(Case theCase) {
+    static Index findOldIndexDir(Case theCase) {
         // first find all existing "/ModuleOutput/keywordsearch/data/" folders
         if (theCase.getCaseType() == Case.CaseType.MULTI_USER_CASE) {
             // multi user cases contain a subfolder for each node that participated in case ingest or review.
@@ -166,7 +160,7 @@ class IndexFinder {
                     File path = Paths.get(item.getAbsolutePath(), moduleOutDirName, KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, INDEX_FOLDER_NAME).toFile(); //NON-NLS
                     // must be a non-empty index directory
                     if (isNonEmptyIndexFolder(path)) {
-                        return new Index(convertPathToUNC(path.toString()), "4", "1.8", theCase.getTextIndexName(), theCase.getName());
+                        return new Index(path.toString(), "4", "1.8", theCase.getTextIndexName(), theCase.getName());
                     }
                 }
             }
@@ -179,26 +173,10 @@ class IndexFinder {
             File path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, INDEX_FOLDER_NAME).toFile(); //NON-NLS
             // must be a non-empty index directory
             if (isNonEmptyIndexFolder(path)) {
-                return new Index(convertPathToUNC(path.toString()), "4", "1.8", theCase.getTextIndexName(), theCase.getName());
+                return new Index(path.toString(), "4", "1.8", theCase.getTextIndexName(), theCase.getName());
             }
         }
         return null;
-    }
-
-    String convertPathToUNC(String indexDir) {
-        if (uncPathUtilities == null) {
-            return indexDir;
-        }
-        // if we can check for UNC paths, do so, otherwise just return the indexDir
-        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
-        if (result == null) {
-            uncPathUtilities.rescanDrives();
-            result = uncPathUtilities.mappedDriveToUNC(indexDir);
-        }
-        if (result == null) {
-            return indexDir;
-        }
-        return result;
     }
 
     /**

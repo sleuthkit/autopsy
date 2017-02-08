@@ -186,7 +186,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         int totalNumProgressUnits = 8;
         int progressUnitsCompleted = 1;
     
-        IndexFinder indexFinder = new IndexFinder();
         List<Index> indexes = new ArrayList<>();
         try {
             // if index metadata file exists, get list of existing Solr cores for this case
@@ -199,7 +198,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             // do case subdirectory search to look for Solr 4 Schema 1.8 indexes that can be upgraded
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
-            Index oldIndex = indexFinder.findOldIndexDir(context.getCase());
+            Index oldIndex = IndexFinder.findOldIndexDir(context.getCase());
             if (oldIndex != null) {
                 // add index to the list of indexes that exist for this case
                 indexes.add(oldIndex);
@@ -216,7 +215,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             // new case that doesn't have an existing index. create new index folder
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
-            currentVersionIndex = indexFinder.createLatestVersionIndexDir(context.getCase());
+            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
             // add current index to the list of indexes that exist for this case
             indexes.add(currentVersionIndex);
         } else {
