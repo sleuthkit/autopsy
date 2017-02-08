@@ -63,8 +63,6 @@ public class Solr4IndexUpgrade {
         IndexWriterConfig config;
         Analyzer analyzer = new StandardAnalyzer();
         config = new IndexWriterConfig(analyzer);
-        //config.setCodec(new Lucene50Codec());
-       //IndexWriter writer = new IndexWriter(dir, config);
         IndexUpgrader upgrader = new IndexUpgrader(dir, config, true);
         upgrader.upgrade();
     }
