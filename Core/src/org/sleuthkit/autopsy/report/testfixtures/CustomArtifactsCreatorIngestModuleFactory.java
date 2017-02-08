@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * attributes with files for test purposes. Uncomment the service provider
  * annotation to activate this test fixture.
  */
-//@ServiceProvider(service = IngestModuleFactory.class)
+@ServiceProvider(service = IngestModuleFactory.class)
 public final class CustomArtifactsCreatorIngestModuleFactory  extends IngestModuleFactoryAdapter {
     
     @Override
