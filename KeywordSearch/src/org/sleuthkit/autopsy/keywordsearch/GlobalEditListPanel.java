@@ -204,7 +204,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                                     .addComponent(ingestMessagesCheckbox)
                                     .addGroup(listEditorPanelLayout.createSequentialGroup()
                                         .addComponent(newKeywordsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addGap(14, 14, 14)
                                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(14, 14, 14)
                                         .addComponent(deleteWordButton, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE)))

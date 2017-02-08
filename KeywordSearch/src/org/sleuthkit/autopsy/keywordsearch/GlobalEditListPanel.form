@@ -60,7 +60,7 @@
                                       <Component id="ingestMessagesCheckbox" min="-2" max="-2" attributes="0"/>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="newKeywordsButton" linkSize="3" min="-2" pref="133" max="-2" attributes="0"/>
-                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                                           <Component id="jButton1" linkSize="3" min="-2" pref="132" max="-2" attributes="0"/>
                                           <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                                           <Component id="deleteWordButton" linkSize="3" min="-2" pref="144" max="-2" attributes="0"/>

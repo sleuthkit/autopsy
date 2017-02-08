@@ -99,7 +99,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }
 
     void setButtonStates() {
-        String currentKeywordList = null;
+        String currentKeywordList = null;  //WJS-TODO this needs to get a list from somewhere
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
         boolean isListSelected = currentKeywordList != null;
 
@@ -247,7 +247,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 .addContainerGap()
                 .addComponent(keywordListsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 329, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 329, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
