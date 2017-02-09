@@ -41,6 +41,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
+import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
@@ -48,6 +49,9 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.KeyValueQu
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -64,9 +68,10 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     //common properties (superset of all Node properties) to be displayed as columns
     static final List<String> COMMON_PROPERTIES
             = Stream.concat(
-                    Stream.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD,
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP,
-                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW)
+                    Stream.of(
+                            TSK_KEYWORD,
+                            TSK_KEYWORD_REGEXP,
+                            TSK_KEYWORD_PREVIEW)
                     .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
                     Arrays.stream(AbstractAbstractFileNode.AbstractFilePropertyType.values())
                     .map(Object::toString))
@@ -89,6 +94,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     protected boolean createKeys(List<KeyValueQueryContent> toPopulate) {
 
         for (QueryRequest queryRequest : queryRequests) {
+            /**
+             * Check the validity of the requested query.
+             */
+            if (!queryRequest.getQuery().validate()) {
+                //TODO mark the particular query node RED
+                break;
+            }
+
+            //JMTODO: It looks like this map is not actually used for anything...
             Map<String, Object> map = queryRequest.getProperties();
             /*
              * make sure all common properties are displayed as columns (since
@@ -97,11 +111,10 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              */
             COMMON_PROPERTIES.stream()
                     .forEach((propertyType) -> map.put(propertyType, ""));
-            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName(),
-                    queryRequest.getQueryString());
-            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName(),
-                    !queryRequest.getQuery().isLiteral());
-            createFlatKeys(queryRequest, toPopulate);
+            map.put(TSK_KEYWORD.getDisplayName(), queryRequest.getQueryString());
+            map.put(TSK_KEYWORD_REGEXP.getDisplayName(), !queryRequest.getQuery().isLiteral());
+
+            createFlatKeys(queryRequest.getQuery(), toPopulate);
         }
 
         return true;
@@ -115,29 +128,21 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @return
      */
     @NbBundle.Messages({"KeywordSearchResultFactory.query.exception.msg=Could not perform the query "})
-    private boolean createFlatKeys(QueryRequest queryRequest, List<KeyValueQueryContent> toPopulate) {
-        /**
-         * Check the validity of the requested query.
-         */
-        final KeywordSearchQuery keywordSearchQuery = queryRequest.getQuery();
-        if (!keywordSearchQuery.validate()) {
-            //TODO mark the particular query node RED
-            return false;
-        }
+    private boolean createFlatKeys(KeywordSearchQuery queryRequest, List<KeyValueQueryContent> toPopulate) {
 
         /**
          * Execute the requested query.
          */
         QueryResults queryResults;
         try {
-            queryResults = keywordSearchQuery.performQuery();
+            queryResults = queryRequest.performQuery();
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Could not perform the query " + keywordSearchQuery.getQueryString(), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + keywordSearchQuery.getQueryString(), ex.getCause().getMessage());
+            logger.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
+            MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
         }
 
-        int id = 0;
+        int hitNumber = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
         for (KeywordHit hit : getOneHitPerObject(queryResults)) {
             /**
@@ -145,31 +150,33 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              */
             Map<String, Object> properties = new LinkedHashMap<>();
             Content content = hit.getContent();
+            String contentName = content.getName();
             if (content instanceof AbstractFile) {
                 AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
             } else {
-                properties.put(AbstractAbstractFileNode.AbstractFilePropertyType.LOCATION.toString(), content.getName());
+                properties.put(LOCATION.toString(), contentName);
             }
 
             /**
              * Add a snippet property, if available.
              */
             if (hit.hasSnippet()) {
-                properties.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
+                properties.put(TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
             }
 
+            //JMTODO: I don't understand this comment or the below code... 
             //@@@ USE ConentHit in UniqueFileMap instead of the below search
             //get unique match result files
             // BC: @@@ THis is really ineffecient.  We should keep track of this when
             // we flattened the list of files to the unique files.            
-            final String highlightQueryEscaped = getHighlightQuery(keywordSearchQuery, keywordSearchQuery.isLiteral(), queryResults, content);
+            final String highlightQueryEscaped = getHighlightQuery(queryRequest, queryRequest.isLiteral(), queryResults, content);
 
-            String name = content.getName();
-            if (hit.isArtifactHit()) {
-                name = hit.getArtifact().getDisplayName() + " Artifact"; // NON-NLS
-            }
-            ++id;
-            tempList.add(new KeyValueQueryContent(name, properties, id, hit.getSolrObjectId(), content, highlightQueryEscaped, keywordSearchQuery, queryResults));
+            String hitName = hit.isArtifactHit()
+                    ? hit.getArtifact().getDisplayName() + " Artifact" //NON-NLS
+                    : contentName;
+
+            hitNumber++;
+            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, highlightQueryEscaped, queryRequest, queryResults));
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
@@ -180,7 +187,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         //cannot reuse snippet in BlackboardResultWriter
         //because for regex searches in UI we compress results by showing a content per regex once (even if multiple term hits)
         //whereas in bb we write every hit per content separately
-        new BlackboardResultWriter(queryResults, queryRequest.getQuery().getKeywordList().getName()).execute();
+        new BlackboardResultWriter(queryResults, queryRequest.getKeywordList().getName()).execute();
 
         return true;
     }
@@ -310,9 +317,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * @param content  File that had the hit.
          * @param queryStr Query used in search
          * @param query    Query used in search
-         * @param hits     Full set of search results (for all files!
-         *
-         * @@@)
+         * @param hits     Full set of search results (for all files! @@@)
          */
         public KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, String queryStr, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
