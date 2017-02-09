@@ -43,21 +43,21 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class CustomArtifactsCreatorIngestModule extends FileIngestModuleAdapter {
 
     private static final Logger logger = Logger.getLogger(CustomArtifactsCreatorIngestModule.class.getName());
-    private static final String moduleName = CustomArtifactsCreatorIngestModuleFactory.getModuleName();
-    private static final String ARTIFACT_TYPE_NAME = "AUT_ARTIFACT";
-    private static final String ARTIFACT_DISPLAY_NAME = "Autopsy Artifact";
-    private static final String INT_ATTR_TYPE_NAME = "AUT_INT_ATTRIBUTE";
-    private static final String INT_ATTR_DISPLAY_NAME = "Autopsy Integer";
-    private static final String DOUBLE_ATTR_TYPE_NAME = "AUT_DOUBLE_ATTRIBUTE";
-    private static final String DOUBLE_ATTR_DISPLAY_NAME = "Autopsy Double";
-    private static final String LONG_ATTR_TYPE_NAME = "AUT_LONG_ATTRIBUTE";
-    private static final String LONG_ATTR_DISPLAY_NAME = "Autopsy Long";
-    private static final String DATETIME_ATTR_TYPE_NAME = "AUT_DATETIME_ATTRIBUTE";
-    private static final String DATETIME_ATTR_DISPLAY_NAME = "Autopsy Datetime";
-    private static final String BYTES_ATTR_TYPE_NAME = "AUT_BYTES_ATTRIBUTE";
-    private static final String BYTES_ATTR_DISPLAY_NAME = "Autopsy Bytes";
-    private static final String STRING_ATTR_TYPE_NAME = "AUT_STRING_ATTRIBUTE";
-    private static final String STRING_ATTR_DISPLAY_NAME = "Autopsy String";
+    private static final String MODULE_NAME = CustomArtifactsCreatorIngestModuleFactory.getModuleName();
+    private static final String ARTIFACT_TYPE_NAME = "CUSTOM_ARTIFACT";
+    private static final String ARTIFACT_DISPLAY_NAME = "Custom Artifact";
+    private static final String INT_ATTR_TYPE_NAME = "CUSTOM_INT_ATTRIBUTE";
+    private static final String INT_ATTR_DISPLAY_NAME = "Custom Integer";
+    private static final String DOUBLE_ATTR_TYPE_NAME = "CUSTOM_DOUBLE_ATTRIBUTE";
+    private static final String DOUBLE_ATTR_DISPLAY_NAME = "Custom Double";
+    private static final String LONG_ATTR_TYPE_NAME = "CUSTOM_LONG_ATTRIBUTE";
+    private static final String LONG_ATTR_DISPLAY_NAME = "Custom Long";
+    private static final String DATETIME_ATTR_TYPE_NAME = "CUSTOM_DATETIME_ATTRIBUTE";
+    private static final String DATETIME_ATTR_DISPLAY_NAME = "Custom Datetime";
+    private static final String BYTES_ATTR_TYPE_NAME = "CUSTOM_BYTES_ATTRIBUTE";
+    private static final String BYTES_ATTR_DISPLAY_NAME = "Custom Bytes";
+    private static final String STRING_ATTR_TYPE_NAME = "CUSTOM_STRING_ATTRIBUTE";
+    private static final String STRING_ATTR_DISPLAY_NAME = "Custom String";
     private BlackboardArtifact.Type artifactType;
     private BlackboardAttribute.Type intAttrType;
     private BlackboardAttribute.Type doubleAttrType;
@@ -91,19 +91,30 @@ final class CustomArtifactsCreatorIngestModule extends FileIngestModuleAdapter {
             return ProcessResult.OK;
         }
 
-        /*
-         * Add a custom artifact with one custom attribute of each value type.
-         */
         try {
+            /*
+             * Add a custom artifact with one custom attribute of each value
+             * type.
+             */
             BlackboardArtifact artifact = file.newArtifact(artifactType.getTypeID());
             List<BlackboardAttribute> attributes = new ArrayList<>();
-            attributes.add(new BlackboardAttribute(intAttrType, moduleName, 0));
-            attributes.add(new BlackboardAttribute(doubleAttrType, moduleName, 0.0));
-            attributes.add(new BlackboardAttribute(longAttributeType, moduleName, 0L));
-            attributes.add(new BlackboardAttribute(dateTimeAttrType, moduleName, 60L));
-            attributes.add(new BlackboardAttribute(bytesAttrType, moduleName, DatatypeConverter.parseHexBinary("ABCD")));
-            attributes.add(new BlackboardAttribute(stringAttrType, moduleName, "Zero"));
+            attributes.add(new BlackboardAttribute(intAttrType, MODULE_NAME, 0));
+            attributes.add(new BlackboardAttribute(doubleAttrType, MODULE_NAME, 0.0));
+            attributes.add(new BlackboardAttribute(longAttributeType, MODULE_NAME, 0L));
+            attributes.add(new BlackboardAttribute(dateTimeAttrType, MODULE_NAME, 60L));
+            attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
+            attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
             artifact.addAttributes(attributes);
+
+            /*
+             * Add a second source module to the attributes. Try to do it twice.
+             * The second attempt should have no effect on the data.
+             */
+            for (BlackboardAttribute attr : attributes) {
+                attr.addSource("Added Module");
+                attr.addSource("Added Module");
+            }
+
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, String.format("Failed to process file (obj_id = %d)", file.getId()), ex);
             return ProcessResult.ERROR;

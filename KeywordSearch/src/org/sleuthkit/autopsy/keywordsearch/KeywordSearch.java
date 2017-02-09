@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,7 +44,7 @@ public class KeywordSearch {
 
     public enum QueryType {
 
-        LITERAL, REGEX
+        LITERAL, SUBSTRING, REGEX
     };
     public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT"; //NON-NLS
     private static PropertyChangeSupport changeSupport = new PropertyChangeSupport(KeywordSearch.class);
