@@ -111,8 +111,8 @@ final class CustomArtifactsCreatorIngestModule extends FileIngestModuleAdapter {
              * The second attempt should have no effect on the data.
              */
             for (BlackboardAttribute attr : attributes) {
-                attr.addSourceModule("Added Module");
-                attr.addSourceModule("Added Module");
+                attr.addSource("Added Module");
+                attr.addSource("Added Module");
             }
 
         } catch (TskCoreException ex) {
