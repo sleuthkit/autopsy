@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,6 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -60,8 +59,10 @@ import org.sleuthkit.datamodel.Content;
  */
 class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
+    private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
+
     //common properties (superset of all Node properties) to be displayed as columns
-    static final List<String> commonPropertyTypes
+    static final List<String> COMMON_PROPERTIES
             = Stream.concat(
                     Stream.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD,
                             BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP,
@@ -72,33 +73,34 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             .collect(Collectors.toList());
 
     private final Collection<QueryRequest> queryRequests;
-    private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
-    KeywordSearchResultFactory(Collection<QueryRequest> queryRequests, DataResultTopComponent viewer) {
+    KeywordSearchResultFactory(Collection<QueryRequest> queryRequests) {
         this.queryRequests = queryRequests;
     }
 
     /**
-     * call this at least for the parent Node, to make sure all common
+     * Call this at least for the parent Node, to make sure all common
      * properties are displayed as columns (since we are doing lazy child Node
      * load we need to preinitialize properties when sending parent Node)
      *
      * @param toSet property set map for a Node
      */
-    public static void initCommonProperties(Map<String, Object> toSet) {
-        commonPropertyTypes.stream()
-                .forEach(propertyType -> toSet.put(propertyType, ""));
-    }
-
     @Override
     protected boolean createKeys(List<KeyValueQueryContent> toPopulate) {
 
         for (QueryRequest queryRequest : queryRequests) {
             Map<String, Object> map = queryRequest.getProperties();
-            initCommonProperties(map);
-            final String query = queryRequest.getQueryString();
-            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName(), query);
-            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName(), !queryRequest.getQuery().isLiteral());
+            /*
+             * make sure all common properties are displayed as columns (since
+             * we are doing lazy child Node load we need to preinitialize
+             * properties when sending parent Node)
+             */
+            COMMON_PROPERTIES.stream()
+                    .forEach((propertyType) -> map.put(propertyType, ""));
+            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName(),
+                    queryRequest.getQueryString());
+            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName(),
+                    !queryRequest.getQuery().isLiteral());
             createFlatKeys(queryRequest, toPopulate);
         }
 

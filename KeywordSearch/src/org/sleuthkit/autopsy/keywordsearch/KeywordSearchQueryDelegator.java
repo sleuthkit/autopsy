@@ -100,7 +100,7 @@ class KeywordSearchQueryDelegator {
         Node rootNode;
         if (queryRequests.size() > 0) {
             Children childNodes =
-                    Children.create(new KeywordSearchResultFactory(queryRequests, searchResultWin), true);
+                    Children.create(new KeywordSearchResultFactory(queryRequests), true);
 
             rootNode = new AbstractNode(childNodes);
         } else {
