@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -59,6 +60,9 @@ public class ArtifactStringContent implements StringContent {
      * @return The HTML representation of the artifact as a string.
      */
     @Messages({
+        "ArtifactStringContent.attrsTableHeader.attribute=Attribute",
+        "ArtifactStringContent.attrsTableHeader.value=Value",
+        "ArtifactStringContent.attrsTableHeader.sources=Source(s)",
         "ArtifactStringContent.failedToGetSourcePath.message=Failed to get source file path from case database",
         "ArtifactStringContent.failedToGetAttributes.message=Failed to get some or all attributes from case database"
     })
@@ -75,16 +79,25 @@ public class ArtifactStringContent implements StringContent {
             /*
              * Use the artifact display name as a header.
              */
-            buffer.append("<h4>"); //NON-NLS
+            buffer.append("<h3>"); //NON-NLS
             buffer.append(artifact.getDisplayName());
-            buffer.append("</h4>\n"); //NON-NLS
+            buffer.append("</h3>\n"); //NON-NLS
 
             /*
              * Put the attributes, source content path and artifact id in a
              * table.
              */
-            buffer.append("<table border='0'>"); //NON-NLS
+            buffer.append("<table border='1'>"); //NON-NLS
             buffer.append("<tr>"); //NON-NLS
+            buffer.append("<td>"); //NON-NLS
+            buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_attribute());
+            buffer.append("</td>"); //NON-NLS
+            buffer.append("<td>"); //NON-NLS
+            buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_value());
+            buffer.append("</td>"); //NON-NLS
+            buffer.append("<td>"); //NON-NLS
+            buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_sources());
+            buffer.append("</td>"); //NON-NLS
             buffer.append("</tr>\n"); //NON-NLS
             try {
                 Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
@@ -131,6 +144,14 @@ public class ArtifactStringContent implements StringContent {
                             break;
                     }
                     buffer.append("</td>"); //NON-NLS
+
+                    /*
+                     * Attribute source modules column.
+                     */
+                    buffer.append("<td>"); //NON-NLS
+                    buffer.append(StringUtils.join(attr.getSourceModules(), ", "));
+                    buffer.append("</td>"); //NON-NLS
+
                     buffer.append("</tr>\n"); //NON-NLS
                 }
 
