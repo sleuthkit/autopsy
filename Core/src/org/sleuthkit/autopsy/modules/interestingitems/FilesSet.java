@@ -535,7 +535,7 @@ public final class FilesSet implements Serializable {
             public boolean passes(AbstractFile file) {
                 switch (this.type) {
                     case FILES:
-                        return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG;
+                        return file.isFile();
                     case DIRECTORIES:
                         return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR;
                     case FILES_AND_DIRECTORIES:
