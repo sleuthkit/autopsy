@@ -61,21 +61,21 @@ class IndexMetadata {
     private List<Index> indexes = new ArrayList<>();
     
     IndexMetadata(String caseDirectory, Index index) throws TextIndexMetadataException {
-        this.caseDirectoryPath = Paths.get(caseDirectory);
         this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
+        this.caseDirectoryPath = Paths.get(index.convertPathToUNC(caseDirectory));
         this.indexes.add(index);
         writeToFile();
     }
     
     IndexMetadata(String caseDirectory, List<Index> indexes) throws TextIndexMetadataException {
-        this.caseDirectoryPath = Paths.get(caseDirectory);
+
         this.metadataFilePath = Paths.get(caseDirectory, METADATA_FILE_NAME);
+        if (!indexes.isEmpty()) {
+            this.caseDirectoryPath = Paths.get(indexes.get(0).convertPathToUNC(caseDirectory));
+        } else {
+            this.caseDirectoryPath = Paths.get(caseDirectory);
+        }
         this.indexes = indexes;
-        writeToFile();
-    }
-    
-    void addIndex(Index index) throws TextIndexMetadataException {
-        this.indexes.add(index);
         writeToFile();
     }
     

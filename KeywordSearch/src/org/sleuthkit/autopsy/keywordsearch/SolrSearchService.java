@@ -329,7 +329,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         try {
             // update text index metadata file
-            IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), indexes);
+            if (!indexes.isEmpty()) {
+                // ELTODO REMOVE
+                List<Index> FAKEindexes = new ArrayList<>();
+                IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), FAKEindexes);
+            }
         } catch (IndexMetadata.TextIndexMetadataException ex) {
             throw new AutopsyServiceException("Failed to save Solr core info in text index metadata file", ex);
         }
