@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.awt.EventQueue;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -28,6 +29,8 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.ChildFactory;
@@ -58,28 +61,16 @@ import org.sleuthkit.datamodel.Content;
 class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
     //common properties (superset of all Node properties) to be displayed as columns
-    //these are merged with FsContentPropertyType defined properties
-    public static enum CommonPropertyTypes {
+    static final List<String> commonPropertyTypes
+            = Stream.concat(
+                    Stream.of(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD,
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP,
+                            BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW)
+                    .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
+                    Arrays.stream(AbstractAbstractFileNode.AbstractFilePropertyType.values())
+                    .map(Object::toString))
+            .collect(Collectors.toList());
 
-        KEYWORD {
-                    @Override
-                    public String toString() {
-                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName();
-                    }
-                },
-        REGEX {
-                    @Override
-                    public String toString() {
-                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName();
-                    }
-                },
-        CONTEXT {
-                    @Override
-                    public String toString() {
-                        return BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName();
-                    }
-                },
-    }
     private final Collection<QueryRequest> queryRequests;
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
@@ -95,27 +86,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * @param toSet property set map for a Node
      */
     public static void initCommonProperties(Map<String, Object> toSet) {
-        CommonPropertyTypes[] commonTypes = CommonPropertyTypes.values();
-        final int COMMON_PROPS_LEN = commonTypes.length;
-        for (int i = 0; i < COMMON_PROPS_LEN; ++i) {
-            toSet.put(commonTypes[i].toString(), "");
-        }
-
-        AbstractAbstractFileNode.AbstractFilePropertyType[] fsTypes = AbstractAbstractFileNode.AbstractFilePropertyType.values();
-        final int FS_PROPS_LEN = fsTypes.length;
-        for (int i = 0; i < FS_PROPS_LEN; ++i) {
-            toSet.put(fsTypes[i].toString(), "");
-        }
-    }
-
-    public static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, String value) {
-        final String typeStr = type.toString();
-        toSet.put(typeStr, value);
-    }
-
-    public static void setCommonProperty(Map<String, Object> toSet, CommonPropertyTypes type, Boolean value) {
-        final String typeStr = type.toString();
-        toSet.put(typeStr, value);
+        commonPropertyTypes.stream()
+                .forEach(propertyType -> toSet.put(propertyType, ""));
     }
 
     @Override
@@ -125,8 +97,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             Map<String, Object> map = queryRequest.getProperties();
             initCommonProperties(map);
             final String query = queryRequest.getQueryString();
-            setCommonProperty(map, CommonPropertyTypes.KEYWORD, query);
-            setCommonProperty(map, CommonPropertyTypes.REGEX, !queryRequest.getQuery().isLiteral());
+            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getDisplayName(), query);
+            map.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getDisplayName(), !queryRequest.getQuery().isLiteral());
             createFlatKeys(queryRequest, toPopulate);
         }
 
@@ -161,7 +133,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             logger.log(Level.SEVERE, "Could not perform the query " + keywordSearchQuery.getQueryString(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + keywordSearchQuery.getQueryString(), ex.getCause().getMessage());
             return false;
-        } 
+        }
 
         int id = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
@@ -181,7 +153,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              * Add a snippet property, if available.
              */
             if (hit.hasSnippet()) {
-                setCommonProperty(properties, CommonPropertyTypes.CONTEXT, hit.getSnippet());
+                properties.put(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
             }
 
             //@@@ USE ConentHit in UniqueFileMap instead of the below search
@@ -227,10 +199,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 // add hit with lowest SolrObjectID-Chunk-ID combination.
                 if (!hits.containsKey(hit.getSolrObjectId())) {
                     hits.put(hit.getSolrObjectId(), hit);
-                } else {
-                    if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
-                        hits.put(hit.getSolrObjectId(), hit);
-                    }
+                } else if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                    hits.put(hit.getSolrObjectId(), hit);
                 }
             }
         }
@@ -251,9 +221,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         if (literal_query) {
             //literal, treat as non-regex, non-term component query
             return constructEscapedSolrQuery(query.getQueryString(), literal_query);
-        } else {
-            //construct a Solr query using aggregated terms to get highlighting
-            //the query is executed later on demand
+        } else //construct a Solr query using aggregated terms to get highlighting
+        //the query is executed later on demand
+        {
             if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
                 Keyword keyword = queryResults.getKeywords().iterator().next();
@@ -286,12 +256,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             }
         }
     }
-    
+
     /**
      * Constructs a complete, escaped Solr query that is ready to be used.
-     * 
-     * @param query keyword term to be searched for
+     *
+     * @param query         keyword term to be searched for
      * @param literal_query flag whether query is literal or regex
+     *
      * @return Solr query string
      */
     private String constructEscapedSolrQuery(String query, boolean literal_query) {
@@ -310,7 +281,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         // store the data in HighlightedMatchesSource so that it can be looked up (in content viewer)
-        HighlightedText highlights = new HighlightedText(key.solrObjectId, queryStr, !key.getQuery().isLiteral(), false, hits);
+        HighlightedText highlights = new HighlightedText(key.solrObjectId, queryStr, !key.getQuery().isLiteral(), hits);
         return new KeywordSearchFilterNode(highlights, kvNode);
     }
 
@@ -412,7 +383,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 logger.log(Level.WARNING, "User cancelled writing of ad hoc search query results for '{0}' to the blackboard", query.getQueryString()); //NON-NLS
             } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, "Error writing of ad hoc search query results for " + query.getQueryString() + " to the blackboard", ex); //NON-NLS
-            } 
+            }
         }
 
         private static synchronized void registerWriter(BlackboardResultWriter writer) {
