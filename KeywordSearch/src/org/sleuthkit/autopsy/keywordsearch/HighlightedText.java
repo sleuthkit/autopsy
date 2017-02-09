@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,14 +27,13 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
-
-import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
+import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
@@ -47,9 +46,10 @@ import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 class HighlightedText implements IndexedText, TextMarkupLookup {
 
     private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
+
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
-    private static final String ANCHOR_PREFIX = HighlightedText.class.getName() + "_";
+    private static final String ANCHOR_PREFIX = HighlightedText.class.getName() + "_"; //NON-NLS
 
     private long objectId;
     private String keywordHitQuery;
@@ -57,62 +57,53 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     private int numberPages;
     private int currentPage;
     private boolean isRegex = false;
-    private boolean group = true;
     private boolean hasChunks = false;
-    //stores all pages/chunks that have hits as key, and number of hits as a value, or 0 if yet unknown
-    private LinkedHashMap<Integer, Integer> hitsPages;
-    //stored page num -> current hit number mapping
-    private HashMap<Integer, Integer> pagesToHits;
+    /**
+     * stores all pages/chunks that have hits as key, and number of hits as a
+     * value, or 0 if yet unknown
+     */
+    private LinkedHashMap<Integer, Integer> numberOfHitsPerPage;
+    /*stored page num -> current hit number mapping*/
+    private HashMap<Integer, Integer> currentHitPerPage;
     private List<Integer> pages;
     private QueryResults hits = null; //original hits that may get passed in
-    private String originalQuery = null; //or original query if hits are not available
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    HighlightedText(long objectId, String keywordHitQuery, boolean isRegex) {
+    /**
+     * This constructor is used when keyword hits are accessed from the "Keyword
+     * Hits" node in the directory tree in Autopsy. In that case we only have
+     * the keyword for which a hit had previously been found so we will need to
+     * re-query to find hits for the keyword.
+     *
+     * @param objectId
+     * @param keyword       The keyword that was found previously (e.g. during
+     *                      ingest)
+     * @param isRegex       true if the keyword was found via a regular
+     *                      expression search
+     * @param originalQuery The original query string that produced the hit. If
+     *                      isRegex is true, this will be the regular expression
+     *                      that produced the hit.
+     */
+    HighlightedText(long objectId, String keyword, boolean isRegex) {
+        // The keyword can be treated as a literal hit at this point so we
+        // surround it in quotes.
         this.objectId = objectId;
-        this.keywordHitQuery = keywordHitQuery;
+        this.keywordHitQuery = KeywordSearchUtil.quoteQuery(keyword);
         this.isRegex = isRegex;
-        this.group = true;
-        this.hitsPages = new LinkedHashMap<>();
+        this.numberOfHitsPerPage = new LinkedHashMap<>();
         this.pages = new ArrayList<>();
-        this.pagesToHits = new HashMap<>();
+        this.currentHitPerPage = new HashMap<>();
 
         this.solrServer = KeywordSearch.getServer();
         this.numberPages = 0;
         this.currentPage = 0;
         //hits are unknown
-
-    }
-
-    /**
-     * This constructor is used when keyword hits are accessed from the
-     * "Keyword Hits" node in the directory tree in Autopsy.
-     * In that case we only have the keyword for which a hit had
-     * previously been found so we will need to re-query to find hits
-     * for the keyword.
-     *
-     * @param objectId
-     * @param keyword The keyword that was found previously (e.g. during ingest)
-     * @param isRegex true if the keyword was found via a regular expression search
-     * @param originalQuery The original query string that produced the hit. If
-     * isRegex is true, this will be the regular expression that produced the hit.
-     */
-    HighlightedText(long objectId, String keyword, boolean isRegex, String originalQuery) {
-        // The keyword can be treated as a literal hit at this point so we
-        // surround it in quotes.
-        this(objectId, KeywordSearchUtil.quoteQuery(keyword), isRegex);
-        this.originalQuery = originalQuery;
     }
 
     HighlightedText(long objectId, String solrQuery, boolean isRegex, QueryResults hits) {
         this(objectId, solrQuery, isRegex);
         this.hits = hits;
-    }
-
-    HighlightedText(long objectId, String solrQuery, boolean isRegex, boolean group, QueryResults hits) {
-        this(objectId, solrQuery, isRegex, hits);
-        this.group = group;
     }
 
     /**
@@ -124,13 +115,11 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         if (isPageInfoLoaded) {
             return;
         }
+
         try {
             this.numberPages = solrServer.queryNumFileChunks(this.objectId);
-        } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content: " + this.objectId); //NON-NLS
-            return;
-        } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content: " + this.objectId); //NON-NLS
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Could not get number pages for content: {0}", this.objectId); //NON-NLS
             return;
         }
 
@@ -182,35 +171,33 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             }
 
             for (Integer page : pagesSorted) {
-                hitsPages.put(page, 0); //unknown number of matches in the page
+                numberOfHitsPerPage.put(page, 0); //unknown number of matches in the page
                 pages.add(page);
-                pagesToHits.put(page, 0); //set current hit to 0th
+                currentHitPerPage.put(page, 0); //set current hit to 0th
             }
 
         } else {
             //no chunks
             this.numberPages = 1;
             this.currentPage = 1;
-            hitsPages.put(1, 0);
+            numberOfHitsPerPage.put(1, 0);
             pages.add(1);
-            pagesToHits.put(1, 0);
+            currentHitPerPage.put(1, 0);
         }
+
         isPageInfoLoaded = true;
     }
 
-    //constructor for dummy singleton factory instance for Lookup
+    /**
+     * Constructor for dummy singleton factory instance for Lookup
+     */
     private HighlightedText() {
-    }
-
-    long getObjectId() {
-        return this.objectId;
     }
 
     @Override
     public int getNumberPages() {
-        return this.numberPages;
         //return number of pages that have hits
-        //return this.hitsPages.keySet().size();
+        return this.numberPages;
     }
 
     @Override
@@ -235,9 +222,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     @Override
     public int nextPage() {
-        if (!hasNextPage()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextPage.exception.msg"));
+        if (false == hasNextPage()) {
+            throw new IllegalStateException("No next page.");
         }
         int idx = pages.indexOf(this.currentPage);
         currentPage = pages.get(idx + 1);
@@ -247,8 +233,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     @Override
     public int previousPage() {
         if (!hasPreviousPage()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousPage.exception.msg"));
+            throw new IllegalStateException("No previous page.");
         }
         int idx = pages.indexOf(this.currentPage);
         currentPage = pages.get(idx - 1);
@@ -257,53 +242,51 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     @Override
     public boolean hasNextItem() {
-        if (!this.pagesToHits.containsKey(currentPage)) {
+        if (!this.currentHitPerPage.containsKey(currentPage)) {
             return false;
         }
-        return this.pagesToHits.get(currentPage) < this.hitsPages.get(currentPage);
+        return this.currentHitPerPage.get(currentPage) < this.numberOfHitsPerPage.get(currentPage);
     }
 
     @Override
     public boolean hasPreviousItem() {
-        if (!this.pagesToHits.containsKey(currentPage)) {
+        if (!this.currentHitPerPage.containsKey(currentPage)) {
             return false;
         }
-        return this.pagesToHits.get(currentPage) > 1;
+        return this.currentHitPerPage.get(currentPage) > 1;
     }
 
     @Override
     public int nextItem() {
         if (!hasNextItem()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.nextItem.exception.msg"));
+            throw new IllegalStateException("No next item.");
         }
-        int cur = pagesToHits.get(currentPage) + 1;
-        pagesToHits.put(currentPage, cur);
+        int cur = currentHitPerPage.get(currentPage) + 1;
+        currentHitPerPage.put(currentPage, cur);
         return cur;
     }
 
     @Override
     public int previousItem() {
         if (!hasPreviousItem()) {
-            throw new IllegalStateException(
-                    NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.previousItem.exception.msg"));
+            throw new IllegalStateException("No previous item.");
         }
-        int cur = pagesToHits.get(currentPage) - 1;
-        pagesToHits.put(currentPage, cur);
+        int cur = currentHitPerPage.get(currentPage) - 1;
+        currentHitPerPage.put(currentPage, cur);
         return cur;
     }
 
     @Override
     public int currentItem() {
-        if (!this.pagesToHits.containsKey(currentPage)) {
+        if (!this.currentHitPerPage.containsKey(currentPage)) {
             return 0;
         }
-        return pagesToHits.get(currentPage);
+        return currentHitPerPage.get(currentPage);
     }
 
     @Override
     public LinkedHashMap<Integer, Integer> getHitsPages() {
-        return this.hitsPages;
+        return this.numberOfHitsPerPage;
     }
 
     @Override
@@ -388,23 +371,24 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     @Override
     public int getNumberHits() {
-        if (!this.hitsPages.containsKey(this.currentPage)) {
+        if (!this.numberOfHitsPerPage.containsKey(this.currentPage)) {
             return 0;
         }
-        return this.hitsPages.get(this.currentPage);
+        return this.numberOfHitsPerPage.get(this.currentPage);
     }
 
     /**
-     * If the Solr query does not produce valid highlighting, we attempt to
-     * add the highlighting ourselves. We do this by taking the text returned
-     * from the document that contains a hit and searching that text for the
-     * keyword that produced the hit.
+     * If the Solr query does not produce valid highlighting, we attempt to add
+     * the highlighting ourselves. We do this by taking the text returned from
+     * the document that contains a hit and searching that text for the keyword
+     * that produced the hit.
      *
      * @param solrDocumentList The list of Solr documents returned in response
-     * to a Solr query. We expect there to only ever be a single document.
+     *                         to a Solr query. We expect there to only ever be
+     *                         a single document.
      *
      * @return Either a string with the keyword highlighted or a string
-     * indicating that we did not find a hit in the document.
+     *         indicating that we did not find a hit in the document.
      */
     private String attemptManualHighlighting(SolrDocumentList solrDocumentList) {
         if (solrDocumentList.isEmpty()) {
@@ -453,10 +437,11 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     }
 
     /**
-     * Anchors are used to navigate back and forth between hits on the same
-     * page and to navigate to hits on the next/previous page.
+     * Anchors are used to navigate back and forth between hits on the same page
+     * and to navigate to hits on the next/previous page.
      *
      * @param searchableContent
+     *
      * @return
      */
     private String insertAnchors(String searchableContent) {
@@ -479,7 +464,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         }
 
         //store total hits for this page, now that we know it
-        this.hitsPages.put(this.currentPage, count);
+        this.numberOfHitsPerPage.put(this.currentPage, count);
         if (this.currentItem() == 0 && this.hasNextItem()) {
             this.nextItem();
         }
@@ -501,6 +486,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     @Override
     // factory method to create an instance of this object
     public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
-        return new HighlightedText(objectId, keywordHitQuery, isRegex, originalQuery);
+        return new HighlightedText(objectId, keywordHitQuery, isRegex);
     }
 }

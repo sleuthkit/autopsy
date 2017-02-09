@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,76 +96,35 @@ public class ExtractedContentViewer implements DataContentViewer {
         Lookup nodeLookup = node.getLookup();
         Content content = nodeLookup.lookup(Content.class);
 
-
         /*
          * Assemble a collection of all of the indexed text "sources" associated
          * with the node.
          */
-        List<IndexedText> sources = new ArrayList<>();
+        List<IndexedText> indexedTextSources = new ArrayList<>();
         IndexedText highlightedHitText = null;
         IndexedText rawContentText = null;
-        IndexedText rawArtifactText = null;
+
 
         /*
          * First add the text marked up with HTML to highlight keyword hits that
          * will be present in the selected node's lookup if the node is for a
          * keyword hit artifact or account.
          */
-        sources.addAll(nodeLookup.lookupAll(IndexedText.class));
+        indexedTextSources.addAll(nodeLookup.lookupAll(IndexedText.class));
 
-        if (!sources.isEmpty()) {
+        if (false == indexedTextSources.isEmpty()) {
+            //JMTODO: how do know the highlighted one is the first one?  I think the assumption is really that it is the only one...
             //if the look up had any sources use them and don't make a new one.
-            highlightedHitText = sources.get(0);
-        } else if (null != content && solrHasContent(content.getId())) {//if the lookup didn't have any sources, and solr has indexed the content...
+            highlightedHitText = indexedTextSources.get(0);
+        } else if (null != content && solrHasContent(content.getId())) {
             /*
-             * get all the credit card artifacts and make a AccountsText object
-             * that will highlight them.
+             * if the lookup didn't have any sources, and solr has indexed the
+             * content,get an AccountsText object that will highlight any
+             * account numbers.
              */
-            String solrDocumentID = String.valueOf(content.getId()); //grab the object id as the solrDocumentID
-            Set<String> accountNumbers = new HashSet<>();
-            try {
-                //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
-                Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
-                artifacts = (artifacts == null || artifacts.isEmpty())
-                        ? content.getArtifacts(TSK_ACCOUNT)
-                        : artifacts;
-
-                /*
-                 * For each artifact add the account number to the list of
-                 * accountNumbers to highlight, and use the solrDocumentId
-                 * attribute(in place of the content's object Id) if it exists
-                 *
-                 * NOTE: this assumes all the artifacts will be from the same
-                 * solrDocumentId
-                 */
-                for (BlackboardArtifact artifact : artifacts) {
-                    try {
-                        BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
-                        if (solrIDAttr != null) {
-                            String valueString = solrIDAttr.getValueString();
-                            if (StringUtils.isNotBlank(valueString)) {
-                                solrDocumentID = valueString;
-                            }
-                        }
-
-                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
-                        if (keyWordAttr != null) {
-                            String valueString = keyWordAttr.getValueString();
-                            if (StringUtils.isNotBlank(valueString)) {
-                                accountNumbers.add(valueString);
-                            }
-                        }
-
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
-                    }
-                }
-                if (accountNumbers.isEmpty() == false) {
-                    highlightedHitText = new AccountsText(solrDocumentID, accountNumbers);
-                    sources.add(highlightedHitText);
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
+            highlightedHitText = getAccountsText(content, nodeLookup);
+            if (highlightedHitText != null) {
+                indexedTextSources.add(highlightedHitText);
             }
         }
 
@@ -175,13 +134,40 @@ public class ExtractedContentViewer implements DataContentViewer {
          */
         if (null != content && solrHasContent(content.getId())) {
             rawContentText = new RawText(content, content.getId());
-            sources.add(rawContentText);
+            indexedTextSources.add(rawContentText);
         }
-
         /*
          * Finally, add the "raw" (not highlighted) text, if any, for any
          * artifact associated with the node.
          */
+        IndexedText rawArtifactText = getRawArtifactText(nodeLookup);
+        if (rawArtifactText != null) {
+            indexedTextSources.add(rawArtifactText);
+        }
+
+        // Now set the default source to be displayed.
+        if (null != highlightedHitText) {
+            currentSource = highlightedHitText;
+        } else if (null != rawContentText) {
+            currentSource = rawContentText;
+        } else {
+            currentSource = rawArtifactText;
+        }
+
+        //JMTODO: What is this supposed to do?
+        // Push the text sources into the panel.
+        for (IndexedText source : indexedTextSources) {
+            int currentPage = source.getCurrentPage();
+            if (currentPage == 0 && source.hasNextPage()) {
+                source.nextPage();
+            }
+        }
+        panel.updateControls(currentSource);
+        setPanel(indexedTextSources);
+    }
+
+    private IndexedText getRawArtifactText(Lookup nodeLookup) {
+        IndexedText rawArtifactText = null;
         BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         if (null != artifact) {
             /*
@@ -195,36 +181,72 @@ public class ExtractedContentViewer implements DataContentViewer {
                         long artifactId = attribute.getValueLong();
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
                         rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
-                        sources.add(rawArtifactText);
+
                     }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
                 }
             } else {
                 rawArtifactText = new RawText(artifact, artifact.getArtifactID());
-                sources.add(rawArtifactText);
+
             }
 
         }
+        return rawArtifactText;
+    }
 
-        // Now set the default source to be displayed.
-        if (null != highlightedHitText) {
-            currentSource = highlightedHitText;
-        } else if (null != rawContentText) {
-            currentSource = rawContentText;
-        } else {
-            currentSource = rawArtifactText;
-        }
+    private IndexedText getAccountsText(Content content, Lookup nodeLookup) {
+        IndexedText highlightedHitText = null;
 
-        // Push the text sources into the panel.
-        for (IndexedText source : sources) {
-            int currentPage = source.getCurrentPage();
-            if (currentPage == 0 && source.hasNextPage()) {
-                source.nextPage();
+        /*
+         * get all the credit card artifacts
+         */
+        String solrDocumentID = String.valueOf(content.getId()); //grab the object id as the solrDocumentID
+        Set<String> accountNumbers = new HashSet<>();
+        try {
+            //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
+            Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
+            artifacts = (artifacts == null || artifacts.isEmpty())
+                    ? content.getArtifacts(TSK_ACCOUNT)
+                    : artifacts;
+
+            /*
+             * For each artifact add the account number to the list of
+             * accountNumbers to highlight, and use the solrDocumentId
+             * attribute(in place of the content's object Id) if it exists
+             *
+             * NOTE: this assumes all the artifacts will be from the same
+             * solrDocumentId
+             */
+            for (BlackboardArtifact artifact : artifacts) {
+                try {
+                    BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
+                    if (solrIDAttr != null) {
+                        String valueString = solrIDAttr.getValueString();
+                        if (StringUtils.isNotBlank(valueString)) {
+                            solrDocumentID = valueString;
+                        }
+                    }
+
+                    BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
+                    if (keyWordAttr != null) {
+                        String valueString = keyWordAttr.getValueString();
+                        if (StringUtils.isNotBlank(valueString)) {
+                            accountNumbers.add(valueString);
+                        }
+                    }
+
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
+                }
             }
+            if (accountNumbers.isEmpty() == false) {
+                highlightedHitText = new AccountsText(solrDocumentID, accountNumbers);
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
         }
-        updatePageControls();
-        setPanel(sources);
+        return highlightedHitText;
     }
 
     private void scrollToCurrentHit() {
@@ -420,7 +442,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
             final boolean hasNextItem = source.hasNextItem();
             final boolean hasNextPage = source.hasNextPage();
-            int indexVal = 0;
+            int indexVal;
             if (hasNextItem || hasNextPage) {
                 if (!hasNextItem) {
                     //flip the page
@@ -455,7 +477,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             IndexedText source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
-            int indexVal = 0;
+            int indexVal;
             if (hasPreviousItem || hasPreviousPage) {
                 if (!hasPreviousItem) {
                     //flip the page
@@ -487,7 +509,6 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-
             currentSource = panel.getSelectedSource();
 
             if (currentSource == null) {
@@ -495,18 +516,9 @@ public class ExtractedContentViewer implements DataContentViewer {
                 return;
             }
 
-            updatePageControls();
-            updateSearchControls();
-
+            panel.updateControls(currentSource);
+            panel.updateSearchControls(currentSource);
         }
-    }
-
-    private void updateSearchControls() {
-        panel.updateSearchControls(currentSource);
-    }
-
-    private void updatePageControls() {
-        panel.updateControls(currentSource);
     }
 
     private void nextPage() {
@@ -538,7 +550,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.enablePrevPageControl(true);
             }
 
-            updateSearchControls();
+            panel.updateSearchControls(currentSource);
         }
     }
 
@@ -571,7 +583,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.enableNextPageControl(true);
             }
 
-            updateSearchControls();
+            panel.updateSearchControls(currentSource);
 
         }
     }
