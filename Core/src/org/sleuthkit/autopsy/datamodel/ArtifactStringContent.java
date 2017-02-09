@@ -146,7 +146,7 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append("</td>"); //NON-NLS
 
                     /*
-                     * Attribute source modules column.
+                     * Attribute sources column.
                      */
                     buffer.append("<td>"); //NON-NLS
                     buffer.append(StringUtils.join(attr.getSources(), ", "));
