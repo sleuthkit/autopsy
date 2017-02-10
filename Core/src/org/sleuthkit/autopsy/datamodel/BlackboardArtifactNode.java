@@ -479,8 +479,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             return null;
         }
 
-        long objectId = content.getId();
-
         Lookup lookup = Lookup.getDefault();
         TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
         try {
@@ -493,14 +491,12 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                     keyword = att.getValueString();
                 } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
                     regexp = att.getValueString();
-                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                    objectId = att.getValueLong();
                 }
             }
             if (keyword != null) {
                 boolean isRegexp = StringUtils.isNotBlank(regexp);
                 String origQuery = isRegexp ? regexp : keyword;
-                return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
+                return highlightFactory.createInstance(artifact.getArtifactID(), keyword, isRegexp, origQuery);
             }
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS

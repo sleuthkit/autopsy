@@ -18,26 +18,35 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.ibm.icu.text.UnicodeSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Highlights hits for a given document. Knows about pages and such for the
@@ -51,24 +60,30 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
     private static final String ANCHOR_PREFIX = HighlightedText.class.getName() + "_"; //NON-NLS
 
-    private long objectId;
-    private String keywordHitQuery;
-    private Server solrServer;
-    private int numberPages;
-    private int currentPage;
-    private boolean isRegex = false;
+    final private Server solrServer = KeywordSearch.getServer();
+
+    private final long objectId;
+    private final boolean isRegex;
+    private final String keywordHitQuery;
+
+    private int numberPages = 0;
+    private int currentPage = 0;
+
     private boolean hasChunks = false;
     /**
      * stores all pages/chunks that have hits as key, and number of hits as a
      * value, or 0 if yet unknown
      */
-    private LinkedHashMap<Integer, Integer> numberOfHitsPerPage;
-    /*stored page num -> current hit number mapping*/
-    private HashMap<Integer, Integer> currentHitPerPage;
-    private List<Integer> pages;
+    private final LinkedHashMap<Integer, Integer> numberOfHitsPerPage = new LinkedHashMap<>();
+    /*
+     * stored page num -> current hit number mapping
+     */
+    private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
+    private final List<Integer> pages = new ArrayList<>();
     private QueryResults hits = null; //original hits that may get passed in
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
+    private BlackboardArtifact artifact;
 
     /**
      * This constructor is used when keyword hits are accessed from the "Keyword
@@ -91,27 +106,34 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         this.objectId = objectId;
         this.keywordHitQuery = KeywordSearchUtil.quoteQuery(keyword);
         this.isRegex = isRegex;
-        this.numberOfHitsPerPage = new LinkedHashMap<>();
-        this.pages = new ArrayList<>();
-        this.currentHitPerPage = new HashMap<>();
 
-        this.solrServer = KeywordSearch.getServer();
-        this.numberPages = 0;
-        this.currentPage = 0;
         //hits are unknown
     }
 
     HighlightedText(long objectId, String solrQuery, boolean isRegex, QueryResults hits) {
         this(objectId, solrQuery, isRegex);
         this.hits = hits;
+        this.artifact = null;
     }
+
+    HighlightedText(BlackboardArtifact artifact) throws TskCoreException {
+        this.artifact = artifact;
+        this.objectId = artifact.getObjectID();
+        KeywordSearch.QueryType qt = KeywordSearch.QueryType.values()[artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE).getValueInt()];
+        this.isRegex = qt == KeywordSearch.QueryType.REGEX;
+        this.keywordHitQuery = artifact.getAttribute(TSK_KEYWORD).getValueString();
+
+    }
+    private static final BlackboardAttribute.Type TSK_KEYWORD_HIT_DOCUMENT_IDS = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS);
+    private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE);
+    private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
 
     /**
      * The main goal of this method is to figure out which pages / chunks have
      * hits.
      */
     @Messages({"HighlightedText.query.exception.msg=Could not perform the query to get chunk info and get highlights:"})
-    private void loadPageInfo() {
+    private void loadPageInfo() throws TskCoreException {
         if (isPageInfoLoaded) {
             return;
         }
@@ -129,69 +151,100 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             hasChunks = true;
         }
 
-        // if the file has chunks, get pages with hits, sorted
-        if (hasChunks) {
+        if (isRegex) {
             /*
-             * If this is being called from the artifacts / dir tree, then we
-             * need to perform the search to get the highlights.
+             * this could go in the constructor but is here to keep it near the
+             * functionaly similar code for non regex searches
              */
-            if (hits == null) {
-                Keyword keywordQuery = new Keyword(keywordHitQuery, !isRegex);
-
-                List<Keyword> keywords = new ArrayList<>();
-                keywords.add(keywordQuery);
-                KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);
-
-                chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
-                try {
-                    hits = chunksQuery.performQuery();
-                } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                    logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights:" + keywordQuery.getSearchTerm(), ex); //NON-NLS
-                    MessageNotifyUtil.Notify.error(Bundle.HighlightedText_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
-                    return;
-                }
+            loadRegexPageInfo();
+        } else if (hasChunks) {
+            // if the file has chunks, get pages with hits, sorted
+            if (loadNonRegexPageInfo()) {
+                //JMTOD: look at error handeling and return values...
+                return;
             }
-
-            //organize the hits by page, filter as needed
-            TreeSet<Integer> pagesSorted = new TreeSet<>();
-            for (Keyword k : hits.getKeywords()) {
-                for (KeywordHit hit : hits.getResults(k)) {
-                    int chunkID = hit.getChunkId();
-                    if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
-                        pagesSorted.add(chunkID);
-                    }
-                }
-            }
-
-            //set page to first page having highlights
-            if (pagesSorted.isEmpty()) {
-                this.currentPage = 0;
-            } else {
-                this.currentPage = pagesSorted.first();
-            }
-
-            for (Integer page : pagesSorted) {
-                numberOfHitsPerPage.put(page, 0); //unknown number of matches in the page
-                pages.add(page);
-                currentHitPerPage.put(page, 0); //set current hit to 0th
-            }
-
         } else {
-            //no chunks
+            //non-regex, no chunks
             this.numberPages = 1;
             this.currentPage = 1;
             numberOfHitsPerPage.put(1, 0);
             pages.add(1);
             currentHitPerPage.put(1, 0);
         }
-
         isPageInfoLoaded = true;
+    }
+
+    private boolean loadNonRegexPageInfo() {
+        /*
+         * If this is being called from the artifacts / dir tree, then we need
+         * to perform the search to get the highlights.
+         */
+        if (hits == null) {
+            Keyword keywordQuery = new Keyword(keywordHitQuery, !isRegex);
+            List<Keyword> keywords = new ArrayList<>();
+            keywords.add(keywordQuery);
+            KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(keywords), keywordQuery);
+            chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
+            try {
+                hits = chunksQuery.performQuery();
+            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights:" + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(Bundle.HighlightedText_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
+                return true;
+            }
+        }
+        //organize the hits by page, filter as needed
+        TreeSet<Integer> pagesSorted = new TreeSet<>();
+        for (Keyword k : hits.getKeywords()) {
+            for (KeywordHit hit : hits.getResults(k)) {
+                int chunkID = hit.getChunkId();
+                if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
+                    pagesSorted.add(chunkID);
+                }
+            }
+        }
+        //set page to first page having highlights
+        if (pagesSorted.isEmpty()) {
+            this.currentPage = 0;
+        } else {
+            this.currentPage = pagesSorted.first();
+        }
+        for (Integer page : pagesSorted) {
+            numberOfHitsPerPage.put(page, 0); //unknown number of matches in the page
+            pages.add(page);
+            currentHitPerPage.put(page, 0); //set current hit to 0th
+        }
+        return false;
+    }
+
+    private void loadRegexPageInfo() throws TskCoreException, NumberFormatException {
+        String chunkIDsString = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS).getValueString();
+        Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
+
+        for (String solrDocumentId : chunkIDs) {
+            int chunkID;
+            final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
+            if (-1 != separatorIndex) {
+
+                chunkID = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
+            } else {
+
+                chunkID = 0;
+            }
+            pages.add(chunkID);
+            numberOfHitsPerPage.put(chunkID, 0);
+            currentHitPerPage.put(chunkID, 0);
+        }
     }
 
     /**
      * Constructor for dummy singleton factory instance for Lookup
      */
     private HighlightedText() {
+        objectId = -1;  //JMTODO: dummy value, is this a legal objectID?
+        isRegex = false;
+        keywordHitQuery = null;
+        artifact = null;
     }
 
     @Override
@@ -291,34 +344,42 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
     @Override
     public String getText() {
-        loadPageInfo(); //inits once
+        try {
+            loadPageInfo(); //inits once
+        } catch (TskCoreException ex) {
+            //JMTODO: deal with this
+            Exceptions.printStackTrace(ex);
+        }
 
         SolrQuery q = new SolrQuery();
         q.setShowDebugInfo(DEBUG); //debug
-
-        // input query has already been properly constructed and escaped
-        q.setQuery(keywordHitQuery);
 
         String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
             contentIdStr += "_" + Integer.toString(this.currentPage);
         }
-
         final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
-        q.addFilterQuery(filterQuery);
-        q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
 
-        q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
+        if (isRegex) {
+            q.setQuery(filterQuery);
+            q.addField(Server.Schema.CONTENT_STR.toString());
+        } else {
+            // input query has already been properly constructed and escaped
+            q.setQuery(keywordHitQuery);
+             q.addField(Server.Schema.TEXT.toString());
+            q.addFilterQuery(filterQuery);
+            q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
+            q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
-        //tune the highlighter
-        q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
-        q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-        q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
-        q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+            //tune the highlighter
+            q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+            q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+            q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+            q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
 
-        //docs says makes sense for the original Highlighter only, but not really
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
-
+            //docs says makes sense for the original Highlighter only, but not really
+            q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
+        }
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
 
@@ -328,21 +389,23 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             if (response.getResults().size() > 1) {
                 logger.log(Level.WARNING, "Unexpected number of results for Solr highlighting query: {0}", keywordHitQuery); //NON-NLS
             }
-
-            Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
-
-            Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
             String highlightedContent;
-
-            if (responseHighlightID == null) {
+            Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
+            if (responseHighlight == null) {
                 highlightedContent = attemptManualHighlighting(response.getResults());
             } else {
-                List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
-                if (contentHighlights == null) {
+                Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
+
+                if (responseHighlightID == null) {
                     highlightedContent = attemptManualHighlighting(response.getResults());
                 } else {
-                    // extracted content (minus highlight tags) is HTML-escaped
-                    highlightedContent = contentHighlights.get(0).trim();
+                    List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
+                    if (contentHighlights == null) {
+                        highlightedContent = attemptManualHighlighting(response.getResults());
+                    } else {
+                        // extracted content (minus highlight tags) is HTML-escaped
+                        highlightedContent = contentHighlights.get(0).trim();
+                    }
                 }
             }
             highlightedContent = insertAnchors(highlightedContent);
@@ -398,7 +461,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         // It doesn't make sense for there to be more than a single document in
         // the list since this class presents a single page (document) of highlighted
         // content at a time.
-        String text = solrDocumentList.get(0).getOrDefault(Server.Schema.TEXT.toString(), "").toString();
+        Server.Schema highlightField= isRegex ? Server.Schema.CONTENT_STR: Server.Schema.TEXT;
+        String text = solrDocumentList.get(0).getOrDefault(highlightField.toString(), "").toString();
 
         // Escape any HTML content that may be in the text. This is needed in
         // order to correctly display the text in the content viewer.
@@ -471,7 +535,11 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         return buf.toString();
     }
-    //dummy instance for Lookup only
+
+    //JMTODO: this whole dummy istance stuff should just be separated to a factory class I think
+    /*
+     * dummy instance for Lookup only
+     */
     private static TextMarkupLookup instance = null;
 
     //getter of the singleton dummy instance solely for Lookup purpose
@@ -486,6 +554,16 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     @Override
     // factory method to create an instance of this object
     public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
+        if (objectId < 0) {
+            try {
+                BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(objectId);
+                return new HighlightedText(blackboardArtifact);
+            } catch (TskCoreException ex) {
+                //JMTODO: what to do here?
+                Exceptions.printStackTrace(ex);
+            }
+        }
+
         return new HighlightedText(objectId, keywordHitQuery, isRegex);
     }
 }
