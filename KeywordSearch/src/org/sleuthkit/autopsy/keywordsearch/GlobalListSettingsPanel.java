@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import org.openide.util.NbBundle;
@@ -99,7 +100,8 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
         KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
 
-        List<Keyword> keywords = currentKeywordList.getKeywords();
+        List<Keyword> keywords = new ArrayList();
+        keywords.addAll(currentKeywordList.getKeywords());
 
         String listName = (String) JOptionPane.showInputDialog(
                 null,
