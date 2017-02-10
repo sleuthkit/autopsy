@@ -88,7 +88,7 @@
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="dirsRadioButton" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="bothRadioButton" min="-2" max="-2" attributes="0"/>
+                              <Component id="allRadioButton" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" pref="105" max="-2" attributes="0"/>
@@ -222,7 +222,7 @@
                                           <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="filesRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                                           <Component id="dirsRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="bothRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                                          <Component id="allRadioButton" alignment="3" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="3" attributes="0">
@@ -589,18 +589,18 @@
                 </Property>
               </Properties>
             </Component>
-            <Component class="javax.swing.JRadioButton" name="bothRadioButton">
+            <Component class="javax.swing.JRadioButton" name="allRadioButton">
               <Properties>
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="typeButtonGroup"/>
                 </Property>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font bold="false" component="bothRadioButton" property="font" relativeSize="false" size="11"/>
+                    <Font bold="false" component="allRadioButton" property="font" relativeSize="false" size="11"/>
                   </FontInfo>
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetDefsPanel.bothRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/modules/interestingitems/Bundle.properties" key="FilesSetDefsPanel.allRadioButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
                 <Property name="enabled" type="boolean" value="false"/>
               </Properties>
