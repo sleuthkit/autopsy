@@ -123,6 +123,106 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         }
     }
 
+    private boolean addKeywordsAction(String existingKeywords, boolean isLiteral, boolean isWholeWord) {
+        String keywordsToRedisplay = existingKeywords;
+        AddKeywordsDialog dialog = new AddKeywordsDialog();
+
+        int goodCount = 0;
+        int dupeCount = 0;
+        int badCount = 1;  // Default to 1 so we enter the loop the first time
+
+        while (badCount > 0) {
+            dialog.setInitialKeywordList(keywordsToRedisplay, isLiteral, isWholeWord);
+            dialog.display();
+
+            goodCount = 0;
+            dupeCount = 0;
+            badCount = 0;
+            keywordsToRedisplay = "";
+
+            if (!dialog.getKeywords().isEmpty()) {
+
+                for (String newWord : dialog.getKeywords()) {
+                    if (newWord.isEmpty()) {
+                        continue;
+                    }
+
+                    final Keyword keyword = new Keyword(newWord, !dialog.isKeywordRegex(), dialog.isKeywordExact());
+                    if (currentKeywordList.hasKeyword(keyword)) {
+                        dupeCount++;
+                        continue;
+                    }
+
+                    //check if valid
+                    boolean valid = true;
+                    try {
+                        Pattern.compile(newWord);
+                    } catch (PatternSyntaxException ex1) {
+                        valid = false;
+                    } catch (IllegalArgumentException ex2) {
+                        valid = false;
+                    }
+                    if (!valid) {
+
+                        // Invalid keywords will reappear in the UI
+                        keywordsToRedisplay += newWord + "\n";
+                        badCount++;
+                        continue;
+                    }
+
+                    // Add the new keyword
+                    tableModel.addKeyword(keyword);
+                    goodCount++;
+                }
+                XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
+                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+
+                if ((badCount > 0) || (dupeCount > 0)) {
+                    // Display the error counts to the user
+                    // The add keywords dialog will pop up again if any were invalid with any 
+                    // invalid entries (valid entries and dupes will disappear)
+
+                    String summary = "";
+                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO;
+                    if (goodCount > 0) {
+                        if (goodCount > 1) {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAddedPlural.text", goodCount) + "\n";
+                        } else {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAdded.text", goodCount) + "\n";
+                        }
+                    }
+                    if (dupeCount > 0) {
+                        if (dupeCount > 1) {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkippedPlural.text", dupeCount) + "\n";
+                        } else {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkipped.text", dupeCount) + "\n";
+                        }
+                        level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN;
+                    }
+                    if (badCount > 0) {
+                        if (badCount > 1) {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrorsPlural.text", badCount) + "\n";
+                        } else {
+                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrors.text", badCount) + "\n";
+                        }
+                        level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR;
+                    }
+                    KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "GlobalEditListPanel.addKeywordResults.text"),
+                            summary, level);
+                }
+            }
+        }
+        setFocusOnKeywordTextBox();
+        setButtonStates();
+        return (goodCount == 1 && badCount == 0 && dupeCount == 0);
+    }
+
+    private void deleteKeywordAction(int[] selectedKeywords) {
+        tableModel.deleteSelected(selectedKeywords);
+        XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
+        setButtonStates();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -250,11 +350,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }// </editor-fold>//GEN-END:initComponents
 
     private void deleteWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteWordButtonActionPerformed
-        if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"), NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-
-            tableModel.deleteSelected(keywordTable.getSelectedRows());
-            XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
-            setButtonStates();
+        if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.removeKwMsg"),
+                NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.deleteWordButtonActionPerformed.delConfirmMsg"),
+                KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+            deleteKeywordAction(keywordTable.getSelectedRows());
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
     }//GEN-LAST:event_deleteWordButtonActionPerformed
@@ -267,100 +366,19 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }//GEN-LAST:event_ingestMessagesCheckboxActionPerformed
 
     private void newKeywordsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newKeywordsButtonActionPerformed
-        String keywordsToRedisplay = "";
-        AddKeywordsDialog dialog = new AddKeywordsDialog();
-
-        int goodCount;
-        int dupeCount;
-        int badCount = 1;  // Default to 1 so we enter the loop the first time
-
-        while (badCount > 0) {
-            dialog.setInitialKeywordList(keywordsToRedisplay);
-            dialog.display();
-
-            goodCount = 0;
-            dupeCount = 0;
-            badCount = 0;
-            keywordsToRedisplay = "";
-
-            if (!dialog.getKeywords().isEmpty()) {
-
-                for (String newWord : dialog.getKeywords()) {
-                    if (newWord.isEmpty()) {
-                        continue;
-                    }
-
-                    final Keyword keyword = new Keyword(newWord, !dialog.isKeywordRegex(), dialog.isKeywordExact());
-                    if (currentKeywordList.hasKeyword(keyword)) {
-                        dupeCount++;
-                        continue;
-                    }
-
-                    //check if valid
-                    boolean valid = true;
-                    try {
-                        Pattern.compile(newWord);
-                    } catch (PatternSyntaxException ex1) {
-                        valid = false;
-                    } catch (IllegalArgumentException ex2) {
-                        valid = false;
-                    }
-                    if (!valid) {
-
-                        // Invalid keywords will reappear in the UI
-                        keywordsToRedisplay += newWord + "\n";
-                        badCount++;
-                        continue;
-                    }
-
-                    // Add the new keyword
-                    tableModel.addKeyword(keyword);
-                    goodCount++;
-                }
-                XmlKeywordSearchList.getCurrent().addList(currentKeywordList);
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-
-                if ((badCount > 0) || (dupeCount > 0)) {
-                    // Display the error counts to the user
-                    // The add keywords dialog will pop up again if any were invalid with any 
-                    // invalid entries (valid entries and dupes will disappear)
-
-                    String summary = "";
-                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO;
-                    if (goodCount > 0) {
-                        if (goodCount > 1) {
-                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAddedPlural.text", goodCount) + "\n";
-                        } else {
-                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordsAdded.text", goodCount) + "\n";
-                        }
-                    }
-                    if (dupeCount > 0) {
-                        if (dupeCount > 1) {
-                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkippedPlural.text", dupeCount) + "\n";
-                        } else {
-                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordDupesSkipped.text", dupeCount) + "\n";
-                        }
-                        level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN;
-                    }
-                    if (badCount > 0) {
-                        if (badCount > 1) {
-                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrorsPlural.text", badCount) + "\n";
-                        } else {
-                            summary += NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.keywordErrors.text", badCount) + "\n";
-                        }
-                        level = KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR;
-                    }
-                    KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "GlobalEditListPanel.addKeywordResults.text"),
-                            summary, level);
-                }
-            }
-        }
-        setFocusOnKeywordTextBox();
-        setButtonStates();
+        addKeywordsAction("", true, true);
     }//GEN-LAST:event_newKeywordsButtonActionPerformed
 
     private void editWordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editWordButtonActionPerformed
-        // TODO add your handling code here:
+        int[] selectedKeywords = keywordTable.getSelectedRows();
+        if (selectedKeywords.length == 1) {
+            Keyword currentKeyword = currentKeywordList.getKeywords().get(selectedKeywords[0]);
+            System.out.println("LITERAL: " + currentKeyword.searchTermIsLiteral());
+            System.out.println("WHOLEWORD: " + currentKeyword.searchTermIsWholeWord());
+            if (addKeywordsAction(currentKeyword.getSearchTerm(), currentKeyword.searchTermIsLiteral(), currentKeyword.searchTermIsWholeWord())) {
+                deleteKeywordAction(selectedKeywords);
+            }
+        }
     }//GEN-LAST:event_editWordButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
