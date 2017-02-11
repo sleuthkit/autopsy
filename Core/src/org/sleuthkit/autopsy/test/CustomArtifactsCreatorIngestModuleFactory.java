@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * attributes with files for test purposes. Uncomment the service provider
  * annotation to activate this test fixture.
  */
-@ServiceProvider(service = IngestModuleFactory.class)
+//@ServiceProvider(service = IngestModuleFactory.class)
 public final class CustomArtifactsCreatorIngestModuleFactory  extends IngestModuleFactoryAdapter {
     
     @Override
