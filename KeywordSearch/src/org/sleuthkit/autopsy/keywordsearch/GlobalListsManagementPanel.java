@@ -239,7 +239,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             }
         });
 
-        copyListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/save16.png"))); // NOI18N
+        copyListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/add16.png"))); // NOI18N
         copyListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.copyListButton.text")); // NOI18N
         copyListButton.setIconTextGap(2);
         copyListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
