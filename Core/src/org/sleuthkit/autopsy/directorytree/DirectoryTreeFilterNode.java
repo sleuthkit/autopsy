@@ -134,8 +134,8 @@ class DirectoryTreeFilterNode extends FilterNode {
             }
 
             // 'run ingest' action and 'file search' action are added only if the
-            // selected node is img node or a root level virtual directory.
-            if (img != null || isRootVD) {
+            // selected node is img node or a root level virtual directory or a directory.
+            if (img != null || isRootVD || dir != null) {
                 actions.add(new FileSearchAction(
                         NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
                 actions.add(new AbstractAction(
