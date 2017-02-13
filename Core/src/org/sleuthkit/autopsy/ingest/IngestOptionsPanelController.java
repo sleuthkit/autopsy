@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.modules.interestingitems;
+package org.sleuthkit.autopsy.ingest;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -28,20 +28,20 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 
 @OptionsPanelController.TopLevelRegistration(
-        categoryName = "#OptionsCategory_Name_InterestingItemDefinitions",
-        iconBase = "org/sleuthkit/autopsy/images/interesting_item_32x32.png",
-        keywords = "#OptionsCategory_Keywords_InterestingItemDefinitions",
-        keywordsCategory = "InterestingItemDefinitions",
-        position = 9
-)
-public final class InterestingItemDefsOptionsPanelController extends OptionsPanelController {
+        categoryName = "#OptionsCategory_Name_IngestOptions",
+        iconBase = "org/sleuthkit/autopsy/images/file_ingest_filter32x32.png",
+        position = 2,
+        keywords = "#OptionsCategory_Keywords_IngestOptions",
+        keywordsCategory = "IngestOptions")
 
-    private FilesSetDefsPanel panel;
+public class IngestOptionsPanelController extends OptionsPanelController {
+
+    private IngestOptionsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
     /**
-     * Component should load its data here.
+     * @inheritDoc
      */
     @Override
     public void update() {
@@ -50,9 +50,27 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
     }
 
     /**
-     * This method is called when both the Ok and Apply buttons are pressed. It
-     * applies to any of the panels that have been opened in the process of
-     * using the options pane.
+     * Get the IngestOptionsPanel which is contained inside this controller.
+     * 
+     * @return panel
+     */
+    private IngestOptionsPanel getPanel() {
+        if (panel == null) {
+            panel = new IngestOptionsPanel();
+            panel.addPropertyChangeListener(new PropertyChangeListener() {
+                @Override
+                public void propertyChange(PropertyChangeEvent evt) {
+                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
+                        changed();
+                    }
+                }
+            });
+        }
+        return panel;
+    }
+
+    /**
+     * @inheritDoc
      */
     @Override
     public void applyChanges() {
@@ -68,64 +86,59 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
     }
 
     /**
-     * This method is called when the Cancel button is pressed. It applies to
-     * any of the panels that have been opened in the process of using the
-     * options pane.
+     * @inheritDoc
      */
     @Override
     public void cancel() {
-        // need not do anything special, if no changes have been persisted yet
-    }
-
-    @Override
-    public boolean isValid() {
-        return true;
+        getPanel().cancel();
     }
 
     /**
-     * Used to determine whether any changes have been made to this controller's
-     * panel.
-     *
-     * @return Whether or not a change has been made.
+     * @inheritDoc
+     */
+    @Override
+    public boolean isValid() {
+        return getPanel().valid();
+    }
+
+    /**
+     * @inheritDoc
      */
     @Override
     public boolean isChanged() {
         return changed;
     }
 
+    /**
+     * @inheritDoc
+     */
+    @Override
+    public JComponent getComponent(Lookup lkp) {
+        return getPanel();
+    }
+
+    /**
+     * @inheritDoc
+     */
     @Override
     public HelpCtx getHelpCtx() {
         return null;
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
-    public JComponent getComponent(Lookup masterLookup) {
-        return getPanel();
+    public void addPropertyChangeListener(PropertyChangeListener pl) {
+        pcs.addPropertyChangeListener(pl);
     }
 
+    /**
+     * @inheritDoc
+     */
     @Override
-    public void addPropertyChangeListener(PropertyChangeListener l) {
-        pcs.addPropertyChangeListener(l);
-    }
-
-    @Override
-    public void removePropertyChangeListener(PropertyChangeListener l) {
-        pcs.removePropertyChangeListener(l);
-    }
-
-    private FilesSetDefsPanel getPanel() {
-        if (panel == null) {
-            panel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.INTERESTING_FILE_SETS);
-            panel.addPropertyChangeListener(new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
-                        changed();
-                    }
-                }
-            });
-        }
-        return panel;
+    public void removePropertyChangeListener(PropertyChangeListener pl) {
+        pcs.removePropertyChangeListener(pl);
     }
 
     void changed() {
@@ -135,5 +148,4 @@ public final class InterestingItemDefsOptionsPanelController extends OptionsPane
         }
         pcs.firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }
-
 }

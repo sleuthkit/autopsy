@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +32,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
 
 /**
@@ -43,7 +43,7 @@ final class AddFileTypeSignatureDialog extends JDialog {
 
     private static final long serialVersionUID = 1L;
     private final AddFileTypeSignaturePanel addFileTypeSigPanel;
-    private static final String TITLE = NbBundle.getMessage(RunIngestModulesDialog.class, "IngestDialog.title.text");
+    private static final String TITLE = NbBundle.getMessage(RunIngestModulesAction.class, "RunIngestModulesAction.name");
     private Signature signature;
     private BUTTON_PRESSED result;
 

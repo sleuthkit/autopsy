@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
-import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.sql.ResultSet;
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
@@ -40,7 +38,7 @@ import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
-import org.sleuthkit.autopsy.ingest.RunIngestModulesDialog;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
@@ -101,22 +99,14 @@ public class ImageNode extends AbstractContentNode<Image> {
         "ImageNode.getActions.openFileSearchByAttr.text=Open File Search by Attributes",})
     public Action[] getActions(boolean context) {
 
-        List<Action> actionsList = new ArrayList<Action>();
+        List<Action> actionsList = new ArrayList<>();
         for (Action a : super.getActions(true)) {
             actionsList.add(a);
         }
         actionsList.addAll(ExplorerNodeActionVisitor.getActions(content));
         actionsList.add(new FileSearchAction(
                 Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
-        actionsList.add(new AbstractAction(
-                Bundle.ImageNode_action_runIngestMods_text()) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                final RunIngestModulesDialog ingestDialog = new RunIngestModulesDialog(Collections.<Content>singletonList(content));
-                ingestDialog.display();
-            }
-        });
-
+        actionsList.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
         actionsList.add(new NewWindowViewAction(
                 NbBundle.getMessage(this.getClass(), "ImageNode.getActions.viewInNewWin.text"), this));
         return actionsList.toArray(new Action[0]);

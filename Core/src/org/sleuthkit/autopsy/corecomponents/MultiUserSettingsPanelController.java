@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Multi_User_Settings",
         iconBase = "org/sleuthkit/autopsy/images/User-Group-icon-green32.png",
-        position = 2,
+        position = 3,
         keywords = "#OptionsCategory_Keywords_Multi_User_Options",
         keywordsCategory = "Multi-user")
 public final class MultiUserSettingsPanelController extends OptionsPanelController {

@@ -31,7 +31,7 @@ import org.openide.util.Lookup;
         iconBase = "org/sleuthkit/autopsy/casemodule/services/tag-options-panel-icon.png",
         keywords = "#OptionsCategory_TagNames",
         keywordsCategory = "CustomTagNames",
-        position = 8
+        position = 10
 )
 public final class TagsOptionsPanelController extends OptionsPanelController {
 

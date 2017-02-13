@@ -84,6 +84,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         initComponents();
         customizeComponents();
         fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
+        this.setName("Configure Ingest Modules");
     }
 
     /**
@@ -184,7 +185,11 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
          */
         pastJobsButton.setEnabled(!dataSources.isEmpty() && !ingestJobs.isEmpty());
     }
-
+    
+    void setPastJobsButtonVisible(boolean isVisible){
+        pastJobsButton.setVisible(isVisible);
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
