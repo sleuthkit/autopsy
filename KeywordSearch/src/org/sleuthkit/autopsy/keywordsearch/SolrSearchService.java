@@ -196,7 +196,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
             currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
-            currentVersionIndex.setNewIndex(true);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             progressUnitsCompleted++;

@@ -806,8 +806,6 @@ public class Server {
         }
 
         try {
-            String coreName = getCoreName(index, theCase);
-
             File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
             if (!dataDir.exists()) {
                 dataDir.mkdirs();
@@ -818,6 +816,7 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.msg"));
             }
 
+            String coreName = getCoreName(theCase);
             if (!coreIsLoaded(coreName)) {
                 /*
                  * The core either does not exist or it is not loaded. Make a
@@ -861,27 +860,18 @@ public class Server {
     /**
      * Get or create a sanitized Solr core name. Stores the core name if needed.
      *
-     * @param index   Index object
      * @param theCase Case object
      *
      * @return The sanitized Solr core name
      */
-    private String getCoreName(Index index, Case theCase) throws CaseMetadata.CaseMetadataException {
-        String coreName = "";
-        if (index.isNewIndex()) {
+    private String getCoreName(Case theCase) throws CaseMetadata.CaseMetadataException {
+        // get core name
+        String coreName = theCase.getTextIndexName();
+        if (coreName == null || coreName.isEmpty()) {
             // come up with a new core name
             coreName = createCoreName(theCase.getName());
             // store the new core name
             theCase.setTextIndexName(coreName);
-        } else {
-            // get core name
-            coreName = theCase.getTextIndexName();
-            if (coreName.isEmpty()) {
-                // come up with a new core name
-                coreName = createCoreName(theCase.getName());
-                // store the new core name
-                theCase.setTextIndexName(coreName);
-            }
         }
         return coreName;
     }
