@@ -57,7 +57,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
             @Override
             public void actionPerformed(ActionEvent e) {
                 String toDelete = editListPanel.getCurrentKeywordList().getName();
-                if (copyAction()){
+                if (copyAction()) {
                     deleteAction(toDelete);
                     listsManagementPanel.resync();
                 }
@@ -80,27 +80,30 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
 
     /**
      * Delete the specified Keyword List
-     * 
+     *
      * @param toDelete - the list to delete
      */
     private void deleteAction(String toDelete) {
-        editListPanel.setCurrentKeywordList(null);
-        editListPanel.setButtonStates();
         XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
         deleter.deleteList(toDelete);
+        editListPanel.setCurrentKeywordList(null);
+        editListPanel.setButtonStates();
+        listsManagementPanel.setButtonStates();
     }
-/**
- * Duplicates the selected keyword list, returns whether or not the keyword list was duplicated.
- * 
- * @return true or false
- */
+
+    /**
+     * Duplicates the selected keyword list, returns whether or not the keyword
+     * list was duplicated.
+     *
+     * @return true or false
+     */
     private boolean copyAction() {
         boolean shouldAdd = false;
         final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
                 "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
         KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
 
-        List<Keyword> keywords = new ArrayList();
+        List<Keyword> keywords = new ArrayList<>();
         keywords.addAll(currentKeywordList.getKeywords());
 
         String listName = (String) JOptionPane.showInputDialog(
@@ -120,7 +123,6 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
             KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
             return shouldAdd;
         }
-
         if (writer.listExists(listName)) {
             boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
                     KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);

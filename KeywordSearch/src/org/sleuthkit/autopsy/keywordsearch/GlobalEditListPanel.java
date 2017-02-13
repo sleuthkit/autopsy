@@ -82,8 +82,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             public void valueChanged(ListSelectionEvent e) {
                 if (lsm.isSelectionEmpty() || currentKeywordList.isEditable() || IngestManager.getInstance().isIngestRunning()) {
                     deleteWordButton.setEnabled(false);
+                    editWordButton.setEnabled(false);
                 } else {
                     deleteWordButton.setEnabled(true);
+                    editWordButton.setEnabled(true);
                 }
             }
         });
@@ -108,18 +110,18 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         boolean isListSelected = currentKeywordList != null;
 
         // items that only need a selected list
-        boolean canEditList = ((isListSelected == true) && (isIngestRunning == false));
+        boolean canEditList = isListSelected && !isIngestRunning;
         ingestMessagesCheckbox.setEnabled(canEditList);
         ingestMessagesCheckbox.setSelected(currentKeywordList != null && currentKeywordList.getIngestMessages());
 
         // items that need an unlocked list w/out ingest running
-        boolean isListLocked = ((isListSelected == false) || (currentKeywordList.isEditable()));
-        boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
+        boolean canAddWord = canEditList && !currentKeywordList.isEditable();
         newKeywordsButton.setEnabled(canAddWord);
 
         // items that need a non-empty list
         if ((currentKeywordList == null) || (currentKeywordList.getKeywords().isEmpty())) {
             deleteWordButton.setEnabled(false);
+            editWordButton.setEnabled(false);
         }
     }
 
@@ -373,8 +375,6 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         int[] selectedKeywords = keywordTable.getSelectedRows();
         if (selectedKeywords.length == 1) {
             Keyword currentKeyword = currentKeywordList.getKeywords().get(selectedKeywords[0]);
-            System.out.println("LITERAL: " + currentKeyword.searchTermIsLiteral());
-            System.out.println("WHOLEWORD: " + currentKeyword.searchTermIsWholeWord());
             if (addKeywordsAction(currentKeyword.getSearchTerm(), currentKeyword.searchTermIsLiteral(), currentKeyword.searchTermIsWholeWord())) {
                 deleteKeywordAction(selectedKeywords);
             }

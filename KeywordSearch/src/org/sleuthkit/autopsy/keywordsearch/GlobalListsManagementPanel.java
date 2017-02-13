@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.awt.EventQueue;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,11 +68,31 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         listsTable.setCellSelectionEnabled(false);
         listsTable.setRowSelectionAllowed(true);
         tableModel.resync();
+        setButtonStates();
 
         listsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 globalListSettingsPanel.setFocusOnKeywordTextBox();
+                setButtonStates();
+            }
+        });
+
+        IngestManager.getInstance().addIngestJobEventListener(new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                Object source = evt.getSource();
+                if (source instanceof String && ((String) source).equals("LOCAL")) { //NON-NLS
+                    EventQueue.invokeLater(() -> {
+                        globalListSettingsPanel.setFocusOnKeywordTextBox();
+                        setButtonStates();
+                        if (listsTable.getRowCount() > 0) {
+                            listsTable.getSelectionModel().setSelectionInterval(0, 0);
+                        } else {
+                            listsTable.getSelectionModel().clearSelection();
+                        }
+                    });
+                }
             }
         });
         /*
@@ -93,11 +116,11 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     void addDeleteButtonActionPerformed(ActionListener l) {
         deleteListButton.addActionListener(l);
     }
-    
+
     void addRenameButtonActionPerformed(ActionListener l) {
         renameListButton.addActionListener(l);
     }
-    
+
     void addCopyButtonActionPerformed(ActionListener l) {
         copyListButton.addActionListener(l);
     }
@@ -143,7 +166,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             writer.addList(listName, new ArrayList<Keyword>());
             if (!(keywordList == null)) {
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-               //java.awt.event.ActionEvent evt deleteListButtonActionPerformed();
             }
         }
 
@@ -160,27 +182,20 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }
 
     void setButtonStates() {
-        String currentKeywordList = null;  //WJS-TODO this needs to get a list from somewhere
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
-        boolean isListSelected = currentKeywordList != null;
-
+        boolean isListSelected = !listsTable.getSelectionModel().isSelectionEmpty();
+        boolean canEditList = isListSelected && !isIngestRunning;
+        // items that only need ingest to not be running
+        importButton.setEnabled(!isIngestRunning);
+        
+        // items that need an unlocked list w/out ingest running 
+        deleteListButton.setEnabled(canEditList);
+        renameListButton.setEnabled(canEditList);
+        importButton.setEnabled(canEditList);
+        
         // items that only need a selected list
-        boolean canEditList = ((isListSelected == true) && (isIngestRunning == false));
-
-        // items that need an unlocked list w/out ingest running || (currentKeywordList.isEditable())
-        boolean isListLocked = ((isListSelected == false));
-        boolean canAddWord = isListSelected && !isIngestRunning && !isListLocked;
-        deleteListButton.setEnabled(canAddWord);
-
-        // items that need a non-empty list|| (currentKeywordList.getKeywords().isEmpty())
-        if ((currentKeywordList == null)) {
-            copyListButton.setEnabled(false);
-            exportButton.setEnabled(false);
-        } else {
-            copyListButton.setEnabled(true);
-            exportButton.setEnabled(true);
-            // We do not set deleteWordButton because it will be set by the list select model code when a word is selected.
-        }
+        copyListButton.setEnabled(isListSelected);
+        exportButton.setEnabled(isListSelected);
     }
 
     /**
@@ -458,8 +473,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         final String EXTENSION = "xml"; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
                 NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.fileFilterLabel"), EXTENSION);
-        chooser.setFileFilter(filter);//currentKeywordList.getName()
-        chooser.setSelectedFile(new File("nameWJS-TODO"));
+        chooser.setFileFilter(filter);
+        String listName = listsTable.getValueAt(listsTable.getSelectedRow(), 0).toString();
+
+        chooser.setSelectedFile(new File(listName));
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 
         int returnVal = chooser.showSaveDialog(this);
@@ -488,8 +505,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
             XmlKeywordSearchList reader = XmlKeywordSearchList.getCurrent();
 
-            List<KeywordList> toWrite = new ArrayList<>();//currentKeywordList.getName()
-            toWrite.add(reader.getList("nameWJS-TODO"));
+            List<KeywordList> toWrite = new ArrayList<>();
+            toWrite.add(reader.getList(listName));
             final XmlKeywordSearchList exporter = new XmlKeywordSearchList(fileAbs);
             boolean written = exporter.saveLists(toWrite);
             if (written) {
