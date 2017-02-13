@@ -23,7 +23,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -128,9 +130,14 @@ public final class ExtractAction extends AbstractAction {
                 }
             }
 
+            /* get the unique set of files from the list. A user once reported extraction taking
+             * days because it was extracting the same PST file 20k times.  They selected 20k 
+             * email messages in the tree and chose to extract them. */
+            Set<AbstractFile> uniqueFiles = new HashSet<>(selectedFiles);
+            
             // make a task for each file
             ArrayList<FileExtractionTask> fileExtractionTasks = new ArrayList<>();
-            for (AbstractFile source : selectedFiles) {
+            for (AbstractFile source : uniqueFiles) {
                 // If there is an attribute name, change the ":". Otherwise the extracted file will be hidden
                 fileExtractionTasks.add(new FileExtractionTask(source, new File(destinationFolder, source.getId() + "-" + FileUtil.escapeFileName(source.getName()))));
             }
@@ -151,10 +158,8 @@ public final class ExtractAction extends AbstractAction {
             }
 
             /*
-             * @@@ Problems with this code: - does not prevent us from having
-             * multiple files with the same target name in the task list (in
-             * which case, the first ones are overwritten) Unique Id was added
-             * to set of names before calling this method to deal with that.
+             * This code assumes that each destination is unique.  We previously satisfied
+             * that by adding the unique ID.
              */
             if (task.destination.exists()) {
                 if (JOptionPane.showConfirmDialog((Component) e.getSource(),
