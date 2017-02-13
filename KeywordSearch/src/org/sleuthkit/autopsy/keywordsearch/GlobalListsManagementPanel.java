@@ -90,22 +90,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 }
             }
         });
-        /*
-         * XmlKeywordSearchList.getCurrent().addPropertyChangeListener(new
-         * PropertyChangeListener() {
-         *
-         * @Override public void propertyChange(PropertyChangeEvent evt) { if
-         * (evt.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_ADDED.toString()))
-         * { tableModel.resync(); for(int i = 0; i<listsTable.getRowCount();
-         * i++) { String name = (String) listsTable.getValueAt(i, 0);
-         * if(((String) evt.getNewValue()).equals(name)) {
-         * listsTable.getSelectionModel().setSelectionInterval(i, i); } } } else
-         * if
-         * (evt.getPropertyName().equals(XmlKeywordSearchList.ListsEvt.LIST_DELETED.toString()))
-         * { tableModel.resync(); if(listsTable.getRowCount() > 0) {
-         * listsTable.getSelectionModel().setSelectionInterval(0, 0); } else {
-         * listsTable.getSelectionModel().clearSelection(); } } } });
-         */
     }
 
     void addDeleteButtonActionPerformed(ActionListener l) {
