@@ -86,11 +86,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                     EventQueue.invokeLater(() -> {
                         globalListSettingsPanel.setFocusOnKeywordTextBox();
                         setButtonStates();
-                        if (listsTable.getRowCount() > 0) {
-                            listsTable.getSelectionModel().setSelectionInterval(0, 0);
-                        } else {
-                            listsTable.getSelectionModel().clearSelection();
-                        }
                     });
                 }
             }
@@ -125,13 +120,13 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         copyListButton.addActionListener(l);
     }
 
-    private void doFileSetsDialog(String keywordList) {
+    /**
+     * Opens the dialogue for creating a new keyword list and adds it to the table.
+     */
+    private void newKeywordListAction() {
         XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
         String listName = "";
-
-        if (keywordList != null) {
-            listName = keywordList;
-        }
+       
 
         listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                 NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, listName);
@@ -140,7 +135,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             return;
         }
         boolean shouldAdd = false;
-        boolean shouldReplace = !(keywordList == null);
         if (writer.listExists(listName)) {
             if (writer.getList(listName).isEditable()) {
                 boolean replace = KeywordSearchUtil.displayConfirmDialog(
@@ -164,9 +158,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         }
         if (shouldAdd) {
             writer.addList(listName, new ArrayList<Keyword>());
-            if (!(keywordList == null)) {
-                firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-            }
         }
 
         tableModel.resync();
@@ -177,10 +168,11 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 listsTable.getSelectionModel().addSelectionInterval(i, i);
             }
         }
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        globalListSettingsPanel.setFocusOnKeywordTextBox();
     }
 
+    /**
+     * Enables and disables buttons on this panel based on the current state.
+     */
     void setButtonStates() {
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
         boolean isListSelected = !listsTable.getSelectionModel().isSelectionEmpty();
@@ -348,8 +340,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }// </editor-fold>//GEN-END:initComponents
 
     private void newListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newListButtonActionPerformed
-        String TODOkeywordList = null;
-        doFileSetsDialog(TODOkeywordList);
+        newKeywordListAction();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         globalListSettingsPanel.setFocusOnKeywordTextBox();
     }//GEN-LAST:event_newListButtonActionPerformed
