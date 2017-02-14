@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.test;
 
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
@@ -28,7 +30,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * attributes with files for test purposes. Uncomment the service provider
  * annotation to activate this test fixture.
  */
-@ServiceProvider(service = IngestModuleFactory.class)
+//@ServiceProvider(service = IngestModuleFactory.class)
 public final class CustomArtifactsCreatorIngestModuleFactory  extends IngestModuleFactoryAdapter {
     
     @Override

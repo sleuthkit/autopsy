@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
@@ -148,7 +149,7 @@ public class ArtifactStringContent implements StringContent {
                     buffer.append("</td>"); //NON-NLS
 
                     /*
-                     * Attribute source modules column.
+                     * Attribute sources column.
                      */
                     buffer.append("<td>"); //NON-NLS
                     buffer.append(StringUtils.join(attr.getSources(), ", "));

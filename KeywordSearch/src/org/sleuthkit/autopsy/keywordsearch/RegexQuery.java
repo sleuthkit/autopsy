@@ -82,6 +82,9 @@ final class RegexQuery implements KeywordSearchQuery {
     private boolean escaped;
     private String escapedQuery;
 
+    private final int MIN_EMAIL_ADDR_LENGTH = 8;
+    private final Pattern INVALID_EMAIL_PATTERN = Pattern.compile(".*\\.(dll|txt|exe|jpg|xml)$");
+
     private final ListMultimap<Keyword, KeywordHit> hitsMultiMap = ArrayListMultimap.create();
 
     // Lucene regular expressions do not support the following Java predefined
@@ -255,6 +258,14 @@ final class RegexQuery implements KeywordSearchQuery {
                 String hit = hitMatcher.group();
 
                 offset = hitMatcher.end();
+
+                if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL) {
+                    // Reduce false positives by eliminating email address hits that are either
+                    // too short or end with well known file externsions.
+                    if (hit.length() < MIN_EMAIL_ADDR_LENGTH || INVALID_EMAIL_PATTERN.matcher(hit).matches()) {
+                        break;
+                    }
+                }
 
                 /*
                  * If searching for credit card account numbers, do a Luhn check
