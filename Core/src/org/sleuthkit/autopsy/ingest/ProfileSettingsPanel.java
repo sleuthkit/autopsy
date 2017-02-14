@@ -28,7 +28,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
+import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
@@ -49,7 +49,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     })
 
     private final DefaultListModel<IngestProfile> profilesListModel;
-    private TreeMap<String, IngestProfile> profiles;
+    private Map<String, IngestProfile> profiles;
     private ProfilePanel panel;
     private boolean filtersShouldBeRefreshed;
 
@@ -386,7 +386,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     public void load() {
         int currentIndex = this.profileList.getSelectedIndex();
         this.profilesListModel.clear();
-        this.profiles = new IngestProfileMap().getIngestProfileMap();
+        this.profiles = (TreeMap<String, IngestProfile>) new IngestProfiles().getIngestProfileMap();
         for (IngestProfile profile : this.profiles.values()) {
             profilesListModel.addElement(profile);
         }
@@ -422,7 +422,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed"));
                 }
                 selectedModulesArea.setText("");
-                for (String moduleName : selectedProfile.getModuleNames(IngestProfile.getEnabledModulesKey())) {
+                for (String moduleName : IngestJobSettings.getEnabledModules(selectedProfile.getName(), "")) {
                     selectedModulesArea.append(moduleName + "\n");
                 }
 

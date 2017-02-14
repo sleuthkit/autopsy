@@ -38,8 +38,8 @@ import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
+import org.sleuthkit.autopsy.ingest.IngestProfiles;
+import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
 
 /**
@@ -1003,7 +1003,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void deleteSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSetButtonActionPerformed
         FilesSet selectedSet = this.setsList.getSelectedValue();
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
-            for (IngestProfile profile : new IngestProfileMap().getIngestProfileMap().values()) {
+            for (IngestProfile profile : new IngestProfiles().getIngestProfileMap().values()) {
                 if (profile.getFileIngestFilter().equals(selectedSet.getName())) {
                     MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
                             "FilesSetDefsPanel.ingest.fileFilterInUseError",

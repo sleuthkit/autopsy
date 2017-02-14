@@ -22,20 +22,23 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.TreeMap;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
-public class IngestProfileMap {
+/**
+ * Class for managing the access to the
+ */
+public final class IngestProfiles {
 
     private static final String PROFILE_FOLDER = "IngestProfiles";
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
-    private TreeMap<String, IngestProfile> profileMap = null;
+    private Map<String, IngestProfile> profileMap = null;
     private static final Object PROFILE_LOCK = new Object();
 
     /**
@@ -43,7 +46,7 @@ public class IngestProfileMap {
      *
      * @return profileList
      */
-    public TreeMap<String, IngestProfile> getIngestProfileMap() {
+    public Map<String, IngestProfile> getIngestProfileMap() {
         if (profileMap == null) {
             loadProfileList();
         }
@@ -93,26 +96,17 @@ public class IngestProfileMap {
      * FileIngestFilter. The name can be used to find the ModuleSettings for
      * this profile.
      */
-    public static class IngestProfile {
+    public static final class IngestProfile {
 
         private final String name;
         private final String description;
         private final String fileIngestFilter;
 
         /**
-         * The key for Enabled ingest modules
-         *
-         * @return the ENABLED_MODULES_KEY
-         */
-        static String getEnabledModulesKey() {
-            return IngestJobSettings.getEnabledModulesKey();
-        }
-
-        /**
          * Creates a new IngestProfile
-         * 
-         * @param name - unique name of the profile
-         * @param desc - optional description of profile
+         *
+         * @param name           - unique name of the profile
+         * @param desc           - optional description of profile
          * @param selectedFilter - the File Ingest Filter used for this profile
          */
         IngestProfile(String name, String desc, String selectedFilter) {
@@ -194,46 +188,6 @@ public class IngestProfileMap {
                     newFile = IngestJobSettings.getSavedModuleSettingsFolder(newName + File.separator).toFile();
                     oldFile.renameTo(newFile);
                 }
-            }
-        }
-
-        /**
-         * Gets the module names for a given key.
-         *
-         * @param key The key string.
-         */
-        HashSet<String> getModuleNames(String key) {
-            synchronized (PROFILE_LOCK) {
-                if (ModuleSettings.settingExists(this.getName(), key) == false) {
-                    ModuleSettings.setConfigSetting(this.getName(), key, "");
-                }
-                HashSet<String> moduleNames = new HashSet<>();
-                String modulesSetting = ModuleSettings.getConfigSetting(this.getName(), key);
-                if (!modulesSetting.isEmpty()) {
-                    String[] settingNames = modulesSetting.split(", ");
-                    for (String name : settingNames) {
-                        // Map some old core module names to the current core module names.
-                        switch (name) {
-                            case "Thunderbird Parser": //NON-NLS
-                            case "MBox Parser": //NON-NLS
-                                moduleNames.add("Email Parser"); //NON-NLS
-                                break;
-                            case "File Extension Mismatch Detection": //NON-NLS
-                                moduleNames.add("Extension Mismatch Detector"); //NON-NLS
-                                break;
-                            case "EWF Verify": //NON-NLS
-                            case "E01 Verify": //NON-NLS
-                                moduleNames.add("E01 Verifier"); //NON-NLS
-                                break;
-                            case "Archive Extractor": //NON-NLS
-                                moduleNames.add("Embedded File Extractor"); //NON-NLS
-                                break;
-                            default:
-                                moduleNames.add(name);
-                        }
-                    }
-                }
-                return moduleNames;
             }
         }
 
