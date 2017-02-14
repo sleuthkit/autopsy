@@ -167,6 +167,8 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
             currentChunk.append(readBaseChunk());
             baseChunkSizeChars = currentChunk.length(); //save the base chunk length
             currentWindow.append(readWindow());
+                //add the window text to the current chunk.
+        currentChunk.append(currentWindow);
             if (endOfReaderReached) {
                 /* if we have reached the end of the content,we won't make
                  * another overlapping chunk, so the length of the base chunk
@@ -181,8 +183,7 @@ class Chunker implements Iterator<Chunk>, Iterable<Chunk> {
              * and break any chunking loop in client code. */
             ex = ioEx;
         }
-        //add the window text to the current chunk.
-        currentChunk.append(currentWindow);
+    
         //sanitize the text and return a Chunk object, that includes the base chunk length.
         return new Chunk(currentChunk, baseChunkSizeChars, chunkSizeBytes);
     }
