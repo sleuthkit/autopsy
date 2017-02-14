@@ -47,7 +47,7 @@ public final class IngestProfiles {
     public synchronized static List<IngestProfile> getIngestProfiles() {
         File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
         File[] directoryListing = dir.listFiles();
-        List profileList = new ArrayList<>();
+        List<IngestProfile> profileList = new ArrayList<>();
         if (directoryListing != null) {
             for (File child : directoryListing) {
                 String name = child.getName().split("\\.")[0];
