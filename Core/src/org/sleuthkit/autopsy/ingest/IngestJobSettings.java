@@ -432,7 +432,13 @@ public class IngestJobSettings {
     }
 
     /**
-     * @return the ENABLED_MODULES_KEY
+     * Get a set which contains all the names of enabled modules for the
+     * specified context.
+     *
+     * @param defaultSetting - The default list of module names.
+     * @param context        -the execution context (profile name) to check
+     *
+     * @return the names of the enabled modules
      */
     static HashSet<String> getEnabledModules(String context, String defaultSetting) {
         return getModulesNamesFromSetting(context, ENABLED_MODULES_KEY, defaultSetting);

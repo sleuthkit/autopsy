@@ -67,7 +67,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.text"), null,
                 filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 0);
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null,
-                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 1);        
+                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 1);
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.text"), null,
                 settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), 2);
         //Listener for when tabbed panes are switched, because we can have two file filter definitions panels open at the same time
@@ -84,7 +84,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
                 }
             }
         });
-        
+
         addIngestJobEventsListener();
         enableTabs();
     }
@@ -156,7 +156,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     public void saveSettings() {
         //if a new filter was created in the profilePanel we don't want to save over it accidently
         if (profilePanel.shouldFiltersBeRefreshed()) {
-            filterPanel.load();  
+            filterPanel.load();
         }
         filterPanel.store();
         settingsPanel.store();

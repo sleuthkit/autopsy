@@ -386,9 +386,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     public void load() {
         int currentIndex = this.profileList.getSelectedIndex();
         this.profilesListModel.clear();
-        this.profiles = (TreeMap<String, IngestProfile>) new IngestProfiles().getIngestProfileMap();
-        for (IngestProfile profile : this.profiles.values()) {
+        this.profiles = new TreeMap<String, IngestProfile>();
+        for (IngestProfile profile : new IngestProfiles().getIngestProfiles()) {
             profilesListModel.addElement(profile);
+            profiles.put(profile.getName(), profile);
         }
         if (currentIndex < 0 || currentIndex >= profilesListModel.getSize()) {
             currentIndex = 0;

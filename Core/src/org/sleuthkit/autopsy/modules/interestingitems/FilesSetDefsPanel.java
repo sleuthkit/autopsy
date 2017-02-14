@@ -1003,7 +1003,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     private void deleteSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteSetButtonActionPerformed
         FilesSet selectedSet = this.setsList.getSelectedValue();
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
-            for (IngestProfile profile : new IngestProfiles().getIngestProfileMap().values()) {
+            for (IngestProfile profile : new IngestProfiles().getIngestProfiles()) {
                 if (profile.getFileIngestFilter().equals(selectedSet.getName())) {
                     MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
                             "FilesSetDefsPanel.ingest.fileFilterInUseError",

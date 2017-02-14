@@ -51,7 +51,7 @@ public class IngestOptionsPanelController extends OptionsPanelController {
 
     /**
      * Get the IngestOptionsPanel which is contained inside this controller.
-     * 
+     *
      * @return panel
      */
     private IngestOptionsPanel getPanel() {
