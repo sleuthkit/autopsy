@@ -171,10 +171,10 @@ public final class IngestProfiles {
          * @param profile
          */
         synchronized static void saveProfile(IngestProfile profile) {
-                String context = PROFILE_FOLDER + File.separator + profile.getName();
-                ModuleSettings.setConfigSetting(context, PROFILE_NAME_KEY, profile.getName());
-                ModuleSettings.setConfigSetting(context, PROFILE_DESC_KEY, profile.getDescription());
-                ModuleSettings.setConfigSetting(context, PROFILE_FILTER_KEY, profile.getFileIngestFilter());
+            String context = PROFILE_FOLDER + File.separator + profile.getName();
+            ModuleSettings.setConfigSetting(context, PROFILE_NAME_KEY, profile.getName());
+            ModuleSettings.setConfigSetting(context, PROFILE_DESC_KEY, profile.getDescription());
+            ModuleSettings.setConfigSetting(context, PROFILE_FILTER_KEY, profile.getFileIngestFilter());
         }
     }
 }
