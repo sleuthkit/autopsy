@@ -362,7 +362,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             return;
         }
         if (option == JOptionPane.OK_OPTION) {
-            this.saveSettings();
+            panel.saveSettings();
             load();
         }
 
@@ -370,12 +370,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
     @Override
     public void saveSettings() {
-       this.store();
     }
 
     @Override
     public void store() {
-     panel.saveSettings();
     }
 
     /**
