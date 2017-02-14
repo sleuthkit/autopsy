@@ -28,7 +28,7 @@ import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
+import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSet;
 import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
 
@@ -49,7 +49,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     })
 
     private final DefaultListModel<IngestProfile> profilesListModel;
-    private TreeMap<String, IngestProfile> profiles;
+    private Map<String, IngestProfile> profiles;
     private ProfilePanel panel;
     private boolean filtersShouldBeRefreshed;
 
@@ -63,6 +63,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
         ingestWarningLabel.setVisible(false);
+        editProfileButton.setEnabled(false);
+        deleteProfileButton.setEnabled(false);
     }
 
     /**
@@ -360,6 +362,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
+
             // While adding new profile(selectedPRofile == null), if a profile with same name already exists, do not add to the profiles hashMap.
             // In case of editing an existing profile(selectedProfile != null), following check is not performed.
             if (this.profiles.containsKey(panel.getProfileName()) && selectedProfile == null) {
@@ -389,9 +392,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     public void load() {
         int currentIndex = this.profileList.getSelectedIndex();
         this.profilesListModel.clear();
-        this.profiles = new IngestProfileMap().getIngestProfileMap();
-        for (IngestProfile profile : this.profiles.values()) {
+        this.profiles = new TreeMap<>();
+        for (IngestProfile profile : IngestProfiles.getIngestProfiles()) {
             profilesListModel.addElement(profile);
+            profiles.put(profile.getName(), profile);
         }
         if (currentIndex < 0 || currentIndex >= profilesListModel.getSize()) {
             currentIndex = 0;
@@ -413,6 +417,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             if (selectedProfile != null) {
                 profileDescArea.setText(selectedProfile.getDescription());
                 filterNameText.setText(selectedProfile.getFileIngestFilter());
+                editProfileButton.setEnabled(true);
+                deleteProfileButton.setEnabled(true);
                 try {
                     Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance().getCustomFileIngestFilters();
                     for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
@@ -423,9 +429,13 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed"));
                 }
                 selectedModulesArea.setText("");
-                for (String moduleName : selectedProfile.getModuleNames(IngestProfile.getEnabledModulesKey())) {
+                for (String moduleName : IngestJobSettings.getEnabledModules(selectedProfile.getName(), "")) {
                     selectedModulesArea.append(moduleName + "\n");
                 }
+
+            } else {
+                editProfileButton.setEnabled(false);
+                deleteProfileButton.setEnabled(false);
             }
         }
     }
