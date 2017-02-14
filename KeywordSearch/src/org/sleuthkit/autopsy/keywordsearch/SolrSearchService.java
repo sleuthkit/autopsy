@@ -184,7 +184,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progress = context.getProgressIndicator();
         int totalNumProgressUnits = 8;
-        int progressUnitsCompleted = 1;
+        int progressUnitsCompleted = 0;
     
         List<Index> indexes = new ArrayList<>();
         try {
@@ -311,12 +311,23 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         } catch (IOException ex) {
                             logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
                         }
+                        return;
                     }
                     
                     // add current index to the list of indexes that exist for this case
                     indexes.add(currentVersionIndex);
                 }
             }
+        }
+
+
+        try {
+            // update text index metadata file
+            if (!indexes.isEmpty()) {
+                IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), indexes);
+            }
+        } catch (IndexMetadata.TextIndexMetadataException ex) {
+            throw new AutopsyServiceException("Failed to save Solr core info in text index metadata file", ex);
         }
 
         // open core
@@ -326,17 +337,6 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
         } 
-
-        try {
-            // update text index metadata file
-            if (!indexes.isEmpty()) {
-                // ELTODO REMOVE
-                List<Index> FAKEindexes = new ArrayList<>();
-                IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), FAKEindexes);
-            }
-        } catch (IndexMetadata.TextIndexMetadataException ex) {
-            throw new AutopsyServiceException("Failed to save Solr core info in text index metadata file", ex);
-        }
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }

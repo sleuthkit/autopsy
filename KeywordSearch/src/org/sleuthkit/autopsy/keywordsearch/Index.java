@@ -26,14 +26,25 @@ import org.sleuthkit.autopsy.coreutils.UNCPathUtilities;
  * This class encapsulates KWS index data.
  */
 final class Index {
-    
+
     private final String indexPath;
     private final String schemaVersion;
     private final String solrVersion;
     private final String indexName;
     private static final String DEFAULT_CORE_NAME = "text_index"; //NON-NLS
     private final UNCPathUtilities uncPathUtilities = new UNCPathUtilities();
-    
+
+    /**
+     * Constructs a representation of a text index.
+     *
+     * @param indexPath     The path to the index.
+     * @param solrVersion   The Solr version of the index.
+     * @param schemaVersion The Solr schema version of the index.
+     * @param coreName      The core name, may be the empty string or null if
+     *                      the corename should be generated.
+     * @param caseName      The name of the case, ignored if coreName does not
+     *                      need to be generated.
+     */
     Index(String indexPath, String solrVersion, String schemaVersion, String coreName, String caseName) {
         this.indexPath = convertPathToUNC(indexPath);
         this.solrVersion = solrVersion;
@@ -44,7 +55,7 @@ final class Index {
         }
         this.indexName = coreName;
     }
-    
+
     /**
      * Create and sanitize a core name.
      *
@@ -53,19 +64,20 @@ final class Index {
      * @return The sanitized Solr core name
      */
     private String createCoreName(String caseName) {
+        String coreName = sanitizeCoreName(caseName);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
-        String coreName = caseName + "_" + dateFormat.format(date);
-        return sanitizeCoreName(coreName);
+        return coreName + "_" + dateFormat.format(date);
     }
-    
+
     /**
      * Sanitizes the case name for Solr cores.
      *
      * Solr:
      * http://stackoverflow.com/questions/29977519/what-makes-an-invalid-core-name
-     * may not be / \ :
-     * Starting Solr6: core names must consist entirely of periods, underscores, hyphens, and alphanumerics as well not start with a hyphen. may not contain space characters.
+     * may not be / \ : Starting Solr6: core names must consist entirely of
+     * periods, underscores, hyphens, and alphanumerics as well not start with a
+     * hyphen. may not contain space characters.
      *
      * @param coreName A candidate core name.
      *
@@ -83,7 +95,7 @@ final class Index {
 
         // Remove spaces / \ : ? ' "
         result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
-        
+
         // Make it all lowercase
         result = result.toLowerCase();
 
@@ -100,9 +112,6 @@ final class Index {
     }
 
     String convertPathToUNC(String indexDir) {
-        if (uncPathUtilities == null) {
-            return indexDir;
-        }
         // if we can check for UNC paths, do so, otherwise just return the indexDir
         String result = uncPathUtilities.mappedDriveToUNC(indexDir);
         if (result == null) {
