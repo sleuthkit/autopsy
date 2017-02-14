@@ -38,9 +38,9 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> panels;
 
     /**
-     * Gets the list of panels used by this wizard for iterating over. 
+     * Gets the list of panels used by this wizard for iterating over.
      * Constructing it when it is null.
-     * 
+     *
      * @return panels - the list of of WizardDescriptor panels
      */
     private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> getPanels() {
@@ -80,7 +80,6 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
         return index + 1 + ". from " + getPanels().size();
     }
 
-   
     @Override
     public boolean hasNext() {
         return (index < getPanels().size() - 1) && !current().isFinishPanel();

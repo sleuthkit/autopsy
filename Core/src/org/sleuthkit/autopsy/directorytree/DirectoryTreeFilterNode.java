@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -72,7 +72,7 @@ class DirectoryTreeFilterNode extends FilterNode {
             if (file != null) {
                 try {
                     final int numChildren = file.getChildrenCount();
-                    
+
                     // left-to-right marks here are necessary to keep the count and parens together
                     // for mixed right-to-left and left-to-right names
                     name = name + " \u200E(\u200E" + numChildren + ")\u200E";

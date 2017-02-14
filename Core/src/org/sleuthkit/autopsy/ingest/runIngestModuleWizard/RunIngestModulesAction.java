@@ -39,29 +39,29 @@ import org.sleuthkit.datamodel.Directory;
  * modules.
  */
 public final class RunIngestModulesAction extends AbstractAction {
-   
+
     @Messages("RunIngestModulesAction.name=Run Ingest Modules")
-    
+
     //'dialog' context name required so existing settings do not need to be reconfigured 
     private static final String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
 
     /**
-     * Returns the name of the default context which will be used when profiles are not available.
-     * 
+     * Returns the name of the default context which will be used when profiles
+     * are not available.
+     *
      * @return the DEFAULT_CONTEXT
      */
     static String getDefaultContext() {
         return DEFAULT_CONTEXT;
     }
 
-   
     private final List<Content> dataSources = new ArrayList<>();
     private final IngestJobSettings.IngestType ingestType;
-    
+
     /**
-     * Creates an action which will make a run ingest modules wizard when it 
-     * is performed.
-     * 
+     * Creates an action which will make a run ingest modules wizard when it is
+     * performed.
+     *
      * @param dataSources - the data sources you want to run ingest on
      */
     public RunIngestModulesAction(List<Content> dataSources) {
@@ -69,11 +69,11 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.dataSources.addAll(dataSources);
         this.ingestType = IngestJobSettings.IngestType.ALL_MODULES;
     }
-    
+
     /**
-     * Creates an action which will make a run ingest modules wizard when it 
-     * is performed.
-     * 
+     * Creates an action which will make a run ingest modules wizard when it is
+     * performed.
+     *
      * @param dir - the directory you want to run ingest on
      */
     public RunIngestModulesAction(Directory dir) {
@@ -81,6 +81,7 @@ public final class RunIngestModulesAction extends AbstractAction {
         this.dataSources.add(dir);
         this.ingestType = IngestJobSettings.IngestType.FILES_ONLY;
     }
+
     /**
      * Opens a run ingest modules wizard with the list of data sources.
      *
@@ -92,9 +93,9 @@ public final class RunIngestModulesAction extends AbstractAction {
         // {0} will be replaced by WizardDescriptor.Panel.getComponent().getName()
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle(Bundle.RunIngestModulesAction_name());
-        
+
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
-            String executionContext = (String)wiz.getProperty("executionContext"); //NON-NLS 
+            String executionContext = (String) wiz.getProperty("executionContext"); //NON-NLS 
             IngestJobSettings ingestJobSettings = new IngestJobSettings(executionContext, this.ingestType);
             showWarnings(ingestJobSettings);
             IngestManager.getInstance().queueIngestJob(this.dataSources, ingestJobSettings);
@@ -103,8 +104,8 @@ public final class RunIngestModulesAction extends AbstractAction {
 
     /**
      * Display any warnings that the ingestJobSettings have.
-     * 
-     * @param ingestJobSettings 
+     *
+     * @param ingestJobSettings
      */
     private static void showWarnings(IngestJobSettings ingestJobSettings) {
         List<String> warnings = ingestJobSettings.getWarnings();

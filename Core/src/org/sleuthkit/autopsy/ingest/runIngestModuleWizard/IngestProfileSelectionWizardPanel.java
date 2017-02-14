@@ -60,7 +60,7 @@ class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePa
         }
         return component;
     }
-    
+
     @Override
     public HelpCtx getHelp() {
         // Show no Help button for this panel:

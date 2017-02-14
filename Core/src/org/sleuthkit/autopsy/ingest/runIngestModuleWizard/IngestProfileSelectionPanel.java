@@ -64,9 +64,10 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         customizePanel();
     }
 
-    private void customizePanel(){
-       this.setName(Bundle.IngestProfileSelectionPanel_name());
+    private void customizePanel() {
+        this.setName(Bundle.IngestProfileSelectionPanel_name());
     }
+
     /**
      * Returns the profile that is currently selected in this panel
      *
