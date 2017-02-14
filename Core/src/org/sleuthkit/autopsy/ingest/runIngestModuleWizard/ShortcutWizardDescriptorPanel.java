@@ -21,44 +21,48 @@ package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 import org.openide.WizardDescriptor;
 
 /**
- * An abstract class providing a methods which can be checked by 
- * the iterator containing panels of this type. So that Wizards containing these
- * panels can skip panels, but still call necessary methods of those panels.
+ * An abstract class providing a methods which can be checked by the iterator
+ * containing panels of this type. So that Wizards containing these panels can
+ * skip panels, but still call necessary methods of those panels.
  */
 public abstract class ShortcutWizardDescriptorPanel implements WizardDescriptor.Panel<WizardDescriptor> {
-    
+
     /**
-     * Whether or not this panel under the correct conditions can enable the skipping of the panel after it.
+     * Whether or not this panel under the correct conditions can enable the
+     * skipping of the panel after it.
+     *
      * @return true or false
      */
-    public boolean panelEnablesSkipping(){
-         /*
-         * This method should be overriden by any panel that might want to 
+    public boolean panelEnablesSkipping() {
+        /*
+         * This method should be overriden by any panel that might want to
          * enable the iterator to skip the panel that comes after it.
          */
         return false;
     }
-    
+
     /**
-     * Whether or not the panel immediately following this one should be skipped .
-     * 
+     * Whether or not the panel immediately following this one should be skipped
+     * .
+     *
      * @return true or false
      */
-    public boolean skipNextPanel(){
+    public boolean skipNextPanel() {
         /*
-         * This method should be overriden by any panel that might want to 
+         * This method should be overriden by any panel that might want to
          * enable the iterator to skip the panel that comes after it.
          */
         return false;
     }
-    
+
     /**
-     * Provides a method which will allow code to be executed in a panel you plan to skip
+     * Provides a method which will allow code to be executed in a panel you
+     * plan to skip
      */
-    public void processThisPanelBeforeSkipped(){
+    public void processThisPanelBeforeSkipped() {
         /*
-         * If you need to perform some actions of this panel before it is skipped 
-         * override this method to have it call the necessary code.
+         * If you need to perform some actions of this panel before it is
+         * skipped override this method to have it call the necessary code.
          */
     }
 }

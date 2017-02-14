@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,12 +22,11 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.TreeMap;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap;
+import org.sleuthkit.autopsy.ingest.IngestProfiles;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
@@ -42,7 +41,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private AddImageAction action;
     private int progressPanelIndex;
     private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
-    
+
     AddImageWizardIterator(AddImageAction action) {
         this.action = action;
     }
@@ -59,11 +58,10 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
 
             AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
-            IngestProfileSelectionWizardPanel profileSelectionPanel = new IngestProfileSelectionWizardPanel(AddImageWizardIngestConfigPanel.class.getCanonicalName(), getPropLastprofileName());
             panels.add(dsPanel);
-            TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
-            if (!profileMap.isEmpty()) {
-                panels.add(profileSelectionPanel);
+            List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
+            if (!profiles.isEmpty()) {
+                panels.add(new IngestProfileSelectionWizardPanel(AddImageWizardIngestConfigPanel.class.getCanonicalName(), getPropLastprofileName()));
             }
             panels.add(ingestConfigPanel);
             panels.add(progressPanel);
@@ -100,25 +98,24 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     public int getIndex() {
         return index;
     }
-    
+
     /**
-     * Gets the name of the property which stores the name of the last profile used by 
-     * the Add Image Wizard.
-     * 
+     * Gets the name of the property which stores the name of the last profile
+     * used by the Add Image Wizard.
+     *
      * @return the PROP_LASTPROFILE_NAME
      */
     static String getPropLastprofileName() {
         return PROP_LASTPROFILE_NAME;
     }
 
-        /**
+    /**
      * @return the PROP_LASTPROFILE_NAME
      */
     static String getPROP_LASTPROFILE_NAME() {
         return PROP_LASTPROFILE_NAME;
     }
 
-    
     /**
      * Gets the current panel.
      *
@@ -174,11 +171,11 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-      
+
         boolean panelEnablesSkipping = current().panelEnablesSkipping();
         boolean skipNextPanel = current().skipNextPanel();
         index++;
-        if (panelEnablesSkipping && skipNextPanel){
+        if (panelEnablesSkipping && skipNextPanel) {
             current().processThisPanelBeforeSkipped();
             nextPanel();
         }

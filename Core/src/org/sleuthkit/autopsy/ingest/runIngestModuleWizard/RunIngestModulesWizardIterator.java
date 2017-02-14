@@ -46,16 +46,9 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
-<<<<<<< HEAD
-            IngestProfileSelectionWizardPanel profilePanel = new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME);
-            TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
-            if (!profileMap.isEmpty()) {
-                panels.add(profilePanel);
-=======
             List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
             if (!profiles.isEmpty()) {
-                panels.add( new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME));
->>>>>>> c4c7cbb9f8c52b7aa09e9e4f83ecbfe599dd2254
+                panels.add(new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME));
             }
 
             panels.add(new IngestModulesConfigWizardPanel());
@@ -89,8 +82,8 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
 
     @Override
     public boolean hasNext() {
-        return (index < getPanels().size() - 1 && 
-                !(current().panelEnablesSkipping() && current().skipNextPanel()));
+        return (index < getPanels().size() - 1
+                && !(current().panelEnablesSkipping() && current().skipNextPanel()));
     }
 
     @Override

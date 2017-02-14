@@ -33,8 +33,6 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  */
 public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorPanel {
 
-
-
     private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
     /**
@@ -57,15 +55,16 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
     String getDefaultContext() {
         return defaultContext;
     }
-    
+
     /**
      * Gets the name of the file which stores the last profile used properties.
-     * 
+     *
      * @return the LAST_PROFILE_PROPERTIES_FILE
      */
     public static String getLastProfilePropertiesFile() {
         return LAST_PROFILE_PROPERTIES_FILE;
     }
+
     // Get the visual component for the panel. In this template, the component
     // is kept separate. This can be more efficient: if the wizard is created
     // but never displayed, or not all panels are displayed, it is better to
@@ -139,9 +138,9 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
     public boolean skipNextPanel() {
         return component.isLastPanel;
     }
-    
+
     @Override
-     public boolean panelEnablesSkipping(){
-         return true;
-     }
+    public boolean panelEnablesSkipping() {
+        return true;
+    }
 }
