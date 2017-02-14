@@ -1,5 +1,5 @@
-/*! \page install_solr Install and Configure Solr and Zookeper
-A central Solr server is needed to store keyword indexes. Zoookeeper is used to keep Solr configuartions. It is installed as part of Bitnami Solr package, but has to be configured separetly. To install Solr, perform the following steps:
+/*! \page install_solr Install and Configure Solr and Zookeeper
+A central Solr server is needed to store keyword indexes. Zookeeper is used to manage Solr configuration and as a coordination service for Autopsy. It is installed as part of Bitnami Solr package, but has to be configured separately. To install Solr, perform the following steps:
 
 
 
@@ -7,7 +7,7 @@ A central Solr server is needed to store keyword indexes. Zoookeeper is used to 
 
 You will need:
 - 64-bit version of the Java Runtime Environment (JRE) from http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html. 
-- Download the Apache Solr 6.2.1 installation package from http://www.apache.org/dyn/closer.lua/lucene/solr/6.2.1-2
+- Download the latest Solr 6 installation package from https://bitnami.com/stack/solr/installer#windows. For the purposes of this guide that was the Bitnami Solr 6.2.1-2.
 - Access to an installed version of Autopsy so that you can copy files from it. 
 - A network-accessible machine to install Solr upon. Note that the Solr process will need to write data out to the main shared storage drive, and needs adequate permissions to write to this location, which may be across a network.
 
@@ -84,7 +84,7 @@ The following steps will configure Solr to run using an account that will have a
 7. From an Autopsy installation, copy the folder <i>"C:\Program Files\Autopsy-XXX(current version)\autopsy\solr\solr\lib"</i> to <i>"C:\Bitnami\solr-6.2.1-2\apache-solr\server\solr\lib"</i>.  
 \subsection configure_Zookeeper Zookeeper Configuration
 
- The following steps will configure Zookeper.
+ The following steps will configure Zookeeper.
  1.  Stop the <i>solrJetty</i> service by pressing <i>Start</i>, typing <i>services.msc</i>, pressing Enter, and locating the <i>solrJetty</i> Windows service. Select the service and press <i>Stop the service</i>. If the service is already stopped and there is no <i>Stop the service</i> available, this is okay.
  2. Start a Windows command prompt as administrator by pressing Start, typing <i>command</i>, right clicking on <i>Command Prompt</i>, and clicking on <i>Run as administrator</i>. Then run the following command to uninstall the solrJetty service:
 
