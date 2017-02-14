@@ -52,6 +52,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private TreeMap<String, IngestProfile> profiles;
     private ProfilePanel panel;
     private boolean filtersShouldBeRefreshed;
+
     /**
      * Creates new form ProfileOptionsPanel
      */
@@ -62,6 +63,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
         ingestWarningLabel.setVisible(false);
+        editProfileButton.setEnabled(false);
+        deleteProfileButton.setEnabled(false);
     }
 
     /**
@@ -268,19 +271,19 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     }//GEN-LAST:event_deleteProfileButtonActionPerformed
 
     /**
-     * Returns whether there were possible changes to the filter list since the last time 
-     * this was called.
-     * 
-     * Resets value to false after being called. 
-     * 
+     * Returns whether there were possible changes to the filter list since the
+     * last time this was called.
+     *
+     * Resets value to false after being called.
+     *
      * @return true or false
      */
-    boolean shouldFiltersBeRefreshed(){
+    boolean shouldFiltersBeRefreshed() {
         boolean shouldRefresh = filtersShouldBeRefreshed;
         filtersShouldBeRefreshed = false;
         return shouldRefresh;
     }
-    
+
     /**
      * Enable / disable buttons, so they can be disabled while ingest is
      * running.
@@ -407,6 +410,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             if (selectedProfile != null) {
                 profileDescArea.setText(selectedProfile.getDescription());
                 filterNameText.setText(selectedProfile.getFileIngestFilter());
+                editProfileButton.setEnabled(true);
+                deleteProfileButton.setEnabled(true);
                 try {
                     Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance().getCustomFileIngestFilters();
                     for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
@@ -420,6 +425,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                 for (String moduleName : selectedProfile.getModuleNames(IngestProfile.getEnabledModulesKey())) {
                     selectedModulesArea.append(moduleName + "\n");
                 }
+
+            } else {
+                editProfileButton.setEnabled(false);
+                deleteProfileButton.setEnabled(false);
             }
         }
     }
