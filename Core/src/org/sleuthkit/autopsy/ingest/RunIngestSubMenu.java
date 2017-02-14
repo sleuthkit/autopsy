@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,29 +31,30 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * This class is used to populate the list of open dataSources to run ingest on them
+ * This class is used to populate the list of open dataSources to run ingest on
+ * them
  */
 final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
-        
+
     /**
-     * Creates main menu/popup menu items. It's called each time a popup menu 
-     * is constructed and just once for the main menu.
-     * Main menu updates happen through the synchMenuPresenters() method.
+     * Creates main menu/popup menu items. It's called each time a popup menu is
+     * constructed and just once for the main menu. Main menu updates happen
+     * through the synchMenuPresenters() method.
      *
      * @return
      */
     @Override
     public JComponent[] getMenuPresenters() {
         List<Content> dataSources = new ArrayList<>();
-        
-        try {    
+
+        try {
             dataSources = Case.getCurrentCase().getDataSources();
         } catch (IllegalStateException ex) {
             // No open Cases, create a disabled empty menu
             return getEmpty();
         } catch (TskCoreException e) {
             System.out.println("Exception getting images: " + e.getMessage()); //NON-NLS
-	}
+        }
         JComponent[] comps = new JComponent[dataSources.size()];
 
         // Add Images to the component list
@@ -70,7 +71,7 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
         }
         return comps;
     }
-    
+
     // returns a disabled empty menu
     private JComponent[] getEmpty() {
         JComponent[] comps = new JComponent[1];
@@ -94,6 +95,5 @@ final class RunIngestSubMenu extends JMenuItem implements DynamicMenuContent {
     public JComponent[] synchMenuPresenters(JComponent[] jcs) {
         return getMenuPresenters();
     }
-
 
 }

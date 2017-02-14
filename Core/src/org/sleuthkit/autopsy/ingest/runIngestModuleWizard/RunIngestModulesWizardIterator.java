@@ -22,11 +22,10 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.TreeMap;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap;
+import org.sleuthkit.autopsy.ingest.IngestProfiles;
 
 /**
  * Iterator class for creating a wizard for run ingest modules.
@@ -39,18 +38,24 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     private List<ShortcutWizardDescriptorPanel> panels;
 
     /**
-     * Gets the list of panels used by this wizard for iterating over. 
+     * Gets the list of panels used by this wizard for iterating over.
      * Constructing it when it is null.
-     * 
+     *
      * @return panels - the list of of WizardDescriptor panels
      */
     private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
+<<<<<<< HEAD
             IngestProfileSelectionWizardPanel profilePanel = new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME);
             TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
             if (!profileMap.isEmpty()) {
                 panels.add(profilePanel);
+=======
+            List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
+            if (!profiles.isEmpty()) {
+                panels.add( new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME));
+>>>>>>> c4c7cbb9f8c52b7aa09e9e4f83ecbfe599dd2254
             }
 
             panels.add(new IngestModulesConfigWizardPanel());
@@ -82,7 +87,6 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
         return index + 1 + ". from " + getPanels().size();
     }
 
-   
     @Override
     public boolean hasNext() {
         return (index < getPanels().size() - 1 && 

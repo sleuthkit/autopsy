@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -185,11 +185,11 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
          */
         pastJobsButton.setEnabled(!dataSources.isEmpty() && !ingestJobs.isEmpty());
     }
-    
-    void setPastJobsButtonVisible(boolean isVisible){
+
+    void setPastJobsButtonVisible(boolean isVisible) {
         pastJobsButton.setVisible(isVisible);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always

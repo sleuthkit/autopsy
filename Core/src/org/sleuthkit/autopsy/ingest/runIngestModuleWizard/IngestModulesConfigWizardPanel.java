@@ -73,7 +73,7 @@ class IngestModulesConfigWizardPanel extends ShortcutWizardDescriptorPanel {
     public void storeSettings(WizardDescriptor wiz) {
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
-         wiz.putProperty("executionContext", RunIngestModulesAction.getDefaultContext()); //NON-NLS
+        wiz.putProperty("executionContext", RunIngestModulesAction.getDefaultContext()); //NON-NLS
     }
 
 }

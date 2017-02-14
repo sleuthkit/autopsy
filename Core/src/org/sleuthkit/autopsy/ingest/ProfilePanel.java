@@ -26,7 +26,7 @@ import java.util.List;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
+import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 
 /**
  * Panel to display options for profile creation and editing.
@@ -70,10 +70,10 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
 
     /**
      * Get the name of the profile.
-     * 
+     *
      * The name will not contain any trailing or leading spaces.
-     * 
-     * @return 
+     *
+     * @return
      */
     String getProfileName() {
         return profileNameField.getText().trim();
@@ -211,8 +211,8 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
             DialogDisplayer.getDefault().notify(notifyDesc);
             return false;
         }
-        if (!containsOnlyLegalChars(getProfileName(), ILLEGAL_NAME_CHARS)){
-             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
+        if (!containsOnlyLegalChars(getProfileName(), ILLEGAL_NAME_CHARS)) {
+            NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
                     NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.messages.profileNameContainsIllegalCharacter"),
                     NotifyDescriptor.WARNING_MESSAGE);
             DialogDisplayer.getDefault().notify(notifyDesc);

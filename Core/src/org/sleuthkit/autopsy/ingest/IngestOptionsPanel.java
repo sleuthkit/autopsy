@@ -40,7 +40,7 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         "IngestOptionsPanel.fileFiltersTab.toolTipText=Settings for creating and editing ingest file filters.",
         "IngestOptionsPanel.profilesTab.text=Profiles",
         "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles.",
-        "IngestOptionsPanel.title.text=Ingest Options"
+        "IngestOptionsPanel.title.text=Ingest"
     })
     private FilesSetDefsPanel filterPanel;
     private IngestSettingsPanel settingsPanel;
@@ -63,12 +63,13 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
         settingsPanel = new IngestSettingsPanel();
         profilePanel = new ProfileSettingsPanel();
-        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.text"), null,
-                settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), 0);
+
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.text"), null,
-                filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 1);
+                filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 0);
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null,
-                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 2);
+                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 1);
+        tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.text"), null,
+                settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), 2);
         //Listener for when tabbed panes are switched, because we can have two file filter definitions panels open at the same time
         //we may wind up in a situation where the user has created and saved one in the profiles panel
         //so we need to refresh the filterPanel in those cases before proceeding.
@@ -83,7 +84,7 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
                 }
             }
         });
-        
+
         addIngestJobEventsListener();
         enableTabs();
     }
@@ -155,11 +156,10 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
     public void saveSettings() {
         //if a new filter was created in the profilePanel we don't want to save over it accidently
         if (profilePanel.shouldFiltersBeRefreshed()) {
-            filterPanel.load();  
+            filterPanel.load();
         }
         filterPanel.store();
         settingsPanel.store();
-        profilePanel.store();
     }
 
     /**

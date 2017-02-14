@@ -31,8 +31,8 @@ import javax.swing.JScrollPane;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.ingest.IngestOptionsPanel;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
+import org.sleuthkit.autopsy.ingest.IngestProfiles;
+import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 
 /**
  * Visual panel for the choosing of ingest profiles by the user when running
@@ -40,12 +40,12 @@ import org.sleuthkit.autopsy.ingest.IngestProfileMap.IngestProfile;
  */
 final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
 
-    @Messages({"IngestProfileSelectionPanel.customSettings.name=Custom Settings", 
+    @Messages({"IngestProfileSelectionPanel.customSettings.name=Custom Settings",
         "IngestProfileSelectionPanel.name=Ingest Profile Selection",
         "IngestProfileSelectionPanel.customSettings.description=configure individual module settings in next step of wizard"})
-    
+
     private static final String CUSTOM_SETTINGS_DISPLAY_NAME = Bundle.IngestProfileSelectionPanel_customSettings_name();
-    private static final String CUSTOM_SETTINGS_DESCRIPTION = Bundle.IngestProfileSelectionPanel_customSettings_description();  
+    private static final String CUSTOM_SETTINGS_DESCRIPTION = Bundle.IngestProfileSelectionPanel_customSettings_description();
     private final IngestProfileSelectionWizardPanel wizardPanel;
     private String selectedProfile;
     private List<IngestProfile> profiles = Collections.emptyList();
@@ -61,6 +61,10 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;
         populateListOfCheckboxes();
+        customizePanel();
+    }
+
+    private void customizePanel() {
         this.setName(Bundle.IngestProfileSelectionPanel_name());
     }
 
@@ -111,6 +115,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
 
     /**
      * Getter for the list of profiles
+     *
      * @return profiles
      */
     private List<IngestProfile> getProfiles() {
@@ -189,9 +194,9 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Opens up a dialog with an IngestOptionsPanel so the user can modify any 
-     * settings from that options panel. 
-     * 
+     * Opens up a dialog with an IngestOptionsPanel so the user can modify any
+     * settings from that options panel.
+     *
      * @param evt the button press
      */
     private void ingestSettingsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ingestSettingsButtonActionPerformed
@@ -222,11 +227,11 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     // End of variables declaration//GEN-END:variables
 
     /**
-     * Listens for changes and checks the currently selected radio button
-     * if custom settings button is enabled it enables the next button,
-     * otherwise it enables the Finish button.
-     * 
-     * @param e 
+     * Listens for changes and checks the currently selected radio button if
+     * custom settings button is enabled it enables the next button, otherwise
+     * it enables the Finish button.
+     *
+     * @param e
      */
     @Override
     public void itemStateChanged(ItemEvent e) {
@@ -247,7 +252,6 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      * Get all the currently existing ingest profiles.
      */
     private void fetchProfileList() {
-        profiles = new ArrayList<>();
-        profiles.addAll(new IngestProfileMap().getIngestProfileMap().values());
+        profiles = IngestProfiles.getIngestProfiles();
     }
 }

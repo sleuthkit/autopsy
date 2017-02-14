@@ -57,15 +57,6 @@ public class IngestJobSettings {
     private static final String MODULE_SETTINGS_FOLDER_PATH = Paths.get(PlatformUtil.getUserConfigDirectory(), IngestJobSettings.MODULE_SETTINGS_FOLDER).toAbsolutePath().toString();
     private static final String MODULE_SETTINGS_FILE_EXT = ".settings"; //NON-NLS
     private static final Logger LOGGER = Logger.getLogger(IngestJobSettings.class.getName());
-
-    /**
-     * @return the ENABLED_MODULES_KEY
-     */
-    static String getEnabledModulesKey() {
-        return ENABLED_MODULES_KEY;
-    }
-    
-    
     private FilesSet fileIngestFilter;
     private String executionContext;
     private final IngestType ingestType;
@@ -75,15 +66,15 @@ public class IngestJobSettings {
     private final List<String> warnings;
 
     /**
-     * Gets the last selected FileIngestFilter saved in settings which is represented
-     * by a FilesSet, if the last selected filter is null
-     * the default filter will be returned.
+     * Gets the last selected FileIngestFilter saved in settings which is
+     * represented by a FilesSet, if the last selected filter is null the
+     * default filter will be returned.
      *
      * @return FilesSet which represents the FileIngestFilter
      */
     FilesSet getFileIngestFilter() {
-        if (fileIngestFilter==null){
-            fileIngestFilter=FilesSetsManager.getDefaultFilter();
+        if (fileIngestFilter == null) {
+            fileIngestFilter = FilesSetsManager.getDefaultFilter();
         }
         return fileIngestFilter;
     }
@@ -167,20 +158,22 @@ public class IngestJobSettings {
     }
 
     /**
-     * Saves the settings with a new context name removing the old profile folder
-     * 
-     * @param executionContext will be used to name the new folder for storing the settings
+     * Saves the settings with a new context name removing the old profile
+     * folder
+     *
+     * @param executionContext will be used to name the new folder for storing
+     *                         the settings
      */
     void saveAs(String executionContext) {
         this.executionContext = executionContext;
         this.createSavedModuleSettingsFolder();
         this.store();
     }
-    
+
     /**
      * Gets the ingest execution context identifier. Examples of execution
      * contexts include the add data source wizard and the run ingest modules
-     * dialog. Different execution conterxts may have different ingest job
+     * dialog. Different execution contexts may have different ingest job
      * settings.
      *
      * @return The execution context identifier.
@@ -266,16 +259,18 @@ public class IngestJobSettings {
         return Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, executionContext);
     }
 
-     /**
-     * Returns the path to the ingest module settings folder from a static manner.
+    /**
+     * Returns the path to the ingest module settings folder from a static
+     * manner.
      *
      * @param context specify the context of the folder you wish to get
+     *
      * @return path to the module settings folder
      */
     static Path getSavedModuleSettingsFolder(String context) {
         return Paths.get(IngestJobSettings.MODULE_SETTINGS_FOLDER_PATH, context);
     }
-    
+
     /**
      * Creates the folder for saving the individual ingest module settings part
      * of these ingest job settings.
@@ -322,8 +317,8 @@ public class IngestJobSettings {
          * Get the enabled/disabled ingest modules settings for this context. By
          * default, all loaded modules are enabled.
          */
-        HashSet<String> enabledModuleNames = getModulesNamesFromSetting(IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(loadedModuleNames));
-        HashSet<String> disabledModuleNames = getModulesNamesFromSetting(IngestJobSettings.DISABLED_MODULES_KEY, ""); //NON-NLS
+        HashSet<String> enabledModuleNames = getModulesNamesFromSetting(executionContext, IngestJobSettings.ENABLED_MODULES_KEY, makeCommaSeparatedValuesList(loadedModuleNames));
+        HashSet<String> disabledModuleNames = getModulesNamesFromSetting(executionContext, IngestJobSettings.DISABLED_MODULES_KEY, ""); //NON-NLS
 
         /**
          * Check for missing modules and create warnings if any are found.
@@ -382,9 +377,9 @@ public class IngestJobSettings {
             ModuleSettings.setConfigSetting(this.executionContext, IngestJobSettings.LAST_FILE_INGEST_FILTER_KEY, FilesSetsManager.getDefaultFilter().getName());
         }
         try {
-            Map<String,FilesSet> fileIngestFilters =  FilesSetsManager.getInstance()
+            Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance()
                     .getCustomFileIngestFilters();
-            for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()){
+            for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
                 fileIngestFilters.put(fSet.getName(), fSet);
             }
             this.fileIngestFilter = fileIngestFilters.get(ModuleSettings.getConfigSetting(
@@ -403,12 +398,12 @@ public class IngestJobSettings {
      *
      * @return The list of module names associated with the key.
      */
-    HashSet<String> getModulesNamesFromSetting(String key, String defaultSetting) {
-        if (ModuleSettings.settingExists(this.executionContext, key) == false) {
-            ModuleSettings.setConfigSetting(this.executionContext, key, defaultSetting);
+    static HashSet<String> getModulesNamesFromSetting(String context, String key, String defaultSetting) {
+        if (ModuleSettings.settingExists(context, key) == false) {
+            ModuleSettings.setConfigSetting(context, key, defaultSetting);
         }
         HashSet<String> moduleNames = new HashSet<>();
-        String modulesSetting = ModuleSettings.getConfigSetting(this.executionContext, key);
+        String modulesSetting = ModuleSettings.getConfigSetting(context, key);
         if (!modulesSetting.isEmpty()) {
             String[] settingNames = modulesSetting.split(", ");
             for (String name : settingNames) {
@@ -434,6 +429,19 @@ public class IngestJobSettings {
             }
         }
         return moduleNames;
+    }
+
+    /**
+     * Get a set which contains all the names of enabled modules for the
+     * specified context.
+     *
+     * @param defaultSetting - The default list of module names.
+     * @param context        -the execution context (profile name) to check
+     *
+     * @return the names of the enabled modules
+     */
+    static HashSet<String> getEnabledModules(String context, String defaultSetting) {
+        return getModulesNamesFromSetting(context, ENABLED_MODULES_KEY, defaultSetting);
     }
 
     /**
