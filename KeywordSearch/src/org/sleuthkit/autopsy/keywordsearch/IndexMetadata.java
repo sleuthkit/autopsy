@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -51,7 +52,7 @@ class IndexMetadata {
     
     private final Path metadataFilePath;
     private final Path caseDirectoryPath;
-    private final String METADATA_FILE_NAME = "SolrCore.properties";
+    private final static String METADATA_FILE_NAME = "SolrCore.properties";
     private final static String ROOT_ELEMENT_NAME = "SolrCores"; //NON-NLS
     private final static String CORE_ELEMENT_NAME = "Core"; //NON-NLS
     private final static String CORE_NAME_ELEMENT_NAME = "CoreName"; //NON-NLS
@@ -99,6 +100,21 @@ class IndexMetadata {
     
     List<Index> getIndexes() {
         return indexes;
+    }
+    
+    /**
+     * Checks whether a text index metadata file exists.
+     *
+     * @param caseDirectory The full path to the top level case output folder.
+     *
+     * @return True if the file exists, false otherwise.
+     */
+    static boolean isMetadataFilePresent(String caseDirectory) {
+        File file = Paths.get(caseDirectory, METADATA_FILE_NAME).toFile();
+        if (file.exists()) {
+            return true;
+        }
+        return false;
     }
     
     /**

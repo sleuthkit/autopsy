@@ -38,6 +38,7 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -174,6 +175,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     @NbBundle.Messages({
+        "SolrSearch.lookingForMetadata.msg=Looking for text index metadata file",
         "SolrSearch.readingIndexes.msg=Reading text index metadata file",
         "SolrSearch.findingIndexes.msg=Looking for existing text index directories",
         "SolrSearch.creatingNewIndex.msg=Creating new text index",
@@ -186,19 +188,27 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         int totalNumProgressUnits = 8;
         int progressUnitsCompleted = 0;
     
+        String caseDirPath = context.getCase().getCaseDirectory();
+        Case theCase = context.getCase();
         List<Index> indexes = new ArrayList<>();
-        try {
-            // if index metadata file exists, get list of existing Solr cores for this case
-            progress.start(Bundle.SolrSearch_readingIndexes_msg(), totalNumProgressUnits);
-            IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory());
-            indexes = indexMetadata.getIndexes();
-        } catch (IndexMetadata.TextIndexMetadataException ex) {
-            logger.log(Level.WARNING, String.format("Unable to read text index metadata file"), ex);
-            
+        progress.start(Bundle.SolrSearch_lookingForMetadata_msg(), totalNumProgressUnits);
+        if (IndexMetadata.isMetadataFilePresent(caseDirPath)) {
+            try {
+                // metadata file exists, get list of existing Solr cores for this case
+                progressUnitsCompleted++;
+                progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
+                IndexMetadata indexMetadata = new IndexMetadata(caseDirPath);
+                indexes = indexMetadata.getIndexes();
+            } catch (IndexMetadata.TextIndexMetadataException ex) {
+                logger.log(Level.SEVERE, String.format("Unable to read text index metadata file"), ex);
+                throw new AutopsyServiceException("Unable to read text index metadata file", ex);
+            }
+        } else {
+            // metadata file doesn't exist.
             // do case subdirectory search to look for Solr 4 Schema 1.8 indexes that can be upgraded
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
-            Index oldIndex = IndexFinder.findOldIndexDir(context.getCase());
+            Index oldIndex = IndexFinder.findOldIndexDir(theCase);
             if (oldIndex != null) {
                 // add index to the list of indexes that exist for this case
                 indexes.add(oldIndex);
@@ -215,7 +225,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             // new case that doesn't have an existing index. create new index folder
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
-            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
+            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(theCase);
             // add current index to the list of indexes that exist for this case
             indexes.add(currentVersionIndex);
         } else {
@@ -324,7 +334,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         try {
             // update text index metadata file
             if (!indexes.isEmpty()) {
-                IndexMetadata indexMetadata = new IndexMetadata(context.getCase().getCaseDirectory(), indexes);
+                IndexMetadata indexMetadata = new IndexMetadata(caseDirPath, indexes);
             }
         } catch (IndexMetadata.TextIndexMetadataException ex) {
             throw new AutopsyServiceException("Failed to save Solr core info in text index metadata file", ex);
@@ -333,9 +343,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         // open core
         try {
             progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
-            KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
+            KeywordSearch.getServer().openCoreForCase(theCase, currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
-            throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
+            throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
         } 
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
