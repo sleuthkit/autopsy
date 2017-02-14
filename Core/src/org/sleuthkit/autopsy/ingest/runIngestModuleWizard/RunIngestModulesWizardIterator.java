@@ -22,11 +22,10 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.TreeMap;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
-import org.sleuthkit.autopsy.ingest.IngestProfileMap;
+import org.sleuthkit.autopsy.ingest.IngestProfiles;
 
 /**
  * Iterator class for creating a wizard for run ingest modules.
@@ -47,8 +46,8 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
-            TreeMap<String, IngestProfileMap.IngestProfile> profileMap = new IngestProfileMap().getIngestProfileMap();
-            if (!profileMap.isEmpty()) {
+            List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
+            if (!profiles.isEmpty()) {
                 panels.add(new IngestProfileSelectionWizardPanel());
             }
 
