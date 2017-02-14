@@ -46,7 +46,7 @@ final class Index {
      *                      need to be generated.
      */
     Index(String indexPath, String solrVersion, String schemaVersion, String coreName, String caseName) {
-        this.indexPath = convertPathToUNC(indexPath);
+        this.indexPath = uncPathUtilities.convertPathToUNC(indexPath);
         this.solrVersion = solrVersion;
         this.schemaVersion = schemaVersion;
         if (coreName == null || coreName.isEmpty()) {
@@ -108,19 +108,6 @@ final class Index {
             result = DEFAULT_CORE_NAME;
         }
 
-        return result;
-    }
-
-    String convertPathToUNC(String indexDir) {
-        // if we can check for UNC paths, do so, otherwise just return the indexDir
-        String result = uncPathUtilities.mappedDriveToUNC(indexDir);
-        if (result == null) {
-            uncPathUtilities.rescanDrives();
-            result = uncPathUtilities.mappedDriveToUNC(indexDir);
-        }
-        if (result == null) {
-            return indexDir;
-        }
         return result;
     }
 

@@ -179,6 +179,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.readingIndexes.msg=Reading text index metadata file",
         "SolrSearch.findingIndexes.msg=Looking for existing text index directories",
         "SolrSearch.creatingNewIndex.msg=Creating new text index",
+        "SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr and schema version",
         "SolrSearch.indentifyingIndex.msg=Identifying text index for upgrade",
         "SolrSearch.copyIndex.msg=Copying existing text index",
         "SolrSearch.openCore.msg=Creating/Opening text index",
@@ -231,10 +232,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             progressUnitsCompleted++;
-            progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
+            progress.progress(Bundle.SolrSearch_checkingForLatestIndex_msg(), progressUnitsCompleted);
             currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
             if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
+                progressUnitsCompleted++;
+                progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
                 Index indexToUpgrade = IndexFinder.identifyIndexToUpgrade(indexes);
                 if (indexToUpgrade == null) {
                     // unable to find index that can be upgraded
