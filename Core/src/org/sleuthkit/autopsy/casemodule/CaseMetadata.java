@@ -442,7 +442,7 @@ public final class CaseMetadata {
                 this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, true);
             } else {
                 this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
-                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, true);
+                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, false);
             }
 
             /*

@@ -27,7 +27,6 @@ import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.openide.modules.InstalledFileLocator;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ExecUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -104,8 +103,7 @@ class IndexUpgrader {
             }
 
             // create upgraded index object
-            upgradedIndex = new Index(newIndexDir, Integer.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion());
-            upgradedIndex.setNewIndex(true);
+            upgradedIndex = new Index(newIndexDir, Integer.toString(currentSolrVersion), indexToUpgrade.getSchemaVersion(), context.getCase().getTextIndexName(), context.getCase().getName());
             return upgradedIndex;
 
         } catch (Exception ex) {

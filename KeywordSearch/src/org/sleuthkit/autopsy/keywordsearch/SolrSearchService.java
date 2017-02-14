@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Level;
@@ -32,9 +34,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.framework.AutopsyService;
@@ -170,40 +175,69 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      */
     @Override
     @NbBundle.Messages({
+        "SolrSearch.lookingForMetadata.msg=Looking for text index metadata file",
+        "SolrSearch.readingIndexes.msg=Reading text index metadata file",
         "SolrSearch.findingIndexes.msg=Looking for existing text index directories",
         "SolrSearch.creatingNewIndex.msg=Creating new text index",
+        "SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr and schema version",
         "SolrSearch.indentifyingIndex.msg=Identifying text index for upgrade",
         "SolrSearch.copyIndex.msg=Copying existing text index",
         "SolrSearch.openCore.msg=Creating/Opening text index",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progress = context.getProgressIndicator();
-        int totalNumProgressUnits = 7;
-        int progressUnitsCompleted = 1;
-
-        // do a case subdirectory search to check for the existence and upgrade status of KWS indexes
-        progress.start(Bundle.SolrSearch_findingIndexes_msg(), totalNumProgressUnits);
-        IndexFinder indexFinder = new IndexFinder();
-        List<Index> indexes = indexFinder.findAllIndexDirs(context.getCase());
+        int totalNumProgressUnits = 8;
+        int progressUnitsCompleted = 0;
+    
+        String caseDirPath = context.getCase().getCaseDirectory();
+        Case theCase = context.getCase();
+        List<Index> indexes = new ArrayList<>();
+        progress.start(Bundle.SolrSearch_lookingForMetadata_msg(), totalNumProgressUnits);
+        if (IndexMetadata.isMetadataFilePresent(caseDirPath)) {
+            try {
+                // metadata file exists, get list of existing Solr cores for this case
+                progressUnitsCompleted++;
+                progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
+                IndexMetadata indexMetadata = new IndexMetadata(caseDirPath);
+                indexes = indexMetadata.getIndexes();
+            } catch (IndexMetadata.TextIndexMetadataException ex) {
+                logger.log(Level.SEVERE, String.format("Unable to read text index metadata file"), ex);
+                throw new AutopsyServiceException("Unable to read text index metadata file", ex);
+            }
+        } else {
+            // metadata file doesn't exist.
+            // do case subdirectory search to look for Solr 4 Schema 1.8 indexes that can be upgraded
+            progressUnitsCompleted++;
+            progress.progress(Bundle.SolrSearch_findingIndexes_msg(), progressUnitsCompleted);
+            Index oldIndex = IndexFinder.findOldIndexDir(theCase);
+            if (oldIndex != null) {
+                // add index to the list of indexes that exist for this case
+                indexes.add(oldIndex);
+            }
+        }
+        
         if (context.cancelRequested()) {
             return;
         }
 
-        // check if index needs upgrade
-        Index currentVersionIndex;
+        // check if we found an index that needs upgrade
+        Index currentVersionIndex = null;
         if (indexes.isEmpty()) {
             // new case that doesn't have an existing index. create new index folder
             progressUnitsCompleted++;
             progress.progress(Bundle.SolrSearch_creatingNewIndex_msg(), progressUnitsCompleted);
-            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(context.getCase());
-            currentVersionIndex.setNewIndex(true);
+            currentVersionIndex = IndexFinder.createLatestVersionIndexDir(theCase);
+            // add current index to the list of indexes that exist for this case
+            indexes.add(currentVersionIndex);
         } else {
             // check if one of the existing indexes is for latest Solr version and schema
             progressUnitsCompleted++;
-            progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
+            progress.progress(Bundle.SolrSearch_checkingForLatestIndex_msg(), progressUnitsCompleted);
             currentVersionIndex = IndexFinder.findLatestVersionIndexDir(indexes);
             if (currentVersionIndex == null) {
                 // found existing index(es) but none were for latest Solr version and schema version
+                progressUnitsCompleted++;
+                progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
                 Index indexToUpgrade = IndexFinder.identifyIndexToUpgrade(indexes);
                 if (indexToUpgrade == null) {
                     // unable to find index that can be upgraded
@@ -290,18 +324,32 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         } catch (IOException ex) {
                             logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
                         }
+                        return;
                     }
+                    
+                    // add current index to the list of indexes that exist for this case
+                    indexes.add(currentVersionIndex);
                 }
             }
+        }
+
+
+        try {
+            // update text index metadata file
+            if (!indexes.isEmpty()) {
+                IndexMetadata indexMetadata = new IndexMetadata(caseDirPath, indexes);
+            }
+        } catch (IndexMetadata.TextIndexMetadataException ex) {
+            throw new AutopsyServiceException("Failed to save Solr core info in text index metadata file", ex);
         }
 
         // open core
         try {
             progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
-            KeywordSearch.getServer().openCoreForCase(context.getCase(), currentVersionIndex);
+            KeywordSearch.getServer().openCoreForCase(theCase, currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
-            throw new AutopsyServiceException(String.format("Failed to open or create core for %s", context.getCase().getCaseDirectory()), ex);
-        }
+            throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
+        } 
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }
