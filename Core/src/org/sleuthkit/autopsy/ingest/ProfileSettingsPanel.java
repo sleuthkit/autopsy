@@ -377,6 +377,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
     @Override
     public void store() {
+        saveSettings();
     }
 
     /**
@@ -386,8 +387,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     public void load() {
         int currentIndex = this.profileList.getSelectedIndex();
         this.profilesListModel.clear();
-        this.profiles = new TreeMap<String, IngestProfile>();
-        for (IngestProfile profile : new IngestProfiles().getIngestProfiles()) {
+        this.profiles = new TreeMap<>();
+        for (IngestProfile profile : IngestProfiles.getIngestProfiles()) {
             profilesListModel.addElement(profile);
             profiles.put(profile.getName(), profile);
         }

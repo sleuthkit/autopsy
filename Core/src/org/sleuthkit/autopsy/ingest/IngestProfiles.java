@@ -38,55 +38,33 @@ public final class IngestProfiles {
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
-    private List<IngestProfile> profileList = null;
-    private static final Object PROFILE_LOCK = new Object();
 
     /**
      * Gets the collection of profiles which currently exist.
      *
      * @return profileList
      */
-    public List<IngestProfile> getIngestProfiles() {
-        if (profileList == null) {
-            loadProfileList();
+    public synchronized static List<IngestProfile> getIngestProfiles() {
+        File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
+        File[] directoryListing = dir.listFiles();
+        List profileList = new ArrayList<>();
+        if (directoryListing != null) {
+            for (File child : directoryListing) {
+                String name = child.getName().split("\\.")[0];
+                String context = PROFILE_FOLDER + File.separator + name;
+                String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
+                String fileIngestFilter = ModuleSettings.getConfigSetting(context, PROFILE_FILTER_KEY);
+                profileList.add(new IngestProfile(name, desc, fileIngestFilter));
+            }
         }
         return profileList;
     }
 
     /**
-     * Read the stored profile definitions from their directory.
-     */
-    private void readFilesFromDirectory() {
-        synchronized (PROFILE_LOCK) {
-            File dir = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER).toFile();
-            File[] directoryListing = dir.listFiles();
-
-            profileList = new ArrayList<>();
-            if (directoryListing != null) {
-                for (File child : directoryListing) {
-                    String name = child.getName().split("\\.")[0];
-                    String context = PROFILE_FOLDER + File.separator + name;
-                    String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
-                    String fileIngestFilter = ModuleSettings.getConfigSetting(context, PROFILE_FILTER_KEY);
-                    profileList.add(new IngestProfile(name, desc, fileIngestFilter));
-                }
-            }
-        }
-    }
-
-    /**
-     * Loads the list of profiles from disk.
-     */
-    void loadProfileList() {
-        readFilesFromDirectory();
-    }
-
-    /**
      * Saves the list of profiles which currently exist to disk.
      */
-    void saveProfileList() {
-        //save last used profile
-        for (IngestProfile profile : getIngestProfiles()) {
+    synchronized static void setProfiles(List<IngestProfile> profiles) {
+        for (IngestProfile profile : profiles) {
             IngestProfile.saveProfile(profile);
         }
     }
@@ -157,15 +135,13 @@ public final class IngestProfiles {
          *
          * @param selectedProfile
          */
-        static void deleteProfile(IngestProfile selectedProfile) {
-            synchronized (PROFILE_LOCK) {
-                try {
-                    Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, selectedProfile.getName() + ".properties"));
-                    Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + ".properties"));
-                    FileUtils.deleteDirectory(IngestJobSettings.getSavedModuleSettingsFolder(selectedProfile.getName() + File.separator).toFile());
-                } catch (IOException ex) {
-                    Exceptions.printStackTrace(ex);
-                }
+        synchronized static void deleteProfile(IngestProfile selectedProfile) {
+            try {
+                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, selectedProfile.getName() + ".properties"));
+                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + ".properties"));
+                FileUtils.deleteDirectory(IngestJobSettings.getSavedModuleSettingsFolder(selectedProfile.getName() + File.separator).toFile());
+            } catch (IOException ex) {
+                Exceptions.printStackTrace(ex);
             }
         }
 
@@ -175,19 +151,17 @@ public final class IngestProfiles {
          * @param oldName the name of the profile you want to rename
          * @param newName the name which you want the profile to have
          */
-        static void renameProfile(String oldName, String newName) {
+        synchronized static void renameProfile(String oldName, String newName) {
             if (!oldName.equals(newName)) { //if renameProfile was called with the new name being the same as the old name, it is complete already
-                synchronized (PROFILE_LOCK) {
-                    File oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, oldName + ".properties").toFile();
-                    File newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, newName + ".properties").toFile();
-                    oldFile.renameTo(newFile);
-                    oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), oldName + ".properties").toFile();
-                    newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), newName + ".properties").toFile();
-                    oldFile.renameTo(newFile);
-                    oldFile = IngestJobSettings.getSavedModuleSettingsFolder(oldName + File.separator).toFile();
-                    newFile = IngestJobSettings.getSavedModuleSettingsFolder(newName + File.separator).toFile();
-                    oldFile.renameTo(newFile);
-                }
+                File oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, oldName + ".properties").toFile();
+                File newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, newName + ".properties").toFile();
+                oldFile.renameTo(newFile);
+                oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), oldName + ".properties").toFile();
+                newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), newName + ".properties").toFile();
+                oldFile.renameTo(newFile);
+                oldFile = IngestJobSettings.getSavedModuleSettingsFolder(oldName + File.separator).toFile();
+                newFile = IngestJobSettings.getSavedModuleSettingsFolder(newName + File.separator).toFile();
+                oldFile.renameTo(newFile);
             }
         }
 
@@ -196,13 +170,11 @@ public final class IngestProfiles {
          *
          * @param profile
          */
-        static void saveProfile(IngestProfile profile) {
-            synchronized (PROFILE_LOCK) {
+        synchronized static void saveProfile(IngestProfile profile) {
                 String context = PROFILE_FOLDER + File.separator + profile.getName();
                 ModuleSettings.setConfigSetting(context, PROFILE_NAME_KEY, profile.getName());
                 ModuleSettings.setConfigSetting(context, PROFILE_DESC_KEY, profile.getDescription());
                 ModuleSettings.setConfigSetting(context, PROFILE_FILTER_KEY, profile.getFileIngestFilter());
-            }
         }
     }
 }
