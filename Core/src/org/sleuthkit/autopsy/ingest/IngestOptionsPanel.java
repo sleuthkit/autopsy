@@ -39,9 +39,8 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         "IngestOptionsPanel.fileFiltersTab.text=File Filters",
         "IngestOptionsPanel.fileFiltersTab.toolTipText=Settings for creating and editing ingest file filters.",
         "IngestOptionsPanel.profilesTab.text=Profiles",
-        "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles.",
-        "IngestOptionsPanel.title.text=Ingest"
-    })
+        "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles."})
+
     private FilesSetDefsPanel filterPanel;
     private IngestSettingsPanel settingsPanel;
     private ProfileSettingsPanel profilePanel;
@@ -59,7 +58,6 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
     }
 
     private void customizeComponents() {
-        setName(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.title.text"));
         filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
         settingsPanel = new IngestSettingsPanel();
         profilePanel = new ProfileSettingsPanel();
