@@ -51,7 +51,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private final DefaultListModel<IngestProfile> profilesListModel;
     private Map<String, IngestProfile> profiles;
     private ProfilePanel panel;
-    private boolean filtersShouldBeRefreshed;
 
     /**
      * Creates new form ProfileOptionsPanel
@@ -59,7 +58,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     ProfileSettingsPanel() {
         this.profilesListModel = new DefaultListModel<>();
         initComponents();
-        this.filtersShouldBeRefreshed = false;
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
         ingestWarningLabel.setVisible(false);
@@ -274,20 +272,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         this.resetComponents();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteProfileButtonActionPerformed
-
-    /**
-     * Returns whether there were possible changes to the filter list since the
-     * last time this was called.
-     *
-     * Resets value to false after being called.
-     *
-     * @return true or false
-     */
-    boolean shouldFiltersBeRefreshed() {
-        boolean shouldRefresh = filtersShouldBeRefreshed;
-        filtersShouldBeRefreshed = false;
-        return shouldRefresh;
-    }
 
     /**
      * Enable / disable buttons, so they can be disabled while ingest is
