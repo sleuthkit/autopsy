@@ -110,15 +110,13 @@ public class ExtractedContentViewer implements DataContentViewer {
             BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
             if (hits != null) {
                 highlightedHitText = new HighlightedText(content.getId(), hits);
-            } else {
-                if (artifact != null && artifact.getArtifactTypeID()
-                        == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
-                    // if the artifact is an account artifact, get an account text .
-                    highlightedHitText = getAccountsText(content, nodeLookup);
-                } else if (artifact != null && artifact.getArtifactTypeID()
-                        == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                    highlightedHitText = new HighlightedText(artifact);
-                }
+            } else if (artifact != null && artifact.getArtifactTypeID()
+                    == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                // if the artifact is an account artifact, get an account text .
+                highlightedHitText = getAccountsText(content, nodeLookup);
+            } else if (artifact != null && artifact.getArtifactTypeID()
+                    == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                highlightedHitText = new HighlightedText(artifact);
             }
             if (highlightedHitText != null) {
                 indexedTextSources.add(highlightedHitText);
@@ -298,16 +296,16 @@ public class ExtractedContentViewer implements DataContentViewer {
             return false;
         }
 
-        /**
-         * Is there any marked up indexed text in the look up of this node? This
-         * will be the case if the node is for a keyword hit artifact produced
-         * by either an ad hoc keyword search result (keyword search toolbar
-         * widgets) or a keyword search by the keyword search ingest module.
-         */
-        Collection<? extends IndexedText> sources = node.getLookup().lookupAll(IndexedText.class);
-        if (sources.isEmpty() == false) {
-            return true;
-        }
+//        /**
+//         * Is there any marked up indexed text in the look up of this node? This
+//         * will be the case if the node is for a keyword hit artifact produced
+//         * by either an ad hoc keyword search result (keyword search toolbar
+//         * widgets) or a keyword search by the keyword search ingest module.
+//         */
+//        Collection<? extends IndexedText> sources = node.getLookup().lookupAll(IndexedText.class);
+//        if (sources.isEmpty() == false) {
+//            return true;
+//        }
 
         /*
          * Is there a credit card artifact in the lookup
@@ -315,7 +313,9 @@ public class ExtractedContentViewer implements DataContentViewer {
         Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
         if (artifacts != null) {
             for (BlackboardArtifact art : artifacts) {
-                if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                final int artifactTypeID = art.getArtifactTypeID();
+                if (artifactTypeID == TSK_ACCOUNT.getTypeID()
+                        || artifactTypeID == TSK_KEYWORD_HIT.getTypeID()) {
                     return true;
                 }
             }

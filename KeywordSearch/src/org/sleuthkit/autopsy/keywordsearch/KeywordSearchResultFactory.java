@@ -147,7 +147,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         int hitNumber = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
-//        final SetMultimap<Long, KeywordHit> orgnizeByDocID = orgnizeByDocID(queryResults);
         for (KeywordHit hit : getOneHitPerObject(queryResults)) {
 
             /**
@@ -169,12 +168,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 properties.put(TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
             }
 
-            //JMTODO: I don't understand this comment or the below code... 
-            //@@@ USE ConentHit in UniqueFileMap instead of the below search
-            //get unique match result files
-            // BC: @@@ THis is really ineffecient.  We should keep track of this when
-            // we flattened the list of files to the unique files.            
-//            final String highlightQueryEscaped = getHighlightQuery(queryRequest, queryRequest.isLiteral(), queryResults, content);
             String hitName = hit.isArtifactHit()
                     ? hit.getArtifact().getDisplayName() + " Artifact" //NON-NLS
                     : contentName;
@@ -220,18 +213,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         return hits.values();
     }
 
-    SetMultimap<Long, KeywordHit> orgnizeByDocID(QueryResults queryResults) {
-        SetMultimap<Long, KeywordHit> hits = TreeMultimap.create(Long::compare, Comparator.comparing(KeywordHit::getChunkId));
-
-        for (Keyword keyWord : queryResults.getKeywords()) {
-            for (KeywordHit hit : queryResults.getResults(keyWord)) {
-
-                hits.put(hit.getSolrObjectId(), hit);
-            }
-        }
-        return hits;
-    }
-
     @Override
     protected Node createNodeForKey(KeyValueQueryContent key) {
         final Content content = key.getContent();
@@ -240,9 +221,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         Node kvNode = new KeyValueNode(key, Children.LEAF, Lookups.singleton(content));
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
-        // store the data in HighlightedMatchesSource so that it can be looked up (in content viewer)
-        HighlightedText highlights = new HighlightedText(key.getSolrObjectId(), hits);
-        return new KeywordSearchFilterNode(highlights, kvNode);
+        return new KeywordSearchFilterNode(hits, kvNode);
     }
 
     /**
@@ -277,8 +256,6 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
             this.hits = hits;
             this.query = query;
-//            boolean isRegex = hits.getQuery().isLiteral() == false;
-//            this.chunkIDs = chunkIDs;
         }
 
         Content getContent() {

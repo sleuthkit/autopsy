@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.ibm.icu.text.UnicodeSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -40,14 +38,13 @@ import org.apache.solr.common.SolrDocumentList;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
+import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -89,6 +86,7 @@ class HighlightedText implements IndexedText {
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
     private BlackboardArtifact artifact;
+    private KeywordSearch.QueryType qt;
 
     /**
      * This constructor is used when keyword hits are accessed from the ad-hoc
@@ -123,24 +121,51 @@ class HighlightedText implements IndexedText {
     }
 
     private void loadPageInfoFromArtifact() throws TskCoreException, NumberFormatException {
+        final String keyword = artifact.getAttribute(TSK_KEYWORD).getValueString();
+        this.keywords.add(keyword);
 
-        KeywordSearch.QueryType qt = KeywordSearch.QueryType.values()[artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE).getValueInt()];
-        this.keywords.add(artifact.getAttribute(TSK_KEYWORD).getValueString());
-        String chunkIDsString = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS).getValueString();
-        Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
-        for (String solrDocumentId : chunkIDs) {
-            int chunkID;
-            final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
-            if (-1 != separatorIndex) {
+        final BlackboardAttribute qtAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
 
-                chunkID = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
-            } else {
+        qt = (qtAttribute != null)
+                ? KeywordSearch.QueryType.values()[qtAttribute.getValueInt()] : null;
 
-                chunkID = 0;
+        final BlackboardAttribute docIDsArtifact = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS);
+
+        if (qt == QueryType.REGEX && docIDsArtifact != null) {
+            //regex search records the chunks in the artifact
+            String chunkIDsString = docIDsArtifact.getValueString();
+            Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
+            for (String solrDocumentId : chunkIDs) {
+                int chunkID;
+                final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
+                if (-1 != separatorIndex) {
+                    chunkID = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
+                } else {
+
+                    chunkID = 0;
+                }
+                pages.add(chunkID);
+                numberOfHitsPerPage.put(chunkID, 0);
+                currentHitPerPage.put(chunkID, 0);
             }
-            pages.add(chunkID);
-            numberOfHitsPerPage.put(chunkID, 0);
-            currentHitPerPage.put(chunkID, 0);
+            this.currentPage = pages.stream().sorted().findFirst().orElse(1);
+            isPageInfoLoaded = true;
+        } else {
+            /*
+             * non-regex searches don't record the chunks in the artifacts, so
+             * we need to look them up
+             */
+            Keyword keywordQuery = new Keyword(keyword, true);
+            KeywordSearchQuery chunksQuery
+                    = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
+            chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
+            try {
+                hits = chunksQuery.performQuery();
+                loadPageInfoFromHits();
+            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+                logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights:" + keywordQuery.getSearchTerm(), ex); //NON-NLS
+                MessageNotifyUtil.Notify.error(Bundle.HighlightedText_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
+            }
         }
     }
 
@@ -154,45 +179,6 @@ class HighlightedText implements IndexedText {
      *
      * @return
      */
-    static private String getHighlightQuery(KeywordSearchQuery query, boolean literal_query, QueryResults queryResults, Content content) {
-        if (literal_query) {
-            //literal, treat as non-regex, non-term component query
-            return constructEscapedSolrQuery(query.getQueryString());
-        } else //construct a Solr query using aggregated terms to get highlighting
-        //the query is executed later on demand
-        {
-            if (queryResults.getKeywords().size() == 1) {
-                //simple case, no need to process subqueries and do special escaping
-                Keyword keyword = queryResults.getKeywords().iterator().next();
-                return constructEscapedSolrQuery(keyword.getSearchTerm());
-            } else {
-                //find terms for this content hit
-                List<Keyword> hitTerms = new ArrayList<>();
-                for (Keyword keyword : queryResults.getKeywords()) {
-                    for (KeywordHit hit : queryResults.getResults(keyword)) {
-                        if (hit.getContent().equals(content)) {
-                            hitTerms.add(keyword);
-                            break; //go to next term
-                        }
-                    }
-                }
-
-                StringBuilder highlightQuery = new StringBuilder();
-                final int lastTerm = hitTerms.size() - 1;
-                int curTerm = 0;
-                for (Keyword term : hitTerms) {
-                    //escape subqueries, MAKE SURE they are not escaped again later
-                    highlightQuery.append(constructEscapedSolrQuery(term.getSearchTerm()));
-                    if (lastTerm != curTerm) {
-                        highlightQuery.append(" "); //acts as OR ||
-                    }
-
-                    ++curTerm;
-                }
-                return highlightQuery.toString();
-            }
-        }
-    }
 
     /**
      * Constructs a complete, escaped Solr query that is ready to be used.
@@ -236,9 +222,7 @@ class HighlightedText implements IndexedText {
              */ loadPageInfoFromArtifact();
         } else if (hasChunks) {
             // if the file has chunks, get pages with hits, sorted
-            if (loadPageInfoFromHits()) {
-                //JMTOD: look at error handeling and return values...
-            }
+            loadPageInfoFromHits();
         } else {
             //non-regex, no chunks
             this.numberPages = 1;
@@ -246,29 +230,12 @@ class HighlightedText implements IndexedText {
             numberOfHitsPerPage.put(1, 0);
             pages.add(1);
             currentHitPerPage.put(1, 0);
+            isPageInfoLoaded = true;
         }
-        isPageInfoLoaded = true;
+
     }
 
-    private boolean loadPageInfoFromHits() {
-//        /*
-//         * If this is being called from the artifacts / dir tree, then we need
-//         * to perform the search to get the highlights.
-//         */
-//        if (hits == null) {
-//
-//            Keyword keywordQuery = new Keyword(keywordHitQuery, true);
-//            KeywordSearchQuery chunksQuery 
-//                    = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
-//            chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
-//            try {
-//                hits = chunksQuery.performQuery();
-//            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-//                logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights:" + keywordQuery.getSearchTerm(), ex); //NON-NLS
-//                MessageNotifyUtil.Notify.error(Bundle.HighlightedText_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
-//                return true;
-//            }
-////        }
+    private void loadPageInfoFromHits() {
         //organize the hits by page, filter as needed
         TreeSet<Integer> pagesSorted = new TreeSet<>();
 
@@ -277,8 +244,9 @@ class HighlightedText implements IndexedText {
                 int chunkID = hit.getChunkId();
                 if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
                     pagesSorted.add(chunkID);
-
-                    this.keywords.add(hit.getHit());
+                    if (StringUtils.isNotBlank(hit.getHit())) {
+                        this.keywords.add(hit.getHit());
+                    }
                 }
             }
         }
@@ -293,7 +261,7 @@ class HighlightedText implements IndexedText {
             pages.add(page);
             currentHitPerPage.put(page, 0); //set current hit to 0th
         }
-        return false;
+        isPageInfoLoaded = true;
     }
 
     @Override
@@ -410,26 +378,29 @@ class HighlightedText implements IndexedText {
         }
         final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
-//        if (isRegex) {
-        q.setQuery(filterQuery);
-        q.addField(Server.Schema.CONTENT_STR.toString());
-//        } else {
-//            // input query has already been properly constructed and escaped
-//            q.setQuery(keywordHitQuery);
-//            q.addField(Server.Schema.TEXT.toString());
-//            q.addFilterQuery(filterQuery);
-//            q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
-//            q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
-//
-//            //tune the highlighter
-//            q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
-//            q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-//            q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
-//            q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
-//
-//            //docs says makes sense for the original Highlighter only, but not really
-//            q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
-//        }
+        if (artifact != null && qt == QueryType.REGEX) {
+            q.setQuery(filterQuery);
+            q.addField(Server.Schema.CONTENT_STR.toString());
+        } else {
+            final String highlightQuery = keywords.stream()
+                    .map(HighlightedText::constructEscapedSolrQuery)
+                    .collect(Collectors.joining(" "));
+
+            q.setQuery(highlightQuery);
+            q.addField(Server.Schema.TEXT.toString());
+            q.addFilterQuery(filterQuery);
+            q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
+            q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
+
+            //tune the highlighter
+            q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+            q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+            q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+            q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+
+            //docs says makes sense for the original Highlighter only, but not really
+            q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
+        }
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
 
@@ -532,8 +503,7 @@ class HighlightedText implements IndexedText {
         for (String unquotedKeyword : keywords) {
             int textOffset = 0;
             int hitOffset;
-
-            while ((hitOffset = text.indexOf(unquotedKeyword, textOffset)) != -1) {
+            while ((hitOffset = StringUtils.indexOfIgnoreCase(text, unquotedKeyword, textOffset)) != -1) {
                 // Append the portion of text up to (but not including) the hit.
                 highlightedText.append(text.substring(textOffset, hitOffset));
                 // Add in the highlighting around the keyword.
@@ -542,12 +512,11 @@ class HighlightedText implements IndexedText {
                 highlightedText.append(HIGHLIGHT_POST);
 
                 // Advance the text offset past the keyword.
-                textOffset = hitOffset + unquotedKeyword.length() + 1;
+                textOffset = hitOffset + unquotedKeyword.length();
             }
-
+            // Append the remainder of text field
+            highlightedText.append(text.substring(textOffset, text.length()));
             if (highlightedText.length() > 0) {
-                // Append the remainder of text field and return.
-                highlightedText.append(text.substring(textOffset, text.length()));
 
             } else {
                 return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
