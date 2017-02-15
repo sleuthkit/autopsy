@@ -398,7 +398,7 @@ public class IngestJobSettings {
      *
      * @return The list of module names associated with the key.
      */
-    static HashSet<String> getModulesNamesFromSetting(String context, String key, String defaultSetting) {
+    private static HashSet<String> getModulesNamesFromSetting(String context, String key, String defaultSetting) {
         if (ModuleSettings.settingExists(context, key) == false) {
             ModuleSettings.setConfigSetting(context, key, defaultSetting);
         }
@@ -435,13 +435,12 @@ public class IngestJobSettings {
      * Get a set which contains all the names of enabled modules for the
      * specified context.
      *
-     * @param defaultSetting - The default list of module names.
-     * @param context        -the execution context (profile name) to check
+     * @param context -the execution context (profile name) to check
      *
      * @return the names of the enabled modules
      */
-    static HashSet<String> getEnabledModules(String context, String defaultSetting) {
-        return getModulesNamesFromSetting(context, ENABLED_MODULES_KEY, defaultSetting);
+    static List<String> getEnabledModules(String context) {
+        return new ArrayList<>(getModulesNamesFromSetting(context, ENABLED_MODULES_KEY, ""));
     }
 
     /**
