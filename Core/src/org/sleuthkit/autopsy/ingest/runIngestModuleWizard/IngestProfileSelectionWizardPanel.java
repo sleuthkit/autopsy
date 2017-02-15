@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
+import java.awt.Component;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.event.ChangeEvent;
@@ -39,10 +40,10 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
     private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
     /**
-     * The visual component that displays this panel. If you need to access the
-     * component from this class, just use getComponent().
+     * The visual ingestProfileSelectionPanel that displays this panel. If you need to access the
+ ingestProfileSelectionPanel from this class, just use getComponent().
      */
-    private IngestProfileSelectionPanel component;
+    private IngestProfileSelectionPanel ingestProfileSelectionPanel;
     private String lastProfileUsed;
     private final String lastProfilePropertyName;
     private final String defaultContext;
@@ -68,23 +69,23 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
         return LAST_PROFILE_PROPERTIES_FILE;
     }
 
-    // Get the visual component for the panel. In this template, the component
+    // Get the visual ingestProfileSelectionPanel for the panel. In this template, the ingestProfileSelectionPanel
     // is kept separate. This can be more efficient: if the wizard is created
     // but never displayed, or not all panels are displayed, it is better to
     // create only those which really need to be visible.
     @Override
-    public IngestProfileSelectionPanel getComponent() {
-        if (component == null) {
+    public Component getComponent() {
+        if (ingestProfileSelectionPanel == null) {
             if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName) == null)
                     && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName).isEmpty()) {
                 lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName);
             } else {
                 lastProfileUsed = getDefaultContext();
             }
-            component = new IngestProfileSelectionPanel(this, lastProfileUsed);
-            component.setName(Bundle.IngestProfileWizardPanel_panelName());
+            ingestProfileSelectionPanel = new IngestProfileSelectionPanel(this, lastProfileUsed);
+            ingestProfileSelectionPanel.setName(Bundle.IngestProfileWizardPanel_panelName());
         }
-        return component;
+        return ingestProfileSelectionPanel;
     }
 
     @Override
@@ -133,14 +134,14 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        lastProfileUsed = component.getLastSelectedProfile();
+        lastProfileUsed = ingestProfileSelectionPanel.getLastSelectedProfile();
         wiz.putProperty("executionContext", lastProfileUsed); //NON-NLS
         ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName, lastProfileUsed);
     }
 
     @Override
     public boolean skipNextPanel() {
-        return component.isLastPanel;
+        return ingestProfileSelectionPanel.isLastPanel;
     }
 
     @Override

@@ -30,7 +30,6 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
-import org.omg.CORBA.BAD_CONTEXT;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
@@ -55,7 +54,6 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
 
     @Messages("AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules")
     private IngestJobSettingsPanel ingestJobSettingsPanel;
-
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
@@ -80,11 +78,12 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
         this.addImageAction = action;
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
-
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         showWarnings(ingestJobSettings);
+        //When this panel is viewed by the user it will always be displaying the
+        //IngestJobSettingsPanel with the AddImageWizardIngestConfigPanel.class.getCanonicalName();
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
-        this.ingestJobSettingsPanel.setName(Bundle.AddImageWizardIngestConfigPanel_name_text());
+
     }
 
     /**
@@ -99,6 +98,7 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
     public Component getComponent() {
         if (component == null) {
             component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
+            component.setName(Bundle.AddImageWizardIngestConfigPanel_name_text());
         }
         return component;
     }
@@ -166,23 +166,13 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-        if (!(ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()) == null)
-                && !ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()).isEmpty()) {
-            lastProfileUsed = ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName());
-        }
-        IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
-        showWarnings(ingestJobSettings);
-        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
-        component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
         JButton cancel = new JButton(
                 NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text"));
         cancel.setEnabled(false);
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
         cleanupTask = null;
         readyToIngest = false;
-
         newContents.clear();
-
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules
         startDataSourceProcessing();
@@ -199,8 +189,7 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-
-        IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
+        IngestJobSettings ingestJobSettings = ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
         showWarnings(ingestJobSettings);
 
@@ -220,15 +209,23 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
         }
     }
 
+    /**
+     * Loads the proper settings for this panel to use the previously selected
+     * Ingest profile when this panel would be skipped due to a profile being
+     * chosen.
+     */
     @Override
     public void processThisPanelBeforeSkipped() {
         if (!(ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()) == null)
                 && !ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()).isEmpty()) {
             lastProfileUsed = ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName());
         }
+        //Because this panel kicks off ingest during the wizard we need to 
+        //swap out the ingestJobSettings for the ones of the chosen profile before
+        //we start processing
         IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
+        ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
         showWarnings(ingestJobSettings);
-        this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
         component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
         readyToIngest = true;
         startDataSourceProcessing();

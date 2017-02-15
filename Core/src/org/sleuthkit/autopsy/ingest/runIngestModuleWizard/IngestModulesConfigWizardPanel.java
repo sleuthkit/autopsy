@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
+import java.awt.Component;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
@@ -42,7 +43,7 @@ class IngestModulesConfigWizardPanel extends ShortcutWizardDescriptorPanel {
     // but never displayed, or not all panels are displayed, it is better to
     // create only those which really need to be visible.
     @Override
-    public IngestJobSettingsPanel getComponent() {
+    public Component getComponent() {
         if (ingestJobSettingsPanel == null) {
             ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModulesAction.getDefaultContext()));
         }
