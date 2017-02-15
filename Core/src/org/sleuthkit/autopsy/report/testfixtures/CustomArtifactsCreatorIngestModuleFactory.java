@@ -18,10 +18,8 @@
  */
 package org.sleuthkit.autopsy.report.testfixtures;
 
-import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
-import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
@@ -31,8 +29,8 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
  * annotation to activate this test fixture.
  */
 //@ServiceProvider(service = IngestModuleFactory.class)
-public final class CustomArtifactsCreatorIngestModuleFactory  extends IngestModuleFactoryAdapter {
-    
+public final class CustomArtifactsCreatorIngestModuleFactory extends IngestModuleFactoryAdapter {
+
     @Override
     public String getModuleDisplayName() {
         return getModuleName();
@@ -57,8 +55,8 @@ public final class CustomArtifactsCreatorIngestModuleFactory  extends IngestModu
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
         return new CustomArtifactsCreatorIngestModule();
     }
-        
-    static String getModuleName() { 
+
+    static String getModuleName() {
         return "Custom Artifacts Creator";
-    } 
+    }
 }
