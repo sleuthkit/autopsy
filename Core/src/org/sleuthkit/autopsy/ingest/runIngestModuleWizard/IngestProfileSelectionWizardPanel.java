@@ -24,6 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
@@ -32,6 +33,8 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  *
  */
 public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorPanel {
+
+    @Messages("IngestProfileWizardPanel.panelName=Ingest Profile Selection")
 
     private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
@@ -79,6 +82,7 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
                 lastProfileUsed = getDefaultContext();
             }
             component = new IngestProfileSelectionPanel(this, lastProfileUsed);
+            component.setName(Bundle.IngestProfileWizardPanel_panelName());
         }
         return component;
     }

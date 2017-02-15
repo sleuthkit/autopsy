@@ -429,7 +429,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     filterDescArea.setText(NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.messages.filterLoadFailed"));
                 }
                 selectedModulesArea.setText("");
-                for (String moduleName : IngestJobSettings.getEnabledModules(selectedProfile.getName(), "")) {
+                for (String moduleName : IngestJobSettings.getEnabledModules(selectedProfile.getName())) {
                     selectedModulesArea.append(moduleName + "\n");
                 }
 
