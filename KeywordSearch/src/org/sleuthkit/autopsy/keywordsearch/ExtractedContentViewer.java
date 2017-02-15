@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -98,8 +97,8 @@ public class ExtractedContentViewer implements DataContentViewer {
         Content content = nodeLookup.lookup(Content.class);
 
         /*
-         * Assemble a collection of all of the indexed text "sources" associated
-         * with the node.
+         * Assemble a collection of all of the indexed text "sources" for the
+         * node.
          */
         List<IndexedText> indexedTextSources = new ArrayList<>();
         IndexedText highlightedHitText = null;
@@ -109,15 +108,21 @@ public class ExtractedContentViewer implements DataContentViewer {
             QueryResults hits = nodeLookup.lookup(QueryResults.class);
             BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
             if (hits != null) {
+                /*
+                 * if there is a QueryReslt object, in the lookup use that. This
+                 * happens when a user selects a row in an ad-hoc search result
+                 */
                 highlightedHitText = new HighlightedText(content.getId(), hits);
-            } else if (artifact != null && artifact.getArtifactTypeID()
-                    == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+            } else if (artifact != null
+                    && artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
                 // if the artifact is an account artifact, get an account text .
                 highlightedHitText = getAccountsText(content, nodeLookup);
-            } else if (artifact != null && artifact.getArtifactTypeID()
-                    == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+            } else if (artifact != null
+                    && artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+                //if there is kwh artifact use that to construct the HighlightedText
                 highlightedHitText = new HighlightedText(artifact);
             }
+
             if (highlightedHitText != null) {
                 indexedTextSources.add(highlightedHitText);
             }
@@ -130,6 +135,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             rawContentText = new RawText(content, content.getId());
             indexedTextSources.add(rawContentText);
         }
+
         /*
          * Finally, add the "raw" (not highlighted) text, if any, for any
          * artifact associated with the node.
@@ -148,7 +154,6 @@ public class ExtractedContentViewer implements DataContentViewer {
             currentSource = rawArtifactText;
         }
 
-        //JMTODO: What is this supposed to do?
         // Push the text sources into the panel.
         for (IndexedText source : indexedTextSources) {
             int currentPage = source.getCurrentPage();
@@ -251,7 +256,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
-
     }
 
     @Override
@@ -295,17 +299,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         if (node == null) {
             return false;
         }
-
-//        /**
-//         * Is there any marked up indexed text in the look up of this node? This
-//         * will be the case if the node is for a keyword hit artifact produced
-//         * by either an ad hoc keyword search result (keyword search toolbar
-//         * widgets) or a keyword search by the keyword search ingest module.
-//         */
-//        Collection<? extends IndexedText> sources = node.getLookup().lookupAll(IndexedText.class);
-//        if (sources.isEmpty() == false) {
-//            return true;
-//        }
 
         /*
          * Is there a credit card artifact in the lookup
@@ -585,7 +578,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
     }
 
-    class NextPageActionListener implements ActionListener {
+    private class NextPageActionListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
