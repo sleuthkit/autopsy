@@ -21,11 +21,13 @@ package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
 class IngestModulesConfigWizardPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
-
+    
+    @NbBundle.Messages("IngestModulesConfigWizardPanel.name.text=Configure Ingest Modules")
     /**
      * The visual ingestJobSettingsPanel that displays this panel. If you need
      * to access the ingestJobSettingsPanel from this class, just use
@@ -42,6 +44,7 @@ class IngestModulesConfigWizardPanel implements WizardDescriptor.FinishablePanel
         if (ingestJobSettingsPanel == null) {
             ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModulesAction.getDefaultContext()));
         }
+        ingestJobSettingsPanel.setName(Bundle.IngestModulesConfigWizardPanel_name_text());
         return ingestJobSettingsPanel;
     }
 

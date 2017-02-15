@@ -41,7 +41,6 @@ import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
 final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
 
     @Messages({"IngestProfileSelectionPanel.customSettings.name=Custom Settings",
-        "IngestProfileSelectionPanel.name=Ingest Profile Selection",
         "IngestProfileSelectionPanel.customSettings.description=configure individual module settings in next step of wizard"})
 
     private static final String CUSTOM_SETTINGS_DISPLAY_NAME = Bundle.IngestProfileSelectionPanel_customSettings_name();
@@ -61,11 +60,6 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;
         populateListOfCheckboxes();
-        customizePanel();
-    }
-
-    private void customizePanel() {
-        this.setName(Bundle.IngestProfileSelectionPanel_name());
     }
 
     /**

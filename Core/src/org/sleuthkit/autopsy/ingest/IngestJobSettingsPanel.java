@@ -60,8 +60,6 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager;
  */
 public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
-    @Messages("IngestJobSettingsPanel.name.text=Configure Ingest Modules")
-
     private static final long serialVersionUID = 1L;
     private static ImageIcon warningIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/warning_triangle.png"));
     private static ImageIcon infoIcon = new ImageIcon(IngestJobSettingsPanel.class.getResource("/org/sleuthkit/autopsy/images/information-frame.png"));
@@ -185,7 +183,6 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
          * and jobs for which to display the history.
          */
         pastJobsButton.setEnabled(!dataSources.isEmpty() && !ingestJobs.isEmpty());
-        this.setName(Bundle.IngestJobSettingsPanel_name_text());
     }
 
     void setPastJobsButtonVisible(boolean isVisible) {
