@@ -18,15 +18,20 @@
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.List;
+import static javax.swing.Box.createVerticalGlue;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.ingest.IngestOptionsPanel;
@@ -58,6 +63,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         initComponents();
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;
+
         populateListOfCheckboxes();
     }
 
@@ -76,10 +82,30 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      */
     private void populateListOfCheckboxes() {
         profiles = getProfiles();
-        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, wizardPanel.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION);
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weighty = .0;
+        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+
+        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, wizardPanel.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION, gridBagLayout, constraints);
         for (IngestProfile profile : profiles) {
-            addRadioButton(profile.toString(), profile.toString(), profile.getDescription());
+            constraints.weightx = 0;
+            constraints.gridy++;
+            constraints.gridx = 0;
+            addRadioButton(profile.toString(), profile.toString(), profile.getDescription(), gridBagLayout, constraints);
         }
+        //Add vertical glue at the bottom of the scroll panel so spacing 
+        //between elements is less dependent on the number of elements
+        constraints.gridy++;
+        constraints.gridx = 0;
+        constraints.weighty = 1;
+        Component vertGlue = createVerticalGlue();
+        profileListPanel.add(vertGlue);
+        gridBagLayout.setConstraints(vertGlue, constraints);
+        profileListPanel.setLayout(gridBagLayout);
     }
 
     /**
@@ -91,19 +117,29 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      *                           programmatically
      * @param profileDesc        - the description of the profile
      */
-    private void addRadioButton(String profileDisplayName, String profileContextName, String profileDesc) {
+    private void addRadioButton(String profileDisplayName, String profileContextName, String profileDesc, GridBagLayout layout, GridBagConstraints constraints) {
         String displayText = profileDisplayName + " - " + profileDesc;
-        JRadioButton myRadio = new JRadioButton(displayText);
+        JRadioButton myRadio = new JRadioButton();
+        //Using a JTextArea as though it is a label in order to get multi-line support
+        JTextArea myLabel = new JTextArea(displayText);
+        Color gray = new Color(240, 240, 240);  //matches background of panel
+        myLabel.setBackground(gray);
+        myLabel.setEditable(false);
+        myLabel.setWrapStyleWord(true);
+        myLabel.setLineWrap(true);
         myRadio.setName(profileContextName);
         myRadio.setToolTipText(profileDesc);
         myRadio.addItemListener(this);
         if (profileContextName.equals(selectedProfile)) {
             myRadio.setSelected(true);
         }
-
         profileListButtonGroup.add(myRadio);
         profileListPanel.add(myRadio);
-
+        layout.setConstraints(myRadio, constraints);
+        constraints.gridx++;
+        constraints.weightx = 1;
+        profileListPanel.add(myLabel);
+        layout.setConstraints(myLabel, constraints);
     }
 
     /**
@@ -153,7 +189,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         profileListScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         profileListPanel.setAutoscrolls(true);
-        profileListPanel.setLayout(new javax.swing.BoxLayout(profileListPanel, javax.swing.BoxLayout.PAGE_AXIS));
+        profileListPanel.setLayout(new java.awt.GridBagLayout());
         profileListScrollPane.setViewportView(profileListPanel);
 
         org.openide.awt.Mnemonics.setLocalizedText(profileListLabel, org.openide.util.NbBundle.getMessage(IngestProfileSelectionPanel.class, "IngestProfileSelectionPanel.profileListLabel.text")); // NOI18N
@@ -229,10 +265,12 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     @Override
     public void itemStateChanged(ItemEvent e) {
         for (Component rButton : profileListPanel.getComponents()) {
+            if (rButton instanceof JRadioButton){
             JRadioButton jrb = (JRadioButton) rButton;
-            if (jrb.isSelected()) {
-                selectedProfile = jrb.getName();
-                break;
+                if (jrb.isSelected()) {
+                    selectedProfile = jrb.getName();
+                    break;
+                }
             }
         }
         boolean wasLastPanel = isLastPanel;
