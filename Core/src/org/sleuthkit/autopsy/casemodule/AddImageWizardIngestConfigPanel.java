@@ -30,8 +30,10 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
+import org.omg.CORBA.BAD_CONTEXT;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
@@ -47,7 +49,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
 class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
-
+    @Messages("AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules")
     private final IngestJobSettingsPanel ingestJobSettingsPanel;
 
     /**
@@ -79,6 +81,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         showWarnings(ingestJobSettings);
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+        this.ingestJobSettingsPanel.setName(Bundle.AddImageWizardIngestConfigPanel_name_text());
     }
 
     /**

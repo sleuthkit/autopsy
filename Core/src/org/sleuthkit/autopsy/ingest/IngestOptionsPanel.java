@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
 /**
  * Global options panel for keyword searching.
  */
-class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     @NbBundle.Messages({"IngestOptionsPanel.settingsTab.text=Settings",
         "IngestOptionsPanel.settingsTab.toolTipText=Settings regarding resources available to ingest.",
@@ -52,7 +52,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
      */
     IngestJobEventPropertyChangeListener ingestJobEventsListener;
 
-    IngestOptionsPanel() {
+    public IngestOptionsPanel() {
         initComponents();
         customizeComponents();
     }
