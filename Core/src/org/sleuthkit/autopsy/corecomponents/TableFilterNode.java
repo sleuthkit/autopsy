@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.Lookups;
 
 /**
  * A filter node that creates at most one layer of child nodes for the node it
@@ -44,7 +45,7 @@ public class TableFilterNode extends FilterNode {
      * The constructor should include column order key. (See getColumnOrderKey)
      */
     public TableFilterNode(Node wrappedNode, boolean createChildren) {
-        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
+        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren) , Lookups.proxy(wrappedNode));
         this.createChildren = createChildren;
     }
 

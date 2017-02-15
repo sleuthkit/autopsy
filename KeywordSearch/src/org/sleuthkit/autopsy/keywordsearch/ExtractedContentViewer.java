@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -104,35 +105,30 @@ public class ExtractedContentViewer implements DataContentViewer {
         IndexedText highlightedHitText = null;
         IndexedText rawContentText = null;
 
-
-        /*
-         * First add the text marked up with HTML to highlight keyword hits that
-         * will be present in the selected node's lookup if the node is for a
-         * keyword hit artifact or account.
-         */
-        indexedTextSources.addAll(nodeLookup.lookupAll(IndexedText.class));
-
-        if (false == indexedTextSources.isEmpty()) {
-            //JMTODO: how do know the highlighted one is the first one?  I think the assumption is really that it is the only one...
-            //if the look up had any sources use them and don't make a new one.
-            highlightedHitText = indexedTextSources.get(0);
-        } else if (null != content && solrHasContent(content.getId())) {
-            /*
-             * if the lookup didn't have any sources, and solr has indexed the
-             * content,get an AccountsText object that will highlight any
-             * account numbers.
-             */
-            highlightedHitText = getAccountsText(content, nodeLookup);
+        if (null != content && solrHasContent(content.getId())) {
+            QueryResults hits = nodeLookup.lookup(QueryResults.class);
+            BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
+            if (hits != null) {
+                highlightedHitText = new HighlightedText(content.getId(), hits);
+            } else {
+                if (artifact != null && artifact.getArtifactTypeID()
+                        == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                    // if the artifact is an account artifact, get an account text .
+                    highlightedHitText = getAccountsText(content, nodeLookup);
+                } else if (artifact != null && artifact.getArtifactTypeID()
+                        == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+                    highlightedHitText = new HighlightedText(artifact);
+                }
+            }
             if (highlightedHitText != null) {
                 indexedTextSources.add(highlightedHitText);
             }
-        }
 
-        /*
-         * Next, add the "raw" (not highlighted) text, if any, for any content
-         * associated with the node.
-         */
-        if (null != content && solrHasContent(content.getId())) {
+
+            /*
+             * Next, add the "raw" (not highlighted) text, if any, for any
+             * content associated with the node.
+             */
             rawContentText = new RawText(content, content.getId());
             indexedTextSources.add(rawContentText);
         }
@@ -174,7 +170,8 @@ public class ExtractedContentViewer implements DataContentViewer {
              * For keyword hit artifacts, add the text of the artifact that hit,
              * not the hit artifact; otherwise add the text for the artifact.
              */
-            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID() || artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
+            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()
+                    || artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
                 try {
                     BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
                     if (attribute != null) {

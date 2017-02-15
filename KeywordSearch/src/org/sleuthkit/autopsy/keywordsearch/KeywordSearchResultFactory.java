@@ -147,7 +147,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         int hitNumber = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
-        final SetMultimap<Long, KeywordHit> orgnizeByDocID = orgnizeByDocID(queryResults);
+//        final SetMultimap<Long, KeywordHit> orgnizeByDocID = orgnizeByDocID(queryResults);
         for (KeywordHit hit : getOneHitPerObject(queryResults)) {
 
             /**
@@ -175,13 +175,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             // BC: @@@ THis is really ineffecient.  We should keep track of this when
             // we flattened the list of files to the unique files.            
 //            final String highlightQueryEscaped = getHighlightQuery(queryRequest, queryRequest.isLiteral(), queryResults, content);
-
             String hitName = hit.isArtifactHit()
                     ? hit.getArtifact().getDisplayName() + " Artifact" //NON-NLS
                     : contentName;
 
             hitNumber++;
-            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content,  queryRequest, queryResults));
+            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, queryRequest, queryResults));
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
@@ -242,7 +241,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         // store the data in HighlightedMatchesSource so that it can be looked up (in content viewer)
-        HighlightedText highlights = new HighlightedText(key.solrObjectId, key.getName(), !key.getQuery().isLiteral(), hits);
+        HighlightedText highlights = new HighlightedText(key.getSolrObjectId(), hits);
         return new KeywordSearchFilterNode(highlights, kvNode);
     }
 
@@ -253,6 +252,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     class KeyValueQueryContent extends KeyValue {
 
         private long solrObjectId;
+
         private final Content content;
         private final QueryResults hits;
         private final KeywordSearchQuery query;
@@ -270,11 +270,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * @param query          Query used in search
          * @param hits           Full set of search results (for all files! @@@)
          */
-        public KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content,  KeywordSearchQuery query, QueryResults hits) {
+        public KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
             this.solrObjectId = solrObjectId;
             this.content = content;
-          
+
             this.hits = hits;
             this.query = query;
 //            boolean isRegex = hits.getQuery().isLiteral() == false;
@@ -285,7 +285,9 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             return content;
         }
 
-       
+        public long getSolrObjectId() {
+            return solrObjectId;
+        }
 
         QueryResults getHits() {
             return hits;

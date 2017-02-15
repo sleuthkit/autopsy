@@ -44,7 +44,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
-import org.sleuthkit.autopsy.datamodel.TextMarkupLookup;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -55,7 +54,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Highlights hits for a given document. Knows about pages and such for the
  * content viewer.
  */
-class HighlightedText implements IndexedText, TextMarkupLookup {
+class HighlightedText implements IndexedText {
 
     private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
 
@@ -70,7 +69,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     final private Server solrServer = KeywordSearch.getServer();
 
     private final long objectId;
-//    private final boolean isRegex;
     private final Set<String> keywords = new HashSet<>();
 
     private int numberPages = 0;
@@ -90,39 +88,20 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
     private QueryResults hits = null; //original hits that may get passed in
     private boolean isPageInfoLoaded = false;
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
-//    private String keywordHitQuery;
     private BlackboardArtifact artifact;
 
-//    HighlightedText(long objectId, String keyword, boolean isRegex) {
-//        // The keyword can be treated as a literal hit at this point so we
-//        // surround it in quotes.
-//
-//        //hits are unknown
-//    }
     /**
      * This constructor is used when keyword hits are accessed from the ad-hoc
      * search results. In that case we have the entire QueryResults object and
      * need to arrange the paging.
      *
      * @param objectId
-     * @param keyword       The keyword that was found previously (e.g. during
-     *                      ingest)
-     * @param isRegex       true if the keyword was found via a regular
-     *                      expression search
      * @param originalQuery The original query string that produced the hit. If
      *                      isRegex is true, this will be the regular expression
      *                      that produced the hit.
      */
-    HighlightedText(long objectId, String keyword, boolean isRegex, QueryResults hits) {
-        /*
-         * JMTODO: is this comment correct??? // The keyword can be treated as a
-         * literal hit at this point so we // surround it in quotes.
-         *
-         */
+    HighlightedText(long objectId, QueryResults hits) {
         this.objectId = objectId;
-//        this.keywords.add(KeywordSearchUtil.quoteQuery(keyword));
-//        this.isRegex = isRegex;
-//        keywordHitQuery = keywords.stream().collect(Collectors.joining(" "));
         this.hits = hits;
     }
 
@@ -137,16 +116,15 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
      *
      * @throws TskCoreException
      */
-    HighlightedText(BlackboardArtifact artifact) throws TskCoreException {
+    HighlightedText(BlackboardArtifact artifact) {
         this.artifact = artifact;
         this.objectId = artifact.getObjectID();
-        loadPageInfoFromArtifact();
+
     }
 
     private void loadPageInfoFromArtifact() throws TskCoreException, NumberFormatException {
 
         KeywordSearch.QueryType qt = KeywordSearch.QueryType.values()[artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE).getValueInt()];
-//        this.isRegex = qt == KeywordSearch.QueryType.REGEX;
         this.keywords.add(artifact.getAttribute(TSK_KEYWORD).getValueString());
         String chunkIDsString = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS).getValueString();
         Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
@@ -164,7 +142,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             numberOfHitsPerPage.put(chunkID, 0);
             currentHitPerPage.put(chunkID, 0);
         }
-//        isPageInfoLoaded = true;
     }
 
     /**
@@ -183,7 +160,8 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             return constructEscapedSolrQuery(query.getQueryString());
         } else //construct a Solr query using aggregated terms to get highlighting
         //the query is executed later on demand
-         if (queryResults.getKeywords().size() == 1) {
+        {
+            if (queryResults.getKeywords().size() == 1) {
                 //simple case, no need to process subqueries and do special escaping
                 Keyword keyword = queryResults.getKeywords().iterator().next();
                 return constructEscapedSolrQuery(keyword.getSearchTerm());
@@ -213,6 +191,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 }
                 return highlightQuery.toString();
             }
+        }
     }
 
     /**
@@ -254,8 +233,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             /*
              * this could go in the constructor but is here to keep it near the
              * functionaly similar code for non regex searches
-             */
-//            loadRegexPageInfoFromArtifact();
+             */ loadPageInfoFromArtifact();
         } else if (hasChunks) {
             // if the file has chunks, get pages with hits, sorted
             if (loadPageInfoFromHits()) {
@@ -316,14 +294,6 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
             currentHitPerPage.put(page, 0); //set current hit to 0th
         }
         return false;
-    }
-
-    /**
-     * Constructor for dummy singleton factory instance for Lookup
-     */
-    private HighlightedText() {
-        objectId = -1;  //JMTODO: dummy value, is this a legal objectID?
-//        isRegex = false;
     }
 
     @Override
@@ -435,7 +405,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
 
         String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
-            final String chunkID = Integer.toString(this.currentPage );
+            final String chunkID = Integer.toString(this.currentPage);
             contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
         }
         final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
@@ -583,7 +553,7 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
                 return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
             }
             text = highlightedText.toString();
-             highlightedText = new StringBuilder("");
+            highlightedText = new StringBuilder("");
         }
         return text;
     }
@@ -624,36 +594,4 @@ class HighlightedText implements IndexedText, TextMarkupLookup {
         return buf.toString();
     }
 
-    //JMTODO: this whole dummy istance stuff should just be separated to a factory class I think
-    /*
-     * dummy instance for Lookup only
-     */
-    private static TextMarkupLookup instance = null;
-
-    //getter of the singleton dummy instance solely for Lookup purpose
-    //this instance does not actually work with Solr
-    public static synchronized TextMarkupLookup getDefault() {
-        if (instance == null) {
-            instance = new HighlightedText();
-        }
-        return instance;
-    }
-
-    @Override
-    // factory method to create an instance of this object
-    public TextMarkupLookup createInstance(long objectId, String keywordHitQuery, boolean isRegex, String originalQuery) {
-        if (objectId < 0) {
-            try {
-                BlackboardArtifact blackboardArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(objectId);
-                if (blackboardArtifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                    return new HighlightedText(blackboardArtifact);
-                }
-            } catch (TskCoreException ex) {
-                //JMTODO: what to do here?
-                Exceptions.printStackTrace(ex);
-            }
-        }
-
-        return new HighlightedText(objectId, keywordHitQuery, isRegex, null);
-    }
 }
