@@ -54,7 +54,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
     private AddImageWizardAddingProgressVisual component;
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
-    private DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
+    private final DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
 
     public DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
         return dspProgressMonitorImpl;
@@ -193,7 +193,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
-            it = new HashSet<ChangeListener>(listeners).iterator();
+            it = new HashSet<>(listeners).iterator();
         }
         ChangeEvent ev = new ChangeEvent(this);
         while (it.hasNext()) {

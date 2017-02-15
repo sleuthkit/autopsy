@@ -40,8 +40,9 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
     private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
     /**
-     * The visual ingestProfileSelectionPanel that displays this panel. If you need to access the
- ingestProfileSelectionPanel from this class, just use getComponent().
+     * The visual ingestProfileSelectionPanel that displays this panel. If you
+     * need to access the ingestProfileSelectionPanel from this class, just use
+     * getComponent().
      */
     private IngestProfileSelectionPanel ingestProfileSelectionPanel;
     private String lastProfileUsed;

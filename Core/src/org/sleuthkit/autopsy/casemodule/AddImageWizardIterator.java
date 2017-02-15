@@ -38,7 +38,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
 
     private int index = 0;
     private List<ShortcutWizardDescriptorPanel> panels;
-    private AddImageAction action;
+    private final AddImageAction action;
     private int progressPanelIndex;
     private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
 
@@ -74,7 +74,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
                 if (c instanceof JComponent) { // assume Swing components
                     JComponent jc = (JComponent) c;
                     // Sets step number of a component
-                    jc.putClientProperty("WizardPanel_contentSelectedIndex", new Integer(i));
+                    jc.putClientProperty("WizardPanel_contentSelectedIndex", i);
                     // Sets steps names for a panel
                     jc.putClientProperty("WizardPanel_contentData", steps);
                     // Turn on subtitle creation on each step

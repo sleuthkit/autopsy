@@ -45,7 +45,7 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private AddImageWizardAddingProgressPanel progressPanel;
+    private final AddImageWizardAddingProgressPanel progressPanel;
     private AddImageWizardChooseDataSourceVisual component;
     private boolean isNextEnable = false;
     private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH"; //NON-NLS
@@ -123,7 +123,7 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
         isNextEnable = isEnabled;
         fireChangeEvent();
     }
-    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Adds a listener to changes of the panel's validity.
@@ -156,7 +156,7 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
-            it = new HashSet<ChangeListener>(listeners).iterator();
+            it = new HashSet<>(listeners).iterator();
         }
         ChangeEvent ev = new ChangeEvent(this);
         while (it.hasNext()) {
@@ -219,8 +219,6 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-
-        return;
     }
 
     /**

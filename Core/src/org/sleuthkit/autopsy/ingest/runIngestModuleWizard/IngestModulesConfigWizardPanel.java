@@ -26,9 +26,8 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
-
 class IngestModulesConfigWizardPanel extends ShortcutWizardDescriptorPanel {
-    
+
     @NbBundle.Messages("IngestModulesConfigWizardPanel.name.text=Configure Ingest Modules")
 
     /**
