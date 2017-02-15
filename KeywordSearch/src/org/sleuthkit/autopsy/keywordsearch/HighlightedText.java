@@ -87,6 +87,7 @@ class HighlightedText implements IndexedText {
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
     private BlackboardArtifact artifact;
     private KeywordSearch.QueryType qt;
+    private boolean isLiteral;
 
     /**
      * This constructor is used when keyword hits are accessed from the ad-hoc
@@ -132,6 +133,7 @@ class HighlightedText implements IndexedText {
         final BlackboardAttribute docIDsArtifact = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS);
 
         if (qt == QueryType.REGEX && docIDsArtifact != null) {
+            isLiteral = false;
             //regex search records the chunks in the artifact
             String chunkIDsString = docIDsArtifact.getValueString();
             Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
@@ -151,6 +153,7 @@ class HighlightedText implements IndexedText {
             this.currentPage = pages.stream().sorted().findFirst().orElse(1);
             isPageInfoLoaded = true;
         } else {
+            isLiteral = true;
             /*
              * non-regex searches don't record the chunks in the artifacts, so
              * we need to look them up
@@ -179,7 +182,6 @@ class HighlightedText implements IndexedText {
      *
      * @return
      */
-
     /**
      * Constructs a complete, escaped Solr query that is ready to be used.
      *
@@ -236,9 +238,9 @@ class HighlightedText implements IndexedText {
     }
 
     private void loadPageInfoFromHits() {
+        isLiteral = hits.getQuery().isLiteral();
         //organize the hits by page, filter as needed
         TreeSet<Integer> pagesSorted = new TreeSet<>();
-
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();
@@ -378,10 +380,7 @@ class HighlightedText implements IndexedText {
         }
         final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
-        if (artifact != null && qt == QueryType.REGEX) {
-            q.setQuery(filterQuery);
-            q.addField(Server.Schema.CONTENT_STR.toString());
-        } else {
+        if (isLiteral) {
             final String highlightQuery = keywords.stream()
                     .map(HighlightedText::constructEscapedSolrQuery)
                     .collect(Collectors.joining(" "));
@@ -400,6 +399,9 @@ class HighlightedText implements IndexedText {
 
             //docs says makes sense for the original Highlighter only, but not really
             q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
+        } else {
+            q.setQuery(filterQuery);
+            q.addField(Server.Schema.CONTENT_STR.toString());
         }
         try {
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -478,16 +480,14 @@ class HighlightedText implements IndexedText {
         if (solrDocumentList.isEmpty()) {
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
         }
+        String highlightField = isLiteral
+                ? LuceneQuery.HIGHLIGHT_FIELD
+                : Server.Schema.CONTENT_STR.toString();
 
         // It doesn't make sense for there to be more than a single document in
         // the list since this class presents a single page (document) of highlighted
-        // content at a time.
-        Server.Schema highlightField = /*
-                 * isRegex ?
-                 */ Server.Schema.CONTENT_STR /*
-                 * : Server.Schema.TEXT
-                 */;
-        String text = solrDocumentList.get(0).getOrDefault(highlightField.toString(), "").toString();
+        // content at a time.  Hence we can just use get(0).
+        String text = solrDocumentList.get(0).getOrDefault(highlightField, "").toString();
 
         // Escape any HTML content that may be in the text. This is needed in
         // order to correctly display the text in the content viewer.
@@ -498,8 +498,6 @@ class HighlightedText implements IndexedText {
 
         StringBuilder highlightedText = new StringBuilder("");
 
-//        // Remove quotes from around the keyword.
-//        String unquotedKeyword = StringUtils.strip(keywordHitQuery, "\"");
         for (String unquotedKeyword : keywords) {
             int textOffset = 0;
             int hitOffset;
