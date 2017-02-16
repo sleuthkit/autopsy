@@ -201,8 +201,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         /*
          * get all the credit card artifacts
          */
-        String solrDocumentID = String.valueOf(content.getId()); //grab the object id as the solrDocumentID
-        Set<String> accountNumbers = new HashSet<>();
         try {
             //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
             Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
@@ -210,39 +208,38 @@ public class ExtractedContentViewer implements DataContentViewer {
                     ? content.getArtifacts(TSK_ACCOUNT)
                     : artifacts;
 
-            /*
-             * For each artifact add the account number to the list of
-             * accountNumbers to highlight, and use the solrDocumentId
-             * attribute(in place of the content's object Id) if it exists
-             *
-             * NOTE: this assumes all the artifacts will be from the same
-             * solrDocumentId
-             */
-            for (BlackboardArtifact artifact : artifacts) {
-                try {
-                    BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
-                    if (solrIDAttr != null) {
-                        String valueString = solrIDAttr.getValueString();
-                        if (StringUtils.isNotBlank(valueString)) {
-                            solrDocumentID = valueString;
-                        }
-                    }
-
-                    BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
-                    if (keyWordAttr != null) {
-                        String valueString = keyWordAttr.getValueString();
-                        if (StringUtils.isNotBlank(valueString)) {
-                            accountNumbers.add(valueString);
-                        }
-                    }
-
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
-                }
-            }
-            if (accountNumbers.isEmpty() == false) {
-                highlightedHitText = new AccountsText(solrDocumentID, accountNumbers);
-            }
+//            /*
+//             * For each artifact add the account number to the list of
+//             * accountNumbers to highlight, and use the solrDocumentId
+//             * attribute(in place of the content's object Id) if it exists
+//             *
+//             * NOTE: this assumes all the artifacts will be from the same
+//             * solrDocumentId
+//             */
+//            for (BlackboardArtifact artifact : artifacts) {
+//                try {
+//                    BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
+//                    if (solrIDAttr != null) {
+//                        String valueString = solrIDAttr.getValueString();
+//                        if (StringUtils.isNotBlank(valueString)) {
+//                            solrDocumentID = valueString;
+//                        }
+//                    }
+//
+//                    BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
+//                    if (keyWordAttr != null) {
+//                        String valueString = keyWordAttr.getValueString();
+//                        if (StringUtils.isNotBlank(valueString)) {
+//                            accountNumbers.add(valueString);
+//                        }
+//                    }
+//
+//                } catch (TskCoreException ex) {
+//                    logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
+//                }
+//            }
+           
+                highlightedHitText = new AccountsText(artifacts);
         } catch (TskCoreException ex) {
             logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
         }
