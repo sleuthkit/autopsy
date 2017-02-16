@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
  */
 public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
 
-    private static Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
+    private static final Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
     //prefix for special VirtualDirectory root nodes grouping local files
     public final static String LOGICAL_FILE_SET_PREFIX = "LogicalFileSet"; //NON-NLS
 

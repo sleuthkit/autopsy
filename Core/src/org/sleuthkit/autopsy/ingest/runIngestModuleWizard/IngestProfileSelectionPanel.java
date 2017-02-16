@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
 import java.awt.Color;
 import java.awt.Component;
-
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -91,7 +90,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         constraints.weighty = .0;
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
 
-        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, RunIngestModulesAction.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION, gridBagLayout, constraints);
+        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, wizardPanel.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION, gridBagLayout, constraints);
         for (IngestProfile profile : profiles) {
             constraints.weightx = 0;
             constraints.gridy++;
@@ -275,7 +274,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
             }
         }
         boolean wasLastPanel = isLastPanel;
-        isLastPanel = !selectedProfile.equals(RunIngestModulesAction.getDefaultContext());
+        isLastPanel = !selectedProfile.equals(wizardPanel.getDefaultContext());
         wizardPanel.fireChangeEvent();
         this.firePropertyChange("LAST_ENABLED", wasLastPanel, isLastPanel); //NON-NLS
     }

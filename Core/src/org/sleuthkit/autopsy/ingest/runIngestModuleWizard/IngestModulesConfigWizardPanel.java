@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
+import java.awt.Component;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
@@ -25,9 +26,10 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 
-class IngestModulesConfigWizardPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
-    
+class IngestModulesConfigWizardPanel extends ShortcutWizardDescriptorPanel {
+
     @NbBundle.Messages("IngestModulesConfigWizardPanel.name.text=Configure Ingest Modules")
+
     /**
      * The visual ingestJobSettingsPanel that displays this panel. If you need
      * to access the ingestJobSettingsPanel from this class, just use
@@ -40,7 +42,7 @@ class IngestModulesConfigWizardPanel implements WizardDescriptor.FinishablePanel
     // but never displayed, or not all panels are displayed, it is better to
     // create only those which really need to be visible.
     @Override
-    public IngestJobSettingsPanel getComponent() {
+    public Component getComponent() {
         if (ingestJobSettingsPanel == null) {
             ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(RunIngestModulesAction.getDefaultContext()));
         }
@@ -77,11 +79,6 @@ class IngestModulesConfigWizardPanel implements WizardDescriptor.FinishablePanel
         IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
         wiz.putProperty("executionContext", RunIngestModulesAction.getDefaultContext()); //NON-NLS
-    }
-
-    @Override
-    public boolean isFinishPanel() {
-        return true;
     }
 
 }

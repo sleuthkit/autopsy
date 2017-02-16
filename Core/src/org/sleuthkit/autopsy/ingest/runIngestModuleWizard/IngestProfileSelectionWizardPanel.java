@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
+import java.awt.Component;
 import java.util.HashSet;
 import java.util.Set;
 import javax.swing.event.ChangeEvent;
@@ -32,37 +33,60 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  * selection panel and is only created when profiles exist.
  *
  */
-class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorPanel {
 
     @Messages("IngestProfileWizardPanel.panelName=Ingest Profile Selection")
 
     private final Set<ChangeListener> listeners = new HashSet<>(1);
-    private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
     /**
-     * The visual component that displays this panel. If you need to access the
-     * component from this class, just use getComponent().
+     * The visual ingestProfileSelectionPanel that displays this panel. If you
+     * need to access the ingestProfileSelectionPanel from this class, just use
+     * getComponent().
      */
-    private IngestProfileSelectionPanel component;
+    private IngestProfileSelectionPanel ingestProfileSelectionPanel;
     private String lastProfileUsed;
+    private final String lastProfilePropertyName;
+    private final String defaultContext;
 
-    // Get the visual component for the panel. In this template, the component
+    public IngestProfileSelectionWizardPanel(String defaultContext, String lastProfilePropertyName) {
+        this.lastProfilePropertyName = lastProfilePropertyName;
+        this.defaultContext = defaultContext;
+    }
+
+    /**
+     * @return the defaultContext
+     */
+    String getDefaultContext() {
+        return defaultContext;
+    }
+
+    /**
+     * Gets the name of the file which stores the last profile used properties.
+     *
+     * @return the LAST_PROFILE_PROPERTIES_FILE
+     */
+    public static String getLastProfilePropertiesFile() {
+        return LAST_PROFILE_PROPERTIES_FILE;
+    }
+
+    // Get the visual ingestProfileSelectionPanel for the panel. In this template, the ingestProfileSelectionPanel
     // is kept separate. This can be more efficient: if the wizard is created
     // but never displayed, or not all panels are displayed, it is better to
     // create only those which really need to be visible.
     @Override
-    public IngestProfileSelectionPanel getComponent() {
-        if (component == null) {
-            if (ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME) == null
-                    || ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME).isEmpty()) {
-                lastProfileUsed = RunIngestModulesAction.getDefaultContext();
+    public Component getComponent() {
+        if (ingestProfileSelectionPanel == null) {
+            if (!(ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName) == null)
+                    && !ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName).isEmpty()) {
+                lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName);
             } else {
-                lastProfileUsed = ModuleSettings.getConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME);
+                lastProfileUsed = getDefaultContext();
             }
-            component = new IngestProfileSelectionPanel(this, lastProfileUsed);
-            component.setName(Bundle.IngestProfileWizardPanel_panelName());
+            ingestProfileSelectionPanel = new IngestProfileSelectionPanel(this, lastProfileUsed);
+            ingestProfileSelectionPanel.setName(Bundle.IngestProfileWizardPanel_panelName());
         }
-        return component;
+        return ingestProfileSelectionPanel;
     }
 
     @Override
@@ -111,14 +135,18 @@ class IngestProfileSelectionWizardPanel implements WizardDescriptor.FinishablePa
 
     @Override
     public void storeSettings(WizardDescriptor wiz) {
-        lastProfileUsed = component.getLastSelectedProfile();
+        lastProfileUsed = ingestProfileSelectionPanel.getLastSelectedProfile();
         wiz.putProperty("executionContext", lastProfileUsed); //NON-NLS
-        ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, PROP_LASTPROFILE_NAME, lastProfileUsed);
+        ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName, lastProfileUsed);
     }
 
     @Override
-    public boolean isFinishPanel() {
-        return component.isLastPanel;
+    public boolean skipNextPanel() {
+        return ingestProfileSelectionPanel.isLastPanel;
     }
 
+    @Override
+    public boolean panelEnablesSkipping() {
+        return true;
+    }
 }

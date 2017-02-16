@@ -34,8 +34,8 @@ import org.sleuthkit.autopsy.ingest.IngestProfiles;
 final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
     private int index;
-
-    private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> panels;
+    private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
+    private List<ShortcutWizardDescriptorPanel> panels;
 
     /**
      * Gets the list of panels used by this wizard for iterating over.
@@ -43,12 +43,12 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
      *
      * @return panels - the list of of WizardDescriptor panels
      */
-    private List<WizardDescriptor.FinishablePanel<WizardDescriptor>> getPanels() {
+    private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
             List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
             if (!profiles.isEmpty()) {
-                panels.add(new IngestProfileSelectionWizardPanel());
+                panels.add(new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME));
             }
 
             panels.add(new IngestModulesConfigWizardPanel());
@@ -71,7 +71,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     }
 
     @Override
-    public WizardDescriptor.FinishablePanel<WizardDescriptor> current() {
+    public ShortcutWizardDescriptorPanel current() {
         return getPanels().get(index);
     }
 
@@ -82,7 +82,8 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
 
     @Override
     public boolean hasNext() {
-        return (index < getPanels().size() - 1) && !current().isFinishPanel();
+        return (index < getPanels().size() - 1
+                && !(current().panelEnablesSkipping() && current().skipNextPanel()));
     }
 
     @Override
