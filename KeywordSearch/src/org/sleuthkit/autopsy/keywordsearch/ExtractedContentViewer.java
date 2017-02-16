@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -115,8 +116,13 @@ public class ExtractedContentViewer implements DataContentViewer {
                 highlightedHitText = new HighlightedText(content.getId(), hits);
             } else if (artifact != null
                     && artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
-                // if the artifact is an account artifact, get an account text .
-                highlightedHitText = getAccountsText(content, nodeLookup);
+                try {
+                    // if the artifact is an account artifact, get an account text .
+                    highlightedHitText = getAccountsText(content, nodeLookup);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to create AccountsText for " + content, ex); //NON-NLS
+
+                }
             } else if (artifact != null
                     && artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
                 //if there is kwh artifact use that to construct the HighlightedText
@@ -126,7 +132,6 @@ public class ExtractedContentViewer implements DataContentViewer {
             if (highlightedHitText != null) {
                 indexedTextSources.add(highlightedHitText);
             }
-
 
             /*
              * Next, add the "raw" (not highlighted) text, if any, for any
@@ -140,7 +145,13 @@ public class ExtractedContentViewer implements DataContentViewer {
          * Finally, add the "raw" (not highlighted) text, if any, for any
          * artifact associated with the node.
          */
-        IndexedText rawArtifactText = getRawArtifactText(nodeLookup);
+        IndexedText rawArtifactText = null;
+        try {
+            rawArtifactText = getRawArtifactText(nodeLookup);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error creating RawTExt for " + content, ex); //NON-NLS
+
+        }
         if (rawArtifactText != null) {
             indexedTextSources.add(rawArtifactText);
         }
@@ -165,7 +176,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         setPanel(indexedTextSources);
     }
 
-    private IndexedText getRawArtifactText(Lookup nodeLookup) {
+    static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
         IndexedText rawArtifactText = null;
         BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
         if (null != artifact) {
@@ -175,75 +186,33 @@ public class ExtractedContentViewer implements DataContentViewer {
              */
             if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()
                     || artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
-                try {
-                    BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
-                    if (attribute != null) {
-                        long artifactId = attribute.getValueLong();
-                        BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
-                        rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
 
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
+                BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
+                if (attribute != null) {
+                    long artifactId = attribute.getValueLong();
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
+                    rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
+
                 }
+
             } else {
                 rawArtifactText = new RawText(artifact, artifact.getArtifactID());
-
             }
-
         }
         return rawArtifactText;
     }
 
-    private IndexedText getAccountsText(Content content, Lookup nodeLookup) {
-        IndexedText highlightedHitText = null;
-
+    static private IndexedText getAccountsText(Content content, Lookup nodeLookup) throws TskCoreException {
         /*
          * get all the credit card artifacts
          */
-        try {
-            //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
-            Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
-            artifacts = (artifacts == null || artifacts.isEmpty())
-                    ? content.getArtifacts(TSK_ACCOUNT)
-                    : artifacts;
+        //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
+        Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
+        artifacts = (artifacts == null || artifacts.isEmpty())
+                ? content.getArtifacts(TSK_ACCOUNT)
+                : artifacts;
 
-//            /*
-//             * For each artifact add the account number to the list of
-//             * accountNumbers to highlight, and use the solrDocumentId
-//             * attribute(in place of the content's object Id) if it exists
-//             *
-//             * NOTE: this assumes all the artifacts will be from the same
-//             * solrDocumentId
-//             */
-//            for (BlackboardArtifact artifact : artifacts) {
-//                try {
-//                    BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
-//                    if (solrIDAttr != null) {
-//                        String valueString = solrIDAttr.getValueString();
-//                        if (StringUtils.isNotBlank(valueString)) {
-//                            solrDocumentID = valueString;
-//                        }
-//                    }
-//
-//                    BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
-//                    if (keyWordAttr != null) {
-//                        String valueString = keyWordAttr.getValueString();
-//                        if (StringUtils.isNotBlank(valueString)) {
-//                            accountNumbers.add(valueString);
-//                        }
-//                    }
-//
-//                } catch (TskCoreException ex) {
-//                    logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
-//                }
-//            }
-           
-                highlightedHitText = new AccountsText(artifacts);
-        } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
-        }
-        return highlightedHitText;
+        return new AccountsText(artifacts);
     }
 
     private void scrollToCurrentHit() {
