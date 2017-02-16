@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -363,16 +364,6 @@ class HighlightedText implements IndexedText {
 
     @Override
     public String getText() {
-        try {
-            loadPageInfo(); //inits once
-        } catch (TskCoreException ex) {
-            //JMTODO: deal with this
-            Exceptions.printStackTrace(ex);
-        }
-
-        SolrQuery q = new SolrQuery();
-        q.setShowDebugInfo(DEBUG); //debug
-
         String contentIdStr = Long.toString(this.objectId);
         if (hasChunks) {
             final String chunkID = Integer.toString(this.currentPage);
@@ -380,30 +371,36 @@ class HighlightedText implements IndexedText {
         }
         final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
-        if (isLiteral) {
-            final String highlightQuery = keywords.stream()
-                    .map(HighlightedText::constructEscapedSolrQuery)
-                    .collect(Collectors.joining(" "));
-
-            q.setQuery(highlightQuery);
-            q.addField(Server.Schema.TEXT.toString());
-            q.addFilterQuery(filterQuery);
-            q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
-            q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
-
-            //tune the highlighter
-            q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
-            q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-            q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
-            q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
-
-            //docs says makes sense for the original Highlighter only, but not really
-            q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
-        } else {
-            q.setQuery(filterQuery);
-            q.addField(Server.Schema.CONTENT_STR.toString());
-        }
         try {
+            loadPageInfo(); //inits once
+
+            SolrQuery q = new SolrQuery();
+            q.setShowDebugInfo(DEBUG); //debug
+
+            if (isLiteral) {
+                final String highlightQuery = keywords.stream()
+                        .map(HighlightedText::constructEscapedSolrQuery)
+                        .collect(Collectors.joining(" "));
+
+                q.setQuery(highlightQuery);
+                q.addField(Server.Schema.TEXT.toString());
+                q.addFilterQuery(filterQuery);
+                q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
+                q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
+
+                //tune the highlighter
+                q.setParam("hl.useFastVectorHighlighter", "on"); //fast highlighter scales better than standard one NON-NLS
+                q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
+                q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
+
+                //docs says makes sense for the original Highlighter only, but not really
+                q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
+            } else {
+                q.setQuery(filterQuery);
+                q.addField(Server.Schema.CONTENT_STR.toString());
+            }
+
             QueryResponse response = solrServer.query(q, METHOD.POST);
 
             // There should never be more than one document since there will 
@@ -414,17 +411,20 @@ class HighlightedText implements IndexedText {
             }
             String highlightedContent;
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
+            String highlightField = isLiteral
+                    ? LuceneQuery.HIGHLIGHT_FIELD
+                    : Server.Schema.CONTENT_STR.toString();
             if (responseHighlight == null) {
-                highlightedContent = attemptManualHighlighting(response.getResults());
+                highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
             } else {
                 Map<String, List<String>> responseHighlightID = responseHighlight.get(contentIdStr);
 
                 if (responseHighlightID == null) {
-                    highlightedContent = attemptManualHighlighting(response.getResults());
+                    highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
                 } else {
                     List<String> contentHighlights = responseHighlightID.get(LuceneQuery.HIGHLIGHT_FIELD);
                     if (contentHighlights == null) {
-                        highlightedContent = attemptManualHighlighting(response.getResults());
+                        highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
                     } else {
                         // extracted content (minus highlight tags) is HTML-escaped
                         highlightedContent = contentHighlights.get(0).trim();
@@ -435,7 +435,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error executing Solr highlighting query: " + q, ex); //NON-NLS
+            logger.log(Level.WARNING, "Error getting highlighted text for " + contentIdStr, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }
@@ -476,13 +476,10 @@ class HighlightedText implements IndexedText {
      * @return Either a string with the keyword highlighted or a string
      *         indicating that we did not find a hit in the document.
      */
-    private String attemptManualHighlighting(SolrDocumentList solrDocumentList) {
+    static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
+            return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
         }
-        String highlightField = isLiteral
-                ? LuceneQuery.HIGHLIGHT_FIELD
-                : Server.Schema.CONTENT_STR.toString();
 
         // It doesn't make sense for there to be more than a single document in
         // the list since this class presents a single page (document) of highlighted
@@ -498,26 +495,26 @@ class HighlightedText implements IndexedText {
 
         StringBuilder highlightedText = new StringBuilder("");
 
-        for (String unquotedKeyword : keywords) {
+        for (String keyword : keywords) {
             int textOffset = 0;
             int hitOffset;
-            while ((hitOffset = StringUtils.indexOfIgnoreCase(text, unquotedKeyword, textOffset)) != -1) {
+            while ((hitOffset = StringUtils.indexOfIgnoreCase(text, keyword, textOffset)) != -1) {
                 // Append the portion of text up to (but not including) the hit.
                 highlightedText.append(text.substring(textOffset, hitOffset));
                 // Add in the highlighting around the keyword.
                 highlightedText.append(HIGHLIGHT_PRE);
-                highlightedText.append(unquotedKeyword);
+                highlightedText.append(keyword);
                 highlightedText.append(HIGHLIGHT_POST);
 
                 // Advance the text offset past the keyword.
-                textOffset = hitOffset + unquotedKeyword.length();
+                textOffset = hitOffset + keyword.length();
             }
             // Append the remainder of text field
             highlightedText.append(text.substring(textOffset, text.length()));
             if (highlightedText.length() > 0) {
 
             } else {
-                return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.noMatchMsg");
+                return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
             }
             text = highlightedText.toString();
             highlightedText = new StringBuilder("");

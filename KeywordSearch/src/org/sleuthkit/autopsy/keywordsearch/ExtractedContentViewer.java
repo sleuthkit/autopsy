@@ -212,7 +212,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 ? content.getArtifacts(TSK_ACCOUNT)
                 : artifacts;
 
-        return new AccountsText(artifacts);
+        return new AccountsText(content.getId(), artifacts);
     }
 
     private void scrollToCurrentHit() {
