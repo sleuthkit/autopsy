@@ -364,19 +364,18 @@ class HighlightedText implements IndexedText {
 
     @Override
     public String getText() {
-        String contentIdStr = Long.toString(this.objectId);
-        if (hasChunks) {
-            final String chunkID = Integer.toString(this.currentPage);
-            contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
-        }
-        final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
         try {
             loadPageInfo(); //inits once
-
             SolrQuery q = new SolrQuery();
             q.setShowDebugInfo(DEBUG); //debug
 
+            String contentIdStr = Long.toString(this.objectId);
+            if (hasChunks) {
+                final String chunkID = Integer.toString(this.currentPage);
+                contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
+            }
+            final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
             if (isLiteral) {
                 final String highlightQuery = keywords.stream()
                         .map(HighlightedText::constructEscapedSolrQuery)
@@ -435,7 +434,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error getting highlighted text for " + contentIdStr, ex); //NON-NLS
+            logger.log(Level.WARNING, "Error getting highlighted text for " + objectId, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }
