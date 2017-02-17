@@ -253,12 +253,10 @@ class HighlightedText implements IndexedText {
                 }
             }
         }
+
         //set page to first page having highlights
-        if (pagesSorted.isEmpty()) {
-            this.currentPage = 0;
-        } else {
-            this.currentPage = pagesSorted.first();
-        }
+        this.currentPage = pagesSorted.stream().findFirst().orElse(1);
+
         for (Integer page : pagesSorted) {
             numberOfHitsPerPage.put(page, 0); //unknown number of matches in the page
             pages.add(page);
