@@ -18,16 +18,19 @@
  */
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
+import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
+import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
@@ -38,23 +41,16 @@ import org.sleuthkit.datamodel.Directory;
  * When the data source is pressed, it should open the wizard for ingest
  * modules.
  */
-public final class RunIngestModulesAction extends AbstractAction {
+public final class RunIngestModulesAction extends CallableSystemAction {
 
     @Messages("RunIngestModulesAction.name=Run Ingest Modules")
+    private static final long serialVersionUID = 1L;
 
-    //'dialog' context name required so existing settings do not need to be reconfigured 
-    private static final String DEFAULT_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
-
-    /**
-     * Returns the name of the default context which will be used when profiles
-     * are not available.
-     *
-     * @return the DEFAULT_CONTEXT
+    /*
+     * Note that the execution context is the name of the dialog that used to be
+     * used instead of this wizard and is retained for backwards compatibility.
      */
-    static String getDefaultContext() {
-        return DEFAULT_CONTEXT;
-    }
-
+    private static final String EXECUTION_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
     private final List<Content> dataSources = new ArrayList<>();
     private final IngestJobSettings.IngestType ingestType;
 
@@ -89,14 +85,19 @@ public final class RunIngestModulesAction extends AbstractAction {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        WizardDescriptor wiz = new WizardDescriptor(new RunIngestModulesWizardIterator());
-        // {0} will be replaced by WizardDescriptor.Panel.getComponent().getName()
+        /**
+         * Create and display a Run Ingest Modules wizard. Note that the
+         * argument in the title format string will be supplied by
+         * WizardDescriptor.Panel.getComponent().getName().
+         */
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        RunIngestModulesWizardIterator wizard = new RunIngestModulesWizardIterator(EXECUTION_CONTEXT, this.ingestType);
+        WizardDescriptor wiz = new WizardDescriptor(wizard);
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle(Bundle.RunIngestModulesAction_name());
-
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         if (DialogDisplayer.getDefault().notify(wiz) == WizardDescriptor.FINISH_OPTION) {
-            String executionContext = (String) wiz.getProperty("executionContext"); //NON-NLS 
-            IngestJobSettings ingestJobSettings = new IngestJobSettings(executionContext, this.ingestType);
+            IngestJobSettings ingestJobSettings = wizard.getIngestJobSettings();
             showWarnings(ingestJobSettings);
             IngestManager.getInstance().queueIngestJob(this.dataSources, ingestJobSettings);
         }
@@ -110,11 +111,27 @@ public final class RunIngestModulesAction extends AbstractAction {
     private static void showWarnings(IngestJobSettings ingestJobSettings) {
         List<String> warnings = ingestJobSettings.getWarnings();
         if (warnings.isEmpty() == false) {
-            StringBuilder warningMessage = new StringBuilder();
+            StringBuilder warningMessage = new StringBuilder(1024);
             for (String warning : warnings) {
                 warningMessage.append(warning).append("\n");
             }
             JOptionPane.showMessageDialog(null, warningMessage.toString());
         }
     }
+
+    @Override
+    public void performAction() {
+        actionPerformed(null);
+    }
+
+    @Override
+    public String getName() {
+        return Bundle.RunIngestModulesAction_name();
+    }
+
+    @Override
+    public HelpCtx getHelpCtx() {
+        return HelpCtx.DEFAULT_HELP;
+    }
+    
 }

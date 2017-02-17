@@ -47,11 +47,13 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     @Messages({"IngestProfileSelectionPanel.customSettings.name=Custom Settings",
         "IngestProfileSelectionPanel.customSettings.description=configure individual module settings in next step of wizard"})
 
+    private static final long serialVersionUID = 1L;
     private static final String CUSTOM_SETTINGS_DISPLAY_NAME = Bundle.IngestProfileSelectionPanel_customSettings_name();
     private static final String CUSTOM_SETTINGS_DESCRIPTION = Bundle.IngestProfileSelectionPanel_customSettings_description();
     private final IngestProfileSelectionWizardPanel wizardPanel;
     private String selectedProfile;
     private List<IngestProfile> profiles = Collections.emptyList();
+    boolean isLastPanel = false;
 
     /**
      * Creates new IngestProfileSelectionPanel
@@ -162,6 +164,37 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         profileListPanel.removeAll();
     }
 
+   /**
+     * Listens for changes and checks the currently selected radio button if
+     * custom settings button is enabled it enables the next button, otherwise
+     * it enables the Finish button.
+     *
+     * @param e
+     */
+    @Override
+    public void itemStateChanged(ItemEvent e) {
+        for (Component rButton : profileListPanel.getComponents()) {
+            if (rButton instanceof JRadioButton){
+            JRadioButton jrb = (JRadioButton) rButton;
+                if (jrb.isSelected()) {
+                    selectedProfile = jrb.getName();
+                    break;
+                }
+            }
+        }
+        boolean wasLastPanel = isLastPanel;
+        isLastPanel = !selectedProfile.equals(wizardPanel.getDefaultContext());
+        wizardPanel.fireChangeEvent();
+        this.firePropertyChange("LAST_ENABLED", wasLastPanel, isLastPanel); //NON-NLS
+    }
+
+    /**
+     * Get all the currently existing ingest profiles.
+     */
+    private void fetchProfileList() {
+        profiles = IngestProfiles.getIngestProfiles();
+    }
+        
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -245,8 +278,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         );
         dialog.display(ingestOptions);
     }//GEN-LAST:event_ingestSettingsButtonActionPerformed
-
-    boolean isLastPanel = false;
+    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton ingestSettingsButton;
     private javax.swing.ButtonGroup profileListButtonGroup;
@@ -255,34 +287,4 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     private javax.swing.JScrollPane profileListScrollPane;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Listens for changes and checks the currently selected radio button if
-     * custom settings button is enabled it enables the next button, otherwise
-     * it enables the Finish button.
-     *
-     * @param e
-     */
-    @Override
-    public void itemStateChanged(ItemEvent e) {
-        for (Component rButton : profileListPanel.getComponents()) {
-            if (rButton instanceof JRadioButton){
-            JRadioButton jrb = (JRadioButton) rButton;
-                if (jrb.isSelected()) {
-                    selectedProfile = jrb.getName();
-                    break;
-                }
-            }
-        }
-        boolean wasLastPanel = isLastPanel;
-        isLastPanel = !selectedProfile.equals(wizardPanel.getDefaultContext());
-        wizardPanel.fireChangeEvent();
-        this.firePropertyChange("LAST_ENABLED", wasLastPanel, isLastPanel); //NON-NLS
-    }
-
-    /**
-     * Get all the currently existing ingest profiles.
-     */
-    private void fetchProfileList() {
-        profiles = IngestProfiles.getIngestProfiles();
-    }
-}
+ }

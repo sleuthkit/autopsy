@@ -25,70 +25,78 @@ import java.util.NoSuchElementException;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
 
 /**
- * Iterator class for creating a wizard for run ingest modules.
- *
+ * A wizard that allows a user to configure an ingest job.
  */
 final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<WizardDescriptor> {
 
-    private int index;
     private final static String PROP_LASTPROFILE_NAME = "RIMW_LASTPROFILE_NAME"; //NON-NLS
-    private List<ShortcutWizardDescriptorPanel> panels;
+    private final IngestJobSettings.IngestType ingestType;
+    private final List<ShortcutWizardDescriptorPanel> panels;
+    private int currentPanelIndex;
 
     /**
-     * Gets the list of panels used by this wizard for iterating over.
-     * Constructing it when it is null.
+     * Constructs a wizard that allows a user to configure an ingest job.
      *
-     * @return panels - the list of of WizardDescriptor panels
+     * @param executionContext The execution context for this wizard. Ingest job
+     *                         settings can differ by execution context.
+     * @param ingestType       The type of ingest to be configured.
      */
-    private List<ShortcutWizardDescriptorPanel> getPanels() {
-        if (panels == null) {
-            panels = new ArrayList<>();
-            List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
-            if (!profiles.isEmpty()) {
-                panels.add(new IngestProfileSelectionWizardPanel(RunIngestModulesAction.getDefaultContext(), PROP_LASTPROFILE_NAME));
-            }
+    RunIngestModulesWizardIterator(String executionContext, IngestJobSettings.IngestType ingestType) {
+        this.ingestType = ingestType;
+        panels = new ArrayList<>();
+        List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
+        if (!profiles.isEmpty() && IngestJobSettings.IngestType.FILES_ONLY != this.ingestType) {
+            panels.add(new IngestProfileSelectionWizardPanel(executionContext, PROP_LASTPROFILE_NAME));
+        }
 
-            panels.add(new IngestModulesConfigWizardPanel());
-            String[] steps = new String[panels.size()];
-            for (int i = 0; i < panels.size(); i++) {
-                Component c = panels.get(i).getComponent();
-                // Default step name to component name of panel.
-                steps[i] = c.getName();
-                if (c instanceof JComponent) { // assume Swing components
-                    JComponent jc = (JComponent) c;
-                    jc.putClientProperty(WizardDescriptor.PROP_CONTENT_SELECTED_INDEX, i);
-                    jc.putClientProperty(WizardDescriptor.PROP_CONTENT_DATA, steps);
-                    jc.putClientProperty(WizardDescriptor.PROP_AUTO_WIZARD_STYLE, true);
-                    jc.putClientProperty(WizardDescriptor.PROP_CONTENT_DISPLAYED, true);
-                    jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
-                }
+        panels.add(new IngestModulesConfigWizardPanel(executionContext, this.ingestType));
+        String[] steps = new String[panels.size()];
+        for (int i = 0; i < panels.size(); i++) {
+            Component c = panels.get(i).getComponent();
+            steps[i] = c.getName();
+            if (c instanceof JComponent) {
+                JComponent jc = (JComponent) c;
+                jc.putClientProperty(WizardDescriptor.PROP_CONTENT_SELECTED_INDEX, i);
+                jc.putClientProperty(WizardDescriptor.PROP_CONTENT_DATA, steps);
+                jc.putClientProperty(WizardDescriptor.PROP_AUTO_WIZARD_STYLE, true);
+                jc.putClientProperty(WizardDescriptor.PROP_CONTENT_DISPLAYED, true);
+                jc.putClientProperty(WizardDescriptor.PROP_CONTENT_NUMBERED, true);
             }
         }
-        return panels;
+    }
+
+    IngestJobSettings getIngestJobSettings() {
+        ShortcutWizardDescriptorPanel panel = current();
+        if (panel instanceof IngestProfileSelectionWizardPanel) {
+            return ((IngestProfileSelectionWizardPanel) panel).getIngestJobSettings();
+        } else {
+            return ((IngestModulesConfigWizardPanel) panel).getIngestJobSettings();
+        }
     }
 
     @Override
     public ShortcutWizardDescriptorPanel current() {
-        return getPanels().get(index);
+        return panels.get(currentPanelIndex);
     }
 
     @Override
     public String name() {
-        return index + 1 + ". from " + getPanels().size();
+        return currentPanelIndex + 1 + ". from " + panels.size();
     }
 
     @Override
     public boolean hasNext() {
-        return (index < getPanels().size() - 1
+        return (currentPanelIndex < panels.size() - 1
                 && !(current().panelEnablesSkipping() && current().skipNextPanel()));
     }
 
     @Override
     public boolean hasPrevious() {
-        return index > 0;
+        return currentPanelIndex > 0;
     }
 
     @Override
@@ -96,7 +104,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-        index++;
+        currentPanelIndex++;
     }
 
     @Override
@@ -104,10 +112,9 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
         if (!hasPrevious()) {
             throw new NoSuchElementException();
         }
-        index--;
+        currentPanelIndex--;
     }
 
-    // If nothing unusual changes in the middle of the wizard, simply:
     @Override
     public void addChangeListener(ChangeListener l) {
     }
@@ -115,9 +122,5 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
     @Override
     public void removeChangeListener(ChangeListener l) {
     }
-    // If something changes dynamically (besides moving between panels), e.g.
-    // the number of panels changes in response to user input, then use
-    // ChangeSupport to implement add/removeChangeListener and call fireChange
-    // when needed
 
 }

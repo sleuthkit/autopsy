@@ -27,6 +27,7 @@ import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 
 /**
  * The first wizard panel of the run ingest modules wizard. Displays the profile
@@ -37,28 +38,33 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
 
     @Messages("IngestProfileWizardPanel.panelName=Ingest Profile Selection")
 
-    private final Set<ChangeListener> listeners = new HashSet<>(1);
     private final static String LAST_PROFILE_PROPERTIES_FILE = "IngestProfileSelectionPanel"; //NON-NLS
-    /**
-     * The visual ingestProfileSelectionPanel that displays this panel. If you
-     * need to access the ingestProfileSelectionPanel from this class, just use
-     * getComponent().
-     */
+    private final String executionContext;
+    private final String lastProfilePropertyName;
+    private final Set<ChangeListener> listeners = new HashSet<>(1);
     private IngestProfileSelectionPanel ingestProfileSelectionPanel;
     private String lastProfileUsed;
-    private final String lastProfilePropertyName;
-    private final String defaultContext;
 
-    public IngestProfileSelectionWizardPanel(String defaultContext, String lastProfilePropertyName) {
+    public IngestProfileSelectionWizardPanel(String executionContext, String lastProfilePropertyName) {
         this.lastProfilePropertyName = lastProfilePropertyName;
-        this.defaultContext = defaultContext;
+        this.executionContext = executionContext;
     }
 
+    /**
+     * Gets the ingest job settings associated with this wizard panel.
+     *
+     * @return The settings, will be null if the panel has not been used in the
+     *         wizard.
+     */
+    IngestJobSettings getIngestJobSettings() {
+        return new IngestJobSettings(lastProfileUsed);
+    }
+    
     /**
      * @return the defaultContext
      */
     String getDefaultContext() {
-        return defaultContext;
+        return executionContext;
     }
 
     /**
@@ -70,10 +76,6 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
         return LAST_PROFILE_PROPERTIES_FILE;
     }
 
-    // Get the visual ingestProfileSelectionPanel for the panel. In this template, the ingestProfileSelectionPanel
-    // is kept separate. This can be more efficient: if the wizard is created
-    // but never displayed, or not all panels are displayed, it is better to
-    // create only those which really need to be visible.
     @Override
     public Component getComponent() {
         if (ingestProfileSelectionPanel == null) {
@@ -91,13 +93,11 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
 
     @Override
     public HelpCtx getHelp() {
-        // Show no Help button for this panel:
         return HelpCtx.DEFAULT_HELP;
     }
 
     @Override
     public boolean isValid() {
-        // If it is always OK to press Next or Finish, then:
         return true;
     }
 
@@ -136,7 +136,6 @@ public class IngestProfileSelectionWizardPanel extends ShortcutWizardDescriptorP
     @Override
     public void storeSettings(WizardDescriptor wiz) {
         lastProfileUsed = ingestProfileSelectionPanel.getLastSelectedProfile();
-        wiz.putProperty("executionContext", lastProfileUsed); //NON-NLS
         ModuleSettings.setConfigSetting(LAST_PROFILE_PROPERTIES_FILE, lastProfilePropertyName, lastProfileUsed);
     }
 
