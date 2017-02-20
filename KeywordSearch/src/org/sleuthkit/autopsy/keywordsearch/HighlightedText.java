@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -56,6 +57,8 @@ class HighlightedText implements IndexedText {
 
     private static final Logger logger = Logger.getLogger(HighlightedText.class.getName());
 
+    private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
+
     private static final BlackboardAttribute.Type TSK_KEYWORD_HIT_DOCUMENT_IDS = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS);
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
@@ -67,25 +70,32 @@ class HighlightedText implements IndexedText {
     final private Server solrServer = KeywordSearch.getServer();
 
     private final long objectId;
+    /*
+     * The keywords to highlight
+     */
     private final Set<String> keywords = new HashSet<>();
 
-    private int numberPages = 0;
-    private int currentPage = 0;
+    private int numberPages;
+    private int currentPage;
 
-    private boolean hasChunks = false;
+    @GuardedBy("this")
+    private boolean isPageInfoLoaded = false;
+
     /**
-     * stores all pages/chunks that have hits as key, and number of hits as a
-     * value, or 0 if yet unknown
+     * stores the chunk number all pages/chunks that have hits as key, and
+     * number of hits as a value, or 0 if not yet known
      */
     private final LinkedHashMap<Integer, Integer> numberOfHitsPerPage = new LinkedHashMap<>();
     /*
      * stored page num -> current hit number mapping
      */
     private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
+    /*
+     * List of unique page/chunk numbers with hits
+     */
     private final List<Integer> pages = new ArrayList<>();
+
     private QueryResults hits = null; //original hits that may get passed in
-    private boolean isPageInfoLoaded = false;
-    private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
     private BlackboardArtifact artifact;
     private KeywordSearch.QueryType qt;
     private boolean isLiteral;
@@ -95,10 +105,11 @@ class HighlightedText implements IndexedText {
      * search results. In that case we have the entire QueryResults object and
      * need to arrange the paging.
      *
-     * @param objectId
-     * @param originalQuery The original query string that produced the hit. If
-     *                      isRegex is true, this will be the regular expression
-     *                      that produced the hit.
+     * @param objectId     The objectID of the content whose text will be
+     *                     highlighted.
+     * @param QueryResults The QueryResults for the ad-hoc search from whose
+     *                     results a selection was made leading to this
+     *                     HighlightedText.
      */
     HighlightedText(long objectId, QueryResults hits) {
         this.objectId = objectId;
@@ -108,13 +119,10 @@ class HighlightedText implements IndexedText {
     /**
      * This constructor is used when keyword hits are accessed from the "Keyword
      * Hits" node in the directory tree in Autopsy. In that case we have the
-     * keyword hit artifact which has the chunks for which a hit had previously
-     * been found to work out the paging for.
+     * keyword hit artifact which has the chunks (as
+     * TSK_KEYWORD_HIT_DOCUMENT_IDS attribute) to use to work out the paging.
      *
-     *
-     * @param artifact
-     *
-     * @throws TskCoreException
+     * @param artifact The artifact that was selected.
      */
     HighlightedText(BlackboardArtifact artifact) {
         this.artifact = artifact;
@@ -122,14 +130,48 @@ class HighlightedText implements IndexedText {
 
     }
 
-    private void loadPageInfoFromArtifact() throws TskCoreException, NumberFormatException {
+    /**
+     * This method figures out which pages / chunks have hits. Invoking it a
+     * second time has no effect.
+     */
+    @Messages({"HighlightedText.query.exception.msg=Could not perform the query to get chunk info and get highlights:"})
+    synchronized private void loadPageInfo() throws TskCoreException, KeywordSearchModuleException, NoOpenCoreException {
+        if (isPageInfoLoaded) {
+            return;
+        }
+
+        this.numberPages = solrServer.queryNumFileChunks(this.objectId);
+
+        if (artifact != null) {
+            loadPageInfoFromArtifact();
+        } else if (numberPages != 0) {
+            // if the file has chunks, get pages with hits, sorted
+            loadPageInfoFromHits();
+        } else {
+            //non-artifact, no chunks, everything is easy.
+            this.numberPages = 1;
+            this.currentPage = 1;
+            numberOfHitsPerPage.put(1, 0);
+            pages.add(1);
+            currentHitPerPage.put(1, 0);
+            isPageInfoLoaded = true;
+        }
+    }
+
+    /**
+     * Figure out the paging info from the artifact that was used to create this
+     * HighlightedText
+     *
+     * @throws TskCoreException
+     */
+    synchronized private void loadPageInfoFromArtifact() throws TskCoreException, KeywordSearchModuleException, NoOpenCoreException {
         final String keyword = artifact.getAttribute(TSK_KEYWORD).getValueString();
         this.keywords.add(keyword);
 
-        final BlackboardAttribute qtAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
-
-        qt = (qtAttribute != null)
-                ? KeywordSearch.QueryType.values()[qtAttribute.getValueInt()] : null;
+        //get the QueryType (if available)
+        final BlackboardAttribute queryTypetAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
+        qt = (queryTypetAttribute != null)
+                ? KeywordSearch.QueryType.values()[queryTypetAttribute.getValueInt()] : null;
 
         final BlackboardAttribute docIDsArtifact = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS);
 
@@ -139,14 +181,10 @@ class HighlightedText implements IndexedText {
             String chunkIDsString = docIDsArtifact.getValueString();
             Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
             for (String solrDocumentId : chunkIDs) {
-                int chunkID;
                 final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
-                if (-1 != separatorIndex) {
-                    chunkID = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
-                } else {
+                int chunkID = (-1 == separatorIndex) ? 0
+                        : Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
 
-                    chunkID = 0;
-                }
                 pages.add(chunkID);
                 numberOfHitsPerPage.put(chunkID, 0);
                 currentHitPerPage.put(chunkID, 0);
@@ -160,85 +198,18 @@ class HighlightedText implements IndexedText {
              * we need to look them up
              */
             Keyword keywordQuery = new Keyword(keyword, true);
-            KeywordSearchQuery chunksQuery
-                    = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
+            KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
             chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
-            try {
-                hits = chunksQuery.performQuery();
-                loadPageInfoFromHits();
-            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                logger.log(Level.SEVERE, "Could not perform the query to get chunk info and get highlights:" + keywordQuery.getSearchTerm(), ex); //NON-NLS
-                MessageNotifyUtil.Notify.error(Bundle.HighlightedText_query_exception_msg() + keywordQuery.getSearchTerm(), ex.getCause().getMessage());
-            }
-        }
-    }
 
-    /**
-     * Return the string used to later have SOLR highlight the document with.
-     *
-     * @param query
-     * @param literal_query
-     * @param queryResults
-     * @param file
-     *
-     * @return
-     */
-    /**
-     * Constructs a complete, escaped Solr query that is ready to be used.
-     *
-     * @param query         keyword term to be searched for
-     * @param literal_query flag whether query is literal or regex
-     *
-     * @return Solr query string
-     */
-    static private String constructEscapedSolrQuery(String query) {
-        return LuceneQuery.HIGHLIGHT_FIELD + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
-    }
-
-    /**
-     * The main goal of this method is to figure out which pages / chunks have
-     * hits.
-     */
-    @Messages({"HighlightedText.query.exception.msg=Could not perform the query to get chunk info and get highlights:"})
-    private void loadPageInfo() throws TskCoreException {
-        if (isPageInfoLoaded) {
-            return;
-        }
-
-        try {
-            this.numberPages = solrServer.queryNumFileChunks(this.objectId);
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content: {0}", this.objectId); //NON-NLS
-            return;
-        }
-
-        if (this.numberPages == 0) {
-            hasChunks = false;
-        } else {
-            hasChunks = true;
-        }
-
-        if (artifact != null) {
-            /*
-             * this could go in the constructor but is here to keep it near the
-             * functionaly similar code for non regex searches
-             */ loadPageInfoFromArtifact();
-        } else if (hasChunks) {
-            // if the file has chunks, get pages with hits, sorted
+            hits = chunksQuery.performQuery();
             loadPageInfoFromHits();
-        } else {
-            //non-regex, no chunks
-            this.numberPages = 1;
-            this.currentPage = 1;
-            numberOfHitsPerPage.put(1, 0);
-            pages.add(1);
-            currentHitPerPage.put(1, 0);
-            isPageInfoLoaded = true;
         }
-
     }
 
-    private void loadPageInfoFromHits() {
+    /**
+     * Load the paging info from the QueryResults object.
+     */
+    synchronized private void loadPageInfoFromHits() {
         isLiteral = hits.getQuery().isLiteral();
         //organize the hits by page, filter as needed
         TreeSet<Integer> pagesSorted = new TreeSet<>();
@@ -263,6 +234,18 @@ class HighlightedText implements IndexedText {
             currentHitPerPage.put(page, 0); //set current hit to 0th
         }
         isPageInfoLoaded = true;
+    }
+
+    /**
+     * Constructs a complete, escaped Solr query that is ready to be used.
+     *
+     * @param query         keyword term to be searched for
+     * @param literal_query flag whether query is literal or regex
+     *
+     * @return Solr query string
+     */
+    static private String constructEscapedSolrQuery(String query) {
+        return LuceneQuery.HIGHLIGHT_FIELD + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
     }
 
     @Override
@@ -369,7 +352,7 @@ class HighlightedText implements IndexedText {
             q.setShowDebugInfo(DEBUG); //debug
 
             String contentIdStr = Long.toString(this.objectId);
-            if (hasChunks) {
+            if (numberPages != 0) {
                 final String chunkID = Integer.toString(this.currentPage);
                 contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
             }
@@ -432,7 +415,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error getting highlighted text for " + objectId, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for " + objectId, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }
