@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -297,6 +297,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * only, i.e. deserialization routines; otherwise you could get a
      * non-deserialized instance. To obtain the singleton instance, use
      * {@link #findInstance}.
+     *
+     * @return instance - the default instance
      */
     public static synchronized DirectoryTreeTopComponent getDefault() {
         if (instance == null) {
@@ -308,6 +310,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     /**
      * Obtain the DirectoryTreeTopComponent instance. Never call
      * {@link #getDefault} directly!
+     *
+     * @return getDefault() - the default instance
      */
     public static synchronized DirectoryTreeTopComponent findInstance() {
         WindowManager winManager = WindowManager.getDefault();
@@ -667,7 +671,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             try {
                                 displayName = content.getUniquePath();
                             } catch (TskCoreException ex) {
-                                LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode); //NON-NLS
+                                LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: {0}", originNode); //NON-NLS
                             }
                         } else if (originNode.getLookup().lookup(String.class) != null) {
                             displayName = originNode.getLookup().lookup(String.class);
@@ -799,7 +803,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Set the selected node using a path to a previously selected node.
      *
      * @param previouslySelectedNodePath Path to a previously selected node.
-     * @param rootNodeName Name of the root node to match, may be null.
+     * @param rootNodeName               Name of the root node to match, may be
+     *                                   null.
      */
     private void setSelectedNode(final String[] previouslySelectedNodePath, final String rootNodeName) {
         if (previouslySelectedNodePath == null) {

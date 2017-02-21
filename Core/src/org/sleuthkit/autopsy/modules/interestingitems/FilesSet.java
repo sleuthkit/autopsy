@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,7 +84,7 @@ public final class FilesSet implements Serializable {
      *
      * @return A description string, possibly the empty string.
      */
-    String getDescription() {
+    public String getDescription() {
         return this.description;
     }
 

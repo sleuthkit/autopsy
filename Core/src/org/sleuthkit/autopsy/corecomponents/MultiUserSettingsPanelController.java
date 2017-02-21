@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Multi_User_Settings",
         iconBase = "org/sleuthkit/autopsy/images/User-Group-icon-green32.png",
-        position = 2,
+        position = 3,
         keywords = "#OptionsCategory_Keywords_Multi_User_Options",
         keywordsCategory = "Multi-user")
 public final class MultiUserSettingsPanelController extends OptionsPanelController {
