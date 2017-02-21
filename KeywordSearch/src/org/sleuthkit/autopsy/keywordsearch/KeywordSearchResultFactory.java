@@ -230,7 +230,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      */
     class KeyValueQueryContent extends KeyValue {
 
-        private long solrObjectId;
+        private final long solrObjectId;
 
         private final Content content;
         private final QueryResults hits;
@@ -240,16 +240,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * NOTE Parameters are defined based on how they are currently used in
          * practice
          *
-         * @param name           File name that has hit.
-         * @param map            Contains content metadata, snippets, etc.
-         *                       (property map)
-         * @param id             User incremented ID
-         * @param content        File that had the hit.
-         * @param highlightQuery Query used in search
-         * @param query          Query used in search
-         * @param hits           Full set of search results (for all files! @@@)
+         * @param name    File name that has hit.
+         * @param map     Contains content metadata, snippets, etc. (property
+         *                map)
+         * @param id      User incremented ID
+         * @param content File that had the hit.
+         * @param query   Query used in search
+         * @param hits    Full set of search results (for all files! @@@)
          */
-        public KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, KeywordSearchQuery query, QueryResults hits) {
+        KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
             this.solrObjectId = solrObjectId;
             this.content = content;
@@ -262,7 +261,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             return content;
         }
 
-        public long getSolrObjectId() {
+        long getSolrObjectId() {
             return solrObjectId;
         }
 
