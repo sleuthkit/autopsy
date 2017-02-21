@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,10 +28,11 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -80,16 +83,24 @@ class AccountsText implements IndexedText {
     @GuardedBy("this")
     private boolean isPageInfoLoaded = false;
     private int numberPagesForFile = 0;
-    private int currentPage = 0;
-    //list of pages, used for iterating back and forth.  Only stores pages with hits
-    private List<Integer> pages = new ArrayList<>();
-    //map from page/chunk to number of hits. value is 0 if not yet known.
-    private final LinkedHashMap<Integer, Integer> numberOfHitsPerPage = new LinkedHashMap<>();
-    //map from page/chunk number to current hit on that page.
+    private Integer currentPage = 0;
+
+    /*
+     * map from page/chunk to number of hits. value is 0 if not yet known.
+     */
+    private final TreeMap<Integer, Integer> numberOfHitsPerPage = new TreeMap<>();
+    /*
+     * set of pages, used for iterating back and forth. Only stores pages with hits
+     */
+    private final Set<Integer> pages = numberOfHitsPerPage.keySet();
+    /*
+     * map from page/chunk number to current hit on that page.
+     */
     private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
 
     AccountsText(long objectID, BlackboardArtifact artifact) {
         this(objectID, Arrays.asList(artifact));
+
     }
 
     @NbBundle.Messages({
@@ -119,21 +130,20 @@ class AccountsText implements IndexedText {
 
     @Override
     public boolean hasNextPage() {
-        return pages.indexOf(this.currentPage) < pages.size() - 1;
+        return getIndexOfCurrentPage() < pages.size() - 1;
 
     }
 
     @Override
     public boolean hasPreviousPage() {
-        return pages.indexOf(this.currentPage) > 0;
-
+        return getIndexOfCurrentPage() > 0;
     }
 
     @Override
     @NbBundle.Messages("AccountsText.nextPage.exception.msg=No next page.")
     public int nextPage() {
         if (hasNextPage()) {
-            currentPage = pages.get(pages.indexOf(this.currentPage) + 1);
+            currentPage = getIndexOfCurrentPage() + 1;
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_nextPage_exception_msg());
@@ -144,11 +154,15 @@ class AccountsText implements IndexedText {
     @NbBundle.Messages("AccountsText.previousPage.exception.msg=No previous page.")
     public int previousPage() {
         if (hasPreviousPage()) {
-            currentPage = pages.get(pages.indexOf(this.currentPage) - 1);
+            currentPage = getIndexOfCurrentPage() - 1;
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_previousPage_exception_msg());
         }
+    }
+
+    private int getIndexOfCurrentPage() {
+        return Iterators.indexOf(pages.iterator(), this.currentPage::equals);
     }
 
     @Override
@@ -198,11 +212,6 @@ class AccountsText implements IndexedText {
         }
     }
 
-    @Override
-    public LinkedHashMap<Integer, Integer> getHitsPages() {
-        return this.numberOfHitsPerPage;
-    }
-
     /**
      * Initialize this object with information about which pages/chunks have
      * hits. Multiple calls will not change the initial results.
@@ -222,7 +231,7 @@ class AccountsText implements IndexedText {
         for (BlackboardArtifact artifact : artifacts) {
             addToPagingInfo(artifact);
         }
-        pages = pages.stream().sorted().distinct().collect(Collectors.toList());
+
         this.currentPage = pages.stream().findFirst().orElse(1);
 
         isPageInfoLoaded = true;
@@ -254,11 +263,9 @@ class AccountsText implements IndexedText {
                 .map(t -> StringUtils.substringAfterLast(t, Server.CHUNK_ID_SEPARATOR))
                 .map(Integer::valueOf)
                 .forEach(chunkID -> {
-                    pages.add(chunkID);
                     numberOfHitsPerPage.put(chunkID, 0);
                     currentHitPerPage.put(chunkID, 0);
                 });
-
     }
 
     @Override

@@ -18,15 +18,15 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.ArrayList;
+import com.google.common.collect.Iterators;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
@@ -37,11 +37,9 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
@@ -76,24 +74,24 @@ class HighlightedText implements IndexedText {
     private final Set<String> keywords = new HashSet<>();
 
     private int numberPages;
-    private int currentPage;
+    private Integer currentPage =0;
 
     @GuardedBy("this")
     private boolean isPageInfoLoaded = false;
 
-    /**
-     * stores the chunk number all pages/chunks that have hits as key, and
-     * number of hits as a value, or 0 if not yet known
+     /*
+     * map from page/chunk to number of hits. value is 0 if not yet known.
      */
-    private final LinkedHashMap<Integer, Integer> numberOfHitsPerPage = new LinkedHashMap<>();
+    private final TreeMap<Integer, Integer> numberOfHitsPerPage = new TreeMap<>();
     /*
-     * stored page num -> current hit number mapping
+     * set of pages, used for iterating back and forth. Only stores pages with hits
+     */
+    private final Set<Integer> pages = numberOfHitsPerPage.keySet();
+    /*
+     * map from page/chunk number to current hit on that page.
      */
     private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
-    /*
-     * List of unique page/chunk numbers with hits
-     */
-    private final List<Integer> pages = new ArrayList<>();
+  
 
     private QueryResults hits = null; //original hits that may get passed in
     private BlackboardArtifact artifact;
@@ -247,6 +245,9 @@ class HighlightedText implements IndexedText {
     static private String constructEscapedSolrQuery(String query) {
         return LuceneQuery.HIGHLIGHT_FIELD + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
     }
+     private int getIndexOfCurrentPage() {
+        return Iterators.indexOf(pages.iterator(), this.currentPage::equals);
+    }
 
     @Override
     public int getNumberPages() {
@@ -259,39 +260,35 @@ class HighlightedText implements IndexedText {
         return this.currentPage;
     }
 
-    @Override
+     @Override
     public boolean hasNextPage() {
-        final int numPages = pages.size();
-        int idx = pages.indexOf(this.currentPage);
-        return idx < numPages - 1;
+        return getIndexOfCurrentPage() < pages.size() - 1;
 
     }
 
     @Override
     public boolean hasPreviousPage() {
-        int idx = pages.indexOf(this.currentPage);
-        return idx > 0;
-
+        return getIndexOfCurrentPage() > 0;
     }
 
     @Override
     public int nextPage() {
-        if (false == hasNextPage()) {
+        if (hasNextPage()) {
+            currentPage = getIndexOfCurrentPage() + 1;
+            return currentPage;
+        } else {
             throw new IllegalStateException("No next page.");
         }
-        int idx = pages.indexOf(this.currentPage);
-        currentPage = pages.get(idx + 1);
-        return currentPage;
     }
 
     @Override
     public int previousPage() {
-        if (!hasPreviousPage()) {
+        if (hasPreviousPage()) {
+            currentPage = getIndexOfCurrentPage() - 1;
+            return currentPage;
+        } else {
             throw new IllegalStateException("No previous page.");
         }
-        int idx = pages.indexOf(this.currentPage);
-        currentPage = pages.get(idx - 1);
-        return currentPage;
     }
 
     @Override
@@ -336,11 +333,6 @@ class HighlightedText implements IndexedText {
             return 0;
         }
         return currentHitPerPage.get(currentPage);
-    }
-
-    @Override
-    public LinkedHashMap<Integer, Integer> getHitsPages() {
-        return this.numberOfHitsPerPage;
     }
 
     @Override
