@@ -391,30 +391,29 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         }
 
     }
-    private void doCopyFileSetsDialog(FilesSet selectedSet) {
-        
-    }
-    
-    
+
     /**
      * Display an interesting files set definition panel in a dialog box and
      * respond to user interactions with the dialog.
      *
-     * @param selectedSet The currently selected files set, may be null to
-     *                    indicate a new interesting files set definition is to
-     *                    be created.
+     * @param selectedSet     The currently selected files set, may be null to
+     *                        indicate a new interesting files set definition is
+     *                        to be created.
+     * @param shouldCreateNew Wether this should be creating a new set or
+     *                        replacing the selectedSet. False for edit, true
+     *                        for copy or new.
      */
-    private void doFileSetsDialog(FilesSet selectedSet) {
+    private void doFileSetsDialog(FilesSet selectedSet, boolean shouldCreateNew) {
         // Create a files set defintion panle.
         FilesSetPanel panel;
         if (selectedSet != null) {
-            // Editing an existing set definition.
-            panel = new FilesSetPanel(selectedSet, panelType);
+            // Editing an existing set definition.            
+            panel = new FilesSetPanel(selectedSet, panelType);            
         } else {
             // Creating a new set definition.
             panel = new FilesSetPanel(panelType);
         }
-
+       
         // Do a dialog box with the files set panel until the user either enters
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.
@@ -425,7 +424,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
         // In case of editing an existing ruleset(selectedSet != null), following check is not performed.
-        if (this.filesSets.containsKey(panel.getFilesSetName()) && selectedSet == null) {
+        if (this.filesSets.containsKey(panel.getFilesSetName()) && shouldCreateNew ) {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
                     "FilesSetDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
                     panel.getFilesSetName()));
@@ -440,7 +439,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 // Preserve the existing rules from the set being edited.
                 rules.putAll(selectedSet.getRules());
             }
-            this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getFileSetIgnoresUnallocatedSpace(), rules);
+            if (shouldCreateNew) {
+                this.replaceFilesSet(null, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getFileSetIgnoresUnallocatedSpace(), rules);
+            } else {
+                this.replaceFilesSet(selectedSet, panel.getFilesSetName(), panel.getFilesSetDescription(), panel.getFileSetIgnoresKnownFiles(), panel.getFileSetIgnoresUnallocatedSpace(), rules);
+            }
         }
     }
 
@@ -1001,7 +1004,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }// </editor-fold>//GEN-END:initComponents
 
     private void newSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newSetButtonActionPerformed
-        this.doFileSetsDialog(null);
+        this.doFileSetsDialog(null, true);
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_newSetButtonActionPerformed
 
@@ -1049,7 +1052,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }//GEN-LAST:event_deleteSetButtonActionPerformed
 
     private void editSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editSetButtonActionPerformed
-        this.doFileSetsDialog(this.setsList.getSelectedValue());
+        this.doFileSetsDialog(this.setsList.getSelectedValue(), false);
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_editSetButtonActionPerformed
 
@@ -1064,7 +1067,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }//GEN-LAST:event_newRuleButtonActionPerformed
 
     private void copySetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copySetButtonActionPerformed
-        // TODO add your handling code here:
+        this.doFileSetsDialog(this.setsList.getSelectedValue(), true);
     }//GEN-LAST:event_copySetButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

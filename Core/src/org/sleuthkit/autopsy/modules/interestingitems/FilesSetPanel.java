@@ -117,7 +117,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
         String returnValue = this.nameTextField.getText();
         return returnValue;
     }
-
+ 
     /**
      * Get the description for the interesting files set defined using this
      * panel.
