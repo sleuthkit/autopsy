@@ -651,6 +651,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         modeRadioButtons = new javax.swing.ButtonGroup();
+        nodeScrollPane = new javax.swing.JScrollPane();
         nodePanel = new javax.swing.JPanel();
         jPanelNodeType = new javax.swing.JPanel();
         jLabelSelectMode = new javax.swing.JLabel();
@@ -686,6 +687,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnLogging = new javax.swing.JButton();
         cbJoinAutoIngestCluster = new javax.swing.JCheckBox();
         tbOops = new javax.swing.JTextField();
+
+        nodeScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+
+        nodePanel.setMinimumSize(new java.awt.Dimension(100, 100));
 
         jPanelNodeType.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jPanelNodeType.border.title"))); // NOI18N
         jPanelNodeType.setMinimumSize(new java.awt.Dimension(50, 50));
@@ -1048,15 +1053,20 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jPanelSharedConfig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        nodeScrollPane.setViewportView(nodePanel);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1441,6 +1451,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox masterNodeCheckBox;
     private javax.swing.ButtonGroup modeRadioButtons;
     private javax.swing.JPanel nodePanel;
+    private javax.swing.JScrollPane nodeScrollPane;
     private javax.swing.JTextField outputPathTextField;
     private javax.swing.JProgressBar pbTaskInProgress;
     private javax.swing.JLabel restartRequiredNodeLabel;
