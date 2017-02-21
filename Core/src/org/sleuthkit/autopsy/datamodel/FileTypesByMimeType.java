@@ -147,7 +147,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                     final String mime_type = resultSet.getString("mime_type"); //NON-NLS
                     if (!mime_type.isEmpty()) {
                         String mimeType[] = mime_type.split("/");
-                        if (!mimeType[0].isEmpty() && !mimeType[1].isEmpty()) {
+                        //Note: Users are able to define custom mime types in Autopsy that do not
+                        //contain a "/" or possibly have multiple slashes
+                        if (mimeType.length > 1 && !mimeType[0].isEmpty() && !mimeType[1].isEmpty()) {
                             if (!existingMimeTypes.containsKey(mimeType[0])) {
                                 existingMimeTypes.put(mimeType[0], new ArrayList<>());
                             }
