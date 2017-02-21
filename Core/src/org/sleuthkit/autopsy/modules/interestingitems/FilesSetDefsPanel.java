@@ -246,6 +246,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.ingoreUnallocCheckbox.setSelected(true);
         this.newSetButton.setEnabled(true && canBeEnabled);
         this.editSetButton.setEnabled(false);
+        this.copySetButton.setEnabled(false);
         this.deleteSetButton.setEnabled(false);
     }
 
@@ -796,6 +797,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         copySetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/new16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(copySetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.copySetButton.text")); // NOI18N
+        copySetButton.setEnabled(false);
         copySetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 copySetButtonActionPerformed(evt);
