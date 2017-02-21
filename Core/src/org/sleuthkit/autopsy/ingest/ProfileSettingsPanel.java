@@ -334,7 +334,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
      */
     private void doProfileDialog(IngestProfile selectedProfile) {
         // Create a files set defintion panel.
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         //start wait cursor for ingest job settings construction
         if (selectedProfile != null) {
@@ -346,7 +345,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         }
         //end wait Cursor for ingest job settings construction
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         // Do a dialog box with the profilePanel till the user enters a name or chooses cancel
         int option = JOptionPane.OK_OPTION;
         do {
