@@ -60,6 +60,7 @@ class HighlightedText implements IndexedText {
     private static final BlackboardAttribute.Type TSK_KEYWORD_HIT_DOCUMENT_IDS = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS);
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
+    static private final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
 
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
@@ -74,24 +75,24 @@ class HighlightedText implements IndexedText {
     private final Set<String> keywords = new HashSet<>();
 
     private int numberPages;
-    private Integer currentPage =0;
+    private Integer currentPage = 0;
 
     @GuardedBy("this")
     private boolean isPageInfoLoaded = false;
 
-     /*
+    /*
      * map from page/chunk to number of hits. value is 0 if not yet known.
      */
     private final TreeMap<Integer, Integer> numberOfHitsPerPage = new TreeMap<>();
     /*
-     * set of pages, used for iterating back and forth. Only stores pages with hits
+     * set of pages, used for iterating back and forth. Only stores pages with
+     * hits
      */
     private final Set<Integer> pages = numberOfHitsPerPage.keySet();
     /*
      * map from page/chunk number to current hit on that page.
      */
     private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
-  
 
     private QueryResults hits = null; //original hits that may get passed in
     private BlackboardArtifact artifact;
@@ -122,9 +123,14 @@ class HighlightedText implements IndexedText {
      *
      * @param artifact The artifact that was selected.
      */
-    HighlightedText(BlackboardArtifact artifact) {
+    HighlightedText(BlackboardArtifact artifact) throws TskCoreException {
         this.artifact = artifact;
-        this.objectId = artifact.getObjectID();
+        BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT);
+        if (attribute != null) {
+            this.objectId = attribute.getValueLong();
+        } else {
+            this.objectId = artifact.getObjectID();
+        }
 
     }
 
@@ -183,7 +189,6 @@ class HighlightedText implements IndexedText {
                 int chunkID = (-1 == separatorIndex) ? 0
                         : Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
 
-                pages.add(chunkID);
                 numberOfHitsPerPage.put(chunkID, 0);
                 currentHitPerPage.put(chunkID, 0);
             }
@@ -210,12 +215,12 @@ class HighlightedText implements IndexedText {
     synchronized private void loadPageInfoFromHits() {
         isLiteral = hits.getQuery().isLiteral();
         //organize the hits by page, filter as needed
-        TreeSet<Integer> pagesSorted = new TreeSet<>();
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();
                 if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
-                    pagesSorted.add(chunkID);
+                    numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
+                    currentHitPerPage.put(chunkID, 0); //set current hit to 0th
                     if (StringUtils.isNotBlank(hit.getHit())) {
                         this.keywords.add(hit.getHit());
                     }
@@ -224,13 +229,8 @@ class HighlightedText implements IndexedText {
         }
 
         //set page to first page having highlights
-        this.currentPage = pagesSorted.stream().findFirst().orElse(1);
+        this.currentPage = pages.stream().findFirst().orElse(1);
 
-        for (Integer page : pagesSorted) {
-            numberOfHitsPerPage.put(page, 0); //unknown number of matches in the page
-            pages.add(page);
-            currentHitPerPage.put(page, 0); //set current hit to 0th
-        }
         isPageInfoLoaded = true;
     }
 
@@ -245,7 +245,8 @@ class HighlightedText implements IndexedText {
     static private String constructEscapedSolrQuery(String query) {
         return LuceneQuery.HIGHLIGHT_FIELD + ":" + "\"" + KeywordSearchUtil.escapeLuceneQuery(query) + "\"";
     }
-     private int getIndexOfCurrentPage() {
+
+    private int getIndexOfCurrentPage() {
         return Iterators.indexOf(pages.iterator(), this.currentPage::equals);
     }
 
@@ -260,7 +261,7 @@ class HighlightedText implements IndexedText {
         return this.currentPage;
     }
 
-     @Override
+    @Override
     public boolean hasNextPage() {
         return getIndexOfCurrentPage() < pages.size() - 1;
 
