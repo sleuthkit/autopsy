@@ -300,7 +300,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Get the selected interesting files set and populate the set
             // components.       
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
-            
+
             if (selectedSet != null) {
                 // Populate the components that display the properties of the
                 // selected files set.
@@ -1130,8 +1130,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             try {
                 Map<String, FilesSet> importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile); //read the xml from that path        
                 this.filesSets.putAll(importedSets);
-            }
-            catch(FilesSetsManager.FilesSetsManagerException ex){
+            } catch (FilesSetsManager.FilesSetsManagerException ex) {
                 //WJS-TODO LOG error inform user that file sets were not successfully imported
             }
             //save currently selected value as default value to select
@@ -1151,7 +1150,26 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }//GEN-LAST:event_importSetButtonActionPerformed
 
     private void exportSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportSetButtonActionPerformed
-        // TODO add your handling code here:
+        //display warning that existing filessets with duplicate names will be overwritten
+        //create file chooser to get xml file
+        JFileChooser chooser = new JFileChooser();
+        final String[] AUTOPSY_EXTENSIONS = new String[]{"xml"}; //NON-NLS
+        FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), AUTOPSY_EXTENSIONS);
+        chooser.addChoosableFileFilter(autopsyFilter);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int returnVal = chooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File selFile = chooser.getSelectedFile();
+            if (selFile == null) {
+                return;
+            }
+            Map<String, FilesSet> exportSets;
+            exportSets = new HashMap<>();
+            exportSets.put(this.setsList.getSelectedValue().getName(), this.setsList.getSelectedValue());
+            InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(selFile, exportSets);
+        }
     }//GEN-LAST:event_exportSetButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

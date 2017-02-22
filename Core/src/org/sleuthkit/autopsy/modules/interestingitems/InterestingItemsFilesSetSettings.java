@@ -31,6 +31,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.openide.util.io.NbObjectInputStream;
 import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -440,6 +443,82 @@ class InterestingItemsFilesSetSettings implements Serializable {
         return true;
     }
 
+    
+    static boolean exportXmlDefinitionsFile(File xmlFile,  Map<String, FilesSet> interestingFilesSets){
+          DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+          try {
+                // Create the new XML document.
+                DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+                Document doc = docBuilder.newDocument();
+                Element rootElement = doc.createElement(FILE_SETS_ROOT_TAG);
+                doc.appendChild(rootElement);
+
+                // Add the interesting files sets to the document.
+                for (FilesSet set : interestingFilesSets.values()) {
+                    // Add the files set element and its attributes.
+                    Element setElement = doc.createElement(FILE_SET_TAG);
+                    setElement.setAttribute(NAME_ATTR, set.getName());
+                    setElement.setAttribute(DESC_ATTR, set.getDescription());
+                    setElement.setAttribute(IGNORE_KNOWN_FILES_ATTR, Boolean.toString(set.ignoresKnownFiles()));
+
+                    // Add the child elements for the set membership rules.
+                    for (FilesSet.Rule rule : set.getRules().values()) {
+                        // Add a rule element with the appropriate name Condition 
+                        // type tag.
+                        FilesSet.Rule.FileNameCondition nameCondition = rule.getFileNameCondition();
+                        Element ruleElement;
+                        if (nameCondition instanceof FilesSet.Rule.FullNameCondition) {
+                            ruleElement = doc.createElement(NAME_RULE_TAG);
+                        } else {
+                            ruleElement = doc.createElement(EXTENSION_RULE_TAG);
+                        }
+
+                        // Add the rule name attribute.
+                        ruleElement.setAttribute(NAME_ATTR, rule.getName());
+                        
+                        // Add the name Condition regex attribute
+                        ruleElement.setAttribute(REGEX_ATTR, Boolean.toString(nameCondition.isRegex()));
+                                                
+                        // Add the type Condition attribute.
+                        FilesSet.Rule.MetaTypeCondition typeCondition = rule.getMetaTypeCondition();
+                        switch (typeCondition.getMetaType()) {
+                            case FILES:
+                                ruleElement.setAttribute(TYPE_FILTER_ATTR, TYPE_FILTER_VALUE_FILES);
+                                break;
+                            case DIRECTORIES:
+                                ruleElement.setAttribute(TYPE_FILTER_ATTR, TYPE_FILTER_VALUE_DIRS);
+                                break;
+                            default:
+                                ruleElement.setAttribute(TYPE_FILTER_ATTR, TYPE_FILTER_VALUE_FILES_AND_DIRS);
+                                break;
+                        }
+
+                        // Add the optional path Condition.
+                        FilesSet.Rule.ParentPathCondition pathFilter = rule.getPathCondition();
+                        if (pathFilter != null) {
+                            if (pathFilter.isRegex()) {
+                                ruleElement.setAttribute(PATH_REGEX_ATTR, pathFilter.getTextToMatch());
+                            } else {
+                                ruleElement.setAttribute(PATH_FILTER_ATTR, pathFilter.getTextToMatch());
+                            }
+                        }
+                        // Add the name Condition text as the rule element content.
+                        ruleElement.setTextContent(nameCondition.getTextToMatch());
+
+                        setElement.appendChild(ruleElement);
+                    }
+
+                    rootElement.appendChild(setElement);
+                }
+                // Overwrite the previous definitions file. Note that the utility 
+                // method logs an error on failure.
+                return XMLUtil.saveDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath(), XML_ENCODING, doc);
+
+            } catch (ParserConfigurationException ex) {
+                logger.log(Level.SEVERE, "Error writing interesting files definition file to " + xmlFile.getPath(), ex); // NON-NLS
+                return false;
+            }
+        }
     /**
      * Construct a meta-type condition for a FilesSet membership rule from data
      * in an XML element.
