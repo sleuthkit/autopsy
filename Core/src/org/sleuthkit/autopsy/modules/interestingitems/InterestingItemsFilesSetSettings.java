@@ -358,11 +358,11 @@ class InterestingItemsFilesSetSettings implements Serializable {
     // multiple intersting files set definition files, e.g., one for
     // definitions that ship with Autopsy and one for user definitions.
     /**
-     * Reads FilesSet definitions from an XML file.
+     * Reads FilesSet definitions from Serialized file or XML file.
      *
      * @param fileName       The name of the file which is expected to store the
      *                       serialized definitions
-     * @param legacyFilePath Path of the set definitions file as a string.
+     * @param legacyFileName Name of the xml set definitions file as a string.
      *
      * @return The set definitions in a map of set names to sets.
      */
@@ -373,32 +373,50 @@ class InterestingItemsFilesSetSettings implements Serializable {
         }
         // Check if the legacy xml file exists.
         if (!legacyFileName.isEmpty()) {
-            File defsFile = Paths.get(PlatformUtil.getUserConfigDirectory(), legacyFileName).toFile();
-            if (!defsFile.exists()) {
-                return filesSets;
-            }
-            // Check if the file can be read.
-            if (!defsFile.canRead()) {
-                logger.log(Level.SEVERE, "FilesSet definition file at {0} exists, but cannot be read", defsFile.getPath()); // NON-NLS
-                return filesSets;
-            }
-            // Parse the XML in the file.
-            Document doc = XMLUtil.loadDoc(InterestingItemsFilesSetSettings.class, defsFile.getPath());
-            if (doc == null) {
-                logger.log(Level.SEVERE, "FilesSet definition file at {0}", defsFile.getPath()); // NON-NLS
-                return filesSets;
-            }
-            // Get the root element.
-            Element root = doc.getDocumentElement();
-            if (root == null) {
-                logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", new Object[]{InterestingItemsFilesSetSettings.FILE_SETS_ROOT_TAG, defsFile.getPath()}); // NON-NLS
-                return filesSets;
-            }
-            // Read in the files set definitions.
-            NodeList setElems = root.getElementsByTagName(FILE_SET_TAG);
-            for (int i = 0; i < setElems.getLength(); ++i) {
-                readFilesSet((Element) setElems.item(i), filesSets, defsFile.getPath());
-            }
+            return readDefinitionsXML(Paths.get(PlatformUtil.getUserConfigDirectory(), legacyFileName).toFile());
+        }
+        return filesSets;
+    }
+
+    /**
+     * Reads an XML file and returns a map of fileSets. Allows for legacy XML
+     * support as well as importing of file sets to XMLs.
+     *
+     * @param xmlFilePath - The Path to the xml file containing the
+     *                    definition(s).
+     *
+     * @return fileSets - a Map<String, Filesset> of the definition(s) found in
+     *         the xml file.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
+     */
+    static Map<String, FilesSet> readDefinitionsXML(File xmlFile) throws FilesSetsManager.FilesSetsManagerException {
+        Map<String, FilesSet> filesSets = new HashMap<>();
+        if (!xmlFile.exists()) {
+            return filesSets;
+        }
+        // Check if the file can be read.
+        if (!xmlFile.canRead()) {
+            logger.log(Level.SEVERE, "FilesSet definition file at {0} exists, but cannot be read", xmlFile.getPath()); // NON-NLS
+            return filesSets;
+        }
+        // Parse the XML in the file.
+        Document doc = XMLUtil.loadDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath());
+        if (doc == null) {
+            logger.log(Level.SEVERE, "FilesSet definition file at {0}", xmlFile.getPath()); // NON-NLS
+            return filesSets;
+        }
+        // Get the root element.
+        Element root = doc.getDocumentElement();
+        if (root == null) {
+            logger.log(Level.SEVERE, "Failed to get root {0} element tag of FilesSet definition file at {1}", new Object[]{InterestingItemsFilesSetSettings.FILE_SETS_ROOT_TAG, xmlFile.getPath()}); // NON-NLS
+            return filesSets;
+        }
+        // Read in the files set definitions.
+        NodeList setElems = root.getElementsByTagName(FILE_SET_TAG);
+        for (int i = 0; i < setElems.getLength(); ++i) {
+            readFilesSet((Element) setElems.item(i), filesSets, xmlFile.getPath());
         }
         return filesSets;
     }

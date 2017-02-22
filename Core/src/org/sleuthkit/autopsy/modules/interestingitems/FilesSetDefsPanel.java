@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.EventQueue;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,9 +30,11 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
@@ -58,7 +61,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.saveError=Error saving interesting files sets to file.",
         "FilesSetDefsPanel.interesting.copySetButton.text=Copy Set",
         "FilesSetDefsPanel.interesting.importSetButton.text=Import Set",
-        "FilesSetDefsPanel.interesting.exportSetButton.text=Export Set"
+        "FilesSetDefsPanel.interesting.exportSetButton.text=Export Set",
+        "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)"
     })
     public static enum PANEL_TYPE {
         FILE_INGEST_FILTERS,
@@ -295,7 +299,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // Get the selected interesting files set and populate the set
             // components.
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
-            FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);   
+            FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
             FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
             if (selectedSet != null) {
                 // Populate the components that display the properties of the
@@ -418,12 +422,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         FilesSetPanel panel;
         if (selectedSet != null) {
             // Editing an existing set definition.            
-            panel = new FilesSetPanel(selectedSet, panelType);            
+            panel = new FilesSetPanel(selectedSet, panelType);
         } else {
             // Creating a new set definition.
             panel = new FilesSetPanel(panelType);
         }
-       
+
         // Do a dialog box with the files set panel until the user either enters
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.
@@ -434,7 +438,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
         // In case of editing an existing ruleset(selectedSet != null), following check is not performed.
-        if (this.filesSets.containsKey(panel.getFilesSetName()) && shouldCreateNew ) {
+        if (this.filesSets.containsKey(panel.getFilesSetName()) && shouldCreateNew) {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
                     "FilesSetDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
                     panel.getFilesSetName()));
@@ -1109,7 +1113,42 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
     }//GEN-LAST:event_copySetButtonActionPerformed
 
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
-        // TODO add your handling code here:
+        //display warning that existing filessets with duplicate names will be overwritten
+        //create file chooser to get xml file
+        JFileChooser chooser = new JFileChooser();
+        final String[] AUTOPSY_EXTENSIONS = new String[]{"xml"}; //NON-NLS
+        FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
+                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), AUTOPSY_EXTENSIONS);
+        chooser.addChoosableFileFilter(autopsyFilter);
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        int returnVal = chooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File selFile = chooser.getSelectedFile();
+            if (selFile == null) {
+                return;
+            }
+            try {
+                Map<String, FilesSet> importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile); //read the xml from that path        
+                this.filesSets.putAll(importedSets);
+            }
+            catch(FilesSetsManager.FilesSetsManagerException ex){
+                //WJS-TODO LOG error inform user that file sets were not successfully imported
+            }
+            //save currently selected value as default value to select
+            FilesSet importedSet = this.setsList.getSelectedValue();
+            // Redo the list model for the files set list component, which will make
+            FilesSetDefsPanel.this.setsListModel.clear();
+            for (FilesSet set : this.filesSets.values()) {
+                this.setsListModel.addElement(set);
+                importedSet = set;
+            }
+            // Select the new/edited files set definition in the set definitions
+            // list. This will cause the selection listeners to repopulate the
+            // subordinate components.
+            this.setsList.setSelectedValue(importedSet, true);
+        }
+
     }//GEN-LAST:event_importSetButtonActionPerformed
 
     private void exportSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportSetButtonActionPerformed
