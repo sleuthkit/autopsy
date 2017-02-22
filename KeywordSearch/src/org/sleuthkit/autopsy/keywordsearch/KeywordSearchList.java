@@ -39,8 +39,14 @@ abstract class KeywordSearchList {
 
     protected static final Logger LOGGER = Logger.getLogger(KeywordSearchList.class.getName());
 
-    private static final String PHONE_NUMBER_REGEX = "(\\([0-9]{3}\\)|[0-9]{3})([ \\-\\.])[0-9]{3}([ \\-\\.])[0-9]{4}";  //NON-NLS
-    private static final String IP_ADDRESS_REGEX = "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])";  //NON-NLS
+    // These are the valid characters that can appear either before or after a
+    // keyword hit. We use these characters to try to reduce the number of false
+    // positives for phone numbers and IP addresses. They don't work as well
+    // for "string" types such as URLs since the characters are more likely to
+    // appear in the resulting hit.
+    private static final String BOUNDARY_CHARACTERS = "[ \t\r\n\\.\\-\\?\\,\\;\\\\!\\:\\[\\]\\/\\(\\)\\\"\\\'\\>\\{\\}]";
+    private static final String PHONE_NUMBER_REGEX = BOUNDARY_CHARACTERS + "(\\([0-9]{3}\\)|[0-9]{3})([ \\-\\.])[0-9]{3}([ \\-\\.])[0-9]{4}" + BOUNDARY_CHARACTERS;  //NON-NLS
+    private static final String IP_ADDRESS_REGEX = BOUNDARY_CHARACTERS + "(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])" + BOUNDARY_CHARACTERS;  //NON-NLS
     private static final String EMAIL_ADDRESS_REGEX = "(\\{?)[a-zA-Z0-9%+_\\-]+(\\.[a-zA-Z0-9%+_\\-]+)*(\\}?)\\@([a-zA-Z0-9]([a-zA-Z0-9\\-]*[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,4}";  //NON-NLS
     private static final String URL_REGEX = "(((((h|H)(t|T))|(f|F))(t|T)(p|P)(s|S?)\\:\\/\\/)|(w|W){3,3}\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(\\/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*";  //NON-NLS
 
