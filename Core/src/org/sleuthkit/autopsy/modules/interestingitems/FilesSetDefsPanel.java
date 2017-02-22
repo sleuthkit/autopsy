@@ -819,6 +819,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        importSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/import16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(importSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.importSetButton.text")); // NOI18N
         importSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -826,6 +827,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
         });
 
+        exportSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/export16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(exportSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.exportSetButton.text")); // NOI18N
         exportSetButton.setEnabled(false);
         exportSetButton.addActionListener(new java.awt.event.ActionListener() {
