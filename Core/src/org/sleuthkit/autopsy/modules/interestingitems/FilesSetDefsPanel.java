@@ -23,7 +23,6 @@ import java.awt.EventQueue;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1118,6 +1117,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.yesOwMsg=Yes, overwrite",
         "FilesSetDefsPanel.noSkipMsg=No, skip",
         "FilesSetDefsPanel.cancelImportMsg=Cancel import",
+        "# {0} - FilesSet name",
         "FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set <{0}> already exists locally, overwrite?",
         "FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict",
         "FilesSetDefsPanel.interesting.failImportMsg=Interesting files set not imported",
@@ -1138,6 +1138,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selFile = chooser.getSelectedFile();
             if (selFile == null) {
+                JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failImportMsg"),
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importButtonAction.featureName"),
+                        JOptionPane.WARNING_MESSAGE);
+                logger.warning("Selected file was null, when trying to import interesting files set definitions");
                 return;
             }
             Collection<FilesSet> importedSets;
@@ -1152,6 +1157,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failImportMsg"),
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importButtonAction.featureName"),
                         JOptionPane.WARNING_MESSAGE);
+                logger.warning("No Interesting files set definitions were read from the selected file");
                 return;
             }
             for (FilesSet set : importedSets) {
@@ -1185,17 +1191,19 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             // list. This will cause the selection listeners to repopulate the
             // subordinate components.
             this.setsList.setSelectedValue(selectedSet, true);
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
         }
-        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+
     }//GEN-LAST:event_importSetButtonActionPerformed
 
     @NbBundle.Messages({"FilesSetDefsPanel.interesting.exportButtonAction.featureName=Interesting Files Set Export",
         "# {0} - file name",
         "FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt=File {0} exists, overwrite?",
-        "FilesSetDefsPanle.interesting.ExportedMsg=Interesting files set exported"})
+        "FilesSetDefsPanel.interesting.ExportedMsg=Interesting files set exported",
+        "FilesSetDefsPanel.interesting.failExportMsg=Export of interesting files set failed"})
     private void exportSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportSetButtonActionPerformed
         //display warning that existing filessets with duplicate names will be overwritten
-        //create file chooser to get xml file
+        //create file chooser to get xml filefinal String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
         JFileChooser chooser = new JFileChooser();
         final String EXTENSION = "xml"; //NON-NLS
         FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
@@ -1209,6 +1217,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     "FilesSetDefsPanel.interesting.exportButtonAction.featureName");
             File selFile = chooser.getSelectedFile();
             if (selFile == null) {
+                JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failExportMsg"),
+                        FEATURE_NAME,
+                        JOptionPane.WARNING_MESSAGE);
+                logger.warning("Selected file was null, when trying to export interesting files set definitions");
                 return;
             }
             //force append extension if not given
@@ -1232,15 +1245,17 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             exportSets.put(this.setsList.getSelectedValue().getName(), this.setsList.getSelectedValue());
             boolean written = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(selFile, exportSets);
             if (written) {
-                final String CONFIRM_MESSAGE = NbBundle.getMessage(this.getClass(), "FilesSetDefsPanle.interesting.ExportedMsg");
-                final Component parentComponent = WindowManager.getDefault().getMainWindow();
                 JOptionPane.showMessageDialog(
-                        parentComponent,
-                        CONFIRM_MESSAGE,
+                        WindowManager.getDefault().getMainWindow(),
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.ExportedMsg"),
                         FEATURE_NAME,
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
-                //WJS-TODO log failure to export file list 
+                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failExportMsg"),
+                        FEATURE_NAME,
+                        JOptionPane.WARNING_MESSAGE);
+                logger.warning("Export of interesting files set failed unable to write definitions xml file");
             }
         }
     }//GEN-LAST:event_exportSetButtonActionPerformed
