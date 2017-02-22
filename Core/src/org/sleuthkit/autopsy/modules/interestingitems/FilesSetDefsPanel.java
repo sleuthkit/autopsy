@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
+import java.awt.Component;
 import java.awt.EventQueue;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +40,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -61,8 +65,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         "FilesSetDefsPanel.saveError=Error saving interesting files sets to file.",
         "FilesSetDefsPanel.interesting.copySetButton.text=Copy Set",
         "FilesSetDefsPanel.interesting.importSetButton.text=Import Set",
-        "FilesSetDefsPanel.interesting.exportSetButton.text=Export Set",
-        "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)"
+        "FilesSetDefsPanel.interesting.exportSetButton.text=Export Set"
     })
     public static enum PANEL_TYPE {
         FILE_INGEST_FILTERS,
@@ -1109,15 +1112,25 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
     private void copySetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copySetButtonActionPerformed
         this.doFileSetsDialog(this.setsList.getSelectedValue(), true);
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_copySetButtonActionPerformed
-
+    @NbBundle.Messages({
+        "FilesSetDefsPanel.yesOwMsg=Yes, overwrite",
+        "FilesSetDefsPanel.noSkipMsg=No, skip",
+        "FilesSetDefsPanel.cancelImportMsg=Cancel import",
+        "FilesSetDefsPanel.interesting.overwriteSetPrompt=Interesting files set <{0}> already exists locally, overwrite?",
+        "FilesSetDefsPanel.interesting.importOwConflict=Import Interesting files set conflict",
+        "FilesSetDefsPanel.interesting.failImportMsg=Interesting files set not imported",
+        "FilesSetDefsPanel.interesting.fileExtensionFilterLbl=Autopsy Interesting File Set File (xml)",
+        "FilesSetDefsPanel.interesting.importButtonAction.featureName=Interesting Files Set Import"
+    })
     private void importSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importSetButtonActionPerformed
-        //display warning that existing filessets with duplicate names will be overwritten
-        //create file chooser to get xml file
+        //save currently selected value as default value to select     
+        FilesSet selectedSet = this.setsList.getSelectedValue();
         JFileChooser chooser = new JFileChooser();
-        final String[] AUTOPSY_EXTENSIONS = new String[]{"xml"}; //NON-NLS
+        final String EXTENSION = "xml"; //NON-NLS
         FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), AUTOPSY_EXTENSIONS);
+                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), EXTENSION);
         chooser.addChoosableFileFilter(autopsyFilter);
         chooser.setAcceptAllFileFilterUsed(false);
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -1127,48 +1140,108 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (selFile == null) {
                 return;
             }
+            Collection<FilesSet> importedSets;
             try {
-                Map<String, FilesSet> importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile); //read the xml from that path        
-                this.filesSets.putAll(importedSets);
+                importedSets = InterestingItemsFilesSetSettings.readDefinitionsXML(selFile).values(); //read the xml from that path            
+                if (importedSets.isEmpty()) {
+                    throw new FilesSetsManager.FilesSetsManagerException("No Files Sets were read from the xml.");
+                }
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                //WJS-TODO LOG error inform user that file sets were not successfully imported
+                //WJS-TODO log exeption
+                JOptionPane.showMessageDialog(this,
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failImportMsg"),
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importButtonAction.featureName"),
+                        JOptionPane.WARNING_MESSAGE);
+                return;
             }
-            //save currently selected value as default value to select
-            FilesSet importedSet = this.setsList.getSelectedValue();
-            // Redo the list model for the files set list component, which will make
+            for (FilesSet set : importedSets) {
+                int choice = JOptionPane.OK_OPTION;
+                selectedSet = set;
+                if (filesSets.containsKey(set.getName())) {
+                    Object[] options = {NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.yesOwMsg"),
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.noSkipMsg"),
+                        NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.cancelImportMsg")};
+                    choice = JOptionPane.showOptionDialog(this,
+                            NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.overwriteSetPrompt", selectedSet.getName()),
+                            NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importOwConflict"),
+                            JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            options,
+                            options[0]);
+                }
+                if (choice == JOptionPane.OK_OPTION) {
+                    this.filesSets.put(set.getName(), set);
+                } else if (choice == JOptionPane.CANCEL_OPTION) {
+                    break;
+                }
+            }
+            // Redo the list model for the files set list component
             FilesSetDefsPanel.this.setsListModel.clear();
             for (FilesSet set : this.filesSets.values()) {
                 this.setsListModel.addElement(set);
-                importedSet = set;
             }
             // Select the new/edited files set definition in the set definitions
             // list. This will cause the selection listeners to repopulate the
             // subordinate components.
-            this.setsList.setSelectedValue(importedSet, true);
+            this.setsList.setSelectedValue(selectedSet, true);
         }
-
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_importSetButtonActionPerformed
 
+    @NbBundle.Messages({"FilesSetDefsPanel.interesting.exportButtonAction.featureName=Interesting Files Set Export",
+        "# {0} - file name",
+        "FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt=File {0} exists, overwrite?",
+        "FilesSetDefsPanle.interesting.ExportedMsg=Interesting files set exported"})
     private void exportSetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportSetButtonActionPerformed
         //display warning that existing filessets with duplicate names will be overwritten
         //create file chooser to get xml file
         JFileChooser chooser = new JFileChooser();
-        final String[] AUTOPSY_EXTENSIONS = new String[]{"xml"}; //NON-NLS
+        final String EXTENSION = "xml"; //NON-NLS
         FileNameExtensionFilter autopsyFilter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), AUTOPSY_EXTENSIONS);
+                NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.fileExtensionFilterLbl"), EXTENSION);
         chooser.addChoosableFileFilter(autopsyFilter);
-        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.setSelectedFile(new File(this.setsList.getSelectedValue().getName()));
         chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        int returnVal = chooser.showOpenDialog(this);
+        int returnVal = chooser.showSaveDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
+                    "FilesSetDefsPanel.interesting.exportButtonAction.featureName");
             File selFile = chooser.getSelectedFile();
             if (selFile == null) {
                 return;
             }
+            //force append extension if not given
+            String fileAbs = selFile.getAbsolutePath();
+            if (!fileAbs.endsWith("." + EXTENSION)) {
+                fileAbs = fileAbs + "." + EXTENSION;
+                selFile = new File(fileAbs);
+            }
+            if (selFile.exists()) {
+                //if the file already exists ask the user how to proceed
+                final String FILE_EXISTS_MESSAGE = NbBundle.getMessage(this.getClass(),
+                        "FilesSetDefsPanel.exportButtonActionPerformed.fileExistPrompt", selFile.getName());
+                boolean shouldWrite = JOptionPane.showConfirmDialog(null, FILE_EXISTS_MESSAGE, FEATURE_NAME, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION;
+                if (!shouldWrite) {
+                    return;
+                }
+            }
             Map<String, FilesSet> exportSets;
             exportSets = new HashMap<>();
+            //currently only exports selectedValue
             exportSets.put(this.setsList.getSelectedValue().getName(), this.setsList.getSelectedValue());
-            InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(selFile, exportSets);
+            boolean written = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(selFile, exportSets);
+            if (written) {
+                final String CONFIRM_MESSAGE = NbBundle.getMessage(this.getClass(), "FilesSetDefsPanle.interesting.ExportedMsg");
+                final Component parentComponent = WindowManager.getDefault().getMainWindow();
+                JOptionPane.showMessageDialog(
+                        parentComponent,
+                        CONFIRM_MESSAGE,
+                        FEATURE_NAME,
+                        JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                //WJS-TODO log failure to export file list 
+            }
         }
     }//GEN-LAST:event_exportSetButtonActionPerformed
 
