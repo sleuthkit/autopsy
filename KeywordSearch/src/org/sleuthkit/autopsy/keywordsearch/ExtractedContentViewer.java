@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -120,8 +121,12 @@ public class ExtractedContentViewer implements DataContentViewer {
                 }
             } else if (artifact != null
                     && artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
-                //if there is kwh artifact use that to construct the HighlightedText
-                highlightedHitText = new HighlightedText(artifact);
+                try {
+                    //if there is kwh artifact use that to construct the HighlightedText
+                    highlightedHitText = new HighlightedText(artifact);
+                } catch (TskCoreException ex) {
+                   logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
+                }
             }
 
             if (highlightedHitText != null) {
@@ -144,7 +149,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         try {
             rawArtifactText = getRawArtifactText(nodeLookup);
         } catch (TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error creating RawTExt for " + content, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error creating RawText for " + content, ex); //NON-NLS
 
         }
         if (rawArtifactText != null) {
