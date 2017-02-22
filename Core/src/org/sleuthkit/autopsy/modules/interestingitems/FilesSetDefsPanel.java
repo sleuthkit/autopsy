@@ -280,12 +280,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (e.getValueIsAdjusting()) {
                 return;
             }
-
             FilesSetDefsPanel.this.rulesListModel.clear();
             FilesSetDefsPanel.this.resetRuleComponents();
-
+            //enable the new button
+            FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
             // Get the selected interesting files set and populate the set
-            // components.
+            // components.       
             FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
             if (selectedSet != null) {
                 // Populate the components that display the properties of the
@@ -293,17 +293,15 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSetDefsPanel.this.setDescriptionTextArea.setText(selectedSet.getDescription());
                 FilesSetDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
                 FilesSetDefsPanel.this.ingoreUnallocCheckbox.setSelected(selectedSet.ingoresUnallocatedSpace());
-                // Enable the new, edit and delete set buttons.
-                FilesSetDefsPanel.this.newSetButton.setEnabled(true && canBeEnabled);
-                FilesSetDefsPanel.this.editSetButton.setEnabled(true && canBeEnabled);
-                FilesSetDefsPanel.this.deleteSetButton.setEnabled(true && canBeEnabled);
-                FilesSetDefsPanel.this.copySetButton.setEnabled(true && canBeEnabled);
+                // Enable the copy, edit and delete set buttons.     
+                FilesSetDefsPanel.this.editSetButton.setEnabled(canBeEnabled);
+                FilesSetDefsPanel.this.deleteSetButton.setEnabled(canBeEnabled);
+                FilesSetDefsPanel.this.copySetButton.setEnabled(canBeEnabled);
                 // Populate the rule definitions list, sorted by name.
                 TreeMap<String, FilesSet.Rule> rules = new TreeMap<>(selectedSet.getRules());
                 for (FilesSet.Rule rule : rules.values()) {
                     FilesSetDefsPanel.this.rulesListModel.addElement(rule);
                 }
-
                 // Select the first rule by default.
                 if (!FilesSetDefsPanel.this.rulesListModel.isEmpty()) {
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
@@ -408,12 +406,12 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         FilesSetPanel panel;
         if (selectedSet != null) {
             // Editing an existing set definition.            
-            panel = new FilesSetPanel(selectedSet, panelType);            
+            panel = new FilesSetPanel(selectedSet, panelType);
         } else {
             // Creating a new set definition.
             panel = new FilesSetPanel(panelType);
         }
-       
+
         // Do a dialog box with the files set panel until the user either enters
         // a valid definition or cancels. Note that the panel gives the user
         // feedback when isValidDefinition() is called.
@@ -424,7 +422,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // While adding new ruleset(selectedSet == null), if rule set with same name already exists, do not add to the filesSets hashMap.
         // In case of editing an existing ruleset(selectedSet != null), following check is not performed.
-        if (this.filesSets.containsKey(panel.getFilesSetName()) && shouldCreateNew ) {
+        if (this.filesSets.containsKey(panel.getFilesSetName()) && shouldCreateNew) {
             MessageNotifyUtil.Message.error(NbBundle.getMessage(this.getClass(),
                     "FilesSetDefsPanel.doFileSetsDialog.duplicateRuleSet.text",
                     panel.getFilesSetName()));
