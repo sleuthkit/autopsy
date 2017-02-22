@@ -275,7 +275,7 @@ class HighlightedText implements IndexedText {
     @Override
     public int nextPage() {
         if (hasNextPage()) {
-            currentPage = getIndexOfCurrentPage() + 1;
+            currentPage = Iterators.get(pages.iterator(),getIndexOfCurrentPage() + 1);
             return currentPage;
         } else {
             throw new IllegalStateException("No next page.");
@@ -285,7 +285,7 @@ class HighlightedText implements IndexedText {
     @Override
     public int previousPage() {
         if (hasPreviousPage()) {
-            currentPage = getIndexOfCurrentPage() - 1;
+            currentPage = Iterators.get(pages.iterator(),getIndexOfCurrentPage()-1);
             return currentPage;
         } else {
             throw new IllegalStateException("No previous page.");

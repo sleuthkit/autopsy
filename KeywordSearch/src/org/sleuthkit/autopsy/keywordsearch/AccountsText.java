@@ -143,7 +143,7 @@ class AccountsText implements IndexedText {
     @NbBundle.Messages("AccountsText.nextPage.exception.msg=No next page.")
     public int nextPage() {
         if (hasNextPage()) {
-            currentPage = getIndexOfCurrentPage() + 1;
+            currentPage =Iterators.get(pages.iterator(),getIndexOfCurrentPage() + 1);
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_nextPage_exception_msg());
@@ -154,7 +154,7 @@ class AccountsText implements IndexedText {
     @NbBundle.Messages("AccountsText.previousPage.exception.msg=No previous page.")
     public int previousPage() {
         if (hasPreviousPage()) {
-            currentPage = getIndexOfCurrentPage() - 1;
+            currentPage = Iterators.get(pages.iterator(),getIndexOfCurrentPage() - 1);
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_previousPage_exception_msg());
