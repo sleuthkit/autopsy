@@ -115,6 +115,7 @@ final class LocalDiskPanel extends JPanel {
         imageWriterPathLabel = new javax.swing.JLabel();
         imageWriterPathDescLabel = new javax.swing.JLabel();
         imageWriterErrorLabel = new javax.swing.JLabel();
+        jLabel1 = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(0, 65));
         setPreferredSize(new java.awt.Dimension(485, 65));
@@ -151,6 +152,8 @@ final class LocalDiskPanel extends JPanel {
         imageWriterErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(imageWriterErrorLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.imageWriterErrorLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(jLabel1, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.jLabel1.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -174,7 +177,8 @@ final class LocalDiskPanel extends JPanel {
                                 .addComponent(imageWriterPathDescLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(imageWriterPathLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 261, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(imageWriterErrorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 444, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(imageWriterErrorLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 444, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 423, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -199,9 +203,11 @@ final class LocalDiskPanel extends JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(imageWriterPathDescLabel)
                     .addComponent(imageWriterPathLabel))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(5, 5, 5)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(imageWriterErrorLabel)
-                .addContainerGap(124, Short.MAX_VALUE))
+                .addContainerGap(52, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -213,6 +219,7 @@ final class LocalDiskPanel extends JPanel {
     private javax.swing.JLabel imageWriterErrorLabel;
     private javax.swing.JLabel imageWriterPathDescLabel;
     private javax.swing.JLabel imageWriterPathLabel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JCheckBox noFatOrphansCheckbox;
     private javax.swing.JComboBox<String> timeZoneComboBox;
     private javax.swing.JLabel timeZoneLabel;
