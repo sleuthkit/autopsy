@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.SortClause;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -83,7 +84,6 @@ final class RegexQuery implements KeywordSearchQuery {
     private String escapedQuery;
 
     private final int MIN_EMAIL_ADDR_LENGTH = 8;
-    private final Pattern INVALID_EMAIL_PATTERN = Pattern.compile(".*\\.(dll|txt|exe|jpg|xml)$");
 
     private final ListMultimap<Keyword, KeywordHit> hitsMultiMap = ArrayListMultimap.create();
 
@@ -281,9 +281,10 @@ final class RegexQuery implements KeywordSearchQuery {
 
                 if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL) {
                     // Reduce false positives by eliminating email address hits that are either
-                    // too short or end with well known file externsions.
-                    if (hit.length() < MIN_EMAIL_ADDR_LENGTH || INVALID_EMAIL_PATTERN.matcher(hit).matches()) {
-                        break;
+                    // too short or are not for valid top level domains.
+                    if (hit.length() < MIN_EMAIL_ADDR_LENGTH
+                            || !DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
+                        continue;
                     }
                 }
 
