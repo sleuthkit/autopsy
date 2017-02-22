@@ -105,12 +105,12 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }
 
     /**
-     * Opens the dialogue for creating a new keyword list and adds it to the table.
+     * Opens the dialogue for creating a new keyword list and adds it to the
+     * table.
      */
     private void newKeywordListAction() {
         XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
         String listName = "";
-       
 
         listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                 NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, listName);
@@ -163,12 +163,12 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         boolean canEditList = isListSelected && !isIngestRunning;
         // items that only need ingest to not be running
         importButton.setEnabled(!isIngestRunning);
-        
+
         // items that need an unlocked list w/out ingest running 
         deleteListButton.setEnabled(canEditList);
         renameListButton.setEnabled(canEditList);
         importButton.setEnabled(canEditList);
-        
+
         // items that only need a selected list
         copyListButton.setEnabled(isListSelected);
         exportButton.setEnabled(isListSelected);
@@ -207,7 +207,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         });
         jScrollPane1.setViewportView(listsTable);
 
-        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/add16.png"))); // NOI18N
         newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.setIconTextGap(2);
         newListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
@@ -239,7 +239,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             }
         });
 
-        copyListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/add16.png"))); // NOI18N
+        copyListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
         copyListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.copyListButton.text")); // NOI18N
         copyListButton.setIconTextGap(2);
         copyListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));

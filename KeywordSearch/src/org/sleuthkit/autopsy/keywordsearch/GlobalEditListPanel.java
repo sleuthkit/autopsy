@@ -101,7 +101,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             }
         });
     }
-    
+
     /**
      * Enables and disables buttons on this panel based on the current state.
      */
@@ -126,10 +126,10 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     }
 
     /**
-     * Adds keywords to a  keyword list, returns true if at least one keyword was successfully added and no
-     * duplicates were found.
-     * 
-     * @return - true or false 
+     * Adds keywords to a keyword list, returns true if at least one keyword was
+     * successfully added and no duplicates were found.
+     *
+     * @return - true or false
      */
     private boolean addKeywordsAction(String existingKeywords, boolean isLiteral, boolean isWholeWord) {
         String keywordsToRedisplay = existingKeywords;
@@ -227,8 +227,9 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
     /**
      * Remove one or more keywords from a keyword list.
-     * 
-     * @param selectedKeywords the indices of the keywords you would like to delete
+     *
+     * @param selectedKeywords the indices of the keywords you would like to
+     *                         delete
      */
     private void deleteKeywordAction(int[] selectedKeywords) {
         tableModel.deleteSelected(selectedKeywords);
@@ -278,7 +279,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         keywordsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.keywordsLabel.text")); // NOI18N
 
-        newKeywordsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newKeywordsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/add16.png"))); // NOI18N
         newKeywordsButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.newKeywordsButton.text")); // NOI18N
         newKeywordsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
