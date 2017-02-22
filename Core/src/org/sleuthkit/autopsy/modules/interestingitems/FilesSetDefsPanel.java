@@ -292,22 +292,22 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             if (e.getValueIsAdjusting()) {
                 return;
             }
-
             FilesSetDefsPanel.this.rulesListModel.clear();
             FilesSetDefsPanel.this.resetRuleComponents();
-
-            // Get the selected interesting files set and populate the set
-            // components.
-            FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
-            FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
+            //enable the new button
             FilesSetDefsPanel.this.newSetButton.setEnabled(canBeEnabled);
+            FilesSetDefsPanel.this.importSetButton.setEnabled(canBeEnabled);
+            // Get the selected interesting files set and populate the set
+            // components.       
+            FilesSet selectedSet = FilesSetDefsPanel.this.setsList.getSelectedValue();
+            
             if (selectedSet != null) {
                 // Populate the components that display the properties of the
                 // selected files set.
                 FilesSetDefsPanel.this.setDescriptionTextArea.setText(selectedSet.getDescription());
                 FilesSetDefsPanel.this.ignoreKnownFilesCheckbox.setSelected(selectedSet.ignoresKnownFiles());
                 FilesSetDefsPanel.this.ingoreUnallocCheckbox.setSelected(selectedSet.ingoresUnallocatedSpace());
-                // Enable the new, edit and delete set buttons.
+                // Enable the copy, export, edit and delete set buttons.
                 FilesSetDefsPanel.this.editSetButton.setEnabled(canBeEnabled);
                 FilesSetDefsPanel.this.deleteSetButton.setEnabled(canBeEnabled);
                 FilesSetDefsPanel.this.copySetButton.setEnabled(canBeEnabled);
@@ -317,7 +317,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 for (FilesSet.Rule rule : rules.values()) {
                     FilesSetDefsPanel.this.rulesListModel.addElement(rule);
                 }
-
                 // Select the first rule by default.
                 if (!FilesSetDefsPanel.this.rulesListModel.isEmpty()) {
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
