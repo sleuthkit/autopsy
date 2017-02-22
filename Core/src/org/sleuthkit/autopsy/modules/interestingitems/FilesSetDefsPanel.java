@@ -1161,14 +1161,13 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 return;
             }
             for (FilesSet set : importedSets) {
-                int choice = JOptionPane.OK_OPTION;
-                selectedSet = set;
+                int choice = JOptionPane.OK_OPTION; 
                 if (filesSets.containsKey(set.getName())) {
                     Object[] options = {NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.yesOwMsg"),
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.noSkipMsg"),
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.cancelImportMsg")};
                     choice = JOptionPane.showOptionDialog(this,
-                            NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.overwriteSetPrompt", selectedSet.getName()),
+                            NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.overwriteSetPrompt", set.getName()),
                             NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importOwConflict"),
                             JOptionPane.YES_NO_CANCEL_OPTION,
                             JOptionPane.QUESTION_MESSAGE,
@@ -1177,6 +1176,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                             options[0]);
                 }
                 if (choice == JOptionPane.OK_OPTION) {
+                    selectedSet = set;
                     this.filesSets.put(set.getName(), set);
                 } else if (choice == JOptionPane.CANCEL_OPTION) {
                     break;
