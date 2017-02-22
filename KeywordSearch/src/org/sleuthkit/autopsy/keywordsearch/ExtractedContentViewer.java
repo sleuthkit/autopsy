@@ -24,13 +24,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
-import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -41,7 +37,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -101,7 +96,7 @@ public class ExtractedContentViewer implements DataContentViewer {
          * Assemble a collection of all of the indexed text "sources" for the
          * node.
          */
-        List<IndexedText> indexedTextSources = new ArrayList<>();
+        List<IndexedText> sources = new ArrayList<>();
         IndexedText highlightedHitText = null;
         IndexedText rawContentText = null;
 
@@ -130,7 +125,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
 
             if (highlightedHitText != null) {
-                indexedTextSources.add(highlightedHitText);
+                sources.add(highlightedHitText);
             }
 
             /*
@@ -138,7 +133,7 @@ public class ExtractedContentViewer implements DataContentViewer {
              * content associated with the node.
              */
             rawContentText = new RawText(content, content.getId());
-            indexedTextSources.add(rawContentText);
+            sources.add(rawContentText);
         }
 
         /*
@@ -153,7 +148,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         }
         if (rawArtifactText != null) {
-            indexedTextSources.add(rawArtifactText);
+            sources.add(rawArtifactText);
         }
 
         // Now set the default source to be displayed.
@@ -166,14 +161,14 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         // Push the text sources into the panel.
-        for (IndexedText source : indexedTextSources) {
+        for (IndexedText source : sources) {
             int currentPage = source.getCurrentPage();
             if (currentPage == 0 && source.hasNextPage()) {
                 source.nextPage();
             }
         }
         panel.updateControls(currentSource);
-        setPanel(indexedTextSources);
+        setPanel(sources);
     }
 
     static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
