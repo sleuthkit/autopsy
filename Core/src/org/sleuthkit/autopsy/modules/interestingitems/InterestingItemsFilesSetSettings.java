@@ -185,7 +185,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         }
     }
 
-    private static FilesSet.Rule readRule(Element elem) {
+    private static FilesSet.Rule readRule(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         String ruleName = InterestingItemsFilesSetSettings.readRuleName(elem);
         FileNameCondition nameCondition = readNameCondition(elem);
         MetaTypeCondition metaCondition = readMetaTypeCondition(elem);
@@ -194,8 +194,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
         FileSizeCondition sizeCondition = readSizeCondition(elem);
         //if meta type condition or all four types of conditions the user can create are all null then don't make the rule
         if (metaCondition == null || (nameCondition == null && pathCondition == null && mimeCondition == null && sizeCondition == null)) {
-            //WJS-TODOD throw an error
-            System.out.println("THIS IS WHEN A RULE SHOULDN'T BE CREATED");
+            logger.log(Level.WARNING, "Error Reading Rule, " + ruleName + " was either missing a meta condition or contained only a meta condition. No rule was imported."); // NON-NLS
+            throw new FilesSetsManager.FilesSetsManagerException(String.format("Invalid Rule in FilesSet xml, missing necessary conditions for %s", ruleName));
         }
         return new FilesSet.Rule(ruleName, nameCondition, metaCondition, pathCondition, mimeCondition, sizeCondition);
     }
@@ -240,17 +240,28 @@ class InterestingItemsFilesSetSettings implements Serializable {
         MimeTypeCondition mimeCondition = null;
         if (!elem.getAttribute(MIME_ATTR).isEmpty()) {
             mimeCondition = new MimeTypeCondition(elem.getAttribute(MIME_ATTR));
+            //no checks on mime type here which means
+            //if they import a rule with a custom MIME type they don't have
+            //the rule will not get any hits
         }
         return mimeCondition;
     }
 
-    private static FileSizeCondition readSizeCondition(Element elem) {
+    private static FileSizeCondition readSizeCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileSizeCondition sizeCondition = null;
         if (!elem.getAttribute(FS_COMPARATOR_ATTR).isEmpty() && !elem.getAttribute(FS_SIZE_ATTR).isEmpty() && !elem.getAttribute(FS_UNITS_ATTR).isEmpty()) {
-            FileSizeCondition.COMPARATOR comparator = FileSizeCondition.COMPARATOR.fromSymbol(elem.getAttribute(FS_COMPARATOR_ATTR));
-            FileSizeCondition.SIZE_UNIT sizeUnit = FileSizeCondition.SIZE_UNIT.fromName(elem.getAttribute(FS_UNITS_ATTR));
-            int size = Integer.parseInt(elem.getAttribute(FS_SIZE_ATTR));
-            sizeCondition = new FileSizeCondition(comparator, sizeUnit, size);
+            try {  //incase they modified the xml manually to invalid comparator, size unit, or non integer string for size
+                FileSizeCondition.COMPARATOR comparator = FileSizeCondition.COMPARATOR.fromSymbol(elem.getAttribute(FS_COMPARATOR_ATTR));
+                FileSizeCondition.SIZE_UNIT sizeUnit = FileSizeCondition.SIZE_UNIT.fromName(elem.getAttribute(FS_UNITS_ATTR));
+                int size = Integer.parseInt(elem.getAttribute(FS_SIZE_ATTR));
+                sizeCondition = new FileSizeCondition(comparator, sizeUnit, size);
+            } catch (NumberFormatException nfEx) {
+                logger.log(Level.SEVERE, "Value in file size attribute was not an integer, unable to create FileSizeCondition for rule: " + readRuleName(elem), nfEx);
+                throw new FilesSetsManager.FilesSetsManagerException(String.format("Non integer size in FilesSet XML for rule %s", readRuleName(elem)), nfEx);
+            }catch (IllegalArgumentException iaEx) {
+                logger.log(Level.SEVERE, "Invalid Comparator symbol or Size Unit set in FilesSet xml, unable to create FileSizeCondition for rule: " + readRuleName(elem), iaEx);
+                throw new FilesSetsManager.FilesSetsManagerException(String.format("Invalid Comparator or Size unit in FilesSet XML for rule %s", readRuleName(elem)), iaEx);
+            } 
         }
         return sizeCondition;
     }
@@ -262,7 +273,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @param filesSets A collection to which the set is to be added.
      * @param filePath  The source file, used for error reporting.
      */
-    private static void readFilesSet(Element setElem, Map<String, FilesSet> filesSets, String filePath) {
+    private static void readFilesSet(Element setElem, Map<String, FilesSet> filesSets, String filePath) throws FilesSetsManager.FilesSetsManagerException {
         // The file set must have a unique name.
         String setName = setElem.getAttribute(InterestingItemsFilesSetSettings.NAME_ATTR);
         if (setName.isEmpty()) {
@@ -294,7 +305,7 @@ class InterestingItemsFilesSetSettings implements Serializable {
         Map<String, FilesSet.Rule> rules = new HashMap<>();
         NodeList allRuleElems = setElem.getChildNodes();
         for (int j = 0; j < allRuleElems.getLength(); ++j) {
-            if (allRuleElems.item(j) instanceof Element) {  //not all the children are elements
+            if (allRuleElems.item(j) instanceof Element) {  //All the children we need to parse here are elements
                 Element elem = (Element) allRuleElems.item(j);
                 FilesSet.Rule rule = readRule(elem);
                 if (rule != null) {
@@ -308,11 +319,8 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     logger.log(Level.SEVERE, "Found malformed rule for set named {0} in FilesSet definition file at {1}, discarding malformed set", new Object[]{setName, filePath}); // NON-NLS
                     return;
                 }
-            } else {
-                System.out.println("NOT AN ELEMENT: " + allRuleElems.item(j).getNodeName() + " To String:" + allRuleElems.item(j).toString());
             }
         }
-
         // Make the files set. Note that degenerate sets with no rules are
         // allowed to facilitate the separation of set definition and rule
         // definitions. A set without rules is simply the empty set.
@@ -366,7 +374,6 @@ class InterestingItemsFilesSetSettings implements Serializable {
         if (!xmlFile.canRead()) {
             logger.log(Level.SEVERE, "FilesSet definition file at {0} exists, but cannot be read", xmlFile.getPath()); // NON-NLS
             return filesSets;
-
         }
         // Parse the XML in the file.
         Document doc = XMLUtil.loadDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath());
@@ -415,7 +422,6 @@ class InterestingItemsFilesSetSettings implements Serializable {
             Document doc = docBuilder.newDocument();
             Element rootElement = doc.createElement(FILE_SETS_ROOT_TAG);
             doc.appendChild(rootElement);
-
             // Add the interesting files sets to the document.
             for (FilesSet set : interestingFilesSets.values()) {
                 // Add the files set element and its attributes.
@@ -423,7 +429,6 @@ class InterestingItemsFilesSetSettings implements Serializable {
                 setElement.setAttribute(NAME_ATTR, set.getName());
                 setElement.setAttribute(DESC_ATTR, set.getDescription());
                 setElement.setAttribute(IGNORE_KNOWN_FILES_ATTR, Boolean.toString(set.ignoresKnownFiles()));
-
                 // Add the child elements for the set membership rules.
                 for (FilesSet.Rule rule : set.getRules().values()) {
                     // Add a rule element with the appropriate name Condition 
@@ -443,7 +448,6 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     // Add the optional rule name attribute.
                     ruleElement.setAttribute(NAME_ATTR, rule.getName());
                     if (nameCondition != null) {
-
                         // Add the name Condition regex attribute
                         ruleElement.setAttribute(REGEX_ATTR, Boolean.toString(nameCondition.isRegex()));
                         // Add the name Condition text as the rule element content.
@@ -483,17 +487,13 @@ class InterestingItemsFilesSetSettings implements Serializable {
                         ruleElement.setAttribute(FS_SIZE_ATTR, Integer.toString(sizeCondition.getSizeValue()));
                         ruleElement.setAttribute(FS_UNITS_ATTR, sizeCondition.getUnit().getName());
                     }
-
                     setElement.appendChild(ruleElement);
                 }
-
                 rootElement.appendChild(setElement);
-
             }
             // Overwrite the previous definitions file. Note that the utility 
             // method logs an error on failure.
             return XMLUtil.saveDoc(InterestingItemsFilesSetSettings.class, xmlFile.getPath(), XML_ENCODING, doc);
-
         } catch (ParserConfigurationException ex) {
             logger.log(Level.SEVERE, "Error writing interesting files definition file to " + xmlFile.getPath(), ex); // NON-NLS
             return false;
@@ -526,7 +526,6 @@ class InterestingItemsFilesSetSettings implements Serializable {
                     case TYPE_FILTER_VALUE_FILES_AND_DIRS:  //converts legacy xmls to current metaCondition terms
                         metaCondition = new FilesSet.Rule.MetaTypeCondition(FilesSet.Rule.MetaTypeCondition.Type.ALL);
                         break;
-
                     default:
                         logger.log(Level.SEVERE, "Found {0} " + InterestingItemsFilesSetSettings.TYPE_FILTER_ATTR + " attribute with unrecognized value ''{0}'', ignoring malformed rule definition", conditionAttribute); // NON-NLS
                         break;

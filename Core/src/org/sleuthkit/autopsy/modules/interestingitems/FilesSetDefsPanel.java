@@ -184,6 +184,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesSetDefsPanel_saveError());
+            logger.log(Level.WARNING, Bundle.FilesSetDefsPanel_saveError(), ex);
         }
     }
 
@@ -229,6 +230,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         } catch (FilesSetsManager.FilesSetsManagerException ex) {
             MessageNotifyUtil.Message.error(Bundle.FilesSetDefsPanel_loadError());
+            logger.log(Level.WARNING, Bundle.FilesSetDefsPanel_loadError(), ex);
             this.filesSets = new TreeMap<>();
         }
 
@@ -1152,12 +1154,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     throw new FilesSetsManager.FilesSetsManagerException("No Files Sets were read from the xml.");
                 }
             } catch (FilesSetsManager.FilesSetsManagerException ex) {
-                //WJS-TODO log exeption
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.failImportMsg"),
                         NbBundle.getMessage(this.getClass(), "FilesSetDefsPanel.interesting.importButtonAction.featureName"),
                         JOptionPane.WARNING_MESSAGE);
-                logger.warning("No Interesting files set definitions were read from the selected file");
+                logger.log(Level.WARNING, "No Interesting files set definitions were read from the selected file, exception", ex);
                 return;
             }
             for (FilesSet set : importedSets) {
