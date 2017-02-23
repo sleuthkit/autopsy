@@ -468,10 +468,13 @@ class HighlightedText implements IndexedText {
 
         StringBuilder highlightedText = new StringBuilder("");
 
+        //do a highlighting pass for each keyword
         for (String keyword : keywords) {
+            //we also need to escape the keyword so that it matches the escpared text
+            final String escapedKeyword = StringEscapeUtils.escapeHtml(keyword);
             int textOffset = 0;
             int hitOffset;
-            while ((hitOffset = StringUtils.indexOfIgnoreCase(text, keyword, textOffset)) != -1) {
+            while ((hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset)) != -1) {
                 // Append the portion of text up to (but not including) the hit.
                 highlightedText.append(text.substring(textOffset, hitOffset));
                 // Add in the highlighting around the keyword.
@@ -480,15 +483,15 @@ class HighlightedText implements IndexedText {
                 highlightedText.append(HIGHLIGHT_POST);
 
                 // Advance the text offset past the keyword.
-                textOffset = hitOffset + keyword.length();
+                textOffset = hitOffset + escapedKeyword.length();
             }
             // Append the remainder of text field
             highlightedText.append(text.substring(textOffset, text.length()));
-            if (highlightedText.length() > 0) {
-
-            } else {
+            
+            if (highlightedText.length() == 0) {
                 return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
-            }
+            } 
+            //reset for next pass
             text = highlightedText.toString();
             highlightedText = new StringBuilder("");
         }
