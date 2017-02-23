@@ -97,7 +97,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }
 
     void addRenameButtonActionPerformed(ActionListener l) {
-        renameListButton.addActionListener(l);
+        editListButton.addActionListener(l);
     }
 
     void addCopyButtonActionPerformed(ActionListener l) {
@@ -166,7 +166,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
 
         // items that need an unlocked list w/out ingest running 
         deleteListButton.setEnabled(canEditList);
-        renameListButton.setEnabled(canEditList);
+        editListButton.setEnabled(canEditList);
         importButton.setEnabled(canEditList);
 
         // items that only need a selected list
@@ -191,7 +191,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         exportButton = new javax.swing.JButton();
         copyListButton = new javax.swing.JButton();
         deleteListButton = new javax.swing.JButton();
-        renameListButton = new javax.swing.JButton();
+        editListButton = new javax.swing.JButton();
 
         setMinimumSize(new java.awt.Dimension(250, 0));
 
@@ -259,13 +259,13 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             }
         });
 
-        renameListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/edit16.png"))); // NOI18N
-        renameListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.renameListButton.text")); // NOI18N
-        renameListButton.setIconTextGap(2);
-        renameListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
-        renameListButton.addActionListener(new java.awt.event.ActionListener() {
+        editListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/edit16.png"))); // NOI18N
+        editListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalEditListPanel.editListButton.text")); // NOI18N
+        editListButton.setIconTextGap(2);
+        editListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        editListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                renameListButtonActionPerformed(evt);
+                editListButtonActionPerformed(evt);
             }
         });
 
@@ -277,27 +277,26 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(keywordListsLabel)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
-                        .addGap(12, 12, 12)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(renameListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, Short.MAX_VALUE)
-                            .addComponent(importButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(12, 12, 12)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(keywordListsLabel)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(copyListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
-                                .addGap(0, 1, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(copyListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
+                                .addGap(12, 12, 12)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(editListButton, javax.swing.GroupLayout.DEFAULT_SIZE, 75, Short.MAX_VALUE)
+                                    .addComponent(importButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(12, 12, 12)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(deleteListButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
+                                    .addComponent(exportButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copyListButton, deleteListButton, exportButton, importButton, newListButton, renameListButton});
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copyListButton, deleteListButton, editListButton, exportButton, importButton, newListButton});
 
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -309,17 +308,17 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(newListButton)
-                    .addComponent(renameListButton)
-                    .addComponent(copyListButton))
+                    .addComponent(editListButton)
+                    .addComponent(deleteListButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(importButton)
                     .addComponent(exportButton)
-                    .addComponent(deleteListButton))
+                    .addComponent(copyListButton))
                 .addContainerGap())
         );
 
-        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {copyListButton, deleteListButton, exportButton, importButton, newListButton, renameListButton});
+        layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {copyListButton, deleteListButton, editListButton, exportButton, importButton, newListButton});
 
     }// </editor-fold>//GEN-END:initComponents
 
@@ -500,20 +499,20 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_deleteListButtonActionPerformed
 
-    private void renameListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renameListButtonActionPerformed
+    private void editListButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_editListButtonActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_renameListButtonActionPerformed
+    }//GEN-LAST:event_editListButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton copyListButton;
     private javax.swing.JButton deleteListButton;
+    private javax.swing.JButton editListButton;
     private javax.swing.JButton exportButton;
     private javax.swing.JButton importButton;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JLabel keywordListsLabel;
     private javax.swing.JTable listsTable;
     private javax.swing.JButton newListButton;
-    private javax.swing.JButton renameListButton;
     // End of variables declaration//GEN-END:variables
 
     @Override
