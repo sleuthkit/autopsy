@@ -26,6 +26,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
@@ -347,6 +348,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selFile = chooser.getSelectedFile();
             if (selFile == null) {
+                KeywordSearchUtil.displayDialog(NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"),
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "Selected file was null keyword lists could not be imported")); //NON-NLS
                 return;
             }
 
@@ -364,6 +369,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             if (!reader.load()) {
                 KeywordSearchUtil.displayDialog(
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.importListFileDialogMsg", fileAbs), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.ERROR);
+                 logger.log(Level.WARNING, String.format("Could not load XML from file %s keyword list was not imported", fileAbs)); //NON-NLS
                 return;
             }
 
@@ -401,12 +407,16 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             }
 
             if (toImportConfirmed.isEmpty()) {
+                 KeywordSearchUtil.displayDialog(
+                        NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                 logger.log(Level.WARNING,String.format("No Keyword lists found in file %s so none will be added",fileAbs));  //NON-NLS
                 return;
             }
 
             if (!writer.writeLists(toImportConfirmed)) {
                 KeywordSearchUtil.displayDialog(
                         NbBundle.getMessage(this.getClass(), "KeywordSearch.listImportFeatureTitle"), NbBundle.getMessage(this.getClass(), "KeywordSearch.kwListFailImportMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+                logger.log(Level.WARNING,String.format("Writing of keyword lists failed, import unsucessful for file %s",fileAbs));  //NON-NLS
             }
 
         }
@@ -437,7 +447,9 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         }
         tableModel.resync();
     }//GEN-LAST:event_listsTableKeyPressed
-
+    @NbBundle.Messages({"KeywordSearchEditListPanel.exportButtonActionPerformed.kwListFailedExportMsg=Keyword lists export failed"
+    }
+    )
     private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
 
         final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
@@ -457,6 +469,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File selFile = chooser.getSelectedFile();
             if (selFile == null) {
+                KeywordSearchUtil.displayDialog(FEATURE_NAME,
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListFailedExportMsg"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                logger.log(Level.WARNING, "Selected file was null Export of Keyword Lists failed"); //NON-NLS
                 return;
             }
 
@@ -487,6 +503,11 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 KeywordSearchUtil.displayDialog(FEATURE_NAME,
                         NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListExportedMsg"),
                         KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+            } else {
+                KeywordSearchUtil.displayDialog(FEATURE_NAME,
+                        NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListFailedExportMsg"),
+                        KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
+                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "KeywordSearchEditListPanel.exportButtonActionPerformed.kwListFailedExportMsg"));
             }
         }
     }//GEN-LAST:event_exportButtonActionPerformed
