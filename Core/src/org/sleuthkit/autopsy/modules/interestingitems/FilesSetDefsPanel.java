@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.modules.interestingitems;
 
-import java.awt.Component;
 import java.awt.EventQueue;
 import java.io.File;
 import java.util.ArrayList;
