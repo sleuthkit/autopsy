@@ -1240,10 +1240,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     return;
                 }
             }
-            Map<String, FilesSet> exportSets;
-            exportSets = new HashMap<>();
+            List<FilesSet> exportSets;
+            exportSets = new ArrayList<>();
             //currently only exports selectedValue
-            exportSets.put(this.setsList.getSelectedValue().getName(), this.setsList.getSelectedValue());
+            exportSets.add(this.setsList.getSelectedValue());
             boolean written = InterestingItemsFilesSetSettings.exportXmlDefinitionsFile(selFile, exportSets);
             if (written) {
                 JOptionPane.showMessageDialog(

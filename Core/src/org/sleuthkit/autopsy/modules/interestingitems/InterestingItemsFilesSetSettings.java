@@ -140,6 +140,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @param ruleElement The XML element.
      *
      * @return The path condition, or null if there is an error (logged).
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
     private static ParentPathCondition readPathCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         // Read in the optional path condition. Null is o.k., but if the attribute
@@ -183,6 +186,17 @@ class InterestingItemsFilesSetSettings implements Serializable {
         }
     }
 
+    /**
+     * Construct a fileset membership rule from the data in an xml element for 
+     * use in a FilesSet.
+     *
+     * @param elem The XML element.
+     *
+     * @return A file set constructed from the conditions available in the XML element
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
+     */
     private static FilesSet.Rule readRule(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         String ruleName = readRuleName(elem);
         FileNameCondition nameCondition = readNameCondition(elem);
@@ -198,6 +212,17 @@ class InterestingItemsFilesSetSettings implements Serializable {
         return new FilesSet.Rule(ruleName, nameCondition, metaCondition, pathCondition, mimeCondition, sizeCondition);
     }
 
+    /**
+     * Construct a file name condition for a FilesSet membership rule from data in an
+     * XML element.
+     *
+     * @param ruleElement The XML element.
+     *
+     * @return The file name condition, or null if none existed
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
+     */
     private static FileNameCondition readNameCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileNameCondition nameCondition = null;
         String content = elem.getTextContent();
@@ -234,6 +259,14 @@ class InterestingItemsFilesSetSettings implements Serializable {
         return nameCondition;
     }
 
+    /**
+     * Construct a MIME type condition for a FilesSet membership rule from data in an
+     * XML element.
+     *
+     * @param ruleElement The XML element.
+     *
+     * @return The mime TYPE condition, or null if none existed
+     */
     private static MimeTypeCondition readMimeCondition(Element elem) {
         MimeTypeCondition mimeCondition = null;
         if (!elem.getAttribute(MIME_ATTR).isEmpty()) {
@@ -245,6 +278,17 @@ class InterestingItemsFilesSetSettings implements Serializable {
         return mimeCondition;
     }
 
+    /**
+     * Construct a file size condition for a FilesSet membership rule from data in an
+     * XML element.
+     *
+     * @param ruleElement The XML element.
+     *
+     * @return The file size condition, or null if none existed
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
+     */
     private static FileSizeCondition readSizeCondition(Element elem) throws FilesSetsManager.FilesSetsManagerException {
         FileSizeCondition sizeCondition = null;
         if (!elem.getAttribute(FS_COMPARATOR_ATTR).isEmpty() && !elem.getAttribute(FS_SIZE_ATTR).isEmpty() && !elem.getAttribute(FS_UNITS_ATTR).isEmpty()) {
@@ -274,6 +318,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @param setElem   A FilesSet XML element
      * @param filesSets A collection to which the set is to be added.
      * @param filePath  The source file, used for error reporting.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
     private static void readFilesSet(Element setElem, Map<String, FilesSet> filesSets, String filePath) throws FilesSetsManager.FilesSetsManagerException {
         // The file set must have a unique name.
@@ -340,6 +387,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @param legacyFileName Name of the xml set definitions file as a string.
      *
      * @return The set definitions in a map of set names to sets.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
     static Map<String, FilesSet> readDefinitionsFile(String fileName, String legacyFileName) throws FilesSetsManager.FilesSetsManagerException {
         Map<String, FilesSet> filesSets = readSerializedDefinitions(fileName);
@@ -415,7 +465,16 @@ class InterestingItemsFilesSetSettings implements Serializable {
         return true;
     }
 
-    static boolean exportXmlDefinitionsFile(File xmlFile, Map<String, FilesSet> interestingFilesSets) {
+    /**
+     * Write the FilesSets to a file as an xml.
+     *
+     * @param xmlFile              the file you will be writing the FilesSets to
+     * @param interestingFilesSets a map of the file sets you wish to write to
+     *                             the xml file
+     *
+     * @return true for successfully writing, false for a failure
+     */
+    static boolean exportXmlDefinitionsFile(File xmlFile, List<FilesSet> interestingFilesSets) {
         DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
         try {
             // Create the new XML document.
@@ -424,13 +483,14 @@ class InterestingItemsFilesSetSettings implements Serializable {
             Element rootElement = doc.createElement(FILE_SETS_ROOT_TAG);
             doc.appendChild(rootElement);
             // Add the interesting files sets to the document.
-            for (FilesSet set : interestingFilesSets.values()) {
+            for (FilesSet set : interestingFilesSets) {
                 // Add the files set element and its attributes.
                 Element setElement = doc.createElement(FILE_SET_TAG);
                 setElement.setAttribute(NAME_ATTR, set.getName());
                 setElement.setAttribute(DESC_ATTR, set.getDescription());
                 setElement.setAttribute(IGNORE_KNOWN_FILES_ATTR, Boolean.toString(set.ignoresKnownFiles()));
                 // Add the child elements for the set membership rules.
+                // All conditions of a rule will be written as a single element in the xml
                 for (FilesSet.Rule rule : set.getRules().values()) {
                     // Add a rule element with the appropriate name Condition 
                     // type tag.
@@ -508,6 +568,9 @@ class InterestingItemsFilesSetSettings implements Serializable {
      * @param ruleElement The XML element.
      *
      * @return The meta-type condition, or null if there is an error (logged).
+     *
+     * @throws
+     * org.sleuthkit.autopsy.modules.interestingitems.FilesSetsManager.FilesSetsManagerException
      */
     private static MetaTypeCondition readMetaTypeCondition(Element ruleElement) throws FilesSetsManager.FilesSetsManagerException {
         MetaTypeCondition metaCondition = null;
