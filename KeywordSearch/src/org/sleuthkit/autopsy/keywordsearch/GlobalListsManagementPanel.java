@@ -168,7 +168,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         // items that need an unlocked list w/out ingest running 
         deleteListButton.setEnabled(canEditList);
         editListButton.setEnabled(canEditList);
-        importButton.setEnabled(canEditList);
 
         // items that only need a selected list
         copyListButton.setEnabled(isListSelected);
