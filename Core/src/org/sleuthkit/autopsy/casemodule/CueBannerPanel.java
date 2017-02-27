@@ -53,7 +53,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
         initComponents();
         enableComponents();
         customizeComponents();
-
     }
 
     public CueBannerPanel(String welcomeLogo) {
@@ -65,7 +64,6 @@ public class CueBannerPanel extends javax.swing.JPanel {
         }
         enableComponents();
         customizeComponents();
-
     }
 
     public void setCloseButtonActionListener(ActionListener e) {
