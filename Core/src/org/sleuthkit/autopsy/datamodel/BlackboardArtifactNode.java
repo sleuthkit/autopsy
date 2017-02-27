@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -454,13 +454,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             forLookup.add(content);
         }
 
-        // if there is a text highlighted version, of the content, add it too
-        // currently happens from keyword search module
-        TextMarkupLookup highlight = getHighlightLookup(artifact, content);
-        if (highlight != null) {
-            forLookup.add(highlight);
-        }
-
         return Lookups.fixed(forLookup.toArray(new Object[forLookup.size()]));
     }
 
@@ -474,39 +467,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
 
-    private static TextMarkupLookup getHighlightLookup(BlackboardArtifact artifact, Content content) {
-        if (artifact.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-            return null;
-        }
-
-        long objectId = content.getId();
-
-        Lookup lookup = Lookup.getDefault();
-        TextMarkupLookup highlightFactory = lookup.lookup(TextMarkupLookup.class);
-        try {
-            List<BlackboardAttribute> attributes = artifact.getAttributes();
-            String keyword = null;
-            String regexp = null;
-            for (BlackboardAttribute att : attributes) {
-                final int attributeTypeID = att.getAttributeType().getTypeID();
-                if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
-                    keyword = att.getValueString();
-                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
-                    regexp = att.getValueString();
-                } else if (attributeTypeID == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                    objectId = att.getValueLong();
-                }
-            }
-            if (keyword != null) {
-                boolean isRegexp = StringUtils.isNotBlank(regexp);
-                String origQuery = isRegexp ? regexp : keyword;
-                return highlightFactory.createInstance(objectId, keyword, isRegexp, origQuery);
-            }
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
-        }
-        return null;
-    }
 
     @Override
     public boolean isLeafTypeNode() {

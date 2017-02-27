@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -123,10 +123,21 @@ class KeywordHit implements Comparable<KeywordHit> {
         return this.content;
     }
 
+    /**
+     * Is this hit in the indexed text of an artifact.
+     *
+     * @return
+     */
     boolean isArtifactHit() {
         return (null != this.artifact);
     }
 
+    /**
+     * If this hit is in the indexed text of an artifact, get that artifact.
+     *
+     * @return The artifact whose indexed text this hit is in, or null if it is
+     *         not an artifacts hit.
+     */
     BlackboardArtifact getArtifact() {
         return this.artifact;
     }

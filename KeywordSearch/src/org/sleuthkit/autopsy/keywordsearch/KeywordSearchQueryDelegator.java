@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,7 +100,7 @@ class KeywordSearchQueryDelegator {
         Node rootNode;
         if (queryRequests.size() > 0) {
             Children childNodes =
-                    Children.create(new KeywordSearchResultFactory(queryRequests, searchResultWin), true);
+                    Children.create(new KeywordSearchResultFactory(queryRequests), true);
 
             rootNode = new AbstractNode(childNodes);
         } else {

@@ -552,6 +552,8 @@ final class RegexQuery implements KeywordSearchQuery {
         attributeMap.computeIfAbsent(type, (BlackboardAttribute.Type t) -> {
             String value = matcher.group(groupName);
             if (attrType.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
+                attributeMap.put(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD), 
+                        new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, value));
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }
             if (StringUtils.isNotBlank(value)) {
