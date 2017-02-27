@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2017 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -138,6 +138,7 @@ class QueryResults {
                 if (StringUtils.isBlank(snippet)) {
                     final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                     try {
+                        //this doesn't work for regex queries...
                         snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
                     } catch (NoOpenCoreException e) {
                         logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS

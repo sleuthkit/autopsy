@@ -51,6 +51,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER;
+import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
@@ -284,14 +286,12 @@ final class RegexQuery implements KeywordSearchQuery {
                  * Get the snippet from the document if keyword search is
                  * configured to use snippets.
                  */
-//                if (KeywordSearchSettings.getShowSnippets()) {
-                    int maxIndex = content.length() - 1;
-                    snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
-                    snippet.appendCodePoint(171);
-                    snippet.append(hit);
-                    snippet.appendCodePoint(171);
-                    snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
-//                }
+                int maxIndex = content.length() - 1;
+                snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
+                snippet.appendCodePoint(171);
+                snippet.append(hit);
+                snippet.appendCodePoint(171);
+                snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
 
                 hits.add(new KeywordHit(docId, snippet.toString(), hit));
             }
@@ -345,11 +345,13 @@ final class RegexQuery implements KeywordSearchQuery {
     }
 
     /**
-     * Get a unique, comma separated list of document ids that match the given hit
-     * for the same object.
+     * Get a unique, comma separated list of document ids that match the given
+     * hit for the same object.
+     *
      * @param keyword The keyword object that resulted in one or more hits.
-     * @param hit The specific hit for which we want to identify all other chunks
-     * that match the keyword
+     * @param hit     The specific hit for which we want to identify all other
+     *                chunks that match the keyword
+     *
      * @return A comma separated list of unique document ids.
      */
     private String getDocumentIds(Keyword keyword, KeywordHit hit) {
@@ -372,8 +374,8 @@ final class RegexQuery implements KeywordSearchQuery {
      * @param foundKeyword The keyword that was found by the regex search.
      * @param hit          The keyword hit.
      * @param snippet      The document snippet that contains the hit
-     * @param listName   The name of the keyword list that contained the keyword
-     *                   for which the hit was found.
+     * @param listName     The name of the keyword list that contained the
+     *                     keyword for which the hit was found.
      *
      *
      *
