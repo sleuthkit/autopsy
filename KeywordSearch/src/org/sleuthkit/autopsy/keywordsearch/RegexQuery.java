@@ -32,6 +32,7 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.SortClause;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -85,7 +86,6 @@ final class RegexQuery implements KeywordSearchQuery {
     private String escapedQuery;
 
     private final int MIN_EMAIL_ADDR_LENGTH = 8;
-    private final Pattern INVALID_EMAIL_PATTERN = Pattern.compile(".*\\.(dll|txt|exe|jpg|xml)$");
 
     private final ListMultimap<Keyword, KeywordHit> hitsMultiMap = ArrayListMultimap.create();
 
@@ -258,11 +258,32 @@ final class RegexQuery implements KeywordSearchQuery {
 
                 offset = hitMatcher.end();
 
+                // We attempt to reduce false positives for phone numbers and IP address hits
+                // by querying Solr for hits delimited by a set of known boundary characters.
+                // See KeywordSearchList.PHONE_NUMBER_REGEX for an example.
+                // Because of this the hits may contain an extra character at the beginning or end that
+                // needs to be chopped off, unless the user has supplied their own wildcard suffix
+                // as part of the regex.
+                if (!queryStringContainsWildcardSuffix
+                        && (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER
+                        || originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS)) {
+                    if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER) {
+                        // For phone numbers replace all non numeric characters (except "(") at the start of the hit.
+                        hit = hit.replaceAll("^[^0-9\\(]", "");
+                    } else {
+                        // Replace all non numeric characters at the start of the hit.
+                        hit = hit.replaceAll("^[^0-9]", "");
+                    }
+                    // Replace all non numeric at the end of the hit.
+                    hit = hit.replaceAll("[^0-9]$", "");
+                }
+
                 if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL) {
                     // Reduce false positives by eliminating email address hits that are either
-                    // too short or end with well known file externsions.
-                    if (hit.length() < MIN_EMAIL_ADDR_LENGTH || INVALID_EMAIL_PATTERN.matcher(hit).matches()) {
-                        break;
+                    // too short or are not for valid top level domains.
+                    if (hit.length() < MIN_EMAIL_ADDR_LENGTH
+                            || !DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
+                        continue;
                     }
                 }
 
@@ -386,6 +407,8 @@ final class RegexQuery implements KeywordSearchQuery {
     // class?
     @Override
     public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+        final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
+
         /*
          * Create either a "plain vanilla" keyword hit artifact with keyword and
          * regex attributes, or a credit card account artifact with attributes
