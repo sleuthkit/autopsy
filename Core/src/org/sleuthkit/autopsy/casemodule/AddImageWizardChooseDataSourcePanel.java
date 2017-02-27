@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,18 +33,19 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.windows.WindowManager;
 import java.awt.Cursor;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
  * to add to Case, and pick the time zone.
  */
-class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<WizardDescriptor>, PropertyChangeListener {
+class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
 
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private AddImageWizardAddingProgressPanel progressPanel;
+    private final AddImageWizardAddingProgressPanel progressPanel;
     private AddImageWizardChooseDataSourceVisual component;
     private boolean isNextEnable = false;
     private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH"; //NON-NLS
@@ -122,7 +123,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
         isNextEnable = isEnabled;
         fireChangeEvent();
     }
-    private final Set<ChangeListener> listeners = new HashSet<ChangeListener>(1); // or can use ChangeSupport in NB 6.0
+    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
      * Adds a listener to changes of the panel's validity.
@@ -155,7 +156,7 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
-            it = new HashSet<ChangeListener>(listeners).iterator();
+            it = new HashSet<>(listeners).iterator();
         }
         ChangeEvent ev = new ChangeEvent(this);
         while (it.hasNext()) {
@@ -218,8 +219,6 @@ class AddImageWizardChooseDataSourcePanel implements WizardDescriptor.Panel<Wiza
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-
-        return;
     }
 
     /**
