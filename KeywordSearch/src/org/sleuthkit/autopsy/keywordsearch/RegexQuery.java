@@ -179,11 +179,8 @@ final class RegexQuery implements KeywordSearchQuery {
                 + (queryStringContainsWildcardSuffix ? "" : ".*") + "/");
 
         // Set the fields we want to have returned by the query.
-        if (KeywordSearchSettings.getShowSnippets()) {
-            solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString(), Server.Schema.CHUNK_SIZE.toString());
-        } else {
-            solrQuery.setFields(Server.Schema.ID.toString(), Server.Schema.CHUNK_SIZE.toString());
-        }
+        solrQuery.setFields(Server.Schema.CONTENT_STR.toString(), Server.Schema.ID.toString(), Server.Schema.CHUNK_SIZE.toString());
+
         filters.stream()
                 .map(KeywordQueryFilter::toString)
                 .forEach(solrQuery::addFilterQuery);
@@ -287,14 +284,14 @@ final class RegexQuery implements KeywordSearchQuery {
                  * Get the snippet from the document if keyword search is
                  * configured to use snippets.
                  */
-                if (KeywordSearchSettings.getShowSnippets()) {
+//                if (KeywordSearchSettings.getShowSnippets()) {
                     int maxIndex = content.length() - 1;
                     snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
                     snippet.appendCodePoint(171);
                     snippet.append(hit);
                     snippet.appendCodePoint(171);
                     snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
-                }
+//                }
 
                 hits.add(new KeywordHit(docId, snippet.toString(), hit));
             }
@@ -373,8 +370,8 @@ final class RegexQuery implements KeywordSearchQuery {
      * Converts the keyword hits for a given search term into artifacts.
      *
      * @param foundKeyword The keyword that was found by the regex search.
-     * @param hit        The keyword hit.
-     * @param snippet    The document snippet that contains the hit
+     * @param hit          The keyword hit.
+     * @param snippet      The document snippet that contains the hit
      * @param listName   The name of the keyword list that contained the keyword
      *                   for which the hit was found.
      *
@@ -552,7 +549,7 @@ final class RegexQuery implements KeywordSearchQuery {
         attributeMap.computeIfAbsent(type, (BlackboardAttribute.Type t) -> {
             String value = matcher.group(groupName);
             if (attrType.equals(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
-                attributeMap.put(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD), 
+                attributeMap.put(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD),
                         new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, value));
                 value = CharMatcher.anyOf(" -").removeFrom(value);
             }

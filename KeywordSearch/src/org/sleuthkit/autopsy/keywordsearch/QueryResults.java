@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.Content;
  *
  */
 class QueryResults {
-    
+
     private static final Logger logger = Logger.getLogger(QueryResults.class.getName());
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     /**
@@ -65,12 +65,12 @@ class QueryResults {
      */
     // TODO: This is redundant. The keyword list is in the query. 
     private final KeywordList keywordList;
-    
+
     QueryResults(KeywordSearchQuery query, KeywordList keywordList) {
         this.keywordSearchQuery = query;
         this.keywordList = keywordList;
     }
-    
+
     void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
@@ -79,15 +79,15 @@ class QueryResults {
     KeywordList getKeywordList() {
         return keywordList;
     }
-    
+
     KeywordSearchQuery getQuery() {
         return keywordSearchQuery;
     }
-    
+
     List<KeywordHit> getResults(Keyword keyword) {
         return results.get(keyword);
     }
-    
+
     Set<Keyword> getKeywords() {
         return results.keySet();
     }
@@ -113,7 +113,7 @@ class QueryResults {
             progress.start(getKeywords().size());
         }
         int unitProgress = 0;
-        
+
         for (final Keyword keyword : getKeywords()) {
             if (worker.isCancelled()) {
                 logger.log(Level.INFO, "Cancel detected, bailing before new keyword processed: {0}", keyword.getSearchTerm()); //NON-NLS
@@ -131,12 +131,12 @@ class QueryResults {
                 }
                 subProgress.progress(keywordList.getName() + ": " + hitDisplayStr, unitProgress);
             }
-            
+
             for (KeywordHit hit : getOneHitPerObject(keyword)) {
                 String termString = keyword.getSearchTerm();
-                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                 String snippet = hit.getSnippet();
                 if (StringUtils.isBlank(snippet)) {
+                    final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                     try {
                         snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
                     } catch (NoOpenCoreException e) {
@@ -171,9 +171,9 @@ class QueryResults {
                     //for each type send an event
                     .forEach((typeID, artifacts)
                             -> IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
-            
+
         }
-        
+
         return newArtifacts;
     }
 
@@ -186,7 +186,7 @@ class QueryResults {
      *         SolrObjectID-ChunkID pairs.
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
-        
+
         HashMap<Long, KeywordHit> hits = new HashMap<>();
 
         // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
@@ -209,7 +209,7 @@ class QueryResults {
     private void writeSingleFileInboxMessage(KeywordCachedArtifact written, Content hitContent) {
         StringBuilder subjectSb = new StringBuilder();
         StringBuilder detailsSb = new StringBuilder();
-        
+
         if (!keywordSearchQuery.isLiteral()) {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExpHitLbl"));
         } else {
@@ -273,5 +273,5 @@ class QueryResults {
 
         IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
     }
-    
+
 }
