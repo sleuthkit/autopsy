@@ -243,6 +243,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     private void openRecentButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openRecentButtonActionPerformed
         recentCasesWindow.setLocationRelativeTo(WindowManager.getDefault().getMainWindow());
+        OpenRecentCasePanel.getInstance();  //refreshes the recent cases table
         recentCasesWindow.setVisible(true);
     }//GEN-LAST:event_openRecentButtonActionPerformed
 
