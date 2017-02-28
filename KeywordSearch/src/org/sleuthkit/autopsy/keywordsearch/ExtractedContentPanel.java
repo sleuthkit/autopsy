@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-16 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -590,19 +590,9 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             enableNextPageControl(false);
             enablePrevPageControl(false);
         } else {
-            if (source.hasNextPage()) {
-                enableNextPageControl(true);
-            } else {
-                enableNextPageControl(false);
-            }
-
-            if (source.hasPreviousPage()) {
-                enablePrevPageControl(true);
-            } else {
-                enablePrevPageControl(false);
-            }
+            enableNextPageControl(source.hasNextPage());
+            enablePrevPageControl(source.hasPreviousPage());
         }
-
     }
 
     /**
@@ -613,22 +603,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     void updateSearchControls(IndexedText source) {
         //setup search controls
         if (source != null && source.isSearchable()) {
-
             updateCurrentMatchDisplay(source.currentItem());
             updateTotaMatcheslDisplay(source.getNumberHits());
-
-            if (source.hasNextItem() || source.hasNextPage()) {
-                enableNextMatchControl(true);
-            } else {
-                enableNextMatchControl(false);
-            }
-
-            if (source.hasPreviousItem() || source.hasPreviousPage()) {
-                enablePrevMatchControl(true);
-            } else {
-                enablePrevMatchControl(false);
-            }
-
+            enableNextMatchControl(source.hasNextItem() || source.hasNextPage());
+            enablePrevMatchControl(source.hasPreviousItem() || source.hasPreviousPage());
         } else {
             enableNextMatchControl(false);
             enablePrevMatchControl(false);

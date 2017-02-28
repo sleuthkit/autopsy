@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -56,13 +56,13 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     private static final Logger LOGGER = Logger.getLogger(TermsComponentQuery.class.getName());
     private static final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
     private static final String SEARCH_HANDLER = "/terms"; //NON-NLS
-    private static final String SEARCH_FIELD = Server.Schema.CONTENT_WS.toString();
+    private static final String SEARCH_FIELD = Server.Schema.TEXT.toString();
     private static final int TERMS_SEARCH_TIMEOUT = 90 * 1000; // Milliseconds
     private static final String CASE_INSENSITIVE = "case_insensitive"; //NON-NLS
     private static final boolean DEBUG_FLAG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
     private static final int MAX_TERMS_QUERY_RESULTS = 20000;
     private final KeywordList keywordList;
-    private final Keyword keyword;
+    private final Keyword originalKeyword;
     private String searchTerm;
     private boolean searchTermIsEscaped;
     private final List<KeywordQueryFilter> filters = new ArrayList<>(); // THIS APPEARS TO BE UNUSED
@@ -72,9 +72,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * card account search and should be factored into another class when time
      * permits.
      */
-    private static final Pattern CREDIT_CARD_NUM_PATTERN = Pattern.compile("(?<ccn>[3456]([ -]?\\d){11,18})");   //12-19 digits, with possible single spaces or dashes in between. First digit is 3,4,5, or 6 //NON-NLS
-    private static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
-    private static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
+    static final Pattern CREDIT_CARD_NUM_PATTERN = Pattern.compile("(?<ccn>[3-6]([ -]?[0-9]){11,18})");   //12-19 digits, with possible single spaces or dashes in between. First digit is 3,4,5, or 6 //NON-NLS
+    static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
+    static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
             /*
              * Track 1 is alphanumeric.
              *
@@ -86,7 +86,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             "(?:" //begin nested optinal group //NON-NLS
             + "%?" //optional start sentinal: % //NON-NLS
             + "B)?" //format code  //NON-NLS
-            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "\\^" //separator //NON-NLS
             + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
             + "(?:\\^" //separator //NON-NLS
@@ -96,7 +96,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?:\\?" // end sentinal: ? //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
-    private static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
+     static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
             /*
              * Track 2 is numeric plus six punctuation symbolls :;<=>?
              *
@@ -107,7 +107,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              *
              */
             "[:;<=>?]?" //(optional)start sentinel //NON-NLS
-            + "(?<accountNumber>[3456]([ -]?\\d){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "(?:[:;<=>?]" //separator //NON-NLS
             + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
             + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
@@ -115,7 +115,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?:[:;<=>?]" //end sentinel //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
-    private static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
+     static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
 
     /**
      * Constructs an object that implements a regex query that will be performed
@@ -135,7 +135,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     // if needed, here in the constructor?
     TermsComponentQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
-        this.keyword = keyword;
+        this.originalKeyword = keyword;
         this.searchTerm = keyword.getSearchTerm();
     }
 
@@ -158,7 +158,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      */
     @Override
     public String getQueryString() {
-        return keyword.getSearchTerm();
+        return originalKeyword.getSearchTerm();
     }
 
     /**
@@ -187,7 +187,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      */
     @Override
     public void escape() {
-        searchTerm = Pattern.quote(keyword.getSearchTerm());
+        searchTerm = Pattern.quote(originalKeyword.getSearchTerm());
         searchTermIsEscaped = true;
     }
 
@@ -286,7 +286,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * If searching for credit card account numbers, do a Luhn check on
              * the term and discard it if it does not pass.
              */
-            if (keyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 Matcher matcher = CREDIT_CARD_NUM_PATTERN.matcher(term.getTerm());
                 matcher.find();
                 final String ccn = CharMatcher.anyOf(" -").removeFrom(matcher.group("ccn"));
@@ -321,13 +321,13 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     /**
      * Converts the keyword hits for a given search term into artifacts.
      *
-     * @param searchTerm The search term.
+     * @param foundKeyword The keyword that was found by the search.
      * @param hit        The keyword hit.
      * @param snippet    The document snippet that contains the hit
      * @param listName   The name of the keyword list that contained the keyword
      *                   for which the hit was found.
      *
-     * 
+     *
      *
      * @return An object that wraps an artifact and a mapping by id of its
      *         attributes.
@@ -335,7 +335,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     // TODO: Are we actually making meaningful use of the KeywordCachedArtifact
     // class?
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(String searchTerm, KeywordHit hit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         /*
          * Create either a "plain vanilla" keyword hit artifact with keyword and
          * regex attributes, or a credit card account artifact with attributes
@@ -344,9 +344,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
          */
         BlackboardArtifact newArtifact;
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
-        if (keyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, searchTerm));
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, keyword.getSearchTerm()));
+        if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
+            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
             try {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
@@ -439,6 +439,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
         }
 
+        // TermsComponentQuery is now being used exclusively for substring searches.
+        attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
+        
         try {
             newArtifact.addAttributes(attributes);
             KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);
