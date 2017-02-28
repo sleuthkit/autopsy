@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,31 +19,33 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.io.File;
 import java.text.MessageFormat;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
-import javax.swing.SwingUtilities;
-import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.SystemAction;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JOptionPane;
-import org.sleuthkit.autopsy.casemodule.Case.CaseType;
 import org.openide.windows.WindowManager;
-import java.awt.Cursor;
-import java.util.concurrent.ExecutionException;
-import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
+import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * An action that creates and runs the new case wizard.
+ * The action associated with the Case/New Case menu item, t toolbar button, and
+ * the button in the start up window that allows users to open cases action. It
+ * runs first the New Case wizard, then the Add Data Source wizard.
+ *
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
 final class NewCaseWizardAction extends CallableSystemAction {
 
@@ -53,39 +55,15 @@ final class NewCaseWizardAction extends CallableSystemAction {
 
     @Override
     public void performAction() {
-        /*
-         * If ingest is running, do a dialog to warn the user and confirm the
-         * intent to close the current case and leave the ingest process
-         * incomplete.
-         */
-        if (IngestManager.getInstance().isIngestRunning()) {
-            NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning"),
-                    NbBundle.getMessage(this.getClass(), "CloseCaseWhileIngesting.Warning.title"),
-                    NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-            descriptor.setValue(NotifyDescriptor.NO_OPTION);
-            Object res = DialogDisplayer.getDefault().notify(descriptor);
-            if (res != null && res == DialogDescriptor.YES_OPTION) {
-                Case currentCase = null;
-                try {
-                    currentCase = Case.getCurrentCase();
-                    currentCase.closeCase();
-                } catch (IllegalStateException ignored) {
-                    /*
-                     * No current case.
-                     */
-                } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, String.format("Error closing case at %s while ingest was running", (null != currentCase ? currentCase.getCaseDirectory() : "?")), ex); //NON-NLS
-                }
-            } else {
-                return;
-            }
+        String optionsDlgTitle = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning.title");
+        String optionsDlgMessage = NbBundle.getMessage(Case.class, "CloseCaseWhileIngesting.Warning");
+        if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            runNewCaseWizard();
         }
-        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        runNewCaseWizard();
     }
 
     private void runNewCaseWizard() {
+        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         final WizardDescriptor wizardDescriptor = new WizardDescriptor(getNewCaseWizardPanels());
         wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
         wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "NewCaseWizardAction.newCase.windowTitle.text"));
@@ -101,7 +79,7 @@ final class NewCaseWizardAction extends CallableSystemAction {
                     final String caseName = (String) wizardDescriptor.getProperty("caseName"); //NON-NLS
                     String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
                     CaseType caseType = CaseType.values()[(int) wizardDescriptor.getProperty("caseType")]; //NON-NLS
-                    Case.create(createdDirectory, caseName, caseNumber, examiner, caseType);
+                    Case.createAsCurrentCase(createdDirectory, caseName, caseNumber, examiner, caseType);
                     return null;
                 }
 
@@ -109,26 +87,29 @@ final class NewCaseWizardAction extends CallableSystemAction {
                 protected void done() {
                     try {
                         get();
+                        /*
+                         * Run the Add Data Source wizard by invoking the Add
+                         * Data Source wizard.
+                         */
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
-                    } catch (Exception ex) {
+                    } catch (InterruptedException | ExecutionException ex) {
                         logger.log(Level.SEVERE, String.format("Error creating case %s", wizardDescriptor.getProperty("caseName")), ex); //NON-NLS                                                
-                        SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(
-                                    WindowManager.getDefault().getMainWindow(),
-                                    (ex instanceof ExecutionException ? ex.getCause().getMessage() : ex.getMessage()),
-                                    NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"), //NON-NLS
-                                    JOptionPane.ERROR_MESSAGE);
-                            StartupWindowProvider.getInstance().close(); // RC: Why close and open?
-                            if (!Case.isCaseOpen()) {
-                                StartupWindowProvider.getInstance().open();
-                            }
-                        });
+                        JOptionPane.showMessageDialog(
+                                WindowManager.getDefault().getMainWindow(),
+                                (ex instanceof ExecutionException ? ex.getCause().getMessage() : ex.getMessage()),
+                                NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"), //NON-NLS
+                                JOptionPane.ERROR_MESSAGE);
+                        StartupWindowProvider.getInstance().close();
+                        StartupWindowProvider.getInstance().open();
                         doFailedCaseCleanup(wizardDescriptor);
+                    } finally {
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     }
                 }
             }.execute();
         } else {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             new Thread(() -> {
                 doFailedCaseCleanup(wizardDescriptor);
             }).start();
@@ -138,11 +119,8 @@ final class NewCaseWizardAction extends CallableSystemAction {
     private void doFailedCaseCleanup(WizardDescriptor wizardDescriptor) {
         String createdDirectory = (String) wizardDescriptor.getProperty("createdDirectory"); //NON-NLS
         if (createdDirectory != null) {
-            Case.deleteCaseDirectory(new File(createdDirectory));
+            FileUtil.deleteDir(new File(createdDirectory));
         }
-        SwingUtilities.invokeLater(() -> {
-            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        });
     }
 
     /**

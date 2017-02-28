@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,8 +50,7 @@ interface IndexedText {
     String getAnchorPrefix();
 
     /**
-     * if searchable text, returns number of hits found and encoded in the
-     * text
+     * if searchable text, returns number of hits found and encoded in the text
      *
      * @return
      */
@@ -139,13 +138,4 @@ interface IndexedText {
      * @return the current item number
      */
     int currentItem();
-
-    /**
-     * get a map storing which pages have matches to their number, or 0 if
-     * unknown
-     *
-     * @return map storing pages with matches, or null if not supported
-     */
-    LinkedHashMap<Integer, Integer> getHitsPages();
-
 }

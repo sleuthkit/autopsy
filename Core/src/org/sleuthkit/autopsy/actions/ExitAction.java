@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,27 +25,37 @@ import org.openide.LifecycleManager;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * The action associated with the Case/Exit menu item. It closes the current
+ * case, if any, and shuts down the application.
+ */
 @ActionRegistration(displayName = "Exit", iconInMenu = true)
 @ActionReference(path = "Menu/Case", position = 1000, separatorBefore = 999)
 @ActionID(id = "org.sleuthkit.autopsy.casemodule.ExitAction", category = "Case")
-
 final public class ExitAction implements ActionListener {
 
+    @NbBundle.Messages({
+        "ExitAction.confirmationDialog.title=Ingest is Running",
+        "ExitAction.confirmationDialog.message=Ingest is running, are you sure you want to exit?"
+
+    })
     @Override
     public void actionPerformed(ActionEvent e) {
-        try {
-            Case currentCase = Case.getCurrentCase();
-            if (currentCase != null) {
-                currentCase.closeCase();
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Had a problem closing the case.", ex); //NON-NLS
-        } finally {
-            LifecycleManager.getDefault().exit();
+        if (IngestRunningCheck.checkAndConfirmProceed(Bundle.ExitAction_confirmationDialog_title(), Bundle.ExitAction_confirmationDialog_message())) {
+            new Thread(() -> {
+                try {
+                    Case.closeCurrentCase();
+                } catch (CaseActionException ex) {
+                    Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Error closing the current case on exit", ex); //NON-NLS
+                } finally {
+                    LifecycleManager.getDefault().exit();
+                }
+            }).start();
         }
     }
-
 }

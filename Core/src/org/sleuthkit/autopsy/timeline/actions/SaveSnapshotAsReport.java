@@ -100,7 +100,7 @@ public class SaveSnapshotAsReport extends Action {
         setEventHandler(actionEvent -> {
             //capture generation date and use to make default report name
             Date generationDate = new Date();
-            final String defaultReportName = FileUtil.escapeFileName(currentCase.getName() + " " + new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss").format(generationDate)); //NON_NLS
+            final String defaultReportName = FileUtil.escapeFileName(currentCase.getDisplayName() + " " + new SimpleDateFormat("MM-dd-yyyy-HH-mm-ss").format(generationDate)); //NON_NLS
             BufferedImage snapshot = SwingFXUtils.fromFXImage(nodeSupplier.get().snapshot(null, null), null);
 
             //prompt user to pick report name

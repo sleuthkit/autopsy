@@ -25,7 +25,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
  * Event published when an automated ingest manager prioritizes all or part of a
  * case.
  */
-public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implements Serializable { // RJCTODO: Rename to AutoIngestPrioritizationEvent
+public final class AutoIngestCasePrioritizedEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String caseName;

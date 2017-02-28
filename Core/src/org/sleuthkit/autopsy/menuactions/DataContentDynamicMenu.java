@@ -50,10 +50,11 @@ class DataContentDynamicMenu extends JMenuItem implements DynamicMenuContent {
 
         defaultItem.addActionListener(new OpenTopComponentAction(contentWin));
 
-        if (!Case.isCaseOpen() || Case.getCurrentCase().hasData() == false) {
-            defaultItem.setEnabled(false); // disable the menu items when no case is opened
-        } else {
-            defaultItem.setEnabled(true); // enable the menu items when there's a case opened / created
+        try {
+            Case currentCase = Case.getCurrentCase();
+            defaultItem.setEnabled(currentCase.hasData());
+        } catch (IllegalStateException ex) {
+            defaultItem.setEnabled(false); // disable the menu when no case is opened
         }
 
         comps[counter++] = defaultItem;
