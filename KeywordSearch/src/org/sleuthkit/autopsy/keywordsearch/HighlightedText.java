@@ -173,40 +173,30 @@ class HighlightedText implements IndexedText {
         this.keywords.add(keyword);
 
         //get the QueryType (if available)
-        final BlackboardAttribute queryTypetAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
-        qt = (queryTypetAttribute != null)
-                ? KeywordSearch.QueryType.values()[queryTypetAttribute.getValueInt()] : null;
+        final BlackboardAttribute queryTypeAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
+        qt = (queryTypeAttribute != null)
+                ? KeywordSearch.QueryType.values()[queryTypeAttribute.getValueInt()] : null;
 
-        final BlackboardAttribute docIDsArtifact = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS);
+        isLiteral = qt != QueryType.REGEX;
 
-        if (qt == QueryType.REGEX && docIDsArtifact != null) {
-            isLiteral = false;
-            //regex search records the chunks in the artifact
-            String chunkIDsString = docIDsArtifact.getValueString();
-            Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
-            for (String solrDocumentId : chunkIDs) {
-                final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
-                int chunkID = (-1 == separatorIndex) ? 0
-                        : Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
-
-                numberOfHitsPerPage.put(chunkID, 0);
-                currentHitPerPage.put(chunkID, 0);
-            }
-            this.currentPage = pages.stream().sorted().findFirst().orElse(1);
-            isPageInfoLoaded = true;
-        } else {
-            isLiteral = true;
-            /*
-             * non-regex searches don't record the chunks in the artifacts, so
-             * we need to look them up
-             */
-            Keyword keywordQuery = new Keyword(keyword, true);
-            KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
-            chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
-
-            hits = chunksQuery.performQuery();
-            loadPageInfoFromHits();
+        // Run a query to figure out which chunks for the current object have
+        // hits for this keyword.
+        Keyword keywordQuery = new Keyword(keyword, isLiteral);
+        KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
+        if (!isLiteral) {
+            // For keywords produced by a regular expression search we need to
+            // escape the hit since it may contain special characters (e.g. / in URL hits).
+            chunksQuery.escape();
+            // We will need to search against the content_str field. Otherwise, Solr will
+            // apply it's text field standard tokenizer and we won't get the desired results.
+            chunksQuery.setField(Server.Schema.CONTENT_STR.toString());
+            // We need to wrap the keyword in *'s when searching against content_str.
+            chunksQuery.setSubstringQuery();
         }
+        chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
+
+        hits = chunksQuery.performQuery();
+        loadPageInfoFromHits();
     }
 
     /**

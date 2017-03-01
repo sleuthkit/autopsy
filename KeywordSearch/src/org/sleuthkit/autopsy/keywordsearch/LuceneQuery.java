@@ -89,7 +89,7 @@ class LuceneQuery implements KeywordSearchQuery {
     public void setSubstringQuery() {
         // Note that this is not a full substring search. Normally substring
         // searches will be done with TermComponentQuery objects instead.
-        keywordStringEscaped = keywordStringEscaped + "*";
+        keywordStringEscaped = "*" + keywordStringEscaped + "*";
     }
 
     @Override
@@ -105,7 +105,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public boolean isLiteral() {
-        return true;
+        return originalKeyword.searchTermIsLiteral();
     }
 
     @Override
