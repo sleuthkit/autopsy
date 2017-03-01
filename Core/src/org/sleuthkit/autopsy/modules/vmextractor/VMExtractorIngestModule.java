@@ -86,6 +86,7 @@ final class VMExtractorIngestModule extends DataSourceIngestModuleAdapter {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
             String timeStamp = dateFormat.format(Calendar.getInstance().getTime());
             String ingestJobOutputDirName = context.getDataSource().getName() + "_" + context.getDataSource().getId() + "_" + timeStamp;
+            ingestJobOutputDirName = ingestJobOutputDirName.replace(':', '_');
             ingestJobOutputDir = Paths.get(Case.getCurrentCase().getModuleDirectory(), VMExtractorIngestModuleFactory.getModuleName(), ingestJobOutputDirName);
             // create module output folder to write extracted virtual machine files to
             Files.createDirectories(ingestJobOutputDir);
