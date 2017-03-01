@@ -163,6 +163,11 @@ public final class ExecUtil {
                 process.waitFor(timeOut, units);
                 if (process.isAlive() && terminator.shouldTerminateProcess()) {
                     killProcess(process);
+                    try {
+                        process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
+                    } catch (InterruptedException exx) {
+                         Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
+                    }
                 }
             } while (process.isAlive());
         } catch (InterruptedException ex) {
@@ -172,6 +177,7 @@ public final class ExecUtil {
             try {
                 process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
             } catch (InterruptedException exx) {
+                 Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, String.format("Wait for process termination following killProcess was interrupted for command %s", processBuilder.command().get(0)));
             }
             Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0)); // NON-NLS
             Thread.currentThread().interrupt();
