@@ -405,7 +405,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_TAGGED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
-                        || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()) {
                 } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
                     map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));

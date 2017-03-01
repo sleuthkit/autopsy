@@ -57,7 +57,6 @@ class HighlightedText implements IndexedText {
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    private static final BlackboardAttribute.Type TSK_KEYWORD_HIT_DOCUMENT_IDS = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS);
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
     static private final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
