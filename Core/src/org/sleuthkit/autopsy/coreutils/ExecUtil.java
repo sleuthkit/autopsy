@@ -170,7 +170,7 @@ public final class ExecUtil {
                 killProcess(process);
             }
             try {
-                process.waitFor(); //waiting to help ensure process is shutdown before returning 
+                process.waitFor(); //waiting to help ensure process is shutdown before calling interrupt() or returning 
             } catch (InterruptedException exx) {
             }
             Logger.getLogger(ExecUtil.class.getName()).log(Level.INFO, "Thread interrupted while running {0}", processBuilder.command().get(0)); // NON-NLS
