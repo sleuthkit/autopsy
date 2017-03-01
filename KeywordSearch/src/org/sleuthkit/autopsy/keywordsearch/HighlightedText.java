@@ -183,16 +183,7 @@ class HighlightedText implements IndexedText {
         // hits for this keyword.
         Keyword keywordQuery = new Keyword(keyword, isLiteral);
         KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
-        if (!isLiteral) {
-            // For keywords produced by a regular expression search we need to
-            // escape the hit since it may contain special characters (e.g. / in URL hits).
-            chunksQuery.escape();
-            // We will need to search against the content_str field. Otherwise, Solr will
-            // apply it's text field standard tokenizer and we won't get the desired results.
-            chunksQuery.setField(Server.Schema.CONTENT_STR.toString());
-            // We need to wrap the keyword in *'s when searching against content_str.
-            chunksQuery.setSubstringQuery();
-        }
+        chunksQuery.escape();
         chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
 
         hits = chunksQuery.performQuery();
