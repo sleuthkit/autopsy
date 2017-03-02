@@ -115,12 +115,21 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                     protected void done() {
                         try {
                             get();
-                        } catch (InterruptedException | ExecutionException ex) {
+                        } catch (InterruptedException ex) {
                             logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
                             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                             JOptionPane.showMessageDialog(
                                     WindowManager.getDefault().getMainWindow(),
                                     ex.getMessage(),
+                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                    JOptionPane.ERROR_MESSAGE);
+                            StartupWindowProvider.getInstance().open();
+                        } catch (ExecutionException ex) {
+                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
+                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                            JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    ex.getCause().getMessage(), //get the message of the wrapped exception
                                     NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
                                     JOptionPane.ERROR_MESSAGE);
                             StartupWindowProvider.getInstance().open();
