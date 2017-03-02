@@ -82,7 +82,7 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
 
             @Override
             public void focusLost(FocusEvent e) {
-                if (keywordTextField.getText().equals("")) {
+                if (keywordTextField.getText().isEmpty()) {
                     clearSearchBox();
                 }
             }
@@ -124,6 +124,11 @@ public class DropdownSingleTermSearchPanel extends KeywordSearchPanel {
         keywordTextField.setText("");
     }
 
+    void setRegexSearchEnabled(boolean enabled) {
+        exactRadioButton.setSelected(true);
+        regexRadioButton.setEnabled(enabled);
+    }
+    
     /**
      * Gets a single keyword list consisting of a single keyword encapsulating
      * the input term(s)/phrase/substring/regex.

@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,19 +34,21 @@ import java.util.Date;
 import org.apache.commons.io.FileUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import static org.sleuthkit.autopsy.casemodule.Case.MODULE_FOLDER;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.datamodel.TskData;
 
 /**
  * Import a case from single-user to multi-user.
+ * 
+ * DO NOT USE, NEEDS TO BE UPDATED
  */
 public class SingleUserCaseConverter {
 
+    private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS    
     private static final String AUTOPSY_DB_FILE = "autopsy.db"; //NON-NLS
     private static final String DOTAUT = CaseMetadata.getFileExtension(); //NON-NLS
     private static final String TIMELINE_FOLDER = "Timeline"; //NON-NLS
@@ -176,7 +178,6 @@ public class SingleUserCaseConverter {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss"); //NON-NLS
         Date date = new Date();
         String dbName = Case.sanitizeCaseName(icd.getNewCaseName()) + "_" + dateFormat.format(date); //NON-NLS
-        String solrName = dbName;
         icd.setPostgreSQLDbName(dbName);
 
         // Copy items to new hostname folder structure
@@ -195,9 +196,10 @@ public class SingleUserCaseConverter {
         CaseMetadata newCaseMetadata = new CaseMetadata(icd.getCaseOutputFolder().toString(),
                 CaseType.MULTI_USER_CASE,
                 icd.getNewCaseName(),
+                icd.getNewCaseName(),
                 oldCaseMetadata.getCaseNumber(),
                 oldCaseMetadata.getExaminer(),
-                dbName, solrName);
+                dbName);
         // Set created date. This calls writefile, no need to call it again
         newCaseMetadata.setCreatedDate(oldCaseMetadata.getCreatedDate());
         newCaseMetadata.setCreatedByVersion(oldCaseMetadata.getCreatedByVersion());

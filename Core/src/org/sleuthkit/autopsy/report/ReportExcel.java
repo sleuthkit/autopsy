@@ -301,7 +301,7 @@ class ReportExcel implements TableReportModule {
         row = sheet.createRow(rowIndex);
         row.setRowStyle(setStyle);
         row.createCell(0).setCellValue(NbBundle.getMessage(this.getClass(), "ReportExcel.cellVal.caseName"));
-        row.createCell(1).setCellValue(currentCase.getName());
+        row.createCell(1).setCellValue(currentCase.getDisplayName());
         ++rowIndex;
 
         row = sheet.createRow(rowIndex);
