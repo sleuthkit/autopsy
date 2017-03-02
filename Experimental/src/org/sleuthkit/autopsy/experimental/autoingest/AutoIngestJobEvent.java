@@ -22,28 +22,17 @@ import java.io.Serializable;
 import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 
-/**
- * RJCTODO
- */
 @Immutable
 abstract class AutoIngestJobEvent extends AutopsyEvent implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final AutoIngestJob job;
 
-    /**
-     * RJCTODO
-     *
-     */
     AutoIngestJobEvent(AutoIngestManager.Event eventSubType, AutoIngestJob job) {
         super(eventSubType.toString(), null, null);
         this.job = job;
     }
 
-    /**
-     * RJCTODO
-     * @return 
-     */
     AutoIngestJob getJob() {
         return this.job;
     }

@@ -54,7 +54,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
 
             // put the image paths information into hashmap
             Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
-            CasePropertiesForm cpf = new CasePropertiesForm(currentCase, crDate, caseDir, imgPaths);
+            CasePropertiesPanel cpf = new CasePropertiesPanel(currentCase, crDate, caseDir, imgPaths);
             cpf.setSize(cpf.getPreferredSize());
             this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), cpf);
             this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());

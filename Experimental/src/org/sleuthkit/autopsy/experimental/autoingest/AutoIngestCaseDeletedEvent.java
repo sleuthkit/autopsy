@@ -45,20 +45,10 @@ final class AutoIngestCaseDeletedEvent extends AutopsyEvent implements Serializa
         this.nodeName = nodeName;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     String getCaseName() {
         return caseName;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     String getNodeName() {
         return nodeName;
     }

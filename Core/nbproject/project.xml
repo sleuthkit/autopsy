@@ -258,6 +258,7 @@
                 <package>org.sleuthkit.autopsy.events</package>
                 <package>org.sleuthkit.autopsy.externalresults</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
+                <package>org.sleuthkit.autopsy.framework</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
