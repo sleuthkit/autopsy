@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
@@ -130,8 +131,10 @@ public class ArtifactStringContent implements StringContent {
                         case INTEGER:
                         case LONG:
                         case DOUBLE:
-                        case BYTE:
                             buffer.append(attr.getDisplayString());
+                            break;
+                        case BYTE:
+                            buffer.append(Arrays.toString(attr.getValueBytes()));
                             break;
                         case DATETIME:
                             long epoch = attr.getValueLong();

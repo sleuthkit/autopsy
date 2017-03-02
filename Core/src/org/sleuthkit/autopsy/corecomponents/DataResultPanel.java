@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,7 +55,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private ExplorerManager explorerManager;
     private ExplorerManagerNodeSelectionListener emNodeSelectionListener;
-    
+
     private Node rootNode;
 
     // Different DataResultsViewers
@@ -276,7 +276,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (!Case.isCaseOpen()) {
+            try {
+                Case.getCurrentCase();
+            } catch (IllegalStateException ex) {
                 // Handle the in-between condition when case is being closed
                 // and legacy selection events are pumped.
                 return;
@@ -334,7 +336,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             explorerManager.removePropertyChangeListener(emNodeSelectionListener);
             explorerManager = null;
         }
-        
+
         // clear all set nodes
         for (UpdateWrapper drv : this.viewers) {
             drv.setNode(null);
@@ -443,7 +445,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     @Override
     public List<DataResultViewer> getViewers() {
-        List<DataResultViewer> ret = new ArrayList<DataResultViewer>();
+        List<DataResultViewer> ret = new ArrayList<>();
         for (UpdateWrapper w : viewers) {
             ret.add(w.getViewer());
         }
@@ -452,7 +454,12 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     public boolean canClose() {
-        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
+        /*
+         * If this is the main results panel in the main top component in the
+         * upper right of the main window, only allow it to be closed when
+         * there's no case opened or no data sources in the open case.
+         */
+        return (!this.isMain) || !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
     }
 
     @Override

@@ -315,4 +315,29 @@ public class UNCPathUtilities {
         }
         return driveMap;
     }
+    
+    /**
+     * Converts a path to UNC, if possible. This is accomplished by checking the
+     * mapped drives list the operating system maintains and substituting where
+     * required. If the drive of the path passed in does not exist in the cached
+     * mapped drives list, a rescan of the mapped drives list is forced, and
+     * mapping is attempted one more time.
+     *
+     * @param indexDir the String of the absolute path to be converted to UNC,
+     *                 if possible
+     *
+     * @return UNC path if able to convert to UNC, original input path otherwise
+     */
+    synchronized public String convertPathToUNC(String indexDir) {
+        // if we can check for UNC paths, do so, otherwise just return the indexDir
+        String result = mappedDriveToUNC(indexDir);
+        if (result == null) {
+            rescanDrives();
+            result = mappedDriveToUNC(indexDir);
+        }
+        if (result == null) {
+            return indexDir;
+        }
+        return result;
+    }
 }

@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Objects;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -55,9 +56,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     @GuardedBy("this")
     transient private IngestJob ingestJob;
     @GuardedBy("this")
-    transient private boolean cancelled; // RJCTODO: Document
+    transient private boolean cancelled;
     @GuardedBy("this")
-    transient private boolean completed; // RJCTODO: Document
+    transient private boolean completed;
     @GuardedBy("this")
     private Date completedDate;
     @GuardedBy("this")
@@ -81,7 +82,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *                          indicate the the job is not completed, i.e., new
      *                          Date(0L).
      */
-    // RJCTODO: The null case directory is error-prone and the nodeName is confusing.
     AutoIngestJob(Manifest manifest, Path caseDirectoryPath, int priority, String nodeName, Stage stage, Date completedDate, boolean errorsOccurred) {
         this.manifest = manifest;
         if (null != caseDirectoryPath) {
@@ -112,7 +112,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *
      * @return True or false
      */
-    // RJCTODO: Use this or lose this
     synchronized boolean hasCaseDirectoryPath() {
         return (false == this.caseDirectoryPath.isEmpty());
     }
@@ -161,21 +160,10 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return this.priority;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param newStage
-     */
     synchronized void setStage(Stage newStage) {
         setStage(newStage, Date.from(Instant.now()));
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param state
-     * @param stateStartedDate
-     */
     synchronized void setStage(Stage newState, Date stateStartedDate) {
         if (Stage.CANCELLING == this.stage && Stage.COMPLETED != newState) {
             return;
@@ -184,29 +172,14 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         this.stageStartDate = stateStartedDate;
     }
 
-    /**
-     * RJCTODO:
-     *
-     * @return
-     */
     synchronized Stage getStage() {
         return this.stage;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     synchronized Date getStageStartDate() {
         return this.stageStartDate;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     synchronized StageDetails getStageDetails() {
         String description;
         Date startDate;
@@ -223,7 +196,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
                 if (!ingestModuleHandle.isCancelled()) {
                     description = ingestModuleHandle.displayName();
                 } else {
-                    description = String.format(Stage.CANCELLING_MODULE.getDisplayText(), ingestModuleHandle.displayName()); // RJCTODO: FIx this
+                    description = String.format(Stage.CANCELLING_MODULE.getDisplayText(), ingestModuleHandle.displayName());
                 }
             } else {
                 /**
@@ -248,26 +221,14 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         this.dataSourceProcessor = dataSourceProcessor;
     }
 
-    /**
-     * RJCTODO
-     */
-    // RJCTODO: Consider moving this class into AIM and making this private
     synchronized void setIngestJob(IngestJob ingestJob) {
         this.ingestJob = ingestJob;
     }
 
-    /**
-     * RJCTODO
-     */
-    // RJCTODO: Consider moving this class into AIM and making this private. 
-    // Or move the AID into a separate package. Or do not worry about it.
     synchronized IngestJob getIngestJob() {
         return this.ingestJob;
     }
 
-    /**
-     * RJCTODO
-     */
     synchronized void cancel() {
         setStage(Stage.CANCELLING);
         cancelled = true;
@@ -280,26 +241,15 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         }
     }
 
-    /**
-     * RJCTODO
-     */
     synchronized boolean isCancelled() {
         return cancelled;
     }
 
-    /**
-     * RJCTODO
-     */
     synchronized void setCompleted() {
         setStage(Stage.COMPLETED);
         completed = true;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     synchronized boolean isCompleted() {
         return completed;
     }
@@ -321,7 +271,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * @return True or false.
      */
     synchronized Date getCompletedDate() {
-        return completedDate; // RJCTODO: Consider returning null if == 0 (epoch)
+        return completedDate;
     }
 
     /**
@@ -342,23 +292,10 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return this.errorsOccurred;
     }
 
-    /**
-     * RJCTODO Gets name of the node associated with the job, possibly a remote
-     * hose if the job is in progress.
-     *
-     * @return The node name.
-     */
     String getNodeName() {
         return nodeName;
     }
 
-    /**
-     * RJCTODO
-     *
-     * @param obj
-     *
-     * @return
-     */
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof AutoIngestJob)) {
@@ -370,26 +307,12 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return this.getManifest().getFilePath().equals(((AutoIngestJob) obj).getManifest().getFilePath());
     }
 
-    /**
-     * RJCTODO
-     *
-     * @return
-     */
     @Override
     public int hashCode() {
-        // RJCTODO: Update this
-        int hash = 7;
-//        hash = 71 * hash + Objects.hashCode(this.dateCreated);
+        int hash = 71 * (Objects.hashCode(this.caseDirectoryPath));
         return hash;
     }
 
-    /**
-     * RJCTODO Default sorting is by ready file creation date, descending
-     *
-     * @param o
-     *
-     * @return
-     */
     @Override
     public int compareTo(AutoIngestJob o) {
         return -this.getManifest().getDateFileCreated().compareTo(o.getManifest().getDateFileCreated());
@@ -401,14 +324,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      */
     static class ReverseDateCompletedComparator implements Comparator<AutoIngestJob> {
 
-        /**
-         * RJCTODO
-         *
-         * @param o1
-         * @param o2
-         *
-         * @return
-         */
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
             return -o1.getStageStartDate().compareTo(o2.getStageStartDate());
@@ -420,14 +335,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      */
     public static class PriorityComparator implements Comparator<AutoIngestJob> {
 
-        /**
-         * RJCTODO
-         *
-         * @param job
-         * @param anotherJob
-         *
-         * @return
-         */
         @Override
         public int compare(AutoIngestJob job, AutoIngestJob anotherJob) {
             return -(job.getPriority().compareTo(anotherJob.getPriority()));
@@ -442,14 +349,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      */
     static class AlphabeticalComparator implements Comparator<AutoIngestJob> {
 
-        /**
-         * RJCTODO
-         *
-         * @param o1
-         * @param o2
-         *
-         * @return
-         */
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
             if (o1.getNodeName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
@@ -462,10 +361,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         }
     }
 
-    /**
-     * RJCTODO
-     */
-    // RJCTODO: Combine this enum with StageDetails to make a single class.
     enum Stage {
 
         PENDING("Pending"),
@@ -494,40 +389,21 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
     }
 
-    /**
-     * RJCTODO
-     */
     @Immutable
     static final class StageDetails {
 
         private final String description;
         private final Date startDate;
 
-        /**
-         * RJCTODO
-         *
-         * @param description
-         * @param startDate
-         */
         private StageDetails(String description, Date startDate) {
             this.description = description;
             this.startDate = startDate;
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         String getDescription() {
             return this.description;
         }
 
-        /**
-         * RJCTODO
-         *
-         * @return
-         */
         Date getStartDate() {
             return this.startDate;
         }

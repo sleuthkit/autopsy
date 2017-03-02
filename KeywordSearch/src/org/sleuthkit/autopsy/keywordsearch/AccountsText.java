@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,26 +18,32 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.lang.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Highlights account hits for a given document. Knows about pages and such for
@@ -50,64 +56,59 @@ import org.sleuthkit.autopsy.coreutils.Version;
  */
 class AccountsText implements IndexedText {
 
-    private static final Logger LOGGER = Logger.getLogger(AccountsText.class.getName());
+    private static final Logger logger = Logger.getLogger(AccountsText.class.getName());
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
-    private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
     private static final String ANCHOR_NAME_PREFIX = AccountsText.class.getName() + "_";
 
     private static final String INSERT_PREFIX = "<a name='" + ANCHOR_NAME_PREFIX; //NON-NLS
     private static final String INSERT_POSTFIX = "'></a>$0"; //$0 will insert current regex match  //NON-NLS
     private static final Pattern ANCHOR_DETECTION_PATTERN = Pattern.compile(HIGHLIGHT_PRE);
 
-    private static final String HIGHLIGHT_FIELD = LuceneQuery.HIGHLIGHT_FIELD_REGEX;
+    private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
+    private static final BlackboardAttribute.Type TSK_CARD_NUMBER = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER);
+    private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
 
-    private final Server solrServer;
-    private final String solrDocumentId;
+    private static final String FIELD = Server.Schema.CONTENT_STR.toString();
+
+    private final Server solrServer = KeywordSearch.getServer();
+
     private final long solrObjectId;
-    private final Integer chunkId;
-    private final Set<String> keywords = new HashSet<>();
+    private final Collection<? extends BlackboardArtifact> artifacts;
+    private final Set<String> accountNumbers = new HashSet<>();
     private final String displayName;
-    private final String queryString;
 
+    @GuardedBy("this")
     private boolean isPageInfoLoaded = false;
     private int numberPagesForFile = 0;
-    private int currentPage = 0;
-    //list of pages, used for iterating back and forth.  Only stores pages with hits
-    private final List<Integer> pages = new ArrayList<>();
-    //map from page/chunk to number of hits. value is 0 if not yet known.
-    private final LinkedHashMap<Integer, Integer> numberOfHitsPerPage = new LinkedHashMap<>();
-    //map from page/chunk number to current hit on that page.
+    private Integer currentPage = 0;
+
+    /*
+     * map from page/chunk to number of hits. value is 0 if not yet known.
+     */
+    private final TreeMap<Integer, Integer> numberOfHitsPerPage = new TreeMap<>();
+    /*
+     * set of pages, used for iterating back and forth. Only stores pages with hits
+     */
+    private final Set<Integer> pages = numberOfHitsPerPage.keySet();
+    /*
+     * map from page/chunk number to current hit on that page.
+     */
     private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
+
+    AccountsText(long objectID, BlackboardArtifact artifact) {
+        this(objectID, Arrays.asList(artifact));
+
+    }
 
     @NbBundle.Messages({
         "AccountsText.creditCardNumber=Credit Card Number",
         "AccountsText.creditCardNumbers=Credit Card Numbers"})
-    AccountsText(String objectId, Set<String> keywords) {
-        this.solrDocumentId = objectId;
-        this.keywords.addAll(keywords);
-
-        //build the query string
-        this.queryString = HIGHLIGHT_FIELD + ":"
-                + keywords.stream()
-                .map(keyword -> "/.*?" + KeywordSearchUtil.escapeLuceneQuery(keyword) + ".*?/")//surround each "keyword" with match anything regex.
-                .collect(Collectors.joining(" ")); //collect as space separated string
-
-        this.solrServer = KeywordSearch.getServer();
-
-        final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
-        if (-1 == separatorIndex) {
-            //no chunk id in solrDocumentId
-            this.solrObjectId = Long.parseLong(solrDocumentId);
-            this.chunkId = null;
-        } else {
-            //solrDocumentId includes chunk id
-            this.solrObjectId = Long.parseLong(solrDocumentId.substring(0, separatorIndex));
-            this.chunkId = Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
-        }
-
-        displayName = keywords.size() == 1
+    AccountsText(long objectID, Collection<? extends BlackboardArtifact> artifacts) {
+        this.solrObjectId = objectID;
+        this.artifacts = artifacts;
+        displayName = artifacts.size() == 1
                 ? Bundle.AccountsText_creditCardNumber()
                 : Bundle.AccountsText_creditCardNumbers();
     }
@@ -128,21 +129,20 @@ class AccountsText implements IndexedText {
 
     @Override
     public boolean hasNextPage() {
-        return pages.indexOf(this.currentPage) < pages.size() - 1;
+        return getIndexOfCurrentPage() < pages.size() - 1;
 
     }
 
     @Override
     public boolean hasPreviousPage() {
-        return pages.indexOf(this.currentPage) > 0;
-
+        return getIndexOfCurrentPage() > 0;
     }
 
     @Override
     @NbBundle.Messages("AccountsText.nextPage.exception.msg=No next page.")
     public int nextPage() {
         if (hasNextPage()) {
-            currentPage = pages.get(pages.indexOf(this.currentPage) + 1);
+            currentPage =Iterators.get(pages.iterator(),getIndexOfCurrentPage() + 1);
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_nextPage_exception_msg());
@@ -153,11 +153,15 @@ class AccountsText implements IndexedText {
     @NbBundle.Messages("AccountsText.previousPage.exception.msg=No previous page.")
     public int previousPage() {
         if (hasPreviousPage()) {
-            currentPage = pages.get(pages.indexOf(this.currentPage) - 1);
+            currentPage = Iterators.get(pages.iterator(),getIndexOfCurrentPage() - 1);
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_previousPage_exception_msg());
         }
+    }
+
+    private int getIndexOfCurrentPage() {
+        return Iterators.indexOf(pages.iterator(), this.currentPage::equals);
     }
 
     @Override
@@ -207,73 +211,56 @@ class AccountsText implements IndexedText {
         }
     }
 
-    @Override
-    public LinkedHashMap<Integer, Integer> getHitsPages() {
-        return this.numberOfHitsPerPage;
-    }
-
     /**
      * Initialize this object with information about which pages/chunks have
      * hits. Multiple calls will not change the initial results.
      */
-    synchronized private void loadPageInfo() {
+    synchronized private void loadPageInfo() throws IllegalStateException, TskCoreException {
         if (isPageInfoLoaded) {
             return;
         }
-        if (chunkId != null) {//if a chunk is specified, only show that chunk/page
-            this.numberPagesForFile = 1;
-            this.currentPage = chunkId;
-            this.numberOfHitsPerPage.put(chunkId, 0);
-            this.pages.add(chunkId);
-            this.currentHitPerPage.put(chunkId, 0);
-        } else {
-            try {
-                this.numberPagesForFile = solrServer.queryNumFileChunks(this.solrObjectId);
-            } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-                LOGGER.log(Level.WARNING, "Could not get number pages for content " + this.solrDocumentId, ex); //NON-NLS
-                return;
-            }
 
-            //if has chunks, get pages with hits
-            TreeSet<Integer> sortedPagesWithHits = new TreeSet<>();
-            SolrQuery q = new SolrQuery();
-            q.setShowDebugInfo(DEBUG); //debug
-            q.setQuery(queryString);
-            q.setFields(Server.Schema.ID.toString());  //for this case we only need the document ids
-            q.addFilterQuery(Server.Schema.ID.toString() + ":" + this.solrObjectId + Server.CHUNK_ID_SEPARATOR + "*");
-
-            try {
-                QueryResponse response = solrServer.query(q, METHOD.POST);
-                for (SolrDocument resultDoc : response.getResults()) {
-                    final String resultDocumentId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
-                    // Put the solr chunk id in the map
-                    String resultChunkID = StringUtils.substringAfter(resultDocumentId, Server.CHUNK_ID_SEPARATOR);
-                    if (StringUtils.isNotBlank(resultChunkID)) {
-                        sortedPagesWithHits.add(Integer.parseInt(resultChunkID));
-                    } else {
-                        sortedPagesWithHits.add(0);
-                    }
-                }
-
-            } catch (KeywordSearchModuleException | NoOpenCoreException | NumberFormatException ex) {
-                LOGGER.log(Level.WARNING, "Error executing Solr highlighting query: " + keywords, ex); //NON-NLS
-            }
-
-            //set page to first page having highlights
-            if (sortedPagesWithHits.isEmpty()) {
-                this.currentPage = 0;
-            } else {
-                this.currentPage = sortedPagesWithHits.first();
-            }
-
-            for (Integer page : sortedPagesWithHits) {
-                numberOfHitsPerPage.put(page, 0); //unknown number of matches in the page
-                pages.add(page);
-                currentHitPerPage.put(page, 0); //set current hit to 0th
-            }
+        try {
+            this.numberPagesForFile = solrServer.queryNumFileChunks(this.solrObjectId);
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+            logger.log(Level.WARNING, "Could not get number pages for content " + this.solrObjectId, ex); //NON-NLS
+            return;
         }
 
+        for (BlackboardArtifact artifact : artifacts) {
+            addToPagingInfo(artifact);
+        }
+
+        this.currentPage = pages.stream().findFirst().orElse(1);
+
         isPageInfoLoaded = true;
+    }
+
+    private void addToPagingInfo(BlackboardArtifact artifact) throws IllegalStateException, TskCoreException {
+        if (solrObjectId != artifact.getObjectID()) {
+            throw new IllegalStateException("not all artifacts are from the same object!");
+        }
+
+        accountNumbers.add(artifact.getAttribute(TSK_CARD_NUMBER).getValueString());
+        final BlackboardAttribute keywordAttribute = artifact.getAttribute(TSK_KEYWORD);
+        if (keywordAttribute != null) {
+            accountNumbers.add(keywordAttribute.getValueString());
+        }
+        List<String> rawDocIDs = new ArrayList<>();
+
+        final BlackboardAttribute docID = artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID);
+        if (docID != null) {
+            rawDocIDs.add(docID.getValueString());
+        }
+
+        rawDocIDs.stream()
+                .map(String::trim)
+                .map(t -> StringUtils.substringAfterLast(t, Server.CHUNK_ID_SEPARATOR))
+                .map(Integer::valueOf)
+                .forEach(chunkID -> {
+                    numberOfHitsPerPage.put(chunkID, 0);
+                    currentHitPerPage.put(chunkID, 0);
+                });
     }
 
     @Override
@@ -287,64 +274,64 @@ class AccountsText implements IndexedText {
         + " <br />Confirm that Autopsy can connect to the Solr server. "
         + "<br /></span></pre></html>"})
     public String getText() {
-        loadPageInfo(); //inits once
-
-        SolrQuery q = new SolrQuery();
-        q.setShowDebugInfo(DEBUG); //debug
-        q.addHighlightField(HIGHLIGHT_FIELD);
-        q.setQuery(queryString);
-
-        //set the documentID filter
-        String queryDocumentID = this.solrObjectId + Server.CHUNK_ID_SEPARATOR + this.currentPage;
-        q.addFilterQuery(Server.Schema.ID.toString() + ":" + queryDocumentID);
-
-        //configure the highlighter
-        q.setParam("hl.useFastVectorHighlighter", "true"); //fast highlighter scales better than standard one NON-NLS
-        q.setParam("hl.tag.pre", HIGHLIGHT_PRE); //makes sense for FastVectorHighlighter only NON-NLS
-        q.setParam("hl.tag.post", HIGHLIGHT_POST); //makes sense for FastVectorHighlighter only NON-NLS
-        q.setParam("hl.fragListBuilder", "single"); //makes sense for FastVectorHighlighter only NON-NLS
-        q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //docs says makes sense for the original Highlighter only, but not really //NON-NLS
-
         try {
-            //extract highlighting and bail early on null responses
-            Map<String, Map<String, List<String>>> highlightingPerDocument = solrServer.query(q, METHOD.POST).getHighlighting();
-            Map<String, List<String>> highlightingPerField = highlightingPerDocument.get(queryDocumentID);
-            if (highlightingPerField == null) {
-                return Bundle.AccountsText_getMarkup_noMatchMsg();
-            }
-            List<String> highlights = highlightingPerField.get(HIGHLIGHT_FIELD);
-            if (highlights == null) {
-                return Bundle.AccountsText_getMarkup_noMatchMsg();
-            }
+            loadPageInfo(); //inits once
 
-            //There should only be one item
-            String highlighting = highlights.get(0).trim();
+            SolrQuery q = new SolrQuery();
+            q.setShowDebugInfo(DEBUG); //debug
 
-            /*
-             * use regex matcher to iterate over occurences of HIGHLIGHT_PRE,
-             * and prepend them with an anchor tag.
-             */
-            Matcher m = ANCHOR_DETECTION_PATTERN.matcher(highlighting);
-            StringBuffer sb = new StringBuffer(highlighting.length());
-            int count = 0;
-            while (m.find()) {
-                count++;
-                m.appendReplacement(sb, INSERT_PREFIX + count + INSERT_POSTFIX);
-            }
-            m.appendTail(sb);
+            String contentIdStr = this.solrObjectId + Server.CHUNK_ID_SEPARATOR + this.currentPage;
+            final String filterQuery = Server.Schema.ID.toString() + ":" + contentIdStr;
+            //set the documentID filter
+            q.setQuery(filterQuery);
+            q.setFields(FIELD);
 
-            //store total hits for this page, now that we know it
-            this.numberOfHitsPerPage.put(this.currentPage, count);
-            if (this.currentItem() == 0 && this.hasNextItem()) {
-                this.nextItem();
-            }
+            QueryResponse queryResponse = solrServer.query(q, METHOD.POST);
+
+            String highlightedText
+                    = HighlightedText.attemptManualHighlighting(
+                            queryResponse.getResults(),
+                            Server.Schema.CONTENT_STR.toString(),
+                            accountNumbers
+                    ).trim();
+
+            highlightedText = insertAnchors(highlightedText);
 
             // extracted content (minus highlight tags) is HTML-escaped
-            return "<html><pre>" + sb.toString() + "</pre></html>"; //NON-NLS
+            return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            LOGGER.log(Level.WARNING, "Error executing Solr highlighting query: " + keywords, ex); //NON-NLS
+            logger.log(Level.WARNING, "Error getting highlighted text for " + solrObjectId, ex); //NON-NLS
             return Bundle.AccountsText_getMarkup_queryFailedMsg();
         }
+    }
+
+    /**
+     * Anchors are used to navigate back and forth between hits on the same page
+     * and to navigate to hits on the next/previous page.
+     *
+     * @param searchableContent
+     *
+     * @return
+     */
+    private String insertAnchors(String searchableContent) {
+        /*
+         * use regex matcher to iterate over occurences of HIGHLIGHT_PRE, and
+         * prepend them with an anchor tag.
+         */
+        Matcher m = ANCHOR_DETECTION_PATTERN.matcher(searchableContent);
+        StringBuffer sb = new StringBuffer(searchableContent.length());
+        int count = 0;
+        while (m.find()) {
+            count++;
+            m.appendReplacement(sb, INSERT_PREFIX + count + INSERT_POSTFIX);
+        }
+        m.appendTail(sb);
+        //store total hits for this page, now that we know it
+        this.numberOfHitsPerPage.put(this.currentPage, count);
+        if (this.currentItem() == 0 && this.hasNextItem()) {
+            this.nextItem();
+        }
+        return sb.toString();
     }
 
     @Override

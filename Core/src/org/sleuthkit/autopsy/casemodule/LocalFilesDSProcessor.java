@@ -29,7 +29,7 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
 
 /**
  * A local/logical files and/or directories data source processor that
