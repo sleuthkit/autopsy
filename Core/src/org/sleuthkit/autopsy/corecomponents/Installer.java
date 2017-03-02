@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.BorderFactory;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -32,7 +33,9 @@ import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
@@ -50,7 +53,7 @@ public class Installer extends ModuleInstall {
     private static Installer instance;
 
     public synchronized static Installer getDefault() {
-        if (instance == null) {
+        if (null == instance) {
             instance = new Installer();
         }
         return instance;
@@ -80,21 +83,18 @@ public class Installer extends ModuleInstall {
                 if (processor instanceof OpenFromArguments) {
                     OpenFromArguments argsProcessor = (OpenFromArguments) processor;
                     final String caseFile = argsProcessor.getDefaultArg();
-                    if (caseFile != null && !caseFile.equals("") && caseFile.endsWith(CaseMetadata.getFileExtension()) && new File(caseFile).exists()) { //NON-NLS
-                        new Thread(() -> {
-                            try {
-                                Case.open(caseFile);
-                            } catch (Exception ex) {
-                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
-                            }
-                        }).start();
+                    if (caseFile != null && !caseFile.isEmpty() && caseFile.endsWith(CaseMetadata.getFileExtension()) && new File(caseFile).exists()) { //NON-NLS
+                        try {
+                            Case.openAsCurrentCase(caseFile);
+                        } catch (CaseActionException ex) {
+                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
+                        }
                         return;
                     }
                 }
             }
             StartupWindowProvider.getInstance().open();
         });
-
     }
 
     @Override
@@ -105,19 +105,10 @@ public class Installer extends ModuleInstall {
     @Override
     public void close() {
         new Thread(() -> {
-            String caseDirName = null;
             try {
-                if (Case.isCaseOpen()) {
-                    Case currentCase = Case.getCurrentCase();
-                    caseDirName = currentCase.getCaseDirectory();
-                    currentCase.closeCase();
-                }
+                Case.closeCurrentCase();
             } catch (CaseActionException ex) {
-                logger.log(Level.SEVERE, String.format("Error closing case with case directory %s", (null != caseDirName ? caseDirName : "?")), ex); //NON-NLS
-            } catch (IllegalStateException ignored) {
-                /*
-                 * No current case. Case.isCaseOpen is not reliable. 
-                 */
+                logger.log(Level.SEVERE, "Error closing current case", ex); //NON-NLS
             }
         }).start();
     }

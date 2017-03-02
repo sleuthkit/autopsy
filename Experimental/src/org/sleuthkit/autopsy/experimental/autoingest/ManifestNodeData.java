@@ -99,9 +99,6 @@ final class ManifestNodeData {
      *
      * @return True or false.
      */
-    // RJCTODO: This is confusing, consider changing the API so that the use case is to
-    // check the length of the node data from the coordination service before 
-    // constructing an instance of this object. That would be much more clear!
     boolean coordSvcNodeDataWasSet() {
         return this.coordSvcNodeDataWasSet;
     }
