@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,14 +30,13 @@ import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.sleuthkit.autopsy.casemodule.Case;
 
-@ActionID(
-        category = "Tools",
-        id = "org.sleuthkit.autopsy.ingest.RunIngestAction"
-)
-@ActionRegistration(
-        displayName = "#CTL_RunIngestAction",
-        lazy = false
-)
+/**
+ * The action associated with assorted Run Ingest Modules menu items.
+ * 
+ * This action should only be invoked in the event dispatch thread (EDT).
+ */
+@ActionID(category = "Tools", id = "org.sleuthkit.autopsy.ingest.RunIngestAction")
+@ActionRegistration(displayName = "#CTL_RunIngestAction", lazy = false)
 @Messages("CTL_RunIngestAction=Run Ingest")
 public final class RunIngestAction extends CallableSystemAction implements Presenter.Menu, ActionListener {
 
@@ -51,6 +50,9 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
         return action;
     }
 
+    private RunIngestAction() {
+    }
+    
     @Override
     public void performAction() {
         getMenuPresenter();
@@ -80,6 +82,6 @@ public final class RunIngestAction extends CallableSystemAction implements Prese
     
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen();// && Case.getCurrentCase().hasData();
+        return Case.isCaseOpen() && Case.getCurrentCase().hasData();        
     }
 }

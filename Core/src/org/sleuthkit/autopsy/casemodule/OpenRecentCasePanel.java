@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,8 @@ import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.openide.windows.WindowManager;
-import java.awt.Cursor;
+import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Panel used by the the open recent case option of the start window.
@@ -103,7 +102,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         }
         final String casePath = casePaths[imagesTable.getSelectedRow()];
         final String caseName = caseNames[imagesTable.getSelectedRow()];
-        if (!casePath.equals("")) {
+        if (!casePath.isEmpty()) {
             try {
                 StartupWindowProvider.getInstance().close();
                 CueBannerPanel.closeOpenRecentCasesWindow();
@@ -114,34 +113,26 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             /*
              * Open the case.
              */
-            if (caseName.equals("") || casePath.equals("") || (!new File(casePath).exists())) {
+            if (caseName.isEmpty() || casePath.isEmpty() || (!new File(casePath).exists())) {
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text", caseName),
                         NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                         JOptionPane.ERROR_MESSAGE);
                 RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
-                if (Case.isCaseOpen() == false) {
-                    StartupWindowProvider.getInstance().open();
-                }
+                StartupWindowProvider.getInstance().open();
             } else {
-                SwingUtilities.invokeLater(() -> {
-                    WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                });
                 new Thread(() -> {
                     try {
-                        Case.open(casePath);
+                        Case.openAsCurrentCase(casePath);
                     } catch (CaseActionException ex) {
+                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
                         SwingUtilities.invokeLater(() -> {
-                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
-                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                             JOptionPane.showMessageDialog(
                                     WindowManager.getDefault().getMainWindow(),
                                     ex.getMessage(), // Should be user-friendly
                                     NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                                    JOptionPane.ERROR_MESSAGE); 
-                            if (!Case.isCaseOpen()) {
-                                StartupWindowProvider.getInstance().open();
-                            }
+                                    JOptionPane.ERROR_MESSAGE);
+                            StartupWindowProvider.getInstance().open();
                         });
                     }
                 }).start();
@@ -160,7 +151,7 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         public int getRowCount() {
             int count = 0;
             for (String s : caseNames) {
-                if (!s.equals("")) {
+                if (!s.isEmpty()) {
                     count++;
                 }
             }

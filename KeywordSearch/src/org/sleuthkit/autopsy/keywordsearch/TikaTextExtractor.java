@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,13 +40,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extractor of text from TIKA supported AbstractFile content. Extracted text
- * will be divided into chunks and indexed with Solr. Protects against Tika
- * parser hangs (for unexpected/corrupt content) using a timeout mechanism. If
- * Tika extraction succeeds, chunks are indexed with Solr.
- *
- * This Tika extraction/chunking utility is useful for large files of Tika
- * parsers-supported content type.
+ * Extracts text from Tika supported AbstractFile content. Protects against Tika
+ * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
 class TikaTextExtractor extends FileTextExtractor {
 
@@ -80,22 +75,24 @@ class TikaTextExtractor extends FileTextExtractor {
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
+            future.cancel(true);
             throw new TextExtractorException(msg, te);
         } catch (Exception ex) {
             KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, ex);
+            future.cancel(true);
             throw new TextExtractorException(msg, ex);
         }
     }
 
     /**
-     * Get a CharSource that wraps a formated representation of the given
+     * Gets a CharSource that wraps a formated representation of the given
      * Metadata.
      *
      * @param metadata The Metadata to wrap as a CharSource
      *
-     * @returna CharSource for the given MetaData
+     * @return A CharSource for the given MetaData
      */
     static private CharSource getMetaDataCharSource(Metadata metadata) {
         return CharSource.wrap(
@@ -121,12 +118,8 @@ class TikaTextExtractor extends FileTextExtractor {
 
             return false;
         }
-
-        //TODO might need to add more mime-types to ignore
-        //then accept all formats supported by Tika
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
-
 
     @Override
     public boolean isDisabled() {

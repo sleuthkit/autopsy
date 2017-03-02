@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
-import org.sleuthkit.autopsy.experimental.autoingest.ReviewModeCasePanel;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCasePanel;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -47,7 +47,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     private static Dimension DIMENSIONS = new Dimension(750, 400);
     private static CueBannerPanel welcomeWindow;
     private static final long serialVersionUID = 1L;
-    private ReviewModeCasePanel caseManagementPanel = null;
+    private AutoIngestCasePanel caseManagementPanel = null;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
 
     public StartupWindow() {
@@ -120,7 +120,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                 break;
             case REVIEW:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + LOCAL_HOST_NAME + ")");
-                caseManagementPanel = new ReviewModeCasePanel(this);
+                caseManagementPanel = new AutoIngestCasePanel(this);
                 setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
                 add(caseManagementPanel);
                 break;

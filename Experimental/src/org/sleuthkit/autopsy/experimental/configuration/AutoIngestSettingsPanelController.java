@@ -98,6 +98,7 @@ public final class AutoIngestSettingsPanelController extends OptionsPanelControl
     private AutoIngestSettingsPanel getPanel() {
         if (panel == null) {
             panel = new AutoIngestSettingsPanel(this);
+            panel.setSize(750, 600);  //makes the panel large enough to hide the scroll bar
         }
         return panel;
     }

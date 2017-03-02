@@ -23,7 +23,7 @@ The keyword search configuration dialog has three tabs, each with it's own purpo
 
 To create a list, select the 'New List' button and choose a name for the new Keyword List. Once the list has been created, keywords can be added to it. Lists can be added to the keyword search ingest process; searches will happen at regular intervals as content is added to the index.
 
-Regular expressions are supported using Java Regex Syntax, with one caveat: Solr treats regular expressions as if they begin and end with the anchoring tags "^" and "$", which match the start and the end of a string respectively. If you do not want this behavior, you can put .* at the start and/or end of the regex.
+Regular expressions are supported using Lucene Regex Syntax which is documented here: https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html. .* is automatically added to the beginning and end of the regular expressions to ensure all matches are found. Additionally, the resulting hits are split on common token separator boundaries (e.g. space, newline, colon, exclamation point etc.) to reduce false positives and to make the resulting keyword hit more amenable to highlighting. If you would prefer not to split on these common boundary characters, you can put .* at the start and/or end of the regex.
 
 <b>List Import and Export</b> \n
 Autopsy supports importing Encase tab-delimited lists as well as lists created previously with Autopsy. For Encase lists, folder structure and hierarchy is currently ignored. This will be fixed in a future version. There is currently no way to export lists for use with Encase. This will also be added in future releases.

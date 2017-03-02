@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -77,8 +77,13 @@ final class CollaborationMonitor {
      * collaborating nodes, informs the user of collaboration tasks on other
      * nodes using progress bars, and monitors the health of key collaboration
      * services.
+     *
+     * @param eventChannelPrefix The prefix for the remote events channel.
+     *
+     * @throws
+     * org.sleuthkit.autopsy.casemodule.CollaborationMonitor.CollaborationMonitorException
      */
-    CollaborationMonitor() throws CollaborationMonitorException {
+    CollaborationMonitor(String eventChannelPrefix) throws CollaborationMonitorException {
         /**
          * Get the local host name so it can be used to identify the source of
          * collaboration tasks broadcast by this node.
@@ -91,9 +96,7 @@ final class CollaborationMonitor {
          */
         eventPublisher = new AutopsyEventPublisher();
         try {
-            Case openedCase = Case.getCurrentCase();
-            String channelPrefix = openedCase.getTextIndexName();
-            eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, channelPrefix));
+            eventPublisher.openRemoteEventChannel(String.format(EVENT_CHANNEL_NAME, eventChannelPrefix));
         } catch (AutopsyEventException ex) {
             throw new CollaborationMonitorException("Failed to initialize", ex);
         }
