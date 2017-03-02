@@ -34,9 +34,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extractor of text from HTML supported AbstractFile content. Extracted text
- * will be * divided into chunks and indexed with Solr. If HTML extraction
- * succeeds, chunks are indexed with Solr.
+ * Extracts text from AbstractFile HTML content.
  */
 class HtmlTextExtractor extends FileTextExtractor {
 

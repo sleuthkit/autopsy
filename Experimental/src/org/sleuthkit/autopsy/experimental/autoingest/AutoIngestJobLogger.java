@@ -192,7 +192,7 @@ final class AutoIngestJobLogger {
      *                                      to acquire an exclusive lock on the
      *                                      log file.
      */
-    void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException { // RJCTODO: Is this used now?
+    void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.WARNING, "Cancelled adding data source to case");
     }
     
@@ -431,7 +431,7 @@ final class AutoIngestJobLogger {
      *                                      log file.
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
-        try (Lock lock = CoordinationService.getInstance(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, getLogPath(caseDirectoryPath).toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
+        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, getLogPath(caseDirectoryPath).toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
                 File logFile = getLogPath(caseDirectoryPath).toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {

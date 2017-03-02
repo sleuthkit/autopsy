@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,15 +23,11 @@ import java.util.Map;
 /**
  * Stores data about a search before it is done.
  */
-class QueryRequest {
+final class QueryRequest {
 
-    private KeywordSearchQuery query;
-    private String queryString;
-    private Map<String, Object> map;
-
-    KeywordSearchQuery getQuery() {
-        return query;
-    }
+    private final KeywordSearchQuery query;
+    private final String queryString;
+    private final Map<String, Object> queryProperties;
 
     /**
      * NOTE: The below descriptions are based on how it is used in teh code.
@@ -40,10 +36,14 @@ class QueryRequest {
      * @param id    ID that callers simply increment from 0
      * @param query Query that will be performed.
      */
-    public QueryRequest(Map<String, Object> map, int id, KeywordSearchQuery query) {
+    QueryRequest(Map<String, Object> map, int id, KeywordSearchQuery query) {
         this.queryString = query.getEscapedQueryString();
-        this.map = map;
+        this.queryProperties = map;
         this.query = query;
+    }
+
+    KeywordSearchQuery getQuery() {
+        return query;
     }
 
     public String getQueryString() {
@@ -51,7 +51,6 @@ class QueryRequest {
     }
 
     public Map<String, Object> getProperties() {
-        return map;
+        return queryProperties;
     }
-
 }

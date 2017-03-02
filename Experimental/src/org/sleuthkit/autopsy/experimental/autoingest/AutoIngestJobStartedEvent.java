@@ -28,9 +28,6 @@ public final class AutoIngestJobStartedEvent extends AutoIngestJobEvent implemen
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * RJCTODO
-     */
     public AutoIngestJobStartedEvent(AutoIngestJob job) {
         super(AutoIngestManager.Event.JOB_STARTED, job);
     }

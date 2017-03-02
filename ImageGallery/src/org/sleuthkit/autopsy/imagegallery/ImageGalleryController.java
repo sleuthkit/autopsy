@@ -917,7 +917,7 @@ public final class ImageGalleryController implements Executor {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (RuntimeProperties.coreComponentsAreActive() == false) {
+            if (RuntimeProperties.runningWithGUI() == false) {
                 /*
                  * Running in "headless" mode, no need to process any events.
                  * This cannot be done earlier because the switch to core
@@ -978,7 +978,7 @@ public final class ImageGalleryController implements Executor {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (RuntimeProperties.coreComponentsAreActive() == false) {
+            if (RuntimeProperties.runningWithGUI() == false) {
                 /*
                  * Running in "headless" mode, no need to process any events.
                  * This cannot be done earlier because the switch to core

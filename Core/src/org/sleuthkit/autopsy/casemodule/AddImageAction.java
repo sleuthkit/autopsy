@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -28,7 +29,6 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -44,25 +44,25 @@ import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.actions.Presenter;
 import org.openide.util.lookup.ServiceProvider;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Image;
 
 /**
- * The action to add an image to the current Case. This action should be
- * disabled on creation and it will be enabled on new case creation or case
- * opened.
+ * An action that invokes the Add Data Source wizard.
  *
- * @author jantonius
+ * This action should only be invoked in the event dispatch thread (EDT).
  */
-// TODO: need annotation because there's a "Lookup.getDefault().lookup(AddImageAction.class)"
-// used in AddImageWizardPanel1 (among other places). It really shouldn't be done like that.
 @ActionID(category = "Tools", id = "org.sleuthkit.autopsy.casemodule.AddImageAction")
 @ActionRegistration(displayName = "#CTL_AddImage", lazy = false)
-@ActionReferences(value = {
-    @ActionReference(path = "Toolbars/Case", position = 100)})
+@ActionReferences(value = {@ActionReference(path = "Toolbars/Case", position = 100)})
 @ServiceProvider(service = AddImageAction.class)
 public final class AddImageAction extends CallableSystemAction implements Presenter.Toolbar {
+
+    private static final long serialVersionUID = 1L;
+    private static final Dimension SIZE = new Dimension(875, 550);
+    private final ChangeSupport cleanupSupport = new ChangeSupport(this);
 
     // Keys into the WizardDescriptor properties that pass information between stages of the wizard
     // <TYPE>: <DESCRIPTION>
@@ -84,15 +84,13 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     static final String NOFATORPHANS_PROP = "nofatorphans"; //NON-NLS
 
     static final Logger logger = Logger.getLogger(AddImageAction.class.getName());
-    static final Dimension SIZE = new Dimension(875, 550);
-
     private WizardDescriptor wizardDescriptor;
     private WizardDescriptor.Iterator<WizardDescriptor> iterator;
     private Dialog dialog;
-    private JButton toolbarButton = new JButton();
+    private final JButton toolbarButton = new JButton();
 
     /**
-     * The constructor for AddImageAction class
+     * Constructs an action that invokes the Add Data Source wizard.
      */
     public AddImageAction() {
         putValue(Action.NAME, NbBundle.getMessage(AddImageAction.class, "CTL_AddImage")); // set the action Name
@@ -106,44 +104,39 @@ public final class AddImageAction extends CallableSystemAction implements Presen
             }
         });
 
-        this.setEnabled(false); // disable this action class
+        /*
+         * Disable this action until a case is opened. Currently, the Case class
+         * enables the action.
+         */
+        this.setEnabled(false);
     }
 
-    /**
-     * Pop-up the "Add Image" wizard panel.
-     *
-     * @param e
-     */
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (IngestManager.getInstance().isIngestRunning()) {
-            final String msg = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
-            if (JOptionPane.showConfirmDialog(null, msg,
-                    NbBundle.getMessage(this.getClass(),
-                            "AddImageAction.ingestConfig.ongoingIngest.title"),
-                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.NO_OPTION) {
-                return;
+        String optionsDlgTitle = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.title");
+        String optionsDlgMessage = NbBundle.getMessage(this.getClass(), "AddImageAction.ingestConfig.ongoingIngest.msg");
+        if (IngestRunningCheck.checkAndConfirmProceed(optionsDlgTitle, optionsDlgMessage)) {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            iterator = new AddImageWizardIterator(this);
+            wizardDescriptor = new WizardDescriptor(iterator);
+            wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
+            wizardDescriptor.putProperty(NAME, e);
+            wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
+
+            if (dialog != null) {
+                dialog.setVisible(false); // hide the old one
             }
+            dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
+            Dimension d = dialog.getSize();
+            dialog.setSize(SIZE);
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            dialog.setVisible(true);
+            dialog.toFront();
+
+            // Do any cleanup that needs to happen (potentially: stopping the
+            //add-image process, reverting an image)
+            runCleanupTasks();
         }
-
-        iterator = new AddImageWizardIterator(this);
-        wizardDescriptor = new WizardDescriptor(iterator);
-        wizardDescriptor.setTitle(NbBundle.getMessage(this.getClass(), "AddImageAction.wizard.title"));
-        wizardDescriptor.putProperty(NAME, e);
-        wizardDescriptor.setTitleFormat(new MessageFormat("{0}"));
-
-        if (dialog != null) {
-            dialog.setVisible(false); // hide the old one
-        }
-        dialog = DialogDisplayer.getDefault().createDialog(wizardDescriptor);
-        Dimension d = dialog.getSize();
-        dialog.setSize(SIZE);
-        dialog.setVisible(true);
-        dialog.toFront();
-
-        // Do any cleanup that needs to happen (potentially: stopping the
-        //add-image process, reverting an image)
-        runCleanupTasks();
     }
 
     /**
@@ -172,12 +165,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
         void runTask(Image newImage);
     }
 
-    /**
-     * This method does nothing. Use the "actionPerformed(ActionEvent e)"
-     * instead of this method.
-     */
     @Override
     public void performAction() {
+        actionPerformed(null);
     }
 
     /**
@@ -191,9 +181,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Gets the HelpCtx associated with implementing object
+     * Gets the help context for this action.
      *
-     * @return HelpCtx or HelpCtx.DEFAULT_HELP
+     * @return The help context.
      */
     @Override
     public HelpCtx getHelpCtx() {
@@ -201,9 +191,9 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Returns the toolbar component of this action
+     * Gets the toolbar component for this action.
      *
-     * @return component the toolbar button
+     * @return The toolbar button
      */
     @Override
     public Component getToolbarPresenter() {
@@ -214,7 +204,7 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     }
 
     /**
-     * Set this action to be enabled/disabled
+     * Enables and disables this action.
      *
      * @param value whether to enable this action or not
      */
@@ -236,8 +226,8 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     public void requestFocusButton(String buttonText) {
         // get all buttons on this wizard panel
         Object[] wizardButtons = wizardDescriptor.getOptions();
-        for (int i = 0; i < wizardButtons.length; i++) {
-            JButton tempButton = (JButton) wizardButtons[i];
+        for (Object wizardButton : wizardButtons) {
+            JButton tempButton = (JButton) wizardButton;
             if (tempButton.getText().equals(buttonText)) {
                 tempButton.setDefaultCapable(true);
                 tempButton.requestFocus();
@@ -253,8 +243,6 @@ public final class AddImageAction extends CallableSystemAction implements Presen
     private void runCleanupTasks() {
         cleanupSupport.fireChange();
     }
-
-    ChangeSupport cleanupSupport = new ChangeSupport(this);
 
     /**
      * Instances of this class implement the cleanup() method to run cleanup
