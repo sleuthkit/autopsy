@@ -67,7 +67,6 @@ class AccountsText implements IndexedText {
     private static final Pattern ANCHOR_DETECTION_PATTERN = Pattern.compile(HIGHLIGHT_PRE);
 
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
-    private static final BlackboardAttribute.Type TSK_KEYWORD_HIT_DOCUMENT_IDS = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS);
     private static final BlackboardAttribute.Type TSK_CARD_NUMBER = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
 
@@ -247,11 +246,7 @@ class AccountsText implements IndexedText {
         if (keywordAttribute != null) {
             accountNumbers.add(keywordAttribute.getValueString());
         }
-        final BlackboardAttribute docIDs = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS);
         List<String> rawDocIDs = new ArrayList<>();
-        if (docIDs != null) {
-            rawDocIDs.addAll(Arrays.asList(docIDs.getValueString().split(",")));
-        }
 
         final BlackboardAttribute docID = artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID);
         if (docID != null) {
