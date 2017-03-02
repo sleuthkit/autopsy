@@ -57,7 +57,6 @@ class HighlightedText implements IndexedText {
 
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
-    private static final BlackboardAttribute.Type TSK_KEYWORD_HIT_DOCUMENT_IDS = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_HIT_DOCUMENT_IDS);
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
     static private final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
@@ -173,40 +172,21 @@ class HighlightedText implements IndexedText {
         this.keywords.add(keyword);
 
         //get the QueryType (if available)
-        final BlackboardAttribute queryTypetAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
-        qt = (queryTypetAttribute != null)
-                ? KeywordSearch.QueryType.values()[queryTypetAttribute.getValueInt()] : null;
+        final BlackboardAttribute queryTypeAttribute = artifact.getAttribute(TSK_KEYWORD_SEARCH_TYPE);
+        qt = (queryTypeAttribute != null)
+                ? KeywordSearch.QueryType.values()[queryTypeAttribute.getValueInt()] : null;
 
-        final BlackboardAttribute docIDsArtifact = artifact.getAttribute(TSK_KEYWORD_HIT_DOCUMENT_IDS);
+        isLiteral = qt != QueryType.REGEX;
 
-        if (qt == QueryType.REGEX && docIDsArtifact != null) {
-            isLiteral = false;
-            //regex search records the chunks in the artifact
-            String chunkIDsString = docIDsArtifact.getValueString();
-            Set<String> chunkIDs = Arrays.stream(chunkIDsString.split(",")).map(StringUtils::strip).collect(Collectors.toSet());
-            for (String solrDocumentId : chunkIDs) {
-                final int separatorIndex = solrDocumentId.indexOf(Server.CHUNK_ID_SEPARATOR);
-                int chunkID = (-1 == separatorIndex) ? 0
-                        : Integer.parseInt(solrDocumentId.substring(separatorIndex + 1));
+        // Run a query to figure out which chunks for the current object have
+        // hits for this keyword.
+        Keyword keywordQuery = new Keyword(keyword, isLiteral);
+        KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
+        chunksQuery.escape();
+        chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
 
-                numberOfHitsPerPage.put(chunkID, 0);
-                currentHitPerPage.put(chunkID, 0);
-            }
-            this.currentPage = pages.stream().sorted().findFirst().orElse(1);
-            isPageInfoLoaded = true;
-        } else {
-            isLiteral = true;
-            /*
-             * non-regex searches don't record the chunks in the artifacts, so
-             * we need to look them up
-             */
-            Keyword keywordQuery = new Keyword(keyword, true);
-            KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
-            chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
-
-            hits = chunksQuery.performQuery();
-            loadPageInfoFromHits();
-        }
+        hits = chunksQuery.performQuery();
+        loadPageInfoFromHits();
     }
 
     /**
