@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.io.CharSource;
 import java.io.IOException;
+import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -69,20 +70,26 @@ class TikaTextExtractor extends FileTextExtractor {
         final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, metadata));
         try {
             final Reader tikaReader = future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+            PushbackReader pushbackReader = new PushbackReader(tikaReader);
+            int read = pushbackReader.read();
+            if (read == -1) {
+                throw new TextExtractorException("Tika returned empty reader for " + sourceFile);
+            }
+            pushbackReader.unread(read);
             CharSource metaDataCharSource = getMetaDataCharSource(metadata);
             //concatenate parsed content and meta data into a single reader.
-            return CharSource.concat(new ReaderCharSource(tikaReader), metaDataCharSource).openStream();
+            return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
-            future.cancel(true);
             throw new TextExtractorException(msg, te);
         } catch (Exception ex) {
             KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, ex);
-            future.cancel(true);
             throw new TextExtractorException(msg, ex);
+        } finally {
+            future.cancel(true);
         }
     }
 
