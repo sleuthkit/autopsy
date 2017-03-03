@@ -70,14 +70,17 @@ class TikaTextExtractor extends FileTextExtractor {
         final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, metadata));
         try {
             final Reader tikaReader = future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
+
+            //check if the reader is empty
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
                 throw new TextExtractorException("Tika returned empty reader for " + sourceFile);
             }
             pushbackReader.unread(read);
-            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
+
             //concatenate parsed content and meta data into a single reader.
+            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
             return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
