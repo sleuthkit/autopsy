@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.casemodule;
+package org.sleuthkit.autopsy.datasourceprocessors;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import org.netbeans.api.progress.ProgressHandle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Image;
@@ -42,7 +43,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * The ImageWriter class is used to complete VHD copies created from local disks
  * after the ingest process completes. 
  */
-class ImageWriter {
+public class ImageWriter {
     
     private final Logger logger = Logger.getLogger(ImageWriter.class.getName());
     
@@ -60,7 +61,7 @@ class ImageWriter {
     private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
     private final boolean doUI;
     
-    ImageWriter(){
+    public ImageWriter(){
         dataSourceIdsLock = new Object();
         currentTasksLock = new Object();
         listenerStarted = false; 
@@ -187,7 +188,7 @@ class ImageWriter {
      * Also starts the listener if needed.
      * @param id The dataSource/Image ID
      */
-    void addDataSourceId(Long id){
+    public void addDataSourceId(Long id){
         startListener();
         synchronized(dataSourceIdsLock){
             dataSourceIds.add(id);
@@ -198,7 +199,7 @@ class ImageWriter {
      * Stop any open progress update task, finish the progress bars, and tell
      * the finishImage process to stop
      */
-    void close(){
+    public void close(){
         synchronized(currentTasksLock){
             isCancelled = true;
             

@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
+import org.sleuthkit.autopsy.datasourceprocessors.ImageWriter;
 import java.awt.Cursor;
 import java.awt.Frame;
 import java.beans.PropertyChangeListener;
