@@ -20,17 +20,11 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.nio.file.Path;
 
-/**
- * RJCTODO:
- */
 public interface ManifestFileParser {
     
     boolean fileIsManifest(Path filePath);
     Manifest parse(Path filePath) throws ManifestFileParserException;
     
-    /**
-     * Exception thrown if a manifest file cannot be parsed. RJCTODO
-     */
     public final static class ManifestFileParserException extends Exception {
 
         private static final long serialVersionUID = 1L;

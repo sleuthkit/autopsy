@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,6 +30,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -39,7 +40,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
  * {@link AddImageWizardIngestConfigPanel} (which is a bit weird if you ask m
  * -jm)
  */
-class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePanel<WizardDescriptor> {
+class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
     /**
      * flag to indicate that the image adding process is finished and this panel
@@ -53,7 +54,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
     private AddImageWizardAddingProgressVisual component;
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
-    private DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
+    private final DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
 
     public DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
         return dspProgressMonitorImpl;
@@ -192,7 +193,7 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
         synchronized (listeners) {
-            it = new HashSet<ChangeListener>(listeners).iterator();
+            it = new HashSet<>(listeners).iterator();
         }
         ChangeEvent ev = new ChangeEvent(this);
         while (it.hasNext()) {
@@ -239,8 +240,4 @@ class AddImageWizardAddingProgressPanel implements WizardDescriptor.FinishablePa
         getComponent().showErrors(errorString, critical);
     }
 
-    @Override
-    public boolean isFinishPanel() {
-        return true;
-    }
 }

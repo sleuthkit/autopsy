@@ -157,7 +157,7 @@ class PhotoRecCarverOutputParser {
             }
             return fileManager.addCarvedFiles(new CarvingResult(af, carvedFiles));
         } catch (NumberFormatException | TskCoreException ex) {
-            logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database: {0}", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error parsing PhotoRec output and inserting it into the database", ex); //NON-NLS
         }
 
         List<LayoutFile> empty = Collections.emptyList();

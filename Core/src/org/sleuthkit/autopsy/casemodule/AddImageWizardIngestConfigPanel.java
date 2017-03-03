@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,13 +32,17 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
  * second panel of add image wizard, allows user to configure ingest modules.
@@ -46,20 +50,19 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
  * TODO: review this for dead code. think about moving logic of adding image to
  * 3rd panel( {@link  AddImageWizardAddingProgressPanel}) separate class -jm
  */
-class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDescriptor> {
+class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
 
-    private final IngestJobSettingsPanel ingestJobSettingsPanel;
-
+    @Messages("AddImageWizardIngestConfigPanel.name.text=Configure Ingest Modules")
+    private IngestJobSettingsPanel ingestJobSettingsPanel;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private Component component = null;
-
+    private String lastProfileUsed = AddImageWizardIngestConfigPanel.class.getCanonicalName();
     private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
     private boolean ingested = false;
     private boolean readyToIngest = false;
-
     // task that will clean up the created database file if the wizard is cancelled before it finishes
     private AddImageAction.CleanupTask cleanupTask;
 
@@ -75,10 +78,12 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         this.addImageAction = action;
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;
-
         IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         showWarnings(ingestJobSettings);
+        //When this panel is viewed by the user it will always be displaying the
+        //IngestJobSettingsPanel with the AddImageWizardIngestConfigPanel.class.getCanonicalName();
         this.ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+
     }
 
     /**
@@ -93,6 +98,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     public Component getComponent() {
         if (component == null) {
             component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
+            component.setName(Bundle.AddImageWizardIngestConfigPanel_name_text());
         }
         return component;
     }
@@ -166,12 +172,10 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
         cleanupTask = null;
         readyToIngest = false;
-
         newContents.clear();
-
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules
-        startDataSourceProcessing(settings);
+        startDataSourceProcessing();
     }
 
     /**
@@ -185,7 +189,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
-        IngestJobSettings ingestJobSettings = this.ingestJobSettingsPanel.getSettings();
+        IngestJobSettings ingestJobSettings = ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
         showWarnings(ingestJobSettings);
 
@@ -206,6 +210,28 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
     }
 
     /**
+     * Loads the proper settings for this panel to use the previously selected
+     * Ingest profile when this panel would be skipped due to a profile being
+     * chosen.
+     */
+    @Override
+    public void processThisPanelBeforeSkipped() {
+        if (!(ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()) == null)
+                && !ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName()).isEmpty()) {
+            lastProfileUsed = ModuleSettings.getConfigSetting(IngestProfileSelectionWizardPanel.getLastProfilePropertiesFile(), AddImageWizardIterator.getPropLastprofileName());
+        }
+        //Because this panel kicks off ingest during the wizard we need to 
+        //swap out the ingestJobSettings for the ones of the chosen profile before
+        //we start processing
+        IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
+        ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
+        showWarnings(ingestJobSettings);
+        component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
+        readyToIngest = true;
+        startDataSourceProcessing();
+    }
+
+    /**
      * Start ingest after verifying we have a new image, we are ready to ingest,
      * and we haven't already ingested.
      */
@@ -221,7 +247,7 @@ class AddImageWizardIngestConfigPanel implements WizardDescriptor.Panel<WizardDe
      * Starts the Data source processing by kicking off the selected
      * DataSourceProcessor
      */
-    private void startDataSourceProcessing(WizardDescriptor settings) {
+    private void startDataSourceProcessing() {
         final UUID dataSourceId = UUID.randomUUID();
 
         // Add a cleanup task to interrupt the background process if the

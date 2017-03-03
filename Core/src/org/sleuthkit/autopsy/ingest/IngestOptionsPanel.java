@@ -32,7 +32,7 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
 /**
  * Global options panel for keyword searching.
  */
-class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     @NbBundle.Messages({"IngestOptionsPanel.settingsTab.text=Settings",
         "IngestOptionsPanel.settingsTab.toolTipText=Settings regarding resources available to ingest.",
@@ -42,8 +42,11 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles."})
 
     private FilesSetDefsPanel filterPanel;
+    private final static int INDEX_OF_FILTER_PANEL = 0;
     private IngestSettingsPanel settingsPanel;
+    private final static int INDEX_OF_SETTINGS_PANEL = 2;
     private ProfileSettingsPanel profilePanel;
+    private final static int INDEX_OF_PROFILE_PANEL = 1;
     /**
      * This panel implements a property change listener that listens to ingest
      * job events so it can disable the buttons on the panel if ingest is
@@ -52,7 +55,7 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
      */
     IngestJobEventPropertyChangeListener ingestJobEventsListener;
 
-    IngestOptionsPanel() {
+    public IngestOptionsPanel() {
         initComponents();
         customizeComponents();
     }
@@ -63,11 +66,11 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
         profilePanel = new ProfileSettingsPanel();
 
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.text"), null,
-                filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), 0);
+                filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), INDEX_OF_FILTER_PANEL);
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.text"), null,
-                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), 1);
+                profilePanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.profilesTab.toolTipText"), INDEX_OF_PROFILE_PANEL);
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.text"), null,
-                settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), 2);
+                settingsPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.settingsTab.toolTipText"), INDEX_OF_SETTINGS_PANEL);
         //Listener for when tabbed panes are switched, because we can have two file filter definitions panels open at the same time
         //we may wind up in a situation where the user has created and saved one in the profiles panel
         //so we need to refresh the filterPanel in those cases before proceeding.
@@ -75,10 +78,15 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
             @Override
             public void stateChanged(ChangeEvent e) {
                 if (e.getSource() instanceof JTabbedPane) {
-                    profilePanel.shouldFiltersBeRefreshed();
-                    {
-                        filterPanel.load();
-                    }
+                        //because we can have two filterPanels open at the same time
+                        //we need to save the settings when we change tabs otherwise
+                        //they could be overwritten with out of date 
+                        if (tabbedPane.getSelectedIndex() == INDEX_OF_FILTER_PANEL) {  
+                            filterPanel.load();
+                        }
+                        else {
+                            filterPanel.saveSettings();
+                        }
                 }
             }
         });
@@ -152,10 +160,6 @@ class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implements Opti
      */
     @Override
     public void saveSettings() {
-        //if a new filter was created in the profilePanel we don't want to save over it accidently
-        if (profilePanel.shouldFiltersBeRefreshed()) {
-            filterPanel.load();
-        }
         filterPanel.store();
         settingsPanel.store();
     }

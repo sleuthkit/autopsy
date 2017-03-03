@@ -117,7 +117,7 @@ public final class IngestProfiles {
          *
          * @return the description
          */
-        String getDescription() {
+        public String getDescription() {
             return description;
         }
 

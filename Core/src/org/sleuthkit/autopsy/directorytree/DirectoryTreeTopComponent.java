@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -297,6 +297,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * only, i.e. deserialization routines; otherwise you could get a
      * non-deserialized instance. To obtain the singleton instance, use
      * {@link #findInstance}.
+     *
+     * @return instance - the default instance
      */
     public static synchronized DirectoryTreeTopComponent getDefault() {
         if (instance == null) {
@@ -308,6 +310,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     /**
      * Obtain the DirectoryTreeTopComponent instance. Never call
      * {@link #getDefault} directly!
+     *
+     * @return getDefault() - the default instance
      */
     public static synchronized DirectoryTreeTopComponent findInstance() {
         WindowManager winManager = WindowManager.getDefault();
@@ -349,97 +353,101 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
-            if (Case.isCaseOpen()) {
-                Case currentCase = Case.getCurrentCase();
+            Case currentCase = null;
+            try {
+                currentCase = Case.getCurrentCase();
+            } catch (IllegalStateException ex) {
+                /*
+                 * No open case.
+                 */
+            }
 
-                // close the top component if there's no image in this case
-                if (currentCase.hasData() == false) {
-                    //this.close();
-                    ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
-                } else {
-                    // if there's at least one image, load the image and open the top component
-                    List<Object> items = new ArrayList<>();
-                    final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-                    items.add(new DataSources());
-                    items.add(new Views(tskCase));
-                    items.add(new Results(tskCase));
-                    items.add(new Tags());
-                    items.add(new Reports());
-                    contentChildren = new RootContentChildren(items);
+            // close the top component if there's no image in this case
+            if (null == currentCase || currentCase.hasData() == false) {
+                ((TreeView) this.jScrollPane1).setRootVisible(false); // hide the root
+            } else {
+                // if there's at least one image, load the image and open the top component
+                List<Object> items = new ArrayList<>();
+                final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+                items.add(new DataSources());
+                items.add(new Views(tskCase));
+                items.add(new Results(tskCase));
+                items.add(new Tags());
+                items.add(new Reports());
+                contentChildren = new RootContentChildren(items);
 
-                    Node root = new AbstractNode(contentChildren) {
-                        /**
-                         * to override the right click action in the white blank
-                         * space area on the directory tree window
-                         */
-                        @Override
-                        public Action[] getActions(boolean popup) {
-                            return new Action[]{};
-                        }
-
-                        // Overide the AbstractNode use of DefaultHandle to return
-                        // a handle which can be serialized without a parent
-                        @Override
-                        public Node.Handle getHandle() {
-                            return new Node.Handle() {
-                                @Override
-                                public Node getNode() throws IOException {
-                                    return em.getRootContext();
-                                }
-                            };
-                        }
-                    };
-
-                    root = new DirectoryTreeFilterNode(root, true);
-
-                    em.setRootContext(root);
-                    em.getRootContext().setName(currentCase.getName());
-                    em.getRootContext().setDisplayName(currentCase.getName());
-                    ((BeanTreeView) this.jScrollPane1).setRootVisible(false); // hide the root
-
-                    // Reset the forward and back lists because we're resetting the root context
-                    resetHistory();
-
-                    Children childNodes = em.getRootContext().getChildren();
-                    TreeView tree = getTree();
-
-                    Node results = childNodes.findChild(ResultsNode.NAME);
-                    tree.expandNode(results);
-
-                    Children resultsChilds = results.getChildren();
-                    tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
-                    tree.expandNode(resultsChilds.findChild(ExtractedContent.NAME));
-
-                    Accounts accounts = resultsChilds.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
-                    showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
-                    showRejectedCheckBox.setSelected(false);
-
-                    Node views = childNodes.findChild(ViewsNode.NAME);
-                    Children viewsChilds = views.getChildren();
-                    for (Node n : viewsChilds.getNodes()) {
-                        tree.expandNode(n);
+                Node root = new AbstractNode(contentChildren) {
+                    /**
+                     * to override the right click action in the white blank
+                     * space area on the directory tree window
+                     */
+                    @Override
+                    public Action[] getActions(boolean popup) {
+                        return new Action[]{};
                     }
 
-                    tree.collapseNode(views);
-
-                    // if the dataResult is not opened
-                    if (!dataResult.isOpened()) {
-                        dataResult.open(); // open the data result top component as well when the directory tree is opened
+                    // Overide the AbstractNode use of DefaultHandle to return
+                    // a handle which can be serialized without a parent
+                    @Override
+                    public Node.Handle getHandle() {
+                        return new Node.Handle() {
+                            @Override
+                            public Node getNode() throws IOException {
+                                return em.getRootContext();
+                            }
+                        };
                     }
+                };
 
-                    // select the first image node, if there is one
-                    // (this has to happen after dataResult is opened, because the event
-                    // of changing the selected node fires a handler that tries to make
-                    // dataResult active)
-                    if (childNodes.getNodesCount() > 0) {
-                        try {
-                            em.setSelectedNodes(new Node[]{childNodes.getNodeAt(0)});
-                        } catch (Exception ex) {
-                            LOGGER.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
-                        }
-                    }
+                root = new DirectoryTreeFilterNode(root, true);
 
+                em.setRootContext(root);
+                em.getRootContext().setName(currentCase.getName());
+                em.getRootContext().setDisplayName(currentCase.getName());
+                ((TreeView) this.jScrollPane1).setRootVisible(false); // hide the root
+
+                // Reset the forward and back lists because we're resetting the root context
+                resetHistory();
+
+                Children childNodes = em.getRootContext().getChildren();
+                TreeView tree = getTree();
+
+                Node results = childNodes.findChild(ResultsNode.NAME);
+                tree.expandNode(results);
+
+                Children resultsChilds = results.getChildren();
+                tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
+                tree.expandNode(resultsChilds.findChild(ExtractedContent.NAME));
+
+                Accounts accounts = resultsChilds.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
+                showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
+                showRejectedCheckBox.setSelected(false);
+
+                Node views = childNodes.findChild(ViewsNode.NAME);
+                Children viewsChilds = views.getChildren();
+                for (Node n : viewsChilds.getNodes()) {
+                    tree.expandNode(n);
                 }
+
+                tree.collapseNode(views);
+
+                // if the dataResult is not opened
+                if (!dataResult.isOpened()) {
+                    dataResult.open(); // open the data result top component as well when the directory tree is opened
+                }
+
+                // select the first image node, if there is one
+                // (this has to happen after dataResult is opened, because the event
+                // of changing the selected node fires a handler that tries to make
+                // dataResult active)
+                if (childNodes.getNodesCount() > 0) {
+                    try {
+                        em.setSelectedNodes(new Node[]{childNodes.getNodeAt(0)});
+                    } catch (PropertyVetoException ex) {
+                        LOGGER.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
+                    }
+                }
+
             }
         } finally {
             this.setCursor(null);
@@ -490,7 +498,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
     @Override
     public boolean canClose() {
-        return !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false; // only allow this window to be closed when there's no case opened or no image in this case
+        /*
+         * Only allow the main tree view in the left side of the main window to
+         * be closed if there is no opne case or the open case has no data
+         * sources.
+         */
+        return !Case.isCaseOpen() || Case.getCurrentCase().hasData() == false;
     }
 
     /**
@@ -536,7 +549,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (RuntimeProperties.coreComponentsAreActive()) {
+        if (RuntimeProperties.runningWithGUI()) {
             String changed = evt.getPropertyName();
             if (changed.equals(Case.Events.CURRENT_CASE.toString())) { // changed current case
                 // When a case is closed, the old value of this property is the 
@@ -667,7 +680,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                             try {
                                 displayName = content.getUniquePath();
                             } catch (TskCoreException ex) {
-                                LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: " + originNode); //NON-NLS
+                                LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: {0}", originNode); //NON-NLS
                             }
                         } else if (originNode.getLookup().lookup(String.class) != null) {
                             displayName = originNode.getLookup().lookup(String.class);

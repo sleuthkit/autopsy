@@ -22,7 +22,6 @@ import java.util.logging.Level;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.keywordsearch.Server.SolrServerNoPortException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
@@ -44,8 +43,6 @@ class Installer extends ModuleInstall {
     public void restored() {
         //Setup the default KeywordSearch configuration files
         KeywordSearchSettings.setDefaults();
-
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new KeywordSearch.CaseChangeListener());
 
         final Server server = KeywordSearch.getServer();
         try {

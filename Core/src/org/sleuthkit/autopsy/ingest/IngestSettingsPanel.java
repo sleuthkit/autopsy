@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 /**
  * Options panel that allow users to set application preferences.
  */
-final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
+final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel {
 
     IngestSettingsPanel() {
         initComponents();
@@ -108,23 +108,23 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
             UserPreferences.setProcessTimeOutHrs((int) timeOutHrs);
         }
     }
-    
+
     boolean valid() {
         return true;
     }
 
     /**
      * Enable or Disable buttons based on whether Ingest is running.
-     * 
-     * @param isEnabled 
+     *
+     * @param isEnabled
      */
-    void enableButtons(boolean isEnabled){
+    void enableButtons(boolean isEnabled) {
         numberOfFileIngestThreadsComboBox.setEnabled(isEnabled);
         jFormattedTextFieldProcTimeOutHrs.setEnabled(isEnabled);
         jCheckBoxEnableProcTimeout.setEnabled(isEnabled);
-        ingestWarningLabel.setVisible(!isEnabled);       
+        ingestWarningLabel.setVisible(!isEnabled);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -144,7 +144,11 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
         jLabelProcessTimeOutUnits = new javax.swing.JLabel();
         ingestWarningLabel = new javax.swing.JLabel();
 
+        setPreferredSize(new java.awt.Dimension(693, 413));
+
         jScrollPane1.setBorder(null);
+
+        jPanel1.setPreferredSize(new java.awt.Dimension(664, 400));
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelNumThreads, org.openide.util.NbBundle.getMessage(IngestSettingsPanel.class, "IngestSettingsPanel.jLabelNumThreads.text")); // NOI18N
 
@@ -205,7 +209,7 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabelProcessTimeOutUnits)))
                                 .addGap(213, 213, 213)))
-                        .addGap(215, 215, 215))
+                        .addContainerGap(52, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(ingestWarningLabel)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
@@ -229,7 +233,7 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
                         .addComponent(jLabelProcessTimeOutUnits)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(ingestWarningLabel)
-                .addContainerGap(277, Short.MAX_VALUE))
+                .addContainerGap(257, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel1);
@@ -238,7 +242,7 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 691, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -246,18 +250,18 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void numberOfFileIngestThreadsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numberOfFileIngestThreadsComboBoxActionPerformed
+    private void jFormattedTextFieldProcTimeOutHrsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_numberOfFileIngestThreadsComboBoxActionPerformed
+    }//GEN-LAST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
 
     private void jCheckBoxEnableProcTimeoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBoxEnableProcTimeoutActionPerformed
         jFormattedTextFieldProcTimeOutHrs.setEditable(jCheckBoxEnableProcTimeout.isSelected());
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_jCheckBoxEnableProcTimeoutActionPerformed
 
-    private void jFormattedTextFieldProcTimeOutHrsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
+    private void numberOfFileIngestThreadsComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_numberOfFileIngestThreadsComboBoxActionPerformed
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-    }//GEN-LAST:event_jFormattedTextFieldProcTimeOutHrsActionPerformed
+    }//GEN-LAST:event_numberOfFileIngestThreadsComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel ingestWarningLabel;
@@ -274,6 +278,6 @@ final class IngestSettingsPanel extends IngestModuleGlobalSettingsPanel  {
 
     @Override
     public void saveSettings() {
-       this.store();
+        this.store();
     }
 }
