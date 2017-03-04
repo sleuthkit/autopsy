@@ -206,6 +206,9 @@ class AddImageTask implements Runnable {
                         if (!verificationError.isEmpty()) {
                             errorMessages.add(verificationError);
                         }
+                        if(! imageWriterPath.isEmpty()){
+                            Case.getCurrentCase().scheduleImageWriterFinish(imageId);
+                        }
                         newDataSources.add(newImage);
                     } else {
                         String errorMessage = String.format("Error commiting adding image %s to the case database, no object id returned", imagePath); //NON-NLS
