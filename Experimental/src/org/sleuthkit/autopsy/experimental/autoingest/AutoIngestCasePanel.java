@@ -28,17 +28,18 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -280,24 +281,37 @@ public final class AutoIngestCasePanel extends JPanel {
      */
     private void openCase(Path caseMetadataFilePath) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        try {
-            AutoIngestCaseManager.getInstance().openCase(caseMetadataFilePath);
-            stopCasesTableRefreshes();
-            StartupWindowProvider.getInstance().close();
-        } catch (CaseActionException ex) {
-            logger.log(Level.SEVERE, String.format("Error while opening case with case metadata file path %s", caseMetadataFilePath), ex);
-            /*
-             * ReviewModeCaseManagerExceptions have user-friendly error
-             * messages.
-             */
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    ex.getMessage(),
-                    org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.cannotOpenCase"),
-                    JOptionPane.ERROR_MESSAGE);
+        new SwingWorker<Void, Void>() {
 
-        } finally {
-            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
+            @Override
+            protected Void doInBackground() throws Exception {
+                AutoIngestCaseManager.getInstance().openCase(caseMetadataFilePath);
+                stopCasesTableRefreshes();
+                StartupWindowProvider.getInstance().close();
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+                } catch (InterruptedException ex) {
+                    logger.log(Level.SEVERE, String.format("Error while opening case with case metadata file path %s", caseMetadataFilePath), ex);
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getMessage(),
+                            org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.cannotOpenCase"),
+                            JOptionPane.ERROR_MESSAGE);
+                } catch (ExecutionException ex) {
+                    logger.log(Level.SEVERE, String.format("Error while opening case with case metadata file path %s", caseMetadataFilePath), ex);
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            ex.getCause().getMessage(),
+                            org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "ReviewModeCasePanel.cannotOpenCase"),
+                            JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                }
+            }
+        }.execute();
     }
 
     /**
