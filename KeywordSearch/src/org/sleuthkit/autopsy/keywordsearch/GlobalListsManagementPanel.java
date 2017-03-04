@@ -35,7 +35,6 @@ import javax.swing.table.AbstractTableModel;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -44,8 +43,6 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
-
-    private final Logger logger = Logger.getLogger(GlobalListsManagementPanel.class.getName());
     private final KeywordListTableModel tableModel;
     private final org.sleuthkit.autopsy.keywordsearch.GlobalListSettingsPanel globalListSettingsPanel;
 
@@ -115,7 +112,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                 NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, listName);
 
-        if (listName == null || listName.trim().equals("")) {
+        if (listName == null || listName.trim().isEmpty()) {
             return;
         }
         boolean shouldAdd = false;
@@ -141,7 +138,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             shouldAdd = true;
         }
         if (shouldAdd) {
-            writer.addList(listName, new ArrayList<Keyword>());
+            writer.addList(listName, new ArrayList<>());
         }
 
         tableModel.resync();
@@ -368,7 +365,7 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             }
 
             List<KeywordList> toImport = reader.getListsL();
-            List<KeywordList> toImportConfirmed = new ArrayList<KeywordList>();
+            List<KeywordList> toImportConfirmed = new ArrayList<>();
 
             final XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
 
@@ -530,6 +527,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }
 
     private class KeywordListTableModel extends AbstractTableModel {
+
+        private static final long serialVersionUID = 1L;
 
         private final XmlKeywordSearchList listsHandle = XmlKeywordSearchList.getCurrent();
 
