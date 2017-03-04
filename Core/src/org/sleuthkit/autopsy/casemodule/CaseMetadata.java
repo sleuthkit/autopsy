@@ -455,13 +455,6 @@ public final class CaseMetadata {
                 this.caseDatabaseName = caseDirectoryPath.relativize(possibleAbsoluteCaseDbPath).toString();
             }
 
-            /*
-             * Update the file to the current schema, if necessary.
-             */
-            if (!schemaVersion.equals(CURRENT_SCHEMA_VERSION)) {
-                writeToFile();
-            }
-
         } catch (ParserConfigurationException | SAXException | IOException ex) {
             throw new CaseMetadataException(String.format("Error reading from case metadata file %s", metadataFilePath), ex);
         }
