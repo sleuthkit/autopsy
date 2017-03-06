@@ -1604,7 +1604,7 @@ public class Case {
         "Case.progressIndicatorTitle.creatingCase=Creating Case",
         "Case.progressIndicatorCancelButton.label=Cancel",
         "Case.progressMessage.preparing=Preparing...",
-        "Case.progressMessage.acquiringLocks=Allowing access, this may take time if another user is upgrading the case."
+        "Case.progressMessage.acquiringLocks=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>"
     })
     private void open(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         /*
