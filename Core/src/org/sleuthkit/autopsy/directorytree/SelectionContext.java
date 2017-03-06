@@ -31,7 +31,7 @@ enum SelectionContext {
 
     private final String displayName;
 
-    SelectionContext(String displayName) {
+  private  SelectionContext(String displayName) {
         this.displayName = displayName;
     }
 

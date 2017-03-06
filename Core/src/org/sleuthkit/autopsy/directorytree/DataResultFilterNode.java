@@ -119,7 +119,7 @@ public class DataResultFilterNode extends FilterNode {
      * @param node Root node to be passed to DataResult viewers
      * @param em   ExplorerManager for component that is creating the node
      */
-    DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
+  private  DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
         this.sourceEm = em;
     }
@@ -194,9 +194,9 @@ public class DataResultFilterNode extends FilterNode {
      * DataResultFilterNode that created in the DataResultFilterNode.java.
      *
      */
-    static class DataResultFilterChildren extends FilterNode.Children {
+  private  static class DataResultFilterChildren extends FilterNode.Children {
 
-        private ExplorerManager sourceEm;
+        private final  ExplorerManager sourceEm;
 
         private boolean filterKnown;
         private boolean filterSlack;
@@ -204,7 +204,7 @@ public class DataResultFilterNode extends FilterNode {
         /**
          * the constructor
          */
-        DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
+     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
             super(arg);
             switch (SelectionContext.getSelectionContext(arg)) {
                 case DATA_SOURCES:
@@ -223,7 +223,7 @@ public class DataResultFilterNode extends FilterNode {
             this.sourceEm = sourceEm;
         }
 
-        DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
+     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
             super(arg);
             this.filterKnown = filterKnown;
             this.filterSlack = filterSlack;
@@ -236,16 +236,15 @@ public class DataResultFilterNode extends FilterNode {
             if (file != null) {
                 if (filterKnown && (file.getKnown() == TskData.FileKnown.KNOWN)) {
                     // Filter out child nodes that represent known files
-                    return EMPTY_ARRAY;
+                    return new Node[]{};
                 }
                 if (filterSlack && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                     // Filter out child nodes that represent slack files
-                    return EMPTY_ARRAY;
+                    return new Node[]{};
                 }
             }
             return new Node[]{new DataResultFilterNode(key, sourceEm, filterKnown, filterSlack)};
         }
-        private static final Node[] EMPTY_ARRAY = new Node[]{};
     }
 
     /**
