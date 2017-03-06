@@ -20,12 +20,18 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import javax.swing.Action;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagsAction;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -33,6 +39,8 @@ import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 
@@ -77,7 +85,8 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         "FileNode.getActions.viewFileInDir.text=View File in Directory",
         "FileNode.getActions.viewInNewWin.text=View in New Window",
         "FileNode.getActions.openInExtViewer.text=Open in External Viewer",
-        "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"})
+        "FileNode.getActions.searchFilesSameMD5.text=Search for files with the same MD5 hash"
+    })
     public Action[] getActions(boolean popup) {
         List<Action> actionsList = new ArrayList<>();
         for (Action a : super.getActions(true)) {
@@ -96,8 +105,32 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(new HashSearchAction(Bundle.FileNode_getActions_searchFilesSameMD5_text(), this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
+        
+        try {
+            if(isFileTagged()) {
+                actionsList.add(DeleteFileContentTagsAction.getInstance());
+            }
+        } catch (TskCoreException ex) {
+            // This should never happen. If it does, something is very wrong.
+            Logger.getLogger(AddContentTagAction.class.getName())
+                    .log(Level.SEVERE, "An error occurred while attempting to retrieve tags for the selected file.", ex); //NON-NLS
+        }
+        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[actionsList.size()]);
+    }
+    
+    private boolean isFileTagged() throws TskCoreException {
+        boolean result = false;
+        
+        List<ContentTag> existingTagsList = Case.getCurrentCase().getServices().getTagsManager().getAllContentTags();
+        for(ContentTag existingTag : existingTagsList) {
+            if(existingTag.getContent().getId() == getContent().getId()) {
+                result = true;
+            }
+        }
+        
+        return result;
     }
 
     @Override
