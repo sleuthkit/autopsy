@@ -287,7 +287,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
     private static final int MIN_SECS_BETWEEN_TSK_ERROR_REPORTS = 60;
     private static final Logger logger = Logger.getLogger(Case.class.getName());
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
-    private final ImageWriter imageWriter = new ImageWriter();
     private static String appName;
     private static Case currentCase;
     private static CoordinationService.Lock currentCaseLock;
@@ -1439,7 +1438,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
                 WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             });
             IngestManager.getInstance().cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
-            oldCase.closeImageWriter();
             completeCaseChange(null); //closes windows, etc   
             if (null != oldCase.tskErrorReporter) {
                 oldCase.tskErrorReporter.shutdown(); // stop listening for TSK errors for the old case
@@ -1615,22 +1613,6 @@ public class Case implements SleuthkitCase.ErrorObserver {
             currentCaseExecutor = Executors.newSingleThreadExecutor();
         }
         return currentCaseExecutor;
-    }
-    
-    /**
-     * Register the ID of an image that is being copied using ImageWriter.
-     * This will cause the image to be finished after ingest is complete.
-     * @param imageID The image ID
-     */
-    void scheduleImageWriterFinish(long imageID){
-        imageWriter.addDataSourceId(imageID);
-    }
-    
-    /**
-     * Cancel all tasks associated with Image Writer
-     */
-    void closeImageWriter(){
-        imageWriter.close();
     }
 
     /**
