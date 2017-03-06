@@ -20,11 +20,13 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -99,10 +101,10 @@ class IndexFinder {
     }
 
     /**
-     * Creates a copy of an existing Solr index. 
+     * Creates a copy of an existing Solr index.
      *
-     * @param indexToUpgrade        Index object to create a copy of
-     * @param context               AutopsyService.CaseContext object
+     * @param indexToUpgrade Index object to create a copy of
+     * @param context        AutopsyService.CaseContext object
      *
      * @return The absolute path of the new Solr index directory
      *
@@ -120,20 +122,31 @@ class IndexFinder {
                 List<File> contents = getAllContentsInFolder(targetDirPath.getAbsolutePath());
                 if (!contents.isEmpty()) {
                     // target directory is not empty
-                    throw new AutopsyService.AutopsyServiceException("Directory to store the upgraded index must be empty " + targetDirPath.getAbsolutePath());
+                    try {
+                        FileUtils.deleteDirectory(targetDirPath.getParentFile()); //We don't want partial copies
+                    } catch (IOException | IllegalArgumentException deleteEx) {
+                        throw new AutopsyService.AutopsyServiceException("Failed to delete existing directory to store the upgraded index " + targetDirPath.getAbsolutePath() + "which was not empty", deleteEx);
+                    }
+                    logger.log(Level.WARNING, String.format("Directory %s existed with contents and was deleted so the upgrade could proceed", indexFolderName));
                 }
             }
             targetDirPath.mkdirs();
             FileUtils.copyDirectory(new File(indexToUpgrade.getIndexPath()), targetDirPath);
             return targetDirPath.getAbsolutePath();
         } catch (AutopsyService.AutopsyServiceException | IOException ex) {
+            try {
+                Path targetDirPath = Paths.get(context.getCase().getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName); //NON-NLS
+                FileUtils.deleteDirectory(targetDirPath.toFile()); //We don't want partial copies
+            } catch (IOException | IllegalArgumentException deleteEx) {
+                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", indexFolderName), deleteEx);
+            }
             throw new AutopsyService.AutopsyServiceException("Error occurred while creating a copy of keyword search index", ex);
         }
     }
 
     /**
-     * Find existing Solr 4 Schema 1.8 index directory location for the case. This is done via
-     * subdirectory search of all existing
+     * Find existing Solr 4 Schema 1.8 index directory location for the case.
+     * This is done via subdirectory search of all existing
      * "ModuleOutput/node_name/keywordsearch/data/" folders.
      *
      * @param theCase the case to get index dir for
@@ -146,8 +159,9 @@ class IndexFinder {
             // multi user cases contain a subfolder for each node that participated in case ingest or review.
             // Any one (but only one!) of those subfolders may contain the actual index.
             /*
-             * NOTE: the following path is an example of valid Solr 4 Schema 1.8 multi-user index
-             * path: X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
+             * NOTE: the following path is an example of valid Solr 4 Schema 1.8
+             * multi-user index path:
+             * X:\Case\ingest1\ModuleOutput\keywordsearch\data\index
              */
 
             // get a list of all folder's contents
@@ -169,8 +183,8 @@ class IndexFinder {
         } else {
             // single user case
             /*
-             * NOTE: the following path is valid single user Solr 4 Schema 1.8 index
-             * path: X:\Case\ModuleOutput\keywordsearch\data\index
+             * NOTE: the following path is valid single user Solr 4 Schema 1.8
+             * index path: X:\Case\ModuleOutput\keywordsearch\data\index
              */
             File path = Paths.get(theCase.getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, INDEX_FOLDER_NAME).toFile(); //NON-NLS
             // must be a non-empty index directory
