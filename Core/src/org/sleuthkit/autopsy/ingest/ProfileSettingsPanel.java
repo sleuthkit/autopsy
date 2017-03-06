@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.ingest;
 
+import java.awt.Cursor;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.swing.DefaultListModel;
@@ -26,6 +27,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
@@ -340,6 +342,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
      */
     private void doProfileDialog(IngestProfile selectedProfile) {
         // Create a files set defintion panel.
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        //start wait cursor for ingest job settings construction
         if (selectedProfile != null) {
             // Editing an existing set definition.
             panel = new ProfilePanel(selectedProfile);
@@ -347,6 +351,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             // Creating a new set definition.
             panel = new ProfilePanel();
         }
+        //end wait Cursor for ingest job settings construction
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         // Do a dialog box with the profilePanel till the user enters a name or chooses cancel
         int option = JOptionPane.OK_OPTION;
         do {

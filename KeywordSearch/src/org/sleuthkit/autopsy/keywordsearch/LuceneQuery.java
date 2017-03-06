@@ -105,7 +105,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public boolean isLiteral() {
-        return true;
+        return originalKeyword.searchTermIsLiteral();
     }
 
     @Override

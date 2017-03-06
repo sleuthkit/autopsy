@@ -89,8 +89,17 @@ class AddKeywordsDialog extends javax.swing.JDialog {
      * Intended to be used to redisplay any keywords that contained errors
      * @param initialKeywords 
      */
-    void setInitialKeywordList(String initialKeywords){
+    void setInitialKeywordList(String initialKeywords, boolean isLiteral, boolean isWholeWord){
         keywordTextArea.setText(initialKeywords);
+        if (!isLiteral){
+            regexRadioButton.setSelected(true);
+        }
+        else if (isWholeWord){
+            exactRadioButton.setSelected(true);
+        }
+        else {
+            substringRadioButton.setSelected(true);
+        }
     }
     
     
