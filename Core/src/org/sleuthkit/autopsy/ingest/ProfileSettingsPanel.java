@@ -415,8 +415,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             if (selectedProfile != null) {
                 profileDescArea.setText(selectedProfile.getDescription());
                 filterNameText.setText(selectedProfile.getFileIngestFilter());
-                editProfileButton.setEnabled(true);
-                deleteProfileButton.setEnabled(true);
+                if (newProfileButton.isEnabled()) {
+                    editProfileButton.setEnabled(true);
+                    deleteProfileButton.setEnabled(true);
+                }
                 try {
                     Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance().getCustomFileIngestFilters();
                     for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
