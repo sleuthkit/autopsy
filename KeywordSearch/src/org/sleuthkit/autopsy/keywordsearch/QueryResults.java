@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.SwingWorker;
+import org.apache.commons.lang.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.NbBundle;
@@ -131,22 +132,25 @@ class QueryResults {
                 subProgress.progress(keywordList.getName() + ": " + hitDisplayStr, unitProgress);
             }
 
-            for (KeywordHit hit : getResults(keyword)) {
+            for (KeywordHit hit : getOneHitPerObject(keyword)) {
                 String termString = keyword.getSearchTerm();
-                final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
-                String snippet;
-                try {
-                    snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
-                } catch (NoOpenCoreException e) {
-                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                    //no reason to continue
-                    break;
-                } catch (Exception e) {
-                    logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
-                    continue;
+                String snippet = hit.getSnippet();
+                if (StringUtils.isBlank(snippet)) {
+                    final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
+                    try {
+                        //this doesn't work for regex queries...
+                        snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
+                    } catch (NoOpenCoreException e) {
+                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                        //no reason to continue
+                        break;
+                    } catch (Exception e) {
+                        logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
+                        continue;
+                    }
                 }
                 if (snippet != null) {
-                    KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(termString, hit, snippet, keywordList.getName());
+                    KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordList.getName());
                     if (writeResult != null) {
                         newArtifacts.add(writeResult.getArtifact());
                         if (notifyInbox) {
@@ -166,12 +170,35 @@ class QueryResults {
                     //group artifacts by type
                     .collect(Collectors.groupingBy(BlackboardArtifact::getArtifactTypeID))
                     //for each type send an event
-                    .forEach((typeID, artifacts) ->
-                            IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
+                    .forEach((typeID, artifacts)
+                            -> IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.fromID(typeID), artifacts)));
 
         }
 
         return newArtifacts;
+    }
+
+    /**
+     * Gets the first hit of the keyword.
+     *
+     * @param keyword
+     *
+     * @return Collection<KeywordHit> containing KeywordHits with lowest
+     *         SolrObjectID-ChunkID pairs.
+     */
+    private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
+
+        HashMap<Long, KeywordHit> hits = new HashMap<>();
+
+        // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
+        for (KeywordHit hit : getResults(keyword)) {
+            if (!hits.containsKey(hit.getSolrObjectId())) {
+                hits.put(hit.getSolrObjectId(), hit);
+            } else if (hit.getChunkId() < hits.get(hit.getSolrObjectId()).getChunkId()) {
+                hits.put(hit.getSolrObjectId(), hit);
+            }
+        }
+        return hits.values();
     }
 
     /**

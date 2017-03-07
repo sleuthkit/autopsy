@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DataSourceUtils;
-import org.sleuthkit.autopsy.corecomponentinterfaces.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
 
 /**
  * A image file data source processor that implements the DataSourceProcessor

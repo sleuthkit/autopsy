@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @OptionsPanelController.TopLevelRegistration(
         categoryName = "#OptionsCategory_Name_HashDatabase",
         iconBase = "org/sleuthkit/autopsy/modules/hashdatabase/options_icon.png",
-        position = 4,
+        position = 6,
         keywords = "#OptionsCategory_Keywords_HashDatabase",
         keywordsCategory = "HashDatabase",
         id = "HashDatabase")

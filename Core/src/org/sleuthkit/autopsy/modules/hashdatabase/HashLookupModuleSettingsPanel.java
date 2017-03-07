@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,16 +30,17 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettingsPanel;
+import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDb;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Ingest job settings panel for hash lookup file ingest modules.
  */
 public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSettingsPanel implements PropertyChangeListener {
 
+    private static final long serialVersionUID = 1L;
     private final HashDbManager hashDbManager = HashDbManager.getInstance();
     private final List<HashSetModel> knownHashSetModels = new ArrayList<>();
     private final HashSetsTableModel knownHashSetsTableModel = new HashSetsTableModel(knownHashSetModels);
@@ -216,6 +217,7 @@ public final class HashLookupModuleSettingsPanel extends IngestModuleIngestJobSe
 
     private static final class HashSetsTableModel extends AbstractTableModel {
 
+        private static final long serialVersionUID = 1L;
         private final List<HashSetModel> hashSets;
 
         HashSetsTableModel(List<HashSetModel> hashSets) {

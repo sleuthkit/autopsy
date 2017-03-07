@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.io.CharSource;
 import java.io.IOException;
+import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -40,13 +41,8 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 
 /**
- * Extractor of text from TIKA supported AbstractFile content. Extracted text
- * will be divided into chunks and indexed with Solr. Protects against Tika
- * parser hangs (for unexpected/corrupt content) using a timeout mechanism. If
- * Tika extraction succeeds, chunks are indexed with Solr.
- *
- * This Tika extraction/chunking utility is useful for large files of Tika
- * parsers-supported content type.
+ * Extracts text from Tika supported AbstractFile content. Protects against Tika
+ * parser hangs (for unexpected/corrupt content) using a timeout mechanism.
  */
 class TikaTextExtractor extends FileTextExtractor {
 
@@ -74,9 +70,18 @@ class TikaTextExtractor extends FileTextExtractor {
         final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, metadata));
         try {
             final Reader tikaReader = future.get(getTimeout(sourceFile.getSize()), TimeUnit.SECONDS);
-            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
+
+            //check if the reader is empty
+            PushbackReader pushbackReader = new PushbackReader(tikaReader);
+            int read = pushbackReader.read();
+            if (read == -1) {
+                throw new TextExtractorException("Tika returned empty reader for " + sourceFile);
+            }
+            pushbackReader.unread(read);
+
             //concatenate parsed content and meta data into a single reader.
-            return CharSource.concat(new ReaderCharSource(tikaReader), metaDataCharSource).openStream();
+            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
+            return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
         } catch (TimeoutException te) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
@@ -86,16 +91,18 @@ class TikaTextExtractor extends FileTextExtractor {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, ex);
             throw new TextExtractorException(msg, ex);
+        } finally {
+            future.cancel(true);
         }
     }
 
     /**
-     * Get a CharSource that wraps a formated representation of the given
+     * Gets a CharSource that wraps a formated representation of the given
      * Metadata.
      *
      * @param metadata The Metadata to wrap as a CharSource
      *
-     * @returna CharSource for the given MetaData
+     * @return A CharSource for the given MetaData
      */
     static private CharSource getMetaDataCharSource(Metadata metadata) {
         return CharSource.wrap(
@@ -121,12 +128,8 @@ class TikaTextExtractor extends FileTextExtractor {
 
             return false;
         }
-
-        //TODO might need to add more mime-types to ignore
-        //then accept all formats supported by Tika
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
     }
-
 
     @Override
     public boolean isDisabled() {

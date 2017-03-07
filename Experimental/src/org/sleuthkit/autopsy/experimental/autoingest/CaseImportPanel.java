@@ -108,7 +108,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
             tbOops.setText(MULTI_USER_SETTINGS_MUST_BE_ENABLED);
             return;
-        } else if (RuntimeProperties.coreComponentsAreActive()) {
+        } else if (RuntimeProperties.runningWithGUI()) {
             tbOops.setText(AIM_MUST_BE_ENABLED);
             return;
         } else {
@@ -674,7 +674,7 @@ public class CaseImportPanel extends javax.swing.JPanel implements ImportDoneCal
     private void enableStartButton() {
         if (UserPreferences.getIsMultiUserModeEnabled()
                 && AutoIngestUserPreferences.getJoinAutoModeCluster()
-                && (! RuntimeProperties.coreComponentsAreActive())
+                && (! RuntimeProperties.runningWithGUI())
                 && !tbCaseSource.getText().isEmpty()
                 && !tbCaseDestination.getText().isEmpty()
                 && canTalkToDb == true

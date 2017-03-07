@@ -404,7 +404,7 @@ class TestRunner(object):
         test_data.ant = ["ant"]
         test_data.ant.append("-v")
         test_data.ant.append("-f")
-        test_data.ant.append(make_local_path(test_data.main_config.build_path))
+        test_data.ant.append(make_local_path(test_data.main_config.build_path, "build.xml"))
         test_data.ant.append("regression-test")
         test_data.ant.append("-l")
         test_data.ant.append(test_data.antlog_dir)
@@ -1485,7 +1485,7 @@ def copy_logs(test_data):
         shutil.copytree(log_dir, test_data.logs_dir)
 
         # copy logs from userdir0/var/log
-        log_dir = os.path.join("..", "..", "Testing","build","test","qa-functional","work","userdir0","var","log/")
+        log_dir = os.path.join(test_data.main_config.build_path,"build","test","qa-functional","work","userdir0","var","log/")
         for log in os.listdir(log_dir):
             if log.find("log"):
                 new_name = log_dir + "userdir0." + log
