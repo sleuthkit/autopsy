@@ -155,26 +155,50 @@ class DropdownToolbar extends javax.swing.JPanel {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            String changed = evt.getPropertyName();
-            if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
-                dropPanel.clearSearchBox();
-                if (RuntimeProperties.runningWithGUI() || null == evt.getNewValue()) {
-                    try {
-                        Server server = KeywordSearch.getServer();
-                        Index indexInfo = server.getIndexInfo();
-                        if (server.coreIsOpen() && IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
-                            boolean schemaIsCurrent = IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion());
-                            listsButton.setEnabled(schemaIsCurrent);
-                            searchDropButton.setEnabled(true);
-                            dropPanel.setRegexSearchEnabled(schemaIsCurrent);
-                            active = true;
-                        } else {
+            if (RuntimeProperties.runningWithGUI()) {
+                String changed = evt.getPropertyName();
+                if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
+                    if (null != evt.getNewValue()) {
+                        /*
+                         * A case has been opened.
+                         */
+                        try {
+                            Server server = KeywordSearch.getServer();
+                            Index indexInfo = server.getIndexInfo();
+                            if (server.coreIsOpen() && IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
+                                /*
+                                 * Solr version is current, so check the Solr
+                                 * schema version and selectively enable the ad
+                                 * hoc search UI components.
+                                 */
+                                boolean schemaIsCurrent = IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion());
+                                listsButton.setEnabled(schemaIsCurrent);
+                                searchDropButton.setEnabled(true);
+                                dropPanel.setRegexSearchEnabled(schemaIsCurrent);
+                                active = true;
+                            } else {
+                                /*
+                                 * Unsupported Solr version, disable the ad hoc
+                                 * search UI components.
+                                 */
+                                searchDropButton.setEnabled(false);
+                                listsButton.setEnabled(false);
+                                active = false;
+                            }
+                        } catch (KeywordSearchModuleException ex) {
+                            /*
+                             * Error, disable the ad hoc search UI components.
+                             */
+                            logger.log(Level.SEVERE, "Error getting text index info", ex); //NON-NLS
                             searchDropButton.setEnabled(false);
                             listsButton.setEnabled(false);
                             active = false;
                         }
-                    } catch (KeywordSearchModuleException ex) {
-                        logger.log(Level.SEVERE, "Error getting text index info", ex); //NON-NLS
+                    } else {
+                        /*
+                         * A case has been closed.
+                         */
+                        dropPanel.clearSearchBox();
                         searchDropButton.setEnabled(false);
                         listsButton.setEnabled(false);
                         active = false;
