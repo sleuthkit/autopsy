@@ -64,6 +64,11 @@ public class ImageWriter implements PropertyChangeListener{
     
     private static int numFinishJobsInProgress = 0;
     
+    /**
+     * Create the Image Writer object.
+     * After creation, startListeners() should be called.
+     * @param dataSourceId 
+     */
     public ImageWriter(Long dataSourceId){
         this.dataSourceId = dataSourceId;
         
@@ -75,11 +80,16 @@ public class ImageWriter implements PropertyChangeListener{
         progressUpdateTask = null;
         finishTask = null;
         
-        doUI = RuntimeProperties.coreComponentsAreActive();
+        doUI = RuntimeProperties.runningWithGUI();
         if(doUI){
             periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("image-writer-progress-update-%d").build()); //NON-NLS
         }
-        
+    }
+    
+    /**
+     * Add this ImageWriter object as a listener to the necessary events
+     */
+    public void subscribeToEvents(){
         IngestManager.getInstance().addIngestJobEventListener(this);
         Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), this);
     }
