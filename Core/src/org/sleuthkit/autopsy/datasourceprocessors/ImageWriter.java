@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.datasourceprocessors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -48,21 +49,21 @@ public class ImageWriter implements PropertyChangeListener{
     private final Logger logger = Logger.getLogger(ImageWriter.class.getName());
     
     private final Long dataSourceId;
-    private Long imageHandle = null;
     
-    private Future<?> finishTask;
-    ProgressHandle progressHandle = null;
-    ScheduledFuture<?> progressUpdateTask = null;
-    private boolean isCancelled;
-    private boolean isStarted;
-    private boolean isFinished;
-    private final Object currentTasksLock; // Get this lock before accessing finishTask, progressHandle, progressUpdateTask, isCancelled,
-                                           // isStarted, or isFinished
+    private Long imageHandle = null;
+    private Future<?> finishTask = null;
+    private ProgressHandle progressHandle = null;
+    private ScheduledFuture<?> progressUpdateTask = null;
+    private boolean isCancelled = false;
+    private boolean isStarted = false;
+    private boolean isFinished = false;
+    private final Object currentTasksLock = new Object(); // Get this lock before accessing imageHandle, finishTask, progressHandle, progressUpdateTask,
+                                                          // isCancelled, isStarted, or isFinished
     
     private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
     private final boolean doUI;
     
-    private static int numFinishJobsInProgress = 0;
+    private static final AtomicInteger numFinishJobsInProgress = new AtomicInteger(0);
     
     /**
      * Create the Image Writer object.
@@ -70,20 +71,8 @@ public class ImageWriter implements PropertyChangeListener{
      * @param dataSourceId 
      */
     public ImageWriter(Long dataSourceId){
-        this.dataSourceId = dataSourceId;
-        
-        currentTasksLock = new Object();
-        isCancelled = false;
-        isStarted = false;
-        isFinished = false;
-        progressHandle = null;
-        progressUpdateTask = null;
-        finishTask = null;
-        
-        doUI = RuntimeProperties.runningWithGUI();
-        if(doUI){
-            periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("image-writer-progress-update-%d").build()); //NON-NLS
-        }
+        this.dataSourceId = dataSourceId;        
+        doUI = RuntimeProperties.runningWithGUI();        
     }
     
     /**
@@ -95,13 +84,21 @@ public class ImageWriter implements PropertyChangeListener{
     }
     
     /**
+     * Deregister this object from the events. This is ok to call multiple times.
+     */
+    public void unsubscribeFromEvents(){
+        IngestManager.getInstance().removeIngestJobEventListener(this);
+        Case.removeEventSubscriber(Case.Events.CURRENT_CASE.toString(), this);        
+    }
+    
+    /**
      * Handle the events:
      * DATA_SOURCE_ANALYSIS_COMPLETED - start the finish image process and clean up after it is complete
      * CURRENT_CASE (case closing) - cancel the finish image process (if necessary)
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if(evt.getPropertyName().equals(IngestManager.IngestJobEvent.DATA_SOURCE_ANALYSIS_COMPLETED.toString())){
+        if(evt instanceof DataSourceAnalysisCompletedEvent){
                         
             DataSourceAnalysisCompletedEvent event = (DataSourceAnalysisCompletedEvent)evt;
 
@@ -122,12 +119,20 @@ public class ImageWriter implements PropertyChangeListener{
             }
         }
         else if(evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())){
+            // Technically this could be a case open event (and not the expected case close event) but
+            // that would probably mean something bad is going on, and we'd still want to cancel
+            // Image Writer.
             close();
         }
     }
     
     private void startFinishImage(String dataSourceName){
+        
         synchronized(currentTasksLock){
+            if(isCancelled){
+                return;
+            }
+            
             // If we've already started the finish process for this datasource, return.
             // Multiple DataSourceAnalysisCompletedEvent events can come from
             // the same image if more ingest modules are run later
@@ -136,64 +141,63 @@ public class ImageWriter implements PropertyChangeListener{
             } else {
                 isStarted = true;
             }
+            
+            Image image;
+            try{
+                image = Case.getCurrentCase().getSleuthkitCase().getImageById(dataSourceId);
+                imageHandle = image.getImageHandle();
+            } catch (TskCoreException ex){
+                logger.log(Level.SEVERE, "Error loading image", ex);
+                
+                // Stay subscribed to the events for now. Case close will clean everything up.
+                return;
+            }
+
+            logger.log(Level.INFO, String.format("Finishing VHD image for %s", 
+                    dataSourceName)); //NON-NLS           
+
+            if(doUI){
+                periodicTasksExecutor = new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("image-writer-progress-update-%d").build()); //NON-NLS
+                progressHandle = ProgressHandle.createHandle("Image writer - " + dataSourceName);
+                progressHandle.start(100);
+                progressUpdateTask = periodicTasksExecutor.scheduleAtFixedRate(
+                        new ProgressUpdateTask(progressHandle, imageHandle), 0, 250, TimeUnit.MILLISECONDS);
+            }
+
+            // The added complexity here with the Future is because we absolutely need to make sure
+            // the call to finishImageWriter returns before allowing the TSK data structures to be freed
+            // during case close.
+            numFinishJobsInProgress.incrementAndGet();
+            finishTask = Executors.newSingleThreadExecutor().submit(() -> {
+                try{
+                    SleuthkitJNI.finishImageWriter(imageHandle);
+                } catch (TskCoreException ex){
+                    logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
+                }
+            });
         }
 
-        logger.log(Level.INFO, String.format("Finishing VHD image for %s", 
-                dataSourceName)); //NON-NLS
-
+        // Wait for finishImageWriter to complete
         try{
-            Image image = Case.getCurrentCase().getSleuthkitCase().getImageById(dataSourceId);
-            imageHandle = image.getImageHandle();
-
-            synchronized(currentTasksLock){
-                if(isCancelled){
-                    return;
-                }
-
-                if(doUI){
-                    progressHandle = ProgressHandle.createHandle("Image writer - " + dataSourceName);
-                    progressHandle.start(100);
-                    progressUpdateTask = periodicTasksExecutor.scheduleAtFixedRate(
-                            new ProgressUpdateTask(progressHandle, image.getImageHandle()), 0, 250, TimeUnit.MILLISECONDS);
-                }
-
-                // The added complexity here with the Future is because we absolutely need to make sure
-                // the call to finishImageWriter returns before allowing the TSK data structures to be freed
-                // during case close.
-                numFinishJobsInProgress++;
-                finishTask = Executors.newSingleThreadExecutor().submit(() -> {
-                    try{
-                        SleuthkitJNI.finishImageWriter(imageHandle);
-                    } catch (TskCoreException ex){
-                        logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
-                    }
-                });
-            }
-
-            // Wait for finishImageWriter to complete
-            try{
-                // The call to get() will happen twice if the user closes the case, which is ok
-                finishTask.get();
-            } catch (InterruptedException | ExecutionException ex){
-                logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
-            }
-            numFinishJobsInProgress--;
-            
-            IngestManager.getInstance().removeIngestJobEventListener(this);
-            Case.removeEventSubscriber(Case.Events.CURRENT_CASE.toString(), this);
-            synchronized(currentTasksLock){
-                if(doUI && ! isCancelled){
-                    progressUpdateTask.cancel(true);
-                    progressHandle.finish();
-                }
-                isFinished = true;
-            }
-            
-
-            logger.log(Level.INFO, String.format("Finished writing VHD image for %s", dataSourceName)); //NON-NLS
-        } catch (TskCoreException | IllegalStateException ex){
+            // The call to get() will happen twice if the user closes the case, which is ok
+            finishTask.get();
+        } catch (InterruptedException | ExecutionException ex){
             logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
         }
+        numFinishJobsInProgress.decrementAndGet();
+
+        synchronized(currentTasksLock){
+            unsubscribeFromEvents();
+            if(doUI){
+                // Some of these may be called twice if the user closes the case
+                progressUpdateTask.cancel(true);
+                progressHandle.finish();
+                periodicTasksExecutor.shutdown();
+            }
+            isFinished = true;            
+        }
+
+        logger.log(Level.INFO, String.format("Finished writing VHD image for %s", dataSourceName)); //NON-NLS
     }
     
     /**
@@ -203,8 +207,12 @@ public class ImageWriter implements PropertyChangeListener{
         synchronized(currentTasksLock){
             isCancelled = true;
             
+            unsubscribeFromEvents();
+            
+            // The case either got closed during ingest (before the startFinishImage got called)
+            // or an error occurred. If imageHandle is not null, we know that the first block of
+            // startFinishImage() completed so all the tasks have also been initialized.
             if(imageHandle == null){
-                // The case got closed during ingest (before the finish process could start)
                 return;
             }
             
@@ -219,17 +227,14 @@ public class ImageWriter implements PropertyChangeListener{
                     logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
                 }
             
-                // Stop the progress bar and progress bar update task.
-                // The thread from startFinishImage will also stop these
+                // Stop the progress bar update task.
+                // The thread from startFinishImage will also stop it
                 // once the task completes, but we have to make absolutely sure
                 // this gets done before the Sleuthkit data structures are freed.
-                if(progressUpdateTask != null){
-                    progressUpdateTask.cancel(true);
-                }
-            
-                if(progressHandle != null){
-                    progressHandle.finish();
-                }
+                // Since we've stopped the update task, we'll stop the associated progress
+                // bar now, too.
+                progressUpdateTask.cancel(true);
+                progressHandle.finish();
             }
         }
     }
@@ -239,15 +244,15 @@ public class ImageWriter implements PropertyChangeListener{
      * @return number of images in progress
      */
     public static int numberOfJobsInProgress(){
-        return numFinishJobsInProgress;
+        return numFinishJobsInProgress.get();
     }
     
     /**
      * Task to query the Sleuthkit processing to get the percentage done. 
      */
     private final class ProgressUpdateTask implements Runnable {
-        long imageHandle;
-        ProgressHandle progressHandle;
+        final long imageHandle;
+        final ProgressHandle progressHandle;
         
         ProgressUpdateTask(ProgressHandle progressHandle, long imageHandle){
             this.imageHandle = imageHandle;
