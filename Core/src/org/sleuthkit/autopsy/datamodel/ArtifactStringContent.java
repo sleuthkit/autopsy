@@ -61,7 +61,7 @@ public class ArtifactStringContent implements StringContent {
      * @return The HTML representation of the artifact as a string.
      */
     @Messages({
-        "ArtifactStringContent.attrsTableHeader.attribute=Attribute",
+        "ArtifactStringContent.attrsTableHeader.type=Type",
         "ArtifactStringContent.attrsTableHeader.value=Value",
         "ArtifactStringContent.attrsTableHeader.sources=Source(s)",
         "ArtifactStringContent.failedToGetSourcePath.message=Failed to get source file path from case database",
@@ -90,15 +90,15 @@ public class ArtifactStringContent implements StringContent {
              */
             buffer.append("<table border='1'>"); //NON-NLS
             buffer.append("<tr>"); //NON-NLS
-            buffer.append("<td>"); //NON-NLS
-            buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_attribute());
-            buffer.append("</td>"); //NON-NLS
-            buffer.append("<td>"); //NON-NLS
+            buffer.append("<td><b>"); //NON-NLS
+            buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_type());
+            buffer.append("</b></td>"); //NON-NLS
+            buffer.append("<td><b>"); //NON-NLS
             buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_value());
-            buffer.append("</td>"); //NON-NLS
-            buffer.append("<td>"); //NON-NLS
+            buffer.append("</b></td>"); //NON-NLS
+            buffer.append("<td><b>"); //NON-NLS
             buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_sources());
-            buffer.append("</td>"); //NON-NLS
+            buffer.append("</b></td>"); //NON-NLS
             buffer.append("</tr>\n"); //NON-NLS
             try {
                 Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
