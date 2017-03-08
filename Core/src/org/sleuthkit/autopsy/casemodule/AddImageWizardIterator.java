@@ -54,11 +54,11 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
-            SelectDataSourceProcessorPanel dspSelection = new SelectDataSourceProcessorPanel();
+            AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
             panels.add(dspSelection);
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
-            
-            AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel();
+
+            AddImageWizardDataSourceSettingsPanel dsPanel = new AddImageWizardDataSourceSettingsPanel();
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
             panels.add(dsPanel);
             List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
@@ -162,7 +162,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     @Override
     // disable the previous button on all panels except the data source panel
     public boolean hasPrevious() {
-       return (index == dsPanelIndex); //Users should be able to back up to select a different DSP
+        return (index == dsPanelIndex); //Users should be able to back up to select a different DSP
     }
 
     /**

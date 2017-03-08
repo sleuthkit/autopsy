@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.casemodule;
 
@@ -18,10 +31,12 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
 /**
- * Create a wizard panel which contains a panel allowing the selection of the DataSourceProcessor
+ * Create a wizard panel which contains a panel allowing the selection of the
+ * DataSourceProcessor
  */
 class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
- @NbBundle.Messages("SelectDataSourceProcessorPanel.name.text=Select Type of Data")
+
+    @NbBundle.Messages("SelectDataSourceProcessorPanel.name.text=Select Type of Data")
     private AddImageWizardSelectDspVisual component;
     private static final String LAST_DSP_PROPERTIES_FILE = "LastDSPUsed";
     private static final String LAST_DSP_USED_KEY = "Last_DSP_Used";

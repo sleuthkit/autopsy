@@ -34,7 +34,6 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-
 /**
  * visual component for the first panel of add image wizard. Allows the user to
  * choose the data source type and then select the data source
@@ -65,7 +64,8 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
     }
 
     /**
-     * WJS-TODO 
+     * Populate the map of DataSourceProcessors which so they can be retrieved
+     * by name.
      */
     private void discoverDataSourceProcessors() {
         for (DataSourceProcessor dsProcessor : Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
@@ -76,9 +76,9 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
             }
         }
     }
-    
+
     /**
-     * WJS-TODO 
+     * WJS-TODO
      */
     void dspSelectionChanged(String dsType) {
         // update the current panel to selection
