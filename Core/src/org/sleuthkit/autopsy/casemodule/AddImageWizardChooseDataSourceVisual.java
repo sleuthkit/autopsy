@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,26 +20,20 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.ListCellRenderer;
-import javax.swing.event.DocumentEvent;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
+
 
 /**
  * visual component for the first panel of add image wizard. Allows the user to
@@ -48,15 +42,15 @@ import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
  */
 final class AddImageWizardChooseDataSourceVisual extends JPanel {
 
-    static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
+    private static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
 
-    private AddImageWizardChooseDataSourcePanel wizPanel;
+    private final AddImageWizardChooseDataSourcePanel wizPanel;
 
     private JPanel currentPanel;
 
-    private Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
+    private final Map<String, DataSourceProcessor> datasourceProcessorsMap = new HashMap<>();
 
-    List<String> coreDSPTypes = new ArrayList<>();
+    private String currentDsp;
 
     /**
      * Creates new form AddImageVisualPanel1
@@ -66,69 +60,15 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     AddImageWizardChooseDataSourceVisual(AddImageWizardChooseDataSourcePanel wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
-
-        customInit();
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private void customInit() {
-
         typePanel.setLayout(new BorderLayout());
-
         discoverDataSourceProcessors();
-
-        // set up the DSP type combobox
-        typeComboBox.removeAllItems();
-
-        Set<String> dspTypes = datasourceProcessorsMap.keySet();
-
-        // make a list of core DSPs
-        // ensure that the core DSPs are at the top and in a fixed order
-        coreDSPTypes.add(ImageDSProcessor.getType());
-        // Local disk processing is not allowed for multi-user cases
-        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
-            coreDSPTypes.add(LocalDiskDSProcessor.getType());
-        } else {
-            // remove LocalDiskDSProcessor from list of DSPs
-            datasourceProcessorsMap.remove(LocalDiskDSProcessor.getType());
-        }
-        coreDSPTypes.add(LocalFilesDSProcessor.getType());
-        coreDSPTypes.add(RawDSProcessor.getType());
-        
-        for (String dspType : coreDSPTypes) {
-            typeComboBox.addItem(dspType);
-        }
-
-        // now add any addtional DSPs that haven't already been added
-        for (String dspType : dspTypes) {
-            if (!coreDSPTypes.contains(dspType)) {
-                typeComboBox.addItem(dspType);
-            }
-        }
-
-        typeComboBox.setRenderer(new ComboboxSeparatorRenderer(typeComboBox.getRenderer()) {
-
-            @Override
-            protected boolean addSeparatorAfter(JList list, Object value, int index) {
-                return (index == coreDSPTypes.size() - 1);
-            }
-        });
-
-        //add actionlistner to listen for change
-        ActionListener cbActionListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                dspSelectionChanged();
-            }
-        };
-        typeComboBox.addActionListener(cbActionListener);
-        typeComboBox.setSelectedIndex(0);
     }
 
+    /**
+     * WJS-TODO 
+     */
     private void discoverDataSourceProcessors() {
-
         for (DataSourceProcessor dsProcessor : Lookup.getDefault().lookupAll(DataSourceProcessor.class)) {
-
             if (!datasourceProcessorsMap.containsKey(dsProcessor.getDataSourceType())) {
                 datasourceProcessorsMap.put(dsProcessor.getDataSourceType(), dsProcessor);
             } else {
@@ -136,10 +76,14 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             }
         }
     }
-
-    private void dspSelectionChanged() {
+    
+    /**
+     * WJS-TODO 
+     */
+    void dspSelectionChanged(String dsType) {
         // update the current panel to selection
-        currentPanel = getCurrentDSProcessor().getPanel();
+        currentDsp = dsType;
+        currentPanel = datasourceProcessorsMap.get(dsType).getPanel();
         updateCurrentPanel(currentPanel);
     }
 
@@ -159,15 +103,14 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString())) {
-                    updateUI(null);
+                    wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
                 }
                 if (evt.getPropertyName().equals(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString())) {
                     wizPanel.moveFocusToNext();
                 }
             }
         });
-
-        updateUI(null);
+        this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
     }
 
     /**
@@ -179,9 +122,11 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     protected DataSourceProcessor getCurrentDSProcessor() {
         // get the type of the currently selected panel and then look up 
         // the correspodning DS Handler in the map
-        String dsType = (String) typeComboBox.getSelectedItem();
-        DataSourceProcessor dsProcessor = datasourceProcessorsMap.get(dsType);
-
+        if (currentDsp.equals("")) {
+            System.out.println("LOADING EMPTY DSP WJSTODO WJS-TODO LOG ISSUE HERE");
+            currentDsp = ImageDSProcessor.getType();
+        }
+        DataSourceProcessor dsProcessor = datasourceProcessorsMap.get(currentDsp);
         return dsProcessor;
 
     }
@@ -285,27 +230,14 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
     private javax.swing.JLabel typeTabel;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * The "listener" that updates the UI of this panel based on the changes of
-     * fields on this panel. This is also the method to check whether all the
-     * fields on this panel are correctly filled and decides whether to enable
-     * the "Next" button or not.
-     *
-     * @param e the document event
-     */
-    public void updateUI(DocumentEvent e) {
-        // Enable the Next button if the current DSP panel is valid
-        this.wizPanel.enableNextButton(getCurrentDSProcessor().isPanelValid());
-    }
-
     @SuppressWarnings("rawtypes")
     public abstract class ComboboxSeparatorRenderer implements ListCellRenderer {
 
-        private ListCellRenderer delegate;
+        private final ListCellRenderer delegate;
 
-        private JPanel separatorPanel = new JPanel(new BorderLayout());
+        private final JPanel separatorPanel = new JPanel(new BorderLayout());
 
-        private JSeparator separator = new JSeparator();
+        private final JSeparator separator = new JSeparator();
 
         public ComboboxSeparatorRenderer(ListCellRenderer delegate) {
             this.delegate = delegate;

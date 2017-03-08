@@ -40,6 +40,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private List<ShortcutWizardDescriptorPanel> panels;
     private final AddImageAction action;
     private int progressPanelIndex;
+    private int dsPanelIndex;
     private final static String PROP_LASTPROFILE_NAME = "AIW_LASTPROFILE_NAME"; //NON-NLS
 
     AddImageWizardIterator(AddImageAction action) {
@@ -53,10 +54,11 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
     private List<ShortcutWizardDescriptorPanel> getPanels() {
         if (panels == null) {
             panels = new ArrayList<>();
-
+            SelectDataSourceProcessorPanel dspSelection = new SelectDataSourceProcessorPanel();
+            panels.add(dspSelection);
             AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
-
-            AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel(progressPanel);
+            
+            AddImageWizardChooseDataSourcePanel dsPanel = new AddImageWizardChooseDataSourcePanel();
             AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
             panels.add(dsPanel);
             List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
@@ -66,6 +68,7 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels.add(ingestConfigPanel);
             panels.add(progressPanel);
             progressPanelIndex = panels.indexOf(progressPanel);  //Doing programatically because number of panels is variable
+            dsPanelIndex = panels.indexOf(dsPanel);
             String[] steps = new String[panels.size()];
             for (int i = 0; i < panels.size(); i++) {
                 Component c = panels.get(i).getComponent();
@@ -157,9 +160,9 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
      * @return boolean true if it has previous panel, false if not
      */
     @Override
-    // disable the previous button on all panels
+    // disable the previous button on all panels except the data source panel
     public boolean hasPrevious() {
-        return false;
+       return (index == dsPanelIndex); //Users should be able to back up to select a different DSP
     }
 
     /**

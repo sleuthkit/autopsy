@@ -45,17 +45,11 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private final AddImageWizardAddingProgressPanel progressPanel;
     private AddImageWizardChooseDataSourceVisual component;
     private boolean isNextEnable = false;
-    private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH"; //NON-NLS
-    private static final String PROP_LASTDATASOURCE_TYPE = "LBL_LastDataSource_TYPE"; //NON-NLS
     // paths to any set hash lookup databases (can be null)
-    private String NSRLPath, knownBadPath;
 
-    AddImageWizardChooseDataSourcePanel(AddImageWizardAddingProgressPanel proPanel) {
-
-        this.progressPanel = proPanel;
+    AddImageWizardChooseDataSourcePanel() {
 
     }
 
@@ -87,8 +81,7 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
     public HelpCtx getHelp() {
         // Show no Help button for this panel:
         return HelpCtx.DEFAULT_HELP;
-        // If you have context help:
-        // return new HelpCtx(SampleWizardPanel1.class);
+
     }
 
     /**
@@ -164,10 +157,6 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
         }
     }
 
-    // You can use a settings object to keep track of state. Normally the
-    // settings object will be the WizardDescriptor, so you can use
-    // WizardDescriptor.getProperty & putProperty to store information entered
-    // by the user.
     /**
      * Provides the wizard panel with the current data--either the default data
      * or already-modified settings, if the user used the previous and/or next
@@ -178,19 +167,9 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-
-        //reset settings if supports it
-        //getComponent().reset();
         // Prepopulate the image directory from the properties file
         try {
-
-            // Load hash database settings, enable or disable the checkbox
-            this.NSRLPath = null;
-            this.knownBadPath = null;
-            //JCheckBox lookupFilesCheckbox = component.getLookupFilesCheckbox();
-            //lookupFilesCheckbox.setSelected(false);
-            //lookupFilesCheckbox.setEnabled(this.NSRLPath != null || this.knownBadPath != null);
-
+      
             // If there is a process object in the settings, revert it and remove it from the settings
             AddImageAction.CleanupTask cleanupTask = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
             if (cleanupTask != null) {
@@ -205,7 +184,7 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
             }
         } catch (Exception e) {
         }
-
+        component.dspSelectionChanged((String)settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
     }
 
     /**
