@@ -47,12 +47,13 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         "# {0} - profile name",
         "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text=Profile with name {0} already exists.",
         "ProfileSettingsPanel.infoTextArea.text=An Ingest Profile runs a preconfigured set of ingest modules"
-                + " on some or all of the files in a data source. Create a profile if you frequently run the same set of modules on a subset of the files."
+        + " on some or all of the files in a data source. Create a profile if you frequently run the same set of modules on a subset of the files."
     })
 
     private final DefaultListModel<IngestProfile> profilesListModel;
     private Map<String, IngestProfile> profiles;
     private ProfilePanel panel;
+    private boolean canBeEnabled;  //if something can be enabled ingest is not running
 
     /**
      * Creates new form ProfileOptionsPanel
@@ -63,8 +64,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
         ingestWarningLabel.setVisible(false);
-        editProfileButton.setEnabled(false);
-        deleteProfileButton.setEnabled(false);
+        canBeEnabled = !IngestManager.getInstance().isIngestRunning();
+        refreshButtons();
     }
 
     /**
@@ -315,10 +316,9 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
      * @param isEnabled
      */
     void enableButtons(boolean isEnabled) {
-        newProfileButton.setEnabled(isEnabled);
-        editProfileButton.setEnabled(isEnabled);
-        deleteProfileButton.setEnabled(isEnabled);
-        ingestWarningLabel.setVisible(!isEnabled);
+        canBeEnabled = isEnabled;  //update value of canBeEnabled to be used by refresh
+        refreshButtons();
+        ingestWarningLabel.setVisible(!canBeEnabled);
     }
 
     /**
@@ -334,23 +334,20 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             this.filterNameText.setText("");
             this.selectedModulesArea.setText("");
         }
-        refreshEditDeleteButtons();
+        refreshButtons();
     }
 
     /**
-     * When Ingest is not running this will changed enabled status of the edit
-     * and delete buttons to reflect their current availability.
+     * When Ingest is not running this will change the enabled status of the
+     * edit and delete buttons to reflect their current availability.
      */
-    private void refreshEditDeleteButtons() {
-        if (newProfileButton.isEnabled()) {
-            if (profilesListModel.isEmpty()) {
-                editProfileButton.setEnabled(false);
-                deleteProfileButton.setEnabled(false);
-            } else {
-                editProfileButton.setEnabled(true);
-                deleteProfileButton.setEnabled(true);
-            }
-        }
+    private void refreshButtons() {
+        IngestProfile selectedProfile = ProfileSettingsPanel.this.profileList.getSelectedValue();
+        boolean profileIsSelected = (selectedProfile != null);
+        newProfileButton.setEnabled(canBeEnabled);
+        editProfileButton.setEnabled(canBeEnabled && profileIsSelected);
+        deleteProfileButton.setEnabled(canBeEnabled && profileIsSelected);
+
     }
 
 
@@ -397,7 +394,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             panel.saveSettings();
             load();
         }
-
     }
 
     @Override
@@ -423,7 +419,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         if (currentIndex < 0 || currentIndex >= profilesListModel.getSize()) {
             currentIndex = 0;
         }
-        refreshEditDeleteButtons();
+        refreshButtons();
         this.profileList.setSelectedIndex(currentIndex);
     }
 
@@ -437,11 +433,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             // Get the selected interesting files set and populate the set
             // components.
             IngestProfile selectedProfile = ProfileSettingsPanel.this.profileList.getSelectedValue();
+            refreshButtons();
             if (selectedProfile != null) {
                 profileDescArea.setText(selectedProfile.getDescription());
                 filterNameText.setText(selectedProfile.getFileIngestFilter());
-                editProfileButton.setEnabled(true);
-                deleteProfileButton.setEnabled(true);
                 try {
                     Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance().getCustomFileIngestFilters();
                     for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
@@ -455,10 +450,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                 for (String moduleName : IngestJobSettings.getEnabledModules(selectedProfile.getName())) {
                     selectedModulesArea.append(moduleName + "\n");
                 }
-
-            } else {
-                editProfileButton.setEnabled(false);
-                deleteProfileButton.setEnabled(false);
             }
         }
     }
