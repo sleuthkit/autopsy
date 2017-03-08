@@ -26,6 +26,8 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datasourceprocessors.ImageWriter;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -41,6 +43,7 @@ class AddImageTask implements Runnable {
     private final String deviceId;
     private final String imagePath;
     private final String timeZone;
+    private final String imageWriterPath;
     private final boolean ignoreFatOrphanFiles;
     private final DataSourceProcessorProgressMonitor progressMonitor;
     private final DataSourceProcessorCallback callback;
@@ -74,15 +77,19 @@ class AddImageTask implements Runnable {
      *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
+     * @param imageWriterPath  Path that a copy of the image should be written to.
+     *                         Use empty string to disable image writing
      * @param progressMonitor      Progress monitor to report progress during
      *                             processing.
      * @param callback             Callback to call when processing is done.
      */
-    AddImageTask(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
+    AddImageTask(String deviceId, String imagePath, String timeZone, boolean ignoreFatOrphanFiles, String imageWriterPath,
+            DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
         this.deviceId = deviceId;
         this.imagePath = imagePath;
         this.timeZone = timeZone;
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
+        this.imageWriterPath = imageWriterPath;
         this.callback = callback;
         this.progressMonitor = progressMonitor;
         tskAddImageProcessLock = new Object();
@@ -101,7 +108,7 @@ class AddImageTask implements Runnable {
         try {
             currentCase.getSleuthkitCase().acquireExclusiveLock();
             synchronized (tskAddImageProcessLock) {
-                tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, true, ignoreFatOrphanFiles);
+                tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, true, ignoreFatOrphanFiles, imageWriterPath);
             }
             Thread progressUpdateThread = new Thread(new ProgressUpdater(progressMonitor, tskAddImageProcess));
             progressUpdateThread.start();
@@ -200,6 +207,10 @@ class AddImageTask implements Runnable {
                         String verificationError = newImage.verifyImageSize();
                         if (!verificationError.isEmpty()) {
                             errorMessages.add(verificationError);
+                        }
+                        if(! imageWriterPath.isEmpty()){
+                            ImageWriter writer = new ImageWriter(imageId);
+                            writer.subscribeToEvents();
                         }
                         newDataSources.add(newImage);
                     } else {
