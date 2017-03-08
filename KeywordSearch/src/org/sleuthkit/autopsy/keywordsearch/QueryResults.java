@@ -149,16 +149,14 @@ class QueryResults {
                         continue;
                     }
                 }
-                if (snippet != null) {
-                    KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordList.getName());
-                    if (writeResult != null) {
-                        newArtifacts.add(writeResult.getArtifact());
-                        if (notifyInbox) {
-                            writeSingleFileInboxMessage(writeResult, hit.getContent());
-                        }
-                    } else {
-                        logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
+                KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordList.getName());
+                if (writeResult != null) {
+                    newArtifacts.add(writeResult.getArtifact());
+                    if (notifyInbox) {
+                        writeSingleFileInboxMessage(writeResult, hit.getContent());
                     }
+                } else {
+                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
                 }
             }
             ++unitProgress;
