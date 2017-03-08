@@ -61,6 +61,7 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
         this.wizPanel = wizPanel;
         typePanel.setLayout(new BorderLayout());
         discoverDataSourceProcessors();
+        currentDsp = ImageDSProcessor.getType(); //default value to the ImageDSProcessor
     }
 
     /**
@@ -78,10 +79,13 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
     }
 
     /**
-     * WJS-TODO
+     * Set the current DataSourceProcessor and update the panel to reflect that
+     * selection.
+     *
+     * @param dsType - the name of the DataSourceProcessor you wish to have this
+     *               panel display settings for.
      */
-    void dspSelectionChanged(String dsType) {
-        // update the current panel to selection
+    void setDspSelection(String dsType) {
         currentDsp = dsType;
         currentPanel = datasourceProcessorsMap.get(dsType).getPanel();
         updateCurrentPanel(currentPanel);
@@ -122,10 +126,6 @@ final class AddImageWizardDataSourceSettingsVisual extends JPanel {
     protected DataSourceProcessor getCurrentDSProcessor() {
         // get the type of the currently selected panel and then look up 
         // the correspodning DS Handler in the map
-        if (currentDsp.equals("")) {
-            System.out.println("LOADING EMPTY DSP WJSTODO WJS-TODO LOG ISSUE HERE");
-            currentDsp = ImageDSProcessor.getType();
-        }
         DataSourceProcessor dsProcessor = datasourceProcessorsMap.get(currentDsp);
         return dsProcessor;
 

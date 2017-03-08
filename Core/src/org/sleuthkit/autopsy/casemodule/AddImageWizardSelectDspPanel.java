@@ -22,11 +22,13 @@ import java.awt.Component;
 import java.awt.Cursor;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
@@ -34,13 +36,14 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
  * Create a wizard panel which contains a panel allowing the selection of the
  * DataSourceProcessor
  */
-class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
+final class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
 
     @NbBundle.Messages("SelectDataSourceProcessorPanel.name.text=Select Type of Data")
     private AddImageWizardSelectDspVisual component;
     private static final String LAST_DSP_PROPERTIES_FILE = "LastDSPUsed";
     private static final String LAST_DSP_USED_KEY = "Last_DSP_Used";
-
+    private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());
+ 
     @Override
     public Component getComponent() {
         if (component == null) {
@@ -50,7 +53,7 @@ class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel impleme
                 lastDspUsed = ModuleSettings.getConfigSetting(LAST_DSP_PROPERTIES_FILE, LAST_DSP_USED_KEY);
             } else {
                 lastDspUsed = ImageDSProcessor.getType();
-                System.out.println("NO SAVED DSP WJS-TODO LOG THIS");
+                logger.log(Level.WARNING, "There was no properties file containing the last DataSourceProcessor used, Disk Image or VM will be selected by default"); //NON-NLS
             }
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             component = new AddImageWizardSelectDspVisual(lastDspUsed);

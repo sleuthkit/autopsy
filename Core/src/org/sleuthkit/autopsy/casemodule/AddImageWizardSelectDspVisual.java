@@ -41,6 +41,9 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
+/**
+ * Panel which displays the available DataSourceProcessors and allows selection of one
+ */
 final class AddImageWizardSelectDspVisual extends JPanel {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());
@@ -58,10 +61,11 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     }
 
     /**
-     * WJS-TODO
+     * Find the DSP which is currently selected and save it as the selected 
+     * DataSourceProcessor.
      *
      */
-    private void dspSelectionChanged() {
+    private void updateSelectedDsp() {
         Enumeration<AbstractButton> buttonGroup = buttonGroup1.getElements();
         while (buttonGroup.hasMoreElements()) {
             AbstractButton dspButton = buttonGroup.nextElement();
@@ -73,23 +77,23 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     }
 
     /**
-     * WJS-TODO
+     * Get the DataSourceProcessor which is currently selected in this panel
      *
-     * @return
+     * @return selectedDsp the DataSourceProcessor which is selected in this panel
      */
     String getSelectedDsp() {
         return selectedDsp;
     }
 
     /**
-     * WJS-TODO
+     * Create the a button for each DataSourceProcessor that should exist as an option.
      */
     private void createDataSourceProcessorButtons() {
         //Listener for button selection
         ActionListener cbActionListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dspSelectionChanged();
+                updateSelectedDsp();
             }
         };
         List<String> dspList = getListOfDsps();
@@ -139,9 +143,11 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     }
 
     /**
-     * WJS-TODO
-     *
-     * @return
+     * Create a list of the DataSourceProcessors which should exist as options on this panel.
+     * The default Autopsy DataSourceProcessors will appear 
+     * at the beggining of the list in the same order.
+     * 
+     * @return dspList a list of DataSourceProcessors which can be chose in this panel
      */
     private List<String> getListOfDsps() {
         List<String> dspList = new ArrayList<>();
@@ -172,11 +178,11 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     }
 
     /**
-     * WJS-TODO
+     * Create a single button for a DataSourceProcessor
      *
-     * @param dspType
+     * @param dspType - the name of the DataSourceProcessor
      *
-     * @return
+     * @return dspButton a JToggleButton for the specified dspType
      */
     private JToggleButton createDspButton(String dspType) {
         JToggleButton dspButton = new JToggleButton();

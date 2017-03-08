@@ -184,7 +184,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
             }
         } catch (Exception e) {
         }
-        component.dspSelectionChanged((String)settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
+        component.setDspSelection((String)settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
     }
 
     /**
