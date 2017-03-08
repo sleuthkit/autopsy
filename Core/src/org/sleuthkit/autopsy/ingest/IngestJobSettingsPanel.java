@@ -25,6 +25,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -413,19 +414,34 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
             FilesSetDefsPanel fileIngestFilterPanel;
             fileIngestFilterPanel = new FilesSetDefsPanel(FilesSetDefsPanel.PANEL_TYPE.FILE_INGEST_FILTERS);
             fileIngestFilterPanel.load();
+            //save the filters that exist before any are created
+            final ArrayList<String> oldFilterList = new ArrayList<>(Arrays.asList(getComboBoxContents()));
             dialog.addApplyButtonListener(
                     (ActionEvent e) -> {
                         fileIngestFilterPanel.store();
+                        ArrayList<FilesSet> newFilterList = new ArrayList<>();
+                        try {
+                            newFilterList.addAll(FilesSetsManager.getInstance().getCustomFileIngestFilters().values());
+                        } catch (FilesSetsManager.FilesSetsManagerException ex) {
+                            logger.log(Level.SEVERE, "Failed to get user created file ingest filters, only default available for selection", ex); //NON-NLS
+                        }
+                        for (FilesSet filter : newFilterList) {  //getting one of the recently created filters
+                            if (!oldFilterList.contains(filter.getName())) {
+                                //set newly created filter to selected filter
+                                settings.setFileIngestFilter(filter);
+                                break;
+                            }
+                        }
                         fileIngestFilterComboBox.setModel(new DefaultComboBoxModel<>(getComboBoxContents()));
+                        //set the selected filter after the comboBox Contents were updated to include it
+                        fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
                         dialog.close();
                     }
             );
             dialog.display(fileIngestFilterPanel);
-
+            //return to saved selection in case they cancel out of filter creation 
             fileIngestFilterComboBox.setSelectedItem(settings.getFileIngestFilter().getName());
-
         } else if (evt.getActionCommand().equals("comboBoxChanged")) {
-
             try {
                 Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance()
                         .getCustomFileIngestFilters();
