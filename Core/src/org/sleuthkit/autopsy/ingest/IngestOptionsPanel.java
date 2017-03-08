@@ -47,6 +47,7 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
     private final static int INDEX_OF_SETTINGS_PANEL = 2;
     private ProfileSettingsPanel profilePanel;
     private final static int INDEX_OF_PROFILE_PANEL = 1;
+    private boolean fitlerPanelPreviouslySelected = true;
     /**
      * This panel implements a property change listener that listens to ingest
      * job events so it can disable the buttons on the panel if ingest is
@@ -78,15 +79,17 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
             @Override
             public void stateChanged(ChangeEvent e) {
                 if (e.getSource() instanceof JTabbedPane) {
-                        //because we can have two filterPanels open at the same time
-                        //we need to save the settings when we change tabs otherwise
-                        //they could be overwritten with out of date 
-                        if (tabbedPane.getSelectedIndex() == INDEX_OF_FILTER_PANEL) {  
-                            filterPanel.load();
-                        }
-                        else {
-                            filterPanel.saveSettings();
-                        }
+                    //because we can have two filterPanels open at the same time
+                    //we need to save the settings when we change tabs from the filterTab 
+                    //otherwise they could be overwritten with out of date 
+                    if (tabbedPane.getSelectedIndex() == INDEX_OF_FILTER_PANEL) {
+                        filterPanel.load();
+                        fitlerPanelPreviouslySelected = true;
+                    } else if (fitlerPanelPreviouslySelected) {
+                        filterPanel.saveSettings();
+                        fitlerPanelPreviouslySelected = false;
+                    }
+
                 }
             }
         });
@@ -160,7 +163,11 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
      */
     @Override
     public void saveSettings() {
-        filterPanel.store();
+        //Because we can create filters in two seperate windows here we need 
+        //to be careful not to save an out of date list over the current list
+        if (fitlerPanelPreviouslySelected) {
+            filterPanel.store();
+        }
         settingsPanel.store();
     }
 
