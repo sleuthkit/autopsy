@@ -80,11 +80,10 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
             @Override
             public void stateChanged(ChangeEvent e) {
                 if (e.getSource() instanceof JTabbedPane) {
-                    
+                    //If we are switching to a filter panel we should load 
+                    //load the filter panel to ensure it is up to date
+                    //incase a filter was addded through the Profile->new->create new filter manner
                     if (tabbedPane.getSelectedIndex() == INDEX_OF_FILTER_PANEL && tabbedPane.getSelectedIndex() != indexOfPreviousTab) {
-                        //If we are switching to a filter panel we should load 
-                        //load the filter panel to ensure it is up to date
-                        //incase a filter was addded through the Profile->new->create new filter manner
                         filterPanel.load();
                     }
                     //save the contents of whichever Tab we just switched from
@@ -167,6 +166,11 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         saveTabByIndex(tabbedPane.getSelectedIndex());
     }
 
+    /**
+     * Save the panel which is in the tab corresponding to the specified index.
+     *
+     * @param index - the index of the tab you wish to save the contents of
+     */
     private void saveTabByIndex(int index) {
         //Because we can create filters in two seperate windows here we need 
         //to be careful not to save an out of date list over the current list
