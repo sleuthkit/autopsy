@@ -28,9 +28,6 @@ public final class AutoIngestJobStatusEvent extends AutoIngestJobEvent implement
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * RJCTODO
-     */
     public AutoIngestJobStatusEvent(AutoIngestJob job) {
         super(AutoIngestManager.Event.JOB_STATUS_UPDATED, job);
     }    

@@ -114,7 +114,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * @param inStartup True if we're doing the initial population of the UI
      */
     final void load(boolean inStartup) {
-        
+
         // multi user mode must be enabled
         if (!UserPreferences.getIsMultiUserModeEnabled()) {
             tbOops.setText(MULTI_USER_SETTINGS_MUST_BE_ENABLED);
@@ -123,23 +123,25 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
         cbJoinAutoIngestCluster.setSelected(AutoIngestUserPreferences.getJoinAutoModeCluster());
         cbJoinAutoIngestCluster.setEnabled(UserPreferences.getIsMultiUserModeEnabled());
-        
+
         if (inStartup) {
             AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
             inputPathTextField.requestFocusInWindow();
-            if (null != storedMode) switch (storedMode) {
-                case REVIEW:
-                    jRadioButtonReview.setSelected(true);
-                    enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
-                    break;
-                case AUTOMATED:
-                    jRadioButtonAutomated.setSelected(true);
-                    enableOptionsBasedOnMode(OptionsUiMode.AIM);
-                    break;
-                default:
-                    cbJoinAutoIngestCluster.setSelected(false);
-                    enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);
-                    break;
+            if (null != storedMode) {
+                switch (storedMode) {
+                    case REVIEW:
+                        jRadioButtonReview.setSelected(true);
+                        enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
+                        break;
+                    case AUTOMATED:
+                        jRadioButtonAutomated.setSelected(true);
+                        enableOptionsBasedOnMode(OptionsUiMode.AIM);
+                        break;
+                    default:
+                        cbJoinAutoIngestCluster.setSelected(false);
+                        enableOptionsBasedOnMode(OptionsUiMode.STANDALONE);
+                        break;
+                }
             }
         }
 
@@ -206,11 +208,11 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     void store() {
         boolean needsRestart = false;
         AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
-        
+
         if (AutoIngestUserPreferences.getJoinAutoModeCluster() != cbJoinAutoIngestCluster.isSelected()) {
             needsRestart = true;
         }
-        
+
         AutoIngestUserPreferences.setJoinAutoModeCluster(cbJoinAutoIngestCluster.isSelected());
         if (!cbJoinAutoIngestCluster.isSelected()) {
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
@@ -224,8 +226,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 });
             }
             return;
-        } 
-            
+        }
+
         if (jRadioButtonAutomated.isSelected()) {
             if (storedMode != AutoIngestUserPreferences.SelectedMode.AUTOMATED) {
                 needsRestart = true;
@@ -261,7 +263,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
             AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.REVIEW);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
-            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);            
+            AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
         }
         if (needsRestart) {
             SwingUtilities.invokeLater(() -> {
@@ -303,11 +305,11 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      * Validate current panel settings.
      */
     boolean valid() {
-        
+
         if (!cbJoinAutoIngestCluster.isSelected()) {
             return true;
         }
-        
+
         boolean isValidNodePanel = true;
 
         switch (getModeFromRadioButtons()) {
@@ -333,13 +335,13 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 break;
             default:
                 break;
-        }     
-        
+        }
+
         if (jRadioButtonAutomated.isSelected()) {
             if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected() && !validSharedConfigSettings()) {
                 isValidNodePanel = false;
             }
-        }  
+        }
         return isValidNodePanel;
     }
 
@@ -593,10 +595,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     }
 
     private void enableOptionsBasedOnMode(OptionsUiMode mode) {
-        if (mode != OptionsUiMode.DOWNLOADING_CONFIGURATION) {            
+        if (mode != OptionsUiMode.DOWNLOADING_CONFIGURATION) {
             jRadioButtonAutomated.setEnabled(cbJoinAutoIngestCluster.isSelected());
             jRadioButtonReview.setEnabled(cbJoinAutoIngestCluster.isSelected());
-            
+
             jLabelSelectInputFolder.setEnabled(mode == OptionsUiMode.AIM);
             inputPathTextField.setEnabled(mode == OptionsUiMode.AIM);
             browseInputFolderButton.setEnabled(mode == OptionsUiMode.AIM);
@@ -629,7 +631,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         if (!cbJoinAutoIngestCluster.isSelected()) {
             return OptionsUiMode.STANDALONE;
         }
-        
+
         if (jRadioButtonAutomated.isSelected()) {
             return OptionsUiMode.AIM;
         } else if (jRadioButtonReview.isSelected()) {
@@ -649,6 +651,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         modeRadioButtons = new javax.swing.ButtonGroup();
+        nodeScrollPane = new javax.swing.JScrollPane();
         nodePanel = new javax.swing.JPanel();
         jPanelNodeType = new javax.swing.JPanel();
         jLabelSelectMode = new javax.swing.JLabel();
@@ -684,6 +687,10 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         bnLogging = new javax.swing.JButton();
         cbJoinAutoIngestCluster = new javax.swing.JCheckBox();
         tbOops = new javax.swing.JTextField();
+
+        nodeScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+
+        nodePanel.setMinimumSize(new java.awt.Dimension(100, 100));
 
         jPanelNodeType.setBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createEtchedBorder(), org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.jPanelNodeType.border.title"))); // NOI18N
         jPanelNodeType.setMinimumSize(new java.awt.Dimension(50, 50));
@@ -1046,15 +1053,20 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 .addComponent(jPanelSharedConfig, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        nodeScrollPane.setViewportView(nodePanel);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(nodePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(nodeScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -1269,9 +1281,9 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void bnAdvancedSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnAdvancedSettingsActionPerformed
         AdvancedAutoIngestSettingsPanel advancedAutoIngestSettingsPanel = new AdvancedAutoIngestSettingsPanel(getModeFromRadioButtons());
         if (JOptionPane.showConfirmDialog(null, advancedAutoIngestSettingsPanel,
-            NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.AdvancedAutoIngestSettingsPanel.Title"),
-            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
-        advancedAutoIngestSettingsPanel.store();
+                NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.AdvancedAutoIngestSettingsPanel.Title"),
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE) == JOptionPane.OK_OPTION) {
+            advancedAutoIngestSettingsPanel.store();
         }
     }//GEN-LAST:event_bnAdvancedSettingsActionPerformed
 
@@ -1439,6 +1451,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private javax.swing.JCheckBox masterNodeCheckBox;
     private javax.swing.ButtonGroup modeRadioButtons;
     private javax.swing.JPanel nodePanel;
+    private javax.swing.JScrollPane nodeScrollPane;
     private javax.swing.JTextField outputPathTextField;
     private javax.swing.JProgressBar pbTaskInProgress;
     private javax.swing.JLabel restartRequiredNodeLabel;

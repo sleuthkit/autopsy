@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Auto_Ingest",
         iconBase = "org/sleuthkit/autopsy/experimental/images/autoIngest32.png",
-        position = 3,
+        position = 4,
         keywords = "#OptionsCategory_Keywords_Auto_Ingest_Settings",
         keywordsCategory = "Auto Ingest")
 public final class AutoIngestSettingsPanelController extends OptionsPanelController {
@@ -98,6 +98,7 @@ public final class AutoIngestSettingsPanelController extends OptionsPanelControl
     private AutoIngestSettingsPanel getPanel() {
         if (panel == null) {
             panel = new AutoIngestSettingsPanel(this);
+            panel.setSize(750, 600);  //makes the panel large enough to hide the scroll bar
         }
         return panel;
     }

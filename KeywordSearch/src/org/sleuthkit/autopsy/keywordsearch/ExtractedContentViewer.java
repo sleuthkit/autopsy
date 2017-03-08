@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,12 +24,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
-import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
@@ -40,7 +38,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
 import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -96,84 +93,50 @@ public class ExtractedContentViewer implements DataContentViewer {
         Lookup nodeLookup = node.getLookup();
         Content content = nodeLookup.lookup(Content.class);
 
-
         /*
-         * Assemble a collection of all of the indexed text "sources" associated
-         * with the node.
+         * Assemble a collection of all of the indexed text "sources" for the
+         * node.
          */
         List<IndexedText> sources = new ArrayList<>();
         IndexedText highlightedHitText = null;
         IndexedText rawContentText = null;
-        IndexedText rawArtifactText = null;
 
-        /*
-         * First add the text marked up with HTML to highlight keyword hits that
-         * will be present in the selected node's lookup if the node is for a
-         * keyword hit artifact or account.
-         */
-        sources.addAll(nodeLookup.lookupAll(IndexedText.class));
-
-        if (!sources.isEmpty()) {
-            //if the look up had any sources use them and don't make a new one.
-            highlightedHitText = sources.get(0);
-        } else if (null != content && solrHasContent(content.getId())) {//if the lookup didn't have any sources, and solr has indexed the content...
-            /*
-             * get all the credit card artifacts and make a AccountsText object
-             * that will highlight them.
-             */
-            String solrDocumentID = String.valueOf(content.getId()); //grab the object id as the solrDocumentID
-            Set<String> accountNumbers = new HashSet<>();
-            try {
-                //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
-                Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
-                artifacts = (artifacts == null || artifacts.isEmpty())
-                        ? content.getArtifacts(TSK_ACCOUNT)
-                        : artifacts;
-
-                /*
-                 * For each artifact add the account number to the list of
-                 * accountNumbers to highlight, and use the solrDocumentId
-                 * attribute(in place of the content's object Id) if it exists
-                 *
-                 * NOTE: this assumes all the artifacts will be from the same
-                 * solrDocumentId
-                 */
-                for (BlackboardArtifact artifact : artifacts) {
-                    try {
-                        BlackboardAttribute solrIDAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID));
-                        if (solrIDAttr != null) {
-                            String valueString = solrIDAttr.getValueString();
-                            if (StringUtils.isNotBlank(valueString)) {
-                                solrDocumentID = valueString;
-                            }
-                        }
-
-                        BlackboardAttribute keyWordAttr = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
-                        if (keyWordAttr != null) {
-                            String valueString = keyWordAttr.getValueString();
-                            if (StringUtils.isNotBlank(valueString)) {
-                                accountNumbers.add(valueString);
-                            }
-                        }
-
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "Failed to retrieve Blackboard Attributes", ex); //NON-NLS
-                    }
-                }
-                if (accountNumbers.isEmpty() == false) {
-                    highlightedHitText = new AccountsText(solrDocumentID, accountNumbers);
-                    sources.add(highlightedHitText);
-                }
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Failed to retrieve Blackboard Artifacts", ex); //NON-NLS
-            }
-        }
-
-        /*
-         * Next, add the "raw" (not highlighted) text, if any, for any content
-         * associated with the node.
-         */
         if (null != content && solrHasContent(content.getId())) {
+            QueryResults hits = nodeLookup.lookup(QueryResults.class);
+            BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
+            if (hits != null) {
+                /*
+                 * if there is a QueryReslt object, in the lookup use that. This
+                 * happens when a user selects a row in an ad-hoc search result
+                 */
+                highlightedHitText = new HighlightedText(content.getId(), hits);
+            } else if (artifact != null
+                    && artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
+                try {
+                    // if the artifact is an account artifact, get an account text .
+                    highlightedHitText = getAccountsText(content, nodeLookup);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Failed to create AccountsText for " + content, ex); //NON-NLS
+
+                }
+            } else if (artifact != null
+                    && artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()) {
+                try {
+                    //if there is kwh artifact use that to construct the HighlightedText
+                    highlightedHitText = new HighlightedText(artifact);
+                } catch (TskCoreException ex) {
+                   logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
+                }
+            }
+
+            if (highlightedHitText != null) {
+                sources.add(highlightedHitText);
+            }
+
+            /*
+             * Next, add the "raw" (not highlighted) text, if any, for any
+             * content associated with the node.
+             */
             rawContentText = new RawText(content, content.getId());
             sources.add(rawContentText);
         }
@@ -182,29 +145,15 @@ public class ExtractedContentViewer implements DataContentViewer {
          * Finally, add the "raw" (not highlighted) text, if any, for any
          * artifact associated with the node.
          */
-        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
-        if (null != artifact) {
-            /*
-             * For keyword hit artifacts, add the text of the artifact that hit,
-             * not the hit artifact; otherwise add the text for the artifact.
-             */
-            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID() || artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
-                try {
-                    BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
-                    if (attribute != null) {
-                        long artifactId = attribute.getValueLong();
-                        BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
-                        rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
-                        sources.add(rawArtifactText);
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "Error getting associated artifact attributes", ex); //NON-NLS
-                }
-            } else {
-                rawArtifactText = new RawText(artifact, artifact.getArtifactID());
-                sources.add(rawArtifactText);
-            }
+        IndexedText rawArtifactText = null;
+        try {
+            rawArtifactText = getRawArtifactText(nodeLookup);
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Error creating RawText for " + content, ex); //NON-NLS
 
+        }
+        if (rawArtifactText != null) {
+            sources.add(rawArtifactText);
         }
 
         // Now set the default source to be displayed.
@@ -223,8 +172,47 @@ public class ExtractedContentViewer implements DataContentViewer {
                 source.nextPage();
             }
         }
-        updatePageControls();
+        panel.updateControls(currentSource);
         setPanel(sources);
+    }
+
+    static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
+        IndexedText rawArtifactText = null;
+        BlackboardArtifact artifact = nodeLookup.lookup(BlackboardArtifact.class);
+        if (null != artifact) {
+            /*
+             * For keyword hit artifacts, add the text of the artifact that hit,
+             * not the hit artifact; otherwise add the text for the artifact.
+             */
+            if (artifact.getArtifactTypeID() == TSK_KEYWORD_HIT.getTypeID()
+                    || artifact.getArtifactTypeID() == TSK_ACCOUNT.getTypeID()) {
+
+                BlackboardAttribute attribute = artifact.getAttribute(TSK_ASSOCIATED_ARTIFACT_TYPE);
+                if (attribute != null) {
+                    long artifactId = attribute.getValueLong();
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactId);
+                    rawArtifactText = new RawText(associatedArtifact, associatedArtifact.getArtifactID());
+
+                }
+
+            } else {
+                rawArtifactText = new RawText(artifact, artifact.getArtifactID());
+            }
+        }
+        return rawArtifactText;
+    }
+
+    static private IndexedText getAccountsText(Content content, Lookup nodeLookup) throws TskCoreException {
+        /*
+         * get all the credit card artifacts
+         */
+        //if the node had artifacts in the lookup use them, other wise look up all credit card artifacts for the content.
+        Collection<? extends BlackboardArtifact> artifacts = nodeLookup.lookupAll(BlackboardArtifact.class);
+        artifacts = (artifacts == null || artifacts.isEmpty())
+                ? content.getArtifacts(TSK_ACCOUNT)
+                : artifacts;
+
+        return new AccountsText(content.getId(), artifacts);
     }
 
     private void scrollToCurrentHit() {
@@ -234,7 +222,6 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         panel.scrollToAnchor(source.getAnchorPrefix() + Integer.toString(source.currentItem()));
-
     }
 
     @Override
@@ -279,24 +266,15 @@ public class ExtractedContentViewer implements DataContentViewer {
             return false;
         }
 
-        /**
-         * Is there any marked up indexed text in the look up of this node? This
-         * will be the case if the node is for a keyword hit artifact produced
-         * by either an ad hoc keyword search result (keyword search toolbar
-         * widgets) or a keyword search by the keyword search ingest module.
-         */
-        Collection<? extends IndexedText> sources = node.getLookup().lookupAll(IndexedText.class);
-        if (sources.isEmpty() == false) {
-            return true;
-        }
-
         /*
          * Is there a credit card artifact in the lookup
          */
         Collection<? extends BlackboardArtifact> artifacts = node.getLookup().lookupAll(BlackboardArtifact.class);
         if (artifacts != null) {
             for (BlackboardArtifact art : artifacts) {
-                if (art.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+                final int artifactTypeID = art.getArtifactTypeID();
+                if (artifactTypeID == TSK_ACCOUNT.getTypeID()
+                        || artifactTypeID == TSK_KEYWORD_HIT.getTypeID()) {
                     return true;
                 }
             }
@@ -420,7 +398,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
             final boolean hasNextItem = source.hasNextItem();
             final boolean hasNextPage = source.hasNextPage();
-            int indexVal = 0;
+            int indexVal;
             if (hasNextItem || hasNextPage) {
                 if (!hasNextItem) {
                     //flip the page
@@ -455,7 +433,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             IndexedText source = panel.getSelectedSource();
             final boolean hasPreviousItem = source.hasPreviousItem();
             final boolean hasPreviousPage = source.hasPreviousPage();
-            int indexVal = 0;
+            int indexVal;
             if (hasPreviousItem || hasPreviousPage) {
                 if (!hasPreviousItem) {
                     //flip the page
@@ -487,7 +465,6 @@ public class ExtractedContentViewer implements DataContentViewer {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-
             currentSource = panel.getSelectedSource();
 
             if (currentSource == null) {
@@ -495,18 +472,9 @@ public class ExtractedContentViewer implements DataContentViewer {
                 return;
             }
 
-            updatePageControls();
-            updateSearchControls();
-
+            panel.updateControls(currentSource);
+            panel.updateSearchControls(currentSource);
         }
-    }
-
-    private void updateSearchControls() {
-        panel.updateSearchControls(currentSource);
-    }
-
-    private void updatePageControls() {
-        panel.updateControls(currentSource);
     }
 
     private void nextPage() {
@@ -538,7 +506,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.enablePrevPageControl(true);
             }
 
-            updateSearchControls();
+            panel.updateSearchControls(currentSource);
         }
     }
 
@@ -571,12 +539,12 @@ public class ExtractedContentViewer implements DataContentViewer {
                 panel.enableNextPageControl(true);
             }
 
-            updateSearchControls();
+            panel.updateSearchControls(currentSource);
 
         }
     }
 
-    class NextPageActionListener implements ActionListener {
+    private class NextPageActionListener implements ActionListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
