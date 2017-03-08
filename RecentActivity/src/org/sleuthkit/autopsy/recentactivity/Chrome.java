@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2014 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
- * 
+ *
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,6 +112,7 @@ class Chrome extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < historyFiles.size()) {
             String temps = RAImageIngestModule.getRATempPath(currentCase, "chrome") + File.separator + historyFiles.get(j).getName().toString() + j + ".db"; //NON-NLS
@@ -155,13 +156,18 @@ class Chrome extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
     }
 
     /**
@@ -185,6 +191,7 @@ class Chrome extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
 
         while (j < bookmarkFiles.size()) {
@@ -286,9 +293,10 @@ class Chrome extends Extract {
                             NbBundle.getMessage(this.getClass(),
                                     "Chrome.parentModuleName"), domain));
                     bbart.addAttributes(bbattributes);
-                    
+
                     // index the artifact for keyword search
                     this.indexArtifact(bbart);
+                    bbartifacts.add(bbart);
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error while trying to insert Chrome bookmark artifact{0}", ex); //NON-NLS
                     this.addErrorMessage(
@@ -299,7 +307,9 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
     }
 
     /**
@@ -324,6 +334,7 @@ class Chrome extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < cookiesFiles.size()) {
             AbstractFile cookiesFile = cookiesFiles.get(j++);
@@ -370,13 +381,19 @@ class Chrome extends Extract {
                 domain = domain.replaceFirst("^\\.+(?!$)", "");
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), domain));
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
 
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
     }
 
     /**
@@ -400,6 +417,7 @@ class Chrome extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < downloadFiles.size()) {
             AbstractFile downloadFile = downloadFiles.get(j++);
@@ -456,14 +474,19 @@ class Chrome extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PROG_NAME,
                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                         NbBundle.getMessage(this.getClass(), "Chrome.moduleName")));
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
+
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
 
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
     }
 
     /**
@@ -487,6 +510,7 @@ class Chrome extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         while (j < signonFiles.size()) {
             AbstractFile signonFile = signonFiles.get(j++);
@@ -539,8 +563,13 @@ class Chrome extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
                         result.get("signon_realm").toString())); //NON-NLS
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFile, bbattributes);
 
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, signonFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
+
+                // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
                 Collection<BlackboardAttribute> osAcctAttributes = new ArrayList<>();
                 osAcctAttributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_USER_NAME,
                         NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
@@ -551,7 +580,9 @@ class Chrome extends Extract {
             dbFile.delete();
         }
 
-        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+        IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(
+                NbBundle.getMessage(this.getClass(), "Chrome.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
     }
 
     private boolean isChromePreVersion30(String temps) {
