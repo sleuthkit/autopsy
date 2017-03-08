@@ -20,9 +20,9 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
 /**
  * Create a wizard panel which contains a panel allowing the selection of the DataSourceProcessor
  */
-class SelectDataSourceProcessorPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
+class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
  @NbBundle.Messages("SelectDataSourceProcessorPanel.name.text=Select Type of Data")
-    private SelectDataSourceProcessorVisual component;
+    private AddImageWizardSelectDspVisual component;
     private static final String LAST_DSP_PROPERTIES_FILE = "LastDSPUsed";
     private static final String LAST_DSP_USED_KEY = "Last_DSP_Used";
 
@@ -38,7 +38,7 @@ class SelectDataSourceProcessorPanel extends ShortcutWizardDescriptorPanel imple
                 System.out.println("NO SAVED DSP WJS-TODO LOG THIS");
             }
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            component = new SelectDataSourceProcessorVisual(lastDspUsed);
+            component = new AddImageWizardSelectDspVisual(lastDspUsed);
             component.setName(Bundle.SelectDataSourceProcessorPanel_name_text());
         }
         component.addPropertyChangeListener(this);

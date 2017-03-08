@@ -40,11 +40,11 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * choose the data source type and then select the data source
  *
  */
-final class AddImageWizardChooseDataSourceVisual extends JPanel {
+final class AddImageWizardDataSourceSettingsVisual extends JPanel {
 
-    private static final Logger logger = Logger.getLogger(AddImageWizardChooseDataSourceVisual.class.getName());
+    private static final Logger logger = Logger.getLogger(AddImageWizardDataSourceSettingsVisual.class.getName());
 
-    private final AddImageWizardChooseDataSourcePanel wizPanel;
+    private final AddImageWizardDataSourceSettingsPanel wizPanel;
 
     private JPanel currentPanel;
 
@@ -57,7 +57,7 @@ final class AddImageWizardChooseDataSourceVisual extends JPanel {
      *
      * @param wizPanel corresponding WizardPanel to handle logic of wizard step
      */
-    AddImageWizardChooseDataSourceVisual(AddImageWizardChooseDataSourcePanel wizPanel) {
+    AddImageWizardDataSourceSettingsVisual(AddImageWizardDataSourceSettingsPanel wizPanel) {
         initComponents();
         this.wizPanel = wizPanel;
         typePanel.setLayout(new BorderLayout());

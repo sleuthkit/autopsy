@@ -69,12 +69,12 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
     private final AddImageAction addImageAction;
 
     private final AddImageWizardAddingProgressPanel progressPanel;
-    private final AddImageWizardChooseDataSourcePanel dataSourcePanel;
+    private final AddImageWizardDataSourceSettingsPanel dataSourcePanel;
 
     private DataSourceProcessor dsProcessor;
     private boolean cancelled;
 
-    AddImageWizardIngestConfigPanel(AddImageWizardChooseDataSourcePanel dsPanel, AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
+    AddImageWizardIngestConfigPanel(AddImageWizardDataSourceSettingsPanel dsPanel, AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
         this.addImageAction = action;
         this.progressPanel = proPanel;
         this.dataSourcePanel = dsPanel;

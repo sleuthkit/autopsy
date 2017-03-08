@@ -41,15 +41,15 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
-final class SelectDataSourceProcessorVisual extends JPanel {
+final class AddImageWizardSelectDspVisual extends JPanel {
 
-    private static final Logger logger = Logger.getLogger(SelectDataSourceProcessorVisual.class.getName());
+    private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());
     private String selectedDsp;
 
     /**
      * Creates new form SelectDataSourceProcessorPanel
      */
-    SelectDataSourceProcessorVisual(String lastDspUsed) {
+    AddImageWizardSelectDspVisual(String lastDspUsed) {
         initComponents();
         selectedDsp = lastDspUsed;
         createDataSourceProcessorButtons();
