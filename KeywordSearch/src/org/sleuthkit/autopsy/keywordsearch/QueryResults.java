@@ -138,7 +138,11 @@ class QueryResults {
                 if (StringUtils.isBlank(snippet)) {
                     final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                     try {
-                        //this doesn't work for regex queries...
+                        /*
+                         * this doesn't work for regex queries... But that is
+                         * okay because regex queries always have snippets made
+                         * from the content_str field we pull back from Solr
+                         */
                         snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
                     } catch (NoOpenCoreException e) {
                         logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
