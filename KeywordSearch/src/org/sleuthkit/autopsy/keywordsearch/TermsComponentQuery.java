@@ -280,7 +280,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         /*
          * Do a term query for each term that matched the regex.
          */
-        QueryResults results = new QueryResults(this, keywordList);
+        QueryResults results = new QueryResults(this);
         for (Term term : terms) {
             /*
              * If searching for credit card account numbers, do a Luhn check on

@@ -60,25 +60,17 @@ class QueryResults {
      */
     private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
 
-    /**
-     * The list of keywords
-     */
-    // TODO: This is redundant. The keyword list is in the query. 
-    private final KeywordList keywordList;
+   
 
-    QueryResults(KeywordSearchQuery query, KeywordList keywordList) {
+    QueryResults(KeywordSearchQuery query) {
         this.keywordSearchQuery = query;
-        this.keywordList = keywordList;
     }
 
     void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
 
-    // TODO: This is redundant. The keyword list is in the query.  
-    KeywordList getKeywordList() {
-        return keywordList;
-    }
+  
 
     KeywordSearchQuery getQuery() {
         return keywordSearchQuery;
@@ -129,7 +121,7 @@ class QueryResults {
                 if (hitDisplayStr.length() > 50) {
                     hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
                 }
-                subProgress.progress(keywordList.getName() + ": " + hitDisplayStr, unitProgress);
+                subProgress.progress(keywordSearchQuery.getKeywordList().getName() + ": " + hitDisplayStr, unitProgress);
             }
 
             for (KeywordHit hit : getOneHitPerObject(keyword)) {
@@ -138,7 +130,11 @@ class QueryResults {
                 if (StringUtils.isBlank(snippet)) {
                     final String snippetQuery = KeywordSearchUtil.escapeLuceneQuery(termString);
                     try {
-                        //this doesn't work for regex queries...
+                        /*
+                         * this doesn't work for regex queries... But that is
+                         * okay because regex queries always have snippets made
+                         * from the content_str field we pull back from Solr
+                         */
                         snippet = LuceneQuery.querySnippet(snippetQuery, hit.getSolrObjectId(), hit.getChunkId(), !keywordSearchQuery.isLiteral(), true);
                     } catch (NoOpenCoreException e) {
                         logger.log(Level.WARNING, "Error querying snippet: " + snippetQuery, e); //NON-NLS
@@ -149,16 +145,14 @@ class QueryResults {
                         continue;
                     }
                 }
-                if (snippet != null) {
-                    KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordList.getName());
-                    if (writeResult != null) {
-                        newArtifacts.add(writeResult.getArtifact());
-                        if (notifyInbox) {
-                            writeSingleFileInboxMessage(writeResult, hit.getContent());
-                        }
-                    } else {
-                        logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
+                KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
+                if (writeResult != null) {
+                    newArtifacts.add(writeResult.getArtifact());
+                    if (notifyInbox) {
+                        writeSingleFileInboxMessage(writeResult, hit.getContent());
                     }
+                } else {
+                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
                 }
             }
             ++unitProgress;
