@@ -21,7 +21,8 @@ package org.sleuthkit.autopsy.datasourceprocessors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -43,6 +44,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * The ImageWriter class is used to complete VHD copies created from local disks
  * after the ingest process completes. The AddImageTask for this data source must have included 
  * a non-empty imageWriterPath parameter to enable Image Writer.
+ * 
+ * Most of the cancellation/cleanup is handled through ImageWriterService
  */
 public class ImageWriter implements PropertyChangeListener{
     
@@ -56,14 +59,16 @@ public class ImageWriter implements PropertyChangeListener{
     private ScheduledFuture<?> progressUpdateTask = null;
     private boolean isCancelled = false;
     private boolean isStarted = false;
-    private boolean isFinished = false;
     private final Object currentTasksLock = new Object(); // Get this lock before accessing imageHandle, finishTask, progressHandle, progressUpdateTask,
                                                           // isCancelled, isStarted, or isFinished
     
     private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
     private final boolean doUI;
     
-    private static final AtomicInteger numFinishJobsInProgress = new AtomicInteger(0);
+    private static final ImageWriterService service = new ImageWriterService(); 
+    
+    private static final Set<ImageWriter> currentImageWriters = new HashSet<>();  // Contains all Image Writer objects that could be processing
+    private static final Object currentImageWritersLock = new Object(); // Get this lock before accessing currentImageWriters
     
     /**
      * Create the Image Writer object.
@@ -94,7 +99,7 @@ public class ImageWriter implements PropertyChangeListener{
     /**
      * Handle the events:
      * DATA_SOURCE_ANALYSIS_COMPLETED - start the finish image process and clean up after it is complete
-     * CURRENT_CASE (case closing) - cancel the finish image process (if necessary)
+     * CURRENT_CASE (case closing) - do some cleanup
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -120,14 +125,14 @@ public class ImageWriter implements PropertyChangeListener{
         }
         else if(evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())){
             // Technically this could be a case open event (and not the expected case close event) but
-            // that would probably mean something bad is going on, and we'd still want to cancel
-            // Image Writer.
+            // that would probably mean something bad is going on, and we'd still want to
+            // do the cleanup
             close();
         }
     }
     
     private void startFinishImage(String dataSourceName){
-        
+      
         synchronized(currentTasksLock){
             if(isCancelled){
                 return;
@@ -141,6 +146,18 @@ public class ImageWriter implements PropertyChangeListener{
             } else {
                 isStarted = true;
             }
+        }
+        
+        // Add this to the list of image writers that could be in progress
+        // (this could get cancelled before the task is created)
+        synchronized(currentImageWritersLock){
+            currentImageWriters.add(this);
+        }
+        
+        synchronized(currentTasksLock){
+            if(isCancelled){
+                return;
+            }
             
             Image image;
             try{
@@ -150,6 +167,7 @@ public class ImageWriter implements PropertyChangeListener{
                 logger.log(Level.SEVERE, "Error loading image", ex);
                 
                 // Stay subscribed to the events for now. Case close will clean everything up.
+                imageHandle = null;
                 return;
             }
 
@@ -167,7 +185,6 @@ public class ImageWriter implements PropertyChangeListener{
             // The added complexity here with the Future is because we absolutely need to make sure
             // the call to finishImageWriter returns before allowing the TSK data structures to be freed
             // during case close.
-            numFinishJobsInProgress.incrementAndGet();
             finishTask = Executors.newSingleThreadExecutor().submit(() -> {
                 try{
                     SleuthkitJNI.finishImageWriter(imageHandle);
@@ -179,13 +196,12 @@ public class ImageWriter implements PropertyChangeListener{
 
         // Wait for finishImageWriter to complete
         try{
-            // The call to get() will happen twice if the user closes the case, which is ok
+            // The call to get() can happen multiple times if the user closes the case, which is ok
             finishTask.get();
         } catch (InterruptedException | ExecutionException ex){
             logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
         }
-        numFinishJobsInProgress.decrementAndGet();
-
+        
         synchronized(currentTasksLock){
             unsubscribeFromEvents();
             if(doUI){
@@ -193,40 +209,59 @@ public class ImageWriter implements PropertyChangeListener{
                 progressUpdateTask.cancel(true);
                 progressHandle.finish();
                 periodicTasksExecutor.shutdown();
-            }
-            isFinished = true;            
+            }          
+        }
+        
+        synchronized(currentImageWritersLock){
+            currentImageWriters.remove(this);
         }
 
         logger.log(Level.INFO, String.format("Finished writing VHD image for %s", dataSourceName)); //NON-NLS
     }
     
     /**
-     * Tell the finishImage process to stop and wait for it to do so.
+     * Check if any finish image tasks are in progress.
+     * @return true if there are finish image tasks in progress, false otherwise
      */
-    private void close(){
-        synchronized(currentTasksLock){
-            isCancelled = true;
-            
-            unsubscribeFromEvents();
-            
-            // The case either got closed during ingest (before the startFinishImage got called)
-            // or an error occurred. If imageHandle is not null, we know that the first block of
-            // startFinishImage() completed so all the tasks have also been initialized.
-            if(imageHandle == null){
-                return;
-            }
-            
-            if(!isFinished){
-                SleuthkitJNI.cancelFinishImage(imageHandle);
-                logger.log(Level.SEVERE, "Case closed before VHD image could be finished"); //NON-NLS
-            
-                // Wait for the finish task to end
-                try{
-                    finishTask.get();
-                } catch (InterruptedException | ExecutionException ex){
-                    logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
+    public static boolean jobsAreInProgress(){
+        synchronized(currentImageWritersLock){
+            for(ImageWriter writer:currentImageWriters){
+                if((writer.finishTask != null) && (! writer.finishTask.isDone())){
+                    return true;
                 }
-            
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Cancels all Image Writer jobs in progress.
+     * Does not wait for them to finish. It does stop the progress update task,
+     * so after this point all that needs to be tested is that the 
+     * finishTask Futures are done.
+     */
+    public static void cancelAllJobs(){
+        synchronized(currentImageWritersLock){
+            for(ImageWriter writer:currentImageWriters){
+                writer.cancelJob();
+            }
+        }
+    }
+    
+    /**
+     * Cancels a single job. 
+     * Does not wait for the job to complete. 
+     */
+    private void cancelJob(){
+        synchronized(currentTasksLock){
+            // All of the following is redundant but safe to call on a complete job
+            isCancelled = true;
+            unsubscribeFromEvents();
+
+            if(imageHandle != null){
+                SleuthkitJNI.cancelFinishImage(imageHandle);
+                    
                 // Stop the progress bar update task.
                 // The thread from startFinishImage will also stop it
                 // once the task completes, but we have to make absolutely sure
@@ -235,17 +270,48 @@ public class ImageWriter implements PropertyChangeListener{
                 // bar now, too.
                 progressUpdateTask.cancel(true);
                 progressHandle.finish();
-            }
+            }            
         }
     }
     
     /**
-     * Get the number of images currently being finished.
-     * @return number of images in progress
+     * Blocks while all finishImage tasks complete.
+     * Also makes sure the progressUpdateTask is canceled.
+     * Once this is done it will be safe to release the Sleuthkit resources.
      */
-    public static int numberOfJobsInProgress(){
-        return numFinishJobsInProgress.get();
+    public static void waitForAllJobsToFinish(){
+        synchronized(currentImageWritersLock){
+            for(ImageWriter writer:currentImageWriters){
+                // Wait for the finish task to end
+                if(writer.finishTask != null){
+                    try{
+                        writer.finishTask.get();
+                    } catch (InterruptedException | ExecutionException ex){
+                        Logger.getLogger(ImageWriter.class.getName()).log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
+                    }
+                    writer.progressUpdateTask.cancel(true);
+                }
+            }
+        }        
     }
+    
+    /**
+     * Clean up any Image Writer objects that haven't started yet.
+     * This is just protecting against the unlikely event that, due to timing
+     * issues, an Image Writer object will be trying to start up while the case is
+     * closing.
+     */
+    private void close(){
+        
+        synchronized(currentTasksLock){
+            if(imageHandle == null){
+                isCancelled = true;  // Prevent the task from starting in case something strange is happening
+                                     // with the event order
+                this.unsubscribeFromEvents();
+            }
+        }
+    }
+    
     
     /**
      * Task to query the Sleuthkit processing to get the percentage done. 
