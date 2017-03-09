@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
@@ -387,7 +386,7 @@ class HighlightedText implements IndexedText {
             highlightedContent = insertAnchors(highlightedContent);
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
-        } catch (Exception ex) {
+        } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Error getting highlighted text for " + objectId, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
@@ -453,8 +452,8 @@ class HighlightedText implements IndexedText {
             //we also need to escape the keyword so that it matches the escpared text
             final String escapedKeyword = StringEscapeUtils.escapeHtml(keyword);
             int textOffset = 0;
-            int hitOffset;
-            while ((hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset)) != -1) {
+            int hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset);
+            while (hitOffset != -1) {
                 // Append the portion of text up to (but not including) the hit.
                 highlightedText.append(text.substring(textOffset, hitOffset));
                 // Add in the highlighting around the keyword.
@@ -464,6 +463,8 @@ class HighlightedText implements IndexedText {
 
                 // Advance the text offset past the keyword.
                 textOffset = hitOffset + escapedKeyword.length();
+                
+                hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset);
             }
             // Append the remainder of text field
             highlightedText.append(text.substring(textOffset, text.length()));
@@ -487,22 +488,21 @@ class HighlightedText implements IndexedText {
      * @return
      */
     private String insertAnchors(String searchableContent) {
-        int searchOffset = 0;
-        int index = -1;
-
         StringBuilder buf = new StringBuilder(searchableContent);
-
         final String searchToken = HIGHLIGHT_PRE;
         final int indexSearchTokLen = searchToken.length();
         final String insertPre = "<a name='" + ANCHOR_PREFIX; //NON-NLS
         final String insertPost = "'></a>"; //NON-NLS
         int count = 0;
-        while ((index = buf.indexOf(searchToken, searchOffset)) >= 0) {
+        int searchOffset = 0;
+        int index = buf.indexOf(searchToken, searchOffset);        
+        while (index >= 0) {
             String insertString = insertPre + Integer.toString(count + 1) + insertPost;
             int insertStringLen = insertString.length();
             buf.insert(index, insertString);
             searchOffset = index + indexSearchTokLen + insertStringLen; //next offset past this anchor
             ++count;
+            index = buf.indexOf(searchToken, searchOffset);
         }
 
         //store total hits for this page, now that we know it
