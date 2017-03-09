@@ -60,25 +60,17 @@ class QueryResults {
      */
     private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
 
-    /**
-     * The list of keywords
-     */
-    // TODO: This is redundant. The keyword list is in the query. 
-    private final KeywordList keywordList;
+   
 
-    QueryResults(KeywordSearchQuery query, KeywordList keywordList) {
+    QueryResults(KeywordSearchQuery query) {
         this.keywordSearchQuery = query;
-        this.keywordList = keywordList;
     }
 
     void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
 
-    // TODO: This is redundant. The keyword list is in the query.  
-    KeywordList getKeywordList() {
-        return keywordList;
-    }
+  
 
     KeywordSearchQuery getQuery() {
         return keywordSearchQuery;
@@ -129,7 +121,7 @@ class QueryResults {
                 if (hitDisplayStr.length() > 50) {
                     hitDisplayStr = hitDisplayStr.substring(0, 49) + "...";
                 }
-                subProgress.progress(keywordList.getName() + ": " + hitDisplayStr, unitProgress);
+                subProgress.progress(keywordSearchQuery.getKeywordList().getName() + ": " + hitDisplayStr, unitProgress);
             }
 
             for (KeywordHit hit : getOneHitPerObject(keyword)) {
@@ -153,7 +145,7 @@ class QueryResults {
                         continue;
                     }
                 }
-                KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordList.getName());
+                KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
                 if (writeResult != null) {
                     newArtifacts.add(writeResult.getArtifact());
                     if (notifyInbox) {
