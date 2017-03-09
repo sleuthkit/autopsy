@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.datasourceprocessors.ImageWriter;
+import org.sleuthkit.autopsy.datasourceprocessors.ImageWriterService;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Image;
@@ -209,8 +209,7 @@ class AddImageTask implements Runnable {
                             errorMessages.add(verificationError);
                         }
                         if(! imageWriterPath.isEmpty()){
-                            ImageWriter writer = new ImageWriter(imageId);
-                            writer.subscribeToEvents();
+                            ImageWriterService.createImageWriter(imageId);                            
                         }
                         newDataSources.add(newImage);
                     } else {

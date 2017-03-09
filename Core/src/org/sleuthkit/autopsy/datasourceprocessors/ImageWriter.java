@@ -47,7 +47,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * 
  * Most of the cancellation/cleanup is handled through ImageWriterService
  */
-public class ImageWriter implements PropertyChangeListener{
+class ImageWriter implements PropertyChangeListener{
     
     private final Logger logger = Logger.getLogger(ImageWriter.class.getName());
     
@@ -67,15 +67,14 @@ public class ImageWriter implements PropertyChangeListener{
     
     private static final ImageWriterService service = new ImageWriterService(); 
     
-    private static final Set<ImageWriter> currentImageWriters = new HashSet<>();  // Contains all Image Writer objects that could be processing
-    private static final Object currentImageWritersLock = new Object(); // Get this lock before accessing currentImageWriters
+
     
     /**
      * Create the Image Writer object.
      * After creation, startListeners() should be called.
      * @param dataSourceId 
      */
-    public ImageWriter(Long dataSourceId){
+    ImageWriter(Long dataSourceId){
         this.dataSourceId = dataSourceId;        
         doUI = RuntimeProperties.runningWithGUI();        
     }
@@ -83,23 +82,20 @@ public class ImageWriter implements PropertyChangeListener{
     /**
      * Add this ImageWriter object as a listener to the necessary events
      */
-    public void subscribeToEvents(){
+    void subscribeToEvents(){
         IngestManager.getInstance().addIngestJobEventListener(this);
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), this);
     }
     
     /**
      * Deregister this object from the events. This is ok to call multiple times.
      */
-    public void unsubscribeFromEvents(){
-        IngestManager.getInstance().removeIngestJobEventListener(this);
-        Case.removeEventSubscriber(Case.Events.CURRENT_CASE.toString(), this);        
+    void unsubscribeFromEvents(){
+        IngestManager.getInstance().removeIngestJobEventListener(this);       
     }
     
     /**
      * Handle the events:
      * DATA_SOURCE_ANALYSIS_COMPLETED - start the finish image process and clean up after it is complete
-     * CURRENT_CASE (case closing) - do some cleanup
      */
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -123,12 +119,6 @@ public class ImageWriter implements PropertyChangeListener{
                 logger.log(Level.SEVERE, "DataSourceAnalysisCompletedEvent did not contain a dataSource object"); //NON-NLS
             }
         }
-        else if(evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())){
-            // Technically this could be a case open event (and not the expected case close event) but
-            // that would probably mean something bad is going on, and we'd still want to
-            // do the cleanup
-            close();
-        }
     }
     
     private void startFinishImage(String dataSourceName){
@@ -145,18 +135,6 @@ public class ImageWriter implements PropertyChangeListener{
                 return;
             } else {
                 isStarted = true;
-            }
-        }
-        
-        // Add this to the list of image writers that could be in progress
-        // (this could get cancelled before the task is created)
-        synchronized(currentImageWritersLock){
-            currentImageWriters.add(this);
-        }
-        
-        synchronized(currentTasksLock){
-            if(isCancelled){
-                return;
             }
             
             Image image;
@@ -211,49 +189,37 @@ public class ImageWriter implements PropertyChangeListener{
                 periodicTasksExecutor.shutdown();
             }          
         }
-        
-        synchronized(currentImageWritersLock){
-            currentImageWriters.remove(this);
-        }
 
         logger.log(Level.INFO, String.format("Finished writing VHD image for %s", dataSourceName)); //NON-NLS
     }
     
     /**
-     * Check if any finish image tasks are in progress.
-     * @return true if there are finish image tasks in progress, false otherwise
+     * If a task hasn't been started yet, set the cancel flag so it can no longer
+     * start.
      */
-    public static boolean jobsAreInProgress(){
-        synchronized(currentImageWritersLock){
-            for(ImageWriter writer:currentImageWriters){
-                if((writer.finishTask != null) && (! writer.finishTask.isDone())){
-                    return true;
-                }
+    void cancelIfNotStarted(){
+        synchronized(currentTasksLock){
+            if(finishTask == null){
+                isCancelled = true;
             }
+            unsubscribeFromEvents();
         }
-        
-        return false;
     }
     
     /**
-     * Cancels all Image Writer jobs in progress.
-     * Does not wait for them to finish. It does stop the progress update task,
-     * so after this point all that needs to be tested is that the 
-     * finishTask Futures are done.
+     * Check if the finishTask process is running.
+     * @return true if the finish task is still going on, false if it is finished or
+     *         never started
      */
-    public static void cancelAllJobs(){
-        synchronized(currentImageWritersLock){
-            for(ImageWriter writer:currentImageWriters){
-                writer.cancelJob();
-            }
-        }
+    boolean jobIsInProgress(){
+        return((finishTask != null) && (! finishTask.isDone()));
     }
     
     /**
      * Cancels a single job. 
-     * Does not wait for the job to complete. 
+     * Does not wait for the job to complete. Safe to call with Image Writer in any state.
      */
-    private void cancelJob(){
+    void cancelJob(){
         synchronized(currentTasksLock){
             // All of the following is redundant but safe to call on a complete job
             isCancelled = true;
@@ -264,8 +230,8 @@ public class ImageWriter implements PropertyChangeListener{
                     
                 // Stop the progress bar update task.
                 // The thread from startFinishImage will also stop it
-                // once the task completes, but we have to make absolutely sure
-                // this gets done before the Sleuthkit data structures are freed.
+                // once the task completes, but we don't have a guarantee on 
+                // when that happens.
                 // Since we've stopped the update task, we'll stop the associated progress
                 // bar now, too.
                 progressUpdateTask.cancel(true);
@@ -277,41 +243,18 @@ public class ImageWriter implements PropertyChangeListener{
     /**
      * Blocks while all finishImage tasks complete.
      * Also makes sure the progressUpdateTask is canceled.
-     * Once this is done it will be safe to release the Sleuthkit resources.
      */
-    public static void waitForAllJobsToFinish(){
-        synchronized(currentImageWritersLock){
-            for(ImageWriter writer:currentImageWriters){
-                // Wait for the finish task to end
-                if(writer.finishTask != null){
-                    try{
-                        writer.finishTask.get();
-                    } catch (InterruptedException | ExecutionException ex){
-                        Logger.getLogger(ImageWriter.class.getName()).log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
-                    }
-                    writer.progressUpdateTask.cancel(true);
-                }
+    void waitForJobToFinish(){
+        // Wait for the finish task to end
+        if(finishTask != null){
+            try{
+                finishTask.get();
+            } catch (InterruptedException | ExecutionException ex){
+                Logger.getLogger(ImageWriter.class.getName()).log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
             }
-        }        
+            progressUpdateTask.cancel(true);
+        }       
     }
-    
-    /**
-     * Clean up any Image Writer objects that haven't started yet.
-     * This is just protecting against the unlikely event that, due to timing
-     * issues, an Image Writer object will be trying to start up while the case is
-     * closing.
-     */
-    private void close(){
-        
-        synchronized(currentTasksLock){
-            if(imageHandle == null){
-                isCancelled = true;  // Prevent the task from starting in case something strange is happening
-                                     // with the event order
-                this.unsubscribeFromEvents();
-            }
-        }
-    }
-    
     
     /**
      * Task to query the Sleuthkit processing to get the percentage done. 
