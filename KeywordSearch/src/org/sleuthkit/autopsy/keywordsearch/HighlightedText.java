@@ -243,7 +243,6 @@ class HighlightedText implements IndexedText {
     @Override
     public boolean hasNextPage() {
         return getIndexOfCurrentPage() < pages.size() - 1;
-
     }
 
     @Override
