@@ -40,8 +40,8 @@ final class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel i
 
     @NbBundle.Messages("SelectDataSourceProcessorPanel.name.text=Select Type of Data")
     private AddImageWizardSelectDspVisual component;
-    private static final String LAST_DSP_PROPERTIES_FILE = "LastDSPUsed";
-    private static final String LAST_DSP_USED_KEY = "Last_DSP_Used";
+    private static final String LAST_DSP_PROPERTIES_FILE = "LastDspUsed"; //NON-NLS
+    private static final String LAST_DSP_USED_KEY = "Last_Dsp_Used"; //NON-NLS
     private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());
  
     @Override
@@ -53,7 +53,7 @@ final class AddImageWizardSelectDspPanel extends ShortcutWizardDescriptorPanel i
                 lastDspUsed = ModuleSettings.getConfigSetting(LAST_DSP_PROPERTIES_FILE, LAST_DSP_USED_KEY);
             } else {
                 lastDspUsed = ImageDSProcessor.getType();
-                logger.log(Level.WARNING, "There was no properties file containing the last DataSourceProcessor used, Disk Image or VM will be selected by default"); //NON-NLS
+                logger.log(Level.WARNING, "There was no properties file containing the last DataSourceProcessor used, Disk Image or VM will be selected as default selection"); //NON-NLS
             }
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             component = new AddImageWizardSelectDspVisual(lastDspUsed);
