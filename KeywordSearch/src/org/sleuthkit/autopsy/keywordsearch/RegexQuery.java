@@ -154,7 +154,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
-        QueryResults results = new QueryResults(this, keywordList);
+        QueryResults results = new QueryResults(this);
 
         final Server solrServer = KeywordSearch.getServer();
         SolrQuery solrQuery = new SolrQuery();

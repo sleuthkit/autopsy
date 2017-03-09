@@ -120,7 +120,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException {
-        QueryResults results = new QueryResults(this, keywordList);
+        QueryResults results = new QueryResults(this);
         //in case of single term literal query there is only 1 term
         boolean showSnippets = KeywordSearchSettings.getShowSnippets();
         results.addResult(new Keyword(keywordString, true), performLuceneQuery(showSnippets));
