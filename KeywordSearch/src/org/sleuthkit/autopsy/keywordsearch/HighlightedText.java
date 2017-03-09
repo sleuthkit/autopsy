@@ -253,7 +253,7 @@ class HighlightedText implements IndexedText {
     @Override
     public int nextPage() {
         if (hasNextPage()) {
-            currentPage = Iterators.get(pages.iterator(),getIndexOfCurrentPage() + 1);
+            currentPage = Iterators.get(pages.iterator(), getIndexOfCurrentPage() + 1);
             return currentPage;
         } else {
             throw new IllegalStateException("No next page.");
@@ -263,7 +263,7 @@ class HighlightedText implements IndexedText {
     @Override
     public int previousPage() {
         if (hasPreviousPage()) {
-            currentPage = Iterators.get(pages.iterator(),getIndexOfCurrentPage()-1);
+            currentPage = Iterators.get(pages.iterator(), getIndexOfCurrentPage() - 1);
             return currentPage;
         } else {
             throw new IllegalStateException("No previous page.");
@@ -462,15 +462,15 @@ class HighlightedText implements IndexedText {
 
                 // Advance the text offset past the keyword.
                 textOffset = hitOffset + escapedKeyword.length();
-                
+
                 hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset);
             }
             // Append the remainder of text field
             highlightedText.append(text.substring(textOffset, text.length()));
-            
+
             if (highlightedText.length() == 0) {
                 return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
-            } 
+            }
             //reset for next pass
             text = highlightedText.toString();
             highlightedText = new StringBuilder("");
@@ -494,7 +494,7 @@ class HighlightedText implements IndexedText {
         final String insertPost = "'></a>"; //NON-NLS
         int count = 0;
         int searchOffset = 0;
-        int index = buf.indexOf(searchToken, searchOffset);        
+        int index = buf.indexOf(searchToken, searchOffset);
         while (index >= 0) {
             String insertString = insertPre + Integer.toString(count + 1) + insertPost;
             int insertStringLen = insertString.length();
