@@ -590,7 +590,7 @@ public final class SearchRunner {
 
             // Create a new (empty) QueryResults object to hold the most recently
             // found hits.
-            QueryResults newResults = new QueryResults(queryResult.getQuery(), queryResult.getKeywordList());
+            QueryResults newResults = new QueryResults(queryResult.getQuery());
 
             // For each keyword represented in the results.
             for (Keyword keyword : queryResult.getKeywords()) {
