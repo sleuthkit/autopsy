@@ -51,7 +51,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
      * Uses lazy Content.Keys
      */
     AbstractContentChildren() {
-        super(true); // use lazy behavior
+        super(false); //don't use lazy behavior
     }
 
     @Override
