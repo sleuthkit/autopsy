@@ -39,23 +39,17 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
  * The "Add Image" wizard panel1 handling the logic of selecting image file(s)
  * to add to Case, and pick the time zone.
  */
-class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
+class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPanel implements PropertyChangeListener {
 
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
-    private final AddImageWizardAddingProgressPanel progressPanel;
-    private AddImageWizardChooseDataSourceVisual component;
+    private AddImageWizardDataSourceSettingsVisual component;
     private boolean isNextEnable = false;
-    private static final String PROP_LASTDATASOURCE_PATH = "LBL_LastDataSource_PATH"; //NON-NLS
-    private static final String PROP_LASTDATASOURCE_TYPE = "LBL_LastDataSource_TYPE"; //NON-NLS
     // paths to any set hash lookup databases (can be null)
-    private String NSRLPath, knownBadPath;
 
-    AddImageWizardChooseDataSourcePanel(AddImageWizardAddingProgressPanel proPanel) {
-
-        this.progressPanel = proPanel;
+    AddImageWizardDataSourceSettingsPanel() {
 
     }
 
@@ -68,10 +62,10 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
      * @return component the UI component of this wizard panel
      */
     @Override
-    public AddImageWizardChooseDataSourceVisual getComponent() {
+    public AddImageWizardDataSourceSettingsVisual getComponent() {
         if (component == null) {
             WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            component = new AddImageWizardChooseDataSourceVisual(this);
+            component = new AddImageWizardDataSourceSettingsVisual(this);
         }
         component.addPropertyChangeListener(this);
         return component;
@@ -87,8 +81,7 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
     public HelpCtx getHelp() {
         // Show no Help button for this panel:
         return HelpCtx.DEFAULT_HELP;
-        // If you have context help:
-        // return new HelpCtx(SampleWizardPanel1.class);
+
     }
 
     /**
@@ -164,10 +157,6 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
         }
     }
 
-    // You can use a settings object to keep track of state. Normally the
-    // settings object will be the WizardDescriptor, so you can use
-    // WizardDescriptor.getProperty & putProperty to store information entered
-    // by the user.
     /**
      * Provides the wizard panel with the current data--either the default data
      * or already-modified settings, if the user used the previous and/or next
@@ -178,26 +167,16 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
-
-        //reset settings if supports it
-        //getComponent().reset();
         // Prepopulate the image directory from the properties file
         try {
-
-            // Load hash database settings, enable or disable the checkbox
-            this.NSRLPath = null;
-            this.knownBadPath = null;
-            //JCheckBox lookupFilesCheckbox = component.getLookupFilesCheckbox();
-            //lookupFilesCheckbox.setSelected(false);
-            //lookupFilesCheckbox.setEnabled(this.NSRLPath != null || this.knownBadPath != null);
-
+      
             // If there is a process object in the settings, revert it and remove it from the settings
             AddImageAction.CleanupTask cleanupTask = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
             if (cleanupTask != null) {
                 try {
                     cleanupTask.cleanup();
                 } catch (Exception ex) {
-                    Logger logger = Logger.getLogger(AddImageWizardChooseDataSourcePanel.class.getName());
+                    Logger logger = Logger.getLogger(AddImageWizardDataSourceSettingsPanel.class.getName());
                     logger.log(Level.WARNING, "Error cleaning up image task", ex); //NON-NLS
                 } finally {
                     cleanupTask.disable();
@@ -205,7 +184,7 @@ class AddImageWizardChooseDataSourcePanel extends ShortcutWizardDescriptorPanel 
             }
         } catch (Exception e) {
         }
-
+        component.setDspSelection((String)settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
     }
 
     /**
