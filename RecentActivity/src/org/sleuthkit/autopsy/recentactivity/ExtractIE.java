@@ -1,19 +1,19 @@
- /*
+/*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,6 +41,7 @@ import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.util.Collection;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import org.openide.modules.InstalledFileLocator;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
@@ -109,6 +110,7 @@ class ExtractIE extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (AbstractFile fav : favoritesFiles) {
             if (fav.getSize() == 0) {
                 continue;
@@ -143,10 +145,15 @@ class ExtractIE extends Extract {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                     NbBundle.getMessage(this.getClass(),
                             "ExtractIE.parentModuleName.noSpace"), domain));
-            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
+
+            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, fav, bbattributes);
+            if (bbart != null) {
+                bbartifacts.add(bbart);
+            }
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
     }
 
     private String getURLFromIEBookmarkFile(AbstractFile fav) {
@@ -205,6 +212,7 @@ class ExtractIE extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (context.dataSourceIngestIsCancelled()) {
                 break;
@@ -253,10 +261,14 @@ class ExtractIE extends Extract {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                     NbBundle.getMessage(this.getClass(),
                             "ExtractIE.parentModuleName.noSpace"), domain));
-            this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+            BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+            if (bbart != null) {
+                bbartifacts.add(bbart);
+            }
         }
         services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+                NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
     }
 
     /**
@@ -302,6 +314,7 @@ class ExtractIE extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String temps;
         String indexFileName;
         for (AbstractFile indexFile : indexFiles) {
@@ -336,7 +349,10 @@ class ExtractIE extends Extract {
             //At this point pasco2 proccessed the index files.
             //Now fetch the results, parse them and the delete the files.
             if (bPascProcSuccess) {
-                parsePascoOutput(indexFile, filename);
+                // Don't add TSK_OS_ACCOUNT artifacts to the ModuleDataEvent
+                bbartifacts.addAll(parsePascoOutput(indexFile, filename).stream()
+                        .filter(bbart -> bbart.getArtifactTypeID() == ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID())
+                        .collect(Collectors.toList()));
                 foundHistory = true;
 
                 //Delete index<n>.dat file since it was succcessfully by Pasco
@@ -350,7 +366,8 @@ class ExtractIE extends Extract {
 
         if (foundHistory) {
             services.fireModuleDataEvent(new ModuleDataEvent(
-                    NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+                    NbBundle.getMessage(this.getClass(), "ExtractIE.parentModuleName"),
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
         }
     }
 
@@ -403,9 +420,12 @@ class ExtractIE extends Extract {
      * @param origFile            Original index.dat file that was analyzed to
      *                            get this output
      * @param pascoOutputFileName name of pasco output file
+     *
+     * @return A collection of created artifacts
      */
-    private void parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
+    private Collection<BlackboardArtifact> parsePascoOutput(AbstractFile origFile, String pascoOutputFileName) {
 
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         String fnAbs = moduleTempResultsDir + File.separator + pascoOutputFileName;
 
         File file = new File(fnAbs);
@@ -414,13 +434,13 @@ class ExtractIE extends Extract {
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.notFound", this.getName(),
                             file.getName()));
             logger.log(Level.WARNING, "Pasco Output not found: {0}", file.getPath()); //NON-NLS
-            return;
+            return bbartifacts;
         }
 
         // Make sure the file the is not empty or the Scanner will
         // throw a "No Line found" Exception
         if (file.length() == 0) {
-            return;
+            return bbartifacts;
         }
 
         Scanner fileScanner;
@@ -431,7 +451,7 @@ class ExtractIE extends Extract {
                     NbBundle.getMessage(this.getClass(), "ExtractIE.parsePascoOutput.errMsg.errParsing", this.getName(),
                             file.getName()));
             logger.log(Level.WARNING, "Unable to find the Pasco file at " + file.getPath(), ex); //NON-NLS
-            return;
+            return bbartifacts;
         }
 
         // Keep a list of reported user accounts to avoid repeats
@@ -521,6 +541,7 @@ class ExtractIE extends Extract {
 
                 // index the artifact for keyword search
                 this.indexArtifact(bbart);
+                bbartifacts.add(bbart);
 
                 if ((!user.isEmpty()) && (!reportedUserAccounts.contains(user))) {
                     BlackboardArtifact osAttr = origFile.newArtifact(ARTIFACT_TYPE.TSK_OS_ACCOUNT);
@@ -529,6 +550,7 @@ class ExtractIE extends Extract {
 
                     // index the artifact for keyword search
                     this.indexArtifact(osAttr);
+                    bbartifacts.add(osAttr);
 
                     reportedUserAccounts.add(user);
                 }
@@ -537,5 +559,6 @@ class ExtractIE extends Extract {
             }
         }
         fileScanner.close();
+        return bbartifacts;
     }
 }
