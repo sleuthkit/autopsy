@@ -55,6 +55,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
     private String drivePath;
     private String timeZone;
     private String imageWriterPath = "";
+    private ImageWriterSettings imageWriterSettings = null;
     private boolean ignoreFatOrphanFiles;
     private boolean setDataSourceOptionsCalled;
 

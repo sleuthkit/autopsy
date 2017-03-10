@@ -46,7 +46,7 @@ public class ImageWriterService implements AutopsyService {
      * Create an image writer object for the given data source ID.
      * @param imageId ID for the image
      */
-    public static void createImageWriter(Long imageId){
+    public static void createImageWriter(Long imageId, ImageWriterSettings settings){
         
         // ImageWriter objects are created during the addImageTask. They can not arrive while
         // we're closing case resources so we don't need to worry about one showing up while
@@ -65,6 +65,7 @@ public class ImageWriterService implements AutopsyService {
     
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
+        System.out.println("\n#### Starting ImageWriter closeCaseResources");
         context.getProgressIndicator().progress(NbBundle.getMessage(this.getClass(), "ImageWriterService.waitingForVHDs"));
         
         synchronized(imageWritersLock){

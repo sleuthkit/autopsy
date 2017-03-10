@@ -201,6 +201,7 @@ class ImageWriter implements PropertyChangeListener{
     void cancelIfNotStarted(){
         synchronized(currentTasksLock){
             if(! isStarted){
+                System.out.println("\n### Cancelling unstarted image writer for " + dataSourceId);
                 isCancelled = true;
             }
         }
@@ -213,6 +214,8 @@ class ImageWriter implements PropertyChangeListener{
      */
     boolean jobIsInProgress(){
         synchronized(currentTasksLock){
+            System.out.println("\n### Checking job in progress for " + dataSourceId + "  result: " + 
+                    ((isStarted) && (! finishTask.isDone())));
             return((isStarted) && (! finishTask.isDone()));
         }
     }
@@ -227,6 +230,7 @@ class ImageWriter implements PropertyChangeListener{
             isCancelled = true;
 
             if(isStarted){
+                System.out.println("\n### Cancelling in progress image writer for " + dataSourceId);
                 SleuthkitJNI.cancelFinishImage(imageHandle);
                     
                 // Stop the progress bar update task.
@@ -251,6 +255,7 @@ class ImageWriter implements PropertyChangeListener{
         synchronized(currentTasksLock){
             // Wait for the finish task to end
             if(isStarted){
+                System.out.println("\n### Waiting for " + dataSourceId + " to finish");
                 try{
                     finishTask.get();
                 } catch (InterruptedException | ExecutionException ex){
@@ -259,6 +264,7 @@ class ImageWriter implements PropertyChangeListener{
                 if(doUI){
                     progressUpdateTask.cancel(true);
                 }
+                System.out.println("\n### Done");
             }   
         }
     }
