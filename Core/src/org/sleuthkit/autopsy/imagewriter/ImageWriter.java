@@ -16,13 +16,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourceprocessors;
+package org.sleuthkit.autopsy.imagewriter;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -64,10 +62,6 @@ class ImageWriter implements PropertyChangeListener{
     
     private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
     private final boolean doUI;
-    
-    private static final ImageWriterService service = new ImageWriterService(); 
-    
-
     
     /**
      * Create the Image Writer object.
@@ -133,8 +127,6 @@ class ImageWriter implements PropertyChangeListener{
             // the same image if more ingest modules are run later
             if(isStarted){
                 return;
-            } else {
-                isStarted = true;
             }
             
             Image image;
@@ -143,8 +135,6 @@ class ImageWriter implements PropertyChangeListener{
                 imageHandle = image.getImageHandle();
             } catch (TskCoreException ex){
                 logger.log(Level.SEVERE, "Error loading image", ex);
-                
-                // Stay subscribed to the events for now. Case close will clean everything up.
                 imageHandle = null;
                 return;
             }
@@ -170,6 +160,9 @@ class ImageWriter implements PropertyChangeListener{
                     logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
                 }
             });
+            
+            // Setting this means that finishTask and all the UI updaters are initialized (if running UI)
+            isStarted = true;
         }
 
         // Wait for finishImageWriter to complete
@@ -181,7 +174,6 @@ class ImageWriter implements PropertyChangeListener{
         }
         
         synchronized(currentTasksLock){
-            unsubscribeFromEvents();
             if(doUI){
                 // Some of these may be called twice if the user closes the case
                 progressUpdateTask.cancel(true);
@@ -196,13 +188,14 @@ class ImageWriter implements PropertyChangeListener{
     /**
      * If a task hasn't been started yet, set the cancel flag so it can no longer
      * start.
+     * This is intended to be used in case close so a job doesn't suddenly start
+     * up during cleanup.
      */
     void cancelIfNotStarted(){
         synchronized(currentTasksLock){
-            if(finishTask == null){
+            if(! isStarted){
                 isCancelled = true;
             }
-            unsubscribeFromEvents();
         }
     }
     
@@ -212,7 +205,9 @@ class ImageWriter implements PropertyChangeListener{
      *         never started
      */
     boolean jobIsInProgress(){
-        return((finishTask != null) && (! finishTask.isDone()));
+        synchronized(currentTasksLock){
+            return((isStarted) && (! finishTask.isDone()));
+        }
     }
     
     /**
@@ -223,9 +218,8 @@ class ImageWriter implements PropertyChangeListener{
         synchronized(currentTasksLock){
             // All of the following is redundant but safe to call on a complete job
             isCancelled = true;
-            unsubscribeFromEvents();
 
-            if(imageHandle != null){
+            if(isStarted){
                 SleuthkitJNI.cancelFinishImage(imageHandle);
                     
                 // Stop the progress bar update task.
@@ -234,8 +228,10 @@ class ImageWriter implements PropertyChangeListener{
                 // when that happens.
                 // Since we've stopped the update task, we'll stop the associated progress
                 // bar now, too.
-                progressUpdateTask.cancel(true);
-                progressHandle.finish();
+                if(doUI){
+                    progressUpdateTask.cancel(true);
+                    progressHandle.finish();
+                }
             }            
         }
     }
@@ -245,15 +241,19 @@ class ImageWriter implements PropertyChangeListener{
      * Also makes sure the progressUpdateTask is canceled.
      */
     void waitForJobToFinish(){
-        // Wait for the finish task to end
-        if(finishTask != null){
-            try{
-                finishTask.get();
-            } catch (InterruptedException | ExecutionException ex){
-                Logger.getLogger(ImageWriter.class.getName()).log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
-            }
-            progressUpdateTask.cancel(true);
-        }       
+        synchronized(currentTasksLock){
+            // Wait for the finish task to end
+            if(isStarted){
+                try{
+                    finishTask.get();
+                } catch (InterruptedException | ExecutionException ex){
+                    Logger.getLogger(ImageWriter.class.getName()).log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
+                }
+                if(doUI){
+                    progressUpdateTask.cancel(true);
+                }
+            }   
+        }
     }
     
     /**

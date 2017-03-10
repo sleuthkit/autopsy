@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.datasourceprocessors;
+package org.sleuthkit.autopsy.imagewriter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +29,13 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 
 @ServiceProviders(value = {@ServiceProvider(service = AutopsyService.class)})
+
+/**
+ * Creates and handles closing of ImageWriter objects.
+ * Currently, ImageWriter is only enabled for local disks, and local disks can
+ * not be processed in multi user mode. If ImageWriter is ever enabled for multi user
+ * cases this code will need to be revised.
+ */
 
 public class ImageWriterService implements AutopsyService {
 
@@ -58,8 +65,8 @@ public class ImageWriterService implements AutopsyService {
     
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
-        context.getProgressIndicator().progress("Waiting for VHD(s) to complete");
-
+        context.getProgressIndicator().progress(NbBundle.getMessage(this.getClass(), "ImageWriterService.waitingForVHDs"));
+        
         synchronized(imageWritersLock){
             // If any of our ImageWriter objects haven't started the finish task, set the cancel flag
             // to make sure they don't start now. The reason they haven't started is that
@@ -82,8 +89,8 @@ public class ImageWriterService implements AutopsyService {
             if(jobsAreInProgress){
                 // If jobs are in progress, ask the user if they want to wait for them to complete
                 NotifyDescriptor descriptor = new NotifyDescriptor.Confirmation(
-                    "Wait for Image Writer to finish?",
-                    "Title",
+                    NbBundle.getMessage(this.getClass(), "ImageWriterService.shouldWait"),
+                    NbBundle.getMessage(this.getClass(), "ImageWriterService.localDisk"),
                     NotifyDescriptor.YES_NO_OPTION,
                     NotifyDescriptor.WARNING_MESSAGE);
                 descriptor.setValue(NotifyDescriptor.NO_OPTION);
@@ -103,6 +110,14 @@ public class ImageWriterService implements AutopsyService {
                 }
                 
             }
+            
+            // Stop listening for events
+            for(ImageWriter writer: imageWriters){
+                writer.unsubscribeFromEvents();
+            }
+            
+            // Clear out the list of Image Writers
+            imageWriters.clear();
         }
     }
 }
