@@ -133,9 +133,16 @@ class ImageWriter implements PropertyChangeListener{
             try{
                 image = Case.getCurrentCase().getSleuthkitCase().getImageById(dataSourceId);
                 imageHandle = image.getImageHandle();
+            } catch (IllegalStateException ex){
+                // This exception means that getCurrentCase() failed because no case was open.
+                // This can happen when the user closes the case while ingest is ongoing - canceling
+                // ingest fires off the DataSourceAnalysisCompletedEvent while the case is in the 
+                // process of closing. 
+                logger.log(Level.WARNING, String.format("Case closed before ImageWriter could start the finishing process for %s",
+                        dataSourceName));
+                return;
             } catch (TskCoreException ex){
                 logger.log(Level.SEVERE, "Error loading image", ex);
-                imageHandle = null;
                 return;
             }
 
