@@ -52,8 +52,8 @@ class LuceneQuery implements KeywordSearchQuery {
     private static final Logger logger = Logger.getLogger(LuceneQuery.class.getName());
     private String keywordStringEscaped;
     private boolean isEscaped;
-    private Keyword originalKeyword = null;
-    private KeywordList keywordList = null;
+    private final Keyword originalKeyword ;
+    private final KeywordList keywordList ;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
     private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
@@ -70,7 +70,6 @@ class LuceneQuery implements KeywordSearchQuery {
     LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
         this.originalKeyword = keyword;
-
         this.keywordStringEscaped = this.originalKeyword.getSearchTerm();
     }
 
