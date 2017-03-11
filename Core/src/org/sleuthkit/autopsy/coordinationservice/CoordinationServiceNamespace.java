@@ -19,15 +19,18 @@
 package org.sleuthkit.autopsy.coordinationservice;
 
 /**
- * Interface for providers of application-level coordination service namespaces.
+ * An interface that allows the root node of the coordination service namespace
+ * for the application to be specified at runtime. An application built on the
+ * Autopsy platform should provide at most one implementation of this interface
+ * (additional implementations are ignored).
  */
-public interface AppCoordinationServiceNamespace {
+public interface CoordinationServiceNamespace {
 
     /**
-     * Gets the name of the root node of the namespace for the application.
+     * Gets the name of the root node of the coordination service namespace.
      *
-     * @return The name of the root node for the application namespace.
+     * @return The name of the root node.
      */
-    public String getAppNamespaceRoot();
+    public String getNamespaceRoot();
 
 }

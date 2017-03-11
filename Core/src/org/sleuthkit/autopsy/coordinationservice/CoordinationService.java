@@ -20,10 +20,12 @@ package org.sleuthkit.autopsy.coordinationservice;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -43,9 +45,8 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  * A coordination service for maintaining configuration information and
  * providing distributed synchronization using a shared hierarchical namespace
  * of nodes.
- *
- * TODO (JIRA 2205): Simple refactoring for general use.
  */
+@ThreadSafe
 public final class CoordinationService {
 
     private static final int SESSION_TIMEOUT_MILLISECONDS = 300000;
@@ -54,8 +55,10 @@ public final class CoordinationService {
     private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 15000;
     private static final int PORT_OFFSET = 1000; // When run in Solr, ZooKeeper defaults to Solr port + 1000
     private static final String DEFAULT_NAMESPACE_ROOT = "autopsy";
-    private static final Map<String, CoordinationService> rootNodesToServices = new HashMap<>();
-    private static CuratorFramework curator;
+    @GuardedBy("CoordinationService.class")
+    private static CoordinationService instance;
+    private final CuratorFramework curator;
+    @GuardedBy("categoryNodeToPath")    
     private final Map<String, String> categoryNodeToPath;
 
     /**
@@ -90,59 +93,31 @@ public final class CoordinationService {
     }
 
     /**
-     * Gets the name of the root node of the namespace for the application.
+     * Gets the coordination service for maintaining configuration information
+     * and providing distributed synchronization using a shared hierarchical
+     * namespace of nodes.
      *
-     * @return The name of the root node for the application namespace.
+     * @return The corrdination service.
+     *
+     * @throws CoordinationServiceException
      */
-    public static String getAppNamespaceRoot() {
-        Collection<? extends AppCoordinationServiceNamespace> providers = Lookup.getDefault().lookupAll(AppCoordinationServiceNamespace.class);
-        Iterator<? extends AppCoordinationServiceNamespace> it = providers.iterator();
-        if (it.hasNext()) {
-            return it.next().getAppNamespaceRoot();
-        } else {
-            return DEFAULT_NAMESPACE_ROOT;
-        }
-    }
-
-    /**
-     * Gets a coordination service for a specific namespace.
-     *
-     * @param rootNode The name of the root node that defines the namespace.
-     *
-     * @return The coordination service.
-     *
-     * @throws CoordinationServiceException If an instance of the coordination
-     *                                      service cannot be created.
-     */
-    public static synchronized CoordinationService getServiceForNamespace(String rootNode) throws CoordinationServiceException {
-        /*
-         * Connect to ZooKeeper via Curator.
-         */
-        if (null == curator) {
-            RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-            int zooKeeperServerPort = Integer.valueOf(UserPreferences.getIndexingServerPort()) + PORT_OFFSET;
-            String connectString = UserPreferences.getIndexingServerHost() + ":" + zooKeeperServerPort;
-            curator = CuratorFrameworkFactory.newClient(connectString, SESSION_TIMEOUT_MILLISECONDS, CONNECTION_TIMEOUT_MILLISECONDS, retryPolicy);
-            curator.start();
-        }
-
-        /*
-         * Get or create a coordination service for the namespace defined by the
-         * specified root node.
-         */
-        if (rootNodesToServices.containsKey(rootNode)) {
-            return rootNodesToServices.get(rootNode);
-        } else {
-            CoordinationService service;
+    public synchronized static CoordinationService getInstance() throws CoordinationServiceException {
+        if (null == instance) {
+            String rootNode;
+            Collection<? extends CoordinationServiceNamespace> providers = Lookup.getDefault().lookupAll(CoordinationServiceNamespace.class);
+            Iterator<? extends CoordinationServiceNamespace> it = providers.iterator();
+            if (it.hasNext()) {
+                rootNode = it.next().getNamespaceRoot();
+            } else {
+                rootNode = DEFAULT_NAMESPACE_ROOT;
+            }
             try {
-                service = new CoordinationService(rootNode);
+                instance = new CoordinationService(rootNode);
             } catch (IOException | InterruptedException | KeeperException | CoordinationServiceException ex) {
-                curator = null;
                 throw new CoordinationServiceException("Failed to create coordination service", ex);
             }
-            rootNodesToServices.put(rootNode, service);
-            return service;
         }
+        return instance;
     }
 
     /**
@@ -160,12 +135,23 @@ public final class CoordinationService {
             throw new CoordinationServiceException("Unable to access ZooKeeper");
         }
 
+        /*
+         * Connect to ZooKeeper via Curator.
+         */
+        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
+        int zooKeeperServerPort = Integer.valueOf(UserPreferences.getIndexingServerPort()) + PORT_OFFSET;
+        String connectString = UserPreferences.getIndexingServerHost() + ":" + zooKeeperServerPort;
+        curator = CuratorFrameworkFactory.newClient(connectString, SESSION_TIMEOUT_MILLISECONDS, CONNECTION_TIMEOUT_MILLISECONDS, retryPolicy);
+        curator.start();
+
+        /*
+         * Create the top-level root and category nodes.
+         */
         String rootNode = rootNodeName;
         if (!rootNode.startsWith("/")) {
             rootNode = "/" + rootNode;
         }
-
-        categoryNodeToPath = new HashMap<>();
+        categoryNodeToPath = new ConcurrentHashMap<>();
         for (CategoryNode node : CategoryNode.values()) {
             String nodePath = rootNode + "/" + node.getDisplayName();
             try {

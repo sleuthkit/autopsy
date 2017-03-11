@@ -211,7 +211,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     void startUp() throws AutoIngestManagerStartupException {
         SYS_LOGGER.log(Level.INFO, "Auto ingest starting");
         try {
-            coordinationService = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot());
+            coordinationService = CoordinationService.getInstance();
         } catch (CoordinationServiceException ex) {
             throw new AutoIngestManagerStartupException("Failed to get coordination service", ex);
         }

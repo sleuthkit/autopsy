@@ -436,7 +436,7 @@ final class AutoIngestJobLogger {
      *                                      log file.
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
-        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logLockName, LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
+        try (Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logLockName, LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
                 File logFile = getLogPath(caseDirectoryPath).toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {
