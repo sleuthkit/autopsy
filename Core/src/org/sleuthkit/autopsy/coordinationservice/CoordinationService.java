@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.coordinationservice;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.curator.RetryPolicy;
@@ -34,6 +36,7 @@ import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
@@ -92,7 +95,13 @@ public final class CoordinationService {
      * @return The name of the root node for the application namespace.
      */
     public static String getAppNamespaceRoot() {
-        return DEFAULT_NAMESPACE_ROOT;
+        Collection<? extends AppCoordinationServiceNamespace> providers = Lookup.getDefault().lookupAll(AppCoordinationServiceNamespace.class);
+        Iterator<? extends AppCoordinationServiceNamespace> it = providers.iterator();
+        if (it.hasNext()) {
+            return it.next().getAppNamespaceRoot();
+        } else {
+            return DEFAULT_NAMESPACE_ROOT;
+        }
     }
 
     /**
