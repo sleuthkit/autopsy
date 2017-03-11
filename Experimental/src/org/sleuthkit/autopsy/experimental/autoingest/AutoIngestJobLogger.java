@@ -50,6 +50,7 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 @Immutable
 final class AutoIngestJobLogger {
 
+    private static final String LOG_LOCK_NAME_FORMAT_STRING = "%s_auto_ingest_log";
     private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
     private static final int LOCK_TIME_OUT = 15;
     private static final TimeUnit LOCK_TIME_OUT_UNIT = TimeUnit.MINUTES;
@@ -59,6 +60,7 @@ final class AutoIngestJobLogger {
     private final String manifestFileName;
     private final String dataSourceFileName;
     private final Path caseDirectoryPath;
+    private final String logLockName;
     private final String hostName;
 
     /**
@@ -104,14 +106,17 @@ final class AutoIngestJobLogger {
      * Advanced users doing troubleshooting of an automated ingest cluster
      * should also consult the Autopsy and system logs as needed.
      *
-     * @param manifestPath      The manifest for the auto ingest job.
-     * @param caseDirectoryPath The case directory.
+     * @param manifestPath       The manifest for the auto ingest job.
+     * @param dataSourceFileName The file name of the data source for the auto
+     *                           ingest job.
+     * @param caseDirectoryPath  The absolute path to the case directory.
      */
     AutoIngestJobLogger(Path manifestPath, String dataSourceFileName, Path caseDirectoryPath) {
         this.manifestPath = manifestPath;
         manifestFileName = manifestPath.getFileName().toString();
         this.dataSourceFileName = dataSourceFileName;
         this.caseDirectoryPath = caseDirectoryPath;
+        this.logLockName = String.format(LOG_LOCK_NAME_FORMAT_STRING, caseDirectoryPath.getFileName());
         hostName = NetworkUtils.getLocalHostName();
     }
 
@@ -192,30 +197,34 @@ final class AutoIngestJobLogger {
     void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.WARNING, "Cancelled adding data source to case");
     }
-    
+
     /**
      * Logs selection of a data source processor
-     * @param dsp  Name of the data source processor
+     *
+     * @param dsp Name of the data source processor
+     *
      * @throws AutoIngestJobLoggerException if there is an error writing the log
      *                                      message.
      * @throws InterruptedException         if interrupted while blocked waiting
      *                                      to acquire an exclusive lock on the
      *                                      log file.
      */
-    void logDataSourceProcessorSelected(String dsp) throws AutoIngestJobLoggerException, InterruptedException{
+    void logDataSourceProcessorSelected(String dsp) throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.INFO, "Using data source processor: " + dsp);
     }
-    
+
     /**
      * Logs the failure of the selected data source processor.
-     * @param dsp  Name of the data source processor
+     *
+     * @param dsp Name of the data source processor
+     *
      * @throws AutoIngestJobLoggerException if there is an error writing the log
      *                                      message.
      * @throws InterruptedException         if interrupted while blocked waiting
      *                                      to acquire an exclusive lock on the
      *                                      log file.
      */
-    void logDataSourceProcessorError(String dsp) throws AutoIngestJobLoggerException, InterruptedException{
+    void logDataSourceProcessorError(String dsp) throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.ERROR, "Error processing with data source processor: " + dsp);
     }
 
@@ -428,7 +437,7 @@ final class AutoIngestJobLogger {
      *                                      log file.
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
-        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, getLogPath(caseDirectoryPath).toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
+        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logLockName, LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
                 File logFile = getLogPath(caseDirectoryPath).toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {
