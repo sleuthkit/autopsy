@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011 - 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -29,15 +28,13 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
 import javax.annotation.concurrent.Immutable;
-import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestManagerException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * A logger for the processing of an auto ingest job by an auto ingest node. An
