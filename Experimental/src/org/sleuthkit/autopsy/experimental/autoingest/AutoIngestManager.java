@@ -73,14 +73,11 @@ import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
-import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
@@ -100,6 +97,8 @@ import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Pro
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
+import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
@@ -212,7 +211,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     void startUp() throws AutoIngestManagerStartupException {
         SYS_LOGGER.log(Level.INFO, "Auto ingest starting");
         try {
-            coordinationService = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot());
+            coordinationService = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot());
         } catch (CoordinationServiceException ex) {
             throw new AutoIngestManagerStartupException("Failed to get coordination service", ex);
         }

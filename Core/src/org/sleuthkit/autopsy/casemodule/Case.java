@@ -74,7 +74,6 @@ import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
@@ -673,7 +672,7 @@ public class Case {
                  * cannot be deleted if another node has it open.
                  */
                 progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
-                try (CoordinationService.Lock dirLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory())) {
+                try (CoordinationService.Lock dirLock = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, metadata.getCaseDirectory())) {
                     assert (null != dirLock);
 
                     /*
@@ -945,7 +944,7 @@ public class Case {
     @Messages({"Case.creationException.couldNotAcquireNameLock=Failed to get lock on case name"})
     private static CoordinationService.Lock acquireExclusiveCaseNameLock(String caseName) throws CaseActionException {
         try {
-            Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, NAME_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
+            Lock lock = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, NAME_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             if (null == lock) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireNameLock());
             }
@@ -971,7 +970,7 @@ public class Case {
     private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseName) throws CaseActionException {
         try {
             String resourcesNodeName = caseName + "_resources";
-            Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, resourcesNodeName, RESOURCE_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
+            Lock lock = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, resourcesNodeName, RESOURCE_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             if (null == lock) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
             }
@@ -2337,7 +2336,7 @@ public class Case {
     @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory."})
     private void acquireSharedCaseDirLock(String caseDir) throws CaseActionException {
         try {
-            caseDirLock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseDir, SHARED_DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
+            caseDirLock = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot()).tryGetSharedLock(CoordinationService.CategoryNode.CASES, caseDir, SHARED_DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             if (null == caseDirLock) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
             }

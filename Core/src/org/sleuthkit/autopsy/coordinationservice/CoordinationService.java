@@ -50,6 +50,7 @@ public final class CoordinationService {
     private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 3000;
     private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 15000;
     private static final int PORT_OFFSET = 1000; // When run in Solr, ZooKeeper defaults to Solr port + 1000
+    private static final String DEFAULT_NAMESPACE_ROOT = "autopsy";
     private static final Map<String, CoordinationService> rootNodesToServices = new HashMap<>();
     private static CuratorFramework curator;
     private final Map<String, String> categoryNodeToPath;
@@ -83,6 +84,15 @@ public final class CoordinationService {
         }
         zooKeeper.close();
         return result;
+    }
+
+    /**
+     * Gets the name of the root node of the namespace for the application.
+     *
+     * @return The name of the root node for the application namespace.
+     */
+    public static String getAppNamespaceRoot() {
+        return DEFAULT_NAMESPACE_ROOT;
     }
 
     /**

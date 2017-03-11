@@ -33,7 +33,6 @@ import javax.annotation.concurrent.Immutable;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
@@ -437,7 +436,7 @@ final class AutoIngestJobLogger {
      *                                      log file.
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
-        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logLockName, LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
+        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationService.getAppNamespaceRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logLockName, LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
                 File logFile = getLogPath(caseDirectoryPath).toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {
