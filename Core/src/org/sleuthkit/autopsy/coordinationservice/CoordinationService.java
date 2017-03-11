@@ -45,14 +45,14 @@ import org.sleuthkit.autopsy.core.UserPreferences;
  */
 public final class CoordinationService {
 
-    private static CuratorFramework curator = null;
-    private static final Map<String, CoordinationService> rootNodesToServices = new HashMap<>();
     private static final int SESSION_TIMEOUT_MILLISECONDS = 300000;
     private static final int CONNECTION_TIMEOUT_MILLISECONDS = 300000;
     private static final int ZOOKEEPER_SESSION_TIMEOUT_MILLIS = 3000;
     private static final int ZOOKEEPER_CONNECTION_TIMEOUT_MILLIS = 15000;
     private static final int PORT_OFFSET = 1000; // When run in Solr, ZooKeeper defaults to Solr port + 1000
-    private final Map<String, String> categoryNodeToPath = new HashMap<>();
+    private static final Map<String, CoordinationService> rootNodesToServices = new HashMap<>();
+    private static CuratorFramework curator;
+    private final Map<String, String> categoryNodeToPath;
 
     /**
      * Determines if ZooKeeper is accessible with the current settings. Closes
@@ -146,6 +146,7 @@ public final class CoordinationService {
             rootNode = "/" + rootNode;
         }
 
+        categoryNodeToPath = new HashMap<>();
         for (CategoryNode node : CategoryNode.values()) {
             String nodePath = rootNode + "/" + node.getDisplayName();
             try {
@@ -422,8 +423,7 @@ public final class CoordinationService {
 
         CASES("cases"),
         MANIFESTS("manifests"),
-        CONFIG("config"),
-        RESOURCE("resource");
+        CONFIG("config");
 
         private final String displayName;
 
