@@ -49,7 +49,6 @@ import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 @Immutable
 final class AutoIngestJobLogger {
 
-    private static final String LOG_LOCK_NAME_FORMAT_STRING = "%s_auto_ingest_log";
     private static final String LOG_FILE_NAME = "auto_ingest_log.txt";
     private static final int LOCK_TIME_OUT = 15;
     private static final TimeUnit LOCK_TIME_OUT_UNIT = TimeUnit.MINUTES;
@@ -59,7 +58,6 @@ final class AutoIngestJobLogger {
     private final String manifestFileName;
     private final String dataSourceFileName;
     private final Path caseDirectoryPath;
-    private final String logLockName;
     private final String hostName;
 
     /**
@@ -114,8 +112,7 @@ final class AutoIngestJobLogger {
         this.manifestPath = manifestPath;
         manifestFileName = manifestPath.getFileName().toString();
         this.dataSourceFileName = dataSourceFileName;
-        this.caseDirectoryPath = caseDirectoryPath;
-        this.logLockName = String.format(LOG_LOCK_NAME_FORMAT_STRING, caseDirectoryPath.getFileName());
+        this.caseDirectoryPath = caseDirectoryPath; 
         hostName = NetworkUtils.getLocalHostName();
     }
 
@@ -436,9 +433,10 @@ final class AutoIngestJobLogger {
      *                                      log file.
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
-        try (Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logLockName, LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
+        Path logPath = getLogPath(caseDirectoryPath);
+        try (Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logPath.toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
-                File logFile = getLogPath(caseDirectoryPath).toFile();
+                File logFile = logPath.toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {
                     writer.println(String.format("%s %s: %s: %s: %-8s: %s", logDateFormat.format((Date.from(Instant.now()).getTime())), hostName, manifestFileName, dataSourceFileName, category.toString(), message));
                 } catch (IOException ex) {
