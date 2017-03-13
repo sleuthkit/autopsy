@@ -27,17 +27,23 @@ import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.params.CursorMarkParams;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.Version;
+import static org.sleuthkit.autopsy.keywordsearch.RegexQuery.LOGGER;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
 
 /**
@@ -54,7 +60,7 @@ class LuceneQuery implements KeywordSearchQuery {
     private KeywordList keywordList = null;
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private String field = null;
-    private static final int MAX_RESULTS = 20000;
+    private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
     static final int SNIPPET_LENGTH = 50;
     static final String HIGHLIGHT_FIELD = Server.Schema.TEXT.toString();
 
@@ -65,7 +71,7 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @param keyword
      */
-    public LuceneQuery(KeywordList keywordList, Keyword keyword) {
+    LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
         this.originalKeyword = keyword;
 
@@ -89,7 +95,7 @@ class LuceneQuery implements KeywordSearchQuery {
     public void setSubstringQuery() {
         // Note that this is not a full substring search. Normally substring
         // searches will be done with TermComponentQuery objects instead.
-        keywordStringEscaped = keywordStringEscaped + "*";
+        keywordStringEscaped += "*";
     }
 
     @Override
@@ -120,17 +126,17 @@ class LuceneQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException {
-        QueryResults results = new QueryResults(this, keywordList);
+        QueryResults results = new QueryResults(this);
         //in case of single term literal query there is only 1 term
-        boolean showSnippets = KeywordSearchSettings.getShowSnippets();
-        results.addResult(new Keyword(keywordString, true), performLuceneQuery(showSnippets));
+        results.addResult(new Keyword(keywordString, true),
+                performLuceneQuery(KeywordSearchSettings.getShowSnippets()));
 
         return results;
     }
 
     @Override
     public boolean validate() {
-        return keywordString != null && !keywordString.equals("");
+        return StringUtils.isNotBlank(keywordString);
     }
 
     @Override
@@ -180,7 +186,7 @@ class LuceneQuery implements KeywordSearchQuery {
             bba.addAttributes(attributes); //write out to bb
             writeResult.add(attributes);
             return writeResult;
-        } catch (TskException e) {
+        } catch (TskCoreException e) {
             logger.log(Level.WARNING, "Error adding bb attributes to artifact", e); //NON-NLS
         }
         return null;
@@ -191,46 +197,41 @@ class LuceneQuery implements KeywordSearchQuery {
      *
      * @param snippets True if results should have a snippet
      *
-     * @return list of ContentHit objects. One per file with hit (ignores
+     * @return list of KeywordHit objects. One per file with hit (ignores
      *         multiple hits of the word in the same doc)
      *
-     * @throws NoOpenCoreException
      */
     private List<KeywordHit> performLuceneQuery(boolean snippets) throws KeywordSearchModuleException, NoOpenCoreException {
         List<KeywordHit> matches = new ArrayList<>();
-        boolean allMatchesFetched = false;
         final Server solrServer = KeywordSearch.getServer();
+        double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
 
-        SolrQuery q = createAndConfigureSolrQuery(snippets);
-        QueryResponse response;
-        SolrDocumentList resultList;
-        Map<String, Map<String, List<String>>> highlightResponse;
-
-        response = solrServer.query(q, METHOD.POST);
-
-        resultList = response.getResults();
-        // objectId_chunk -> "text" -> List of previews
-        highlightResponse = response.getHighlighting();
+        SolrQuery solrQuery = createAndConfigureSolrQuery(snippets);
 
         final String strippedQueryString = StringUtils.strip(getQueryString(), "\"");
 
-        // cycle through results in sets of MAX_RESULTS
-        for (int start = 0; !allMatchesFetched; start = start + MAX_RESULTS) {
-            q.setStart(start);
+        String cursorMark = CursorMarkParams.CURSOR_MARK_START;
+        boolean allResultsProcessed = false;
 
-            allMatchesFetched = start + MAX_RESULTS >= resultList.getNumFound();
+        while (!allResultsProcessed) {
+            solrQuery.set(CursorMarkParams.CURSOR_MARK_PARAM, cursorMark);
+            QueryResponse response = solrServer.query(solrQuery, SolrRequest.METHOD.POST);
+            SolrDocumentList resultList = response.getResults();
+            // objectId_chunk -> "text" -> List of previews
+            Map<String, Map<String, List<String>>> highlightResponse = response.getHighlighting();
 
             for (SolrDocument resultDoc : resultList) {
                 try {
-                    /* for each result, check that the first occurence of that
+                    /*
+                     * for each result, check that the first occurence of that
                      * term is before the window. if all the ocurences start
                      * within the window, don't record them for this chunk, they
-                     * will get picked up in the next one. */
+                     * will get picked up in the next one.
+                     */
                     final String docId = resultDoc.getFieldValue(Server.Schema.ID.toString()).toString();
                     final Integer chunkSize = (Integer) resultDoc.getFieldValue(Server.Schema.CHUNK_SIZE.toString());
                     final Collection<Object> content = resultDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
 
-                    double indexSchemaVersion = NumberUtils.toDouble(KeywordSearch.getServer().getIndexInfo().getSchemaVersion());
                     if (indexSchemaVersion < 2.0) {
                         //old schema versions don't support chunk_size or the content_str fields, so just accept hits
                         matches.add(createKeywordtHit(highlightResponse, docId));
@@ -250,11 +251,17 @@ class LuceneQuery implements KeywordSearchQuery {
                     return matches;
                 }
             }
+            String nextCursorMark = response.getNextCursorMark();
+            if (cursorMark.equals(nextCursorMark)) {
+                allResultsProcessed = true;
+            }
+            cursorMark = nextCursorMark;
+
         }
         return matches;
     }
 
-    /**
+    /*
      * Create the query object for the stored keyword
      *
      * @param snippets True if query should request snippets
@@ -271,17 +278,17 @@ class LuceneQuery implements KeywordSearchQuery {
         // Run the query against an optional alternative field. 
         if (field != null) {
             //use the optional field
-            StringBuilder sb = new StringBuilder();
-            sb.append(field).append(":").append(theQueryStr);
-            theQueryStr = sb.toString();
+            theQueryStr = field + ":" + theQueryStr;
         }
         q.setQuery(theQueryStr);
-        q.setRows(MAX_RESULTS);
+        q.setRows(MAX_RESULTS_PER_CURSOR_MARK);
+        // Setting the sort order is necessary for cursor based paging to work.
+        q.setSort(SolrQuery.SortClause.asc(Server.Schema.ID.toString()));
 
         q.setFields(Server.Schema.ID.toString(),
                 Server.Schema.CHUNK_SIZE.toString(),
                 Server.Schema.CONTENT_STR.toString());
-        q.addSort(Server.Schema.ID.toString(), SolrQuery.ORDER.asc);
+
         for (KeywordQueryFilter filter : filters) {
             q.addFilterQuery(filter.toString());
         }

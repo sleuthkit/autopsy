@@ -855,6 +855,8 @@ class ReportHTML implements TableReportModule {
             if (iconPath == null) {
                 // use default Autopsy icon if custom icon is not set
                 iconPath = "favicon.ico";
+            } else {
+                iconPath = "agency_logo"; //ref to writeNav() for agency_logo
             }
             index.append("<head>\n<title>").append(reportTitle).append(" ").append(
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getDisplayName())).append(

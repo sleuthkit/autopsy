@@ -27,7 +27,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
@@ -46,12 +45,15 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         "ProfileSettingsPanel.deleteProfileButton.text=Delete Profile",
         "ProfileSettingsPanel.messages.filterLoadFailed=Failed to load file ingest filter",
         "# {0} - profile name",
-        "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text=Profile with name {0} already exists."
+        "ProfileSettingsPanel.doFileSetsDialog.duplicateProfile.text=Profile with name {0} already exists.",
+        "ProfileSettingsPanel.infoTextArea.text=An Ingest Profile runs a preconfigured set of ingest modules"
+        + " on some or all of the files in a data source. Create a profile if you frequently run the same set of modules on a subset of the files."
     })
 
     private final DefaultListModel<IngestProfile> profilesListModel;
     private Map<String, IngestProfile> profiles;
     private ProfilePanel panel;
+    private boolean canBeEnabled;  //if something can be enabled ingest is not running
 
     /**
      * Creates new form ProfileOptionsPanel
@@ -62,8 +64,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         this.profileList.setModel(profilesListModel);
         this.profileList.addListSelectionListener(new ProfileSettingsPanel.ProfileListSelectionListener());
         ingestWarningLabel.setVisible(false);
-        editProfileButton.setEnabled(false);
-        deleteProfileButton.setEnabled(false);
+        canBeEnabled = !IngestManager.getInstance().isIngestRunning();
+        refreshButtons();
     }
 
     /**
@@ -93,6 +95,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         selectedModulesLabel = new javax.swing.JLabel();
         ingestWarningLabel = new javax.swing.JLabel();
         jSeparator2 = new javax.swing.JSeparator();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        infoTextArea = new javax.swing.JTextArea();
 
         setBorder(javax.swing.BorderFactory.createEtchedBorder());
         setPreferredSize(new java.awt.Dimension(800, 488));
@@ -177,6 +181,18 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
 
+        jScrollPane2.setFont(jScrollPane2.getFont().deriveFont(jScrollPane2.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+
+        infoTextArea.setEditable(false);
+        infoTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        infoTextArea.setColumns(20);
+        infoTextArea.setFont(infoTextArea.getFont().deriveFont(infoTextArea.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        infoTextArea.setLineWrap(true);
+        infoTextArea.setRows(3);
+        infoTextArea.setText(org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.infoTextArea.text")); // NOI18N
+        infoTextArea.setWrapStyleWord(true);
+        jScrollPane2.setViewportView(infoTextArea);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -184,17 +200,21 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(profileListLabel)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                    .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(profileListLabel))
+                        .addGap(6, 6, 6))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(profileListPane, javax.swing.GroupLayout.PREFERRED_SIZE, 339, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(6, 6, 6)))
+                        .addComponent(profileListPane, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -210,7 +230,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addGroup(layout.createSequentialGroup()
                                                 .addComponent(ingestWarningLabel)
-                                                .addGap(0, 0, Short.MAX_VALUE))
+                                                .addGap(0, 69, Short.MAX_VALUE))
                                             .addComponent(profileDescPane, javax.swing.GroupLayout.Alignment.TRAILING)
                                             .addComponent(selectedModulesPane, javax.swing.GroupLayout.Alignment.TRAILING)))
                                     .addGroup(layout.createSequentialGroup()
@@ -231,18 +251,18 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {deleteProfileButton, editProfileButton, newProfileButton});
 
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jScrollPane2, profileListPane});
+
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(profileListLabel)
-                            .addComponent(profileDescLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
+                                .addComponent(profileDescLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(profileDescPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -253,8 +273,14 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(selectedModulesLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(selectedModulesPane))
-                            .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 415, Short.MAX_VALUE))
+                                .addComponent(selectedModulesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 171, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(profileListLabel)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 346, Short.MAX_VALUE)
+                                .addGap(9, 9, 9)))
                         .addGap(4, 4, 4)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -262,7 +288,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                             .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(ingestWarningLabel))
                         .addContainerGap())
-                    .addComponent(jSeparator2, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addComponent(jSeparator2)))
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -290,10 +316,9 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
      * @param isEnabled
      */
     void enableButtons(boolean isEnabled) {
-        newProfileButton.setEnabled(isEnabled);
-        editProfileButton.setEnabled(isEnabled);
-        deleteProfileButton.setEnabled(isEnabled);
-        ingestWarningLabel.setVisible(!isEnabled);
+        canBeEnabled = isEnabled;  //update value of canBeEnabled to be used by refresh
+        refreshButtons();
+        ingestWarningLabel.setVisible(!canBeEnabled);
     }
 
     /**
@@ -309,23 +334,20 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             this.filterNameText.setText("");
             this.selectedModulesArea.setText("");
         }
-        refreshEditDeleteButtons();
+        refreshButtons();
     }
 
     /**
-     * When Ingest is not running this will changed enabled status of the edit
-     * and delete buttons to reflect their current availability.
+     * When Ingest is not running this will change the enabled status of the
+     * edit and delete buttons to reflect their current availability.
      */
-    private void refreshEditDeleteButtons() {
-        if (newProfileButton.isEnabled()) {
-            if (profilesListModel.isEmpty()) {
-                editProfileButton.setEnabled(false);
-                deleteProfileButton.setEnabled(false);
-            } else {
-                editProfileButton.setEnabled(true);
-                deleteProfileButton.setEnabled(true);
-            }
-        }
+    private void refreshButtons() {
+        IngestProfile selectedProfile = ProfileSettingsPanel.this.profileList.getSelectedValue();
+        boolean profileIsSelected = (selectedProfile != null);
+        newProfileButton.setEnabled(canBeEnabled);
+        editProfileButton.setEnabled(canBeEnabled && profileIsSelected);
+        deleteProfileButton.setEnabled(canBeEnabled && profileIsSelected);
+
     }
 
 
@@ -372,7 +394,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             panel.saveSettings();
             load();
         }
-
     }
 
     @Override
@@ -398,7 +419,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         if (currentIndex < 0 || currentIndex >= profilesListModel.getSize()) {
             currentIndex = 0;
         }
-        refreshEditDeleteButtons();
+        refreshButtons();
         this.profileList.setSelectedIndex(currentIndex);
     }
 
@@ -412,11 +433,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             // Get the selected interesting files set and populate the set
             // components.
             IngestProfile selectedProfile = ProfileSettingsPanel.this.profileList.getSelectedValue();
+            refreshButtons();
             if (selectedProfile != null) {
                 profileDescArea.setText(selectedProfile.getDescription());
                 filterNameText.setText(selectedProfile.getFileIngestFilter());
-                editProfileButton.setEnabled(true);
-                deleteProfileButton.setEnabled(true);
                 try {
                     Map<String, FilesSet> fileIngestFilters = FilesSetsManager.getInstance().getCustomFileIngestFilters();
                     for (FilesSet fSet : FilesSetsManager.getStandardFileIngestFilters()) {
@@ -430,10 +450,6 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                 for (String moduleName : IngestJobSettings.getEnabledModules(selectedProfile.getName())) {
                     selectedModulesArea.append(moduleName + "\n");
                 }
-
-            } else {
-                editProfileButton.setEnabled(false);
-                deleteProfileButton.setEnabled(false);
             }
         }
     }
@@ -445,7 +461,9 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private javax.swing.JScrollPane filterDescPane;
     private javax.swing.JLabel filterNameLabel;
     private javax.swing.JLabel filterNameText;
+    private javax.swing.JTextArea infoTextArea;
     private javax.swing.JLabel ingestWarningLabel;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSeparator jSeparator2;
     private javax.swing.JButton newProfileButton;
     private javax.swing.JTextArea profileDescArea;

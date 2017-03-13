@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011 - 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,6 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import org.sleuthkit.autopsy.coordinationservice.CoordinationServiceNamespace;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -29,15 +28,12 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
-import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
-import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import java.util.concurrent.TimeUnit;
-import java.util.List;
 import javax.annotation.concurrent.Immutable;
-import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.autopsy.ingest.IngestManager.IngestManagerException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
+import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
+import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 
 /**
  * A logger for the processing of an auto ingest job by an auto ingest node. An
@@ -107,14 +103,16 @@ final class AutoIngestJobLogger {
      * Advanced users doing troubleshooting of an automated ingest cluster
      * should also consult the Autopsy and system logs as needed.
      *
-     * @param manifestPath      The manifest for the auto ingest job.
-     * @param caseDirectoryPath The case directory.
+     * @param manifestPath       The manifest for the auto ingest job.
+     * @param dataSourceFileName The file name of the data source for the auto
+     *                           ingest job.
+     * @param caseDirectoryPath  The absolute path to the case directory.
      */
     AutoIngestJobLogger(Path manifestPath, String dataSourceFileName, Path caseDirectoryPath) {
         this.manifestPath = manifestPath;
         manifestFileName = manifestPath.getFileName().toString();
         this.dataSourceFileName = dataSourceFileName;
-        this.caseDirectoryPath = caseDirectoryPath;
+        this.caseDirectoryPath = caseDirectoryPath; 
         hostName = NetworkUtils.getLocalHostName();
     }
 
@@ -195,30 +193,34 @@ final class AutoIngestJobLogger {
     void logDataSourceProcessorCancelled() throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.WARNING, "Cancelled adding data source to case");
     }
-    
+
     /**
      * Logs selection of a data source processor
-     * @param dsp  Name of the data source processor
+     *
+     * @param dsp Name of the data source processor
+     *
      * @throws AutoIngestJobLoggerException if there is an error writing the log
      *                                      message.
      * @throws InterruptedException         if interrupted while blocked waiting
      *                                      to acquire an exclusive lock on the
      *                                      log file.
      */
-    void logDataSourceProcessorSelected(String dsp) throws AutoIngestJobLoggerException, InterruptedException{
+    void logDataSourceProcessorSelected(String dsp) throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.INFO, "Using data source processor: " + dsp);
     }
-    
+
     /**
      * Logs the failure of the selected data source processor.
-     * @param dsp  Name of the data source processor
+     *
+     * @param dsp Name of the data source processor
+     *
      * @throws AutoIngestJobLoggerException if there is an error writing the log
      *                                      message.
      * @throws InterruptedException         if interrupted while blocked waiting
      *                                      to acquire an exclusive lock on the
      *                                      log file.
      */
-    void logDataSourceProcessorError(String dsp) throws AutoIngestJobLoggerException, InterruptedException{
+    void logDataSourceProcessorError(String dsp) throws AutoIngestJobLoggerException, InterruptedException {
         log(MessageCategory.ERROR, "Error processing with data source processor: " + dsp);
     }
 
@@ -431,9 +433,10 @@ final class AutoIngestJobLogger {
      *                                      log file.
      */
     private void log(MessageCategory category, String message) throws AutoIngestJobLoggerException, InterruptedException {
-        try (Lock lock = CoordinationService.getServiceForNamespace(CoordinationServiceNamespace.getRoot()).tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, getLogPath(caseDirectoryPath).toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
+        Path logPath = getLogPath(caseDirectoryPath);
+        try (Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, logPath.toString(), LOCK_TIME_OUT, LOCK_TIME_OUT_UNIT)) {
             if (null != lock) {
-                File logFile = getLogPath(caseDirectoryPath).toFile();
+                File logFile = logPath.toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {
                     writer.println(String.format("%s %s: %s: %s: %-8s: %s", logDateFormat.format((Date.from(Instant.now()).getTime())), hostName, manifestFileName, dataSourceFileName, category.toString(), message));
                 } catch (IOException ex) {

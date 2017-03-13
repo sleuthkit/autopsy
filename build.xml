@@ -8,7 +8,7 @@
     <import file="nbproject/build-impl.xml"/>
     
     <!-- IMPORTANT: nbproject/platform.properties has a netbeans-plat-version property that MUST be kept in sync (manually) -->
-    <property name="netbeans-plat-version" value="8.1" />
+    <property name="netbeans-plat-version" value="8.2" />
     <property name="nbplatform.active.dir" value="${basedir}/netbeans-plat/${netbeans-plat-version}" />
     <!-- Supported java versions.-->
     <condition property="supported-java-versions">

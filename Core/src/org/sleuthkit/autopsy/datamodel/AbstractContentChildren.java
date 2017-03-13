@@ -51,7 +51,9 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
      * Uses lazy Content.Keys
      */
     AbstractContentChildren() {
-        super(true); // use lazy behavior
+        /*This was turned off because we were getting out of memory errors when the 
+        filter nodes were hiding nodes. Turning this off seemed to help  */
+        super(false); //don't use lazy behavior
     }
 
     @Override
