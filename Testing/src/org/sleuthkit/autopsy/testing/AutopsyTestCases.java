@@ -50,12 +50,14 @@ import org.netbeans.jemmy.operators.JListOperator;
 import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
+import org.netbeans.jemmy.operators.JToggleButtonOperator;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 public class AutopsyTestCases {
 
     private static final Logger logger = Logger.getLogger(AutopsyTestCases.class.getName());
     private long start;
+
     /**
      * This method is used to escape file/directory path. Example:
      * \\NetworkLocation\foo\bar get escaped to \\\\NetworkLocation\foo\bar so
@@ -79,7 +81,7 @@ public class AutopsyTestCases {
     public AutopsyTestCases () {
         start = 0;
     }
-    
+
     public void testNewCaseWizardOpen(String title) {
         logger.info("New Case");
         NbDialogOperator nbdo = new NbDialogOperator(title);
@@ -102,15 +104,19 @@ public class AutopsyTestCases {
         start = System.currentTimeMillis();
         wo.btFinish().clickMouse();
     }
-    
+
     public void testStartAddImageFileDataSource() {
         logger.info("Starting Add Image process");
         WizardOperator wo = new WizardOperator("Add Data");
+        //select the toggle button for Disk Image or VM File it will be the first button created and proceed to next panel
+        JToggleButtonOperator jtbo = new JToggleButtonOperator(wo, 0);
+        jtbo.clickMouse();
+        wo.btNext().clickMouse();
         JTextFieldOperator jtfo0 = new JTextFieldOperator(wo, 0);
         String img_path = getEscapedPath(System.getProperty("img_path"));
         String imageDir = img_path;
         ((JTextComponent) jtfo0.getSource()).setText(imageDir);
-        JComboBoxOperator comboBoxOperator = new JComboBoxOperator(wo, 1);
+        JComboBoxOperator comboBoxOperator = new JComboBoxOperator(wo, 0);
         comboBoxOperator.setSelectedItem("(GMT-5:00) America/New_York");
         wo.btNext().clickMouse();
     }
@@ -118,9 +124,10 @@ public class AutopsyTestCases {
     public void testStartAddLogicalFilesDataSource() {
         logger.info("Starting Add Logical Files process");
         WizardOperator wo = new WizardOperator("Add Data");
-        JComboBoxOperator comboBoxOperator = new JComboBoxOperator(wo);
-        // select the item indexed 2 (Logical Files) from the drop-down list.
-        comboBoxOperator.selectItem(2);
+        //select the toggle button for Logical Files it will be the third button created and proceed to next panel
+        JToggleButtonOperator jtbo = new JToggleButtonOperator(wo, 2);
+        jtbo.clickMouse();
+        wo.btNext().clickMouse();
         JButtonOperator addButtonOperator = new JButtonOperator(wo, "Add");
         addButtonOperator.pushNoBlock();
         JFileChooserOperator fileChooserOperator = new JFileChooserOperator();
