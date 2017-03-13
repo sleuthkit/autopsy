@@ -81,7 +81,7 @@ final class RegexQuery implements KeywordSearchQuery {
     private final Keyword originalKeyword; // The regular expression originalKeyword used to perform the search.
     private String field = Server.Schema.CONTENT_STR.toString();
     private final String keywordString;
-    static final private int MAX_RESULTS = 512;
+    static final private int MAX_RESULTS_PER_CURSOR_MARK = 512;
     private boolean escaped;
     private String escapedQuery;
 
@@ -154,7 +154,6 @@ final class RegexQuery implements KeywordSearchQuery {
 
     @Override
     public QueryResults performQuery() throws NoOpenCoreException {
-        QueryResults results = new QueryResults(this, keywordList);
 
         final Server solrServer = KeywordSearch.getServer();
         SolrQuery solrQuery = new SolrQuery();
@@ -187,12 +186,12 @@ final class RegexQuery implements KeywordSearchQuery {
                 .map(KeywordQueryFilter::toString)
                 .forEach(solrQuery::addFilterQuery);
 
-        solrQuery.setRows(MAX_RESULTS);
+        solrQuery.setRows(MAX_RESULTS_PER_CURSOR_MARK);
         // Setting the sort order is necessary for cursor based paging to work.
         solrQuery.setSort(SortClause.asc(Server.Schema.ID.toString()));
 
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;
-        SolrDocumentList resultList = null;
+        SolrDocumentList resultList ;
         boolean allResultsProcessed = false;
 
         while (!allResultsProcessed) {
@@ -218,15 +217,14 @@ final class RegexQuery implements KeywordSearchQuery {
                 }
                 cursorMark = nextCursorMark;
             } catch (KeywordSearchModuleException ex) {
-                LOGGER.log(Level.SEVERE, "Error executing Lucene Solr Query: " + keywordString, ex); //NON-NLS
+                LOGGER.log(Level.SEVERE, "Error executing Regex Solr Query: " + keywordString, ex); //NON-NLS
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             }
         }
-
+        QueryResults results = new QueryResults(this);
         for (Keyword k : hitsMultiMap.keySet()) {
             results.addResult(k, hitsMultiMap.get(k));
         }
-
         return results;
     }
 

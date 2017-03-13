@@ -186,7 +186,7 @@ class IndexUpgrader {
      *
      * @return The new Solr index version.
      */
-    private int upgradeSolrIndexVersion5to6(int currentIndexVersion, String solr5IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminatior) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
+    private int upgradeSolrIndexVersion5to6(int currentIndexVersion, String solr5IndexPath, String tempResultsDir, UserCancelledProcessTerminator terminator) throws AutopsyService.AutopsyServiceException, SecurityException, IOException {
         if (currentIndexVersion != 5) {
             return currentIndexVersion;
         }
@@ -218,7 +218,11 @@ class IndexUpgrader {
         ProcessBuilder processBuilder = new ProcessBuilder(commandLine);
         processBuilder.redirectOutput(new File(outputFileFullPath));
         processBuilder.redirectError(new File(errFileFullPath));
-        ExecUtil.execute(processBuilder, terminatior);
+        try {
+            ExecUtil.execute(processBuilder, terminator);
+        } catch (SecurityException | IOException ex) {
+            throw new AutopsyService.AutopsyServiceException("Error executing Solr 4 to Solr 5 upgrade tool");
+        }
 
         // alternatively can execute lucene upgrade command from the folder where lucene jars are located
         // java -cp ".;lucene-core-6.2.1.jar;lucene-backward-codecs-6.2.1.jar;lucene-codecs-6.2.1.jar;lucene-analyzers-common-6.2.1.jar" org.apache.lucene.index.IndexUpgrader \path\to\index

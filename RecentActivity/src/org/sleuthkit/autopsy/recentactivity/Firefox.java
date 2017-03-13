@@ -97,7 +97,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile historyFile : historyFiles) {
             if (historyFile.getSize() == 0) {
@@ -148,14 +148,19 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"), (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_HISTORY, historyFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
             ++j;
             dbFile.delete();
         }
 
         services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY));
+                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY, bbartifacts));
     }
 
     /**
@@ -180,7 +185,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
-
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile bookmarkFile : bookmarkFiles) {
             if (bookmarkFile.getSize() == 0) {
@@ -228,15 +233,19 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
 
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bookmarkFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
             ++j;
             dbFile.delete();
         }
 
         services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK));
+                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK, bbartifacts));
     }
 
     /**
@@ -260,6 +269,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile cookiesFile : cookiesFiles) {
             if (cookiesFile.getSize() == 0) {
@@ -326,14 +336,19 @@ class Firefox extends Extract {
                 bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DOMAIN,
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"), domain));
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_COOKIE, cookiesFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
             ++j;
             dbFile.delete();
         }
 
         services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE));
+                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE, bbartifacts));
     }
 
     /**
@@ -368,6 +383,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -436,8 +452,11 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         (Util.extractDomain((result.get("source").toString() != null) ? result.get("source").toString() : "")))); //NON-NLS
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
 
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
             if (errors > 0) {
                 this.addErrorMessage(
@@ -450,7 +469,8 @@ class Firefox extends Extract {
         }
 
         services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
     }
 
     /**
@@ -476,6 +496,7 @@ class Firefox extends Extract {
         }
 
         dataFound = true;
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         int j = 0;
         for (AbstractFile downloadsFile : downloadsFiles) {
             if (downloadsFile.getSize() == 0) {
@@ -546,8 +567,11 @@ class Firefox extends Extract {
                         NbBundle.getMessage(this.getClass(),
                                 "Firefox.parentModuleName.noSpace"),
                         (Util.extractDomain((result.get("url").toString() != null) ? result.get("url").toString() : "")))); //NON-NLS
-                this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
 
+                BlackboardArtifact bbart = this.addArtifact(ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, downloadsFile, bbattributes);
+                if (bbart != null) {
+                    bbartifacts.add(bbart);
+                }
             }
             if (errors > 0) {
                 this.addErrorMessage(NbBundle.getMessage(this.getClass(), "Firefox.getDlV24.errMsg.errParsingArtifacts",
@@ -559,6 +583,7 @@ class Firefox extends Extract {
         }
 
         services.fireModuleDataEvent(new ModuleDataEvent(
-                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"), BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD));
+                NbBundle.getMessage(this.getClass(), "Firefox.parentModuleName"),
+                BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD, bbartifacts));
     }
 }

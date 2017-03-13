@@ -47,9 +47,7 @@ class KeywordSearchUtil {
             return query;
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("\"").append(query).append("\"");
-        return sb.toString();
+        return "\""+query+"\"";
     }
 
     /**

@@ -86,16 +86,19 @@ abstract class Extract {
      * @param bbattributes is the collection of blackboard attributes that need
      *                     to be added to the artifact after the artifact has
      *                     been created
+     * @return The newly-created artifact, or null on error
      */
-    protected void addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) {
+    protected BlackboardArtifact addArtifact(BlackboardArtifact.ARTIFACT_TYPE type, AbstractFile content, Collection<BlackboardAttribute> bbattributes) {
         try {
             BlackboardArtifact bbart = content.newArtifact(type);
             bbart.addAttributes(bbattributes);
             // index the artifact for keyword search
             this.indexArtifact(bbart);
+            return bbart;
         } catch (TskException ex) {
             logger.log(Level.SEVERE, "Error while trying to add an artifact", ex); //NON-NLS
         }
+        return null;
     }
     
     /**
