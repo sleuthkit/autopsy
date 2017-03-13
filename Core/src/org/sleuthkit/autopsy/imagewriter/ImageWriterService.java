@@ -18,8 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagewriter;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -39,7 +39,7 @@ import org.sleuthkit.autopsy.framework.AutopsyService;
 
 public class ImageWriterService implements AutopsyService {
 
-    private static final Set<ImageWriter> imageWriters = new HashSet<>();  // Contains all Image Writer objects
+    private static final List<ImageWriter> imageWriters = new ArrayList<>();  // Contains all Image Writer objects
     private static final Object imageWritersLock = new Object(); // Get this lock before accessing currentImageWriters    
     
     /**

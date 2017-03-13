@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
+import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
 
 /**
@@ -141,9 +142,10 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
             if(configPanel.getImageWriterEnabled()){
                 imageWriterPath = configPanel.getImageWriterPath();
+                imageWriterSettings = new ImageWriterSettings(imageWriterPath, true);
             }
         }
-        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterPath, progressMonitor, callback);
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);
         new Thread(addDiskTask).start();
     }
 
@@ -169,7 +171,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      * @param callback             Callback to call when processing is done.
      */
     public void run(String deviceId, String drivePath, String timeZone, boolean ignoreFatOrphanFiles, DataSourceProcessorProgressMonitor progressMonitor, DataSourceProcessorCallback callback) {
-        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterPath, progressMonitor, callback);
+        addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);
         new Thread(addDiskTask).start();
     }
 
