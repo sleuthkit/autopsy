@@ -26,6 +26,7 @@ import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 
 @ServiceProviders(value = {@ServiceProvider(service = AutopsyService.class)})
@@ -52,7 +53,7 @@ public class ImageWriterService implements AutopsyService {
         // we're closing case resources so we don't need to worry about one showing up while
         // doing our close/cleanup.
         synchronized(imageWritersLock){
-            ImageWriter writer = new ImageWriter(imageId);
+            ImageWriter writer = new ImageWriter(imageId, settings);
             writer.subscribeToEvents();
             imageWriters.add(writer);
         }
@@ -67,6 +68,12 @@ public class ImageWriterService implements AutopsyService {
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         System.out.println("\n#### Starting ImageWriter closeCaseResources");
         context.getProgressIndicator().progress(NbBundle.getMessage(this.getClass(), "ImageWriterService.waitingForVHDs"));
+        try{
+            Case.getCurrentCase();
+        } catch(Exception ex){
+            System.out.println("\n#### Failed to get current case");
+            ex.printStackTrace();
+        }
         
         synchronized(imageWritersLock){
             // If any of our ImageWriter objects haven't started the finish task, set the cancel flag
