@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.Reader;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -51,9 +50,9 @@ class TikaTextExtractor extends FileTextExtractor {
 
     private static final List<String> TIKA_SUPPORTED_TYPES
             = new Tika().getParser().getSupportedTypes(new ParseContext())
-            .stream()
-            .map(mt -> mt.getType() + "/" + mt.getSubtype())
-            .collect(Collectors.toList());
+                    .stream()
+                    .map(mt -> mt.getType() + "/" + mt.getSubtype())
+                    .collect(Collectors.toList());
 
     @Override
     public void logWarning(final String msg, Exception ex) {
@@ -62,7 +61,7 @@ class TikaTextExtractor extends FileTextExtractor {
     }
 
     @Override
-    public Reader getReader(AbstractFile sourceFile) throws TextExtractorException, MissingResourceException {
+    public Reader getReader(AbstractFile sourceFile) throws TextExtractorException {
         ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
 
         Metadata metadata = new Metadata();
@@ -75,7 +74,7 @@ class TikaTextExtractor extends FileTextExtractor {
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
             if (read == -1) {
-                throw new TextExtractorException("Tika returned empty reader for " + sourceFile);
+                throw new TextExtractorException("Unable to exrtact text: Tika returned empty reader for " + sourceFile);
             }
             pushbackReader.unread(read);
 
@@ -86,6 +85,8 @@ class TikaTextExtractor extends FileTextExtractor {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
             logWarning(msg, te);
             throw new TextExtractorException(msg, te);
+        } catch (TextExtractorException ex) {
+            throw ex;
         } catch (Exception ex) {
             KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
@@ -107,10 +108,10 @@ class TikaTextExtractor extends FileTextExtractor {
     static private CharSource getMetaDataCharSource(Metadata metadata) {
         return CharSource.wrap(
                 new StringBuilder("\n\n------------------------------METADATA------------------------------\n\n")
-                .append(Stream.of(metadata.names()).sorted()
-                        .map(key -> key + ": " + metadata.get(key))
-                        .collect(Collectors.joining("\n"))
-                ));
+                        .append(Stream.of(metadata.names()).sorted()
+                                .map(key -> key + ": " + metadata.get(key))
+                                .collect(Collectors.joining("\n"))
+                        ));
     }
 
     @Override
@@ -124,8 +125,7 @@ class TikaTextExtractor extends FileTextExtractor {
                 || FileTextExtractor.BLOB_MIME_TYPES.contains(detectedFormat) //any binary unstructured blobs (string extraction will be used)
                 || FileTextExtractor.ARCHIVE_MIME_TYPES.contains(detectedFormat)
                 || (detectedFormat.startsWith("video/") && !detectedFormat.equals("video/x-flv")) //skip video other than flv (tika supports flv only) //NON-NLS
-                || detectedFormat.equals("application/x-font-ttf")) {   // Tika currently has a bug in the ttf parser in fontbox; It will throw an out of memory exception//NON-NLS
-
+                ) {
             return false;
         }
         return TIKA_SUPPORTED_TYPES.contains(detectedFormat);
