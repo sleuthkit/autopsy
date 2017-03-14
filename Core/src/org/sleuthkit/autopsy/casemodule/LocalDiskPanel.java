@@ -71,7 +71,7 @@ final class LocalDiskPanel extends JPanel {
             public void valueChanged(ListSelectionEvent e) {
                 if (diskTable.getSelectedRow() >= 0 && diskTable.getSelectedRow() < disks.size()) {
                     enableNext = true;
-                    setPotentialImageWriterPath((LocalDisk) disks.get(diskTable.getSelectedRow()));
+                    setPotentialImageWriterPath(disks.get(diskTable.getSelectedRow()));
                     try {
                         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
                     } catch (Exception ex) {
@@ -101,7 +101,7 @@ final class LocalDiskPanel extends JPanel {
         errorLabel.setVisible(false);
         errorLabel.setText("");
         diskTable.setEnabled(false);
-        imageWriterErrorLabel.setOpaque(true);
+        imageWriterErrorLabel.setVisible(false);
         imageWriterErrorLabel.setText("");
         pathTextField.setEnabled(copyImageCheckbox.isSelected());
         browseButton.setEnabled(copyImageCheckbox.isSelected());
@@ -130,8 +130,8 @@ final class LocalDiskPanel extends JPanel {
         jLabel1 = new javax.swing.JLabel();
         imageWriterErrorLabel = new javax.swing.JLabel();
 
-        setMinimumSize(new java.awt.Dimension(0, 65));
-        setPreferredSize(new java.awt.Dimension(485, 65));
+        setMinimumSize(new java.awt.Dimension(0, 420));
+        setPreferredSize(new java.awt.Dimension(485, 410));
 
         diskLabel.setFont(diskLabel.getFont().deriveFont(diskLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(diskLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.diskLabel.text")); // NOI18N
@@ -343,6 +343,7 @@ final class LocalDiskPanel extends JPanel {
 
     private boolean imageWriterPathIsValid() {
         if (pathTextField.getText().isEmpty()) {
+            imageWriterErrorLabel.setVisible(true);
             imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterEmptyPathError.text"));
             return false;
         }
@@ -350,18 +351,21 @@ final class LocalDiskPanel extends JPanel {
         File f = new File(pathTextField.getText());
         if (((f.getParentFile() != null) && (!f.getParentFile().exists()))
                 || (f.getParentFile() == null)) {
+            imageWriterErrorLabel.setVisible(true);
             imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterDirError.text"));
             return false;
         }
         if (f.isDirectory()) {
+            imageWriterErrorLabel.setVisible(true);
             imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterIsDirError.text"));
             return false;
         }
         if (f.exists()) {
+            imageWriterErrorLabel.setVisible(true);
             imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterFileExistsError.text"));
             return false;
         }
-
+        imageWriterErrorLabel.setVisible(false);
         imageWriterErrorLabel.setText("");
         return true;
     }
