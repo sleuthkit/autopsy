@@ -28,6 +28,7 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
@@ -36,6 +37,7 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -77,13 +79,14 @@ class DirectoryTreeFilterNode extends FilterNode {
             AbstractFile file = getLookup().lookup(AbstractFile.class);
             if (file != null) {
                 try {
-                    final int numChildren = file.getChildrenCount();
+                    int numVisibleChildren = getVisibleChildCount(file);
+                    
                     /*
                      * Left-to-right marks here are necessary to keep the count
                      * and parens together for mixed right-to-left and
                      * left-to-right names.
                      */
-                    name = name + " \u200E(\u200E" + numChildren + ")\u200E";  //NON-NLS
+                    name = name + " \u200E(\u200E" + numVisibleChildren + ")\u200E";  //NON-NLS
 
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
@@ -91,6 +94,35 @@ class DirectoryTreeFilterNode extends FilterNode {
             }
         }
         return name;
+    }
+    
+    /**
+     * This method gets the number of visible children. Depending on the user
+     * preferences, slack files will either be included or purged in the count.
+     * 
+     * @param file The AbstractFile object whose children will be counted.
+     *
+     * @return The number of visible children.
+     */
+    private int getVisibleChildCount(AbstractFile file) throws TskCoreException {
+        int numVisibleChildren = 0;
+        List<Content> childList = file.getChildren();
+
+        if(UserPreferences.hideSlackFilesInDataSourcesTree()) {
+            // Purge slack files from the file count
+            for(int i=0; i < childList.size(); i++) {
+                AbstractFile childFile = (AbstractFile)childList.get(i);
+                if(childFile.getType() != TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) {
+                    numVisibleChildren++;
+                }
+            }
+        }
+        else {
+            // Include slack files in the file count
+            numVisibleChildren = file.getChildrenCount();
+        }
+        
+        return numVisibleChildren;
     }
 
     /**
