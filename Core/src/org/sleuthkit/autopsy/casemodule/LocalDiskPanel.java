@@ -485,9 +485,9 @@ final class LocalDiskPanel extends JPanel {
         public String getColumnName(int columnIndex) {
             switch (columnIndex) {
                 case 0:
-                    return NbBundle.getMessage(this.getClass(), "LocalDiskPanel.diskTable.column1");
+                    return NbBundle.getMessage(this.getClass(), "LocalDiskPanel.diskTable.column1.title");
                 case 1:
-                    return NbBundle.getMessage(this.getClass(), "LocalDiskPanel.diskTable.column2");
+                    return NbBundle.getMessage(this.getClass(), "LocalDiskPanel.diskTable.column2.title");
                 default:
                     return "Unnamed"; //NON-NLS  
             }
