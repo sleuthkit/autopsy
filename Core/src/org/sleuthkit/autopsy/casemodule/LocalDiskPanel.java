@@ -71,6 +71,7 @@ final class LocalDiskPanel extends JPanel {
             public void valueChanged(ListSelectionEvent e) {
                 if (diskTable.getSelectedRow() >= 0 && diskTable.getSelectedRow() < disks.size()) {
                     enableNext = true;
+                    setPotentialImageWriterPath((LocalDisk) disks.get(diskTable.getSelectedRow()));
                     try {
                         firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
                     } catch (Exception ex) {
@@ -430,6 +431,9 @@ final class LocalDiskPanel extends JPanel {
         timeZoneComboBox.setSelectedItem(formatted);
     }
 
+    /**
+     * Table model for displaing information from LocalDisk Objects in a table.
+     */
     private class LocalDiskModel implements TableModel {
 
         private List<LocalDisk> physicalDrives = new ArrayList<>();
@@ -473,13 +477,17 @@ final class LocalDiskPanel extends JPanel {
 
         }
 
+        @NbBundle.Messages({"LocalDiskPanel.diskTable.column1.title=Disk Name",
+            "LocalDiskPanel.diskTable.column2.title=Disk Size"
+        })
+
         @Override
         public String getColumnName(int columnIndex) {
             switch (columnIndex) {
                 case 0:
-                    return "Disk Name";  //WJS-TODO
+                    return NbBundle.getMessage(this.getClass(), "LocalDiskPanel.diskTable.column1");
                 case 1:
-                    return "Disk Size"; //WJS-TODO
+                    return NbBundle.getMessage(this.getClass(), "LocalDiskPanel.diskTable.column2");
                 default:
                     return "Unnamed"; //NON-NLS  
             }
@@ -529,6 +537,10 @@ final class LocalDiskPanel extends JPanel {
 
         }
 
+        /**
+         * Gets the lists of physical drives and partitions and combines them
+         * into a list of disks.
+         */
         class LocalDiskThread extends SwingWorker<Object, Void> {
 
             private final Logger logger = Logger.getLogger(LocalDiskThread.class.getName());
@@ -543,6 +555,10 @@ final class LocalDiskPanel extends JPanel {
                 return null;
             }
 
+            /**
+             * Display any error messages that might of occurred when getting
+             * the lists of physical drives or partitions.
+             */
             private void displayErrors() {
                 if (physicalDrives.isEmpty() && partitions.isEmpty()) {
                     if (PlatformUtil.isWindowsOS()) {
