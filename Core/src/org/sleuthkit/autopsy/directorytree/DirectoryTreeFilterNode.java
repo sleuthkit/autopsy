@@ -98,28 +98,29 @@ class DirectoryTreeFilterNode extends FilterNode {
     
     /**
      * This method gets the number of visible children. Depending on the user
-     * preferences, slack files will either be included or purged in the count.
+     * preferences, known and/or slack files will either be included or purged
+     * in the count.
      * 
      * @param file The AbstractFile object whose children will be counted.
      *
      * @return The number of visible children.
      */
     private int getVisibleChildCount(AbstractFile file) throws TskCoreException {
-        int numVisibleChildren = 0;
         List<Content> childList = file.getChildren();
+        
+        int numVisibleChildren = file.getChildrenCount();
+        boolean purgeKnownFiles = UserPreferences.hideKnownFilesInDataSourcesTree();
+        boolean purgeSlackFiles = UserPreferences.hideSlackFilesInDataSourcesTree();
 
-        if(UserPreferences.hideSlackFilesInDataSourcesTree()) {
-            // Purge slack files from the file count
+        if(purgeKnownFiles || purgeSlackFiles) {
+            // Purge known and/or slack files from the file count
             for(int i=0; i < childList.size(); i++) {
                 AbstractFile childFile = (AbstractFile)childList.get(i);
-                if(childFile.getType() != TskData.TSK_DB_FILES_TYPE_ENUM.SLACK) {
-                    numVisibleChildren++;
+                if((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
+                || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                    numVisibleChildren--;
                 }
             }
-        }
-        else {
-            // Include slack files in the file count
-            numVisibleChildren = file.getChildrenCount();
         }
         
         return numVisibleChildren;
