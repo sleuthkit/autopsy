@@ -141,8 +141,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
             if (configPanel.getImageWriterEnabled()) {
-                imageWriterPath = configPanel.getImageWriterPath();
-                imageWriterSettings = new ImageWriterSettings(imageWriterPath, true);
+                imageWriterSettings = configPanel.getImageWriterSettings();
             }
         }
         addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);

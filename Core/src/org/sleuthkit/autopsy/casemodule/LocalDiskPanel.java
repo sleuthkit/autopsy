@@ -40,6 +40,7 @@ import org.sleuthkit.autopsy.coreutils.LocalDisk;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
 
 /**
  * ImageTypePanel for adding a local disk or partition such as PhysicalDrive0 or
@@ -105,6 +106,7 @@ final class LocalDiskPanel extends JPanel {
         imageWriterErrorLabel.setText("");
         pathTextField.setEnabled(copyImageCheckbox.isSelected());
         browseButton.setEnabled(copyImageCheckbox.isSelected());
+        changeDatabasePathCheckbox.setEnabled(copyImageCheckbox.isSelected());
     }
 
     /**
@@ -129,6 +131,7 @@ final class LocalDiskPanel extends JPanel {
         browseButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         imageWriterErrorLabel = new javax.swing.JLabel();
+        changeDatabasePathCheckbox = new javax.swing.JCheckBox();
 
         setMinimumSize(new java.awt.Dimension(0, 420));
         setPreferredSize(new java.awt.Dimension(485, 410));
@@ -184,6 +187,8 @@ final class LocalDiskPanel extends JPanel {
         imageWriterErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
         org.openide.awt.Mnemonics.setLocalizedText(imageWriterErrorLabel, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.imageWriterErrorLabel.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(changeDatabasePathCheckbox, org.openide.util.NbBundle.getMessage(LocalDiskPanel.class, "LocalDiskPanel.changeDatabasePathCheckbox.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -207,13 +212,16 @@ final class LocalDiskPanel extends JPanel {
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(21, 21, 21)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(imageWriterErrorLabel)
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel1)
-                                        .addGroup(layout.createSequentialGroup()
-                                            .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(browseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))))))))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(browseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(imageWriterErrorLabel)
+                                            .addComponent(jLabel1)
+                                            .addComponent(changeDatabasePathCheckbox))
+                                        .addGap(0, 0, Short.MAX_VALUE)))))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -238,17 +246,20 @@ final class LocalDiskPanel extends JPanel {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(browseButton)
                     .addComponent(pathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(changeDatabasePathCheckbox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(imageWriterErrorLabel)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(66, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void copyImageCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyImageCheckboxActionPerformed
         pathTextField.setEnabled(copyImageCheckbox.isSelected());
         browseButton.setEnabled(copyImageCheckbox.isSelected());
+        changeDatabasePathCheckbox.setEnabled(copyImageCheckbox.isSelected());
         fireUpdateEvent();
     }//GEN-LAST:event_copyImageCheckboxActionPerformed
 
@@ -274,6 +285,7 @@ final class LocalDiskPanel extends JPanel {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton browseButton;
+    private javax.swing.JCheckBox changeDatabasePathCheckbox;
     private javax.swing.JCheckBox copyImageCheckbox;
     private javax.swing.JLabel descLabel;
     private javax.swing.JLabel diskLabel;
@@ -390,8 +402,8 @@ final class LocalDiskPanel extends JPanel {
         return copyImageCheckbox.isSelected();
     }
 
-    String getImageWriterPath() {
-        return pathTextField.getText();
+    ImageWriterSettings getImageWriterSettings() {
+        return new ImageWriterSettings(pathTextField.getText(), changeDatabasePathCheckbox.isSelected());
     }
 
     /**
