@@ -261,7 +261,7 @@ final class LocalDiskPanel extends JPanel {
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentFile = new File(oldText);
         if ((currentFile.getParentFile() != null) && (currentFile.getParentFile().exists())) {
-            fc.setCurrentDirectory(currentFile.getParentFile());
+            fc.setSelectedFile(currentFile);
         }
 
         int retval = fc.showOpenDialog(this);
@@ -335,13 +335,29 @@ final class LocalDiskPanel extends JPanel {
             subDirectory.mkdirs();
         }
 
-        String path = disk.getName().replaceAll("[:]", "");
+        String path = disk.getName();
+        
+        // Remove all non-ASCII characters
+        path = path.replaceAll("[^\\p{ASCII}]", ""); //NON-NLS
+
+        // Remove all control characters
+        path = path.replaceAll("[\\p{Cntrl}]", ""); //NON-NLS
+
+        // Remove / \ : ? ' "
+        path = path.replaceAll("[/?:'\"\\\\]", ""); //NON-NLS
+        
         path += " " + System.currentTimeMillis();
         path += ".vhd";
         pathTextField.setText(Paths.get(getDefaultImageWriterFolder(), path).toString());
     }
 
-    private boolean imageWriterPathIsValid() {
+    private boolean imageWriterPathIsValid() {      
+        if((! copyImageCheckbox.isSelected()) || ! (diskTable.getSelectedRow() >= 0 && diskTable.getSelectedRow() < disks.size())){
+            imageWriterErrorLabel.setVisible(false);
+            imageWriterErrorLabel.setText("");
+            return true;
+        }
+        
         if (pathTextField.getText().isEmpty()) {
             imageWriterErrorLabel.setVisible(true);
             imageWriterErrorLabel.setText(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.imageWriterEmptyPathError.text"));
@@ -385,8 +401,7 @@ final class LocalDiskPanel extends JPanel {
      * @return true if panel is valid
      */
     boolean validatePanel() {
-        if (copyImageCheckbox.isSelected()
-                && !imageWriterPathIsValid()) {
+        if (!imageWriterPathIsValid()) {
             return false;
         }
         return enableNext;
@@ -608,6 +623,10 @@ final class LocalDiskPanel extends JPanel {
                             diskTable.setEnabled(true);
                             diskTable.clearSelection();
                         }
+                        pathTextField.setText("");
+                        errorLabel.setText("");
+                        errorLabel.setVisible(false);
+                        fireUpdateEvent();
                         ready = true;
                     } else {
                         logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
