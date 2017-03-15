@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2016 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,9 +38,9 @@ import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
  * wizard. It also provides a run method overload to allow it to be used
  * independently of the wizard.
  */
-@ServiceProviders(value={
-    @ServiceProvider(service=DataSourceProcessor.class),
-    @ServiceProvider(service=AutoIngestDataSourceProcessor.class)}
+@ServiceProviders(value = {
+    @ServiceProvider(service = DataSourceProcessor.class),
+    @ServiceProvider(service = AutoIngestDataSourceProcessor.class)}
 )
 public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestDataSourceProcessor {
 
@@ -101,7 +101,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      */
     @Override
     public JPanel getPanel() {
-        configPanel.select();
+        configPanel.refreshTable();
         return configPanel;
     }
 
@@ -138,7 +138,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
             drivePath = configPanel.getContentPaths();
             timeZone = configPanel.getTimeZone();
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
-            if(configPanel.getImageWriterEnabled()){
+            if (configPanel.getImageWriterEnabled()) {
                 imageWriterPath = configPanel.getImageWriterPath();
             }
         }
@@ -192,7 +192,6 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      */
     @Override
     public void reset() {
-        configPanel.reset();
         deviceId = null;
         drivePath = null;
         timeZone = null;
@@ -202,22 +201,22 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
 
     @Override
     public int canProcess(Path dataSourcePath) throws AutoIngestDataSourceProcessorException {
-        
+
         // verify that the data source is not a file or a directory
         File file = dataSourcePath.toFile();
         // ELTODO this needs to be tested more. should I keep isDirectory or just test for isFile?
         if (file.isFile() || file.isDirectory()) {
             return 0;
         }
-        
+
         // check whether data source is an existing disk or partition
         // ELTODO this needs to be tested more. do these methods actually work correctly? 
         // or should I use PlatformUtil.getPhysicalDrives() and PlatformUtil.getPartitions() instead?
         String path = dataSourcePath.toString();
-        if ( (DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)) && DriveUtils.driveExists(path) ) {
+        if ((DriveUtils.isPhysicalDrive(path) || DriveUtils.isPartition(path)) && DriveUtils.driveExists(path)) {
             return 90;
         }
-        
+
         return 0;
     }
 
@@ -227,7 +226,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
         this.drivePath = dataSourcePath.toString();
         this.timeZone = Calendar.getInstance().getTimeZone().getID();
         this.ignoreFatOrphanFiles = false;
-        setDataSourceOptionsCalled = true;        
+        setDataSourceOptionsCalled = true;
         run(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, progressMonitor, callBack);
     }
 
@@ -252,5 +251,5 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
         this.ignoreFatOrphanFiles = ignoreFatOrphanFiles;
         setDataSourceOptionsCalled = true;
     }
-    
+
 }
