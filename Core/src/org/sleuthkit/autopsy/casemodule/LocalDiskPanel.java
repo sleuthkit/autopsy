@@ -81,7 +81,16 @@ final class LocalDiskPanel extends JPanel {
                                 NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
                                 MessageNotifyUtil.MessageType.ERROR);
                     }
-
+                } else {  //The selection changed to nothing valid being selected, such as with ctrl+click
+                    enableNext = false;
+                    try {
+                        firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
+                    } catch (Exception ex) {
+                        logger.log(Level.SEVERE, "LocalDiskPanel listener threw exception", e); //NON-NLS
+                        MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr"),
+                                NbBundle.getMessage(this.getClass(), "LocalDiskPanel.moduleErr.msg"),
+                                MessageNotifyUtil.MessageType.ERROR);
+                    }
                 }
             }
         });
@@ -460,6 +469,7 @@ final class LocalDiskPanel extends JPanel {
 
         // set the selected timezone
         timeZoneComboBox.setSelectedItem(formatted);
+
     }
 
     /**
