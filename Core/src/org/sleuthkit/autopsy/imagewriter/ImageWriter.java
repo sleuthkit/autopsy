@@ -195,7 +195,6 @@ class ImageWriter implements PropertyChangeListener{
         try{
             // The call to get() can happen multiple times if the user closes the case, which is ok
             int result = finishTask.get();
-            System.out.println("\n#### image writer finish result: " + result);
             if((result == 0) && settings.getUpdateDatabasePath()){
                 caseDb.updateImagePath(settings.getPath(), dataSourceId);
             }

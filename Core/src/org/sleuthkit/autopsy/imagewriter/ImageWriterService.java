@@ -66,14 +66,7 @@ public class ImageWriterService implements AutopsyService {
     
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
-        System.out.println("\n#### Starting ImageWriter closeCaseResources");
         context.getProgressIndicator().progress(NbBundle.getMessage(this.getClass(), "ImageWriterService.waitingForVHDs"));
-        try{
-            Case.getCurrentCase();
-        } catch(Exception ex){
-            System.out.println("\n#### Failed to get current case");
-            ex.printStackTrace();
-        }
         
         synchronized(imageWritersLock){
             // If any of our ImageWriter objects haven't started the finish task, set the cancel flag
