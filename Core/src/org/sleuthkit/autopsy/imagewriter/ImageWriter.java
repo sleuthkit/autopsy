@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.imagewriter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -33,6 +34,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Image;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent;
 import org.sleuthkit.datamodel.SleuthkitJNI;
@@ -50,9 +52,10 @@ class ImageWriter implements PropertyChangeListener{
     private final Logger logger = Logger.getLogger(ImageWriter.class.getName());
     
     private final Long dataSourceId;
+    private final ImageWriterSettings settings;
     
     private Long imageHandle = null;
-    private Future<?> finishTask = null;
+    private Future<Integer> finishTask = null;
     private ProgressHandle progressHandle = null;
     private ScheduledFuture<?> progressUpdateTask = null;
     private boolean isCancelled = false;
@@ -62,15 +65,27 @@ class ImageWriter implements PropertyChangeListener{
     
     private ScheduledThreadPoolExecutor periodicTasksExecutor = null;
     private final boolean doUI;
+    private SleuthkitCase caseDb = null;
     
     /**
      * Create the Image Writer object.
      * After creation, startListeners() should be called.
      * @param dataSourceId 
      */
-    ImageWriter(Long dataSourceId){
-        this.dataSourceId = dataSourceId;        
-        doUI = RuntimeProperties.runningWithGUI();        
+    ImageWriter(Long dataSourceId, ImageWriterSettings settings){
+        this.dataSourceId = dataSourceId;     
+        this.settings = settings;
+        doUI = RuntimeProperties.runningWithGUI();    
+        
+        // We save the reference to the sleuthkit case here in case getCurrentCase() is set to
+        // null before Image Writer finishes. The user can still elect to wait for image writer
+        // (in ImageWriterService.closeCaseResources) even though the case is closing. 
+        try{
+            caseDb = Case.getCurrentCase().getSleuthkitCase();
+        } catch (IllegalStateException ex){
+            logger.log(Level.SEVERE, "Unable to load case. Image writer will be cancelled.");
+            this.isCancelled = true;
+        }
     }
     
     /**
@@ -160,11 +175,21 @@ class ImageWriter implements PropertyChangeListener{
             // The added complexity here with the Future is because we absolutely need to make sure
             // the call to finishImageWriter returns before allowing the TSK data structures to be freed
             // during case close.
-            finishTask = Executors.newSingleThreadExecutor().submit(() -> {
-                try{
-                    SleuthkitJNI.finishImageWriter(imageHandle);
-                } catch (TskCoreException ex){
-                    logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
+            finishTask = Executors.newSingleThreadExecutor().submit(new Callable<Integer>(){
+                @Override
+                public Integer call() throws TskCoreException{
+                    try{
+                        int result = SleuthkitJNI.finishImageWriter(imageHandle);
+                        
+                        // We've decided to always update the path to the VHD, even if it wasn't finished.
+                        // This supports the case where an analyst has partially ingested a device
+                        // but has to stop before completion. They will at least have part of the image.
+                        caseDb.updateImagePath(settings.getPath(), dataSourceId);
+                        return result;
+                    } catch (TskCoreException ex){
+                        logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
+                        return -1;
+                    }
                 }
             });
             
@@ -173,9 +198,10 @@ class ImageWriter implements PropertyChangeListener{
         }
 
         // Wait for finishImageWriter to complete
+        int result = 0;
         try{
             // The call to get() can happen multiple times if the user closes the case, which is ok
-            finishTask.get();
+            result = finishTask.get();
         } catch (InterruptedException | ExecutionException ex){
             logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
         }
@@ -189,7 +215,11 @@ class ImageWriter implements PropertyChangeListener{
             }          
         }
 
-        logger.log(Level.INFO, String.format("Finished writing VHD image for %s", dataSourceName)); //NON-NLS
+        if(result == 0){
+            logger.log(Level.INFO, String.format("Successfully finished writing VHD image for %s", dataSourceName)); //NON-NLS
+        } else {
+            logger.log(Level.INFO, String.format("Finished VHD image for %s with errors", dataSourceName)); //NON-NLS
+        }
     }
     
     /**
