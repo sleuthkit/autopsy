@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -30,7 +29,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import org.openide.explorer.ExplorerManager;
 import org.openide.nodes.AbstractNode;
-import org.openide.nodes.ChildFactory;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
@@ -111,7 +109,7 @@ public class DataResultFilterNode extends FilterNode {
      * @param em   ExplorerManager for component that is creating the node
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
-        super(node, Children.create(new DataResultFilterChildren(node, em), true));
+        super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
 
     }
@@ -121,8 +119,8 @@ public class DataResultFilterNode extends FilterNode {
      * @param node Root node to be passed to DataResult viewers
      * @param em   ExplorerManager for component that is creating the node
      */
-    private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
-        super(node, Children.create(new DataResultFilterChildren(node, em, filterKnown, filterSlack), true));
+  private  DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
+        super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
         this.sourceEm = em;
     }
 
@@ -196,20 +194,18 @@ public class DataResultFilterNode extends FilterNode {
      * DataResultFilterNode that created in the DataResultFilterNode.java.
      *
      */
-    private static class DataResultFilterChildren extends ChildFactory<Node> {
+  private  static class DataResultFilterChildren extends FilterNode.Children {
 
-        private final ExplorerManager sourceEm;
+        private final  ExplorerManager sourceEm;
 
         private boolean filterKnown;
         private boolean filterSlack;
-        private final Node parent;
 
         /**
          * the constructor
          */
-        private DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
-            super();
-            this.parent = arg;
+     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
+            super(arg);
             switch (SelectionContext.getSelectionContext(arg)) {
                 case DATA_SOURCES:
                     filterSlack = filterSlackFromDataSources;
@@ -227,33 +223,24 @@ public class DataResultFilterNode extends FilterNode {
             this.sourceEm = sourceEm;
         }
 
-        private DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
-            super();
-            this.parent = arg;
+     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
+            super(arg);
             this.filterKnown = filterKnown;
             this.filterSlack = filterSlack;
             this.sourceEm = sourceEm;
         }
 
-       
         @Override
-        protected boolean createKeys(List<Node> list) {
-            list.addAll(Arrays.asList(parent.getChildren().getNodes()));
-            return true;
-        }
-     
-        
-        @Override
-        protected Node[] createNodesForKey(Node key) {
+        protected Node[] createNodes(Node key) {
             AbstractFile file = key.getLookup().lookup(AbstractFile.class);
             if (file != null) {
                 if (filterKnown && (file.getKnown() == TskData.FileKnown.KNOWN)) {
                     // Filter out child nodes that represent known files
-                    return null;
+                    return new Node[]{};
                 }
                 if (filterSlack && file.getType().equals(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                     // Filter out child nodes that represent slack files
-                    return null;
+                    return new Node[]{};
                 }
             }
             return new Node[]{new DataResultFilterNode(key, sourceEm, filterKnown, filterSlack)};
@@ -351,7 +338,8 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(FileTypesNode fileTypes) {
             return defaultVisit(fileTypes);
         }
-
+        
+        
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
@@ -443,12 +431,14 @@ public class DataResultFilterNode extends FilterNode {
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return openChild(c);
         }
-
+        
         @Override
         public AbstractAction visit(FileTypesNode fileTypes) {
             return openChild(fileTypes);
         }
+        
 
+        
         /**
          * Tell the originating ExplorerManager to display the given
          * dataModelNode.
