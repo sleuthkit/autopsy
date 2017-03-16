@@ -346,14 +346,12 @@ final class LocalDiskPanel extends JPanel {
 
         String path = disk.getName();
         
-        // Remove all non-ASCII characters
-        path = path.replaceAll("[^\\p{ASCII}]", ""); //NON-NLS
-
-        // Remove all control characters
-        path = path.replaceAll("[\\p{Cntrl}]", ""); //NON-NLS
-
-        // Remove / \ : ? ' "
-        path = path.replaceAll("[/?:'\"\\\\]", ""); //NON-NLS
+        // Remove any character that isn't alphanumeric, a space, parent, or underscore.
+        // If the name ends up empty or starting with a space, prepend "localDisk"
+        path = path.replaceAll("[^0-9A-Za-z _()]", ""); // NON-NLS
+        if(path.isEmpty() || path.startsWith(" ")){
+            path = "localDisk" + path;
+        }
         
         path += " " + System.currentTimeMillis();
         path += ".vhd";
