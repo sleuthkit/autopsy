@@ -55,22 +55,7 @@ class KeywordSearchQueryDelegator {
 
         for (KeywordList keywordList : keywordLists) {
             for (Keyword keyword : keywordList.getKeywords()) {
-                KeywordSearchQuery query;
-                if (keyword.searchTermIsLiteral()) {
-                    // literal, exact match
-                    if (keyword.searchTermIsWholeWord()) {
-                        query = new LuceneQuery(keywordList, keyword);
-                        query.escape();
-                    } // literal, substring match
-                    else {
-                        query = new TermsComponentQuery(keywordList, keyword);
-                        query.escape();
-                        query.setSubstringQuery();
-                    }
-                } // regexp
-                else {
-                    query = new RegexQuery(keywordList, keyword);
-                }
+                KeywordSearchQuery query = KeywordSearchUtil.getQueryForKeyword(keyword, keywordList);
                 queryDelegates.add(query);
             }
         }
