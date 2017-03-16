@@ -179,7 +179,13 @@ class ImageWriter implements PropertyChangeListener{
                 @Override
                 public Integer call() throws TskCoreException{
                     try{
-                        return SleuthkitJNI.finishImageWriter(imageHandle);
+                        int result = SleuthkitJNI.finishImageWriter(imageHandle);
+                        
+                        // We've decided to always update the path to the VHD, even if it wasn't finished.
+                        // This supports the case where an analyst has partially ingested a device
+                        // but has to stop before completion. They will at least have part of the image.
+                        caseDb.updateImagePath(settings.getPath(), dataSourceId);
+                        return result;
                     } catch (TskCoreException ex){
                         logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
                         return -1;
@@ -192,13 +198,11 @@ class ImageWriter implements PropertyChangeListener{
         }
 
         // Wait for finishImageWriter to complete
+        int result = 0;
         try{
             // The call to get() can happen multiple times if the user closes the case, which is ok
-            int result = finishTask.get();
-            if((result == 0) && settings.getUpdateDatabasePath()){
-                caseDb.updateImagePath(settings.getPath(), dataSourceId);
-            }
-        } catch (InterruptedException | ExecutionException | TskCoreException ex){
+            result = finishTask.get();
+        } catch (InterruptedException | ExecutionException ex){
             logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
         }
         
@@ -211,7 +215,11 @@ class ImageWriter implements PropertyChangeListener{
             }          
         }
 
-        logger.log(Level.INFO, String.format("Finished writing VHD image for %s", dataSourceName)); //NON-NLS
+        if(result == 0){
+            logger.log(Level.INFO, String.format("Successfully finished writing VHD image for %s", dataSourceName)); //NON-NLS
+        } else {
+            logger.log(Level.INFO, String.format("Finished VHD image for %s with errors", dataSourceName)); //NON-NLS
+        }
     }
     
     /**
