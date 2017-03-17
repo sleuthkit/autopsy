@@ -763,7 +763,7 @@ public final class FilesSet implements Serializable {
              *                  matched.
              */
             ExtensionCondition(Pattern extension) {
-                super(extension.pattern(), false);
+                super(extension);
             }
 
             @Override
