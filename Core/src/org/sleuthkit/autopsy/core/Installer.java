@@ -30,6 +30,7 @@ import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javax.swing.SwingWorker;
+import org.openide.LifecycleManager;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
@@ -340,29 +341,6 @@ public class Installer extends ModuleInstall {
 
         logger.log(Level.INFO, "close()"); //NON-NLS
 
-//            new SwingWorker<Void, Void>() {
-//
-//                @Override
-//                protected Void doInBackground() throws Exception {
-//                    Case.closeCurrentCase();
-//                    return null;
-//                }
-//
-//                @Override
-//                protected void done() {
-//                    try {
-//                        get();
-//                    } catch (InterruptedException ex) {
-//                        logger.log(Level.SEVERE, "Unexpected interrupt closing the current case", ex);
-//                    } catch (ExecutionException ex) {
-//                        logger.log(Level.SEVERE, "Error closing the current case", ex);
-//                        MessageNotifyUtil.Message.error(Bundle.Installer_close_messageBox_caseCloseExceptionMessage(ex.getMessage()));
-//                    } finally {
-//                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-//                    }
-//                }
-//            }.execute();
-//        }
         //exit JavaFx plat
         if (javaFxInit) {
             Platform.exit();
