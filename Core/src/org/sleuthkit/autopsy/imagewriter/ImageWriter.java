@@ -184,7 +184,9 @@ class ImageWriter implements PropertyChangeListener{
                         // We've decided to always update the path to the VHD, even if it wasn't finished.
                         // This supports the case where an analyst has partially ingested a device
                         // but has to stop before completion. They will at least have part of the image.
-                        caseDb.updateImagePath(settings.getPath(), dataSourceId);
+                        if(settings.getUpdateDatabasePath()){
+                            caseDb.updateImagePath(settings.getPath(), dataSourceId);
+                        }
                         return result;
                     } catch (TskCoreException ex){
                         logger.log(Level.SEVERE, "Error finishing VHD image", ex); //NON-NLS
