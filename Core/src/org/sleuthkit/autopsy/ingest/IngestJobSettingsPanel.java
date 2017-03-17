@@ -74,6 +74,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
 
     /**
      * Construct a panel to allow a user to make ingest job settings.
+     * This constructor assumes there is no ingest history.
      *
      * @param settings The initial settings for the ingest job.
      */
@@ -88,12 +89,13 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
     }
 
     /**
-     * Construct a panel to allow a user to make ingest job settings.
+     * Construct a panel to allow a user to make ingest job settings. 
+     * This constructor enables tracking of ingest job history.
      *
      * @param settings    The initial settings for the ingest job.
      * @param dataSources The data sources ingest is being run on.
      */
-    IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
+    public IngestJobSettingsPanel(IngestJobSettings settings, List<Content> dataSources) {
         this.settings = settings;
         this.dataSources.addAll(dataSources);
         try {
