@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,24 @@
  */
 package org.sleuthkit.autopsy.imagewriter;
 
+/**
+ * Helper class to hold the image writer settings from the local disk panel
+ */
 public class ImageWriterSettings {
+    private final String path;
+    private final boolean updateDatabasePath;
 
-    public ImageWriterSettings(String x, boolean y) {
+    public ImageWriterSettings(String path, boolean updateDatabasePath){
+        this.path = path;
+        this.updateDatabasePath = updateDatabasePath;
     }
-    
-    public String getPath() {
-        return "";
-    }    
 
+    public String getPath(){
+        return path;
+    }
+
+    public boolean getUpdateDatabasePath(){
+        return updateDatabasePath;
+    }    
 }
+
