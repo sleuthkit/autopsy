@@ -19,12 +19,14 @@
 package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
 import java.awt.Component;
+import java.util.List;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A wizard panel for configuring an ingest job.
@@ -34,16 +36,17 @@ class IngestModulesConfigWizardPanel extends ShortcutWizardDescriptorPanel {
     private final String executionContext;
     private final IngestJobSettings.IngestType ingestType;
     private IngestJobSettingsPanel ingestJobSettingsPanel;
-
+    private final List<Content> dataSources;
     /**
      * Constructs a wizard panel for configuring an ingest job.
      *
      * @param executionContest The execution context for the wizard.
      * @param ingestType       The ingest type.
      */
-    IngestModulesConfigWizardPanel(String executionContest, IngestJobSettings.IngestType ingestType) {
+    IngestModulesConfigWizardPanel(String executionContest, IngestJobSettings.IngestType ingestType, List<Content> dataSources) {
         this.executionContext = executionContest;
         this.ingestType = ingestType;
+        this.dataSources = dataSources;
     }
 
     /**
@@ -64,7 +67,7 @@ class IngestModulesConfigWizardPanel extends ShortcutWizardDescriptorPanel {
              * Creating an ingest job settings object is expensive, so it is
              * deferred until this panel is actually used in the wizard.
              */
-            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(executionContext, ingestType));
+            ingestJobSettingsPanel = new IngestJobSettingsPanel(new IngestJobSettings(executionContext, ingestType), dataSources);
         }
         ingestJobSettingsPanel.setName(Bundle.IngestModulesConfigWizardPanel_name_text());
         return ingestJobSettingsPanel;
