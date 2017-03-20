@@ -16,7 +16,7 @@ Once files are placed in the Solr index, they can be searched quickly for specif
 
 \section keyword_search_configuration_dialog Keyword Search Configuration Dialog
 
-The keyword search configuration dialog has three tabs, each with it's own purpose:
+The keyword search configuration dialog has three tabs, each with its own purpose:
 \li The Lists tab is used to add, remove, and modify keyword search lists.
 \li The String Extraction tab is used to enable language scripts and extraction type.
 \li The General tab is used to configure the ingest timings and display information.
@@ -26,7 +26,7 @@ To create a list, select the 'New List' button and choose a name for the new Key
 Regular expressions are supported using Lucene Regex Syntax which is documented here: https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html. .* is automatically added to the beginning and end of the regular expressions to ensure all matches are found. Additionally, the resulting hits are split on common token separator boundaries (e.g. space, newline, colon, exclamation point etc.) to reduce false positives and to make the resulting keyword hit more amenable to highlighting. If you would prefer not to split on these common boundary characters, you can put .* at the start and/or end of the regex.
 
 <b>List Import and Export</b> \n
-Autopsy supports importing Encase tab-delimited lists as well as lists created previously with Autopsy. For Encase lists, folder structure and hierarchy is currently ignored. This will be fixed in a future version. There is currently no way to export lists for use with Encase. This will also be added in future releases.
+Autopsy supports importing Encase tab-delimited lists as well as lists created previously with Autopsy. For Encase lists, folder structure and hierarchy is ignored. There is currently no way to export lists for use with Encase, but lists can be exported to share between Autopsy users.
 
 <b>Lists tab</b> \n
 \image html keyword-search-configuration-dialog.PNG
