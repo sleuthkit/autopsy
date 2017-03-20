@@ -54,7 +54,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
     @NbBundle.Messages({"# {0} - filter name",
         "# {1} - profile name",
-        "FilesSetDefsPanel.ingest.fileFilterInUseError=The selected file filter, {0}, is being used by a profile, {1}, and cannot be deleted until after the profile.",
+        "FilesSetDefsPanel.ingest.fileFilterInUseError=The selected file filter, {0}, is being used by a profile, {1}, and cannot be deleted while any profile uses it.",
         "FilesSetDefsPanel.bytes=Bytes",
         "FilesSetDefsPanel.kiloBytes=Kilobytes",
         "FilesSetDefsPanel.megaBytes=Megabytes",
