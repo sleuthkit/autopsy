@@ -55,8 +55,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
     private String deviceId;
     private String drivePath;
     private String timeZone;
-    private String imageWriterPath = "";
-    private ImageWriterSettings imageWriterSettings = null;
+    private ImageWriterSettings imageWriterSettings;
     private boolean ignoreFatOrphanFiles;
     private boolean setDataSourceOptionsCalled;
 
@@ -142,6 +141,8 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
             ignoreFatOrphanFiles = configPanel.getNoFatOrphans();
             if (configPanel.getImageWriterEnabled()) {
                 imageWriterSettings = configPanel.getImageWriterSettings();
+            } else {
+                imageWriterSettings = null;
             }
         }
         addDiskTask = new AddImageTask(deviceId, drivePath, timeZone, ignoreFatOrphanFiles, imageWriterSettings, progressMonitor, callback);
