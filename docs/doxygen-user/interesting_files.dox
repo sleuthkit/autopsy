@@ -12,10 +12,12 @@ Configuration
 
 Add rules using "Tools", "Options", "Interesting Files".
 
-All rules need to be part of a set. Sets need to have the following defined:
+All rules need to be part of a set. Select "New set" on the left side panel to create a new set. Sets need to have the following defined:
 
 - Set Name (required)
 - Set Description (optional)
+
+Sets can be renamed, edited, copied, and imported and exported from the left side panel.
 
 Rules specify what to look for in a data source.  Each rule specifies:
 - Type: If the rule should be applied to only files, only directories, or both files and directories. 

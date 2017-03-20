@@ -29,15 +29,41 @@ Once ingest is started, you can review the currently running ingest tasks in the
 
 \section ingest_configure Configuring Ingest Modules
 
-You will be presented with an interface to configure the ingest modules. From here, you can choose to enable or disable each module and some modules will have further configuration settings. 
+You will be presented with an interface to configure the ingest modules. From here, you can choose which type of files to analyze and enable or disable each module. Some modules will have further configuration settings. 
 
 \image html select-ingest-modules.PNG
+
+The selection box at the top controls which files the ingest modules will run on. The two built-in options are "All files, directories, and unallocated space" and "All Files and Directories." The \ref file_filters section describes how to create custom file filters. The chosen filter applies to all ingest modules.
 
 There are two places to configure ingest modules. When you select the module name, you may have some "run time" options to configure in the panel to the right.  These are generally settings that you may want to change from image to image. 
 
 There may also be an "Advanced" button that is enabled in the lower corner.  Pressing this button allows you to change global settings that are not specific to a single image.  This advanced configuration panel can often be found in the "Tools", "Options" menu too. 
 
 As an example, the hash lookup module will allow you to enable or disable hash databases in the "run time" options panel, but requires you to go to the "Advanced" dialog to add or remove hash databases from the Autopsy configuration. 
+
+\section file_filters Custom File Filters
+
+The file filters panel can be opened from the ingest module selection panel or through the Ingest tab on the main options panel. File filters allow ingest modules to be run on only a subset of the files. In the example below, a filter has been set up to only run on files with a "png" extension.
+
+\image html ingest-file-filters.PNG
+
+Each filter contains one or more rules for selecting files based on file name and/or path. All files will still be displayed in the tree view, but the ingest modules will only run on a subset. If we use the previous example and run the hash module, only files ending in .png will have their hash computed.
+
+\section ingest_profiles Using Ingest Profiles
+
+Ingest profiles allow you to quickly choose a defined set of ingest modules to run. This can be useful if you run different sets of ingest modules (or different configurations of those ingest modules) on different types of data. Ingest profiles can be configured through the Ingest tab on the options panel.
+
+\image html ingest-profiles.PNG
+
+Each profile can specify different per-run settings for each ingest module, and you can choose use either a predefined or custom file filter (see \ref file_filters).
+
+\image html ingest-profile-create.PNG
+
+If any custom profiles are present, there will be a new screen in the add data source wizard.
+
+\image html profile-data-source-panel.PNG
+
+If you choose custom settings it will bring up the normal ingest module selection panel. If you choose a user-defined profile the ingest module screen will be skipped entirely and the ingest modules from that profile will be run on the data source. The profile selection panel will also appear when running ingest by right-clicking on a data source from the tree.
 
 <br><br>
 \section ingest_already_run Notification of Ingest Already Run

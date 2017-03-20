@@ -32,10 +32,12 @@ a data source.  All user-defined and Tika rules are always applied.
 Seeing Results
 ------
 
-This module does not have obvious impacts in the user interface, though it is used by many other modules. 
+The results can be seen in the views area of the tree, under Views->File Types->By MIME Type.
+
+\image html mime-type-tree.PNG
+
+Note that only user-defined MIME types of the form  (media type)/(media subtype) will be displayed in the tree.
 
 To see the file type of an individual file, view the "Results" tab in the lower right when you navigate to the file. You should see a page in there that mentions the file type.
-
-The Views area of the tree does not take the results of this module into account. That part of the tree relies on extension.  We will be updating it in the future to rely on extension when there is no output from this module for the file. 
 
 */
