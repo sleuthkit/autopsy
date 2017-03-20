@@ -27,6 +27,7 @@ import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestProfiles;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * A wizard that allows a user to configure an ingest job.
@@ -45,7 +46,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
      *                         settings can differ by execution context.
      * @param ingestType       The type of ingest to be configured.
      */
-    RunIngestModulesWizardIterator(String executionContext, IngestJobSettings.IngestType ingestType) {
+    RunIngestModulesWizardIterator(String executionContext, IngestJobSettings.IngestType ingestType, List<Content> dataSources) {
         this.ingestType = ingestType;
         panels = new ArrayList<>();
         List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
@@ -53,7 +54,7 @@ final class RunIngestModulesWizardIterator implements WizardDescriptor.Iterator<
             panels.add(new IngestProfileSelectionWizardPanel(executionContext, PROP_LASTPROFILE_NAME));
         }
 
-        panels.add(new IngestModulesConfigWizardPanel(executionContext, this.ingestType));
+        panels.add(new IngestModulesConfigWizardPanel(executionContext, this.ingestType, dataSources));
         String[] steps = new String[panels.size()];
         for (int i = 0; i < panels.size(); i++) {
             Component c = panels.get(i).getComponent();

@@ -18,14 +18,15 @@
  */
 package org.sleuthkit.autopsy.imagewriter;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 
 @ServiceProviders(value = {@ServiceProvider(service = AutopsyService.class)})
@@ -39,20 +40,20 @@ import org.sleuthkit.autopsy.framework.AutopsyService;
 
 public class ImageWriterService implements AutopsyService {
 
-    private static final Set<ImageWriter> imageWriters = new HashSet<>();  // Contains all Image Writer objects
+    private static final List<ImageWriter> imageWriters = new ArrayList<>();  // Contains all Image Writer objects
     private static final Object imageWritersLock = new Object(); // Get this lock before accessing currentImageWriters    
     
     /**
      * Create an image writer object for the given data source ID.
      * @param imageId ID for the image
      */
-    public static void createImageWriter(Long imageId){
+    public static void createImageWriter(Long imageId, ImageWriterSettings settings){
         
         // ImageWriter objects are created during the addImageTask. They can not arrive while
         // we're closing case resources so we don't need to worry about one showing up while
         // doing our close/cleanup.
         synchronized(imageWritersLock){
-            ImageWriter writer = new ImageWriter(imageId);
+            ImageWriter writer = new ImageWriter(imageId, settings);
             writer.subscribeToEvents();
             imageWriters.add(writer);
         }

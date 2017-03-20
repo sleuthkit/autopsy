@@ -91,7 +91,7 @@ public final class RunIngestModulesAction extends CallableSystemAction {
          * WizardDescriptor.Panel.getComponent().getName().
          */
         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        RunIngestModulesWizardIterator wizard = new RunIngestModulesWizardIterator(EXECUTION_CONTEXT, this.ingestType);
+        RunIngestModulesWizardIterator wizard = new RunIngestModulesWizardIterator(EXECUTION_CONTEXT, this.ingestType, this.dataSources);
         WizardDescriptor wiz = new WizardDescriptor(wizard);
         wiz.setTitleFormat(new MessageFormat("{0}"));
         wiz.setTitle(Bundle.RunIngestModulesAction_name());

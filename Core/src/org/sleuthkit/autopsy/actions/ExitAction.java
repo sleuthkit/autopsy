@@ -18,17 +18,23 @@
  */
 package org.sleuthkit.autopsy.actions;
 
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.openide.LifecycleManager;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
 import org.openide.awt.ActionRegistration;
 import org.openide.util.NbBundle;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
+import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * The action associated with the Case/Exit menu item. It closes the current
@@ -39,23 +45,40 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @ActionID(id = "org.sleuthkit.autopsy.casemodule.ExitAction", category = "Case")
 final public class ExitAction implements ActionListener {
 
+    private static final Logger logger = Logger.getLogger(ExitAction.class.getName());
+
     @NbBundle.Messages({
         "ExitAction.confirmationDialog.title=Ingest is Running",
-        "ExitAction.confirmationDialog.message=Ingest is running, are you sure you want to exit?"
-
+        "ExitAction.confirmationDialog.message=Ingest is running, are you sure you want to exit?",
+        "# {0} - exception message", "ExitAction.messageBox.caseCloseExceptionMessage=Error closing case: {0}"
     })
     @Override
     public void actionPerformed(ActionEvent e) {
         if (IngestRunningCheck.checkAndConfirmProceed(Bundle.ExitAction_confirmationDialog_title(), Bundle.ExitAction_confirmationDialog_message())) {
-            new Thread(() -> {
-                try {
+            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            new SwingWorker<Void, Void>() {
+
+                @Override
+                protected Void doInBackground() throws Exception {
                     Case.closeCurrentCase();
-                } catch (CaseActionException ex) {
-                    Logger.getLogger(ExitAction.class.getName()).log(Level.SEVERE, "Error closing the current case on exit", ex); //NON-NLS
-                } finally {
-                    LifecycleManager.getDefault().exit();
+                    return null;
                 }
-            }).start();
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                    } catch (InterruptedException ex) {
+                        logger.log(Level.SEVERE, "Unexpected interrupt closing the current case", ex);
+                    } catch (ExecutionException ex) {
+                        logger.log(Level.SEVERE, "Error closing the current case", ex);
+                        MessageNotifyUtil.Message.error(Bundle.ExitAction_messageBox_caseCloseExceptionMessage(ex.getMessage()));
+                    } finally {
+                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                        LifecycleManager.getDefault().exit();
+                    }
+                }
+            }.execute();
         }
     }
 }

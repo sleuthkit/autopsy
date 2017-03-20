@@ -21,23 +21,25 @@ The data source must remain accessible for the duration of the analysis because 
 
 Regardless of the type of data source, there are some common steps in the process:
 
-1) You will be prompted to specify the data source to add (details are provided below)
+1) You will select the type of data source.
 
 \image html select-data-source-type.PNG
 
+2) You will be prompted to specify the data source to add. This screen varies based on the data source type. Details on adding each type of data source are provided below.
+
 NOTE: If you are adding a data source to a multi-user case, ensure that all Autopsy clients will have access to the data source at the same path. We recommend using UNC paths to ensure this consistent mapping. 
 
-2) Autopsy will perform a basic examination of the data source and populate an embedded database with an entry for each file in the data source. No content is analyzed in the process, only the files are enumerated. 
+3) Autopsy will perform a basic examination of the data source and populate an embedded database with an entry for each file in the data source. No content is analyzed in the process, only the files are enumerated. 
 
-3) While it is examining the data source, you will be prompted with a list of ingest modules to enable. 
+4) While it is examining the data source, you will be prompted with a list of ingest modules to enable. If one or more ingest profiles have been saved, there will be a screen before this asking whether to use one of the saved profiles or do a custom setup. See \ref ingest_page for more information on setting up ingest profiles.
 
 \image html select-ingest-modules.PNG
 
-4) After you configure the ingest modules, you may need to wait for Autopsy to finish its basic examination of the data source. 
+5) After you configure the ingest modules, you may need to wait for Autopsy to finish its basic examination of the data source. 
 
 \image html data-source-progress-bar.PNG
 
-5) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
+6) After the ingest modules have been configured and the basic examination of the data source is complete, the ingest modules will begin to analyze the file contents. 
 
 You cannot remove a data source from a case.
 
@@ -52,24 +54,29 @@ Autopsy supports disk images in the following formats:
 
 To add a disk image:
 
--# Choose "Disk Image or VM File" from the pull down.
+-# Choose "Disk Image or VM File" from the data source types.
 -# Browse to the first file in the disk image. You need to specify only the first file and Autopsy will find the rest.  
 -# Choose the timezone that the disk image came from.  This is most important for when adding FAT file systems because it does not store timezone information and Autopsy will not know how to normalize to UTC.
 -# Choose to perform orphan file finding on FAT file systems.  This can be a time intensive process because it will require that Autopsy look at each sector in the device.  
 
 
-\section ds_local Adding a Local Drive
+\section ds_local Adding a Local Disk
 
-Autopsy can analyze a local drive without needing to first make an image copy of it. This is most useful when analyzing a USB-attached device through a write blocker.  
+Autopsy can analyze a local disk without needing to first make an image copy of it. This is most useful when analyzing a USB-attached device through a write blocker.  
 
-Note that if you are analyzing a local drive that is being updated, then Autopsy will not see files that are added after you add it as a data source.  
+Note that if you are analyzing a local disk that is being updated, then Autopsy will not see files that are added after you add it as a data source.  
 
 You will need to be running Autopsy as an Administrator to view all devices.  
 
+There is an option to make a copy of the local disk as a VHD during analysis. This VHD can be loaded in Windows or analyzed through Autopsy. There is an additional option to update the image path in the case database to this newly created file. Enabling this option will allow you to browse the case data normally even after the local disk is removed. Note that at least one ingest module must successfully run in order to generate the complete image copy.
+
+\image html local-disk-data-source.PNG
+
 To add a local drive:
--# Choose "Local Drive" from the pull down.
+-# Choose "Local Disk" from the data source types.
 -# Choose the device from the pull down list.
 -# Choose to perform orphan file finding.  See comment in \ref ds_img about this setting.
+-# Choose whether to create a VHD copy of the local disk and whether to update the image path.
 
 
 \section ds_log Adding a Logical File
@@ -84,7 +91,7 @@ Some things to note when doing this:
 \image html change_logical_file_set_display_name.PNG
 
 To add logical files:
--# Choose "Logical Files" from the pull down.
+-# Choose "Logical Files" from the data source types.
 -# Press the "Add" button and navigate to a folder or file to add.  Choosing a folder will cause all of its contents (including sub-folders) to be added.
 -# Continue to press "Add" until all files and folders have been selected.
 
@@ -95,8 +102,8 @@ All of the files that you added in the panel will be grouped together into a sin
 \image html unallocated_space_options.PNG
 
 To add unallocated space image files:
--# Choose "Unallocated Space Image File" from the pull down
--# Browse to the file
+-# Choose "Unallocated Space Image File" from the data source types.
+-# Browse to the file.
 -# Choose whether to break the image up into chunks. Breaking the image up will give better performance since the chunks can be processed in parallel,  but there is a chance that keywords or carved files that span chunk boundaries will be missed.
 
 */
