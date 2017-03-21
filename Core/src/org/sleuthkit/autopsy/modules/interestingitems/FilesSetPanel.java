@@ -172,7 +172,9 @@ public class FilesSetPanel extends javax.swing.JPanel {
         descPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.descPanel.border.title"))); // NOI18N
 
         descTextArea.setColumns(20);
+        descTextArea.setLineWrap(true);
         descTextArea.setRows(5);
+        descTextArea.setWrapStyleWord(true);
         descScrollPanel.setViewportView(descTextArea);
 
         javax.swing.GroupLayout descPanelLayout = new javax.swing.GroupLayout(descPanel);

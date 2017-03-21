@@ -145,8 +145,8 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         profileDescArea.setColumns(20);
         profileDescArea.setLineWrap(true);
         profileDescArea.setRows(5);
+        profileDescArea.setWrapStyleWord(true);
         profileDescArea.setMinimumSize(new java.awt.Dimension(10, 22));
-        profileDescArea.setPreferredSize(new java.awt.Dimension(14, 40));
         profileDescPane.setViewportView(profileDescArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(profileDescLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.profileDescLabel.text")); // NOI18N
@@ -158,12 +158,15 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         filterNameText.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         filterNameText.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
+        filterDescPane.setAutoscrolls(true);
+
         filterDescArea.setEditable(false);
         filterDescArea.setBackground(new java.awt.Color(240, 240, 240));
         filterDescArea.setColumns(20);
+        filterDescArea.setLineWrap(true);
         filterDescArea.setRows(5);
+        filterDescArea.setWrapStyleWord(true);
         filterDescArea.setMinimumSize(new java.awt.Dimension(10, 40));
-        filterDescArea.setPreferredSize(new java.awt.Dimension(14, 42));
         filterDescPane.setViewportView(filterDescArea);
 
         selectedModulesArea.setEditable(false);
@@ -171,6 +174,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
         selectedModulesArea.setColumns(20);
         selectedModulesArea.setLineWrap(true);
         selectedModulesArea.setRows(5);
+        selectedModulesArea.setWrapStyleWord(true);
         selectedModulesPane.setViewportView(selectedModulesArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(selectedModulesLabel, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.selectedModulesLabel.text")); // NOI18N
@@ -261,7 +265,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(profileDescLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(profileDescLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 15, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(profileDescPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -273,7 +277,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(selectedModulesLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(selectedModulesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 171, Short.MAX_VALUE))
+                                .addComponent(selectedModulesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)

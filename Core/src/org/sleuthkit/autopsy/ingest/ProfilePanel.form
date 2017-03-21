@@ -28,15 +28,15 @@
                           <Component id="profileDescLabel" min="-2" max="-2" attributes="0"/>
                           <Component id="profileNameLabel" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="366" max="32767" attributes="0"/>
+                      <EmptySpace pref="478" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Component id="profileDescPane" alignment="0" max="32767" attributes="0"/>
-                  <Component id="profileNameField" alignment="1" max="32767" attributes="0"/>
+                  <Component id="jScrollPane1" alignment="0" max="32767" attributes="0"/>
+                  <Component id="profileDescPane" alignment="1" max="32767" attributes="0"/>
               </Group>
               <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
           </Group>
@@ -47,9 +47,9 @@
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="profileNameLabel" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Component id="profileNameField" min="-2" max="-2" attributes="0"/>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="jScrollPane1" min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Component id="profileDescLabel" min="-2" pref="22" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="profileDescPane" max="32767" attributes="0"/>
@@ -75,11 +75,9 @@
             <Property name="rows" type="int" value="5"/>
             <Property name="wrapStyleWord" type="boolean" value="true"/>
             <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[10, 22]"/>
+              <Dimension value="[104, 22]"/>
             </Property>
-            <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-              <Dimension value="[14, 40]"/>
-            </Property>
+            <Property name="name" type="java.lang.String" value="" noResource="true"/>
           </Properties>
         </Component>
       </SubComponents>
@@ -98,11 +96,17 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JTextField" name="profileNameField">
-    </Component>
     <Container class="javax.swing.JPanel" name="jPanel1">
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
+    </Container>
+    <Container class="javax.swing.JScrollPane" name="jScrollPane1">
+
+      <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+      <SubComponents>
+        <Component class="javax.swing.JTextField" name="profileNameField">
+        </Component>
+      </SubComponents>
     </Container>
   </SubComponents>
 </Form>
