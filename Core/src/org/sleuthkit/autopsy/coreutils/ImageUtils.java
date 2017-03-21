@@ -160,7 +160,7 @@ public class ImageUtils {
     private static FileTypeDetector fileTypeDetector;
 
     /**
-     *Thread/Executor that saves generated thumbnails to disk in the background
+     * Thread/Executor that saves generated thumbnails to disk in the background
      */
     private static final Executor imageSaver
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
@@ -303,14 +303,22 @@ public class ImageUtils {
     public static BufferedImage getThumbnail(Content content, int iconSize) {
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
-
-            Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
-            thumbnailTask.run();
-            try {
-                return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
-            } catch (InterruptedException | ExecutionException ex) {
-                LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), ex); //NON-NLS
-                return DEFAULT_THUMBNAIL;
+            if (ImageUtils.isGIF(file)) {
+                try {
+                    return ScalrWrapper.resizeHighQuality(ImageIO.read(new BufferedInputStream(new ReadContentInputStream(file))), iconSize, iconSize);
+                } catch (IOException iOException) {
+                    LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), iOException); //NON-NLS
+                    return DEFAULT_THUMBNAIL;
+                }
+            } else {
+                Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
+                thumbnailTask.run();
+                try {
+                    return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), ex); //NON-NLS
+                    return DEFAULT_THUMBNAIL;
+                }
             }
         } else {
             return DEFAULT_THUMBNAIL;
@@ -334,12 +342,12 @@ public class ImageUtils {
     }
 
     /**
-     * Get the location of the cached thumbnail for a file with the given fileID
-     * as a java File. The returned File may not exist on disk yet.
+     * Get the location,as a java File, of the cached thumbnail for an file with
+     * the given fileID . The returned File may not exist on disk yet.
      *
      * @param fileID the fileID to get the cached thumbnail location for
      *
-     * @return a File object representing the location of the cached thumbnail.
+     * @return A File object representing the location of the cached thumbnail.
      *         This file may not actually exist(yet). Returns null if there was
      *         any problem getting the file, such as no case was open.
      */
