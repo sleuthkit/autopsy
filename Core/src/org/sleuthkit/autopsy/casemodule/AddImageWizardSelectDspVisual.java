@@ -42,7 +42,8 @@ import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Panel which displays the available DataSourceProcessors and allows selection of one
+ * Panel which displays the available DataSourceProcessors and allows selection
+ * of one
  */
 final class AddImageWizardSelectDspVisual extends JPanel {
 
@@ -61,7 +62,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     }
 
     /**
-     * Find the DSP which is currently selected and save it as the selected 
+     * Find the DSP which is currently selected and save it as the selected
      * DataSourceProcessor.
      *
      */
@@ -79,14 +80,16 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     /**
      * Get the DataSourceProcessor which is currently selected in this panel
      *
-     * @return selectedDsp the DataSourceProcessor which is selected in this panel
+     * @return selectedDsp the DataSourceProcessor which is selected in this
+     *         panel
      */
     String getSelectedDsp() {
         return selectedDsp;
     }
 
     /**
-     * Create the a button for each DataSourceProcessor that should exist as an option.
+     * Create the a button for each DataSourceProcessor that should exist as an
+     * option.
      */
     private void createDataSourceProcessorButtons() {
         //Listener for button selection
@@ -121,6 +124,11 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             buttonGroup1.add(dspButton);
             gridBagLayout.setConstraints(dspButton, constraints);
             constraints.gridx++;
+            //Add space between the button and text 
+            Filler buttonTextSpacer = new Filler(spacerBlockDimension, spacerBlockDimension, spacerBlockDimension);
+            gridBagLayout.setConstraints(buttonTextSpacer, constraints);
+            jPanel1.add(buttonTextSpacer);
+            constraints.gridx++;
             //Add the text area serving as a label to the right of the button
             JTextArea myLabel = new JTextArea(dspType);
             myLabel.setBackground(new Color(240, 240, 240));//matches background of panel
@@ -143,11 +151,12 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     }
 
     /**
-     * Create a list of the DataSourceProcessors which should exist as options on this panel.
-     * The default Autopsy DataSourceProcessors will appear 
-     * at the beggining of the list in the same order.
-     * 
-     * @return dspList a list of DataSourceProcessors which can be chose in this panel
+     * Create a list of the DataSourceProcessors which should exist as options
+     * on this panel. The default Autopsy DataSourceProcessors will appear at
+     * the beggining of the list in the same order.
+     *
+     * @return dspList a list of DataSourceProcessors which can be chose in this
+     *         panel
      */
     private List<String> getListOfDsps() {
         List<String> dspList = new ArrayList<>();
