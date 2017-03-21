@@ -102,17 +102,6 @@ public class Installer extends ModuleInstall {
         super.uninstalled();
     }
 
-    @Override
-    public void close() {
-        new Thread(() -> {
-            try {
-                Case.closeCurrentCase();
-            } catch (CaseActionException ex) {
-                logger.log(Level.SEVERE, "Error closing current case", ex); //NON-NLS
-            }
-        }).start();
-    }
-
     private void setLookAndFeel() {
         if (System.getProperty("os.name").toLowerCase().contains("mac")) { //NON-NLS
             setOSXLookAndFeel();
