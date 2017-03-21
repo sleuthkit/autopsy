@@ -288,6 +288,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         );
 
         jButtonSelectAll.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.jButtonSelectAll.text")); // NOI18N
+        jButtonSelectAll.setMargin(new java.awt.Insets(2, 8, 2, 8));
         jButtonSelectAll.setMaximumSize(new java.awt.Dimension(87, 23));
         jButtonSelectAll.setMinimumSize(new java.awt.Dimension(87, 23));
         jButtonSelectAll.setPreferredSize(new java.awt.Dimension(86, 23));
@@ -298,6 +299,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         });
 
         jButtonDeselectAll.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.jButtonDeselectAll.text")); // NOI18N
+        jButtonDeselectAll.setMargin(new java.awt.Insets(2, 8, 2, 8));
         jButtonDeselectAll.setPreferredSize(new java.awt.Dimension(86, 23));
         jButtonDeselectAll.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -306,6 +308,7 @@ public final class IngestJobSettingsPanel extends javax.swing.JPanel {
         });
 
         pastJobsButton.setText(org.openide.util.NbBundle.getMessage(IngestJobSettingsPanel.class, "IngestJobSettingsPanel.pastJobsButton.text")); // NOI18N
+        pastJobsButton.setMargin(new java.awt.Insets(2, 8, 2, 8));
         pastJobsButton.setMaximumSize(new java.awt.Dimension(87, 23));
         pastJobsButton.setMinimumSize(new java.awt.Dimension(87, 23));
         pastJobsButton.setPreferredSize(new java.awt.Dimension(87, 23));
