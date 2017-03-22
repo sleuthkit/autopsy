@@ -37,6 +37,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JToggleButton;
 import org.openide.util.Lookup;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.datasourceprocessors.RawDSProcessor;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -49,6 +50,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());
     private String selectedDsp;
+    private int indexOfLocalDiskDSP = -1;
 
     /**
      * Creates new form SelectDataSourceProcessorPanel
@@ -87,6 +89,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         return selectedDsp;
     }
 
+    @NbBundle.Messages("AddImageWizardSelectDspVisual.multiUserWarning.text=This type of Data Source Processor is not available in multi-user mode")
     /**
      * Create the a button for each DataSourceProcessor that should exist as an
      * option.
@@ -108,8 +111,10 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         constraints.gridy = 0;
         constraints.weighty = 0;
         constraints.anchor = GridBagConstraints.LINE_START;
+        boolean isMultiUserCase = Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE;
         Dimension spacerBlockDimension = new Dimension(6, 4); // Space between left edge and button, Space between rows 
         for (String dspType : dspList) {
+            boolean shouldAddMultiUserWarning = false;
             constraints.weightx = 1;
             //Add a spacer
             Filler spacer = new Filler(spacerBlockDimension, spacerBlockDimension, spacerBlockDimension);
@@ -120,6 +125,11 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             //Add the button
             JToggleButton dspButton = createDspButton(dspType);
             dspButton.addActionListener(cbActionListener);
+            if (isMultiUserCase && dspList.indexOf(dspType) == indexOfLocalDiskDSP) {
+                dspButton.setEnabled(false); //disable the button for local disk DSP when this is a multi user case
+                dspButton.setSelected(false);
+                shouldAddMultiUserWarning = true;
+            }
             jPanel1.add(dspButton);
             buttonGroup1.add(dspButton);
             gridBagLayout.setConstraints(dspButton, constraints);
@@ -130,7 +140,15 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             jPanel1.add(buttonTextSpacer);
             constraints.gridx++;
             //Add the text area serving as a label to the right of the button
-            JTextArea myLabel = new JTextArea(dspType);
+     
+            JTextArea myLabel = new JTextArea();  
+            if (shouldAddMultiUserWarning) {
+                myLabel.setText(dspType + " - " + NbBundle.getMessage(this.getClass(), "AddImageWizardSelectDspVisual.multiUserWarning.text"));
+                myLabel.setEnabled(false);  //gray out the text
+            }
+            else {
+                myLabel.setText(dspType);
+            }
             myLabel.setBackground(new Color(240, 240, 240));//matches background of panel
             myLabel.setEditable(false);
             myLabel.setWrapStyleWord(true);
@@ -169,12 +187,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             }
         }
         dspList.add(ImageDSProcessor.getType());
-        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
-            dspList.add(LocalDiskDSProcessor.getType());
-        } else {
-            // remove LocalDiskDSProcessor from list of DSPs
-            datasourceProcessorsMap.remove(LocalDiskDSProcessor.getType());
-        }
+        dspList.add(LocalDiskDSProcessor.getType());
         dspList.add(LocalFilesDSProcessor.getType());
         dspList.add(RawDSProcessor.getType());
         // now add any addtional DSPs that haven't already been added
@@ -183,6 +196,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
                 dspList.add(dspType);
             }
         }
+        indexOfLocalDiskDSP = dspList.indexOf(LocalDiskDSProcessor.getType());
         return dspList;
     }
 
