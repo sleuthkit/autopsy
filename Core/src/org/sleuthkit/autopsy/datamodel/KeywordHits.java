@@ -139,11 +139,21 @@ public class KeywordHits implements AutopsyVisitableItem {
                         }
 
                         Map<String, Set<Long>> listMap = listsMap.get(listName);
-                        if (listMap.containsKey(word) == false) {
-                            listMap.put(word, new HashSet<Long>());
-                        }
+                        if (reg == null) {
+                            // litteral search result, use keyword as display name
+                            if (listMap.containsKey(word) == false) {
+                                listMap.put(word, new HashSet<Long>());
+                            }
 
-                        listMap.get(word).add(id);
+                            listMap.get(word).add(id);
+                        } else {
+                            // regular expression or substring search result, use regular expression as display name.
+                            // this way all hits for the regular expression or substring will be grouped together. 
+                            if (listMap.containsKey(reg) == false) {
+                                listMap.put(reg, new HashSet<Long>());
+                            }
+                            listMap.get(reg).add(id);
+                        }
                     } // regular expression, single term
                     else if (reg != null) {
                         if (regexMap.containsKey(reg) == false) {
