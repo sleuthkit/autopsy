@@ -308,25 +308,26 @@ public class ImageUtils {
                  * Intercepting the image reading code for GIFs here allows us
                  * to rescale easily, but we lose animations.
                  */
-                try {
-                    return ScalrWrapper.resizeHighQuality(ImageIO.read(getBufferedReadContentStream(file)), iconSize, iconSize);
+                try (BufferedInputStream bufferedReadContentStream = getBufferedReadContentStream(file);) {
+                    final BufferedImage image = ImageIO.read(bufferedReadContentStream);
+                    if (image != null) {
+                        return ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
+                    }
                 } catch (IOException iOException) {
                     LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), iOException); //NON-NLS
-                    return DEFAULT_THUMBNAIL;
                 }
-            } else {
-                Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
-                thumbnailTask.run();
-                try {
-                    return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), ex); //NON-NLS
-                    return DEFAULT_THUMBNAIL;
-                }
+                return DEFAULT_THUMBNAIL;
             }
-        } else {
-            return DEFAULT_THUMBNAIL;
+
+            Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
+            thumbnailTask.run();
+            try {
+                return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
+            } catch (InterruptedException | ExecutionException ex) {
+                LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), ex); //NON-NLS
+            }
         }
+        return DEFAULT_THUMBNAIL;
     }
 
     /**
@@ -567,33 +568,30 @@ public class ImageUtils {
      * @see #getImageHeight(org.sleuthkit.datamodel.AbstractFile)
      */
     private static <T> T getImageProperty(AbstractFile file, final String errorTemplate, PropertyExtractor<T> propertyExtractor) throws IOException {
-        try (InputStream inputStream = getBufferedReadContentStream(file);) {
-            try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
-                if (input == null) {
-                    IIOException iioException = new IIOException("Could not create ImageInputStream.");
-                    LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
-                    throw iioException;
+        try (InputStream inputStream = getBufferedReadContentStream(file);
+                ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
+            if (input == null) {
+                IIOException iioException = new IIOException("Could not create ImageInputStream.");
+                LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
+                throw iioException;
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+            if (readers.hasNext()) {
+                ImageReader reader = readers.next();
+                reader.setInput(input);
+                try {
+                    return propertyExtractor.extract(reader);
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, errorTemplate + ex.toString(), getContentPathSafe(file));
+                    throw ex;
+                } finally {
+                    reader.dispose();
                 }
-                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-
-                if (readers.hasNext()) {
-                    ImageReader reader = readers.next();
-                    reader.setInput(input);
-                    try {
-
-                        return propertyExtractor.extract(reader);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.WARNING, errorTemplate + ex.toString(), getContentPathSafe(file));
-                        throw ex;
-                    } finally {
-                        reader.dispose();
-                    }
-                } else {
-                    IIOException iioException = new IIOException("No ImageReader found.");
-                    LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
-
-                    throw iioException;
-                }
+            } else {
+                IIOException iioException = new IIOException("No ImageReader found.");
+                LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
+                throw iioException;
             }
         }
     }
