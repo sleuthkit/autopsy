@@ -402,7 +402,7 @@ public class Case {
     /**
      * Adds a subscriber to specific case events.
      *
-     * @param eventName  The event the subscriber is interested in.
+     * @param eventName The event the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
      */
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -412,7 +412,7 @@ public class Case {
     /**
      * Removes a subscriber to specific case events.
      *
-     * @param eventName  The event the subscriber is no longer interested in.
+     * @param eventName The event the subscriber is no longer interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to remove.
      */
     public static void removeEventSubscriber(String eventName, PropertyChangeListener subscriber) {
@@ -449,21 +449,19 @@ public class Case {
      * IMPORTANT: This method should not be called in the event dispatch thread
      * (EDT).
      *
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
+     * @param caseDir The full path of the case directory. The directory will be
+     * created if it doesn't already exist; if it exists, it is ASSUMED it was
+     * created by calling createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
-     * @param caseType        The type of case (single-user or multi-user).
+     * later by the user.
+     * @param caseNumber The case number, can be the empty string.
+     * @param examiner The examiner to associate with the case, can be the empty
+     * string.
+     * @param caseType The type of case (single-user or multi-user).
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     @Messages({
         "# {0} - exception message", "Case.exceptionMessage.wrapperMessage={0}"
@@ -503,9 +501,8 @@ public class Case {
      * @param caseMetadataFilePath The path of the case metadata (.aut) file.
      *
      * @throws CaseActionException if there is a problem opening the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     @Messages({
         "# {0} - exception message", "Case.openException.couldNotOpenCase=Could not open case: {0}",
@@ -568,7 +565,8 @@ public class Case {
      *
      * IMPORTANT: This method should not be called in the event dispatch thread
      * (EDT).
-     * @throws CaseActionException 
+     *
+     * @throws CaseActionException
      */
     @Messages({
         "# {0} - exception message", "Case.closeException.couldNotCloseCase=Error closing case: {0}",
@@ -607,9 +605,8 @@ public class Case {
      * (EDT).
      *
      * @throws CaseActionException if there is a problem deleting the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     public static void deleteCurrentCase() throws CaseActionException {
         synchronized (currentCaseWriteLock) {
@@ -629,14 +626,14 @@ public class Case {
      * @param metadata The metadata for the case to delete.
      *
      * @throws CaseActionException if there is a problem deleting the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     @Messages({
         "# {0} - exception message", "Case.deleteException.couldNotDeleteCase=Could not delete case: {0}",
         "Case.progressIndicatorTitle.deletingCase=Deleting Case",
         "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first",
+        "Case.progressMessage.checkingForOtherUser=Checking to see if another user has the case open...",
         "Case.progressMessage.deletingTextIndex=Deleting text index...",
         "Case.progressMessage.deletingCaseDatabase=Deleting case database...",
         "Case.exceptionMessage.cancelled=Cancelled by user"
@@ -672,7 +669,7 @@ public class Case {
                  * First, acquire an exclusive case directory lock. The case
                  * cannot be deleted if another node has it open.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_checkingForOtherUser());
                 try (CoordinationService.Lock dirLock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
                     assert (null != dirLock);
 
@@ -777,7 +774,7 @@ public class Case {
     /**
      * Creates a case directory and its subdirectories.
      *
-     * @param caseDir  Path to the case directory (typically base + case name).
+     * @param caseDir Path to the case directory (typically base + case name).
      * @param caseType The type of case, single-user or multi-user.
      *
      * @throws CaseActionException throw if could not create the case dir
@@ -906,7 +903,7 @@ public class Case {
      * Deletes the case directory of a deleted case and removes the case form
      * the Recent Cases menu.
      *
-     * @param metadata          The case metadata.
+     * @param metadata The case metadata.
      * @param progressIndicator A progress indicator.
      */
     @Messages({
@@ -935,12 +932,12 @@ public class Case {
      * Acquires an exclusive case name lock.
      *
      * @param caseName The case name (not the case display name, which can be
-     *                 changed by a user).
+     * changed by a user).
      *
      * @return The lock.
      *
      * @throws CaseActionException with a user-friendly message if the lock
-     *                             cannot be acquired.
+     * cannot be acquired.
      */
     @Messages({"Case.creationException.couldNotAcquireNameLock=Failed to get lock on case name"})
     private static CoordinationService.Lock acquireExclusiveCaseNameLock(String caseName) throws CaseActionException {
@@ -960,12 +957,12 @@ public class Case {
      * Acquires an exclusive case resources lock.
      *
      * @param caseName The case name (not the case display name, which can be
-     *                 changed by a user).
+     * changed by a user).
      *
      * @return The lock.
      *
      * @throws CaseActionException with a user-friendly message if the lock
-     *                             cannot be acquired.
+     * cannot be acquired.
      */
     @Messages({"Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources"})
     private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseName) throws CaseActionException {
@@ -1319,7 +1316,7 @@ public class Case {
      * the case directory, creating it if it does not exist.
      *
      * @return The path to the module output directory, relative to the case
-     *         directory.
+     * directory.
      */
     public String getModuleOutputDirectoryRelativePath() {
         Path path = Paths.get(getModuleDirectory());
@@ -1336,8 +1333,7 @@ public class Case {
      * @return A list of data sources.
      *
      * @throws org.sleuthkit.datamodel.TskCoreException if there is a problem
-     *                                                  querying the case
-     *                                                  database.
+     * querying the case database.
      */
     public List<Content> getDataSources() throws TskCoreException {
         List<Content> list = caseDb.getRootObjects();
@@ -1410,8 +1406,8 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param eventId A unique identifier for the event. This UUID must be used
-     *                to call notifyFailedAddingDataSource or
-     *                notifyNewDataSource after the data source is added.
+     * to call notifyFailedAddingDataSource or notifyNewDataSource after the
+     * data source is added.
      */
     public void notifyAddingDataSource(UUID eventId) {
         eventPublisher.publish(new AddingDataSourceEvent(eventId));
@@ -1424,8 +1420,7 @@ public class Case {
      * This should not be called from the event dispatch thread (EDT)
      *
      * @param addingDataSourceEventId The unique identifier for the
-     *                                corresponding adding data source event
-     *                                (see notifyAddingDataSource).
+     * corresponding adding data source event (see notifyAddingDataSource).
      */
     public void notifyFailedAddingDataSource(UUID addingDataSourceEventId) {
         eventPublisher.publish(new AddingDataSourceFailedEvent(addingDataSourceEventId));
@@ -1437,10 +1432,9 @@ public class Case {
      *
      * This should not be called from the event dispatch thread (EDT)
      *
-     * @param dataSource              The data source.
+     * @param dataSource The data source.
      * @param addingDataSourceEventId The unique identifier for the
-     *                                corresponding adding data source event
-     *                                (see notifyAddingDataSource).
+     * corresponding adding data source event (see notifyAddingDataSource).
      */
     public void notifyDataSourceAdded(Content dataSource, UUID addingDataSourceEventId) {
         eventPublisher.publish(new DataSourceAddedEvent(dataSource, addingDataSourceEventId));
@@ -1493,13 +1487,13 @@ public class Case {
     /**
      * Adds a report to the case.
      *
-     * @param localPath     The path of the report file, must be in the case
-     *                      directory or one of its subdirectories.
+     * @param localPath The path of the report file, must be in the case
+     * directory or one of its subdirectories.
      * @param srcModuleName The name of the module that created the report.
-     * @param reportName    The report name, may be empty.
+     * @param reportName The report name, may be empty.
      *
      * @throws TskCoreException if there is a problem adding the report to the
-     *                          case database.
+     * case database.
      */
     public void addReport(String localPath, String srcModuleName, String reportName) throws TskCoreException {
         String normalizedLocalPath;
@@ -1519,7 +1513,7 @@ public class Case {
      * @return A collection of report objects.
      *
      * @throws TskCoreException if there is a problem querying the case
-     *                          database.
+     * database.
      */
     public List<Report> getAllReports() throws TskCoreException {
         return this.caseDb.getAllReports();
@@ -1553,9 +1547,9 @@ public class Case {
      * Updates the case display name name.
      *
      * @param oldCaseName The old case name.
-     * @param oldPath     The old path name.
+     * @param oldPath The old path name.
      * @param newCaseName The new case name.
-     * @param newPath     The new case path.
+     * @param newPath The new case path.
      */
     void updateCaseName(String oldCaseName, String oldPath, String newCaseName, String newPath) throws CaseActionException {
         try {
@@ -1583,28 +1577,26 @@ public class Case {
     }
 
     /**
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
+     * @param caseDir The full path of the case directory. The directory will be
+     * created if it doesn't already exist; if it exists, it is ASSUMED it was
+     * created by calling createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
-     * @param caseType        The type of case (single-user or multi-user).
+     * later by the user.
+     * @param caseNumber The case number, can be the empty string.
+     * @param examiner The examiner to associate with the case, can be the empty
+     * string.
+     * @param caseType The type of case (single-user or multi-user).
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     @Messages({
         "Case.exceptionMessage.illegalCaseName=Case name contains illegal characters.",
         "Case.progressIndicatorTitle.creatingCase=Creating Case",
         "Case.progressIndicatorCancelButton.label=Cancel",
         "Case.progressMessage.preparing=Preparing...",
-        "Case.progressMessage.acquiringLocks=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>"
+        "Case.progressMessage.openingCaseResources=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>"
     })
     private void open(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         /*
@@ -1652,7 +1644,7 @@ public class Case {
                  * First, acquire an exclusive case name lock to prevent two
                  * nodes from creating the same case at the same time.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_openingCaseResources());
                 try (CoordinationService.Lock nameLock = Case.acquireExclusiveCaseNameLock(caseName)) {
                     assert (null != nameLock);
                     /*
@@ -1718,21 +1710,19 @@ public class Case {
     /**
      * Creates and opens a new case.
      *
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
+     * @param caseDir The full path of the case directory. The directory will be
+     * created if it doesn't already exist; if it exists, it is ASSUMED it was
+     * created by calling createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
-     * @param caseType        The type of case (single-user or multi-user).
+     * later by the user.
+     * @param caseNumber The case number, can be the empty string.
+     * @param examiner The examiner to associate with the case, can be the empty
+     * string.
+     * @param caseType The type of case (single-user or multi-user).
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     @Messages({
         "Case.progressMessage.creatingCaseDirectory=Creating case directory...",
@@ -1819,9 +1809,8 @@ public class Case {
      * @param caseMetadataFilePath The apth to the case metadata file.
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     private void open(Path caseMetadataFilePath) throws CaseActionException {
         /*
@@ -1872,7 +1861,7 @@ public class Case {
                  * as long as this node has this case open, in order to prevent
                  * deletion of the case by another node.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_openingCaseResources());
                 acquireSharedCaseDirLock(caseMetadata.getCaseDirectory());
                 /*
                  * Next, acquire an exclusive case resources lock to ensure only
@@ -1934,9 +1923,8 @@ public class Case {
      * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException if there is a problem opening the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      */
     @Messages({
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
@@ -2131,6 +2119,7 @@ public class Case {
      * @param progressIndicator A progress indicator.
      */
     @Messages({
+        "Case.progressMessage.closingCaseResources=<html>Preparing to close case resources.<br>This may take time if another user is upgrading the case.</html>",
         "Case.progressMessage.notifyingCaseEventSubscribers=Notifying case event subscribers...",
         "Case.progressMessage.clearingTempDirectory=Clearing case temp directory...",
         "Case.progressMessage.closingCaseLevelServices=Closing case-level services...",
@@ -2139,7 +2128,6 @@ public class Case {
         "Case.progressMessage.closingCaseDatabase=Closing case database...",
         "Case.progressMessage.tearingDownTskErrorReporting=Tearing down SleuthKit error reporting..."
     })
-
     private void close() throws CaseActionException {
         /*
          * Set up either a GUI progress indicator or a logging progress
@@ -2172,7 +2160,7 @@ public class Case {
                  * node at a time can create/open/upgrade/close the case
                  * resources.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_closingCaseResources());
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseName())) {
                     assert (null != resourcesLock);
                     close(progressIndicator);
@@ -2332,7 +2320,7 @@ public class Case {
      * @param caseDir The full path of the case directory.
      *
      * @throws CaseActionException with a user-friendly message if the lock
-     *                             cannot be acquired.
+     * cannot be acquired.
      */
     @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory."})
     private void acquireSharedCaseDirLock(String caseDir) throws CaseActionException {
@@ -2425,7 +2413,7 @@ public class Case {
          * characters is encountered.
          *
          * @param message The exception message.
-         * @param cause   The exceptin cause.
+         * @param cause The exceptin cause.
          */
         IllegalCaseNameException(String message, Throwable cause) {
             super(message, cause);
@@ -2435,20 +2423,18 @@ public class Case {
     /**
      * Creates a new, single-user Autopsy case.
      *
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
+     * @param caseDir The full path of the case directory. The directory will be
+     * created if it doesn't already exist; if it exists, it is ASSUMED it was
+     * created by calling createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
+     * later by the user.
+     * @param caseNumber The case number, can be the empty string.
+     * @param examiner The examiner to associate with the case, can be the empty
+     * string.
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      * @deprecated Use createAsCurrentCase instead.
      */
     @Deprecated
@@ -2459,21 +2445,19 @@ public class Case {
     /**
      * Creates a new Autopsy case and makes it the current case.
      *
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
+     * @param caseDir The full path of the case directory. The directory will be
+     * created if it doesn't already exist; if it exists, it is ASSUMED it was
+     * created by calling createCaseDirectory.
      * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
-     * @param caseType        The type of case (single-user or multi-user).
+     * later by the user.
+     * @param caseNumber The case number, can be the empty string.
+     * @param examiner The examiner to associate with the case, can be the empty
+     * string.
+     * @param caseType The type of case (single-user or multi-user).
      *
      * @throws CaseActionException if there is a problem creating the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      * @deprecated Use createAsCurrentCase instead.
      */
     @Deprecated
@@ -2487,9 +2471,8 @@ public class Case {
      * @param caseMetadataFilePath The path of the case metadata (.aut) file.
      *
      * @throws CaseActionException if there is a problem opening the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      * @deprecated Use openAsCurrentCase instead.
      */
     @Deprecated
@@ -2501,9 +2484,8 @@ public class Case {
      * Closes this Autopsy case.
      *
      * @throws CaseActionException if there is a problem closing the case. The
-     *                             exception will have a user-friendly message
-     *                             and may be a wrapper for a lower-level
-     *                             exception.
+     * exception will have a user-friendly message and may be a wrapper for a
+     * lower-level exception.
      * @deprecated Use closeCurrentCase instead.
      */
     @Deprecated
@@ -2625,8 +2607,8 @@ public class Case {
      * Adds an image to the current case after it has been added to the DB.
      * Sends out event and reopens windows if needed.
      *
-     * @param imgPath  The path of the image file.
-     * @param imgId    The ID of the image.
+     * @param imgPath The path of the image file.
+     * @param imgId The ID of the image.
      * @param timeZone The time zone of the image.
      *
      * @return
@@ -2661,7 +2643,7 @@ public class Case {
     /**
      * Deletes reports from the case.
      *
-     * @param reports        Collection of Report to be deleted from the case.
+     * @param reports Collection of Report to be deleted from the case.
      * @param deleteFromDisk No longer supported - ignored.
      *
      * @throws TskCoreException
