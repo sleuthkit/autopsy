@@ -200,6 +200,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         casesToManifests = new HashMap<>();
         pendingJobs = new ArrayList<>();
         completedJobs = new ArrayList<>();
+        try {
+            RuntimeProperties.setRunningWithGUI(false);
+            SYS_LOGGER.log(Level.INFO, "Set running with desktop GUI runtime property to false");
+        } catch (RuntimeProperties.RuntimePropertiesException ex) {
+            SYS_LOGGER.log(Level.SEVERE, "Failed to set running with desktop GUI runtime property to false", ex);
+        }        
     }
 
     /**
@@ -229,13 +235,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
         jobStatusPublishingExecutor.scheduleAtFixedRate(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
         eventPublisher.addSubscriber(EVENT_LIST, instance);
-        try {
-            RuntimeProperties.setRunningWithGUI(false);
-            SYS_LOGGER.log(Level.INFO, "Set running with desktop GUI runtime property to false");
-        } catch (RuntimeProperties.RuntimePropertiesException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Failed to set running with desktop GUI runtime property to false", ex);
-            throw new AutoIngestManagerStartupException("Failed to set running with desktop GUI runtime property to false", ex);
-        }
         state = State.RUNNING;
         errorState = ErrorState.NONE;
     }

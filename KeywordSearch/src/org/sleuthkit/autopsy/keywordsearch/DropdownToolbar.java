@@ -132,7 +132,7 @@ class DropdownToolbar extends javax.swing.JPanel {
     }
 
     private void maybeShowListsPopup(MouseEvent evt) {
-        if (!active) {
+        if (!active || !listsButton.isEnabled()) {
             return;
         }
         if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
@@ -142,7 +142,7 @@ class DropdownToolbar extends javax.swing.JPanel {
     }
 
     private void maybeShowSearchPopup(MouseEvent evt) {
-        if (!active) {
+        if (!active || !searchDropButton.isEnabled()) {
             return;
         }
         if (evt != null && !SwingUtilities.isLeftMouseButton(evt)) {
