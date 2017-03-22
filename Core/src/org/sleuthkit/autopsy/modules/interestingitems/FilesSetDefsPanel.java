@@ -54,7 +54,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
     @NbBundle.Messages({"# {0} - filter name",
         "# {1} - profile name",
-        "FilesSetDefsPanel.ingest.fileFilterInUseError=The selected file filter, {0}, is being used by a profile, {1}, and cannot be deleted until after the profile.",
+        "FilesSetDefsPanel.ingest.fileFilterInUseError=The selected file filter, {0}, is being used by a profile, {1}, and cannot be deleted while any profile uses it.",
         "FilesSetDefsPanel.bytes=Bytes",
         "FilesSetDefsPanel.kiloBytes=Kilobytes",
         "FilesSetDefsPanel.megaBytes=Megabytes",
@@ -667,9 +667,8 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         setDescriptionTextArea.setColumns(20);
         setDescriptionTextArea.setFont(setDescriptionTextArea.getFont().deriveFont(setDescriptionTextArea.getFont().getStyle() & ~java.awt.Font.BOLD, 13));
         setDescriptionTextArea.setLineWrap(true);
-        setDescriptionTextArea.setRows(2);
+        setDescriptionTextArea.setRows(10);
         setDescriptionTextArea.setMinimumSize(new java.awt.Dimension(10, 22));
-        setDescriptionTextArea.setPreferredSize(new java.awt.Dimension(14, 40));
         setDescScrollPanel.setViewportView(setDescriptionTextArea);
 
         editSetButton.setFont(editSetButton.getFont().deriveFont(editSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));

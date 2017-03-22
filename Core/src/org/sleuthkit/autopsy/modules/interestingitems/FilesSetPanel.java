@@ -29,9 +29,10 @@ import org.sleuthkit.autopsy.modules.interestingitems.FilesSetDefsPanel.PANEL_TY
  */
 public class FilesSetPanel extends javax.swing.JPanel {
 
-    @NbBundle.Messages({"FilesSetPanel.ingest.title=File Ingest Filter", "FilesSetPanel.ingest.createNewFilter=Create/edit file ingest filter(s)..."})
+    @NbBundle.Messages({"FilesSetPanel.ingest.title=File Ingest Filter", "FilesSetPanel.ingest.createNewFilter=Create/edit file ingest filter(s)...", "FilesSetPanel.ingest.messages.filtersMustBeNamed=File ingest filters must be named."})
 
     private static final String CREATE_NEW_FILE_INGEST_FILTER = Bundle.FilesSetPanel_ingest_createNewFilter();
+    private final String mustBeNamedErrorText;
 
     /**
      * @return the CREATE_NEW_FILE_INGEST_FILTER
@@ -47,8 +48,10 @@ public class FilesSetPanel extends javax.swing.JPanel {
         initComponents();
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
             ignoreKnownFilesCheckbox.setVisible(false);
+            mustBeNamedErrorText = NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ingest.messages.filtersMustBeNamed");
             org.openide.awt.Mnemonics.setLocalizedText(nameLabel, org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ingest.nameLabel.text")); // NOI18N
         } else {
+            mustBeNamedErrorText = NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.interesting.messages.filesSetsMustBeNamed");
             ignoreUnallocCheckbox.setVisible(false);
         }
     }
@@ -62,8 +65,10 @@ public class FilesSetPanel extends javax.swing.JPanel {
         initComponents();
         if (panelType == PANEL_TYPE.FILE_INGEST_FILTERS) {
             ignoreKnownFilesCheckbox.setVisible(false);
+            mustBeNamedErrorText = NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.ingest.messages.filtersMustBeNamed");
         } else {
             ignoreUnallocCheckbox.setVisible(false);
+            mustBeNamedErrorText = NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.interesting.messages.filesSetsMustBeNamed");
         }
         this.nameTextField.setText(filesSet.getName());
         this.descTextArea.setText(filesSet.getDescription());
@@ -81,7 +86,7 @@ public class FilesSetPanel extends javax.swing.JPanel {
     boolean isValidDefinition() {
         if (this.nameTextField.getText().isEmpty()) {
             NotifyDescriptor notifyDesc = new NotifyDescriptor.Message(
-                    NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.messages.filesSetsMustBeNamed"),
+                    mustBeNamedErrorText,
                     NotifyDescriptor.WARNING_MESSAGE);
             DialogDisplayer.getDefault().notify(notifyDesc);
             return false;
@@ -167,7 +172,9 @@ public class FilesSetPanel extends javax.swing.JPanel {
         descPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(org.openide.util.NbBundle.getMessage(FilesSetPanel.class, "FilesSetPanel.descPanel.border.title"))); // NOI18N
 
         descTextArea.setColumns(20);
+        descTextArea.setLineWrap(true);
         descTextArea.setRows(5);
+        descTextArea.setWrapStyleWord(true);
         descScrollPanel.setViewportView(descTextArea);
 
         javax.swing.GroupLayout descPanelLayout = new javax.swing.GroupLayout(descPanel);

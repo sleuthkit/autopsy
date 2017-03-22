@@ -437,12 +437,9 @@
                       </FontInfo>
                     </Property>
                     <Property name="lineWrap" type="boolean" value="true"/>
-                    <Property name="rows" type="int" value="2"/>
+                    <Property name="rows" type="int" value="10"/>
                     <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
                       <Dimension value="[10, 22]"/>
-                    </Property>
-                    <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-                      <Dimension value="[14, 40]"/>
                     </Property>
                   </Properties>
                 </Component>

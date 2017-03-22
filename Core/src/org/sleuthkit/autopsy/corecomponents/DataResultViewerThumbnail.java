@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -74,7 +74,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
      * Creates a DataResultViewerThumbnail object that is compatible with node
      * multiple selection actions.
      */
-    public DataResultViewerThumbnail(ExplorerManager explorerManager) {
+    DataResultViewerThumbnail(ExplorerManager explorerManager) {
         super(explorerManager);
         initialize();
     }
@@ -83,13 +83,13 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
      * Creates a DataResultViewerThumbnail object that is NOT compatible with
      * node multiple selection actions.
      */
-    public DataResultViewerThumbnail() {
+    DataResultViewerThumbnail() {
         initialize();
     }
 
     @NbBundle.Messages({"DataResultViewerThumbnail.thumbnailSizeComboBox.small=Small Thumbnails",
-                "DataResultViewerThumbnail.thumbnailSizeComboBox.medium=Medium Thumbnails",
-                "DataResultViewerThumbnail.thumbnailSizeComboBox.large=Large Thumbnails"
+        "DataResultViewerThumbnail.thumbnailSizeComboBox.medium=Medium Thumbnails",
+        "DataResultViewerThumbnail.thumbnailSizeComboBox.large=Large Thumbnails"
     })
     private void initialize() {
         initComponents();
@@ -97,10 +97,10 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         em.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
         thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
-                new String[] {  Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
-                                Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
-                                Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large() }));
-
+                new String[]{Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_small(),
+                    Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_medium(),
+                    Bundle.DataResultViewerThumbnail_thumbnailSizeComboBox_large()}));
+        thumbnailSizeComboBox.setSelectedIndex(1);
         curPage = -1;
         totalPages = 0;
         curPageImages = 0;
@@ -249,35 +249,41 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }//GEN-LAST:event_goToPageFieldActionPerformed
 
     private void thumbnailSizeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_thumbnailSizeComboBoxActionPerformed
-
-        iconSize = ImageUtils.ICON_SIZE_MEDIUM;   //default size
+        int newIconSize;
         switch (thumbnailSizeComboBox.getSelectedIndex()) {
             case 0:
-                iconSize = ImageUtils.ICON_SIZE_SMALL;
+                newIconSize = ImageUtils.ICON_SIZE_SMALL;
                 break;
             case 2:
-                iconSize = ImageUtils.ICON_SIZE_LARGE;
+                newIconSize = ImageUtils.ICON_SIZE_LARGE;
+                break;
+            case 1:
+            default:
+                newIconSize = ImageUtils.ICON_SIZE_MEDIUM;   //default size
                 break;
         }
 
-        Node root = em.getRootContext();
-        for (Children c : Arrays.asList(root.getChildren())) {
-            ((ThumbnailViewChildren) c).setIconSize(iconSize);
-        }
-
-        for (Node page : root.getChildren().getNodes()) {
-            for (Node node : page.getChildren().getNodes()) {
-                ((ThumbnailViewNode) node).setIconSize(iconSize);
+        if (iconSize != newIconSize) {
+            iconSize = newIconSize;
+            Node root = em.getRootContext();
+            for (Children c : Arrays.asList(root.getChildren())) {
+                ((ThumbnailViewChildren) c).setIconSize(iconSize);
             }
-        }
 
-        // Temporarily set the explored context to the root, instead of a child node.
-        // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
-        // update even though the new and old Node values are identical. This in turn
-        // will cause the entire view to update completely. After this we 
-        // immediately set the node back to the current child by calling switchPage().        
-        em.setExploredContext(root);
-        switchPage();
+            for (Node page : root.getChildren().getNodes()) {
+                for (Node node : page.getChildren().getNodes()) {
+                    ((ThumbnailViewNode) node).setIconSize(iconSize);
+                }
+            }
+
+            // Temporarily set the explored context to the root, instead of a child node.
+            // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
+            // update even though the new and old Node values are identical. This in turn
+            // will cause the entire view to update completely. After this we 
+            // immediately set the node back to the current child by calling switchPage().        
+            em.setExploredContext(root);
+            switchPage();
+        }
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
