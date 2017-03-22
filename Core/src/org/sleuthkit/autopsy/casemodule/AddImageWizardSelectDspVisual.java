@@ -51,6 +51,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());
     private String selectedDsp;
     private int indexOfLocalDiskDSP = -1;
+    boolean isMultiUserCase;
 
     /**
      * Creates new form SelectDataSourceProcessorPanel
@@ -58,8 +59,12 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     AddImageWizardSelectDspVisual(String lastDspUsed) {
         initComponents();
         selectedDsp = lastDspUsed;
+        isMultiUserCase = Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE;
+        //if the last selected DSP was the Local Disk DSP and it would be disabled then we want to select a different DSP
+        if (isMultiUserCase && selectedDsp.equals(LocalDiskDSProcessor.getType())) {
+            selectedDsp = ImageDSProcessor.getType();
+        }
         createDataSourceProcessorButtons();
-
         //add actionlistner to listen for change
     }
 
@@ -111,7 +116,6 @@ final class AddImageWizardSelectDspVisual extends JPanel {
         constraints.gridy = 0;
         constraints.weighty = 0;
         constraints.anchor = GridBagConstraints.LINE_START;
-        boolean isMultiUserCase = Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE;
         Dimension spacerBlockDimension = new Dimension(6, 4); // Space between left edge and button, Space between rows 
         for (String dspType : dspList) {
             boolean shouldAddMultiUserWarning = false;
@@ -140,13 +144,12 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             jPanel1.add(buttonTextSpacer);
             constraints.gridx++;
             //Add the text area serving as a label to the right of the button
-     
-            JTextArea myLabel = new JTextArea();  
+
+            JTextArea myLabel = new JTextArea();
             if (shouldAddMultiUserWarning) {
                 myLabel.setText(dspType + " - " + NbBundle.getMessage(this.getClass(), "AddImageWizardSelectDspVisual.multiUserWarning.text"));
                 myLabel.setEnabled(false);  //gray out the text
-            }
-            else {
+            } else {
                 myLabel.setText(dspType);
             }
             myLabel.setBackground(new Color(240, 240, 240));//matches background of panel
