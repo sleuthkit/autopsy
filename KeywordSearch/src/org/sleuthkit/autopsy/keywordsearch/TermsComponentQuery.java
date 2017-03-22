@@ -281,7 +281,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
          * Do a term query for each term that matched the regex.
          */
         QueryResults results = new QueryResults(this);
-        Set<KeywordHit> termHits = new HashSet<>(); // ELDEBUG
         for (Term term : terms) {
             /*
              * If searching for credit card account numbers, do a Luhn check on
@@ -310,15 +309,12 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             LuceneQuery termQuery = new LuceneQuery(keywordList, new Keyword(escapedTerm, true));
             filters.forEach(termQuery::addFilter); // This appears to be unused
             QueryResults termQueryResult = termQuery.performQuery();
-            // ELDEBUG Set<KeywordHit> termHits = new HashSet<>();
+            Set<KeywordHit> termHits = new HashSet<>();
             for (Keyword word : termQueryResult.getKeywords()) {
                 termHits.addAll(termQueryResult.getResults(word));
             }
-            // ELDEBUG
-//            results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(termHits));
+            results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(termHits));
         }
-        // ELDEBUG
-        results.addResult(new Keyword(originalKeyword.getSearchTerm(), false), new ArrayList<>(termHits));
         return results;
     }
 
@@ -352,8 +348,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
             
-            // add original substring search keyword 
-            //attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
             try {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
