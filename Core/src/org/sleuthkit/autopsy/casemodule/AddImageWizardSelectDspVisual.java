@@ -50,8 +50,6 @@ final class AddImageWizardSelectDspVisual extends JPanel {
 
     private static final Logger logger = Logger.getLogger(AddImageWizardSelectDspVisual.class.getName());
     private String selectedDsp;
-    private int indexOfLocalDiskDSP = -1;
-    boolean isMultiUserCase;
 
     /**
      * Creates new form SelectDataSourceProcessorPanel
@@ -59,9 +57,8 @@ final class AddImageWizardSelectDspVisual extends JPanel {
     AddImageWizardSelectDspVisual(String lastDspUsed) {
         initComponents();
         selectedDsp = lastDspUsed;
-        isMultiUserCase = Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE;
         //if the last selected DSP was the Local Disk DSP and it would be disabled then we want to select a different DSP
-        if (isMultiUserCase && selectedDsp.equals(LocalDiskDSProcessor.getType())) {
+        if ((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) && selectedDsp.equals(LocalDiskDSProcessor.getType())) {
             selectedDsp = ImageDSProcessor.getType();
         }
         createDataSourceProcessorButtons();
@@ -129,7 +126,7 @@ final class AddImageWizardSelectDspVisual extends JPanel {
             //Add the button
             JToggleButton dspButton = createDspButton(dspType);
             dspButton.addActionListener(cbActionListener);
-            if (isMultiUserCase && dspList.indexOf(dspType) == indexOfLocalDiskDSP) {
+            if ((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) && dspType.equals(LocalDiskDSProcessor.getType())){
                 dspButton.setEnabled(false); //disable the button for local disk DSP when this is a multi user case
                 dspButton.setSelected(false);
                 shouldAddMultiUserWarning = true;
@@ -199,7 +196,6 @@ final class AddImageWizardSelectDspVisual extends JPanel {
                 dspList.add(dspType);
             }
         }
-        indexOfLocalDiskDSP = dspList.indexOf(LocalDiskDSProcessor.getType());
         return dspList;
     }
 
