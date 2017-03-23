@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 
@@ -45,12 +46,18 @@ final class PathUtils {
      * @return The path of the case folder, or null if it is not found.
      */
     static Path findCaseDirectory(Path folderToSearch, String caseName) {
+        String sanitizedCaseName;
+        try {
+            sanitizedCaseName = Case.displayNameToCaseName(caseName);
+        } catch (Case.IllegalCaseNameException unused) {
+            return null;
+        }
         File searchFolder = new File(folderToSearch.toString());
         if (!searchFolder.isDirectory()) {
             return null;
         }
         Path caseFolderPath = null;
-        String[] candidateFolders = searchFolder.list(new CaseFolderFilter(caseName));
+        String[] candidateFolders = searchFolder.list(new CaseFolderFilter(sanitizedCaseName));
         long mostRecentModified = 0;
         for (String candidateFolder : candidateFolders) {
             File file = new File(candidateFolder);
