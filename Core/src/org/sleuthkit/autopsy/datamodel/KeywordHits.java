@@ -64,7 +64,8 @@ public class KeywordHits implements AutopsyVisitableItem {
     public static final String SIMPLE_REGEX_SEARCH = NbBundle
             .getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
     private final KeywordResults keywordResults;
-
+    private final String DUMMY_INSTANCE = "DUMMY_EXACT_MATCH_INSTANCE";
+    
     public KeywordHits(SleuthkitCase skCase) {
         this.skCase = skCase;
         keywordResults = new KeywordResults();
@@ -72,9 +73,9 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private final class KeywordResults extends Observable {
 
-        // Map from listName/Type to Map of keyword to set of artifact Ids
+        // Map from listName/Type to Map of keywords/regexp to Map of instance terms to Set of artifact Ids
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
-        private final Map<String, Map<String, Set<Long>>> topLevelMap = new LinkedHashMap<>();
+        private final Map<String, Map<String, Map<String, Set<Long>>>> topLevelMap = new LinkedHashMap<>();
 
         KeywordResults() {
             update();
@@ -98,26 +99,66 @@ public class KeywordHits implements AutopsyVisitableItem {
             Collections.sort(keywords);
             return keywords;
         }
-
-        Set<Long> getArtifactIds(String listName, String keyword) {
+        
+        List<String> getKeywordInstances(String listName, String keyword) {
+            List<String> instances;
             synchronized (topLevelMap) {
-                return topLevelMap.get(listName).get(keyword);
+                instances = new ArrayList<>(topLevelMap.get(listName).get(keyword).keySet());
+            }
+            Collections.sort(instances);
+            return instances;
+        }
+
+        Set<Long> getArtifactIds(String listName, String keyword, String keywordInstance) {
+            synchronized (topLevelMap) {
+                return topLevelMap.get(listName).get(keyword).get(keywordInstance);
             }
         }
 
+        void addRegExpToList(Map<String, Map<String, Set<Long>>> listMap, String regExp, String word, Long id) {
+            if (listMap.containsKey(regExp) == false) {
+                listMap.put(regExp, new LinkedHashMap<>());
+            }
+            Map<String, Set<Long>> instanceMap = listMap.get(regExp);
+
+            // get or create keyword instances entry. 
+            if (instanceMap.containsKey(word) == false) {
+                instanceMap.put(word, new HashSet<>());
+            }
+
+            // add this ID to the instance
+            instanceMap.get(word).add(id);
+        }
+        
+        void addExactMatchToList(Map<String, Map<String, Set<Long>>> listMap, String word, Long id) {
+            if (listMap.containsKey(word) == false) {
+                listMap.put(word, new LinkedHashMap<>());
+            }
+            Map<String, Set<Long>> instanceMap = listMap.get(word);
+
+            // get or create keyword instances entry. 
+            // for exact match, use a dummy instance
+            if (instanceMap.containsKey(DUMMY_INSTANCE) == false) {
+                instanceMap.put(DUMMY_INSTANCE, new HashSet<>());
+            }
+
+            // add this ID to the instance
+            instanceMap.get(DUMMY_INSTANCE).add(id);
+        }
+        
         // populate maps based on artifactIds
         void populateMaps(Map<Long, Map<Long, String>> artifactIds) {
             synchronized (topLevelMap) {
                 topLevelMap.clear();
 
                 // map of list name to keword to artifact IDs
-                Map<String, Map<String, Set<Long>>> listsMap = new LinkedHashMap<>();
+                Map<String, Map<String, Map<String, Set<Long>>>> listsMap = new LinkedHashMap<>();
 
-                // Map from from literal keyword to artifact IDs
-                Map<String, Set<Long>> literalMap = new LinkedHashMap<>();
+                // Map from from literal keyword to instances (which will be empty) to artifact IDs
+                Map<String, Map<String, Set<Long>>> literalMap = new LinkedHashMap<>();
 
-                // Map from regex keyword artifact IDs
-                Map<String, Set<Long>> regexMap = new LinkedHashMap<>();
+                // Map from regex keyword artifact to instances to artifact IDs
+                Map<String, Map<String, Set<Long>>> regexMap = new LinkedHashMap<>();
 
                 // top-level nodes
                 topLevelMap.put(SIMPLE_LITERAL_SEARCH, literalMap);
@@ -134,31 +175,26 @@ public class KeywordHits implements AutopsyVisitableItem {
 
                     // part of a list
                     if (listName != null) {
+                        // get or create list entry
                         if (listsMap.containsKey(listName) == false) {
-                            listsMap.put(listName, new LinkedHashMap<String, Set<Long>>());
+                            listsMap.put(listName, new LinkedHashMap<>());
                         }
-
-                        Map<String, Set<Long>> listMap = listsMap.get(listName);
-                        if (listMap.containsKey(word) == false) {
-                            listMap.put(word, new HashSet<Long>());
+                        Map<String, Map<String, Set<Long>>> listMap = listsMap.get(listName);
+                        
+                        if (reg != null) {
+                            addRegExpToList(listMap, reg, word, id);
+                        } else {
+                            addExactMatchToList(listMap, word, id);
                         }
-
-                        listMap.get(word).add(id);
                     } // regular expression, single term
                     else if (reg != null) {
-                        if (regexMap.containsKey(reg) == false) {
-                            regexMap.put(reg, new HashSet<Long>());
-                        }
-                        regexMap.get(reg).add(id);
+                        addRegExpToList(regexMap, reg, word, id);
                     } // literal, single term
                     else {
-                        if (literalMap.containsKey(word) == false) {
-                            literalMap.put(word, new HashSet<Long>());
-                        }
-                        literalMap.get(word).add(id);
-                    }
-                    topLevelMap.putAll(listsMap);
+                        addExactMatchToList(literalMap, word, id);
+                    }   
                 }
+                topLevelMap.putAll(listsMap);
             }
             
             setChanged();
@@ -360,8 +396,10 @@ public class KeywordHits implements AutopsyVisitableItem {
         private void updateDisplayName() {
             int totalDescendants = 0;
             for (String word : keywordResults.getKeywords(listName)) {
-                Set<Long> ids = keywordResults.getArtifactIds(listName, word);
-                totalDescendants += ids.size();
+                for (String instance : keywordResults.getKeywordInstances(listName, word)) {
+                    Set<Long> ids = keywordResults.getArtifactIds(listName, word, instance);
+                    totalDescendants += ids.size();
+                }
             }
             super.setDisplayName(listName + " (" + totalDescendants + ")");
         }
@@ -451,7 +489,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String keyword;
 
         public TermNode(String setName, String keyword) {
-            super(Children.create(new HitsFactory(setName, keyword), true), Lookups.singleton(keyword));
+            super(Children.create(new InstancesFactory(setName, keyword), true), Lookups.singleton(keyword));
             super.setName(keyword);
             this.setName = setName;
             this.keyword = keyword;
@@ -461,7 +499,183 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            super.setDisplayName(keyword + " (" + keywordResults.getArtifactIds(setName, keyword).size() + ")");
+            int totalDescendants = 0;
+            
+            for (String instance : keywordResults.getKeywordInstances(setName, keyword)) {
+                Set<Long> ids = keywordResults.getArtifactIds(setName, keyword, instance);
+                totalDescendants += ids.size();
+            }
+            
+            super.setDisplayName(keyword + " (" + totalDescendants + ")");
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
+
+        @Override
+        public boolean isLeafTypeNode() {
+            List<String> instances = keywordResults.getKeywordInstances(setName, keyword);
+            // is this an exact match
+            // TODO: Enable this again, maybe?
+            /*
+            if (instances.size() == 1 && instances.get(0).equals(DUMMY_INSTANCE)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+*/
+
+            return false;
+        }
+
+        @Override
+        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+            return v.visit(this);
+        }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet s = super.createSheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
+                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
+                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
+                    getDisplayName()));
+
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
+                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
+                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
+                    keywordResults.getKeywordInstances(setName, keyword).size()));
+
+            return s;
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
+    }
+
+    public class InstancesFactory extends ChildFactory.Detachable<String> implements Observer {
+        private final String keyword;
+        private final String setName;
+
+        public InstancesFactory(String setName, String keyword) {
+            super();
+            this.setName = setName;
+            this.keyword = keyword;
+        }
+
+        @Override
+        protected void addNotify() {
+            keywordResults.addObserver(this);
+        }
+
+        @Override
+        protected void removeNotify() {
+            keywordResults.deleteObserver(this);
+        }
+
+        @Override
+        protected boolean createKeys(List<String> list) {
+            list.addAll(keywordResults.getKeywordInstances(setName, keyword));
+            return true;
+        }
+
+        @Override
+        protected Node createNodeForKey(String key) {
+            // 
+            if (key.equals(DUMMY_INSTANCE)) {
+                // COPY AND PASTED from below, make single method in future
+                if (skCase == null) {
+                    return null;
+                }
+
+                Set<Long> artifactIds = keywordResults.getArtifactIds(setName, keyword, keyword);
+                Long artifactId = (Long)artifactIds.toArray()[0];
+                try {
+                    BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
+                    BlackboardArtifactNode n = new BlackboardArtifactNode(art);
+                    AbstractFile file;
+                    try {
+                        file = skCase.getAbstractFileById(art.getObjectID());
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren"); //NON-NLS
+                        return n;
+                    }
+
+                    // It is possible to get a keyword hit on artifacts generated
+                    // for the underlying image in which case MAC times are not
+                    // available/applicable/useful.
+                    if (file == null) {
+                        return n;
+                    }
+
+                    n.addNodeProperty(new NodeProperty<>(
+                            NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.modTime.name"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "KeywordHits.createNodeForKey.modTime.displayName"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "KeywordHits.createNodeForKey.modTime.desc"),
+                            ContentUtils.getStringTime(file.getMtime(), file)));
+                    n.addNodeProperty(new NodeProperty<>(
+                            NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.accessTime.name"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "KeywordHits.createNodeForKey.accessTime.displayName"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "KeywordHits.createNodeForKey.accessTime.desc"),
+                            ContentUtils.getStringTime(file.getAtime(), file)));
+                    n.addNodeProperty(new NodeProperty<>(
+                            NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.chgTime.name"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "KeywordHits.createNodeForKey.chgTime.displayName"),
+                            NbBundle.getMessage(this.getClass(),
+                                    "KeywordHits.createNodeForKey.chgTime.desc"),
+                            ContentUtils.getStringTime(file.getCtime(), file)));
+                    return n;
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
+                }
+                return null;
+            }
+            return new InstanceNode(setName, keyword, key);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
+        }
+        
+    }
+    
+    public class InstanceNode extends DisplayableItemNode implements Observer {
+
+        private final String setName;
+        private final String keyword;
+        private final String instance;
+
+        public InstanceNode(String setName, String keyword, String instance) {
+            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(keyword));
+            super.setName(keyword);
+            this.setName = setName;
+            this.keyword = keyword;
+            this.instance = instance;
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
+            updateDisplayName();
+            keywordResults.addObserver(this);
+        }
+
+        private void updateDisplayName() {
+            int totalDescendants = keywordResults.getArtifactIds(setName, keyword, instance).size();
+            super.setDisplayName(keyword + " (" + totalDescendants + ")");
         }
 
         @Override
@@ -496,7 +710,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
-                    keywordResults.getArtifactIds(setName, keyword).size()));
+                    keywordResults.getKeywordInstances(setName, keyword).size()));
 
             return s;
         }
@@ -507,15 +721,18 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    
     public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {
 
         private final String keyword;
         private final String setName;
+        private final String instance;
 
-        public HitsFactory(String setName, String keyword) {
+        public HitsFactory(String setName, String keyword, String instance) {
             super();
             this.setName = setName;
             this.keyword = keyword;
+            this.instance = instance;
         }
 
         @Override
@@ -530,7 +747,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
-            list.addAll(keywordResults.getArtifactIds(setName, keyword));
+            list.addAll(keywordResults.getArtifactIds(setName, keyword, instance));
             return true;
         }
 
