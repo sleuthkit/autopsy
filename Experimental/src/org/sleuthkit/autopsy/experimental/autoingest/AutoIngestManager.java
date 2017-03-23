@@ -2351,7 +2351,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             throw new AnalysisStartupException("Ingest manager error starting job", ingestJobStartResult.getStartupException());
                         }
                     } else {
-                        for (String warning : ingestJobSettings.getWarnings()) {
+                        for (String warning : settingsWarnings) {
                             SYS_LOGGER.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
                         }
                         currentJob.setErrorsOccurred(true);
