@@ -1935,11 +1935,11 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             try {
                 Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);
                 if (null != caseDirectoryPath) {
-                    Path metadataFilePath = caseDirectoryPath.resolve(manifest.getCaseName() + CaseMetadata.getFileExtension());
+                    Path metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
                     Case.openAsCurrentCase(metadataFilePath.toString());
                 } else {
                     caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                    Case.createAsCurrentCase(caseDirectoryPath.toString(), currentJob.getManifest().getCaseName(), "", "", CaseType.MULTI_USER_CASE);
+                    Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
                     /*
                      * Sleep a bit before releasing the lock to ensure that the
                      * new case folder is visible on the network.
@@ -1952,13 +1952,13 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 return caseForJob;
 
             } catch (CaseActionException ex) {
-                throw new CaseManagementException(String.format("Error creating or opening case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+                throw new CaseManagementException(String.format("Error creating or opening case %s (%s) for %s", manifest.getCaseName(), caseName, manifest.getFilePath()), ex);
             } catch (IllegalStateException ex) {
                 /*
                  * Deal with the unfortunate fact that Case.getCurrentCase
                  * throws IllegalStateException.
                  */
-                throw new CaseManagementException(String.format("Error getting current case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+                throw new CaseManagementException(String.format("Error getting current case %s (%s) for %s", caseName, manifest.getCaseName(), manifest.getFilePath()), ex);
             }
         }
 
