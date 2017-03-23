@@ -725,8 +725,9 @@ public class Case {
     }
 
     /**
-     * Sanitizes the case name for use as a PostgreSQL database name and in
-     * ActiveMQ event channel (topic) names.
+     * Cleans up the display name for a case to make a suitable case name for
+     * use in case direcotry paths, coordination service locks, PostgreSQL
+     * database names, Active MQ message message channels, etc.
      *
      * PostgreSQL:
      * http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html 63
@@ -743,7 +744,7 @@ public class Case {
      *
      * @throws org.sleuthkit.autopsy.casemodule.Case.IllegalCaseNameException
      */
-    static String sanitizeCaseName(String caseName) throws IllegalCaseNameException {
+    public static String displayNameToCaseName(String caseName) throws IllegalCaseNameException {
 
         String result;
 
@@ -1615,7 +1616,7 @@ public class Case {
          */
         String caseName;
         try {
-            caseName = sanitizeCaseName(caseDisplayName);
+            caseName = displayNameToCaseName(caseDisplayName);
         } catch (IllegalCaseNameException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_illegalCaseName()), ex);
         }
@@ -2408,7 +2409,7 @@ public class Case {
      * An exception to throw when a case name with invalid characters is
      * encountered.
      */
-    final static class IllegalCaseNameException extends Exception {
+    public final static class IllegalCaseNameException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
