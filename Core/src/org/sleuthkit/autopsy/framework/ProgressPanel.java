@@ -28,6 +28,7 @@ class ProgressPanel extends javax.swing.JPanel {
     ProgressPanel() {
         initComponents();
         this.progressBar.setMinimum(0);
+        this.progressBar.setIndeterminate(true);
     }
 
     void setMessage(String message) {
