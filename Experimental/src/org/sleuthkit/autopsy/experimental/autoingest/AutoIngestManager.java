@@ -68,6 +68,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.casemodule.Case.IllegalCaseNameException;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
@@ -205,7 +206,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             SYS_LOGGER.log(Level.INFO, "Set running with desktop GUI runtime property to false");
         } catch (RuntimeProperties.RuntimePropertiesException ex) {
             SYS_LOGGER.log(Level.SEVERE, "Failed to set running with desktop GUI runtime property to false", ex);
-        }        
+        }
     }
 
     /**
@@ -1922,8 +1923,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          */
         private Case openCase() throws CoordinationServiceException, CaseManagementException, InterruptedException {
             Manifest manifest = currentJob.getManifest();
-            String caseName = manifest.getCaseName();
-            SYS_LOGGER.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
+            String caseDisplayName = manifest.getCaseName();
+            String caseName;
+            try {
+                caseName = Case.displayNameToCaseName(caseDisplayName);
+            } catch (IllegalCaseNameException ex) {
+                throw new CaseManagementException(String.format("Error creating or opening case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+            }
+            SYS_LOGGER.log(Level.INFO, "Opening case {0} ({1}) for {2}", new Object[]{caseDisplayName, caseName, manifest.getFilePath()});
             currentJob.setStage(AutoIngestJob.Stage.OPENING_CASE);
             try {
                 Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);

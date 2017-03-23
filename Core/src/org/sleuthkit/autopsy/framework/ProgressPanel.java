@@ -33,20 +33,20 @@ class ProgressPanel extends javax.swing.JPanel {
 
     void setMessage(String message) {
         this.progressMessage.setText(message);
-    } 
-    
+    }
+
     void setInderminate(boolean indeterminate) {
         this.progressBar.setIndeterminate(indeterminate);
     }
-    
+
     void setMaximum(int max) {
         this.progressBar.setMaximum(max);
     }
-    
+
     void setCurrent(int current) {
         this.progressBar.setValue(current);
     }
-    
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
