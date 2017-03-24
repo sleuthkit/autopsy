@@ -518,17 +518,12 @@ public class KeywordHits implements AutopsyVisitableItem {
         public boolean isLeafTypeNode() {
             List<String> instances = keywordResults.getKeywordInstances(setName, keyword);
             // is this an exact match
-            // TODO: Enable this again, maybe?
-            /*
             if (instances.size() == 1 && instances.get(0).equals(DUMMY_INSTANCE)) {
                 return true;
             }
             else {
                 return false;
             }
-*/
-
-            return false;
         }
 
         @Override
@@ -563,8 +558,35 @@ public class KeywordHits implements AutopsyVisitableItem {
             return getClass().getName();
         }
     }
+    
+    // Allows us to pass in either longs or strings
+    // as they keys for different types of nodes at the 
+    // same level. Probably a better way to do this, but
+    // it works.
+    class InstanceKey {
+        private boolean isRegExp;
+        private String strKey;
+        private Long longKey;
+        public InstanceKey(String key) {
+            isRegExp = true;
+            strKey = key;
+        }
+        public InstanceKey(Long key) {
+            isRegExp = false;
+            longKey = key;
+        }
+        boolean isRegExp() {
+            return isRegExp;
+        }
+        Long getIdKey() {
+            return longKey;
+        }
+        String getRegExpKey() {
+            return strKey;
+        }
+    }
 
-    public class InstancesFactory extends ChildFactory.Detachable<String> implements Observer {
+    public class InstancesFactory extends ChildFactory.Detachable<InstanceKey> implements Observer {
         private final String keyword;
         private final String setName;
 
@@ -585,22 +607,35 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<String> list) {
-            list.addAll(keywordResults.getKeywordInstances(setName, keyword));
+        protected boolean createKeys(List<InstanceKey> list) {
+            List <String>instances = keywordResults.getKeywordInstances(setName, keyword); 
+            // The keys are different depending on what we are displaying.
+            // regexp get another layer to show instances.  
+            // Exact matches don't. 
+            if ((instances.size() == 1) && (instances.get(0).equals(DUMMY_INSTANCE))) {
+                for (Long id : keywordResults.getArtifactIds(setName, keyword, DUMMY_INSTANCE) ) {
+                    list.add(new InstanceKey(id));
+                }
+            } else {
+                for (String instance : instances) {
+                    list.add(new InstanceKey(instance));
+                }
+                
+            }
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(String key) {
+        protected Node createNodeForKey(InstanceKey key) {
             // 
-            if (key.equals(DUMMY_INSTANCE)) {
-                // COPY AND PASTED from below, make single method in future
+            if (key.isRegExp() == false) {
+                // COPY AND PASTED from below, 
+                // TODO make single method
                 if (skCase == null) {
                     return null;
                 }
 
-                Set<Long> artifactIds = keywordResults.getArtifactIds(setName, keyword, keyword);
-                Long artifactId = (Long)artifactIds.toArray()[0];
+                Long artifactId = key.getIdKey();
                 try {
                     BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
                     BlackboardArtifactNode n = new BlackboardArtifactNode(art);
@@ -646,7 +681,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 }
                 return null;
             }
-            return new InstanceNode(setName, keyword, key);
+            return new InstanceNode(setName, keyword, key.getRegExpKey());
         }
 
         @Override
@@ -675,7 +710,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         private void updateDisplayName() {
             int totalDescendants = keywordResults.getArtifactIds(setName, keyword, instance).size();
-            super.setDisplayName(keyword + " (" + totalDescendants + ")");
+            super.setDisplayName(instance + " (" + totalDescendants + ")");
         }
 
         @Override
@@ -753,6 +788,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(Long artifactId) {
+            // TODO Move to private method that can be used
+            // with copy and pasted code above
             if (skCase == null) {
                 return null;
             }
