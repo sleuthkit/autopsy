@@ -70,6 +70,12 @@ public class KeywordHits implements AutopsyVisitableItem {
         this.skCase = skCase;
         keywordResults = new KeywordResults();
     }
+    
+    /* All of these maps and code assume the following:
+     * Regexps will have an 'instance' layer that shows the specific words that matched the regexp
+     * Exact match and substring will not have the instance layer and instead will have the specific hits 
+     * below their term.
+     */
 
     private final class KeywordResults extends Observable {
 
@@ -172,7 +178,9 @@ public class KeywordHits implements AutopsyVisitableItem {
                     String listName = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                     String word = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
                     String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
-
+                    // new in 4.4
+                    String kwType = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()));
+                    
                     // part of a list
                     if (listName != null) {
                         // get or create list entry
@@ -181,14 +189,30 @@ public class KeywordHits implements AutopsyVisitableItem {
                         }
                         Map<String, Map<String, Set<Long>>> listMap = listsMap.get(listName);
                         
-                        if (reg != null) {
+                        // substring, treated same as exact match
+                        // Enum for "1" is defined in KeywordSearch.java
+                        if ((kwType != null) && (kwType.equals("1"))) {
+                            // original term should be stored in reg
+                            if (reg != null) {
+                                addExactMatchToList(listMap, reg, id);
+                            } else {
+                                addExactMatchToList(listMap, word, id);
+                            }
+                        }
+                        else if (reg != null) {
                             addRegExpToList(listMap, reg, word, id);
                         } else {
                             addExactMatchToList(listMap, word, id);
                         }
                     } // regular expression, single term
                     else if (reg != null) {
-                        addRegExpToList(regexMap, reg, word, id);
+                        // substring is treated same as exact 
+                        if ((kwType != null) && (kwType.equals("1"))) {
+                            // original term should be stored in reg
+                            addExactMatchToList(literalMap, reg, id);
+                        } else {
+                            addRegExpToList(regexMap, reg, word, id);
+                        }
                     } // literal, single term
                     else {
                         addExactMatchToList(literalMap, word, id);
@@ -203,35 +227,43 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @SuppressWarnings("deprecation")
         public void update() {
+            // maps Artifact ID to map of attribute types to attribute values
             Map<Long, Map<Long, String>> artifactIds = new LinkedHashMap<>();
 
             if (skCase == null) {
                 return;
             }
 
+            // query attributes table for the ones that we need for the tree
             int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
             int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
             int regexId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID();
             int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
-            String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.artifact_id," //NON-NLS
+            String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.value_int32,"
+                    + "blackboard_attributes.artifact_id," //NON-NLS
                     + "blackboard_attributes.attribute_type_id FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
                     + "(blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id AND " //NON-NLS
                     + "blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
                     + ") AND (attribute_type_id=" + setId + " OR " //NON-NLS
                     + "attribute_type_id=" + wordId + " OR " //NON-NLS
+                    + "attribute_type_id=" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID() + " OR " //NON-NLS
                     + "attribute_type_id=" + regexId + ")"; //NON-NLS
 
             try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
-                    String value = resultSet.getString("value_text"); //NON-NLS
+                    String valueStr = resultSet.getString("value_text"); //NON-NLS
                     long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                     long typeId = resultSet.getLong("attribute_type_id"); //NON-NLS
                     if (!artifactIds.containsKey(artifactId)) {
                         artifactIds.put(artifactId, new LinkedHashMap<Long, String>());
                     }
-                    if (!value.equals("")) {
-                        artifactIds.get(artifactId).put(typeId, value);
+                    if (valueStr != null && !valueStr.equals("")) {
+                        artifactIds.get(artifactId).put(typeId, valueStr);
+                    } else {
+                        // Keyword Search Type is an int
+                        Long valueLong = resultSet.getLong("value_int32");
+                        artifactIds.get(artifactId).put(typeId, valueLong.toString());
                     }
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -290,6 +322,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Creates the list nodes 
+     */
     private class ListFactory extends ChildFactory.Detachable<String> implements Observer {
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
@@ -380,6 +415,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    /** 
+     * Represents the keyword search lists (or default groupings if list was not given) 
+     */
     public class ListNode extends DisplayableItemNode implements Observer {
 
         private final String listName;
@@ -447,6 +485,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Creates the nodes that represent search terms
+     */
     private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
 
         private final String setName;
@@ -483,13 +524,16 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    /**
+     * Represents the search term or regexp that user searched for
+     */
     public class TermNode extends DisplayableItemNode implements Observer {
 
         private final String setName;
         private final String keyword;
 
         public TermNode(String setName, String keyword) {
-            super(Children.create(new InstancesFactory(setName, keyword), true), Lookups.singleton(keyword));
+            super(Children.create(new RegExpInstancesFactory(setName, keyword), true), Lookups.singleton(keyword));
             super.setName(keyword);
             this.setName = setName;
             this.keyword = keyword;
@@ -563,15 +607,15 @@ public class KeywordHits implements AutopsyVisitableItem {
     // as they keys for different types of nodes at the 
     // same level. Probably a better way to do this, but
     // it works.
-    class InstanceKey {
-        private boolean isRegExp;
+    class RegExpInstanceKey {
+        private final boolean isRegExp;
         private String strKey;
         private Long longKey;
-        public InstanceKey(String key) {
+        public RegExpInstanceKey(String key) {
             isRegExp = true;
             strKey = key;
         }
-        public InstanceKey(Long key) {
+        public RegExpInstanceKey(Long key) {
             isRegExp = false;
             longKey = key;
         }
@@ -586,11 +630,14 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    public class InstancesFactory extends ChildFactory.Detachable<InstanceKey> implements Observer {
+    /**
+     * Creates the nodes for a given regexp that represent the specific terms that were found
+     */
+    public class RegExpInstancesFactory extends ChildFactory.Detachable<RegExpInstanceKey> implements Observer {
         private final String keyword;
         private final String setName;
 
-        public InstancesFactory(String setName, String keyword) {
+        public RegExpInstancesFactory(String setName, String keyword) {
             super();
             this.setName = setName;
             this.keyword = keyword;
@@ -607,18 +654,18 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<InstanceKey> list) {
+        protected boolean createKeys(List<RegExpInstanceKey> list) {
             List <String>instances = keywordResults.getKeywordInstances(setName, keyword); 
             // The keys are different depending on what we are displaying.
             // regexp get another layer to show instances.  
             // Exact matches don't. 
             if ((instances.size() == 1) && (instances.get(0).equals(DUMMY_INSTANCE))) {
                 for (Long id : keywordResults.getArtifactIds(setName, keyword, DUMMY_INSTANCE) ) {
-                    list.add(new InstanceKey(id));
+                    list.add(new RegExpInstanceKey(id));
                 }
             } else {
                 for (String instance : instances) {
-                    list.add(new InstanceKey(instance));
+                    list.add(new RegExpInstanceKey(instance));
                 }
                 
             }
@@ -626,62 +673,13 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(InstanceKey key) {
-            // 
+        protected Node createNodeForKey(RegExpInstanceKey key) {
+            // if it isn't not a regexp, then skip the 'instance' layer of the tree
             if (key.isRegExp() == false) {
-                // COPY AND PASTED from below, 
-                // TODO make single method
-                if (skCase == null) {
-                    return null;
-                }
-
-                Long artifactId = key.getIdKey();
-                try {
-                    BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
-                    BlackboardArtifactNode n = new BlackboardArtifactNode(art);
-                    AbstractFile file;
-                    try {
-                        file = skCase.getAbstractFileById(art.getObjectID());
-                    } catch (TskCoreException ex) {
-                        logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren"); //NON-NLS
-                        return n;
-                    }
-
-                    // It is possible to get a keyword hit on artifacts generated
-                    // for the underlying image in which case MAC times are not
-                    // available/applicable/useful.
-                    if (file == null) {
-                        return n;
-                    }
-
-                    n.addNodeProperty(new NodeProperty<>(
-                            NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.modTime.name"),
-                            NbBundle.getMessage(this.getClass(),
-                                    "KeywordHits.createNodeForKey.modTime.displayName"),
-                            NbBundle.getMessage(this.getClass(),
-                                    "KeywordHits.createNodeForKey.modTime.desc"),
-                            ContentUtils.getStringTime(file.getMtime(), file)));
-                    n.addNodeProperty(new NodeProperty<>(
-                            NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.accessTime.name"),
-                            NbBundle.getMessage(this.getClass(),
-                                    "KeywordHits.createNodeForKey.accessTime.displayName"),
-                            NbBundle.getMessage(this.getClass(),
-                                    "KeywordHits.createNodeForKey.accessTime.desc"),
-                            ContentUtils.getStringTime(file.getAtime(), file)));
-                    n.addNodeProperty(new NodeProperty<>(
-                            NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.chgTime.name"),
-                            NbBundle.getMessage(this.getClass(),
-                                    "KeywordHits.createNodeForKey.chgTime.displayName"),
-                            NbBundle.getMessage(this.getClass(),
-                                    "KeywordHits.createNodeForKey.chgTime.desc"),
-                            ContentUtils.getStringTime(file.getCtime(), file)));
-                    return n;
-                } catch (TskException ex) {
-                    logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
-                }
-                return null;
+                return createBlackboardArtifactNode(key.getIdKey());
+            } else {
+                return new RegExpInstanceNode(setName, keyword, key.getRegExpKey());
             }
-            return new InstanceNode(setName, keyword, key.getRegExpKey());
         }
 
         @Override
@@ -691,13 +689,16 @@ public class KeywordHits implements AutopsyVisitableItem {
         
     }
     
-    public class InstanceNode extends DisplayableItemNode implements Observer {
+    /**
+     * Represents a specific term that was found from a regexp 
+     */
+    public class RegExpInstanceNode extends DisplayableItemNode implements Observer {
 
         private final String setName;
         private final String keyword;
         private final String instance;
 
-        public InstanceNode(String setName, String keyword, String instance) {
+        public RegExpInstanceNode(String setName, String keyword, String instance) {
             super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(keyword));
             super.setName(keyword);
             this.setName = setName;
@@ -756,7 +757,65 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    /** 
+     * Create a blackboard node for the given Keyword Hit artifact
+     * @param artifactId
+     * @return Node or null on error
+     */
+    private BlackboardArtifactNode createBlackboardArtifactNode (Long artifactId) {
+        if (skCase == null) {
+            return null;
+        }
+
+        try {
+            BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
+            BlackboardArtifactNode n = new BlackboardArtifactNode(art);
+            AbstractFile file;
+            try {
+                file = skCase.getAbstractFileById(art.getObjectID());
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren"); //NON-NLS
+                return n;
+            }
+
+            // It is possible to get a keyword hit on artifacts generated
+            // for the underlying image in which case MAC times are not
+            // available/applicable/useful.
+            if (file == null) {
+                return n;
+            }
+
+            n.addNodeProperty(new NodeProperty<>(
+                    NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.modTime.name"),
+                    NbBundle.getMessage(this.getClass(),
+                            "KeywordHits.createNodeForKey.modTime.displayName"),
+                    NbBundle.getMessage(this.getClass(),
+                            "KeywordHits.createNodeForKey.modTime.desc"),
+                    ContentUtils.getStringTime(file.getMtime(), file)));
+            n.addNodeProperty(new NodeProperty<>(
+                    NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.accessTime.name"),
+                    NbBundle.getMessage(this.getClass(),
+                            "KeywordHits.createNodeForKey.accessTime.displayName"),
+                    NbBundle.getMessage(this.getClass(),
+                            "KeywordHits.createNodeForKey.accessTime.desc"),
+                    ContentUtils.getStringTime(file.getAtime(), file)));
+            n.addNodeProperty(new NodeProperty<>(
+                    NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.chgTime.name"),
+                    NbBundle.getMessage(this.getClass(),
+                            "KeywordHits.createNodeForKey.chgTime.displayName"),
+                    NbBundle.getMessage(this.getClass(),
+                            "KeywordHits.createNodeForKey.chgTime.desc"),
+                    ContentUtils.getStringTime(file.getCtime(), file)));
+            return n;
+        } catch (TskException ex) {
+            logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
+        }
+        return null;
+    }
     
+    /**
+     * Creates nodes for individual files that had hits
+     */
     public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {
 
         private final String keyword;
@@ -788,56 +847,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(Long artifactId) {
-            // TODO Move to private method that can be used
-            // with copy and pasted code above
-            if (skCase == null) {
-                return null;
-            }
-
-            try {
-                BlackboardArtifact art = skCase.getBlackboardArtifact(artifactId);
-                BlackboardArtifactNode n = new BlackboardArtifactNode(art);
-                AbstractFile file;
-                try {
-                    file = skCase.getAbstractFileById(art.getObjectID());
-                } catch (TskCoreException ex) {
-                    logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren"); //NON-NLS
-                    return n;
-                }
-
-                // It is possible to get a keyword hit on artifacts generated
-                // for the underlying image in which case MAC times are not
-                // available/applicable/useful.
-                if (file == null) {
-                    return n;
-                }
-
-                n.addNodeProperty(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.modTime.name"),
-                        NbBundle.getMessage(this.getClass(),
-                                "KeywordHits.createNodeForKey.modTime.displayName"),
-                        NbBundle.getMessage(this.getClass(),
-                                "KeywordHits.createNodeForKey.modTime.desc"),
-                        ContentUtils.getStringTime(file.getMtime(), file)));
-                n.addNodeProperty(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.accessTime.name"),
-                        NbBundle.getMessage(this.getClass(),
-                                "KeywordHits.createNodeForKey.accessTime.displayName"),
-                        NbBundle.getMessage(this.getClass(),
-                                "KeywordHits.createNodeForKey.accessTime.desc"),
-                        ContentUtils.getStringTime(file.getAtime(), file)));
-                n.addNodeProperty(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.chgTime.name"),
-                        NbBundle.getMessage(this.getClass(),
-                                "KeywordHits.createNodeForKey.chgTime.displayName"),
-                        NbBundle.getMessage(this.getClass(),
-                                "KeywordHits.createNodeForKey.chgTime.desc"),
-                        ContentUtils.getStringTime(file.getCtime(), file)));
-                return n;
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
-            }
-            return null;
+            return createBlackboardArtifactNode(artifactId);
         }
 
         @Override

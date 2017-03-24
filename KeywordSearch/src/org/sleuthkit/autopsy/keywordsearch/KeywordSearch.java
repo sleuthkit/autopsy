@@ -42,8 +42,9 @@ public class KeywordSearch {
     private static final Logger TIKA_LOGGER = Logger.getLogger("Tika"); //NON-NLS
     private static final org.sleuthkit.autopsy.coreutils.Logger logger = org.sleuthkit.autopsy.coreutils.Logger.getLogger(Case.class.getName());
 
+    // @@@ We should move this into TskData (or somewhere) because we are using
+    // this value in the results tree to display substring differently from regexp (KeywordHit.java)
     public enum QueryType {
-
         LITERAL, SUBSTRING, REGEX
     };
     public static final String NUM_FILES_CHANGE_EVT = "NUM_FILES_CHANGE_EVT"; //NON-NLS
