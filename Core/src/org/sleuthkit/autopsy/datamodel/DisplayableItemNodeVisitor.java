@@ -90,6 +90,8 @@ public interface DisplayableItemNodeVisitor<T> {
     T visit(KeywordHits.ListNode khsn);
 
     T visit(KeywordHits.TermNode khmln);
+    
+    T visit(KeywordHits.RegExpInstanceNode khmln);
 
     T visit(HashsetHits.RootNode hhrn);
 
@@ -278,6 +280,11 @@ public interface DisplayableItemNodeVisitor<T> {
 
         @Override
         public T visit(KeywordHits.ListNode khsn) {
+            return defaultVisit(khsn);
+        }
+                
+        @Override
+        public T visit(KeywordHits.RegExpInstanceNode khsn) {
             return defaultVisit(khsn);
         }
 
