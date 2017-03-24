@@ -347,6 +347,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
+            
             try {
                 newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
