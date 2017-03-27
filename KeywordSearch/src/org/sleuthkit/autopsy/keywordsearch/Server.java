@@ -241,7 +241,7 @@ public class Server {
             javaHome = System.getenv("JAVA_HOME"); // NON-NLS
         }
 
-        if (javaHome.isEmpty()) {
+        if (javaHome == null || javaHome.isEmpty()) {
             logger.log(Level.WARNING, "Java not found. Keyword search functionality may not work."); //NON-NLS
         }
 
