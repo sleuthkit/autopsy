@@ -49,6 +49,11 @@
         <ivy:retrieve conf="servlet" sync="true" pattern="release/solr/lib/servlet-api-3.0.jar" />
 
     </target>
+    
+    <property name="ext.dir" value="release/modules/ext" />
+    <target name="clean" depends="projectized-common.clean">
+        <delete dir="${ext.dir}"/>
+    </target>
 
     <target name="clean-all" depends="clean" description="Clear Ivy cache.">
         <ivy:cleancache/>

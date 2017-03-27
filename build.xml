@@ -261,4 +261,9 @@
         <echo file="${nbdist.dir}/${app.name}-installer/autopsy/.lastModified" message="" />
         <antcall target="build-installer-${os.family}" />
     </target>
+    
+     <property name="ext.dir" value="build/cluster/modules/ext" />
+    <target name="clean" depends="suite.clean">
+        <delete dir="${ext.dir}"/>
+    </target>
 </project>

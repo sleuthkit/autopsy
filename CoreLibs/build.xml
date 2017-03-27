@@ -59,4 +59,9 @@
         <!-- overrode depends attribute -->
         
     </target>
+    
+    <property name="ext.dir" value="release/modules/ext" />
+    <target name="clean" depends="projectized-common.clean">
+        <delete dir="${ext.dir}"/>
+    </target>
 </project>
