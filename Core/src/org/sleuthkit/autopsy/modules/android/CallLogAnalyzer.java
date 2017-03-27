@@ -143,9 +143,11 @@ class CallLogAnalyzer {
             logger.log(Level.SEVERE, "Could not parse call log; error connecting to db " + DatabasePath, e); //NON-NLS
         }
         finally {
-            services.fireModuleDataEvent(new ModuleDataEvent(
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
                         moduleName,
                         BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG, bbartifacts));
+            }
         }
     }
 

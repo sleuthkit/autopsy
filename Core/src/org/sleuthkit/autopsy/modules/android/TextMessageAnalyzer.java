@@ -147,9 +147,11 @@ class TextMessageAnalyzer {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error parsing text messages to Blackboard", e); //NON-NLS
         } finally {
-            services.fireModuleDataEvent(new ModuleDataEvent(
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
                             moduleName,
                             BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE, bbartifacts));
+            }
               
             try {
                 if (resultSet != null) {

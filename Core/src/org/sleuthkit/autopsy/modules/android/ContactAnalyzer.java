@@ -175,9 +175,11 @@ class ContactAnalyzer {
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Error posting to blackboard", e); //NON-NLS
         } finally {
-            services.fireModuleDataEvent(new ModuleDataEvent(
-                moduleName,
-                BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts));
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                    moduleName,
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts));
+            }
             
             try {
                 if (resultSet != null) {
