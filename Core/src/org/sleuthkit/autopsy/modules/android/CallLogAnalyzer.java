@@ -25,7 +25,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -36,6 +38,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -52,6 +56,9 @@ class CallLogAnalyzer {
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(CallLogAnalyzer.class.getName());
     private static Blackboard blackboard;
+    
+    private static final IngestServices services = IngestServices.getInstance();
+     
 
     /**
      * the names of tables that potentially hold call logs in the dbs
@@ -85,6 +92,8 @@ class CallLogAnalyzer {
         if (DatabasePath == null || DatabasePath.isEmpty()) {
             return;
         }
+        
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + DatabasePath); //NON-NLS
                 Statement statement = connection.createStatement();) {
 
@@ -112,6 +121,8 @@ class CallLogAnalyzer {
                             bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, moduleName, directionString));
                             bba.addAttribute(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, moduleName, name));
 
+                            bbartifacts.add(bba);
+                            
                             try {
                                 // index the artifact for keyword search
                                 blackboard.indexArtifact(bba);
@@ -130,6 +141,11 @@ class CallLogAnalyzer {
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Could not parse call log; error connecting to db " + DatabasePath, e); //NON-NLS
+        }
+        finally {
+            services.fireModuleDataEvent(new ModuleDataEvent(
+                        moduleName,
+                        BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG, bbartifacts));
         }
     }
 
