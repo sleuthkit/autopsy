@@ -59,8 +59,8 @@
                 <binary-origin>release/modules/ext/apache-mime4j-dom-0.8.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/java-libpst-0.9.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/java-libpst-0.9.3.jar</binary-origin>
+                <runtime-relative-path>ext/java-libpst-1.0-SNAPSHOT.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/java-libpst-1.0-SNAPSHOT.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-mbox-iterator-0.8.0.jar</runtime-relative-path>

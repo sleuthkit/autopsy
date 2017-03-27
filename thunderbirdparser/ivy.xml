@@ -10,7 +10,5 @@
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-core" rev="0.8.0"/>
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-dom" rev="0.8.0"/>
         <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.0"/>
-        <dependency conf="autopsy->default" org="org.apache.james" name="apache-mime4j-mbox-iterator" rev="0.8.0"/>
-        <dependency conf="autopsy->default" org="com.pff" name="java-libpst" rev="0.9.3"/>
     </dependencies>
 </ivy-module>
