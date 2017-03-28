@@ -21,8 +21,6 @@
 /KeywordSearch/release/modules/ext/
 /KeywordSearch/release/solr/lib/
 /KeywordSearch/release/solr/solr/lib/
-/KeywordSearch/release/solr/start.jar
-/KeywordSearch/release/solr/webapps/solr.war
 /KeywordSearch/build/
 /KeywordSearch/dist/
 /KeywordSearch/nbproject/*
