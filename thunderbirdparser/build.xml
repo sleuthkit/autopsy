@@ -40,6 +40,9 @@
     <property name="ext.dir" value="release/modules/ext" />
     
     <target name="clean" depends="projectized-common.clean">
+         <!--Override clean to delete jars, etc downloaded with Ivy, 
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
         <delete dir="${ext.dir}"/>
     </target>
     

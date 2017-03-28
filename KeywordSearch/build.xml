@@ -5,8 +5,7 @@
 <project name="org.sleuthkit.autopsy.keywordsearch" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.keywordsearch.</description>
     <import file="nbproject/build-impl.xml"/>
-    
-    
+        
     <property name="ivy.install.version" value="2.3.0-rc2" />
     <condition property="ivy.home" value="${env.IVY_HOME}">
         <isset property="env.IVY_HOME" />
@@ -35,11 +34,7 @@
                  uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
     
-
- 
-
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
-        
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
         <ivy:retrieve conf="autopsy" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
@@ -47,12 +42,16 @@
         <ivy:retrieve conf="solr-libs" sync="true" pattern="release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="slf4j-libs" sync="true" pattern="release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="servlet" sync="true" pattern="release/solr/lib/servlet-api-3.0.jar" />
-
     </target>
     
-    <property name="ext.dir" value="release/modules/ext" />
+    <property name="release.dir" value="release" />
     <target name="clean" depends="projectized-common.clean">
-        <delete dir="${ext.dir}"/>
+        <!--Override clean to delete jars, etc downloaded with Ivy, 
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
+        <delete dir="${release.dir}/modules/ext"/>
+        <delete dir="${release.dir}/solr/lib"/>
+        <delete dir="${release.dir}/solr/solr/lib"/>
     </target>
 
     <target name="clean-all" depends="clean" description="Clear Ivy cache.">
