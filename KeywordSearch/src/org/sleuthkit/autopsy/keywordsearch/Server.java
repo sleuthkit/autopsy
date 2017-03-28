@@ -36,11 +36,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -62,11 +60,9 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -569,7 +565,7 @@ public class Server {
         try {
             // Close any open core before stopping server
             closeCore();
-        } catch (KeywordSearchModuleException e) {
+        } catch (KeywordSearchModuleException | NoOpenCoreException e) {
             logger.log(Level.WARNING, "Failed to close core: ", e); //NON-NLS
         }
 
@@ -696,35 +692,38 @@ public class Server {
         }
     }
 
-    Index getIndexInfo() throws KeywordSearchModuleException {
+    Index getIndexInfo() throws NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
-            if (null != currentCore) {
-                return currentCore.getIndexInfo();
-            } else {
-                throw new KeywordSearchModuleException("Cannot get text index info, no core is open");
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
             }
+            return currentCore.getIndexInfo();
         } finally {
             currentCoreLock.readLock().unlock();
-        }        
+        }
     }
     
-    void closeCore() throws KeywordSearchModuleException {
+    void closeCore() throws KeywordSearchModuleException, NoOpenCoreException {
         currentCoreLock.writeLock().lock();
         try {
-            if (null != currentCore) {
-                currentCore.close();
-                currentCore = null;
-                serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
             }
+            currentCore.close();
+            currentCore = null;
+            serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
         } finally {
             currentCoreLock.writeLock().unlock();
         }
     }
 
-    void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
+    void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException, NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
             currentCore.addDocument(doc);
         } finally {
             currentCoreLock.readLock().unlock();
@@ -761,7 +760,7 @@ public class Server {
                     closeCore();
                 }
             }
-        } catch (KeywordSearchModuleException ex) {
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(Server.class, "Server.close.exception.msg"), ex);
         } finally {
             currentCoreLock.readLock().unlock();

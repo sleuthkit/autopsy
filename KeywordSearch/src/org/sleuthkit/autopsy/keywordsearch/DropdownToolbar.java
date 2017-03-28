@@ -189,7 +189,7 @@ class DropdownToolbar extends javax.swing.JPanel {
                                     disableSearch = true;
                                 }
                             }
-                        } catch (KeywordSearchModuleException ex) {
+                        } catch (NoOpenCoreException ex) {
                             /*
                              * Error, disable the ad hoc search UI components.
                              */
