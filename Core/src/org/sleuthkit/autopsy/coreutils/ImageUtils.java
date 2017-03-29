@@ -137,6 +137,8 @@ public class ImageUtils {
         OPEN_CV_LOADED = openCVLoadedTemp;
         SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
         SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
+        SUPPORTED_IMAGE_EXTENSIONS.removeIf("db"::equals); // remove db files
+        
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /*
          * special cases and variants that we support, but don't get registered
