@@ -227,7 +227,7 @@ class Ingester {
             solrServer.addDocument(updateDoc);
             uncommitedIngests = true;
 
-        } catch (KeywordSearchModuleException ex) {
+        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             //JMTODO: does this need to be internationalized?
             throw new IngesterException(
                     NbBundle.getMessage(Ingester.class, "Ingester.ingest.exception.err.msg", sourceName), ex);

@@ -182,7 +182,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr and schema version",
         "SolrSearch.indentifyingIndex.msg=Identifying text index for upgrade",
         "SolrSearch.copyIndex.msg=Copying existing text index",
-        "SolrSearch.openCore.msg=Creating/Opening text index",
+        "SolrSearch.openCore.msg=Opening text index",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         ProgressIndicator progress = context.getProgressIndicator();

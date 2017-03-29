@@ -159,41 +159,50 @@ class DropdownToolbar extends javax.swing.JPanel {
                 String changed = evt.getPropertyName();
                 if (changed.equals(Case.Events.CURRENT_CASE.toString())) {
                     if (null != evt.getNewValue()) {
+                        boolean disableSearch = false;
                         /*
                          * A case has been opened.
                          */
                         try {
                             Server server = KeywordSearch.getServer();
-                            Index indexInfo = server.getIndexInfo();
-                            if (server.coreIsOpen() && IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
-                                /*
-                                 * Solr version is current, so check the Solr
-                                 * schema version and selectively enable the ad
-                                 * hoc search UI components.
-                                 */
-                                boolean schemaIsCurrent = IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion());
-                                listsButton.setEnabled(schemaIsCurrent);
-                                searchDropButton.setEnabled(true);
-                                dropPanel.setRegexSearchEnabled(schemaIsCurrent);
-                                active = true;
-                            } else {
-                                /*
-                                 * Unsupported Solr version, disable the ad hoc
-                                 * search UI components.
-                                 */
-                                searchDropButton.setEnabled(false);
-                                listsButton.setEnabled(false);
-                                active = false;
+                            if (server.coreIsOpen() == false) {
+                                disableSearch = true;
                             }
-                        } catch (KeywordSearchModuleException ex) {
+                            else {
+                                Index indexInfo = server.getIndexInfo();
+                                if (IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
+                                    /*
+                                     * Solr version is current, so check the Solr
+                                     * schema version and selectively enable the ad
+                                     * hoc search UI components.
+                                     */
+                                    boolean schemaIsCurrent = IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion());
+                                    listsButton.setEnabled(schemaIsCurrent);
+                                    searchDropButton.setEnabled(true);
+                                    dropPanel.setRegexSearchEnabled(schemaIsCurrent);
+                                    active = true;
+                                } else {
+                                    /*
+                                     * Unsupported Solr version, disable the ad hoc
+                                     * search UI components.
+                                     */
+                                    disableSearch = true;
+                                }
+                            }
+                        } catch (NoOpenCoreException ex) {
                             /*
                              * Error, disable the ad hoc search UI components.
                              */
                             logger.log(Level.SEVERE, "Error getting text index info", ex); //NON-NLS
+                            disableSearch = true;
+                        }
+                        
+                        if (disableSearch) {
                             searchDropButton.setEnabled(false);
                             listsButton.setEnabled(false);
                             active = false;
                         }
+                        
                     } else {
                         /*
                          * A case has been closed.
