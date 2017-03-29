@@ -375,7 +375,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         try {
             KeywordSearch.getServer().closeCore();
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+        } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
     }
