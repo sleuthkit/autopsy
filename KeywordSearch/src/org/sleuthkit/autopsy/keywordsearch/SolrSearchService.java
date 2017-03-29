@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -148,8 +149,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      *
      * @param coreName The core name.
      */
+    @Deprecated
     @Override
     public void deleteTextIndex(String coreName) throws KeywordSearchServiceException {
+        //If this was called with the metadata.textIndexName then this will only work on solr 4 cores
         KeywordSearch.getServer().deleteCore(coreName);
     }
 
@@ -185,7 +188,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         ProgressIndicator progress = context.getProgressIndicator();
         int totalNumProgressUnits = 8;
         int progressUnitsCompleted = 0;
-    
+
         String caseDirPath = context.getCase().getCaseDirectory();
         Case theCase = context.getCase();
         List<Index> indexes = new ArrayList<>();
@@ -212,7 +215,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 indexes.add(oldIndex);
             }
         }
-        
+
         if (context.cancelRequested()) {
             return;
         }
@@ -323,13 +326,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         }
                         return;
                     }
-                    
+
                     // add current index to the list of indexes that exist for this case
                     indexes.add(currentVersionIndex);
                 }
             }
         }
-
 
         try {
             // update text index metadata file
@@ -346,7 +348,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             KeywordSearch.getServer().openCoreForCase(theCase, currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
-        } 
+        }
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }
@@ -378,5 +380,30 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
+    }
+
+    /**
+     * Deletes the solr core for a case. Finds the core name based on the caseDirectory if specified,
+     * otherwise will try to delete based on the textIndexName.
+     *
+     * @param textIndexName - the name of the core if the core is a solr 4 core
+     * @param caseDirectory - the case directory, used for getting the solr 6
+     *                      core name
+     *
+     * @throws KeywordSearchServiceException
+     */
+    @Override
+    public void deleteCores(String textIndexName, String caseDirectory) throws KeywordSearchServiceException {
+        String coreName = textIndexName;
+        if (!caseDirectory.isEmpty()) {
+            IndexMetadata indexMetadata;
+            try {
+                indexMetadata = new IndexMetadata(caseDirectory);
+                coreName = indexMetadata.getIndexes().get(0).getIndexName();
+            } catch (IndexMetadata.TextIndexMetadataException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+        KeywordSearch.getServer().deleteCore(coreName);
     }
 }

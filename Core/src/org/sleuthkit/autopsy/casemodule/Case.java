@@ -685,7 +685,7 @@ public class Case {
 
                     for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class
                     )) {
-                        searchService.deleteTextIndex(metadata.getTextIndexName());
+                        searchService.deleteCores(metadata.getTextIndexName(), metadata.getCaseDirectory());
                     }
 
                     if (CaseType.MULTI_USER_CASE == metadata.getCaseType()) {

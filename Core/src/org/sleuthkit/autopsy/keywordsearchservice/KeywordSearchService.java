@@ -57,5 +57,7 @@ public interface KeywordSearchService extends Closeable {
      * @throws KeywordSearchServiceException if unable to delete.
      */
     public void deleteTextIndex(String textIndexName) throws KeywordSearchServiceException;
+    
+    public void deleteCores(String textIndexName, String caseDirectory) throws KeywordSearchServiceException;
 
 }
