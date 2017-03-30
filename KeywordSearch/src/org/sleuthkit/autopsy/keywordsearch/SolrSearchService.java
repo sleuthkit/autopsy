@@ -401,7 +401,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 indexMetadata = new IndexMetadata(caseDirectory);
                 //When I was debugging and there were multiple cores they had the same name 
                 //so the first one is as good as any.
-                coreName = indexMetadata.getIndexes().get(0).getIndexName();
+                if (!indexMetadata.getIndexes().isEmpty()){
+                    coreName = indexMetadata.getIndexes().get(0).getIndexName();
+                }
             } catch (IndexMetadata.TextIndexMetadataException ex) {
                 Exceptions.printStackTrace(ex);
             }
