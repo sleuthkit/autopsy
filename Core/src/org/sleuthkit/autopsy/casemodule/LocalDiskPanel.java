@@ -671,6 +671,7 @@ final class LocalDiskPanel extends JPanel {
                         logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
                     }
                 }
+                diskTable.revalidate();
             }
         }
     }
