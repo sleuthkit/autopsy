@@ -370,7 +370,7 @@ public final class SearchRunner {
         private List<Keyword> keywords; //keywords to search
         private List<String> keywordListNames; // lists currently being searched
         private List<KeywordList> keywordLists;
-        private Map<String, KeywordList> keywordToList; //keyword to list name mapping
+        private Map<Keyword, KeywordList> keywordToList; //keyword to list name mapping
         private AggregateProgressHandle progressGroup;
         private final Logger logger = Logger.getLogger(SearchRunner.Searcher.class.getName());
         private boolean finalRun = false;
@@ -431,8 +431,7 @@ public final class SearchRunner {
                         return null;
                     }
 
-                    final String queryStr = keyword.getSearchTerm();
-                    final KeywordList keywordList = keywordToList.get(queryStr);
+                    final KeywordList keywordList = keywordToList.get(keyword);
 
                     //new subProgress will be active after the initial query
                     //when we know number of hits to start() with
@@ -545,7 +544,7 @@ public final class SearchRunner {
                 keywordLists.add(list);
                 for (Keyword k : list.getKeywords()) {
                     keywords.add(k);
-                    keywordToList.put(k.getSearchTerm(), list);
+                    keywordToList.put(k, list);
                 }
             }
         }
