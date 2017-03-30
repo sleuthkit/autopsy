@@ -57,6 +57,7 @@ public interface KeywordSearchService extends Closeable {
      * @throws KeywordSearchServiceException if unable to delete.
      * @deprecated deleteCore(String textIndexName, String caseDirectory) should be used instead to support newer solr cores
      */
+    @Deprecated
     public void deleteTextIndex(String textIndexName) throws KeywordSearchServiceException;
     
     public void deleteCore(String textIndexName, String caseDirectory) throws KeywordSearchServiceException;
