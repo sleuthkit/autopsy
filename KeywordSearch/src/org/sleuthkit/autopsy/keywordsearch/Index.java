@@ -95,7 +95,7 @@ final class Index {
         result = result.toLowerCase();
 
         // Must not start with hyphen
-        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '-')) {
+        if (result.length() > 0 && (result.codePointAt(0) == '-')) {
             result = "_" + result;
         }
 
