@@ -68,6 +68,7 @@ import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
+import org.sleuthkit.autopsy.casemodule.Case.IllegalCaseNameException;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
@@ -200,6 +201,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         casesToManifests = new HashMap<>();
         pendingJobs = new ArrayList<>();
         completedJobs = new ArrayList<>();
+        try {
+            RuntimeProperties.setRunningWithGUI(false);
+            SYS_LOGGER.log(Level.INFO, "Set running with desktop GUI runtime property to false");
+        } catch (RuntimeProperties.RuntimePropertiesException ex) {
+            SYS_LOGGER.log(Level.SEVERE, "Failed to set running with desktop GUI runtime property to false", ex);
+        }
     }
 
     /**
@@ -229,13 +236,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         jobProcessingTaskFuture = jobProcessingExecutor.submit(jobProcessingTask);
         jobStatusPublishingExecutor.scheduleAtFixedRate(new PeriodicJobStatusEventTask(), JOB_STATUS_EVENT_INTERVAL_SECONDS, JOB_STATUS_EVENT_INTERVAL_SECONDS, TimeUnit.SECONDS);
         eventPublisher.addSubscriber(EVENT_LIST, instance);
-        try {
-            RuntimeProperties.setRunningWithGUI(false);
-            SYS_LOGGER.log(Level.INFO, "Set running with desktop GUI runtime property to false");
-        } catch (RuntimeProperties.RuntimePropertiesException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Failed to set running with desktop GUI runtime property to false", ex);
-            throw new AutoIngestManagerStartupException("Failed to set running with desktop GUI runtime property to false", ex);
-        }
         state = State.RUNNING;
         errorState = ErrorState.NONE;
     }
@@ -1923,17 +1923,23 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          */
         private Case openCase() throws CoordinationServiceException, CaseManagementException, InterruptedException {
             Manifest manifest = currentJob.getManifest();
-            String caseName = manifest.getCaseName();
-            SYS_LOGGER.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
+            String caseDisplayName = manifest.getCaseName();
+            String caseName;
+            try {
+                caseName = Case.displayNameToCaseName(caseDisplayName);
+            } catch (IllegalCaseNameException ex) {
+                throw new CaseManagementException(String.format("Error creating or opening case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+            }
+            SYS_LOGGER.log(Level.INFO, "Opening case {0} ({1}) for {2}", new Object[]{caseDisplayName, caseName, manifest.getFilePath()});
             currentJob.setStage(AutoIngestJob.Stage.OPENING_CASE);
             try {
                 Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);
                 if (null != caseDirectoryPath) {
-                    Path metadataFilePath = caseDirectoryPath.resolve(manifest.getCaseName() + CaseMetadata.getFileExtension());
+                    Path metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
                     Case.openAsCurrentCase(metadataFilePath.toString());
                 } else {
                     caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                    Case.createAsCurrentCase(caseDirectoryPath.toString(), currentJob.getManifest().getCaseName(), "", "", CaseType.MULTI_USER_CASE);
+                    Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
                     /*
                      * Sleep a bit before releasing the lock to ensure that the
                      * new case folder is visible on the network.
@@ -1946,13 +1952,13 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 return caseForJob;
 
             } catch (CaseActionException ex) {
-                throw new CaseManagementException(String.format("Error creating or opening case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+                throw new CaseManagementException(String.format("Error creating or opening case %s (%s) for %s", manifest.getCaseName(), caseName, manifest.getFilePath()), ex);
             } catch (IllegalStateException ex) {
                 /*
                  * Deal with the unfortunate fact that Case.getCurrentCase
                  * throws IllegalStateException.
                  */
-                throw new CaseManagementException(String.format("Error getting current case %s for %s", manifest.getCaseName(), manifest.getFilePath()), ex);
+                throw new CaseManagementException(String.format("Error getting current case %s (%s) for %s", caseName, manifest.getCaseName(), manifest.getFilePath()), ex);
             }
         }
 
@@ -2345,7 +2351,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                             throw new AnalysisStartupException("Ingest manager error starting job", ingestJobStartResult.getStartupException());
                         }
                     } else {
-                        for (String warning : ingestJobSettings.getWarnings()) {
+                        for (String warning : settingsWarnings) {
                             SYS_LOGGER.log(Level.SEVERE, "Ingest job settings error for {0}: {1}", new Object[]{manifestPath, warning});
                         }
                         currentJob.setErrorsOccurred(true);

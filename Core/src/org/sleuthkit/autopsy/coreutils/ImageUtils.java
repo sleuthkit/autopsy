@@ -137,6 +137,8 @@ public class ImageUtils {
         OPEN_CV_LOADED = openCVLoadedTemp;
         SUPPORTED_IMAGE_EXTENSIONS.addAll(Arrays.asList(ImageIO.getReaderFileSuffixes()));
         SUPPORTED_IMAGE_EXTENSIONS.add("tec"); // Add JFIF .tec files
+        SUPPORTED_IMAGE_EXTENSIONS.removeIf("db"::equals); // remove db files
+        
         SUPPORTED_IMAGE_MIME_TYPES = new TreeSet<>(Arrays.asList(ImageIO.getReaderMIMETypes()));
         /*
          * special cases and variants that we support, but don't get registered
@@ -160,7 +162,7 @@ public class ImageUtils {
     private static FileTypeDetector fileTypeDetector;
 
     /**
-     *Thread/Executor that saves generated thumbnails to disk in the background
+     * Thread/Executor that saves generated thumbnails to disk in the background
      */
     private static final Executor imageSaver
             = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
@@ -297,12 +299,27 @@ public class ImageUtils {
      * @param content  the content to generate a thumbnail for
      * @param iconSize the size (one side of a square) in pixels to generate
      *
-     * @return a thumbnail for the given image or a default one if there was a
+     * @return A thumbnail for the given image or a default one if there was a
      *         problem making a thumbnail.
      */
     public static BufferedImage getThumbnail(Content content, int iconSize) {
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
+            if (ImageUtils.isGIF(file)) {
+                /*
+                 * Intercepting the image reading code for GIFs here allows us
+                 * to rescale easily, but we lose animations.
+                 */
+                try (BufferedInputStream bufferedReadContentStream = getBufferedReadContentStream(file);) {
+                    final BufferedImage image = ImageIO.read(bufferedReadContentStream);
+                    if (image != null) {
+                        return ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
+                    }
+                } catch (IOException iOException) {
+                    LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), iOException); //NON-NLS
+                }
+                return DEFAULT_THUMBNAIL;
+            }
 
             Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
             thumbnailTask.run();
@@ -310,11 +327,22 @@ public class ImageUtils {
                 return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
             } catch (InterruptedException | ExecutionException ex) {
                 LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), ex); //NON-NLS
-                return DEFAULT_THUMBNAIL;
             }
-        } else {
-            return DEFAULT_THUMBNAIL;
         }
+        return DEFAULT_THUMBNAIL;
+    }
+
+    /**
+     * Get a BufferedInputStream wrapped around a ReadContentStream for the
+     * given AbstractFile.
+     *
+     * @param file The AbstractFile to get a stream for.
+     *
+     * @return A BufferedInputStream wrapped around a ReadContentStream for the
+     *         given AbstractFile
+     */
+    private static BufferedInputStream getBufferedReadContentStream(AbstractFile file) {
+        return new BufferedInputStream(new ReadContentInputStream(file));
     }
 
     /**
@@ -334,12 +362,12 @@ public class ImageUtils {
     }
 
     /**
-     * Get the location of the cached thumbnail for a file with the given fileID
-     * as a java File. The returned File may not exist on disk yet.
+     * Get the location,as a java File, of the cached thumbnail for an file with
+     * the given fileID . The returned File may not exist on disk yet.
      *
      * @param fileID the fileID to get the cached thumbnail location for
      *
-     * @return a File object representing the location of the cached thumbnail.
+     * @return A File object representing the location of the cached thumbnail.
      *         This file may not actually exist(yet). Returns null if there was
      *         any problem getting the file, such as no case was open.
      */
@@ -542,33 +570,30 @@ public class ImageUtils {
      * @see #getImageHeight(org.sleuthkit.datamodel.AbstractFile)
      */
     private static <T> T getImageProperty(AbstractFile file, final String errorTemplate, PropertyExtractor<T> propertyExtractor) throws IOException {
-        try (InputStream inputStream = new BufferedInputStream(new ReadContentInputStream(file));) {
-            try (ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
-                if (input == null) {
-                    IIOException iioException = new IIOException("Could not create ImageInputStream.");
-                    LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
-                    throw iioException;
+        try (InputStream inputStream = getBufferedReadContentStream(file);
+                ImageInputStream input = ImageIO.createImageInputStream(inputStream)) {
+            if (input == null) {
+                IIOException iioException = new IIOException("Could not create ImageInputStream.");
+                LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
+                throw iioException;
+            }
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+            if (readers.hasNext()) {
+                ImageReader reader = readers.next();
+                reader.setInput(input);
+                try {
+                    return propertyExtractor.extract(reader);
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, errorTemplate + ex.toString(), getContentPathSafe(file));
+                    throw ex;
+                } finally {
+                    reader.dispose();
                 }
-                Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-
-                if (readers.hasNext()) {
-                    ImageReader reader = readers.next();
-                    reader.setInput(input);
-                    try {
-
-                        return propertyExtractor.extract(reader);
-                    } catch (IOException ex) {
-                        LOGGER.log(Level.WARNING, errorTemplate + ex.toString(), getContentPathSafe(file));
-                        throw ex;
-                    } finally {
-                        reader.dispose();
-                    }
-                } else {
-                    IIOException iioException = new IIOException("No ImageReader found.");
-                    LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
-
-                    throw iioException;
-                }
+            } else {
+                IIOException iioException = new IIOException("No ImageReader found.");
+                LOGGER.log(Level.WARNING, errorTemplate + iioException.toString(), getContentPathSafe(file));
+                throw iioException;
             }
         }
     }
@@ -785,7 +810,7 @@ public class ImageUtils {
         protected javafx.scene.image.Image readImage() throws IOException {
             if (ImageUtils.isGIF(file)) {
                 //use JavaFX to directly read GIF to preserve potential animation
-                javafx.scene.image.Image image = new javafx.scene.image.Image(new BufferedInputStream(new ReadContentInputStream(file)));
+                javafx.scene.image.Image image = new javafx.scene.image.Image(getBufferedReadContentStream(file));
                 if (image.isError() == false) {
                     return image;
                 }

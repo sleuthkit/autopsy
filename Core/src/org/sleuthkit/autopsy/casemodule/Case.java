@@ -568,7 +568,8 @@ public class Case {
      *
      * IMPORTANT: This method should not be called in the event dispatch thread
      * (EDT).
-     * @throws CaseActionException 
+     *
+     * @throws CaseActionException
      */
     @Messages({
         "# {0} - exception message", "Case.closeException.couldNotCloseCase=Error closing case: {0}",
@@ -637,6 +638,7 @@ public class Case {
         "# {0} - exception message", "Case.deleteException.couldNotDeleteCase=Could not delete case: {0}",
         "Case.progressIndicatorTitle.deletingCase=Deleting Case",
         "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first",
+        "Case.progressMessage.checkingForOtherUser=Checking to see if another user has the case open...",
         "Case.progressMessage.deletingTextIndex=Deleting text index...",
         "Case.progressMessage.deletingCaseDatabase=Deleting case database...",
         "Case.exceptionMessage.cancelled=Cancelled by user"
@@ -672,7 +674,7 @@ public class Case {
                  * First, acquire an exclusive case directory lock. The case
                  * cannot be deleted if another node has it open.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_checkingForOtherUser());
                 try (CoordinationService.Lock dirLock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
                     assert (null != dirLock);
 
@@ -723,8 +725,9 @@ public class Case {
     }
 
     /**
-     * Sanitizes the case name for use as a PostgreSQL database name and in
-     * ActiveMQ event channel (topic) names.
+     * Cleans up the display name for a case to make a suitable case name for
+     * use in case direcotry paths, coordination service locks, PostgreSQL
+     * database names, Active MQ message message channels, etc.
      *
      * PostgreSQL:
      * http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html 63
@@ -741,7 +744,7 @@ public class Case {
      *
      * @throws org.sleuthkit.autopsy.casemodule.Case.IllegalCaseNameException
      */
-    static String sanitizeCaseName(String caseName) throws IllegalCaseNameException {
+    public static String displayNameToCaseName(String caseName) throws IllegalCaseNameException {
 
         String result;
 
@@ -1604,7 +1607,7 @@ public class Case {
         "Case.progressIndicatorTitle.creatingCase=Creating Case",
         "Case.progressIndicatorCancelButton.label=Cancel",
         "Case.progressMessage.preparing=Preparing...",
-        "Case.progressMessage.acquiringLocks=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>"
+        "Case.progressMessage.openingCaseResources=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>"
     })
     private void open(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
         /*
@@ -1613,7 +1616,7 @@ public class Case {
          */
         String caseName;
         try {
-            caseName = sanitizeCaseName(caseDisplayName);
+            caseName = displayNameToCaseName(caseDisplayName);
         } catch (IllegalCaseNameException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_illegalCaseName()), ex);
         }
@@ -1652,7 +1655,7 @@ public class Case {
                  * First, acquire an exclusive case name lock to prevent two
                  * nodes from creating the same case at the same time.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_openingCaseResources());
                 try (CoordinationService.Lock nameLock = Case.acquireExclusiveCaseNameLock(caseName)) {
                     assert (null != nameLock);
                     /*
@@ -1872,7 +1875,7 @@ public class Case {
                  * as long as this node has this case open, in order to prevent
                  * deletion of the case by another node.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_openingCaseResources());
                 acquireSharedCaseDirLock(caseMetadata.getCaseDirectory());
                 /*
                  * Next, acquire an exclusive case resources lock to ensure only
@@ -2131,6 +2134,7 @@ public class Case {
      * @param progressIndicator A progress indicator.
      */
     @Messages({
+        "Case.progressMessage.closingCaseResources=<html>Preparing to close case resources.<br>This may take time if another user is upgrading the case.</html>",
         "Case.progressMessage.notifyingCaseEventSubscribers=Notifying case event subscribers...",
         "Case.progressMessage.clearingTempDirectory=Clearing case temp directory...",
         "Case.progressMessage.closingCaseLevelServices=Closing case-level services...",
@@ -2139,7 +2143,6 @@ public class Case {
         "Case.progressMessage.closingCaseDatabase=Closing case database...",
         "Case.progressMessage.tearingDownTskErrorReporting=Tearing down SleuthKit error reporting..."
     })
-
     private void close() throws CaseActionException {
         /*
          * Set up either a GUI progress indicator or a logging progress
@@ -2172,7 +2175,7 @@ public class Case {
                  * node at a time can create/open/upgrade/close the case
                  * resources.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_acquiringLocks());
+                progressIndicator.start(Bundle.Case_progressMessage_closingCaseResources());
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseName())) {
                     assert (null != resourcesLock);
                     close(progressIndicator);
@@ -2406,7 +2409,7 @@ public class Case {
      * An exception to throw when a case name with invalid characters is
      * encountered.
      */
-    final static class IllegalCaseNameException extends Exception {
+    public final static class IllegalCaseNameException extends Exception {
 
         private static final long serialVersionUID = 1L;
 

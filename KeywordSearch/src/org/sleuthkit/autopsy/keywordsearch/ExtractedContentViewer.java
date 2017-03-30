@@ -327,6 +327,9 @@ public class ExtractedContentViewer implements DataContentViewer {
      */
     private boolean solrHasContent(Long objectId) {
         final Server solrServer = KeywordSearch.getServer();
+        if (solrServer.coreIsOpen() == false)
+            return false;
+        
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {

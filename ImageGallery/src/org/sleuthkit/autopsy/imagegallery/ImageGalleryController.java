@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -182,7 +182,7 @@ public final class ImageGalleryController implements Executor {
         return groupManager;
     }
 
-    public DrawableDB getDatabase() {
+    synchronized public DrawableDB getDatabase() {
         return db;
     }
 
@@ -306,7 +306,7 @@ public final class ImageGalleryController implements Executor {
         "ImageGalleryController.noGroupsDlg.msg6=There are no fully analyzed groups to display:"
         + "  the current Group By setting resulted in no groups, "
         + "or no groups are fully analyzed but ingest is not running."})
-    public void checkForGroups() {
+    synchronized private void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
             if (IngestManager.getInstance().isIngestRunning()) {
                 if (listeningEnabled.get() == false) {
@@ -951,13 +951,15 @@ public final class ImageGalleryController implements Executor {
                     if (isListeningEnabled()) {
                         if (file.isFile()) {
                             try {
-                                if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
-                                    //this file should be included and we don't already know about it from hash sets (NSRL)
-                                    queueDBWorkerTask(new UpdateFileTask(file, db));
-                                } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
-                                    //doing this check results in fewer tasks queued up, and faster completion of db update
-                                    //this file would have gotten scooped up in initial grab, but actually we don't need it
-                                    queueDBWorkerTask(new RemoveFileTask(file, db));
+                                synchronized (ImageGalleryController.this) {
+                                    if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
+                                        //this file should be included and we don't already know about it from hash sets (NSRL)
+                                        queueDBWorkerTask(new UpdateFileTask(file, db));
+                                    } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
+                                        //doing this check results in fewer tasks queued up, and faster completion of db update
+                                        //this file would have gotten scooped up in initial grab, but actually we don't need it
+                                        queueDBWorkerTask(new RemoveFileTask(file, db));
+                                    }
                                 }
                             } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
                                 //TODO: What to do here?

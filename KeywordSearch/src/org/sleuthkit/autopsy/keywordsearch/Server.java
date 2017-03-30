@@ -36,11 +36,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
@@ -62,11 +60,9 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.util.NamedList;
 import org.openide.modules.InstalledFileLocator;
 import org.openide.modules.Places;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
-import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -241,7 +237,7 @@ public class Server {
             javaHome = System.getenv("JAVA_HOME"); // NON-NLS
         }
 
-        if (javaHome.isEmpty()) {
+        if (javaHome == null || javaHome.isEmpty()) {
             logger.log(Level.WARNING, "Java not found. Keyword search functionality may not work."); //NON-NLS
         }
 
@@ -696,17 +692,16 @@ public class Server {
         }
     }
 
-    Index getIndexInfo() throws KeywordSearchModuleException {
+    Index getIndexInfo() throws NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
-            if (null != currentCore) {
-                return currentCore.getIndexInfo();
-            } else {
-                throw new KeywordSearchModuleException("Cannot get text index info, no core is open");
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
             }
+            return currentCore.getIndexInfo();
         } finally {
             currentCoreLock.readLock().unlock();
-        }        
+        }
     }
     
     void closeCore() throws KeywordSearchModuleException {
@@ -722,9 +717,12 @@ public class Server {
         }
     }
 
-    void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException {
+    void addDocument(SolrInputDocument doc) throws KeywordSearchModuleException, NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
+            if (null == currentCore) {
+                throw new NoOpenCoreException();
+            }
             currentCore.addDocument(doc);
         } finally {
             currentCoreLock.readLock().unlock();

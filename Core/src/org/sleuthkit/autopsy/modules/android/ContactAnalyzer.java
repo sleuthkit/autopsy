@@ -25,6 +25,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -35,6 +37,8 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.ContentUtils;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestServices;
+import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -49,6 +53,7 @@ class ContactAnalyzer {
 
     private static final String moduleName = AndroidModuleFactory.getModuleName();
     private static final Logger logger = Logger.getLogger(ContactAnalyzer.class.getName());
+    private static final IngestServices services = IngestServices.getInstance();
 
     public static void findContacts(Content dataSource, FileManager fileManager,
             IngestJobContext context) {
@@ -98,7 +103,8 @@ class ContactAnalyzer {
             logger.log(Level.SEVERE, "Error opening database", e); //NON-NLS
             return;
         }
-
+        
+        Collection<BlackboardArtifact> bbartifacts = new ArrayList<>();
         try {
             // get display_name, mimetype(email or phone number) and data1 (phonenumber or email address depending on mimetype)
             //sorted by name, so phonenumber/email would be consecutive for a person if they exist.
@@ -152,6 +158,8 @@ class ContactAnalyzer {
                 }
                 oldName = name;
                 
+                bbartifacts.add(bba);
+                 
                 try {
                     // index the artifact for keyword search
                     blackboard.indexArtifact(bba);
@@ -167,6 +175,12 @@ class ContactAnalyzer {
         } catch (TskCoreException e) {
             logger.log(Level.SEVERE, "Error posting to blackboard", e); //NON-NLS
         } finally {
+            if (!bbartifacts.isEmpty()) {
+                services.fireModuleDataEvent(new ModuleDataEvent(
+                    moduleName,
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts));
+            }
+            
             try {
                 if (resultSet != null) {
                     resultSet.close();

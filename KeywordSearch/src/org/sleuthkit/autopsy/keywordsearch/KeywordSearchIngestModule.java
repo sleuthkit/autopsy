@@ -166,7 +166,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             if (!IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion())) {
                 throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));                
             }
-        } catch (KeywordSearchModuleException ex) {
+        } catch (NoOpenCoreException ex) {
             throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_failedToGetIndexSchema(), ex);
         }
 
