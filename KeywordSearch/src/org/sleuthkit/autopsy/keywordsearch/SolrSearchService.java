@@ -148,8 +148,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * Deletes Solr core for a case.
      *
      * @param coreName The core name.
+     * @deprecated deleteCore(String textIndexName, String caseDirectory) should be used instead to support newer solr cores
      */
-    @Deprecated
     @Override
     public void deleteTextIndex(String coreName) throws KeywordSearchServiceException {
         //If this was called with the metadata.textIndexName then this will only work on solr 4 cores
@@ -393,7 +393,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * @throws KeywordSearchServiceException
      */
     @Override
-    public void deleteCores(String textIndexName, String caseDirectory) throws KeywordSearchServiceException {
+    public void deleteCore(String textIndexName, String caseDirectory) throws KeywordSearchServiceException {
         String coreName = textIndexName;
         if (!caseDirectory.isEmpty()) {
             IndexMetadata indexMetadata;
