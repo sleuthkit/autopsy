@@ -261,14 +261,4 @@
         <echo file="${nbdist.dir}/${app.name}-installer/autopsy/.lastModified" message="" />
         <antcall target="build-installer-${os.family}" />
     </target>
-       
-    <property name="cluster.dir" value="build/cluster/modules/ext" />
-    <target name="clean" depends="suite.clean">
-        <!--Override clean to delete jars, etc downloaded with Ivy, 
-        or copied in from thirdparty folder.  This way we don't end up with 
-        out-of-date/unneeded stuff in the installer-->
-        <delete dir="${cluster.dir}/modules/ext"/>
-        <delete dir="${cluster.dir}/solr/lib"/>
-        <delete dir="${cluster.dir}/solr/solr/lib"/>
-    </target>
 </project>

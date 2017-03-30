@@ -34,6 +34,21 @@
                  uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
     </target>
     
+    <property name="release.dir" value="release" />
+    
+    <target name="get-solr-deployment" description="copy the solr deployment into release"> 
+        <copy  todir="${release.dir}/solr" >
+            <fileset dir="solr"/>
+        </copy>
+    </target>
+    
+    <target name="get-solr-upgrader-jars" description="copy the solr index upgrader jars into release"> 
+        <copy  file="SolrUpgradeTools/Solr4IndexUpgrade.jar"
+               todir="${release.dir}/Solr4to5IndexUpgrade" />
+        <copy file="SolrUpgradeTools/Solr5IndexUpgrade.jar"
+              todir="${release.dir}/Solr5to6IndexUpgrade" />
+    </target>
+    
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
@@ -42,16 +57,19 @@
         <ivy:retrieve conf="solr-libs" sync="true" pattern="release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="slf4j-libs" sync="true" pattern="release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="servlet" sync="true" pattern="release/solr/lib/servlet-api-3.0.jar" />
+        <ivy:retrieve conf="solr4to5" sync="true" pattern="release/Solr4to5IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="solr5to6" sync="true" pattern="release/Solr5to6IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
+      
+         <!--Copy Solr deployment and tools that arn't downloaded with Ivy-->
+        <antcall target="get-solr-deployment" /> 
+        <antcall target="get-solr-upgrader-jars" /> 
     </target>
-    
-    <property name="release.dir" value="release" />
+     
     <target name="clean" depends="projectized-common.clean">
-        <!--Override clean to delete jars, etc downloaded with Ivy, 
+        <!--Override clean to delete jars, etc downloaded with Ivy  
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <delete dir="${release.dir}/modules/ext"/>
-        <delete dir="${release.dir}/solr/lib"/>
-        <delete dir="${release.dir}/solr/solr/lib"/>
+        <delete dir="release"/>
     </target>
 
     <target name="clean-all" depends="clean" description="Clear Ivy cache.">
