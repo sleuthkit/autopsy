@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -51,7 +52,7 @@ public final class IngestProfiles {
         List<IngestProfile> profileList = new ArrayList<>();
         if (directoryListing != null) {
             for (File child : directoryListing) {
-                String name = child.getName().replace(PROFILE_FILE_EXT, ""); //remove the extension
+                String name = FilenameUtils.removeExtension(child.getName()); 
                 String context = PROFILE_FOLDER + File.separator + name;
                 String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
                 String fileIngestFilter = ModuleSettings.getConfigSetting(context, PROFILE_FILTER_KEY);
