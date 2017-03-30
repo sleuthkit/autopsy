@@ -405,7 +405,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     coreName = indexMetadata.getIndexes().get(0).getIndexName();
                 }
             } catch (IndexMetadata.TextIndexMetadataException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.WARNING, "Unable to create IndexMetaData from caseDirectory " + caseDirectory, ex);
             }
         }
         KeywordSearch.getServer().deleteCore(coreName);
