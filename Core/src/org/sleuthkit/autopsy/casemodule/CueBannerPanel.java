@@ -51,8 +51,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     public CueBannerPanel() {
         initComponents();
-        customizeComponents();
         enableComponents();
+        customizeComponents();
     }
 
     public CueBannerPanel(String welcomeLogo) {
@@ -62,8 +62,8 @@ public class CueBannerPanel extends javax.swing.JPanel {
             ImageIcon icon = new ImageIcon(cl.getResource(welcomeLogo));
             autopsyLogo.setIcon(icon);
         }
-        customizeComponents();
         enableComponents();
+        customizeComponents();
     }
 
     public void setCloseButtonActionListener(ActionListener e) {
@@ -76,6 +76,7 @@ public class CueBannerPanel extends javax.swing.JPanel {
 
     public void refresh() {
         enableComponents();
+        customizeComponents();
     }
 
     private void customizeComponents() {
