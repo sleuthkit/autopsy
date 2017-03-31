@@ -2,10 +2,60 @@
 <!-- You may freely edit this file. See harness/README in the NetBeans platform -->
 <!-- for some information on what you could do (e.g. targets to override). -->
 <!-- If you delete this file and reopen the project it will be recreated. -->
-<project name="org.sleuthkit.autopsy.core" default="netbeans" basedir=".">
+<project name="org.sleuthkit.autopsy.core" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" >
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.core</description>
     <import file="nbproject/build-impl.xml"/>
-         
+          
+    
+    <property name="ivy.install.version" value="2.3.0-rc2" />
+    <condition property="ivy.home" value="${env.IVY_HOME}">
+        <isset property="env.IVY_HOME" />
+    </condition>
+    <property name="ivy.home" value="${user.home}/.ant" />
+    <property name="ivy.jar.dir" value="${ivy.home}/lib" />
+    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+
+    <target name="download-ivy" unless="offline">
+        <available file="${ivy.jar.file}" property="ivy.available"/>
+        <antcall target="-download-ivy" />
+    </target>
+    
+    <target name="-download-ivy" unless="ivy.available">
+        <mkdir dir="${ivy.jar.dir}"/>
+        <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
+             dest="${ivy.jar.file}" usetimestamp="true"/>
+    </target>
+
+    <!-- init-ivy will bootstrap Ivy if the user doesn't have it already -->
+    <target name="init-ivy" depends="download-ivy" unless="ivy.lib.path">
+        <path id="ivy.lib.path">
+            <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml"
+                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+    </target>
+    
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="modules.dir" value="release/modules/" />
+    <property name="ext.dir" value="${modules.dir}/ext" />
+    <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
+        <mkdir dir="${ext.dir}"/>
+        
+        <!--Copy openCV dependencies to release-->
+        <copy todir="${modules.dir}" >
+            <fileset dir="${thirdparty.dir}/opencv" />
+        </copy>
+
+        <!--Copy other jars-->
+        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
+    </target>
+    
     <!-- Verify that the TSK_HOME env variable is set -->
     <target name="findTSK">
         <property environment="env"/>
@@ -18,25 +68,48 @@
     
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar" tofile="${basedir}/release/modules/ext/Tsk_DataModel_PostgreSQL.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" tofile="${basedir}/release/modules/ext/postgresql-9.4.1211.jre7.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar" tofile="${basedir}/release/modules/ext/mchange-commons-java-0.2.9.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar" tofile="${basedir}/release/modules/ext/c3p0-0.9.5.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar"
+              tofile="${basedir}/release/modules/ext/Tsk_DataModel_PostgreSQL.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" 
+              tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar"
+              tofile="${basedir}/release/modules/ext/postgresql-9.4.1211.jre7.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
+              tofile="${basedir}/release/modules/ext/mchange-commons-java-0.2.9.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar" 
+              tofile="${basedir}/release/modules/ext/c3p0-0.9.5.jar"/>
     </target>
 
-    <target name="download-binlist">
+
+
+    <target name="download-binlist" description="Download the din list data file used to enrich credit card numbers">
         <get src="https://raw.githubusercontent.com/binlist/data/master/ranges.csv" 
              dest="src\org\sleuthkit\autopsy\datamodel" 
              ignoreerrors="true"
              verbose="true"/>
     </target>
 
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init">
-        <antcall target="download-binlist" />   
-
+    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+        <!-- fetch all the dependencies from Ivy and stick them in the right places -->
+        <ivy:resolve/>
+        <ivy:retrieve conf="core" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        
         <!-- get additional deps -->   
         <antcall target="getTSKJars" />
+        <antcall target="get-thirdparty-dependencies" />
+
+        <!--Donwload the bin list used for credit card number enrichment-->
+        <antcall target="download-binlist" />   
     </target>
+     
+    <target name="clean" depends="projectized-common.clean">
+        <!--Override clean to delete jars, etc downloaded with Ivy  
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
+        <delete includeemptydirs="true" >
+            <fileset dir="release/modules" includes="**/*"/>
+        </delete>
+    </target>
+    
+
 </project>
