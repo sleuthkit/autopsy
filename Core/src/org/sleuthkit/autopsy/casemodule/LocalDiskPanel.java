@@ -653,7 +653,7 @@ final class LocalDiskPanel extends JPanel {
                 try {
                     super.get(); //block and get all exceptions thrown while doInBackground()
                 } catch (CancellationException ex) {
-                    logger.log(Level.INFO, "Loading local disks was canceled, which should not be possible."); //NON-NLS
+                    logger.log(Level.INFO, "Loading local disks was canceled."); //NON-NLS
                 } catch (InterruptedException ex) {
                     logger.log(Level.INFO, "Loading local disks was interrupted."); //NON-NLS
                 } catch (Exception ex) {
