@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
+import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
@@ -55,6 +56,7 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final Map<Long, List<FilesSet>> interestingFileSetsByJob = new ConcurrentHashMap<>();
     private final FilesIdentifierIngestJobSettings settings;
+    private final IngestServices services = IngestServices.getInstance();
     private IngestJobContext context;
     private Blackboard blackboard;
 
@@ -141,7 +143,18 @@ final class FilesIdentifierIngestModule implements FileIngestModule {
                         MessageNotifyUtil.Notify.error(Bundle.FilesIdentifierIngestModule_indexError_message(), artifact.getDisplayName());
                     }
 
-                    IngestServices.getInstance().fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
+                    services.fireModuleDataEvent(new ModuleDataEvent(moduleName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, Collections.singletonList(artifact)));
+
+                    // make an ingest inbox message
+                    StringBuilder detailsSb = new StringBuilder();
+                    detailsSb.append("File: " + file.getParentPath() + file.getName() + "<br/>\n");
+                    detailsSb.append("Rule Set: " + filesSet.getName());
+
+                    services.postMessage(IngestMessage.createDataMessage(InterestingItemsIngestModuleFactory.getModuleName(),
+                            "Interesting File Match: " + filesSet.getName() + "(" + file.getName() +")",
+                            detailsSb.toString(),
+                            file.getName(),
+                            artifact));
 
                 } catch (TskCoreException ex) {
                     FilesIdentifierIngestModule.logger.log(Level.SEVERE, "Error posting to the blackboard", ex); //NOI18N NON-NLS
