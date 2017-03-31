@@ -3,7 +3,7 @@
 /*/build/
 */nbproject/private/*
 /nbproject/private/*
-/Core/release/modules/
+/Core/release/
 /Core/src/org/sleuthkit/autopsy/coreutils/Version.properties
 /Core/build/
 /Core/dist/
@@ -71,11 +71,10 @@ genfiles.properties
 hs_err_pid*.log
 Core/src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html
 Core/src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png
+Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 /test/script/myconfig.xml
 /test/script/*/*.xml
 .DS_Store
 .*.swp
-Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 
-thunderbirdparser/release/modules/ext
-
+thunderbirdparser/release/

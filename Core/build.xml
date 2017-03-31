@@ -36,18 +36,28 @@
     </target>
     
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
-    <property name="modules.dir" value="release/modules/" />
+    <property name="release.dir" value="${basedir}/release" />
+    <property name="modules.dir" value="${release.dir}/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
+    
+    <target name="get-InternalPythonModules" description="get internal python modules"> 
+        <copy todir="${release.dir}/InternalPythonModules" >
+            <fileset dir="{basedir}/../../InternalPythonModules"/>
+        </copy>
+    </target>
+    
     <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
-        <mkdir dir="${ext.dir}"/>
-        
         <!--Copy openCV dependencies to release-->
         <copy todir="${modules.dir}" >
             <fileset dir="${thirdparty.dir}/opencv" />
         </copy>
-
+        
+        <!--Copy photorec to release-->
+        <copy todir="${release.dir}/photorec_exec" >
+            <fileset dir="${thirdparty.dir}/photorec_exec"/>
+        </copy>
+       
         <!--Copy other jars-->
-        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
         <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
@@ -90,6 +100,9 @@
     </target>
 
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+        <mkdir dir="${ext.dir}"/>
+        <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
+        
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
         <ivy:retrieve conf="core" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
@@ -97,7 +110,8 @@
         <!-- get additional deps -->   
         <antcall target="getTSKJars" />
         <antcall target="get-thirdparty-dependencies" />
-
+        <antcall target="get-InternalPythonModules"/>
+        
         <!--Donwload the bin list used for credit card number enrichment-->
         <antcall target="download-binlist" />   
     </target>
@@ -107,9 +121,7 @@
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
         <delete includeemptydirs="true" >
-            <fileset dir="release/modules" includes="**/*"/>
+            <fileset dir="${release.dir}" includes="**/*"/>
         </delete>
     </target>
-    
-
 </project>
