@@ -60,7 +60,7 @@
         <ivy:retrieve conf="solr4to5" sync="true" pattern="release/Solr4to5IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr5to6" sync="true" pattern="release/Solr5to6IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
       
-         <!--Copy Solr deployment and tools that arn't downloaded with Ivy-->
+        <!--Copy Solr deployment and tools that arn't downloaded with Ivy-->
         <antcall target="get-solr-deployment" /> 
         <antcall target="get-solr-upgrader-jars" /> 
     </target>
@@ -69,7 +69,9 @@
         <!--Override clean to delete jars, etc downloaded with Ivy  
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <delete dir="release"/>
+        <delete includeemptydirs="true">
+            <fileset dir="release" includes="**/*"/>
+        </delete>
     </target>
 
     <target name="clean-all" depends="clean" description="Clear Ivy cache.">
