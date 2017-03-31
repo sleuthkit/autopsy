@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -38,6 +39,7 @@ public final class IngestProfiles {
     private static final String PROFILE_NAME_KEY = "Profile_Name";
     private static final String PROFILE_DESC_KEY = "Profile_Description";
     private static final String PROFILE_FILTER_KEY = "Profile_Filter";
+    private static final String PROFILE_FILE_EXT = ".properties";
 
     /**
      * Gets the collection of profiles which currently exist.
@@ -50,7 +52,7 @@ public final class IngestProfiles {
         List<IngestProfile> profileList = new ArrayList<>();
         if (directoryListing != null) {
             for (File child : directoryListing) {
-                String name = child.getName().split("\\.")[0];
+                String name = FilenameUtils.removeExtension(child.getName()); 
                 String context = PROFILE_FOLDER + File.separator + name;
                 String desc = ModuleSettings.getConfigSetting(context, PROFILE_DESC_KEY);
                 String fileIngestFilter = ModuleSettings.getConfigSetting(context, PROFILE_FILTER_KEY);
@@ -137,8 +139,8 @@ public final class IngestProfiles {
          */
         synchronized static void deleteProfile(IngestProfile selectedProfile) {
             try {
-                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, selectedProfile.getName() + ".properties"));
-                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + ".properties"));
+                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, selectedProfile.getName() + PROFILE_FILE_EXT));
+                Files.deleteIfExists(Paths.get(PlatformUtil.getUserConfigDirectory(), selectedProfile.getName() + PROFILE_FILE_EXT));
                 FileUtils.deleteDirectory(IngestJobSettings.getSavedModuleSettingsFolder(selectedProfile.getName() + File.separator).toFile());
             } catch (IOException ex) {
                 Exceptions.printStackTrace(ex);
@@ -153,11 +155,11 @@ public final class IngestProfiles {
          */
         synchronized static void renameProfile(String oldName, String newName) {
             if (!oldName.equals(newName)) { //if renameProfile was called with the new name being the same as the old name, it is complete already
-                File oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, oldName + ".properties").toFile();
-                File newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, newName + ".properties").toFile();
+                File oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, oldName + PROFILE_FILE_EXT).toFile();
+                File newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), PROFILE_FOLDER, newName + PROFILE_FILE_EXT).toFile();
                 oldFile.renameTo(newFile);
-                oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), oldName + ".properties").toFile();
-                newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), newName + ".properties").toFile();
+                oldFile = Paths.get(PlatformUtil.getUserConfigDirectory(), oldName + PROFILE_FILE_EXT).toFile();
+                newFile = Paths.get(PlatformUtil.getUserConfigDirectory(), newName + PROFILE_FILE_EXT).toFile();
                 oldFile.renameTo(newFile);
                 oldFile = IngestJobSettings.getSavedModuleSettingsFolder(oldName + File.separator).toFile();
                 newFile = IngestJobSettings.getSavedModuleSettingsFolder(newName + File.separator).toFile();
