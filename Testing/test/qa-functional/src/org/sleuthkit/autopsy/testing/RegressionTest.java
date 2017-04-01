@@ -25,7 +25,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import org.netbeans.jemmy.Timeouts;
 import org.netbeans.junit.NbModuleSuite;
-import org.sleuthkit.autopsy.core.UserPreferences;
 
 /**
  * This test expects the following system properties to be set: img_path: The
@@ -99,7 +98,6 @@ public class RegressionTest extends TestCase {
     public void setUp() {
         logger.info("########  " + AutopsyTestCases.getEscapedPath(System.getProperty("img_path")) + "  #######");
         Timeouts.setDefault("ComponentOperator.WaitComponentTimeout", 1000000);
-        UserPreferences.setNumberOfFileIngestThreads(1);  //Let nightly test using 1 ingest thread to avoid ordering results in report of insertion to tsk tables
     }
 
     /**
