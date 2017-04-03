@@ -29,7 +29,11 @@ Once a keyword list is selected all keywords in that list will be displayed on t
 
 \image html keyword-search-configuration-new-keywords.PNG
 
-New entries can be typed into the dialog or pasted from the clipboard. All entries added at once must be the same type of match (exact, substring, or regex), but the dialog can be used multiple times to add keywords to the keyword list. Refer to the \ref ad_hoc_kw_types_section section for an explanation of each keyword type.
+New entries can be typed into the dialog or pasted from the clipboard. All entries added at once must be the same type of match (exact, substring, or regex), but the dialog can be used multiple times to add keywords to the keyword list.  Refer to the \ref ad_hoc_kw_types_section section for an explanation of each keyword type.
+
+Under the Keyword list is the option to send ingest inbox messages for each hit. If this is enabled, each keyword hit for that list will be accessible through the yellow triangle next to the Keyword Lists button. This feature gives you a quick way to view your most important keyword search results.
+
+\image html keyword-search-inbox.PNG
 
 ## String Extraction tab {#stringExtractionTab}
 The string extraction setting defines how strings are extracted from files from which text cannot be extracted because their file formats are not supported. This is the case with arbitrary binary files (such as the page file) and chunks of unallocated space that represent deleted files.
@@ -81,9 +85,6 @@ The Keyword Search module will save the search results regardless whether the se
 The keyword results will appear in the tree under "Keyword Hits". Each keyword search term will display the number of matches, and can be expanded to show the matches. From here, clicking on one of the matches will show a list of files on the right side of the screen. Select a file and go to the Indexed Text tab to see exactly where the matches occurred in the file.
 
 \image html keyword_results.PNG
-
-To see keyword search results in real-time while ingest is running, add keyword lists using the \subpage keyword_search_configuration_dialog "Keyword Search Configuration Dialog" and select the "Use during ingest" check box. You can select "Send messages to inbox during ingest" per list, if the hits on that list should be reported in the Inbox, which is recommended for very specific searches.
-
 
  
 */

@@ -39,7 +39,7 @@ Substring match should be used where the search term is just part of a word, or 
 
 Regex match can be used to search for a specific pattern. Regular expressions are supported using Lucene Regex Syntax which is documented here: https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html. .* is automatically added to the beginning and end of the regular expressions to ensure all matches are found. Additionally, the resulting hits are split on common token separator boundaries (e.g. space, newline, colon, exclamation point etc.) to make the resulting keyword hit more amenable to highlighting.
 
-There is some validation on the regex but it's best to test on a sample image to make sure your regexes are working as expected.
+There is some validation on the regex but it's best to test on a sample image to make sure your regexes are correct and working as expected.
 
 > In the year 1885 in an article titled Current Notes, the quick brown fox first jumped over the lazy dog.
 
