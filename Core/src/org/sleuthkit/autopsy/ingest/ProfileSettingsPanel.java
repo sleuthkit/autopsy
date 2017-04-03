@@ -19,14 +19,19 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Cursor;
+import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
@@ -54,7 +59,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private Map<String, IngestProfile> profiles;
     private ProfilePanel panel;
     private boolean canBeEnabled;  //if something can be enabled ingest is not running
-
+    private int option = JOptionPane.CANCEL_OPTION;
     /**
      * Creates new form ProfileOptionsPanel
      */
@@ -368,6 +373,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
      */
     private void doProfileDialog(IngestProfile selectedProfile) {
         // Create a files set defintion panel.
+         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         //start wait cursor for ingest job settings construction
         if (selectedProfile != null) {
@@ -377,12 +383,21 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             // Creating a new set definition.
             panel = new ProfilePanel();
         }
+         dialog.addApplyButtonListener(
+                    (ActionEvent e) -> {
+                        panel.store();
+                        option = JOptionPane.OK_OPTION;
+                        dialog.close();
+                    }
+            );
+           
+        
         //end wait Cursor for ingest job settings construction
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         // Do a dialog box with the profilePanel till the user enters a name or chooses cancel
-        int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showConfirmDialog(null, panel, Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.CANCEL_OPTION; 
+            dialog.display(panel);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         if (option == JOptionPane.OK_OPTION) {
