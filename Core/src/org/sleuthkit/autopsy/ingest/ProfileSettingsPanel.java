@@ -20,11 +20,8 @@ package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
