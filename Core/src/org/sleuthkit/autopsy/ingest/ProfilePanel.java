@@ -116,6 +116,7 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         profileDescArea.setMinimumSize(new java.awt.Dimension(104, 22));
         profileDescArea.setName(""); // NOI18N
         profileDescArea.setPreferredSize(new java.awt.Dimension(164, 30));
+        profileDescPane.setViewportView(profileDescArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(profileNameLabel, org.openide.util.NbBundle.getMessage(ProfilePanel.class, "ProfilePanel.profileNameLabel.text")); // NOI18N
 
@@ -127,18 +128,17 @@ class ProfilePanel extends IngestModuleGlobalSettingsPanel {
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(profileDescLabel)
-                    .addComponent(profileNameLabel)))
             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 637, Short.MAX_VALUE)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(6, 6, 6)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(profileNameField)
-                    .addComponent(profileDescPane))
-                .addGap(5, 5, 5))
+                    .addComponent(profileDescLabel)
+                    .addComponent(profileNameLabel)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(profileNameField)
+                            .addComponent(profileDescPane))
+                        .addGap(5, 5, 5))))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
