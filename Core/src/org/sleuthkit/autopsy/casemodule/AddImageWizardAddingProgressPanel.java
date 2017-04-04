@@ -236,6 +236,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        startIngest();
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
         if (imgAdded) {
             getComponent().setStateFinished();
@@ -247,12 +248,9 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
     }
 
     void setIngestJobSettings(IngestJobSettings ingestSettings) {
-        if (!readyToIngest){
-            showWarnings(ingestSettings);
-            this.readyToIngest = true;
-            this.ingestJobSettings = ingestSettings;
-            startIngest();
-        }        
+        showWarnings(ingestSettings);
+        this.readyToIngest = true;
+        this.ingestJobSettings = ingestSettings;
     }
 
     /**
@@ -284,14 +282,14 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
      * Start ingest after verifying we have a new image, we are ready to ingest,
      * and we haven't already ingested.
      */
-    void startIngest() {
+    private void startIngest() {
         if (!newContents.isEmpty() && readyToIngest && !ingested) {
             ingested = true;
             IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettings);
             setStateFinished();
         }
     }
-    
+
     private static void showWarnings(IngestJobSettings ingestJobSettings) {
         List<String> warnings = ingestJobSettings.getWarnings();
         if (warnings.isEmpty() == false) {
@@ -302,45 +300,44 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
             JOptionPane.showMessageDialog(null, warningMessage.toString());
         }
     }
-    
+
     /**
      * Starts the Data source processing by kicking off the selected
      * DataSourceProcessor
      */
     void startDataSourceProcessing(DataSourceProcessor dsp) {
-            final UUID dataSourceId = UUID.randomUUID();
-            newContents.clear();
-            cleanupTask = null;
-            readyToIngest = false;
-            dsProcessor = dsp;
-            
+        final UUID dataSourceId = UUID.randomUUID();
+        newContents.clear();
+        cleanupTask = null;
+        readyToIngest = false;
+        dsProcessor = dsp;
 
-            // Add a cleanup task to interrupt the background process if the
-            // wizard exits while the background process is running.
-            cleanupTask = addImageAction.new CleanupTask() {
-                @Override
-                void cleanup() throws Exception {
-                    cancelDataSourceProcessing(dataSourceId);
-                    cancelled = true;
-                }
-            };
+        // Add a cleanup task to interrupt the background process if the
+        // wizard exits while the background process is running.
+        cleanupTask = addImageAction.new CleanupTask() {
+            @Override
+            void cleanup() throws Exception {
+                cancelDataSourceProcessing(dataSourceId);
+                cancelled = true;
+            }
+        };
 
-            cleanupTask.enable();
+        cleanupTask.enable();
 
-            new Thread(() -> {
-                Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
-            }).start();
-            DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
-                @Override
-                public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-                    dataSourceProcessorDone(dataSourceId, result, errList, contents);
-                }
-            };
+        new Thread(() -> {
+            Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
+        }).start();
+        DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
+            @Override
+            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
+                dataSourceProcessorDone(dataSourceId, result, errList, contents);
+            }
+        };
 
-            setStateStarted();
+        setStateStarted();
 
-            // Kick off the DSProcessor 
-            dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
+        // Kick off the DSProcessor 
+        dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
     }
 
     /*
