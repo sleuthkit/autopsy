@@ -56,10 +56,10 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels = new ArrayList<>();
             AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
             panels.add(dspSelection);
-            AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
+            AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel(action);
 
-            AddImageWizardDataSourceSettingsPanel dsPanel = new AddImageWizardDataSourceSettingsPanel();
-            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
+            AddImageWizardDataSourceSettingsPanel dsPanel = new AddImageWizardDataSourceSettingsPanel(progressPanel);
+            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(progressPanel);
             panels.add(dsPanel);
             List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
             if (!profiles.isEmpty()) {

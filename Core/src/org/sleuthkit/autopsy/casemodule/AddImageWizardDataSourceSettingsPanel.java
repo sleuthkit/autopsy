@@ -47,10 +47,12 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
      */
     private AddImageWizardDataSourceSettingsVisual component;
     private boolean isNextEnable = false;
+    private final AddImageWizardAddingProgressPanel progressPanel;
+    private boolean processingStarted = false;
     // paths to any set hash lookup databases (can be null)
 
-    AddImageWizardDataSourceSettingsPanel() {
-
+    AddImageWizardDataSourceSettingsPanel(AddImageWizardAddingProgressPanel proPanel) {
+        this.progressPanel = proPanel;
     }
 
     /**
@@ -169,7 +171,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
     public void readSettings(WizardDescriptor settings) {
         // Prepopulate the image directory from the properties file
         try {
-      
+
             // If there is a process object in the settings, revert it and remove it from the settings
             AddImageAction.CleanupTask cleanupTask = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
             if (cleanupTask != null) {
@@ -184,7 +186,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
             }
         } catch (Exception e) {
         }
-        component.setDspSelection((String)settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
+        component.setDspSelection((String) settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
     }
 
     /**
@@ -198,6 +200,12 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
      */
     @Override
     public void storeSettings(WizardDescriptor settings) {
+        // Start processing the data source by handing it off to the selected DSP, 
+        // so it gets going in the background while the user is still picking the Ingest modules        
+        if (!processingStarted){  //storeSettings is called twice 
+            processingStarted = true;
+            progressPanel.startDataSourceProcessing(component.getCurrentDSProcessor());
+        }
     }
 
     /**

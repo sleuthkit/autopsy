@@ -19,28 +19,17 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import org.openide.util.NbBundle;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Window;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobSettingsPanel;
-import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.IngestProfileSelectionWizardPanel;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
 
@@ -60,24 +49,10 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
      */
     private Component component = null;
     private String lastProfileUsed = AddImageWizardIngestConfigPanel.class.getCanonicalName();
-    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
-    private boolean ingested = false;
-    private boolean readyToIngest = false;
-    // task that will clean up the created database file if the wizard is cancelled before it finishes
-    private AddImageAction.CleanupTask cleanupTask;
-
-    private final AddImageAction addImageAction;
-
     private final AddImageWizardAddingProgressPanel progressPanel;
-    private final AddImageWizardDataSourceSettingsPanel dataSourcePanel;
 
-    private DataSourceProcessor dsProcessor;
-    private boolean cancelled;
-
-    AddImageWizardIngestConfigPanel(AddImageWizardDataSourceSettingsPanel dsPanel, AddImageAction action, AddImageWizardAddingProgressPanel proPanel) {
-        this.addImageAction = action;
+    AddImageWizardIngestConfigPanel(AddImageWizardAddingProgressPanel proPanel) {
         this.progressPanel = proPanel;
-        this.dataSourcePanel = dsPanel;
         IngestJobSettings ingestJobSettings = new IngestJobSettings(AddImageWizardIngestConfigPanel.class.getCanonicalName());
         showWarnings(ingestJobSettings);
         //When this panel is viewed by the user it will always be displaying the
@@ -170,12 +145,6 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
                 NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.CANCEL_BUTTON.text"));
         cancel.setEnabled(false);
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, cancel});
-        cleanupTask = null;
-        readyToIngest = false;
-        newContents.clear();
-        // Start processing the data source by handing it off to the selected DSP, 
-        // so it gets going in the background while the user is still picking the Ingest modules
-        startDataSourceProcessing();
     }
 
     /**
@@ -191,11 +160,9 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
     public void storeSettings(WizardDescriptor settings) {
         IngestJobSettings ingestJobSettings = ingestJobSettingsPanel.getSettings();
         ingestJobSettings.save();
-        showWarnings(ingestJobSettings);
 
-        // Start ingest if it hasn't already been started
-        readyToIngest = true;
-        startIngest();
+        // Start ingest if it hasn't already been started       
+        progressPanel.setIngestJobSettings(ingestJobSettings);  //calls start Ingest
     }
 
     private static void showWarnings(IngestJobSettings ingestJobSettings) {
@@ -224,130 +191,6 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
         //swap out the ingestJobSettings for the ones of the chosen profile before
         //we start processing
         IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
-        ingestJobSettingsPanel = new IngestJobSettingsPanel(ingestJobSettings);
-        showWarnings(ingestJobSettings);
-        component = new AddImageWizardIngestConfigVisual(this.ingestJobSettingsPanel);
-        readyToIngest = true;
-        startDataSourceProcessing();
-    }
-
-    /**
-     * Start ingest after verifying we have a new image, we are ready to ingest,
-     * and we haven't already ingested.
-     */
-    private void startIngest() {
-        if (!newContents.isEmpty() && readyToIngest && !ingested) {
-            ingested = true;
-            IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettingsPanel.getSettings());
-            progressPanel.setStateFinished();
-        }
-    }
-
-    /**
-     * Starts the Data source processing by kicking off the selected
-     * DataSourceProcessor
-     */
-    private void startDataSourceProcessing() {
-        final UUID dataSourceId = UUID.randomUUID();
-
-        // Add a cleanup task to interrupt the background process if the
-        // wizard exits while the background process is running.
-        cleanupTask = addImageAction.new CleanupTask() {
-            @Override
-            void cleanup() throws Exception {
-                cancelDataSourceProcessing(dataSourceId);
-                cancelled = true;
-            }
-        };
-
-        cleanupTask.enable();
-
-        // get the selected DSProcessor
-        dsProcessor = dataSourcePanel.getComponent().getCurrentDSProcessor();
-
-        new Thread(() -> {
-            Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
-        }).start();
-        DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
-            @Override
-            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-                dataSourceProcessorDone(dataSourceId, result, errList, contents);
-            }
-        };
-
-        progressPanel.setStateStarted();
-
-        // Kick off the DSProcessor 
-        dsProcessor.run(progressPanel.getDSPProgressMonitorImpl(), cbObj);
-
-    }
-
-    /*
-     * Cancels the data source processing - in case the users presses 'Cancel'
-     */
-    private void cancelDataSourceProcessing(UUID dataSourceId) {
-        dsProcessor.cancel();
-    }
-
-    /*
-     * Callback for the data source processor. Invoked by the DSP on the EDT
-     * thread, when it finishes processing the data source.
-     */
-    private void dataSourceProcessorDone(UUID dataSourceId, DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-        // disable the cleanup task
-        cleanupTask.disable();
-
-        // Get attention for the process finish
-        // this caused a crash on OS X
-        if (PlatformUtil.isWindowsOS() == true) {
-            java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
-        }
-        AddImageWizardAddingProgressVisual panel = progressPanel.getComponent();
-        if (panel != null) {
-            Window w = SwingUtilities.getWindowAncestor(panel);
-            if (w != null) {
-                w.toFront();
-            }
-        }
-        // Tell the panel we're done
-        progressPanel.setStateFinished();
-
-        //check the result and display to user
-        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS) {
-            progressPanel.getComponent().setProgressBarTextAndColor(
-                    NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.noErrs.text"), 100, Color.black);
-        } else {
-            progressPanel.getComponent().setProgressBarTextAndColor(
-                    NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.errs.text"), 100, Color.red);
-        }
-
-        //if errors, display them on the progress panel
-        boolean critErr = false;
-        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
-            critErr = true;
-        }
-        for (String err : errList) {
-            //  TBD: there probably should be an error level for each error
-            progressPanel.addErrors(err, critErr);
-        }
-
-        //notify the UI of the new content added to the case
-        new Thread(() -> {
-            if (!contents.isEmpty()) {
-                Case.getCurrentCase().notifyDataSourceAdded(contents.get(0), dataSourceId);
-            } else {
-                Case.getCurrentCase().notifyFailedAddingDataSource(dataSourceId);
-            }
-        }).start();
-
-        if (!cancelled) {
-            newContents.clear();
-            newContents.addAll(contents);
-            progressPanel.setStateStarted();
-            startIngest();
-        } else {
-            cancelled = false;
-        }
-
+        progressPanel.setIngestJobSettings(ingestJobSettings); //calls start ingest
     }
 }
