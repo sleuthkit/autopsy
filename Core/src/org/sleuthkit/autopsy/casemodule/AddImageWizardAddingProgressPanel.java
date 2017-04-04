@@ -236,6 +236,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        // Start ingest if it hasn't already been started 
         startIngest();
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
         if (imgAdded) {

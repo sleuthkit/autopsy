@@ -159,10 +159,8 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
     @Override
     public void storeSettings(WizardDescriptor settings) {
         IngestJobSettings ingestJobSettings = ingestJobSettingsPanel.getSettings();
-        ingestJobSettings.save();
-
-        // Start ingest if it hasn't already been started       
-        progressPanel.setIngestJobSettings(ingestJobSettings);  //calls start Ingest
+        ingestJobSettings.save();              
+        progressPanel.setIngestJobSettings(ingestJobSettings);  //prepare ingest for being started
     }
 
     private static void showWarnings(IngestJobSettings ingestJobSettings) {
@@ -189,8 +187,7 @@ class AddImageWizardIngestConfigPanel extends ShortcutWizardDescriptorPanel {
         }
         //Because this panel kicks off ingest during the wizard we need to 
         //swap out the ingestJobSettings for the ones of the chosen profile before
-        //we start processing
         IngestJobSettings ingestJobSettings = new IngestJobSettings(lastProfileUsed);
-        progressPanel.setIngestJobSettings(ingestJobSettings); //calls start ingest
+        progressPanel.setIngestJobSettings(ingestJobSettings); //prepare ingest for being started
     }
 }
