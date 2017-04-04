@@ -202,7 +202,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
     public void storeSettings(WizardDescriptor settings) {
         // Start processing the data source by handing it off to the selected DSP, 
         // so it gets going in the background while the user is still picking the Ingest modules        
-        if (!processingStarted){  //storeSettings is called twice 
+        if (!processingStarted) {  //storeSettings is called twice 
             processingStarted = true;
             progressPanel.startDataSourceProcessing(component.getCurrentDSProcessor());
         }
