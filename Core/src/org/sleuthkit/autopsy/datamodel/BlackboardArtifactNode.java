@@ -70,7 +70,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     private static final Integer[] SHOW_UNIQUE_PATH = new Integer[]{
         BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID(),
         BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID(),
-        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),};
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID(),
+        BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID(),};
 
     // TODO (RC): This is an unattractive alternative to subclassing BlackboardArtifactNode,
     // cut from the same cloth as the equally unattractive SHOW_UNIQUE_PATH array
@@ -207,7 +208,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         // If this is a node for a keyword hit on an artifact, we set the
         // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
-        if (artifact != null && artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
+        if (artifact != null && 
+                (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() || 
+                artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID())) {
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
                     if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {

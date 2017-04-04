@@ -20,18 +20,20 @@ package org.sleuthkit.autopsy.ingest.runIngestModuleWizard;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
+import javax.swing.Box;
 import static javax.swing.Box.createVerticalGlue;
+import javax.swing.ButtonModel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JToggleButton;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.ingest.IngestOptionsPanel;
@@ -42,7 +44,7 @@ import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
  * Visual panel for the choosing of ingest profiles by the user when running
  * ingest.
  */
-final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
+final class IngestProfileSelectionPanel extends JPanel {
 
     @Messages({"IngestProfileSelectionPanel.customSettings.name=Custom Settings",
         "IngestProfileSelectionPanel.customSettings.description=configure individual module settings in next step of wizard"})
@@ -55,6 +57,10 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     private List<IngestProfile> profiles = Collections.emptyList();
     boolean isLastPanel = false;
 
+    //Listener for profile button selection
+    ActionListener buttonGroupActionListener = (ActionEvent e) -> {
+        updateSelectedProfile();
+    };
     /**
      * Creates new IngestProfileSelectionPanel
      *
@@ -65,8 +71,9 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         initComponents();
         wizardPanel = panel;
         selectedProfile = lastSelectedProfile;
+        isLastPanel = !selectedProfile.equals(wizardPanel.getDefaultContext());
 
-        populateListOfCheckboxes();
+        populateProfilesList();
     }
 
     /**
@@ -79,11 +86,28 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     }
 
     /**
-     * Adds a radio button for custom settings as well as one for each profile
+     * Handles the change to selected profile 
+     * if custom settings button is selected, it enables the next button, otherwise
+     * it enables the Finish button.
+     */
+    private void updateSelectedProfile() {
+        
+        ButtonModel selectedButton = profileListButtonGroup.getSelection();
+        selectedProfile = selectedButton.getActionCommand();
+        
+        boolean wasLastPanel = isLastPanel;
+        isLastPanel = !selectedProfile.equals(wizardPanel.getDefaultContext());
+        wizardPanel.fireChangeEvent();
+        this.firePropertyChange("LAST_ENABLED", wasLastPanel, isLastPanel); //NON-NLS
+    }
+    
+    /**
+     * Adds a button for custom settings as well as one for each profile
      * that has been created to the panel containing them.
      */
-    private void populateListOfCheckboxes() {
+    private void populateProfilesList() {
         profiles = getProfiles();
+        
         GridBagLayout gridBagLayout = new GridBagLayout();
         GridBagConstraints constraints = new GridBagConstraints();
         constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -92,13 +116,15 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
         constraints.weighty = .0;
         constraints.anchor = GridBagConstraints.FIRST_LINE_START;
 
-        addRadioButton(CUSTOM_SETTINGS_DISPLAY_NAME, wizardPanel.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION, gridBagLayout, constraints);
-        for (IngestProfile profile : profiles) {
+        addButton(CUSTOM_SETTINGS_DISPLAY_NAME, wizardPanel.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION, gridBagLayout, constraints);
+        
+        profiles.forEach((profile) -> {
             constraints.weightx = 0;
             constraints.gridy++;
             constraints.gridx = 0;
-            addRadioButton(profile.toString(), profile.toString(), profile.getDescription(), gridBagLayout, constraints);
-        }
+            
+            addButton(profile.toString(), profile.toString(), profile.getDescription(), gridBagLayout, constraints);
+        });
         //Add vertical glue at the bottom of the scroll panel so spacing 
         //between elements is less dependent on the number of elements
         constraints.gridy++;
@@ -119,29 +145,64 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
      *                           programmatically
      * @param profileDesc        - the description of the profile
      */
-    private void addRadioButton(String profileDisplayName, String profileContextName, String profileDesc, GridBagLayout layout, GridBagConstraints constraints) {
-        String displayText = profileDisplayName + " - " + profileDesc;
-        JRadioButton myRadio = new JRadioButton();
+    private void addButton(String profileDisplayName, String profileContextName, String profileDesc, GridBagLayout layout, GridBagConstraints constraints) {
+        
+        //Add a spacer
+        Dimension spacerBlockDimension = new Dimension(6, 4); // Space between left edge and button, Space between rows 
+        Box.Filler spacer = new Box.Filler(spacerBlockDimension, spacerBlockDimension, spacerBlockDimension);
+        constraints.weightx = 1;
+        layout.setConstraints(spacer, constraints);
+        profileListPanel.add(spacer);
+        constraints.gridx++;
+        constraints.gridy++;
+        
+
+        JToggleButton profileButton = new JToggleButton();     
+        profileButton.setMaximumSize(new java.awt.Dimension(48, 48));
+        profileButton.setMinimumSize(new java.awt.Dimension(48, 48));
+        profileButton.setPreferredSize(new java.awt.Dimension(48, 48));
+        
+        profileButton.setName(profileContextName);
+        profileButton.setActionCommand(profileContextName);
+        
+        profileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/timeline/images/magnifier-zoom-in-green.png")));
+        profileButton.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/checkbox24.png")));
+        profileButton.setFocusable(false);
+        profileButton.setFocusPainted(false);
+        profileButton.addActionListener(buttonGroupActionListener);
+         
+        if (profileContextName.equals(selectedProfile)) {
+            profileButton.setSelected(true);
+        }
+        
+        profileListButtonGroup.add(profileButton);
+        profileListPanel.add(profileButton);
+        layout.setConstraints(profileButton, constraints);
+        constraints.gridx++;
+        constraints.weightx = 1;
+        
         //Using a JTextArea as though it is a label in order to get multi-line support
+        String displayText = profileDisplayName;
+        if (!profileDesc.isEmpty()) {
+            displayText += " - " + profileDesc;
+        }
         JTextArea myLabel = new JTextArea(displayText);
         Color gray = new Color(240, 240, 240);  //matches background of panel
         myLabel.setBackground(gray);
         myLabel.setEditable(false);
         myLabel.setWrapStyleWord(true);
         myLabel.setLineWrap(true);
-        myRadio.setName(profileContextName);
-        myRadio.setToolTipText(profileDesc);
-        myRadio.addItemListener(this);
-        if (profileContextName.equals(selectedProfile)) {
-            myRadio.setSelected(true);
-        }
-        profileListButtonGroup.add(myRadio);
-        profileListPanel.add(myRadio);
-        layout.setConstraints(myRadio, constraints);
+       
+        //Add space between the button and text 
+        Box.Filler buttonTextSpacer = new Box.Filler(spacerBlockDimension, spacerBlockDimension, spacerBlockDimension);
+        layout.setConstraints(buttonTextSpacer, constraints);
+        profileListPanel.add(buttonTextSpacer);
         constraints.gridx++;
-        constraints.weightx = 1;
+            
+        //Add the text area serving as a label to the right of the button
         profileListPanel.add(myLabel);
         layout.setConstraints(myLabel, constraints);
+
     }
 
     /**
@@ -162,30 +223,6 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
     private void clearListOfCheckBoxes() {
         profileListButtonGroup = new javax.swing.ButtonGroup();
         profileListPanel.removeAll();
-    }
-
-   /**
-     * Listens for changes and checks the currently selected radio button if
-     * custom settings button is enabled it enables the next button, otherwise
-     * it enables the Finish button.
-     *
-     * @param e
-     */
-    @Override
-    public void itemStateChanged(ItemEvent e) {
-        for (Component rButton : profileListPanel.getComponents()) {
-            if (rButton instanceof JRadioButton){
-            JRadioButton jrb = (JRadioButton) rButton;
-                if (jrb.isSelected()) {
-                    selectedProfile = jrb.getName();
-                    break;
-                }
-            }
-        }
-        boolean wasLastPanel = isLastPanel;
-        isLastPanel = !selectedProfile.equals(wizardPanel.getDefaultContext());
-        wizardPanel.fireChangeEvent();
-        this.firePropertyChange("LAST_ENABLED", wasLastPanel, isLastPanel); //NON-NLS
     }
 
     /**
@@ -272,7 +309,7 @@ final class IngestProfileSelectionPanel extends JPanel implements ItemListener {
                     fetchProfileList();
                     profileListPanel.revalidate();
                     profileListPanel.repaint();
-                    populateListOfCheckboxes();
+                    populateProfilesList();
                     dialog.close();
                 }
         );

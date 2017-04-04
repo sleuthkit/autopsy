@@ -565,7 +565,7 @@ public class Server {
         try {
             // Close any open core before stopping server
             closeCore();
-        } catch (KeywordSearchModuleException | NoOpenCoreException e) {
+        } catch (KeywordSearchModuleException e) {
             logger.log(Level.WARNING, "Failed to close core: ", e); //NON-NLS
         }
 
@@ -704,15 +704,14 @@ public class Server {
         }
     }
     
-    void closeCore() throws KeywordSearchModuleException, NoOpenCoreException {
+    void closeCore() throws KeywordSearchModuleException {
         currentCoreLock.writeLock().lock();
         try {
-            if (null == currentCore) {
-                throw new NoOpenCoreException();
+            if (null != currentCore) {
+                currentCore.close();
+                currentCore = null;
+                serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
             }
-            currentCore.close();
-            currentCore = null;
-            serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STOPPED);
         } finally {
             currentCoreLock.writeLock().unlock();
         }
@@ -760,7 +759,7 @@ public class Server {
                     closeCore();
                 }
             }
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
+        } catch (KeywordSearchModuleException ex) {
             throw new KeywordSearchServiceException(NbBundle.getMessage(Server.class, "Server.close.exception.msg"), ex);
         } finally {
             currentCoreLock.readLock().unlock();

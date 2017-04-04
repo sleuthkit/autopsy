@@ -86,21 +86,16 @@ final class Index {
     static private String sanitizeCoreName(String coreName) {
 
         String result;
-
-        // Remove all non-ASCII characters
-        result = coreName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
-
-        // Remove all control characters
-        result = result.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
-
-        // Remove spaces / \ : ? ' "
-        result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
+        
+        // Allow these characters: '-', '.', '0'-'9', 'A'-'Z', '_', and 'a'-'z'.
+        // Replace all else with '_'.
+        result = coreName.replaceAll("[^-.0-9A-Z_a-z]", "_"); // NON-NLS
 
         // Make it all lowercase
         result = result.toLowerCase();
 
         // Must not start with hyphen
-        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '-')) {
+        if (result.length() > 0 && (result.codePointAt(0) == '-')) {
             result = "_" + result;
         }
 
