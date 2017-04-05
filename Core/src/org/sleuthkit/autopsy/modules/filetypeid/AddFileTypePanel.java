@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ import org.openide.util.NbBundle.Messages;
 import static org.sleuthkit.autopsy.modules.filetypeid.AddFileTypePanel.EVENT.SIG_LIST_CHANGED;
 import org.sleuthkit.autopsy.modules.filetypeid.AddFileTypeSignatureDialog.BUTTON_PRESSED;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
+
 @Messages("AddFileTypePanel.mimeFormatLabel.text=Form of MIME type should be: media type/media subtype")
 
 /**
@@ -40,7 +41,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
 
     private AddFileTypeSignatureDialog addSigDialog;
     private DefaultListModel<FileType.Signature> signaturesListModel;
-    
+
     /**
      * Creates a panel for a new file type.
      */
@@ -89,23 +90,31 @@ class AddFileTypePanel extends javax.swing.JPanel {
         "AddMimeTypePanel.emptySigList.title=Invalid Signature List",
         "AddMimeTypePanel.emptySetName.message=Interesting files set name is required if alert is requested.",
         "AddMimeTypePanel.emptySetName.title=Missing Interesting Files Set Name",
+        "# {0} - media subtype",
         "AddFileTypePanel.nonStandardMIMEType.message="
-                + "Files of this MIME type will not appear under the Views, File Types, By MIME Type tree because it is not in the format of: media type/media subtype",
+        + "This MIME type is invalid because it is not in the format of: media type/media subtype. Custom/{0} has been suggested instead.",
         "AddFileTypePanel.nonStandardMIMEType.title=Non-standard MIME Type"})
+
     FileType getFileType() {
         String typeName = mimeTypeTextField.getText();
+
         if (typeName.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.title"),
                     JOptionPane.ERROR_MESSAGE);
             return null;
+
         }
-        if (typeName.split("/").length != 2) {
-            JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message"),
+        //if the MIME type is lacking two parts ask if they want to use 'custom' as the first part
+        //if the MIME type has more than 2 parts the first part will be used as a media type and the remainder of the string as the sub-type
+        if (typeName.split("/").length == 1) { 
+            JOptionPane.showMessageDialog(null,  
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", typeName),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
                     JOptionPane.WARNING_MESSAGE);
+            mimeTypeTextField.setText("custom/" + typeName);
+            return null;
         }
         if (this.signaturesListModel.isEmpty()) {
             JOptionPane.showMessageDialog(null,

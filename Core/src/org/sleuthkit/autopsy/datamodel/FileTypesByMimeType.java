@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -147,13 +149,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                     final String mime_type = resultSet.getString("mime_type"); //NON-NLS
                     if (!mime_type.isEmpty()) {
                         String mimeType[] = mime_type.split("/");
-                        //Note: Users are able to define custom mime types in Autopsy that do not
-                        //contain a "/" or possibly have multiple slashes
                         if (mimeType.length > 1 && !mimeType[0].isEmpty() && !mimeType[1].isEmpty()) {
                             if (!existingMimeTypes.containsKey(mimeType[0])) {
                                 existingMimeTypes.put(mimeType[0], new ArrayList<>());
                             }
-                            existingMimeTypes.get(mimeType[0]).add(mimeType[1]);
+                            //if the mime_type contained multiple slashes then everything after the first slash will become the subtype
+                            existingMimeTypes.get(mimeType[0]).add(StringUtils.join(ArrayUtils.subarray(mimeType, 1, mimeType.length), "/"));
                         }
                     }
                 }
@@ -356,10 +357,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          *                 results
          */
         private void updateDisplayName(String mimeType) {
-
             final long count = new MediaSubTypeNodeChildren(mimeType).calculateItems(skCase, mimeType);
-
-            super.setDisplayName(mimeType.split("/")[1] + " (" + count + ")");
+            String[] mimeTypeParts = mimeType.split("/");
+            //joins up all remaining parts of the mimeType into one sub-type string
+            super.setDisplayName(StringUtils.join(ArrayUtils.subarray(mimeTypeParts, 1, mimeTypeParts.length), "/") + " (" + count + ")");
         }
 
         /**

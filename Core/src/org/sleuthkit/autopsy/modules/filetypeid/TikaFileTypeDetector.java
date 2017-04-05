@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,6 +84,7 @@ public class TikaFileTypeDetector {
         SortedSet<MediaType> m = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
         String[] split = mimeType.split("/");
 
+        //if they had additional slashes in a custom mime type it will not be a detectable MIME type by tika 
         if (split.length == 2) {
             String type = split[0];
             String subtype = split[1];
