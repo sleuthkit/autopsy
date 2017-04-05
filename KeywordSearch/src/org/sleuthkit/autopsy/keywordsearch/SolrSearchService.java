@@ -361,7 +361,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
         /*
-         * TODO (AUT-2084): The following code KeywordSearch.CaseChangeListener
+         * TODO (JIRA 2525): The following code KeywordSearch.CaseChangeListener
          * gambles that any BlackboardResultWriters (SwingWorkers) will complete
          * in less than roughly two seconds. This stuff should be reworked using
          * an ExecutorService and tasks with Futures.

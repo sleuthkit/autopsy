@@ -1,0 +1,49 @@
+2016-11-08 19:38:35.491 INFO  (main) [   ] o.e.j.u.log Logging initialized @777ms
+2016-11-08 19:38:35.741 INFO  (main) [   ] o.e.j.s.Server jetty-9.3.8.v20160314
+2016-11-08 19:38:35.756 INFO  (main) [   ] o.e.j.d.p.ScanningAppProvider Deployment monitor [file:///C:/Temp/lucene-solr-releases-lucene-solr-6.2.1/lucene-solr-releases-lucene-solr-6.2.1/solr/server/contexts/] at interval 0
+2016-11-08 19:38:35.819 WARN  (main) [   ] o.e.j.w.WebInfConfiguration Web application not found c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server/solr-webapp/webapp
+2016-11-08 19:38:35.835 WARN  (main) [   ] o.e.j.w.WebAppContext Failed startup of context o.e.j.w.WebAppContext@4e1d422d{/solr,null,null}{c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server/solr-webapp/webapp}
+java.io.FileNotFoundException: c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server/solr-webapp/webapp
+	at org.eclipse.jetty.webapp.WebInfConfiguration.unpack(WebInfConfiguration.java:497)
+	at org.eclipse.jetty.webapp.WebInfConfiguration.preConfigure(WebInfConfiguration.java:72)
+	at org.eclipse.jetty.webapp.WebAppContext.preConfigure(WebAppContext.java:480)
+	at org.eclipse.jetty.webapp.WebAppContext.doStart(WebAppContext.java:516)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:68)
+	at org.eclipse.jetty.deploy.bindings.StandardStarter.processBinding(StandardStarter.java:41)
+	at org.eclipse.jetty.deploy.AppLifeCycle.runBindings(AppLifeCycle.java:188)
+	at org.eclipse.jetty.deploy.DeploymentManager.requestAppGoal(DeploymentManager.java:499)
+	at org.eclipse.jetty.deploy.DeploymentManager.addApp(DeploymentManager.java:147)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.fileAdded(ScanningAppProvider.java:180)
+	at org.eclipse.jetty.deploy.providers.WebAppProvider.fileAdded(WebAppProvider.java:458)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider$1.fileAdded(ScanningAppProvider.java:64)
+	at org.eclipse.jetty.util.Scanner.reportAddition(Scanner.java:610)
+	at org.eclipse.jetty.util.Scanner.reportDifferences(Scanner.java:529)
+	at org.eclipse.jetty.util.Scanner.scan(Scanner.java:392)
+	at org.eclipse.jetty.util.Scanner.doStart(Scanner.java:313)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:68)
+	at org.eclipse.jetty.deploy.providers.ScanningAppProvider.doStart(ScanningAppProvider.java:150)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:68)
+	at org.eclipse.jetty.deploy.DeploymentManager.startAppProvider(DeploymentManager.java:561)
+	at org.eclipse.jetty.deploy.DeploymentManager.doStart(DeploymentManager.java:236)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:68)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.start(ContainerLifeCycle.java:132)
+	at org.eclipse.jetty.server.Server.start(Server.java:405)
+	at org.eclipse.jetty.util.component.ContainerLifeCycle.doStart(ContainerLifeCycle.java:114)
+	at org.eclipse.jetty.server.handler.AbstractHandler.doStart(AbstractHandler.java:61)
+	at org.eclipse.jetty.server.Server.doStart(Server.java:372)
+	at org.eclipse.jetty.util.component.AbstractLifeCycle.start(AbstractLifeCycle.java:68)
+	at org.eclipse.jetty.xml.XmlConfiguration$1.run(XmlConfiguration.java:1510)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at org.eclipse.jetty.xml.XmlConfiguration.main(XmlConfiguration.java:1435)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.jetty.start.Main.invokeMain(Main.java:214)
+	at org.eclipse.jetty.start.Main.start(Main.java:457)
+	at org.eclipse.jetty.start.Main.main(Main.java:75)
+2016-11-08 19:38:35.928 INFO  (main) [   ] o.e.j.s.ServerConnector Started ServerConnector@33c7e1bb{HTTP/1.1,[http/1.1]}{0.0.0.0:23232}
+2016-11-08 19:38:35.928 INFO  (main) [   ] o.e.j.s.Server Started @1225ms
+2016-11-08 19:48:32.793 INFO  (ShutdownMonitor) [   ] o.e.j.s.ServerConnector Stopped ServerConnector@33c7e1bb{HTTP/1.1,[http/1.1]}{0.0.0.0:23232}
+2016-11-08 19:48:32.796 INFO  (ShutdownMonitor) [   ] o.e.j.s.h.ContextHandler Stopped o.e.j.w.WebAppContext@4e1d422d{/solr,null,UNAVAILABLE}{c:\Temp\lucene-solr-releases-lucene-solr-6.2.1\lucene-solr-releases-lucene-solr-6.2.1\solr\server/solr-webapp/webapp}
+2016-11-08 19:48:32.798 WARN  (ShutdownMonitor) [   ] o.e.j.s.ServletContextHandler ServletContextHandler.setHandler should not be called directly. Use insertHandler or setSessionHandler etc.
