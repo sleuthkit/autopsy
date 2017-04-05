@@ -114,7 +114,7 @@ final class IngestProfileSelectionPanel extends JPanel {
         constraints.gridx = 0;
         constraints.gridy = 0;
         constraints.weighty = .0;
-        constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+        constraints.anchor = GridBagConstraints.LINE_START;
 
         addButton(CUSTOM_SETTINGS_DISPLAY_NAME, wizardPanel.getDefaultContext(), CUSTOM_SETTINGS_DESCRIPTION, gridBagLayout, constraints);
         
