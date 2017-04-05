@@ -73,6 +73,7 @@ Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 .DS_Store
 .*.swp
 
-thunderbirdparser/release/
-ImageGallery/release/
+/thunderbirdparser/release/
+/ImageGallery/release/
+/RecentActivity/release/
 
