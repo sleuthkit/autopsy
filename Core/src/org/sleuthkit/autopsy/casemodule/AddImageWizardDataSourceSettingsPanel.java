@@ -47,12 +47,9 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
      */
     private AddImageWizardDataSourceSettingsVisual component;
     private boolean isNextEnable = false;
-    private final AddImageWizardAddingProgressPanel progressPanel;
-    private boolean processingStarted = false;
     // paths to any set hash lookup databases (can be null)
 
-    AddImageWizardDataSourceSettingsPanel(AddImageWizardAddingProgressPanel proPanel) {
-        this.progressPanel = proPanel;
+    AddImageWizardDataSourceSettingsPanel() {
     }
 
     /**
@@ -199,13 +196,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
      * @param settings the setting to be stored to
      */
     @Override
-    public void storeSettings(WizardDescriptor settings) {
-        // Start processing the data source by handing it off to the selected DSP, 
-        // so it gets going in the background while the user is still picking the Ingest modules        
-        if (!processingStarted) {  //storeSettings is called twice 
-            processingStarted = true;
-            progressPanel.startDataSourceProcessing(component.getCurrentDSProcessor());
-        }
+    public void storeSettings(WizardDescriptor settings) {    
     }
 
     /**

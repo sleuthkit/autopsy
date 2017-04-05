@@ -61,7 +61,7 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
     private final AddImageAction addImageAction;
 
-    private DataSourceProcessor dsProcessor;
+    private DataSourceProcessor dsProcessor = null;
     private boolean cancelled;
     /**
      * flag to indicate that the image adding process is finished and this panel
@@ -307,38 +307,40 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
      * DataSourceProcessor
      */
     void startDataSourceProcessing(DataSourceProcessor dsp) {
-        final UUID dataSourceId = UUID.randomUUID();
-        newContents.clear();
-        cleanupTask = null;
-        readyToIngest = false;
-        dsProcessor = dsp;
+        if (dsProcessor == null) {  //this can only be run once
+            final UUID dataSourceId = UUID.randomUUID();
+            newContents.clear();
+            cleanupTask = null;
+            readyToIngest = false;
+            dsProcessor = dsp;
 
-        // Add a cleanup task to interrupt the background process if the
-        // wizard exits while the background process is running.
-        cleanupTask = addImageAction.new CleanupTask() {
-            @Override
-            void cleanup() throws Exception {
-                cancelDataSourceProcessing(dataSourceId);
-                cancelled = true;
-            }
-        };
+            // Add a cleanup task to interrupt the background process if the
+            // wizard exits while the background process is running.
+            cleanupTask = addImageAction.new CleanupTask() {
+                @Override
+                void cleanup() throws Exception {
+                    cancelDataSourceProcessing(dataSourceId);
+                    cancelled = true;
+                }
+            };
 
-        cleanupTask.enable();
+            cleanupTask.enable();
 
-        new Thread(() -> {
-            Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
-        }).start();
-        DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
-            @Override
-            public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
-                dataSourceProcessorDone(dataSourceId, result, errList, contents);
-            }
-        };
+            new Thread(() -> {
+                Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
+            }).start();
+            DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
+                @Override
+                public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
+                    dataSourceProcessorDone(dataSourceId, result, errList, contents);
+                }
+            };
 
-        setStateStarted();
+            setStateStarted();
 
-        // Kick off the DSProcessor 
-        dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
+            // Kick off the DSProcessor 
+            dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
+        }
     }
 
     /*
