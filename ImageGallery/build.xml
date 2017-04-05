@@ -5,4 +5,24 @@
 <project name="org.sleuthkit.autopsy.imagegallery" default="netbeans" basedir=".">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.imagegallery.</description>
     <import file="nbproject/build-impl.xml"/>
+    
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="ext.dir" value="release/modules/ext" />
+    
+    <target name="clean" depends="projectized-common.clean">
+        <!--Override clean to delete jars, etc downloaded with Ivy, 
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
+        <delete dir="${ext.dir}"/>
+    </target>
+    
+    <target name="get-thirdparty-jars" description="get third-party jar dependencies"> 
+        <mkdir dir="${ext.dir}"/>
+        <copy file="${thirdparty.dir}/sqlite-jdbc/sqlite-jdbc-3.7.8-SNAPSHOT.jar" todir="${ext.dir}" />
+    </target>
+ 
+    <target name="init" depends="basic-init,files-init,build-init,-javac-init">
+        <!--  copy jars not downloaded with Ivy -->
+        <antcall target="get-thirdparty-jars"/>
+    </target>
 </project>
