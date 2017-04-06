@@ -49,22 +49,22 @@
         <dependency conf="autopsy_core->*" org="com.github.spullara.mustache.java" name="compiler" rev="0.9.1" />
         
         <!-- image support for autopsy and image gallery -->
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.common" name="common-lang" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.common" name="common-io" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.common" name="common-image" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-jpeg" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-bmp" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-tiff" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-pnm" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-psd" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-iff" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-pcx" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-pict" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-sgi" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-tga" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-icns" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.2" />
-        <dependency conf="autopsy_core->*" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-lang" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-io" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.common" name="common-image" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-jpeg" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-bmp" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-tiff" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pnm" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-psd" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-iff" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pcx" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-pict" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-sgi" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-tga" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-icns" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-thumbsdb" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-core" rev="3.2" />
+        <dependency conf="autopsy_core->default" org="com.twelvemonkeys.imageio" name="imageio-metadata" rev="3.2" />
 </dependencies>
 </ivy-module>
