@@ -501,8 +501,6 @@ final class LocalDiskPanel extends JPanel {
      */
     private class LocalDiskModel implements TableModel {
 
-        private List<LocalDisk> physicalDrives = new ArrayList<>();
-        private List<LocalDisk> partitions = new ArrayList<>();
         private LocalDiskThread worker = null;
         private boolean ready = false;
         private volatile boolean loadingDisks = false;
@@ -609,6 +607,8 @@ final class LocalDiskPanel extends JPanel {
         class LocalDiskThread extends SwingWorker<Object, Void> {
 
             private final Logger logger = Logger.getLogger(LocalDiskThread.class.getName());
+            private List<LocalDisk> physicalDrives = new ArrayList<>();
+            private List<LocalDisk> partitions = new ArrayList<>();
 
             @Override
             protected Object doInBackground() throws Exception {
@@ -674,10 +674,6 @@ final class LocalDiskPanel extends JPanel {
                         pathTextField.setText("");
                         fireUpdateEvent();
                         ready = true;
-                    } else {
-                        //this should not be possible but happens
-                        //possible threading error when this method is called while running
-                        logger.log(Level.INFO, "Loading local disks was canceled"); //NON-NLS
                     }
                 }
                 diskTable.revalidate();
