@@ -74,7 +74,7 @@ Core/src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png
 .*.swp
 Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 
-thunderbirdparser/release/modules/ext
-
-ImageGallery/release/modules/ext/
+/thunderbirdparser/release/
+/Experimental/release/
+ImageGallery/release/
 

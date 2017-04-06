@@ -2,7 +2,24 @@
 <!-- You may freely edit this file. See harness/README in the NetBeans platform -->
 <!-- for some information on what you could do (e.g. targets to override). -->
 <!-- If you delete this file and reopen the project it will be recreated. -->
-<project name="org.sleuthkit.autopsy.experimental" default="netbeans" basedir=".">
+<project name="org.sleuthkit.autopsy.experimental" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" xmlns:if="ant:if">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.experimental.</description>
     <import file="nbproject/build-impl.xml"/>
+    <import file="../BootstrapIvy.xml"/>
+    <property name="release.dir" value="${basedir}/release" />
+    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+        <ivy:settings file="ivysettings.xml" />
+        <ivy:resolve/>
+        <ivy:retrieve  sync="false" pattern="${release.dir}/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
+    </target>
+
+    <target name="clean" depends="projectized-common.clean">
+        <!--Override clean to delete jars, etc downloaded with Ivy  
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
+        <mkdir dir="${release.dir}"/>
+        <delete includeemptydirs="true">
+            <fileset dir="${release.dir}" includes="**/*"/>
+        </delete>
+    </target>
 </project>
