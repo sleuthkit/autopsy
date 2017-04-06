@@ -93,11 +93,15 @@ class AddFileTypePanel extends javax.swing.JPanel {
         "# {0} - media subtype",
         "AddFileTypePanel.nonStandardMIMEType.message="
         + "This MIME type is invalid because it is not in the format of: media type/media subtype. Custom/{0} has been suggested instead.",
+        "# {0} - type name",
+        "AddFileTypePanel.containsIllegalCharacter.message=Invalid character in MIME type, {0} has been suggested instead",
+        "AddFileTypePanel.containsIllegalCharacter.title=Invalid Character in MIME Type",
         "AddFileTypePanel.nonStandardMIMEType.title=Non-standard MIME Type"})
 
     FileType getFileType() {
         String typeName = mimeTypeTextField.getText();
 
+        //if typeName does not equal sanitized typeName display message saying this name will be used instead 
         if (typeName.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
@@ -106,10 +110,20 @@ class AddFileTypePanel extends javax.swing.JPanel {
             return null;
 
         }
+        //if we need to remove more characters could use matches instead of contains and regex "[^\\w\s\\-\\/] to remove everything that isnt a letter, number, underscore, whitespace, dash, or forward slash.
+        if (typeName.contains("\'")) {  //remove single apostraphes as they are an easy way to accidently screw up PostgreSQL
+            typeName = typeName.replaceAll("[\\']", "");
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.containsIllegalCharacter.message", typeName),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.containsIllegalCharacter.title"),
+                    JOptionPane.WARNING_MESSAGE);
+            mimeTypeTextField.setText(typeName);
+            return null;
+        }
         //if the MIME type is lacking two parts ask if they want to use 'custom' as the first part
         //if the MIME type has more than 2 parts the first part will be used as a media type and the remainder of the string as the sub-type
-        if (typeName.split("/").length == 1) { 
-            JOptionPane.showMessageDialog(null,  
+        if (typeName.split("/").length == 1) {
+            JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", typeName),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
                     JOptionPane.WARNING_MESSAGE);
