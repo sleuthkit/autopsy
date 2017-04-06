@@ -89,16 +89,18 @@ public class ArtifactStringContent implements StringContent {
              * table.
              */
             buffer.append("<table border='1'>"); //NON-NLS
+            
+            // header row
             buffer.append("<tr>"); //NON-NLS
-            buffer.append("<td><b>"); //NON-NLS
+            buffer.append("<th><b>"); //NON-NLS
             buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_type());
-            buffer.append("</b></td>"); //NON-NLS
-            buffer.append("<td><b>"); //NON-NLS
+            buffer.append("</b></th>"); //NON-NLS
+            buffer.append("<th><b>"); //NON-NLS
             buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_value());
-            buffer.append("</b></td>"); //NON-NLS
-            buffer.append("<td><b>"); //NON-NLS
+            buffer.append("</b></th>"); //NON-NLS
+            buffer.append("<th><b>"); //NON-NLS
             buffer.append(Bundle.ArtifactStringContent_attrsTableHeader_sources());
-            buffer.append("</b></td>"); //NON-NLS
+            buffer.append("</b></th>"); //NON-NLS
             buffer.append("</tr>\n"); //NON-NLS
             try {
                 Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
@@ -109,63 +111,41 @@ public class ArtifactStringContent implements StringContent {
                 for (BlackboardAttribute attr : artifact.getAttributes()) {
 
                     /*
-                     * Attribute display name column.
-                     */
-                    buffer.append("<tr><td>"); //NON-NLS
-                    buffer.append(attr.getAttributeType().getDisplayName());
-                    buffer.append("</td>"); //NON-NLS
-
-                    /*
                      * Attribute value column.
                      */
-                    buffer.append("<td>"); //NON-NLS
+                    String value = "";
                     switch (attr.getAttributeType().getValueType()) {
                         case STRING:
-                            String str = attr.getValueString();
-                            str = str.replaceAll(" ", "&nbsp;"); //NON-NLS
-                            str = str.replaceAll("<", "&lt;"); //NON-NLS
-                            str = str.replaceAll(">", "&gt;"); //NON-NLS
-                            str = str.replaceAll("(\r\n|\n)", "<br />"); //NON-NLS
-                            buffer.append(str);
-                            break;
                         case INTEGER:
                         case LONG:
                         case DOUBLE:
-                            buffer.append(attr.getDisplayString());
-                            break;
                         case BYTE:
-                            buffer.append(Arrays.toString(attr.getValueBytes()));
+                        default:
+                            value = attr.getDisplayString();
                             break;
+                            
+                        // Use Autopsy date formatting settings, not TSK defaults
                         case DATETIME:
                             long epoch = attr.getValueLong();
-                            String time = "0000-00-00 00:00:00";
+                            value = "0000-00-00 00:00:00";
                             if (null != content && 0 != epoch) {
                                 dateFormatter.setTimeZone(ContentUtils.getTimeZone(content));
-                                time = dateFormatter.format(new java.util.Date(epoch * 1000));
+                                value = dateFormatter.format(new java.util.Date(epoch * 1000));
                             }
-                            buffer.append(time);
                             break;
                     }
-                    buffer.append("</td>"); //NON-NLS
 
                     /*
                      * Attribute sources column.
                      */
-                    buffer.append("<td>"); //NON-NLS
-                    buffer.append(StringUtils.join(attr.getSources(), ", "));
-                    buffer.append("</td>"); //NON-NLS
-
-                    buffer.append("</tr>\n"); //NON-NLS
+                    String sources = StringUtils.join(attr.getSources(), ", ");
+                    buffer.append(makeTableRow(attr.getAttributeType().getDisplayName(), value, sources));
                 }
 
                 /*
                  * Add a row for the source content path.
                  */
-                buffer.append("<tr>"); //NON-NLS
-                buffer.append("<td>"); //NON-NLS
-                buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.srcFilePath.text"));
-                buffer.append("</td>"); //NON-NLS
-                buffer.append("<td>"); //NON-NLS
+
                 String path = "";
                 try {
                     if (null != content) {
@@ -175,33 +155,24 @@ public class ArtifactStringContent implements StringContent {
                     logger.log(Level.SEVERE, String.format("Error getting source content path for artifact (artifact_id=%d, obj_id=%d)", artifact.getArtifactID(), artifact.getObjectID()), ex);
                     path = Bundle.ArtifactStringContent_failedToGetSourcePath_message();
                 }
-                buffer.append(path);
-                buffer.append("</td>"); //NON-NLS
-                buffer.append("</tr>\n"); //NON-NLS
+                
+                buffer.append(makeTableRow(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.srcFilePath.text"),
+                        path, ""));
+
 
                 /*
                  * Add a row for the artifact id.
-                 */
-                buffer.append("<tr><td>"); //NON-NLS
-                buffer.append(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.artifactId.text"));
-                buffer.append("</td><td>"); //NON-NLS
-                buffer.append(artifact.getArtifactID());
-                buffer.append("</td>"); //NON-NLS
-                buffer.append("</tr>\n"); //NON-NLS
-
-                /*
-                 * Finish the document
-                 */
-                buffer.append("</table>"); //NON-NLS
-                buffer.append("</html>\n"); //NON-NLS
-                stringContent = buffer.toString();
+                 */               
+                buffer.append(makeTableRow(NbBundle.getMessage(this.getClass(), "ArtifactStringContent.getStr.artifactId.text"),
+                        Long.toString(artifact.getArtifactID()), ""));
 
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, String.format("Error getting data for artifact (artifact_id=%d)", artifact.getArtifactID()), ex);
-                buffer.append("<tr><td>"); //NON-NLS
-                buffer.append(Bundle.ArtifactStringContent_failedToGetAttributes_message());
-                buffer.append("</td>"); //NON-NLS
-                buffer.append("</tr>\n"); //NON-NLS
+                buffer.append(makeTableRow(Bundle.ArtifactStringContent_failedToGetAttributes_message(), "", ""));                
+            } finally {
+                /*
+                 * Finish the document
+                 */
                 buffer.append("</table>"); //NON-NLS
                 buffer.append("</html>\n"); //NON-NLS
                 stringContent = buffer.toString();
@@ -209,6 +180,27 @@ public class ArtifactStringContent implements StringContent {
         }
 
         return stringContent;
+    }
+    
+    // escape special HTML characters
+    private String escapeHtmlString(String str) {
+        str = str.replaceAll(" ", "&nbsp;"); //NON-NLS
+        str = str.replaceAll("<", "&lt;"); //NON-NLS
+        str = str.replaceAll(">", "&gt;"); //NON-NLS
+        str = str.replaceAll("(\r\n|\n)", "<br />"); //NON-NLS
+        return str;
+    }
+    
+    /**
+     * Make a row in the result table
+     * @param type String for column1 (Type of attribute))
+     * @param value String for column2 (value of attribute)
+     * @param source Column 3 (attribute source)
+     * @return  HTML formatted string of these values
+     */
+    private String makeTableRow(String type, String value, String source) {
+        String row = "<tr><td>" + escapeHtmlString(type) + "</td><td>" + escapeHtmlString(value) + "</td><td>" + escapeHtmlString(source) + "</td></tr>";
+        return row;
     }
 
 }
