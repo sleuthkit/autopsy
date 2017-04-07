@@ -3,8 +3,7 @@
 /*/build/
 */nbproject/private/*
 /nbproject/private/*
-/Core/release/modules/lib/
-/Core/release/modules/ext/
+/Core/release/
 /Core/src/org/sleuthkit/autopsy/coreutils/Version.properties
 /Core/build/
 /Core/dist/
@@ -18,11 +17,7 @@
 /CoreLibs/nbproject/*
 !/CoreLibs/nbproject/project.xml
 !/CoreLibs/nbproject/project.properties
-/KeywordSearch/release/modules/ext/
-/KeywordSearch/release/solr/lib/
-/KeywordSearch/release/solr/solr/lib/
-/KeywordSearch/release/solr/start.jar
-/KeywordSearch/release/solr/webapps/solr.war
+/KeywordSearch/release/
 /KeywordSearch/build/
 /KeywordSearch/dist/
 /KeywordSearch/nbproject/*
@@ -72,10 +67,14 @@ genfiles.properties
 hs_err_pid*.log
 Core/src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html
 Core/src/org/sleuthkit/autopsy/casemodule/docs/screenshot.png
+Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 /test/script/myconfig.xml
 /test/script/*/*.xml
 .DS_Store
 .*.swp
-Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 
-thunderbirdparser/release/modules/ext
+
+/ImageGallery/release/
+/thunderbirdparser/release/
+/Experimental/release/
+
