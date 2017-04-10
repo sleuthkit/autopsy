@@ -38,6 +38,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.framework.AutopsyService;
@@ -147,13 +148,23 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     /**
      * Deletes Solr core for a case.
      *
-     * @param coreName The core name.
-     * @deprecated deleteCore(String textIndexName, String caseDirectory) should be used instead to support newer solr cores
+     * @param metadata The CaseMetadata which will have its core deleted.
      */
     @Override
-    public void deleteTextIndex(String coreName) throws KeywordSearchServiceException {
-        //If this was called with the metadata.textIndexName then this will only work on solr 4 cores
-        KeywordSearch.getServer().deleteCore(coreName);
+    public void deleteTextIndex(CaseMetadata metadata) throws KeywordSearchServiceException {
+        String caseDirectory = metadata.getCaseDirectory();
+        if (!caseDirectory.isEmpty()) {
+            IndexMetadata indexMetadata;
+            try {
+                indexMetadata = new IndexMetadata(caseDirectory);
+                //When there were multiple cores in the array they seemed to have the name.
+                if (!indexMetadata.getIndexes().isEmpty()) {
+                    KeywordSearch.getServer().deleteCore(indexMetadata.getIndexes().get(0).getIndexName());
+                }
+            } catch (IndexMetadata.TextIndexMetadataException ex) {
+                logger.log(Level.WARNING, "Unable to create IndexMetaData from caseDirectory " + caseDirectory, ex);
+            }
+        }
     }
 
     @Override
@@ -380,34 +391,5 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to close core for %s", context.getCase().getCaseDirectory()), ex);
         }
-    }
-
-    /**
-     * Deletes the solr core for a case. Finds the core name based on the caseDirectory if specified,
-     * otherwise will try to delete based on the textIndexName.
-     *
-     * @param textIndexName - the name of the core if the core is a solr 4 core
-     * @param caseDirectory - the case directory, used for getting the solr 6
-     *                      core name
-     *
-     * @throws KeywordSearchServiceException
-     */
-    @Override
-    public void deleteCore(String textIndexName, String caseDirectory) throws KeywordSearchServiceException {
-        String coreName = textIndexName;
-        if (!caseDirectory.isEmpty()) {
-            IndexMetadata indexMetadata;
-            try {
-                indexMetadata = new IndexMetadata(caseDirectory);
-                //When I was debugging and there were multiple cores they had the same name 
-                //so the first one is as good as any.
-                if (!indexMetadata.getIndexes().isEmpty()){
-                    coreName = indexMetadata.getIndexes().get(0).getIndexName();
-                }
-            } catch (IndexMetadata.TextIndexMetadataException ex) {
-                logger.log(Level.WARNING, "Unable to create IndexMetaData from caseDirectory " + caseDirectory, ex);
-            }
-        }
-        KeywordSearch.getServer().deleteCore(coreName);
     }
 }

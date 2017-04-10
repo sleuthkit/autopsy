@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearchservice;
 
 import java.io.Closeable;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -52,14 +54,10 @@ public interface KeywordSearchService extends Closeable {
     /**
      * Deletes the keyword search text index for a case.
      *
-     * @param textIndexName The text index name.
-     * 
+     * @param metadata The CaseMetadata which will have its core deleted.
+     *
      * @throws KeywordSearchServiceException if unable to delete.
-     * @deprecated deleteCore(String textIndexName, String caseDirectory) should be used instead to support newer solr cores
      */
-    @Deprecated
-    public void deleteTextIndex(String textIndexName) throws KeywordSearchServiceException;
-    
-    public void deleteCore(String textIndexName, String caseDirectory) throws KeywordSearchServiceException;
+    public void deleteTextIndex(CaseMetadata metadata) throws KeywordSearchServiceException;
 
 }
