@@ -50,13 +50,12 @@
         <copy file="${thirdparty.dir}/java-libpst/java-libpst-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
     </target>
 
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+    <target name="get-deps" depends="init-ivy, get-thirdparty-jars">
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
-        <ivy:retrieve conf="autopsy" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-       
-        <!--  copy jars not downloaded with Ivy -->
-        <antcall target="get-thirdparty-jars"/>
+        <ivy:retrieve conf="autopsy" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
+    
+    <target name="init" depends="get-deps,basic-init,files-init,build-init,-javac-init"/>
 </project>
 

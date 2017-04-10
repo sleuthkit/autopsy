@@ -25,13 +25,13 @@
     <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
-        <ivy:retrieve conf="autopsy" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="jetty-libs" sync="true" pattern="release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr-libs" sync="true" pattern="release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="slf4j-libs" sync="true" pattern="release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="servlet" sync="true" pattern="release/solr/lib/servlet-api-3.0.jar" />
-        <ivy:retrieve conf="solr4to5" sync="true" pattern="release/Solr4to5IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr5to6" sync="true" pattern="release/Solr5to6IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="autopsy"  pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="jetty-libs"  pattern="release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="solr-libs"  pattern="release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="slf4j-libs"  pattern="release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="servlet"  pattern="release/solr/lib/servlet-api-3.0.jar" />
+        <ivy:retrieve conf="solr4to5" pattern="release/Solr4to5IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="solr5to6"  pattern="release/Solr5to6IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
       
         <!--Copy Solr deployment and tools that arn't downloaded with Ivy-->
         <antcall target="get-solr-deployment" /> 

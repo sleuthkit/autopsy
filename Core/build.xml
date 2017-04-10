@@ -71,23 +71,18 @@
              ignoreerrors="true"
              verbose="true"/>
     </target>
-
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
-        <mkdir dir="${ext.dir}"/>
+    
+    <target name="retrieve-deps" depends="init-ivy,getTSKJars,get-thirdparty-dependencies,get-InternalPythonModules, download-binlist">
+         <mkdir dir="${ext.dir}"/>
         <copy file="${thirdparty.dir}/LICENSE-2.0.txt" todir="${ext.dir}" />
         
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
-        <ivy:retrieve conf="core" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        
-        <!-- get additional deps -->   
-        <antcall target="getTSKJars" />
-        <antcall target="get-thirdparty-dependencies" />
-        <antcall target="get-InternalPythonModules"/>
-        
-        <!--Donwload the bin list used for credit card number enrichment-->
-        <antcall target="download-binlist" />   
+        <ivy:retrieve conf="core" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+       
     </target>
+
+    <target name="init" depends="retrieve-deps,basic-init,files-init,build-init,-javac-init"/>
      
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  
