@@ -313,7 +313,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             for (Keyword word : termQueryResult.getKeywords()) {
                 termHits.addAll(termQueryResult.getResults(word));
             }
-            results.addResult(new Keyword(term.getTerm(), false), new ArrayList<>(termHits));
+            results.addResult(new Keyword(term.getTerm(), false, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), new ArrayList<>(termHits));
         }
         return results;
     }

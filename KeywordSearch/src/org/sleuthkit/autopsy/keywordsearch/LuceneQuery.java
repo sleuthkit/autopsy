@@ -181,7 +181,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
         QueryResults results = new QueryResults(this);
         //in case of single term literal query there is only 1 term
-        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true), matches);
+        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), matches);
 
         return results;
     }

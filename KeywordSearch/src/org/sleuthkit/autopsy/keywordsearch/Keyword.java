@@ -36,6 +36,8 @@ class Keyword {
     private boolean isLiteral;
     private boolean isWholeWord;
     private BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType;
+    private final String listName;
+    private final String originalTerm;
 
     /**
      * Constructs a representation of a keyword for which to search. The search
@@ -50,8 +52,25 @@ class Keyword {
         this.searchTerm = searchTerm;
         this.isLiteral = isLiteral;
         this.isWholeWord = true;
+        this.listName = "";
+        this.originalTerm = searchTerm;
     }
+    
+    Keyword(String searchTerm, boolean isLiteral, String listName, String originalTerm) {
+        this.searchTerm = searchTerm;
+        this.isLiteral = isLiteral;
+        this.isWholeWord = true;
+        this.listName = listName;
+        this.originalTerm = originalTerm;
+    }    
 
+    Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord, String listName, String originalTerm) {
+        this.searchTerm = searchTerm;
+        this.isLiteral = isLiteral;
+        this.isWholeWord = isWholeWord;
+        this.listName = listName;
+        this.originalTerm = originalTerm;      
+    }    
     /**
      * Constructs a representation of a keyword for which to search. The search
      * term may be either a literal term, to be treated as either a whole word
@@ -68,6 +87,8 @@ class Keyword {
         this.searchTerm = searchTerm;
         this.isLiteral = isLiteral;
         this.isWholeWord = isWholeWord;
+        this.listName = "";
+        this.originalTerm = searchTerm;        
     }
 
     /**
@@ -184,6 +205,20 @@ class Keyword {
         hash = 17 * hash + (this.isLiteral ? 1 : 0);
         hash = 17 * hash + (this.isWholeWord ? 1 : 0);
         return hash;
+    }
+
+    /**
+     * @return the listName
+     */
+    String getListName() {
+        return listName;
+    }
+
+    /**
+     * @return the originalTerm
+     */
+    String getOriginalTerm() {
+        return originalTerm;
     }
 
 }
