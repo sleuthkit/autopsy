@@ -315,7 +315,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             }
             results.addResult(new Keyword(term.getTerm(), false, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), new ArrayList<>(termHits));
         }
-        return results;
+        return results; 
     }
 
     /**

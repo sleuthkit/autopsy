@@ -206,7 +206,7 @@ final class RegexQuery implements KeywordSearchQuery {
                         for (KeywordHit hit : keywordHits) {
                             hitsMultiMap.put(new Keyword(hit.getHit(), true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), hit);
                         }
-                    } catch (TskException ex) {
+                    } catch (TskException ex) { 
                         //
                     }
                 }

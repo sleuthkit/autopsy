@@ -70,7 +70,7 @@ class LuceneQuery implements KeywordSearchQuery {
     LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
         this.originalKeyword = keyword;
-        this.keywordStringEscaped = this.originalKeyword.getSearchTerm();
+        this.keywordStringEscaped = this.originalKeyword.getSearchTerm(); 
     }
 
     @Override

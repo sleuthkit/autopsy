@@ -61,7 +61,7 @@ class Keyword {
         this.isLiteral = isLiteral;
         this.isWholeWord = true;
         this.listName = listName;
-        this.originalTerm = originalTerm;
+        this.originalTerm = originalTerm; 
     }    
 
     Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord, String listName, String originalTerm) {

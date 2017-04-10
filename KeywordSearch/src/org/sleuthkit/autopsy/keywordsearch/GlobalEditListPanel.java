@@ -162,7 +162,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                     final Keyword keyword = new Keyword(newWord, !dialog.isKeywordRegex(), dialog.isKeywordExact(), currentKeywordList.getName(), newWord);
                     if (currentKeywordList.hasKeyword(keyword)) {
                         dupeCount++;
-                        continue;
+                        continue; 
                     }
 
                     //check if valid
