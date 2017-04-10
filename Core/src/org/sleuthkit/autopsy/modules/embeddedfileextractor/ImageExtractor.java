@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,12 +19,14 @@
 package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.apache.poi.OldFileFormatException;
 import org.apache.poi.hslf.model.Picture;
 import org.apache.poi.hslf.usermodel.PictureData;
 import org.apache.poi.hslf.usermodel.SlideShow;
@@ -211,6 +213,10 @@ class ImageExtractor {
         HWPFDocument doc = null;
         try {
             doc = new HWPFDocument(new ReadContentInputStream(af));
+        } catch (OldFileFormatException ex) {
+            // Files from Word 95 and older are not supported for image
+            // extraction.
+            return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
@@ -325,6 +331,14 @@ class ImageExtractor {
         SlideShow ppt = null;
         try {
             ppt = new SlideShow(new ReadContentInputStream(af));
+        } catch (OldFileFormatException ex) {
+            // Older PPT files are not supported for image extraction.
+            return null;
+        } catch (FileNotFoundException ex) {
+            // This exception gets thrown for the XP-SP3 test image (and
+            // possibly others). Until it can be determined why this happens, we
+            // will simply return out of this method without logging the error.
+            return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
             logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
@@ -476,6 +490,9 @@ class ImageExtractor {
         Workbook xls;
         try {
             xls = new HSSFWorkbook(new ReadContentInputStream(af));
+        } catch (OldFileFormatException ex) {
+            // Older XLS files are not supported for image extraction.
+            return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
             logger.log(Level.WARNING, String.format("%s%s", NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()), af.getName()), ex); //NON-NLS
