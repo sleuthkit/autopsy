@@ -39,6 +39,7 @@ The following topics are available here:
  - \subpage content_viewer_page
  - \subpage image_gallery_page
  - \subpage file_search_page
+ - \subpage ad_hoc_keyword_search_page
  - \subpage timeline_page
  - \subpage stix_page
  - \subpage logs_and_output_page

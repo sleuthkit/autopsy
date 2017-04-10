@@ -5,6 +5,10 @@
         <!-- module dependencies -->
         <conf name="autopsy"/>
         
+        <!-- Solr index upgrade tool dependencies -->
+        <conf name="solr4to5"/>
+        <conf name="solr5to6"/>
+        
         <!-- Solr server dependencies -->
         <conf name="solr-libs"/>
         <conf name="jetty-libs"/>
@@ -14,7 +18,20 @@
     <dependencies>
         <!-- Solr -->
         <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="6.2.1"/>
+        
+        <!-- Solr index upgrade -->
+        <dependency conf="solr4to5->default" org="org.apache.lucene" name="lucene-analyzers-common" rev="5.5.1"/>
+        <dependency conf="solr4to5->default" org="org.apache.lucene" name="lucene-backward-codecs" rev="5.5.1"/>
+        <dependency conf="solr4to5->default" org="org.apache.lucene" name="lucene-codecs" rev="5.5.1"/>
+        <dependency conf="solr4to5->default" org="org.apache.lucene" name="lucene-core" rev="5.5.1"/>
+       
+        <dependency conf="solr5to6->default" org="org.apache.lucene" name="lucene-analyzers-common" rev="6.2.1"/>
+        <dependency conf="solr5to6->default" org="org.apache.lucene" name="lucene-backward-codecs" rev="6.2.1"/>
+        <dependency conf="solr5to6->default" org="org.apache.lucene" name="lucene-codecs" rev="6.2.1"/>
+        <dependency conf="solr5to6->default" org="org.apache.lucene" name="lucene-core" rev="6.2.1"/>
 
+        
+        
         <!-- Autopsy -->
         <dependency conf="autopsy->*" org="org.apache.solr" name="solr-solrj" rev="6.2.1"/>
         <dependency conf="autopsy->*" org="commons-lang" name="commons-lang" rev="2.4"/>
@@ -38,8 +55,8 @@
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jcl-over-slf4j" rev="1.7.10"/>
         <dependency conf="slf4j-libs->default" org="org.slf4j" name="jul-to-slf4j" rev="1.7.10"/>
         
-        <!-- Tika 1.4 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
-        version available  is 2.0.0  Overriding the version worked-->
+        <!-- Tika 1.14 seems to declare a (transitive?) dependency on cleartk-util 3.2.2, but the most recent
+        version available is 2.0.0  Overriding the version worked-->
         <override  org="org.cleartk" module="cleartk-util" rev="2.0.0"/>
        
     </dependencies>
