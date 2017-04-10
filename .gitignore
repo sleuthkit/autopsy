@@ -3,7 +3,7 @@
 /*/build/
 */nbproject/private/*
 /nbproject/private/*
-/Core/release/
+
 /Core/src/org/sleuthkit/autopsy/coreutils/Version.properties
 /Core/build/
 /Core/dist/
@@ -77,4 +77,5 @@ Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 /ImageGallery/release/
 /thunderbirdparser/release/
 /Experimental/release/
+
 
