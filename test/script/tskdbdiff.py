@@ -301,6 +301,10 @@ class TskDbDiff(object):
 
         conn = sqlite3.connect(backup_db_file)
         id_path_table = build_id_table(conn.cursor())
+        id_vs_parts_table = build_id_vs_parts_table(conn.cursor())
+        id_vs_info_table = build_id_vs_info_table(conn.cursor())
+        id_fs_info_table = build_id_fs_info_table(conn.cursor())
+        id_objects_table = build_id_objects_table(conn.cursor())
         conn.text_factory = lambda x: x.decode("utf-8", "ignore")
 
         # Delete the blackboard tables
@@ -310,7 +314,7 @@ class TskDbDiff(object):
         # Write to the database dump
         with codecs.open(dump_file, "wb", "utf_8") as db_log:
             for line in conn.iterdump():
-                line = normalize_db_entry(line, id_path_table)
+                line = normalize_db_entry(line, id_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table)
                 db_log.write('%s\n' % line)
             # Now sort the file    
             
@@ -342,7 +346,7 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
-def normalize_db_entry(line, table):
+def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table, objects_table):
     """ Make testing more consistent and reasonable by doctoring certain db entries.
 
     Args:
@@ -369,28 +373,59 @@ def normalize_db_entry(line, table):
     # remove object ID
     elif (path_index != -1):
         obj_id = fields_list[0]
-        path = table[int(obj_id)]
-        newLine = ('INSERT INTO "tsk_files_path" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        objValue = table[int(obj_id)]
+        par_obj_id = objects_table[int(obj_id)]
+        par_obj_value = table[par_obj_id]
+        par_obj_name = par_obj_value[par_obj_value.rfind('/')+1:]
+        #check the par_id that we insert to the path name when we create uniqueName
+        pathValue = re.sub(par_obj_name + '_' + str(par_obj_id), par_obj_name, fields_list[1])
+                
+        newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');') 
         return newLine
     # remove object ID
     elif (layout_index != -1):
         obj_id = fields_list[0]
         path= table[int(obj_id)]
-        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', '.join(fields_list[1:]) + ');') 
+        newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
     elif (object_index != -1):
         obj_id = fields_list[0]
         parent_id = fields_list[1]
-    
+        newLine = 'INSERT INTO "tsk_objects" VALUES('
+        path = None
+        parent_path = None
+
+        #if obj_id or parent_id is invalid literal, we simple return the values as it is 
         try:
-             path = table[int(obj_id)]
-             parent_path = table[int(parent_id)]
-             newLine = ('INSERT INTO "tsk_objects" VALUES(' + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');') 
-             return newLine
-        except Exception as e: 
-            # objects table has things that aren't files. if lookup fails, don't replace anything.
+            obj_id = int(obj_id)
+            parent_id = int(parent_id) 
+        except Exception as e:
             return line
+
+        if obj_id in table.keys():
+             path = table[obj_id]
+        elif obj_id in vs_parts_table.keys():
+             path = vs_parts_table[obj_id]
+        elif obj_id in vs_info_table.keys():
+             path = vs_info_table[obj_id]
+        elif obj_id in fs_info_table.keys():
+             path = fs_info_table[obj_id]
+        
+        if parent_id in table.keys():
+             parent_path = table[parent_id]
+        elif parent_id in vs_parts_table.keys():
+             parent_path = vs_parts_table[parent_id]
+        elif parent_id in vs_info_table.keys():
+             parent_path = vs_info_table[parent_id]
+        elif parent_id in fs_info_table.keys():
+             parent_path = fs_info_table[parent_id]
+        
+
+        if path and parent_path:
+             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
+        else:
+             return line 
     # remove time-based information, ie Test_6/11/14 -> Test    
     elif (report_index != -1):
         fields_list[1] = "AutopsyTestCase"
@@ -443,7 +478,51 @@ def build_id_table(artifact_cursor):
     mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, parent_path, name FROM tsk_files")])
     return mapping
 
+def build_id_vs_parts_table(artifact_cursor):
+    """Build the map of object ids to vs_parts.
+
+    Args:
+        artifact_cursor: the database cursor
+    """
+    # for each row in the db, take the object id, addr, and start, then create a tuple in the dictionary
+    # with the object id as the key and (addr + start) as the value
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, addr, start FROM tsk_vs_parts")])
+    return mapping
+
+def build_id_vs_info_table(artifact_cursor):
+    """Build the map of object ids to vs_info.
+
+    Args:
+        artifact_cursor: the database cursor
+    """
+    # for each row in the db, take the object id, vs_type, and img_offset, then create a tuple in the dictionary
+    # with the object id as the key and (vs_type + img_offset) as the value
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, vs_type, img_offset FROM tsk_vs_info")])
+    return mapping
+
      
+def build_id_fs_info_table(artifact_cursor):
+    """Build the map of object ids to fs_info.
+
+    Args:
+        artifact_cursor: the database cursor
+    """
+    # for each row in the db, take the object id, img_offset, and fs_type, then create a tuple in the dictionary
+    # with the object id as the key and (img_offset + fs_type) as the value
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, img_offset, fs_type FROM tsk_fs_info")])
+    return mapping
+
+def build_id_objects_table(artifact_cursor):
+    """Build the map of object ids to par_id.
+
+    Args:
+        artifact_cursor: the database cursor
+    """
+    # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
+    # with the object id as the key and par_obj_id as the value
+    mapping = dict([(row[0], row[1]) for row in artifact_cursor.execute("SELECT obj_id, par_obj_id FROM tsk_objects")])
+    return mapping
+
 def main():
     try:
         sys.argv.pop(0)
