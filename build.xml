@@ -221,12 +221,19 @@
     
     
     <target name="doxygen" description="build doxygen docs, requires doxygen in PATH" depends="-init,-hide-excluded-modules">
-        <exec executable="doxygen" dir="${basedir}/docs/doxygen">
-            <arg value="Doxyfile"/>
-        </exec>
-        <exec executable="doxygen" dir="${basedir}/docs/doxygen-user">
-            <arg value="Doxyfile"/>
-        </exec>
+        <property environment="env" /> 
+        <if>
+            <available file="doxygen"  
+                 filepath="${env.PATH}"/>
+            <then>
+            <exec executable="doxygen" dir="${basedir}/docs/doxygen">
+                <arg value="Doxyfile"/>
+            </exec>
+            <exec executable="doxygen" dir="${basedir}/docs/doxygen-user">
+                <arg value="Doxyfile"/>
+            </exec>
+            </then>
+        </if>
     </target>
     
     <target name="check-release">

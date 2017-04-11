@@ -53,26 +53,38 @@ public final class CaseMetadata {
 
     private static final String FILE_EXTENSION = ".aut";
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
+
+    //fields from schema version 1
     private static final String SCHEMA_VERSION_ONE = "1.0";
-    private static final String SCHEMA_VERSION_TWO = "2.0";
-    private final static String AUTOPSY_VERSION_ELEMENT_NAME = "AutopsyCreatedVersion"; //NON-NLS
-    private final static String CASE_DATABASE_NAME_ELEMENT_NAME = "DatabaseName"; //NON-NLS
-    private final static String TEXT_INDEX_NAME_ELEMENT = "TextIndexName"; //NON-NLS
-    private static final String CURRENT_SCHEMA_VERSION = "3.0";
     private final static String ROOT_ELEMENT_NAME = "AutopsyCase"; //NON-NLS
     private final static String SCHEMA_VERSION_ELEMENT_NAME = "SchemaVersion"; //NON-NLS
     private final static String CREATED_DATE_ELEMENT_NAME = "CreatedDate"; //NON-NLS
-    private final static String MODIFIED_DATE_ELEMENT_NAME = "ModifiedDate"; //NON-NLS
-    private final static String AUTOPSY_CREATED_BY_ELEMENT_NAME = "CreatedByAutopsyVersion"; //NON-NLS
-    private final static String AUTOPSY_SAVED_BY_ELEMENT_NAME = "SavedByAutopsyVersion"; //NON-NLS
+    private final static String AUTOPSY_VERSION_ELEMENT_NAME = "AutopsyCreatedVersion"; //NON-NLS
     private final static String CASE_ELEMENT_NAME = "Case"; //NON-NLS
     private final static String CASE_NAME_ELEMENT_NAME = "Name"; //NON-NLS
-    private final static String CASE_DISPLAY_NAME_ELEMENT_NAME = "DisplayName"; //NON-NLS
     private final static String CASE_NUMBER_ELEMENT_NAME = "Number"; //NON-NLS
     private final static String EXAMINER_ELEMENT_NAME = "Examiner"; //NON-NLS
     private final static String CASE_TYPE_ELEMENT_NAME = "CaseType"; //NON-NLS
-    private final static String CASE_DATABASE_ELEMENT_NAME = "Database"; //NON-NLS
+    private final static String CASE_DATABASE_NAME_ELEMENT_NAME = "DatabaseName"; //NON-NLS
+    private final static String TEXT_INDEX_NAME_ELEMENT = "TextIndexName"; //NON-NLS
+
+    //fields from schema version 2
+    private static final String SCHEMA_VERSION_TWO = "2.0";
+    private final static String AUTOPSY_CREATED_BY_ELEMENT_NAME = "CreatedByAutopsyVersion"; //NON-NLS
+    private final static String CASE_DATABASE_ABSOLUTE_PATH_ELEMENT_NAME = "Database"; //NON-NLS
     private final static String TEXT_INDEX_ELEMENT = "TextIndex"; //NON-NLS
+
+    //fields from schema version 3
+    private static final String SCHEMA_VERSION_THREE = "3.0";
+    private final static String CASE_DISPLAY_NAME_ELEMENT_NAME = "DisplayName"; //NON-NLS
+    private final static String CASE_DATABASE_NAME_RELATIVE_ELEMENT_NAME = "CaseDatabase"; //NON-NLS
+
+    //unread fields, these are regenerated on save
+    private final static String MODIFIED_DATE_ELEMENT_NAME = "ModifiedDate"; //NON-NLS
+    private final static String AUTOPSY_SAVED_BY_ELEMENT_NAME = "SavedByAutopsyVersion"; //NON-NLS
+
+    private static final String CURRENT_SCHEMA_VERSION = SCHEMA_VERSION_THREE;
+
     private final Path metadataFilePath;
     private Case.CaseType caseType;
     private String caseName;
@@ -80,6 +92,7 @@ public final class CaseMetadata {
     private String caseNumber;
     private String examiner;
     private String caseDatabaseName;
+    private String caseDatabasePath;
     private String textIndexName;
     private String createdDate;
     private String createdByVersion;
@@ -368,7 +381,8 @@ public final class CaseMetadata {
         createChildElement(doc, caseElement, CASE_NUMBER_ELEMENT_NAME, caseNumber);
         createChildElement(doc, caseElement, EXAMINER_ELEMENT_NAME, examiner);
         createChildElement(doc, caseElement, CASE_TYPE_ELEMENT_NAME, caseType.toString());
-        createChildElement(doc, caseElement, CASE_DATABASE_ELEMENT_NAME, caseDatabaseName);
+        createChildElement(doc, caseElement, CASE_DATABASE_ABSOLUTE_PATH_ELEMENT_NAME, caseDatabasePath);
+        createChildElement(doc, caseElement, CASE_DATABASE_NAME_RELATIVE_ELEMENT_NAME, caseDatabaseName);
         createChildElement(doc, caseElement, TEXT_INDEX_ELEMENT, textIndexName);
     }
 
@@ -440,19 +454,27 @@ public final class CaseMetadata {
             if (schemaVersion.equals(SCHEMA_VERSION_ONE)) {
                 this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_NAME_ELEMENT_NAME, true);
                 this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_NAME_ELEMENT, true);
+            } else if (schemaVersion.equals(SCHEMA_VERSION_TWO)) {
+                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_ABSOLUTE_PATH_ELEMENT_NAME, true);
+                this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, false);
             } else {
-                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_ELEMENT_NAME, true);
+                this.caseDatabaseName = getElementTextContent(caseElement, CASE_DATABASE_NAME_RELATIVE_ELEMENT_NAME, true);
                 this.textIndexName = getElementTextContent(caseElement, TEXT_INDEX_ELEMENT, false);
             }
 
             /*
              * Fix up the case database name due to a bug that for a time caused
              * the absolute paths of single-user case databases to be stored.
+             * Derive the missing (absolute/relative) value from the one
+             * present.
              */
             Path possibleAbsoluteCaseDbPath = Paths.get(this.caseDatabaseName);
+            Path caseDirectoryPath = Paths.get(getCaseDirectory());
             if (possibleAbsoluteCaseDbPath.getNameCount() > 1) {
-                Path caseDirectoryPath = Paths.get(getCaseDirectory());
+                this.caseDatabasePath = this.caseDatabaseName;
                 this.caseDatabaseName = caseDirectoryPath.relativize(possibleAbsoluteCaseDbPath).toString();
+            } else {
+                this.caseDatabasePath = caseDirectoryPath.resolve(caseDatabaseName).toAbsolutePath().toString();
             }
 
         } catch (ParserConfigurationException | SAXException | IOException ex) {

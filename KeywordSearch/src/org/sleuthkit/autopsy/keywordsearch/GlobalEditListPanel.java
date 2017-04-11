@@ -125,6 +125,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         }
     }
 
+    @NbBundle.Messages("GlobalEditListPanel.editKeyword.title=Edit Keyword")      
     /**
      * Adds keywords to a  keyword list, returns true if at least one keyword was successfully added and no
      * duplicates were found.
@@ -139,6 +140,9 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         int dupeCount = 0;
         int badCount = 1;  // Default to 1 so we enter the loop the first time
 
+        if (!existingKeywords.isEmpty()){  //if there is an existing keyword then this action was called by the edit button
+            dialog.setTitle(NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.editKeyword.title"));
+        }
         while (badCount > 0) {
             dialog.setInitialKeywordList(keywordsToRedisplay, isLiteral, isWholeWord);
             dialog.display();

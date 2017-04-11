@@ -5,34 +5,7 @@
 <project name="org.sleuthkit.autopsy.keywordsearch" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.keywordsearch.</description>
     <import file="nbproject/build-impl.xml"/>
-        
-    <property name="ivy.install.version" value="2.3.0-rc2" />
-    <condition property="ivy.home" value="${env.IVY_HOME}">
-        <isset property="env.IVY_HOME" />
-    </condition>
-    <property name="ivy.home" value="${user.home}/.ant" />
-    <property name="ivy.jar.dir" value="${ivy.home}/lib" />
-    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
-
-    <target name="download-ivy" unless="offline">
-        <available file="${ivy.jar.file}" property="ivy.available"/>
-        <antcall target="-download-ivy" />
-    </target>
-    
-    <target name="-download-ivy" unless="ivy.available">
-        <mkdir dir="${ivy.jar.dir}"/>
-        <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
-             dest="${ivy.jar.file}" usetimestamp="true"/>
-    </target>
-
-    <!-- init-ivy will bootstrap Ivy if the user doesn't have it already -->
-    <target name="init-ivy" depends="download-ivy" unless="ivy.lib.path">
-        <path id="ivy.lib.path">
-            <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
-        </path>
-        <taskdef resource="org/apache/ivy/ant/antlib.xml"
-                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
-    </target>
+    <import file="../BootstrapIvy.xml"/>
     
     <property name="release.dir" value="release" />
     
