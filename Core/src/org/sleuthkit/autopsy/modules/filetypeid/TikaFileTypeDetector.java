@@ -84,7 +84,6 @@ public class TikaFileTypeDetector {
         SortedSet<MediaType> m = MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes();
         String[] split = mimeType.split("/");
 
-        //if they had additional slashes in a custom mime type it will not be a detectable MIME type by tika 
         if (split.length == 2) {
             String type = split[0];
             String subtype = split[1];
