@@ -116,7 +116,7 @@ public class Case {
     private static final int NAME_LOCK_TIMOUT_HOURS = 12;
     private static final int SHARED_DIR_LOCK_TIMOUT_HOURS = 12;
     private static final int RESOURCE_LOCK_TIMOUT_HOURS = 12;
-    private static final int MAX_SANITIZED_CASE_NAME_LEN = 47;
+    private static final int MAX_POSTGRESQL_NAME_LEN = 47;
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -794,8 +794,8 @@ public class Case {
          * Truncate to 63-16=47 chars to accomodate the timestamp, then add the
          * timestamp.
          */
-        if (dbName.length() > MAX_SANITIZED_CASE_NAME_LEN) {
-            dbName = dbName.substring(0, MAX_SANITIZED_CASE_NAME_LEN);
+        if (dbName.length() > MAX_POSTGRESQL_NAME_LEN) {
+            dbName = dbName.substring(0, MAX_POSTGRESQL_NAME_LEN);
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
