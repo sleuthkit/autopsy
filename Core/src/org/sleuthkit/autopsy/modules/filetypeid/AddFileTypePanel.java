@@ -92,7 +92,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
         "AddMimeTypePanel.emptySetName.title=Missing Interesting Files Set Name",
         "# {0} - media subtype",
         "AddFileTypePanel.nonStandardMIMEType.message="
-        + "This MIME type is invalid because it is not in the format of: media type/media subtype. Custom/{0} has been suggested instead.",
+        + "MIME type must be of form: media type/media subtype. Custom/{0} has been suggested instead.",
         "# {0} - type name",
         "AddFileTypePanel.containsIllegalCharacter.message=Invalid character in MIME type, {0} has been suggested instead",
         "AddFileTypePanel.containsIllegalCharacter.title=Invalid Character in MIME Type",
