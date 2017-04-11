@@ -7,7 +7,6 @@
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
     
-    <property name="release.dir" value="${basedir}/release"/>
     
     <target name="get-thirdparty-tools" >
         <copy todir="${basedir}/release/pasco2">
@@ -21,20 +20,18 @@
         </copy>
     </target>
     
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+    <target name="get-deps" depends="init-ivy,get-thirdparty-tools">
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
-        <ivy:retrieve conf="recent-activity" sync="true" pattern="${release.dir}/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <antcall target="get-thirdparty-tools"/>
+        <ivy:retrieve conf="recent-activity" sync="true" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
+        
+    <target name="init" depends="get-deps,harness.init"/>
     
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <mkdir dir="${release.dir}"/>
-        <delete includeemptydirs="true">
-            <fileset dir="${release.dir}" includes="**/*"/>
-        </delete>
+        <delete  dir="${basedir}/release" />
     </target>
 </project>
