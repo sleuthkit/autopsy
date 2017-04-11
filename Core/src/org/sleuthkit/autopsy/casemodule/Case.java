@@ -727,24 +727,24 @@ public class Case {
     /**
      * Transforms the display name for a case to make a suitable case name for
      * use in case directory paths, coordination service locks, Active MQ
-     * message message channels, etc.
+     * message channels, etc.
      *
      * ActiveMQ:
      * http://activemq.2283324.n4.nabble.com/What-are-limitations-restrictions-on-destination-name-td4664141.html
      * may not be ?
      *
-     * @param displayName A candidate case name.
+     * @param caseDisplayName A case display name.
      *
-     * @return The sanitized case name.
+     * @return The case display name transformed into a corresponding case name.
      *
      * @throws org.sleuthkit.autopsy.casemodule.Case.IllegalCaseNameException
      */
-    public static String displayNameToCaseName(String displayName) throws IllegalCaseNameException {
+    public static String displayNameToCaseName(String caseDisplayName) throws IllegalCaseNameException {
 
         /*
          * Remove all non-ASCII characters.
          */
-        String caseName = displayName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
+        String caseName = caseDisplayName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
 
         /*
          * Remove all control characters.
@@ -762,7 +762,7 @@ public class Case {
         caseName = caseName.toLowerCase();
 
         if (caseName.isEmpty()) {
-            throw new IllegalCaseNameException(String.format("Failed to convert case name '%s'", displayName));
+            throw new IllegalCaseNameException(String.format("Failed to convert case name '%s'", caseDisplayName));
         }
 
         return caseName;
@@ -778,13 +778,15 @@ public class Case {
      *
      * @param candidateName The candidate name.
      *
-     * @return The transformed name.
+     * @return The candidate name transformed into a corresponding PostgreSQL
+     *         case database name.
      */
     private static String makePostgreSqlDbName(String candidateName) throws IllegalCaseNameException {
 
         /*
          * Apply the same transformations as are used for case names, for
-         * consistency.
+         * consistency and to make it easier to find the database name when
+         * scanning a list of case database on the server.
          */
         String dbName = displayNameToCaseName(candidateName);
 
@@ -797,7 +799,7 @@ public class Case {
 
         /*
          * Truncate to 63-16=47 chars to accomodate the timestamp, then add the
-         * suffix.
+         * timestamp.
          */
         if (dbName.length() > MAX_SANITIZED_CASE_NAME_LEN) {
             dbName = dbName.substring(0, MAX_SANITIZED_CASE_NAME_LEN);
