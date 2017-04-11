@@ -8,7 +8,7 @@
     <import file="../BootstrapIvy.xml"/>
     
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
-    <property name="lib.dir" value="release/modules/lib" />
+    <property name="lib.dir" value="${basedir}/release/modules/lib" />
     
     <condition property="os.family" value="unix">  
         <os family="unix"/>  
@@ -25,19 +25,15 @@
     <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
-        <ivy:retrieve sync="false" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
+        <ivy:retrieve sync="false" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
     </target>
     
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,retrieve-deps">
-        <!-- overrode depends attribute -->
-        
-    </target>
+    <target name="init" depends="retrieve-deps, harness.init"/>
     
-    <property name="ext.dir" value="release/modules/ext" />
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy, 
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <delete dir="${ext.dir}"/>
+        <delete dir="${basedir}}/release/"/>
     </target>
 </project>
