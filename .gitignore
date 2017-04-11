@@ -69,3 +69,9 @@ Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 
 
 
+Core/release/
+CoreLibs/release/
+Experimental/release/
+ImageGallery/release/
+KeywordSearch/release/
+thunderbirdparser/release/
