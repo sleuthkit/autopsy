@@ -769,30 +769,23 @@ public class Case {
     }
 
     /**
-     * Transforms a candidate name for a PostgreSQL database into a name that
-     * can be safely used in SQL commands as described at
+     * Transforms a case name into a name for a PostgreSQL database that can be
+     * safely used in SQL commands as described at
      * http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html: 63
      * chars max, must start with a letter or underscore, following chars can be
      * letters, underscores, or digits. A timestamp suffix is added to ensure
      * uniqueness.
      *
-     * @param candidateName The candidate name.
+     * @param caseName The candidate name.
      *
      * @return The candidate name transformed into a corresponding PostgreSQL
      *         case database name.
      */
-    private static String makePostgreSqlDbName(String candidateName) throws IllegalCaseNameException {
-
-        /*
-         * Apply the same transformations as are used for case names, for
-         * consistency and to make it easier to find the database name when
-         * scanning a list of case database on the server.
-         */
-        String dbName = displayNameToCaseName(candidateName);
-
+    private static String caseNameToCaseDbName(String caseName) throws IllegalCaseNameException {
         /*
          * Must start with letter or underscore. If not, prepend an underscore.
          */
+        String dbName = caseName;
         if (dbName.length() > 0 && !(Character.isLetter(dbName.codePointAt(0))) && !(dbName.codePointAt(0) == '_')) {
             dbName = "_" + dbName;
         }
@@ -1814,7 +1807,7 @@ public class Case {
             if (CaseType.SINGLE_USER_CASE == caseType) {
                 dbName = SINGLE_USER_CASE_DB_NAME;
             } else if (CaseType.MULTI_USER_CASE == caseType) {
-                dbName = makePostgreSqlDbName(caseName);
+                dbName = caseNameToCaseDbName(caseName);
             }
         } catch (IllegalCaseNameException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabaseName(), ex);
