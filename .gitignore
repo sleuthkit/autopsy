@@ -10,24 +10,19 @@
 /Core/nbproject/*
 !/Core/nbproject/project.xml
 !/Core/nbproject/project.properties
-/CoreLibs/release/
+
 /CoreLibs/build/
 /CoreLibs/dist/
 /CoreLibs/nbproject/*
 !/CoreLibs/nbproject/project.xml
 !/CoreLibs/nbproject/project.properties
-/KeywordSearch/release/
+
 /KeywordSearch/build/
 /KeywordSearch/dist/
 /KeywordSearch/nbproject/*
 !/KeywordSearch/nbproject/project.xml
 !/KeywordSearch/nbproject/project.properties
-/Ingest/release/modules/ext/
-/Ingest/build/
-/Ingest/dist/
-/Ingest/nbproject/*
-!/Ingest/nbproject/project.xml
-!/Ingest/nbproject/project.properties
+
 */genfiles.properties
 genfiles.properties
 /branding/core/core.jar/org/netbeans/core/startup/Bundle.properties
@@ -71,11 +66,6 @@ Core/src/org/sleuthkit/autopsy/datamodel/ranges.csv
 /test/script/*/*.xml
 .DS_Store
 .*.swp
-
-
-/ImageGallery/release/
-/thunderbirdparser/release/
-/Experimental/release/
 
 
 
