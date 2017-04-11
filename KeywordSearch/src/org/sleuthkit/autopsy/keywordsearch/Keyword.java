@@ -193,7 +193,9 @@ class Keyword {
         Keyword other = (Keyword) obj;
         return (this.searchTerm.equals(other.getSearchTerm())
                 && this.isLiteral == other.searchTermIsLiteral()
-                && this.isWholeWord == other.searchTermIsWholeWord());
+                && this.isWholeWord == other.searchTermIsWholeWord()
+                && this.listName.equals(other.getListName())
+                && this.originalTerm.equals(other.getOriginalTerm()));
     }
 
     @Override
