@@ -145,7 +145,9 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     @NbBundle.Messages({"# {0} - case directory",
-        "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from caseDirectory: {0}"
+        "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from caseDirectory: {0}",
+        "# {0} - case directory",
+        "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case"
     })
     /**
      * Deletes Solr core for a case.
@@ -158,14 +160,22 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         IndexMetadata indexMetadata;
         try {
             indexMetadata = new IndexMetadata(caseDirectory);
-            //When there were multiple cores in the same array they seemed to have the same name as each other.
-            if (!indexMetadata.getIndexes().isEmpty()) {
-                KeywordSearch.getServer().deleteCore(indexMetadata.getIndexes().get(0).getIndexName());
-            }
         } catch (IndexMetadata.TextIndexMetadataException ex) {
             logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noIndexMetadata", caseDirectory), ex);
-            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noIndexMetadata", caseDirectory), ex); //NON-NLS
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noIndexMetadata", caseDirectory), ex);
         }
+        //find the index for the current version of solr (the one we are connected to) and delete its core using the index name
+        String currentSchema = IndexFinder.getCurrentSchemaVersion();
+        String currentSolr = IndexFinder.getCurrentSolrVersion();
+        for (Index index : indexMetadata.getIndexes()) {
+            if (index.getSolrVersion().equals(currentSolr) && index.getSchemaVersion().equals(currentSchema)) {
+                KeywordSearch.getServer().deleteCore(index.getIndexName());
+                return; //only one core per for each combination of solr and schema version
+            }
+        }
+        //if an index for the current core was not found this code this code will execute
+        logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
+        throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
     }
 
     @Override
