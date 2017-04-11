@@ -2,10 +2,44 @@
 <!-- You may freely edit this file. See harness/README in the NetBeans platform -->
 <!-- for some information on what you could do (e.g. targets to override). -->
 <!-- If you delete this file and reopen the project it will be recreated. -->
-<project name="org.sleuthkit.autopsy.core" default="netbeans" basedir=".">
+<project name="org.sleuthkit.autopsy.core" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant" >
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.core</description>
     <import file="nbproject/build-impl.xml"/>
-         
+    <import file="../BootstrapIvy.xml"/>
+    
+     
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="modules.dir" value="release/modules/" />
+    <property name="ext.dir" value="${modules.dir}/ext" />
+    
+    <target name="get-InternalPythonModules" description="get internal python modules"> 
+        <copy todir="release/InternalPythonModules" >
+            <fileset dir="{basedir}/../../InternalPythonModules"/>
+        </copy>
+    </target>
+    
+    <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
+        <!--Copy openCV dependencies to release-->
+        <copy todir="${modules.dir}" >
+            <fileset dir="${thirdparty.dir}/opencv" />
+        </copy>
+        
+        <!--Copy photorec to release-->
+        <copy todir="release/photorec_exec" >
+            <fileset dir="${thirdparty.dir}/photorec_exec"/>
+        </copy>
+       
+        <!--Copy other jars-->
+        <copy file="${thirdparty.dir}/rejistry/Rejistry-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/sevenzip/sevenzipjbinding-AllPlatforms.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/stix/StixLib.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/jdom/jdom-2.0.5.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/jdom/jdom-2.0.5-contrib.jar" todir="${ext.dir}" />
+    </target>
+    
+    
+    
     <!-- Verify that the TSK_HOME env variable is set -->
     <target name="findTSK">
         <property environment="env"/>
@@ -18,12 +52,18 @@
     
     <target name="getTSKJars" depends="findTSK">
         <property environment="env"/>
-        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar" tofile="${basedir}/release/modules/ext/Tsk_DataModel_PostgreSQL.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" tofile="${basedir}/release/modules/ext/postgresql-9.4.1211.jre7.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar" tofile="${basedir}/release/modules/ext/mchange-commons-java-0.2.9.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar" tofile="${basedir}/release/modules/ext/c3p0-0.9.5.jar"/>
-        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/dist/Tsk_DataModel_PostgreSQL.jar" 
+              tofile="${basedir}/release/modules/ext/Tsk_DataModel_PostgreSQL.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar"
+              tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/postgresql-9.4.1211.jre7.jar" 
+              tofile="${basedir}/release/modules/ext/postgresql-9.4.1211.jre7.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/mchange-commons-java-0.2.9.jar"
+              tofile="${basedir}/release/modules/ext/mchange-commons-java-0.2.9.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/c3p0-0.9.5.jar"
+              tofile="${basedir}/release/modules/ext/c3p0-0.9.5.jar"/>
+        <copy file="${env.TSK_HOME}/bindings/java/lib/sqlite-jdbc-3.8.11.jar" 
+              tofile="${basedir}/release/modules/ext/sqlite-jdbc-3.8.11.jar"/>
     </target>
 
     <target name="download-binlist">
@@ -33,10 +73,21 @@
              verbose="true"/>
     </target>
 
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init">
-        <antcall target="download-binlist" />   
-
-        <!-- get additional deps -->   
-        <antcall target="getTSKJars" />
+    <target name="get-deps" depends="get-InternalPythonModules,get-thirdparty-dependencies,getTSKJars,download-binlist, init-ivy">
+        <!-- fetch all the dependencies from Ivy and stick them in the right places -->
+        <ivy:resolve/>
+        <ivy:retrieve conf="core"  pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        
     </target>
+    <target name="init" depends="get-deps,harness.init">
+       
+    </target>
+    
+    <target name="clean" depends="projectized-common.clean">
+        <!--Override clean to delete jars, etc downloaded with Ivy, 
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
+        <delete dir="${basedir}/release/"/>
+    </target>
+    
 </project>
