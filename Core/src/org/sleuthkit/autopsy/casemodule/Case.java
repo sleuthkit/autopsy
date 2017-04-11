@@ -776,9 +776,9 @@ public class Case {
      * letters, underscores, or digits. A timestamp suffix is added to ensure
      * uniqueness.
      *
-     * @param caseName The candidate name.
+     * @param caseName The case name.
      *
-     * @return The candidate name transformed into a corresponding PostgreSQL
+     * @return The case name transformed into a corresponding PostgreSQL
      *         case database name.
      */
     private static String caseNameToCaseDbName(String caseName) throws IllegalCaseNameException {
