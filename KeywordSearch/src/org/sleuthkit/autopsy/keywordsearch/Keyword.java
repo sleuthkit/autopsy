@@ -37,6 +37,11 @@ class Keyword {
     private boolean isWholeWord;
     private BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType;
     private final String listName;
+    /*
+     * For substring searches, original search term (e.g. "pass" or "enger") can
+     * be different from the search term (e.g. "passenger") that is found and
+     * used (e.g. for highlighting purposes).
+     */
     private final String originalTerm;
 
     /**
@@ -67,19 +72,25 @@ class Keyword {
      * NOTE: The addition of keyword list name and original search term was
      * added to facilitate proper de-duping of results of periodic keyword
      * searches that does not lose any keyword hits. Without this addition when
-     * using substring search feature during ingest, if there are multiple searches
-     * on differnt keyword lists that produce the same keyword hit, that hit is
-     * only going to be displayed in results of one of the list. For example,
-     * two substring searches, such as "pass" and "enger", will be missing one
-     * copy of any shared entries (i.e., "passenger" will only show up on one
-     * list). See JIRA story 2495.
+     * using substring search feature during ingest, if there are multiple
+     * searches on differnt keyword lists that produce the same keyword hit,
+     * that hit is only going to be displayed in results of one of the list. For
+     * example, two substring searches, such as "pass" and "enger", will be
+     * missing one copy of any shared entries (i.e., "passenger" will only show
+     * up on one list). See JIRA story 2495.
      *
-     * @param searchTerm  The search term.
-     * @param isLiteral   Whether or not the search term is a literal term,
-     *                    instead of a regex.
-     * @param isWholeWord Whether or not the search term, if it is a literal
-     *                    search term, should be treated as a whole word rather
-     *                    than a substring.
+     * @param searchTerm   The search term.
+     * @param isLiteral    Whether or not the search term is a literal term,
+     *                     instead of a regex.
+     * @param isWholeWord  Whether or not the search term, if it is a literal
+     *                     search term, should be treated as a whole word rather
+     *                     than a substring.
+     * @param listName     Keyword list name.
+     * @param originalTerm The original search term that was entered into the
+     *                     keyword list. For substring searches, original search
+     *                     term (e.g. "pass" or "enger") can be different from
+     *                     the search term (e.g. "passenger") that is found and
+     *                     used (e.g. for highlighting purposes).
      */
     Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord, String listName, String originalTerm) {
         this.searchTerm = searchTerm;
