@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearchservice;
 
 import java.io.Closeable;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.TskCoreException;

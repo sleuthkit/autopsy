@@ -33,7 +33,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
@@ -157,7 +156,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             IndexMetadata indexMetadata;
             try {
                 indexMetadata = new IndexMetadata(caseDirectory);
-                //When there were multiple cores in the array they seemed to have the name.
+                //When there were multiple cores in the same array they seemed to have the same name as each other.
                 if (!indexMetadata.getIndexes().isEmpty()) {
                     KeywordSearch.getServer().deleteCore(indexMetadata.getIndexes().get(0).getIndexName());
                 }
