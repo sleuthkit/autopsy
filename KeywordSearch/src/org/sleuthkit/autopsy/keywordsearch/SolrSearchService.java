@@ -170,10 +170,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         for (Index index : indexMetadata.getIndexes()) {
             if (index.getSolrVersion().equals(currentSolr) && index.getSchemaVersion().equals(currentSchema)) {
                 KeywordSearch.getServer().deleteCore(index.getIndexName());
-                return; //only one core per for each combination of solr and schema version
+                return; //only one core exists for each combination of solr and schema version
             }
         }
-        //if an index for the current core was not found this code this code will execute
+        //this code this code will only execute if an index for the current core was not found 
         logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
         throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
     }
