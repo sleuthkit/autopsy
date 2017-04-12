@@ -2343,7 +2343,7 @@ public class Case {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
             }
         } catch (InterruptedException | CoordinationServiceException ex) {
-            throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireNameLock(), ex);
+            throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
         }
     }
 
