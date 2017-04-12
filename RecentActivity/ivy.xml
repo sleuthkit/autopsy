@@ -1,0 +1,12 @@
+
+<ivy-module version="2.0">
+    <info organisation="org.sleuthkit.autopsy" module="keywordsearch"/>
+    <configurations >
+        <!-- module dependencies -->
+        <conf name="recent-activity"/>
+      
+    </configurations>
+    <dependencies>
+        <dependency conf="recent-activity->default" org="com.google.code.gson" name="gson" rev="2.1"/>
+    </dependencies>
+</ivy-module>

@@ -2,7 +2,37 @@
 <!-- You may freely edit this file. See harness/README in the NetBeans platform -->
 <!-- for some information on what you could do (e.g. targets to override). -->
 <!-- If you delete this file and reopen the project it will be recreated. -->
-<project name="org.sleuthkit.autopsy.recentactivity" default="netbeans" basedir=".">
+<project name="org.sleuthkit.autopsy.recentactivity" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.recentactivity.</description>
     <import file="nbproject/build-impl.xml"/>
+    <import file="../BootstrapIvy.xml"/>
+    
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty"/>
+    
+    <target name="get-thirdparty-tools" >
+        <copy todir="${basedir}/release/pasco2">
+            <fileset dir="${thirdparty.dir}/pasco2/lib/" />
+        </copy>
+        <copy todir="${basedir}/release/rr">
+            <fileset dir="${thirdparty.dir}/rr/" />
+        </copy>
+        <copy todir="${basedir}/release/rr-full" >
+            <fileset dir="${thirdparty.dir}/rr-full/" />
+        </copy>
+    </target>
+    
+    <target name="get-deps" depends="init-ivy,get-thirdparty-tools">
+        <!-- fetch all the dependencies from Ivy and stick them in the right places -->
+        <ivy:resolve/>
+        <ivy:retrieve conf="recent-activity" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+    </target>
+        
+    <target name="init" depends="get-deps,harness.init"/>
+    
+    <target name="clean" depends="projectized-common.clean">
+        <!--Override clean to delete jars, etc downloaded with Ivy  
+        or copied in from thirdparty folder.  This way we don't end up with 
+        out-of-date/unneeded stuff in the installer-->
+        <delete  dir="${basedir}/release" />
+    </target>
 </project>

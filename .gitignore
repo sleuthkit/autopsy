@@ -69,10 +69,11 @@ genfiles.properties
 /jdiff-logs/*
 /gen_version.txt
 hs_err_pid*.log
+
 .DS_Store
 .*.swp
-
 /Experimental/release/
 /ImageGallery/release/
 /thunderbirdparser/release/
+/RecentActivity/release/
 

@@ -1889,38 +1889,50 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             }
             SYS_LOGGER.log(Level.INFO, "Opening case {0} ({1}) for {2}", new Object[]{caseDisplayName, caseName, manifest.getFilePath()});
             currentJob.setStage(AutoIngestJob.Stage.OPENING_CASE);
-            try {
-                Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);
-                if (null != caseDirectoryPath) {
-                    Path metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
-                    Case.openAsCurrentCase(metadataFilePath.toString());
-                } else {
-                    caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                    Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
-                    /*
-                     * Sleep a bit before releasing the lock to ensure that the
-                     * new case folder is visible on the network.
-                     */
-                    Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
-                }
-                currentJob.setCaseDirectoryPath(caseDirectoryPath);
-                Case caseForJob = Case.getCurrentCase();
-                SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
-                return caseForJob;
+            /*
+             * Acquire and hold a case name lock so that only one node at as
+             * time can scan the output directory at a time. This prevents
+             * making duplicate cases for the saem auto ingest case.
+             */
+            try (Lock caseLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, 30, TimeUnit.MINUTES)) {
+                if (null != caseLock) {
+                    try {
+                        Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);
+                        if (null != caseDirectoryPath) {
+                            Path metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
+                            Case.openAsCurrentCase(metadataFilePath.toString());
+                        } else {
+                            caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
+                            Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
+                            /*
+                             * Sleep a bit before releasing the lock to ensure
+                             * that the new case folder is visible on the
+                             * network.
+                             */
+                            Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
+                        }
+                        currentJob.setCaseDirectoryPath(caseDirectoryPath);
+                        Case caseForJob = Case.getCurrentCase();
+                        SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
+                        return caseForJob;
 
-            } catch (CaseActionException ex) {
-                throw new CaseManagementException(String.format("Error creating or opening case %s (%s) for %s", manifest.getCaseName(), caseName, manifest.getFilePath()), ex);
-            } catch (IllegalStateException ex) {
-                /*
-                 * Deal with the unfortunate fact that Case.getCurrentCase
-                 * throws IllegalStateException.
-                 */
-                throw new CaseManagementException(String.format("Error getting current case %s (%s) for %s", caseName, manifest.getCaseName(), manifest.getFilePath()), ex);
+                    } catch (CaseActionException ex) {
+                        throw new CaseManagementException(String.format("Error creating or opening case %s (%s) for %s", manifest.getCaseName(), caseName, manifest.getFilePath()), ex);
+                    } catch (IllegalStateException ex) {
+                        /*
+                         * Deal with the unfortunate fact that
+                         * Case.getCurrentCase throws IllegalStateException.
+                         */
+                        throw new CaseManagementException(String.format("Error getting current case %s (%s) for %s", caseName, manifest.getCaseName(), manifest.getFilePath()), ex);
+                    }
+                } else {
+                    throw new CaseManagementException(String.format("Timed out acquiring case name lock for %s for %s", manifest.getCaseName(), manifest.getFilePath()));
+                }
             }
         }
 
         /**
-         * Runs the ingest porocess for the current job.
+         * Runs the ingest process for the current job.
          *
          * @param caseForJob The case for the job.
          *
