@@ -7,23 +7,24 @@
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
     
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty"/>
     
     <target name="get-thirdparty-tools" >
         <copy todir="${basedir}/release/pasco2">
-            <fileset dir="${basedir}/../thirdparty/pasco2/lib/" />
+            <fileset dir="${thirdparty.dir}/pasco2/lib/" />
         </copy>
         <copy todir="${basedir}/release/rr">
-            <fileset dir="${basedir}/../thirdparty/rr/" />
+            <fileset dir="${thirdparty.dir}/rr/" />
         </copy>
         <copy todir="${basedir}/release/rr-full" >
-            <fileset dir="${basedir}/../thirdparty/rr-full/" />
+            <fileset dir="${thirdparty.dir}/rr-full/" />
         </copy>
     </target>
     
     <target name="get-deps" depends="init-ivy,get-thirdparty-tools">
         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
-        <ivy:retrieve conf="recent-activity" sync="true" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="recent-activity" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
         
     <target name="init" depends="get-deps,harness.init"/>

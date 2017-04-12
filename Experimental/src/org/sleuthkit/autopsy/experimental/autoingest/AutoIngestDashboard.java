@@ -57,6 +57,7 @@ import org.openide.filesystems.FileObject;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
+import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseNewAction;
 import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
@@ -181,7 +182,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestDashboard() {
-        disableUiMenuActions();
+        //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
+         WindowManager.getDefault().getMainWindow().setEnabled(false);
         
         manager = AutoIngestManager.getInstance();
 
@@ -223,36 +225,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * Must set this flag, otherwise pop up menus don't close properly.
          */
         UIManager.put("PopupMenu.consumeEventOnClose", false);
-    }
-    
-    private void disableUiMenuActions() {        
-        /*
-         * Disable the new case action in auto ingest mode.
-         */
-        CallableSystemAction.get(CaseNewAction.class).setEnabled(false);
-
-        /*
-         * Disable the new case action in auto ingest mode.
-         */
-        CallableSystemAction.get(CaseOpenAction.class).setEnabled(false);
-        CallableSystemAction.get(AutoIngestCaseOpenAction.class).setEnabled(false);
-
-        /*
-         * Permanently delete the "Open Recent Cases" item in the "Case" menu.
-         * This is quite drastic, as it also affects Autopsy standalone mode on
-         * this machine, but we need to make sure a user can't open case in
-         * automated ingest mode. "Open Recent Cases" item can't be disabled via 
-         * CallableSystemAction because of how it is defined in layer.xml, i.e. 
-         * it is defined as "folder", not "file". 
-         */
-        FileObject root = FileUtil.getConfigRoot();
-        FileObject openRecentCasesMenu = root.getFileObject("Menu/Case/OpenRecentCase");
-        if (openRecentCasesMenu != null) {
-            try {
-                openRecentCasesMenu.delete();
-            } catch (IOException ignore) {
-            }
-        }        
     }
 
     /**

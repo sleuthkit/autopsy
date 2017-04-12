@@ -7,9 +7,6 @@
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
     
-    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
-    <property name="lib.dir" value="${basedir}/release/modules/lib" />
-    
     <condition property="os.family" value="unix">  
         <os family="unix"/>  
     </condition> 
@@ -21,19 +18,21 @@
     </condition>  
     <import file="build-${os.family}.xml"/> 
 
-        
-    <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="lib.dir" value="${basedir}/release/modules/lib" />
+   
+    <target name="get-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
-        <ivy:retrieve sync="false" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
+        <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
     </target>
     
-    <target name="init" depends="retrieve-deps, harness.init"/>
-    
+    <target name="init" depends="get-deps,harness.init"/>
+
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy, 
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <delete dir="${basedir}}/release/"/>
+        <delete dir="${basedir}/release"/>
     </target>
 </project>

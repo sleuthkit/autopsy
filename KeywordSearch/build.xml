@@ -7,44 +7,40 @@
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
     
-    <property name="release.dir" value="release" />
     
     <target name="get-solr-deployment" description="copy the solr deployment into release"> 
-        <copy  todir="${release.dir}/solr" >
+        <copy  todir="${basedir}/release/solr" >
             <fileset dir="solr"/>
         </copy>
     </target>
     
     <target name="get-solr-upgrader-jars" description="copy the solr index upgrader jars into release"> 
         <copy  file="SolrUpgradeTools/Solr4IndexUpgrade.jar"
-               todir="${release.dir}/Solr4to5IndexUpgrade" />
+               todir="${basedir}/release/Solr4to5IndexUpgrade" />
         <copy file="SolrUpgradeTools/Solr5IndexUpgrade.jar"
-              todir="${release.dir}/Solr5to6IndexUpgrade" />
+              todir="${basedir}/release/Solr5to6IndexUpgrade" />
     </target>
     
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
-        <!-- fetch all the dependencies from Ivy and stick them in the right places -->
+    <target name="get-deps" depends="init-ivy, get-solr-deployment,get-solr-upgrader-jars">
+         <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
-        <ivy:retrieve conf="autopsy" sync="true" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="jetty-libs" sync="true" pattern="release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr-libs" sync="true" pattern="release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="slf4j-libs" sync="true" pattern="release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="servlet" sync="true" pattern="release/solr/lib/servlet-api-3.0.jar" />
-        <ivy:retrieve conf="solr4to5" sync="true" pattern="release/Solr4to5IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr5to6" sync="true" pattern="release/Solr5to6IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
-      
-        <!--Copy Solr deployment and tools that arn't downloaded with Ivy-->
-        <antcall target="get-solr-deployment" /> 
-        <antcall target="get-solr-upgrader-jars" /> 
+        <ivy:retrieve conf="autopsy"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="jetty-libs"  pattern="${basedir}/release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="solr-libs"  pattern="${basedir}/release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="slf4j-libs"  pattern="${basedir}/release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="servlet"  pattern="${basedir}/release/solr/lib/servlet-api-3.0.jar" />
+        <ivy:retrieve conf="solr4to5" pattern="${basedir}/release/Solr4to5IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="solr5to6"  pattern="${basedir}/release/Solr5to6IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
+    
+    <target name="init" depends="get-deps, harness.init"/>
+       
      
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <delete includeemptydirs="true">
-            <fileset dir="release" includes="**/*"/>
-        </delete>
+        <delete  dir="${basedir}/release"/>
     </target>
 
     <target name="clean-all" depends="clean" description="Clear Ivy cache.">
