@@ -193,16 +193,17 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         rightPanel = new javax.swing.JPanel();
 
         mainSplitPane.setBorder(null);
-        mainSplitPane.setDividerLocation(300);
+        mainSplitPane.setDividerLocation(309);
         mainSplitPane.setDividerSize(1);
 
-        leftPanel.setPreferredSize(new java.awt.Dimension(287, 327));
+        leftPanel.setPreferredSize(new java.awt.Dimension(309, 327));
+        leftPanel.setVerifyInputWhenFocusTarget(false);
 
         javax.swing.GroupLayout leftPanelLayout = new javax.swing.GroupLayout(leftPanel);
         leftPanel.setLayout(leftPanelLayout);
         leftPanelLayout.setHorizontalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGap(0, 309, Short.MAX_VALUE)
         );
         leftPanelLayout.setVerticalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -217,7 +218,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         rightPanel.setLayout(rightPanelLayout);
         rightPanelLayout.setHorizontalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 372, Short.MAX_VALUE)
+            .addGap(0, 363, Short.MAX_VALUE)
         );
         rightPanelLayout.setVerticalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
