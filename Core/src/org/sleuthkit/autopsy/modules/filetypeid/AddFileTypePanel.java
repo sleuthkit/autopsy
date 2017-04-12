@@ -24,6 +24,8 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import static org.sleuthkit.autopsy.modules.filetypeid.AddFileTypePanel.EVENT.SIG_LIST_CHANGED;
@@ -130,12 +132,23 @@ class AddFileTypePanel extends javax.swing.JPanel {
             mimeTypeTextField.setText("custom/" + typeName);
             return null;
         }
+        //Make sure the mimetype will piece back together to be the same string it was entered 
+        //trailing forward slashes will cause this mismatch to happen
+        //suggests a mime_type that will be the same after it is split appart and rejoined
+        if (!StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/").equals(typeName)) {
+            String rejoinedMimeType = StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/");  
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", rejoinedMimeType),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
+                    JOptionPane.WARNING_MESSAGE);  
+            mimeTypeTextField.setText(rejoinedMimeType);
+            return null;
+        }
         if (this.signaturesListModel.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     Bundle.AddMimeTypePanel_emptySigList_message(),
                     Bundle.AddMimeTypePanel_emptySigList_title(),
                     JOptionPane.ERROR_MESSAGE);
-
             return null;
         }
         List<Signature> sigList = new ArrayList<>();
