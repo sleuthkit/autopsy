@@ -32,10 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -64,7 +61,6 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -77,7 +73,6 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
@@ -106,7 +101,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -781,44 +775,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
     }
 
-    /**
-     * Tries to unload the Solr core for a case.
-     *
-     * @param caseName The case name.
-     * @param coreName The name of the core to unload.
-     *
-     * @throws Exception if there is a problem unloading the core or it has
-     *                   already been unloaded (e.g., by the server due to
-     *                   resource constraints), or there is a problem deleting
-     *                   files associated with the core
-     */
-    private void unloadSolrCore(String coreName) throws Exception {
-        /*
-         * Send a core unload request to the Solr server, with the parameters
-         * that request deleting the index and the instance directory
-         * (deleteInstanceDir removes everything related to the core, the index
-         * directory, the configuration files, etc.) set to true.
-         */
-        String url = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
-        HttpSolrServer solrServer = new HttpSolrServer(url);
-        org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer);
-    }
-
-    /**
-     * Tries to delete the case database for a case.
-     *
-     * @param caseFolderPath  The case name.
-     * @param caseDatbaseName The case database name.
-     */
-    private void deleteCaseDatabase(String caseDatbaseName) throws UserPreferencesException, ClassNotFoundException, SQLException {
-        CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
-        Class.forName("org.postgresql.Driver"); //NON-NLS
-        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
-                Statement statement = connection.createStatement();) {
-            String deleteCommand = "DROP DATABASE \"" + caseDatbaseName + "\""; //NON-NLS
-            statement.execute(deleteCommand);
-        }
-    }
+    
 
     /**
      * Removes a set of auto ingest jobs from a collection of jobs.
