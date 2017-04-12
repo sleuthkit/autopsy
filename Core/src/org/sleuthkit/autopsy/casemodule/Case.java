@@ -778,8 +778,8 @@ public class Case {
      *
      * @param caseName The case name.
      *
-     * @return The case name transformed into a corresponding PostgreSQL
-     *         case database name.
+     * @return The case name transformed into a corresponding PostgreSQL case
+     *         database name.
      */
     private static String caseNameToCaseDbName(String caseName) throws IllegalCaseNameException {
         /*
@@ -962,35 +962,9 @@ public class Case {
     }
 
     /**
-     * Acquires an exclusive case name lock.
-     *
-     * @param caseName The case name (not the case display name, which can be
-     *                 changed by a user).
-     *
-     * @return The lock.
-     *
-     * @throws CaseActionException with a user-friendly message if the lock
-     *                             cannot be acquired.
-     */
-    @Messages({"Case.creationException.couldNotAcquireNameLock=Failed to get lock on case name"})
-    private static CoordinationService.Lock acquireExclusiveCaseNameLock(String caseName) throws CaseActionException {
-        try {
-            Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, caseName, NAME_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
-            if (null == lock) {
-                throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireNameLock());
-            }
-            return lock;
-
-        } catch (InterruptedException | CoordinationServiceException ex) {
-            throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireNameLock(), ex);
-        }
-    }
-
-    /**
      * Acquires an exclusive case resources lock.
      *
-     * @param caseName The case name (not the case display name, which can be
-     *                 changed by a user).
+     * @param caseDir The full path of the case directory.
      *
      * @return The lock.
      *
@@ -998,9 +972,9 @@ public class Case {
      *                             cannot be acquired.
      */
     @Messages({"Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources"})
-    private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseName) throws CaseActionException {
+    private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
-            String resourcesNodeName = caseName + "_resources";
+            String resourcesNodeName = caseDir + "_resources";
             Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCE_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             if (null == lock) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
@@ -1679,37 +1653,30 @@ public class Case {
                 open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
             } else {
                 /*
-                 * First, acquire an exclusive case name lock to prevent two
-                 * nodes from creating the same case at the same time.
+                 * Acquire a shared case directory lock that will be held as
+                 * long as this node has this case open. This will prevent
+                 * deletion of the case by another node.
                  */
                 progressIndicator.start(Bundle.Case_progressMessage_openingCaseResources());
-                try (CoordinationService.Lock nameLock = Case.acquireExclusiveCaseNameLock(caseName)) {
-                    assert (null != nameLock);
-                    /*
-                     * Next, acquire a shared case directory lock that will be
-                     * held as long as this node has this case open. This will
-                     * prevent deletion of the case by another node.
-                     */
-                    acquireSharedCaseDirLock(caseDir);
-                    /*
-                     * Finally, acquire an exclusive case resources lock to
-                     * ensure only one node at a time can
-                     * create/open/upgrade/close the case resources.
-                     */
-                    try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseName)) {
-                        assert (null != resourcesLock);
-                        try {
-                            open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
-                        } catch (CaseActionException ex) {
-                            /*
-                             * Release the case directory lock immediately if
-                             * there was a problem opening the case.
-                             */
-                            if (CaseType.MULTI_USER_CASE == caseType) {
-                                releaseSharedCaseDirLock(caseName);
-                            }
-                            throw ex;
+                acquireSharedCaseDirLock(caseDir);
+                /*
+                 * Acquire an exclusive case resources lock to ensure only one
+                 * node at a time can create/open/upgrade/close the case
+                 * resources.
+                 */
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseDir)) {
+                    assert (null != resourcesLock);
+                    try {
+                        open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
+                    } catch (CaseActionException ex) {
+                        /*
+                         * Release the case directory lock immediately if there
+                         * was a problem opening the case.
+                         */
+                        if (CaseType.MULTI_USER_CASE == caseType) {
+                            releaseSharedCaseDirLock(caseName);
                         }
+                        throw ex;
                     }
                 }
             }
@@ -1912,7 +1879,7 @@ public class Case {
                  * one node at a time can create/open/upgrade/close case
                  * resources.
                  */
-                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseName())) {
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseDirectory())) {
                     assert (null != resourcesLock);
                     try {
                         openCaseDatabase(progressIndicator);
@@ -2206,7 +2173,7 @@ public class Case {
                  * resources.
                  */
                 progressIndicator.start(Bundle.Case_progressMessage_closingCaseResources());
-                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseName())) {
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseDirectory())) {
                     assert (null != resourcesLock);
                     close(progressIndicator);
                 } finally {
@@ -2375,7 +2342,7 @@ public class Case {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
             }
         } catch (InterruptedException | CoordinationServiceException ex) {
-            throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireNameLock(), ex);
+            throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock(), ex);
         }
     }
 

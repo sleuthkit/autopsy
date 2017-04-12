@@ -20,17 +20,30 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.Color;
 import java.awt.EventQueue;
+import java.awt.Window;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.openide.WizardDescriptor;
 import org.openide.util.HelpCtx;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgressMonitor;
+import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.ingest.IngestJobSettings;
+import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescriptorPanel;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * The final panel of the add image wizard. It displays a progress bar and
@@ -42,21 +55,35 @@ import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.ShortcutWizardDescript
  */
 class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
 
+    private boolean readyToIngest = false;
+    // task that will clean up the created database file if the wizard is cancelled before it finishes
+    private AddImageAction.CleanupTask cleanupTask;
+
+    private final AddImageAction addImageAction;
+
+    private DataSourceProcessor dsProcessor = null;
+    private boolean cancelled;
     /**
      * flag to indicate that the image adding process is finished and this panel
      * is completed(valid)
      */
     private boolean imgAdded = false;
+    private boolean ingested = false;
     /**
      * The visual component that displays this panel. If you need to access the
      * component from this class, just use getComponent().
      */
     private AddImageWizardAddingProgressVisual component;
     private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
-
+    private final List<Content> newContents = Collections.synchronizedList(new ArrayList<Content>());
     private final DSPProgressMonitorImpl dspProgressMonitorImpl = new DSPProgressMonitorImpl();
+    private IngestJobSettings ingestJobSettings;
 
-    public DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
+    AddImageWizardAddingProgressPanel(AddImageAction action) {
+        this.addImageAction = action;
+    }
+
+    DSPProgressMonitorImpl getDSPProgressMonitorImpl() {
         return dspProgressMonitorImpl;
     }
 
@@ -209,10 +236,22 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
      */
     @Override
     public void readSettings(WizardDescriptor settings) {
+        // Start ingest if it hasn't already been started 
+        startIngest();
         settings.setOptions(new Object[]{WizardDescriptor.PREVIOUS_OPTION, WizardDescriptor.NEXT_OPTION, WizardDescriptor.FINISH_OPTION, WizardDescriptor.CANCEL_OPTION});
         if (imgAdded) {
             getComponent().setStateFinished();
         }
+    }
+
+    void resetReadyToIngest() {
+        this.readyToIngest = false;
+    }
+
+    void setIngestJobSettings(IngestJobSettings ingestSettings) {
+        showWarnings(ingestSettings);
+        this.readyToIngest = true;
+        this.ingestJobSettings = ingestSettings;
     }
 
     /**
@@ -240,4 +279,136 @@ class AddImageWizardAddingProgressPanel extends ShortcutWizardDescriptorPanel {
         getComponent().showErrors(errorString, critical);
     }
 
+    /**
+     * Start ingest after verifying we have a new image, we are ready to ingest,
+     * and we haven't already ingested.
+     */
+    private void startIngest() {
+        if (!newContents.isEmpty() && readyToIngest && !ingested) {
+            ingested = true;
+            IngestManager.getInstance().queueIngestJob(newContents, ingestJobSettings);
+            setStateFinished();
+        }
+    }
+
+    private static void showWarnings(IngestJobSettings ingestJobSettings) {
+        List<String> warnings = ingestJobSettings.getWarnings();
+        if (warnings.isEmpty() == false) {
+            StringBuilder warningMessage = new StringBuilder();
+            for (String warning : warnings) {
+                warningMessage.append(warning).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warningMessage.toString());
+        }
+    }
+
+    /**
+     * Starts the Data source processing by kicking off the selected
+     * DataSourceProcessor
+     */
+    void startDataSourceProcessing(DataSourceProcessor dsp) {
+        if (dsProcessor == null) {  //this can only be run once
+            final UUID dataSourceId = UUID.randomUUID();
+            newContents.clear();
+            cleanupTask = null;
+            readyToIngest = false;
+            dsProcessor = dsp;
+
+            // Add a cleanup task to interrupt the background process if the
+            // wizard exits while the background process is running.
+            cleanupTask = addImageAction.new CleanupTask() {
+                @Override
+                void cleanup() throws Exception {
+                    cancelDataSourceProcessing(dataSourceId);
+                    cancelled = true;
+                }
+            };
+
+            cleanupTask.enable();
+
+            new Thread(() -> {
+                Case.getCurrentCase().notifyAddingDataSource(dataSourceId);
+            }).start();
+            DataSourceProcessorCallback cbObj = new DataSourceProcessorCallback() {
+                @Override
+                public void doneEDT(DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
+                    dataSourceProcessorDone(dataSourceId, result, errList, contents);
+                }
+            };
+
+            setStateStarted();
+
+            // Kick off the DSProcessor 
+            dsProcessor.run(getDSPProgressMonitorImpl(), cbObj);
+        }
+    }
+
+    /*
+     * Cancels the data source processing - in case the users presses 'Cancel'
+     */
+    private void cancelDataSourceProcessing(UUID dataSourceId) {
+        dsProcessor.cancel();
+    }
+
+    /*
+     * Callback for the data source processor. Invoked by the DSP on the EDT
+     * thread, when it finishes processing the data source.
+     */
+    private void dataSourceProcessorDone(UUID dataSourceId, DataSourceProcessorCallback.DataSourceProcessorResult result, List<String> errList, List<Content> contents) {
+        // disable the cleanup task
+        cleanupTask.disable();
+
+        // Get attention for the process finish
+        // this caused a crash on OS X
+        if (PlatformUtil.isWindowsOS() == true) {
+            java.awt.Toolkit.getDefaultToolkit().beep(); //BEEP!
+        }
+        AddImageWizardAddingProgressVisual panel = getComponent();
+        if (panel != null) {
+            Window w = SwingUtilities.getWindowAncestor(panel);
+            if (w != null) {
+                w.toFront();
+            }
+        }
+        // Tell the panel we're done
+        setStateFinished();
+
+        //check the result and display to user
+        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.NO_ERRORS) {
+            getComponent().setProgressBarTextAndColor(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.noErrs.text"), 100, Color.black);
+        } else {
+            getComponent().setProgressBarTextAndColor(
+                    NbBundle.getMessage(this.getClass(), "AddImageWizardIngestConfigPanel.dsProcDone.errs.text"), 100, Color.red);
+        }
+
+        //if errors, display them on the progress panel
+        boolean critErr = false;
+        if (result == DataSourceProcessorCallback.DataSourceProcessorResult.CRITICAL_ERRORS) {
+            critErr = true;
+        }
+        for (String err : errList) {
+            //  TBD: there probably should be an error level for each error
+            addErrors(err, critErr);
+        }
+
+        //notify the UI of the new content added to the case
+        new Thread(() -> {
+            if (!contents.isEmpty()) {
+                Case.getCurrentCase().notifyDataSourceAdded(contents.get(0), dataSourceId);
+            } else {
+                Case.getCurrentCase().notifyFailedAddingDataSource(dataSourceId);
+            }
+        }).start();
+
+        if (!cancelled) {
+            newContents.clear();
+            newContents.addAll(contents);
+            setStateStarted();
+            startIngest();
+        } else {
+            cancelled = false;
+        }
+
+    }
 }

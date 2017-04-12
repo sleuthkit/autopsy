@@ -50,7 +50,6 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
     // paths to any set hash lookup databases (can be null)
 
     AddImageWizardDataSourceSettingsPanel() {
-
     }
 
     /**
@@ -169,7 +168,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
     public void readSettings(WizardDescriptor settings) {
         // Prepopulate the image directory from the properties file
         try {
-      
+
             // If there is a process object in the settings, revert it and remove it from the settings
             AddImageAction.CleanupTask cleanupTask = (AddImageAction.CleanupTask) settings.getProperty(AddImageAction.IMAGECLEANUPTASK_PROP);
             if (cleanupTask != null) {
@@ -184,7 +183,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
             }
         } catch (Exception e) {
         }
-        component.setDspSelection((String)settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
+        component.setDspSelection((String) settings.getProperty("SelectedDsp")); //NON-NLS magic string used SelectDataSourceProcessorPanel
     }
 
     /**
@@ -197,7 +196,7 @@ class AddImageWizardDataSourceSettingsPanel extends ShortcutWizardDescriptorPane
      * @param settings the setting to be stored to
      */
     @Override
-    public void storeSettings(WizardDescriptor settings) {
+    public void storeSettings(WizardDescriptor settings) {    
     }
 
     /**
