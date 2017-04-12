@@ -964,8 +964,7 @@ public class Case {
     /**
      * Acquires an exclusive case resources lock.
      *
-     * @param caseName The case name (not the case display name, which can be
-     *                 changed by a user).
+     * @param caseDir The full path of the case directory.
      *
      * @return The lock.
      *
@@ -973,9 +972,9 @@ public class Case {
      *                             cannot be acquired.
      */
     @Messages({"Case.creationException.couldNotAcquireResourcesLock=Failed to get lock on case resources"})
-    private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseName) throws CaseActionException {
+    private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
-            String resourcesNodeName = caseName + "_resources";
+            String resourcesNodeName = caseDir + "_resources";
             Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCE_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             if (null == lock) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
@@ -1665,7 +1664,7 @@ public class Case {
                  * node at a time can create/open/upgrade/close the case
                  * resources.
                  */
-                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseName)) {
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseDir)) {
                     assert (null != resourcesLock);
                     try {
                         open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
@@ -1880,7 +1879,7 @@ public class Case {
                  * one node at a time can create/open/upgrade/close case
                  * resources.
                  */
-                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseName())) {
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseDirectory())) {
                     assert (null != resourcesLock);
                     try {
                         openCaseDatabase(progressIndicator);
@@ -2174,7 +2173,7 @@ public class Case {
                  * resources.
                  */
                 progressIndicator.start(Bundle.Case_progressMessage_closingCaseResources());
-                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseName())) {
+                try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseMetadata.getCaseDirectory())) {
                     assert (null != resourcesLock);
                     close(progressIndicator);
                 } finally {
