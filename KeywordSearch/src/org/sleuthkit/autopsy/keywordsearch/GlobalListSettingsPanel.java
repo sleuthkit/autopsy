@@ -114,11 +114,16 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 null,
                 null,
                 currentKeywordList.getName());
-        //if the name is null, empty, or unchanged return without changing anything
-        if (listName == null || listName.trim().equals("") || listName.equals(currentKeywordList.getName())) {
+        
+        if (listName == null ) {
             return shouldAdd;
         }
-
+        //remove trailing and leading spaces so lists can't have visually identical names
+        listName = listName.trim();
+        //if the name is empty or unchanged return without changing anything
+        if (listName.equals("") || listName.equals(currentKeywordList.getName())) {
+            return shouldAdd;
+        }
         XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
         if (writer.listExists(listName) && writer.getList(listName).isEditable()) {
             KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
