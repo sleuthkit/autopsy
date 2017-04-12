@@ -103,7 +103,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         /**
-         * Get keyword-level info for a given list.  Will be regexp term for regexps 
+         * Get keywords used in a given list.  Will be regexp patterns for regexps 
          * and search term for non-regexps.
          * 
          * @param listName Keyword list name
@@ -119,8 +119,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
         
         /**
-         * Get keyword instances for a given list and keyword combination.  
-         * Will be the default instance for non-regexp searches
+         * Get specific keyword terms that were found for a given list 
+         * and keyword combination. For example, a specific phone number for a
+         * phone number regexp.  Will be the default instance for non-regexp searches.
          * 
          * @param listName Keyword list name
          * @param keyword search term (regexp pattern or exact match term)
@@ -149,7 +150,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         /**
-         * Add a hit for a regexp  to the internal data structure. 
+         * Add a hit for a regexp to the internal data structure. 
          * @param listMap Maps keywords/regexp to instances to artifact IDs
          * @param regExp Regular expression that was used in search
          * @param keywordInstance Specific term that matched regexp
