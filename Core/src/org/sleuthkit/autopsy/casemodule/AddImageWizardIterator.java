@@ -56,10 +56,10 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
             panels = new ArrayList<>();
             AddImageWizardSelectDspPanel dspSelection = new AddImageWizardSelectDspPanel();
             panels.add(dspSelection);
-            AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel();
+            AddImageWizardAddingProgressPanel progressPanel = new AddImageWizardAddingProgressPanel(action);
 
             AddImageWizardDataSourceSettingsPanel dsPanel = new AddImageWizardDataSourceSettingsPanel();
-            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(dsPanel, action, progressPanel);
+            AddImageWizardIngestConfigPanel ingestConfigPanel = new AddImageWizardIngestConfigPanel(progressPanel);
             panels.add(dsPanel);
             List<IngestProfiles.IngestProfile> profiles = IngestProfiles.getIngestProfiles();
             if (!profiles.isEmpty()) {
@@ -174,7 +174,13 @@ class AddImageWizardIterator implements WizardDescriptor.Iterator<WizardDescript
         if (!hasNext()) {
             throw new NoSuchElementException();
         }
-
+        // Start processing the data source by handing it off to the selected DSP, 
+        // so it gets going in the background while the user is still picking the Ingest modules    
+        // This will occur when the next button is clicked on the panel where you have chosen your data to process
+        if (index == dsPanelIndex) {
+            ((AddImageWizardAddingProgressPanel) panels.get(progressPanelIndex)).
+                    startDataSourceProcessing(((AddImageWizardDataSourceSettingsPanel) panels.get(dsPanelIndex)).getComponent().getCurrentDSProcessor());
+        }
         boolean panelEnablesSkipping = current().panelEnablesSkipping();
         boolean skipNextPanel = current().skipNextPanel();
         index++;
