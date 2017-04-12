@@ -114,7 +114,8 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 null,
                 null,
                 currentKeywordList.getName());
-        if (listName == null || listName.trim().equals("")) {
+        //if the name is null, empty, or unchanged return without changing anything
+        if (listName == null || listName.trim().equals("") || listName.equals(currentKeywordList.getName())) {
             return shouldAdd;
         }
 
