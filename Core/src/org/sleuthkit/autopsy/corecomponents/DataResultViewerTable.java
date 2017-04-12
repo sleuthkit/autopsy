@@ -79,8 +79,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * current table view due to its collection of its children's properties.
      */
     private final Map<Integer, Property<?>> propertiesMap = new TreeMap<>();
-    private final DummyNodeListener dummyNodeListener = new DummyNodeListener();
-    private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.dummyNodeDisplayName");
+    private final PleasewaitNodeListener pleasewaitNodeListener = new PleasewaitNodeListener();
+    private static final String PLEASEWAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.pleasewaitNodeDisplayName");
     private static final Color TAGGED_COLOR = new Color(200, 210, 220);
     private Node currentRoot;
     // When a column in the table is moved, these two variables keep track of where
@@ -321,14 +321,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             Node oldNode = this.em.getRootContext();
             if (oldNode != null) {
-                oldNode.removeNodeListener(dummyNodeListener);
+                oldNode.removeNodeListener(pleasewaitNodeListener);
             }
 
             // if there's no selection node, do nothing
             if (hasChildren) {
                 Node root = selectedNode;
-                dummyNodeListener.reset();
-                root.addNodeListener(dummyNodeListener);
+                pleasewaitNodeListener.reset();
+                root.addNodeListener(pleasewaitNodeListener);
                 setupTable(root);
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
@@ -580,7 +580,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         super.clearComponent();
     }
 
-    private class DummyNodeListener implements NodeListener {
+    private class PleasewaitNodeListener implements NodeListener {
 
         private volatile boolean load = true;
 
@@ -605,7 +605,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         private boolean containsReal(Node[] delta) {
             for (Node n : delta) {
-                if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                if (!n.getDisplayName().equals(PLEASEWAIT_NODE_DISPLAY_NAME)) {
                     return true;
                 }
             }
