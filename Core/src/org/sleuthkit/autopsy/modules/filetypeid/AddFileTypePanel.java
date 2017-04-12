@@ -108,7 +108,6 @@ class AddFileTypePanel extends javax.swing.JPanel {
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.title"),
                     JOptionPane.ERROR_MESSAGE);
             return null;
-
         }
         //if we need to remove more characters could use matches instead of contains and regex "[^\\w\s\\-\\/] to remove everything that isnt a letter, number, underscore, whitespace, dash, or forward slash.
         if (typeName.contains("\'")) {  //remove single apostraphes as they are an easy way to accidently screw up PostgreSQL
@@ -120,9 +119,10 @@ class AddFileTypePanel extends javax.swing.JPanel {
             mimeTypeTextField.setText(typeName);
             return null;
         }
-        //if the MIME type is lacking two parts ask if they want to use 'custom' as the first part
+        //if the MIME type is lacking two parts or the first part is empty ask if they want to use 'custom' as the first part
         //if the MIME type has more than 2 parts the first part will be used as a media type and the remainder of the string as the sub-type
-        if (typeName.split("/").length == 1) {
+        String[] splitName = typeName.split("/");
+        if (splitName.length < 2 || splitName[0].isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", typeName),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
