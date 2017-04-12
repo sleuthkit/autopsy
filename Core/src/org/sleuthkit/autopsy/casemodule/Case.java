@@ -116,7 +116,7 @@ public class Case {
     private static final int NAME_LOCK_TIMOUT_HOURS = 12;
     private static final int SHARED_DIR_LOCK_TIMOUT_HOURS = 12;
     private static final int RESOURCE_LOCK_TIMOUT_HOURS = 12;
-    private static final int MAX_SANITIZED_CASE_NAME_LEN = 47;
+    private static final int MAX_CASEDB_NAME_LEN_MINUS_TIMESTAMP = 47; //Truncate to 63-16=47 chars to accomodate the timestamp
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -725,56 +725,83 @@ public class Case {
     }
 
     /**
-     * Cleans up the display name for a case to make a suitable case name for
-     * use in case direcotry paths, coordination service locks, PostgreSQL
-     * database names, Active MQ message message channels, etc.
-     *
-     * PostgreSQL:
-     * http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html 63
-     * chars max, must start with a-z or _ following chars can be letters _ or
-     * digits
+     * Transforms the display name for a case to make a suitable case name for
+     * use in case directory paths, coordination service locks, Active MQ
+     * message channels, etc.
      *
      * ActiveMQ:
      * http://activemq.2283324.n4.nabble.com/What-are-limitations-restrictions-on-destination-name-td4664141.html
      * may not be ?
      *
-     * @param caseName A candidate case name.
+     * @param caseDisplayName A case display name.
      *
-     * @return The sanitized case name.
+     * @return The case display name transformed into a corresponding case name.
      *
      * @throws org.sleuthkit.autopsy.casemodule.Case.IllegalCaseNameException
      */
-    public static String displayNameToCaseName(String caseName) throws IllegalCaseNameException {
+    public static String displayNameToCaseName(String caseDisplayName) throws IllegalCaseNameException {
 
-        String result;
+        /*
+         * Remove all non-ASCII characters.
+         */
+        String caseName = caseDisplayName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
 
-        // Remove all non-ASCII characters
-        result = caseName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
+        /*
+         * Remove all control characters.
+         */
+        caseName = caseName.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
 
-        // Remove all control characters
-        result = result.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
+        /*
+         * Remove /, \, :, ?, space, ' ".
+         */
+        caseName = caseName.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
 
-        // Remove / \ : ? space ' "
-        result = result.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
+        /*
+         * Make it all lowercase.
+         */
+        caseName = caseName.toLowerCase();
 
-        // Make it all lowercase
-        result = result.toLowerCase();
-
-        // Must start with letter or underscore for PostgreSQL. If not, prepend an underscore.
-        if (result.length() > 0 && !(Character.isLetter(result.codePointAt(0))) && !(result.codePointAt(0) == '_')) {
-            result = "_" + result;
+        if (caseName.isEmpty()) {
+            throw new IllegalCaseNameException(String.format("Failed to convert case name '%s'", caseDisplayName));
         }
 
-        // Chop to 63-16=47 left (63 max for PostgreSQL, taking 16 for the date _20151225_123456)
-        if (result.length() > MAX_SANITIZED_CASE_NAME_LEN) {
-            result = result.substring(0, MAX_SANITIZED_CASE_NAME_LEN);
+        return caseName;
+    }
+
+    /**
+     * Transforms a case name into a name for a PostgreSQL database that can be
+     * safely used in SQL commands as described at
+     * http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html: 63
+     * chars max, must start with a letter or underscore, following chars can be
+     * letters, underscores, or digits. A timestamp suffix is added to ensure
+     * uniqueness.
+     *
+     * @param caseName The case name.
+     *
+     * @return The case name transformed into a corresponding PostgreSQL
+     *         case database name.
+     */
+    private static String caseNameToCaseDbName(String caseName) throws IllegalCaseNameException {
+        /*
+         * Must start with letter or underscore. If not, prepend an underscore.
+         */
+        String dbName = caseName;
+        if (dbName.length() > 0 && !(Character.isLetter(dbName.codePointAt(0))) && !(dbName.codePointAt(0) == '_')) {
+            dbName = "_" + dbName;
         }
 
-        if (result.isEmpty()) {
-            throw new IllegalCaseNameException(String.format("Failed to sanitize case name '%s'", caseName));
+        /*
+         * Truncate to 63-16=47 chars to accomodate the timestamp, then add the
+         * timestamp.
+         */
+        if (dbName.length() > MAX_CASEDB_NAME_LEN_MINUS_TIMESTAMP) {
+            dbName = dbName.substring(0, MAX_CASEDB_NAME_LEN_MINUS_TIMESTAMP);
         }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        Date date = new Date();
+        dbName = dbName + "_" + dateFormat.format(date);
 
-        return result;
+        return dbName;
     }
 
     /**
@@ -1740,6 +1767,7 @@ public class Case {
     @Messages({
         "Case.progressMessage.creatingCaseDirectory=Creating case directory...",
         "Case.progressMessage.creatingCaseDatabase=Creating case database...",
+        "Case.exceptionMessage.couldNotCreateCaseDatabaseName=Failed to create case database name from case name.",
         "Case.progressMessage.creatingCaseMetadataFile=Creating case metadata file...",
         "Case.exceptionMessage.couldNotCreateMetadataFile=Failed to create case metadata file.",
         "Case.exceptionMessage.couldNotCreateCaseDatabase=Failed to create case database."
@@ -1777,23 +1805,25 @@ public class Case {
         String dbName = null;
         try {
             if (CaseType.SINGLE_USER_CASE == caseType) {
+                dbName = SINGLE_USER_CASE_DB_NAME;
+            } else if (CaseType.MULTI_USER_CASE == caseType) {
+                dbName = caseNameToCaseDbName(caseName);
+            }
+        } catch (IllegalCaseNameException ex) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabaseName(), ex);
+        }
+        try {
+            if (CaseType.SINGLE_USER_CASE == caseType) {
                 /*
                  * For single-user cases, the case database is a SQLite database
-                 * with a fixed name and is physically located in the root of
-                 * the case directory.
+                 * physically located in the root of the case directory.
                  */
-                dbName = SINGLE_USER_CASE_DB_NAME;
                 this.caseDb = SleuthkitCase.newCase(Paths.get(caseDir, SINGLE_USER_CASE_DB_NAME).toString());
             } else if (CaseType.MULTI_USER_CASE == caseType) {
                 /*
                  * For multi-user cases, the case database is a PostgreSQL
-                 * database with a name consiting of the case name with a time
-                 * stamp suffix and is physically located on the database
-                 * server.
+                 * database physically located on the database server.
                  */
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-                Date date = new Date();
-                dbName = caseName + "_" + dateFormat.format(date);
                 this.caseDb = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
             }
         } catch (TskCoreException ex) {
