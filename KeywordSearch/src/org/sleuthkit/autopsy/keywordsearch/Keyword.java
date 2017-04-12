@@ -73,7 +73,7 @@ class Keyword {
      * added to facilitate proper de-duping of results of periodic keyword
      * searches that does not lose any keyword hits. Without this addition when
      * using substring search feature during ingest, if there are multiple
-     * searches on differnt keyword lists that produce the same keyword hit,
+     * searches on different keyword lists that produce the same keyword hit,
      * that hit is only going to be displayed in results of one of the list. For
      * example, two substring searches, such as "pass" and "enger", will be
      * missing one copy of any shared entries (i.e., "passenger" will only show
