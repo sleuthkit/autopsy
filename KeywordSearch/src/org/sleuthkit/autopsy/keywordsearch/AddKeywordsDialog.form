@@ -134,6 +134,9 @@
           <Events>
             <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="keywordTextAreaMouseClicked"/>
           </Events>
+          <AuxValues>
+            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextArea() {&#xa;    //Override the paste action for this jtext area to always insert a new line before the pasted text&#xa;    @Override&#xa;    public void paste() {&#xa;        keywordTextArea.setText(keywordTextArea.getText() + &quot;\n&quot;);&#xa;        super.paste();&#xa;    }&#xa;}"/>
+          </AuxValues>
         </Component>
       </SubComponents>
     </Container>
