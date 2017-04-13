@@ -3,6 +3,7 @@
 /*/build/
 */nbproject/private/*
 /nbproject/private/*
+
 /Core/release/
 /Core/src/org/sleuthkit/autopsy/coreutils/Version.properties
 /Core/src/org/sleuthkit/autopsy/casemodule/docs/QuickStart.html
@@ -13,13 +14,15 @@
 /Core/nbproject/*
 !/Core/nbproject/project.xml
 !/Core/nbproject/project.properties
+
 /CoreLibs/release/
 /CoreLibs/build/
 /CoreLibs/dist/
 /CoreLibs/nbproject/*
 !/CoreLibs/nbproject/project.xml
 !/CoreLibs/nbproject/project.properties
-KeywordSearch/release/
+
+/KeywordSearch/release/
 /KeywordSearch/build/
 /KeywordSearch/dist/
 /KeywordSearch/nbproject/*
@@ -28,6 +31,7 @@ KeywordSearch/release/
 
 */genfiles.properties
 genfiles.properties
+
 /branding/core/core.jar/org/netbeans/core/startup/Bundle.properties
 /branding/modules/org-netbeans-core-windows.jar/org/netbeans/core/windows/view/ui/Bundle.properties
 /branding/build/
@@ -35,6 +39,7 @@ genfiles.properties
 /branding/nbproject/*
 !/branding/nbproject/project.xml
 !/branding/nbproject/project.properties
+
 /test/input/*
 !/test/input/notablehashes.txt-md5.idx
 !/test/input/notablekeywords.xml
@@ -65,11 +70,10 @@ genfiles.properties
 /gen_version.txt
 hs_err_pid*.log
 
-
 .DS_Store
 .*.swp
-
-/ImageGallery/release/
-/RecentActivity/release/
 /Experimental/release/
+/ImageGallery/release/
 /thunderbirdparser/release/
+/RecentActivity/release/
+

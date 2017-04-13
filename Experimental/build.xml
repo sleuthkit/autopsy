@@ -6,17 +6,19 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.experimental.</description>
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy">
+   
+    <target name="get-deps" depends="init-ivy">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
-        <ivy:retrieve  sync="false" pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
+        <ivy:retrieve conf="experimental"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
-
+    
+    <target name="init" depends="get-deps, harness.init" />
+      
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <mkdir dir="${basedir}/release"/>
         <delete dir="${basedir}/release"/>
     </target>
 </project>
