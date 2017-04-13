@@ -675,6 +675,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         editSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(editSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.editSetButton.text")); // NOI18N
         editSetButton.setEnabled(false);
+        editSetButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        editSetButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        editSetButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        editSetButton.setPreferredSize(new java.awt.Dimension(111, 25));
         editSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editSetButtonActionPerformed(evt);
@@ -733,6 +737,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         deleteSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.deleteSetButton.text")); // NOI18N
         deleteSetButton.setEnabled(false);
+        deleteSetButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        deleteSetButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        deleteSetButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        deleteSetButton.setPreferredSize(new java.awt.Dimension(111, 25));
         deleteSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteSetButtonActionPerformed(evt);
@@ -752,6 +760,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         newSetButton.setFont(newSetButton.getFont().deriveFont(newSetButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         newSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.newSetButton.text")); // NOI18N
+        newSetButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        newSetButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        newSetButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        newSetButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newSetButtonActionPerformed(evt);
@@ -818,6 +830,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         copySetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/new16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(copySetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.copySetButton.text")); // NOI18N
         copySetButton.setEnabled(false);
+        copySetButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        copySetButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        copySetButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        copySetButton.setPreferredSize(new java.awt.Dimension(111, 25));
         copySetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 copySetButtonActionPerformed(evt);
@@ -826,6 +842,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         importSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/import16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(importSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.importSetButton.text")); // NOI18N
+        importSetButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        importSetButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        importSetButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        importSetButton.setPreferredSize(new java.awt.Dimension(111, 25));
         importSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importSetButtonActionPerformed(evt);
@@ -835,6 +855,10 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         exportSetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/export16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(exportSetButton, org.openide.util.NbBundle.getMessage(FilesSetDefsPanel.class, "FilesSetDefsPanel.interesting.exportSetButton.text")); // NOI18N
         exportSetButton.setEnabled(false);
+        exportSetButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        exportSetButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        exportSetButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        exportSetButton.setPreferredSize(new java.awt.Dimension(111, 25));
         exportSetButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 exportSetButtonActionPerformed(evt);
@@ -851,17 +875,17 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(copySetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(copySetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(importSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
+                                .addComponent(importSetButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
-                                .addComponent(newSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(newSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(editSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(editSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(exportSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteSetButton, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)))
+                            .addComponent(exportSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteSetButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(setsListScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(setsListLabel))
@@ -946,7 +970,7 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         .addGap(8, 8, 8))))
         );
 
-        jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copySetButton, deleteSetButton, editSetButton, newSetButton});
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copySetButton, deleteSetButton, editSetButton, exportSetButton, importSetButton, newSetButton});
 
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1019,18 +1043,18 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                         .addComponent(setsListScrollPane)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(newSetButton)
-                            .addComponent(editSetButton)
-                            .addComponent(deleteSetButton))
+                            .addComponent(newSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(editSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(copySetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(importSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(exportSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(copySetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(importSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(exportSetButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(6, 6, 6))))
         );
 
-        jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {deleteRuleButton, deleteSetButton, editRuleButton, editSetButton, newRuleButton, newSetButton});
+        jPanel1Layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {copySetButton, deleteRuleButton, deleteSetButton, editRuleButton, editSetButton, exportSetButton, importSetButton, newRuleButton, newSetButton});
 
         jScrollPane1.setViewportView(jPanel1);
 

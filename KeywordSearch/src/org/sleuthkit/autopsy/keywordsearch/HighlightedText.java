@@ -179,7 +179,7 @@ class HighlightedText implements IndexedText {
 
         // Run a query to figure out which chunks for the current object have
         // hits for this keyword.
-        Keyword keywordQuery = new Keyword(keyword, isLiteral);
+        Keyword keywordQuery =  new Keyword(keyword, isLiteral, true);
         KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
         chunksQuery.escape();
         chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));

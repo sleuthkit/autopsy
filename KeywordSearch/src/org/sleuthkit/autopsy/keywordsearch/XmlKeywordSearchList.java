@@ -201,7 +201,7 @@ final class XmlKeywordSearchList extends KeywordSearchList {
                     Keyword keyword;
                     String whole = wordEl.getAttribute(KEYWORD_WHOLE_ATTR);
                     if (whole.equals("")) {
-                        keyword = new Keyword(wordEl.getTextContent(), isLiteral);
+                        keyword = new Keyword(wordEl.getTextContent(), isLiteral, true);
                     } else {
                         boolean isWhole = whole.equals("true");
                         keyword = new Keyword(wordEl.getTextContent(), isLiteral, isWhole);

@@ -37,6 +37,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.framework.AutopsyService;
@@ -143,14 +144,38 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         }
     }
 
+    @NbBundle.Messages({"# {0} - case directory",
+        "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from caseDirectory: {0}",
+        "# {0} - case directory",
+        "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case"
+    })
     /**
      * Deletes Solr core for a case.
      *
-     * @param coreName The core name.
+     * @param metadata The CaseMetadata which will have its core deleted.
      */
     @Override
-    public void deleteTextIndex(String coreName) throws KeywordSearchServiceException {
-        KeywordSearch.getServer().deleteCore(coreName);
+    public void deleteTextIndex(CaseMetadata metadata) throws KeywordSearchServiceException {
+        String caseDirectory = metadata.getCaseDirectory();
+        IndexMetadata indexMetadata;
+        try {
+            indexMetadata = new IndexMetadata(caseDirectory);
+        } catch (IndexMetadata.TextIndexMetadataException ex) {
+            logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noIndexMetadata", caseDirectory), ex);
+            throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noIndexMetadata", caseDirectory), ex);
+        }
+        //find the index for the current version of solr (the one we are connected to) and delete its core using the index name
+        String currentSchema = IndexFinder.getCurrentSchemaVersion();
+        String currentSolr = IndexFinder.getCurrentSolrVersion();
+        for (Index index : indexMetadata.getIndexes()) {
+            if (index.getSolrVersion().equals(currentSolr) && index.getSchemaVersion().equals(currentSchema)) {
+                KeywordSearch.getServer().deleteCore(index.getIndexName());
+                return; //only one core exists for each combination of solr and schema version
+            }
+        }
+        //this code this code will only execute if an index for the current core was not found 
+        logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
+        throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
     }
 
     @Override
@@ -185,7 +210,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         ProgressIndicator progress = context.getProgressIndicator();
         int totalNumProgressUnits = 8;
         int progressUnitsCompleted = 0;
-    
+
         String caseDirPath = context.getCase().getCaseDirectory();
         Case theCase = context.getCase();
         List<Index> indexes = new ArrayList<>();
@@ -212,7 +237,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 indexes.add(oldIndex);
             }
         }
-        
+
         if (context.cancelRequested()) {
             return;
         }
@@ -323,13 +348,12 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         }
                         return;
                     }
-                    
+
                     // add current index to the list of indexes that exist for this case
                     indexes.add(currentVersionIndex);
                 }
             }
         }
-
 
         try {
             // update text index metadata file
@@ -346,7 +370,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
             KeywordSearch.getServer().openCoreForCase(theCase, currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
-        } 
+        }
 
         progress.progress(Bundle.SolrSearch_complete_msg(), totalNumProgressUnits);
     }
