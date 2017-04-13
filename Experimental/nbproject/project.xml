@@ -120,6 +120,10 @@
                 <package>org.sleuthkit.autopsy.experimental.configuration</package>
             </public-packages>
             <class-path-extension>
+                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
@@ -138,30 +142,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-4.9.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-4.9.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpclient-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpclient-4.3.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpmime-4.3.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpmime-4.3.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpcore-4.3.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/noggit-0.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/noggit-0.5.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

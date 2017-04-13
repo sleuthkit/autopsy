@@ -204,9 +204,9 @@ final class RegexQuery implements KeywordSearchQuery {
                     try {
                         List<KeywordHit> keywordHits = createKeywordHits(resultDoc);
                         for (KeywordHit hit : keywordHits) {
-                            hitsMultiMap.put(new Keyword(hit.getHit(), true), hit);
+                            hitsMultiMap.put(new Keyword(hit.getHit(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), hit);
                         }
-                    } catch (TskException ex) {
+                    } catch (TskException ex) { 
                         //
                     }
                 }

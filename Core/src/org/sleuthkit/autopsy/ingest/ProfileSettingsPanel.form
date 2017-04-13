@@ -33,11 +33,11 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" alignment="0" attributes="0">
-                                  <Component id="newProfileButton" linkSize="5" min="-2" pref="107" max="-2" attributes="0"/>
+                                  <Component id="newProfileButton" linkSize="5" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="editProfileButton" linkSize="5" min="-2" pref="107" max="-2" attributes="0"/>
+                                  <Component id="editProfileButton" linkSize="5" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="deleteProfileButton" linkSize="5" min="-2" pref="109" max="-2" attributes="0"/>
+                                  <Component id="deleteProfileButton" linkSize="5" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <Component id="jScrollPane2" linkSize="6" alignment="1" min="-2" pref="346" max="-2" attributes="0"/>
                           </Group>
@@ -118,25 +118,25 @@
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="selectedModulesLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="selectedModulesPane" pref="170" max="32767" attributes="0"/>
+                              <Component id="selectedModulesPane" pref="171" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" attributes="0">
                               <Component id="jScrollPane2" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
                               <Component id="profileListLabel" min="-2" max="-2" attributes="0"/>
                               <EmptySpace min="-2" max="-2" attributes="0"/>
-                              <Component id="profileListPane" pref="346" max="32767" attributes="0"/>
-                              <EmptySpace min="9" pref="9" max="-2" attributes="0"/>
+                              <Component id="profileListPane" pref="356" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="0" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="newProfileButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="editProfileButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="deleteProfileButton" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="ingestWarningLabel" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                   </Group>
                   <Component id="jSeparator2" max="32767" attributes="0"/>
               </Group>
@@ -181,16 +181,16 @@
           <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="ProfileSettingsPanel.newProfileButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
-          <Insets value="[2, 8, 2, 8]"/>
+          <Insets value="[2, 6, 2, 6]"/>
         </Property>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[97, 23]"/>
+          <Dimension value="[111, 25]"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[97, 23]"/>
+          <Dimension value="[111, 25]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[97, 23]"/>
+          <Dimension value="[111, 25]"/>
         </Property>
       </Properties>
       <Events>
@@ -206,16 +206,16 @@
           <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="ProfileSettingsPanel.editProfileButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
-          <Insets value="[2, 8, 2, 8]"/>
+          <Insets value="[2, 6, 2, 6]"/>
         </Property>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[97, 23]"/>
+          <Dimension value="[111, 25]"/>
         </Property>
         <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[97, 23]"/>
+          <Dimension value="[111, 25]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[97, 23]"/>
+          <Dimension value="[111, 25]"/>
         </Property>
       </Properties>
       <Events>
@@ -231,10 +231,16 @@
           <ResourceString bundle="org/sleuthkit/autopsy/ingest/Bundle.properties" key="ProfileSettingsPanel.deleteProfileButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
-          <Insets value="[2, 8, 2, 8]"/>
+          <Insets value="[2, 6, 2, 6]"/>
+        </Property>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[111, 25]"/>
+        </Property>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[111, 25]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
-          <Dimension value="[97, 23]"/>
+          <Dimension value="[111, 25]"/>
         </Property>
       </Properties>
       <Events>
