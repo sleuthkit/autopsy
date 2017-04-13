@@ -95,10 +95,9 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
      * Duplicates the selected keyword list, returns whether or not the keyword
      * list was duplicated.
      *
-     * @return true or false
+     * @return true if the list was copied false if it was not
      */
     private boolean copyAction() {
-        boolean shouldAdd = false;
         final String FEATURE_NAME = NbBundle.getMessage(this.getClass(),
                 "KeywordSearchGlobalListSettingsPanel.component.featureName.text");
         KeywordList currentKeywordList = editListPanel.getCurrentKeywordList();
@@ -114,37 +113,30 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
                 null,
                 null,
                 currentKeywordList.getName());
-        
-        if (listName == null ) {
-            return shouldAdd;
+
+        if (listName == null) {
+            return false;
         }
         //remove trailing and leading spaces so lists can't have visually identical names
         listName = listName.trim();
         //if the name is empty or unchanged return without changing anything
         if (listName.equals("") || listName.equals(currentKeywordList.getName())) {
-            return shouldAdd;
+            return false;
         }
         XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
         if (writer.listExists(listName) && writer.getList(listName).isEditable()) {
             KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.noOwDefaultMsg"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-            return shouldAdd;
+            return false;
         }
         if (writer.listExists(listName)) {
-            boolean replace = KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
-                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN);
-            if (replace) {
-                shouldAdd = true;
+            if (!KeywordSearchUtil.displayConfirmDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListExistMsg", listName),
+                    KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                return false;
             }
-
-        } else {
-            shouldAdd = true;
         }
-
-        if (shouldAdd) {
-            writer.addList(listName, keywords);
-            KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
-        }
-        return shouldAdd;
+        writer.addList(listName, keywords);
+        KeywordSearchUtil.displayDialog(FEATURE_NAME, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.kwListSavedMsg", listName), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.INFO);
+        return true;
     }
 
     @Override
@@ -193,7 +185,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         rightPanel = new javax.swing.JPanel();
 
         mainSplitPane.setBorder(null);
-        mainSplitPane.setDividerLocation(309);
+        mainSplitPane.setDividerLocation(364);
         mainSplitPane.setDividerSize(1);
 
         leftPanel.setPreferredSize(new java.awt.Dimension(309, 327));
@@ -203,7 +195,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         leftPanel.setLayout(leftPanelLayout);
         leftPanelLayout.setHorizontalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 309, Short.MAX_VALUE)
+            .addGap(0, 364, Short.MAX_VALUE)
         );
         leftPanelLayout.setVerticalGroup(
             leftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -218,7 +210,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         rightPanel.setLayout(rightPanelLayout);
         rightPanelLayout.setHorizontalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 363, Short.MAX_VALUE)
+            .addGap(0, 308, Short.MAX_VALUE)
         );
         rightPanelLayout.setVerticalGroup(
             rightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
