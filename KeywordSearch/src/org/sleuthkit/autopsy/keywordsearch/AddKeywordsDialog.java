@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,7 @@ import java.util.Arrays;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -40,19 +41,19 @@ import org.openide.windows.WindowManager;
 class AddKeywordsDialog extends javax.swing.JDialog {
 
     List<String> newKeywords = new ArrayList<>();
-    
+
     /**
-     * Creates new form AddKeywordsDialog.
-     * Note that this does not display the dialog - call display() after creation.
+     * Creates new form AddKeywordsDialog. Note that this does not display the
+     * dialog - call display() after creation.
+     *
      * @param initialKeywords Keywords to populate the list with
-     * @param type Starting keyword type
+     * @param type            Starting keyword type
      */
-    AddKeywordsDialog(){
+    AddKeywordsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 NbBundle.getMessage(AddKeywordsDialog.class, "AddKeywordsDialog.addKeywordsTitle.text"),
                 true);
         initComponents();
-        
         // Set the add button to only be active when there is text in the text area
         addButton.setEnabled(false);
         keywordTextArea.getDocument().addDocumentListener(new DocumentListener() {
@@ -60,20 +61,23 @@ class AddKeywordsDialog extends javax.swing.JDialog {
             public void changedUpdate(DocumentEvent e) {
                 fire();
             }
+
             @Override
             public void removeUpdate(DocumentEvent e) {
                 fire();
             }
+
             @Override
             public void insertUpdate(DocumentEvent e) {
                 fire();
             }
+
             private void fire() {
                 enableButtons();
             }
         });
     }
-    
+
     /**
      * Display the dialog
      */
@@ -83,51 +87,52 @@ class AddKeywordsDialog extends javax.swing.JDialog {
         setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
         setVisible(true);
     }
-    
+
     /**
-     * Set the initial contents of the text box.
-     * Intended to be used to redisplay any keywords that contained errors
-     * @param initialKeywords 
+     * Set the initial contents of the text box. Intended to be used to
+     * redisplay any keywords that contained errors
+     *
+     * @param initialKeywords
      */
-    void setInitialKeywordList(String initialKeywords, boolean isLiteral, boolean isWholeWord){
+    void setInitialKeywordList(String initialKeywords, boolean isLiteral, boolean isWholeWord) {
         keywordTextArea.setText(initialKeywords);
-        if (!isLiteral){
+        if (!isLiteral) {
             regexRadioButton.setSelected(true);
-        }
-        else if (isWholeWord){
+        } else if (isWholeWord) {
             exactRadioButton.setSelected(true);
-        }
-        else {
+        } else {
             substringRadioButton.setSelected(true);
         }
     }
-    
-    
-    private void enableButtons(){
-        addButton.setEnabled(! keywordTextArea.getText().isEmpty());
+
+    private void enableButtons() {
+        addButton.setEnabled(!keywordTextArea.getText().isEmpty());
     }
-    
+
     /**
      * Get the list of keywords from the text area
+     *
      * @return list of keywords
      */
-    List<String> getKeywords(){
+    List<String> getKeywords() {
         return newKeywords;
     }
-    
+
     /**
      * Get whether the regex option is selected
+     *
      * @return true if the regex radio button is selected
      */
-    boolean isKeywordRegex(){
+    boolean isKeywordRegex() {
         return regexRadioButton.isSelected();
     }
-    
+
     /**
      * Get whether the exact match option is selected
+     *
      * @return true if the exact match radio button is selected
      */
-    boolean isKeywordExact(){
+    boolean isKeywordExact() {
         return exactRadioButton.isSelected();
     }
 
@@ -145,7 +150,14 @@ class AddKeywordsDialog extends javax.swing.JDialog {
         substringRadioButton = new javax.swing.JRadioButton();
         regexRadioButton = new javax.swing.JRadioButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        keywordTextArea = new javax.swing.JTextArea();
+        keywordTextArea = new JTextArea() {
+            //Override the paste action for this jtext area to always insert a new line before the pasted text
+            @Override
+            public void paste() {
+                keywordTextArea.setText(keywordTextArea.getText() + "\n");
+                super.paste();
+            }
+        };
         enterKeywordsLabel = new javax.swing.JLabel();
         keywordTypeLabel = new javax.swing.JLabel();
         addButton = new javax.swing.JButton();
@@ -261,7 +273,7 @@ class AddKeywordsDialog extends javax.swing.JDialog {
     private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
         // Save the values from the list
         newKeywords.addAll(Arrays.asList(keywordTextArea.getText().split("\\r?\\n")));
-        
+
         setVisible(false);
         dispose();
     }//GEN-LAST:event_addButtonActionPerformed
