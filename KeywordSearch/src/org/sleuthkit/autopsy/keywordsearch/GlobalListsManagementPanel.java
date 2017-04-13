@@ -203,10 +203,13 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         });
         jScrollPane1.setViewportView(listsTable);
 
-        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/add16.png"))); // NOI18N
         newListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.newListButton.text")); // NOI18N
         newListButton.setIconTextGap(2);
-        newListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        newListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        newListButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        newListButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        newListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newListButtonActionPerformed(evt);
@@ -216,7 +219,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         importButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/import16.png"))); // NOI18N
         importButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.importButton.text")); // NOI18N
         importButton.setIconTextGap(2);
-        importButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        importButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        importButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        importButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        importButton.setPreferredSize(new java.awt.Dimension(111, 25));
         importButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 importButtonActionPerformed(evt);
@@ -228,17 +234,23 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         exportButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/export16.png"))); // NOI18N
         exportButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.exportButton.text")); // NOI18N
         exportButton.setIconTextGap(2);
-        exportButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        exportButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        exportButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        exportButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        exportButton.setPreferredSize(new java.awt.Dimension(111, 25));
         exportButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 exportButtonActionPerformed(evt);
             }
         });
 
-        copyListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/add16.png"))); // NOI18N
+        copyListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
         copyListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.copyListButton.text")); // NOI18N
         copyListButton.setIconTextGap(2);
-        copyListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        copyListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        copyListButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        copyListButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        copyListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         copyListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 copyListButtonActionPerformed(evt);
@@ -248,7 +260,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         deleteListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/delete16.png"))); // NOI18N
         deleteListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.deleteListButton.text")); // NOI18N
         deleteListButton.setIconTextGap(2);
-        deleteListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        deleteListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        deleteListButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        deleteListButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        deleteListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         deleteListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteListButtonActionPerformed(evt);
@@ -258,7 +273,10 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         renameListButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/edit16.png"))); // NOI18N
         renameListButton.setText(org.openide.util.NbBundle.getMessage(GlobalListsManagementPanel.class, "GlobalListsManagementPanel.renameListButton.text")); // NOI18N
         renameListButton.setIconTextGap(2);
-        renameListButton.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        renameListButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        renameListButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        renameListButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        renameListButton.setPreferredSize(new java.awt.Dimension(111, 25));
         renameListButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 renameListButtonActionPerformed(evt);
@@ -270,27 +288,24 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(10, 10, 10)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(keywordListsLabel)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(copyListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 85, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE))
-                        .addGap(12, 12, 12)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(renameListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 75, Short.MAX_VALUE)
-                            .addComponent(importButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(12, 12, 12)
+                            .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(renameListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(copyListButton, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
-                                .addGap(0, 1, Short.MAX_VALUE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addContainerGap())
+                            .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteListButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(keywordListsLabel))
+                .addGap(6, 6, 6))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {copyListButton, deleteListButton, exportButton, importButton, newListButton, renameListButton});
@@ -298,21 +313,21 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(22, 22, 22)
                 .addComponent(keywordListsLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 305, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(newListButton)
-                    .addComponent(renameListButton)
-                    .addComponent(copyListButton))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addComponent(newListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(renameListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(deleteListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(6, 6, 6)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(importButton)
-                    .addComponent(exportButton)
-                    .addComponent(deleteListButton))
-                .addContainerGap())
+                    .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(copyListButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(6, 6, 6))
         );
 
         layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {copyListButton, deleteListButton, exportButton, importButton, newListButton, renameListButton});
