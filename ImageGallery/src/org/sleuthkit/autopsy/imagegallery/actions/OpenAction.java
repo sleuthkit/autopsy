@@ -1,7 +1,7 @@
 /*
 * Autopsy Forensic Browser
 *
-* Copyright 2013 Basis Technology Corp.
+* Copyright 2011-17 Basis Technology Corp.
 * Contact: carrier <at> sleuthkit <dot> org
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,10 +53,10 @@ import org.sleuthkit.autopsy.imagegallery.ImageGalleryTopComponent;
     "OpenAction.stale.confDlg.title=Image Gallery"})
 public final class OpenAction extends CallableSystemAction implements Presenter.Toolbar {
     
-    private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
-    private static final boolean fxInited = Installer.isJavaFxInited();
     private static final Logger LOGGER = Logger.getLogger(OpenAction.class.getName());
-    private JButton toolbarButton = new JButton();
+    private static final String VIEW_IMAGES_VIDEOS = Bundle.CTL_OpenAction();
+    
+    private final JButton toolbarButton = new JButton();
     private final PropertyChangeListener pcl;
     
     public OpenAction() {
@@ -64,7 +64,7 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
         toolbarButton.addActionListener(actionEvent -> performAction());
         pcl = (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                setEnabled(Case.isCaseOpen());
+                 setEnabled(evt.getNewValue() != null);
             }
         };
         Case.addPropertyChangeListener(pcl);
@@ -73,7 +73,7 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
     
     @Override
     public boolean isEnabled() {
-        return Case.isCaseOpen() && fxInited && Case.getCurrentCase().hasData();
+        return Case.isCaseOpen() && Installer.isJavaFxInited() && Case.getCurrentCase().hasData();
     }
     
     /** Returns the toolbar component of this action

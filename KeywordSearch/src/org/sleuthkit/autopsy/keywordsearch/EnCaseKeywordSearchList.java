@@ -74,7 +74,7 @@ class EnCaseKeywordSearchList extends KeywordSearchList {
                     if (child.flags.contains(EncaseFlag.pg)) { // Skip GREP keywords
                         break;
                     }
-                    children.add(new Keyword(child.value, true));
+                    children.add(new Keyword(child.value, true, true));
                     break;
             }
         }

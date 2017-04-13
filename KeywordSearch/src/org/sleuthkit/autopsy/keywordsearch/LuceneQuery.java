@@ -70,7 +70,7 @@ class LuceneQuery implements KeywordSearchQuery {
     LuceneQuery(KeywordList keywordList, Keyword keyword) {
         this.keywordList = keywordList;
         this.originalKeyword = keyword;
-        this.keywordStringEscaped = this.originalKeyword.getSearchTerm();
+        this.keywordStringEscaped = this.originalKeyword.getSearchTerm(); 
     }
 
     @Override
@@ -181,7 +181,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
         QueryResults results = new QueryResults(this);
         //in case of single term literal query there is only 1 term
-        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true), matches);
+        results.addResult(new Keyword(originalKeyword.getSearchTerm(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), matches);
 
         return results;
     }
