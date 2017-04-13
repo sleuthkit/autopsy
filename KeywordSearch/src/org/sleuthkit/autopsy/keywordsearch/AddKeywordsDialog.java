@@ -154,7 +154,7 @@ class AddKeywordsDialog extends javax.swing.JDialog {
             //Override the paste action for this jtext area to always insert a new line before the pasted text
             @Override
             public void paste() {
-                keywordTextArea.setText(keywordTextArea.getText() + "\n");
+                keywordTextArea.append("\n");
                 super.paste();
             }
         };
