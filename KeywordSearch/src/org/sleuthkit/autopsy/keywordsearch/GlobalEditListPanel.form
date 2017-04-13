@@ -151,7 +151,7 @@
         <Component class="javax.swing.JButton" name="newKeywordsButton">
           <Properties>
             <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-              <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/new16.png"/>
+              <Image iconType="3" name="/org/sleuthkit/autopsy/keywordsearch/add16.png"/>
             </Property>
             <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
               <ResourceString bundle="org/sleuthkit/autopsy/keywordsearch/Bundle.properties" key="GlobalEditListPanel.newKeywordsButton.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
