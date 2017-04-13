@@ -64,7 +64,7 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
         toolbarButton.addActionListener(actionEvent -> performAction());
         pcl = (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                setEnabled(Case.isCaseOpen());
+                 setEnabled(evt.getNewValue() != null);
             }
         };
         Case.addPropertyChangeListener(pcl);
