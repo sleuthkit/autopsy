@@ -115,6 +115,10 @@ final class LocalDiskPanel extends JPanel {
         diskTable.setEnabled(false);
         imageWriterErrorLabel.setVisible(false);
         imageWriterErrorLabel.setText("");
+        if(! PlatformUtil.isWindowsOS()){
+            copyImageCheckbox.setSelected(false);
+            copyImageCheckbox.setEnabled(false);
+        }
         pathTextField.setEnabled(copyImageCheckbox.isSelected());
         browseButton.setEnabled(copyImageCheckbox.isSelected());
         changeDatabasePathCheckbox.setEnabled(copyImageCheckbox.isSelected());
