@@ -28,7 +28,6 @@ import java.util.Arrays;
 import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -41,7 +40,7 @@ import org.openide.windows.WindowManager;
 class AddKeywordsDialog extends javax.swing.JDialog {
 
     List<String> newKeywords = new ArrayList<>();
-
+    private javax.swing.JTextArea keywordTextArea;
     /**
      * Creates new form AddKeywordsDialog. Note that this does not display the
      * dialog - call display() after creation.
@@ -56,26 +55,7 @@ class AddKeywordsDialog extends javax.swing.JDialog {
         initComponents();
         // Set the add button to only be active when there is text in the text area
         addButton.setEnabled(false);
-        keywordTextArea.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                fire();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                fire();
-            }
-
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                fire();
-            }
-
-            private void fire() {
-                enableButtons();
-            }
-        });
+        initKeywordTextArea();      
     }
 
     /**
@@ -86,6 +66,61 @@ class AddKeywordsDialog extends javax.swing.JDialog {
         Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
         setVisible(true);
+    }
+
+    private void initKeywordTextArea() {
+        keywordTextArea = new javax.swing.JTextArea() {
+            //Override the paste action for this jtext area to always append pasted text with a new line if necessary
+            @Override
+            public void paste() {
+                //if the cursor position is not at the start of a new line add the new line symbol before the pasted text
+                if (!(keywordTextArea.getDocument().getLength()==0) && !keywordTextArea.getText().endsWith("\n")) {
+                    keywordTextArea.append(System.getProperty("line.separator"));
+                }
+                keywordTextArea.setCaretPosition(keywordTextArea.getDocument().getLength());
+                super.paste();           
+            }
+        };
+        keywordTextArea.setColumns(
+                20);
+        keywordTextArea.setRows(
+                5);
+        keywordTextArea.addMouseListener(
+                new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt
+            ) {
+                keywordTextAreaMouseClicked(evt);
+            }
+        }
+        );
+        jScrollPane1.setViewportView(keywordTextArea);
+
+        keywordTextArea.getDocument()
+                .addDocumentListener(new DocumentListener() {
+                    @Override
+                    public void changedUpdate(DocumentEvent e
+                    ) {
+                        fire();
+                    }
+
+                    @Override
+                    public void removeUpdate(DocumentEvent e
+                    ) {
+                        fire();
+                    }
+
+                    @Override
+                    public void insertUpdate(DocumentEvent e
+                    ) {
+                        fire();
+                    }
+
+                    private void fire() {
+                        enableButtons();
+                    }
+                }
+                );
     }
 
     /**
@@ -150,14 +185,6 @@ class AddKeywordsDialog extends javax.swing.JDialog {
         substringRadioButton = new javax.swing.JRadioButton();
         regexRadioButton = new javax.swing.JRadioButton();
         jScrollPane1 = new javax.swing.JScrollPane();
-        keywordTextArea = new JTextArea() {
-            //Override the paste action for this jtext area to always insert a new line before the pasted text
-            @Override
-            public void paste() {
-                keywordTextArea.append("\n");
-                super.paste();
-            }
-        };
         enterKeywordsLabel = new javax.swing.JLabel();
         keywordTypeLabel = new javax.swing.JLabel();
         addButton = new javax.swing.JButton();
@@ -175,15 +202,6 @@ class AddKeywordsDialog extends javax.swing.JDialog {
 
         keywordTypeButtonGroup.add(regexRadioButton);
         org.openide.awt.Mnemonics.setLocalizedText(regexRadioButton, org.openide.util.NbBundle.getMessage(AddKeywordsDialog.class, "AddKeywordsDialog.regexRadioButton.text")); // NOI18N
-
-        keywordTextArea.setColumns(20);
-        keywordTextArea.setRows(5);
-        keywordTextArea.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                keywordTextAreaMouseClicked(evt);
-            }
-        });
-        jScrollPane1.setViewportView(keywordTextArea);
 
         org.openide.awt.Mnemonics.setLocalizedText(enterKeywordsLabel, org.openide.util.NbBundle.getMessage(AddKeywordsDialog.class, "AddKeywordsDialog.enterKeywordsLabel.text")); // NOI18N
 
@@ -283,7 +301,7 @@ class AddKeywordsDialog extends javax.swing.JDialog {
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
-    private void keywordTextAreaMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_keywordTextAreaMouseClicked
+    private void keywordTextAreaMouseClicked(java.awt.event.MouseEvent evt) {
         if (SwingUtilities.isRightMouseButton(evt)) {
             JPopupMenu popup = new JPopupMenu();
 
@@ -316,16 +334,13 @@ class AddKeywordsDialog extends javax.swing.JDialog {
             popup.add(pasteMenu);
             popup.show(keywordTextArea, evt.getX(), evt.getY());
         }
-    }//GEN-LAST:event_keywordTextAreaMouseClicked
-
-
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addButton;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel enterKeywordsLabel;
     private javax.swing.JRadioButton exactRadioButton;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTextArea keywordTextArea;
     private javax.swing.ButtonGroup keywordTypeButtonGroup;
     private javax.swing.JLabel keywordTypeLabel;
     private javax.swing.JButton pasteButton;

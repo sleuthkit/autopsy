@@ -125,20 +125,6 @@
     <Container class="javax.swing.JScrollPane" name="jScrollPane1">
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
-      <SubComponents>
-        <Component class="javax.swing.JTextArea" name="keywordTextArea">
-          <Properties>
-            <Property name="columns" type="int" value="20"/>
-            <Property name="rows" type="int" value="5"/>
-          </Properties>
-          <Events>
-            <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="keywordTextAreaMouseClicked"/>
-          </Events>
-          <AuxValues>
-            <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new JTextArea() {&#xa;    //Override the paste action for this jtext area to always insert a new line before the pasted text&#xa;    @Override&#xa;    public void paste() {&#xa;        keywordTextArea.append(&quot;\n&quot;);&#xa;        super.paste();&#xa;    }&#xa;}"/>
-          </AuxValues>
-        </Component>
-      </SubComponents>
     </Container>
     <Component class="javax.swing.JLabel" name="enterKeywordsLabel">
       <Properties>
