@@ -37,40 +37,13 @@ class Keyword {
     private boolean isWholeWord;
     private BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType;
     private final String listName;
+    /*
+     * For substring searches, original search term (e.g. "pass" or "enger") can
+     * be different from the search term (e.g. "passenger") that is found and
+     * used (e.g. for highlighting purposes).
+     */
     private final String originalTerm;
 
-    /**
-     * Constructs a representation of a keyword for which to search. The search
-     * term for the keyword may be either a literal term that will be treated as
-     * a whole word, or a regex.
-     *
-     * @param searchTerm The search term for the keyword.
-     * @param isLiteral  Whether or not the search term is a literal term that
-     *                   will be treated as a whole word, instead of a regex.
-     */
-    Keyword(String searchTerm, boolean isLiteral) {
-        this.searchTerm = searchTerm;
-        this.isLiteral = isLiteral;
-        this.isWholeWord = true;
-        this.listName = "";
-        this.originalTerm = searchTerm;
-    }
-    
-    Keyword(String searchTerm, boolean isLiteral, String listName, String originalTerm) {
-        this.searchTerm = searchTerm;
-        this.isLiteral = isLiteral;
-        this.isWholeWord = true;
-        this.listName = listName;
-        this.originalTerm = originalTerm;
-    }    
-
-    Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord, String listName, String originalTerm) {
-        this.searchTerm = searchTerm;
-        this.isLiteral = isLiteral;
-        this.isWholeWord = isWholeWord;
-        this.listName = listName;
-        this.originalTerm = originalTerm;      
-    }    
     /**
      * Constructs a representation of a keyword for which to search. The search
      * term may be either a literal term, to be treated as either a whole word
@@ -88,7 +61,43 @@ class Keyword {
         this.isLiteral = isLiteral;
         this.isWholeWord = isWholeWord;
         this.listName = "";
-        this.originalTerm = searchTerm;        
+        this.originalTerm = searchTerm;
+    }
+
+    /**
+     * Constructs a representation of a keyword for which to search. The search
+     * term may be either a literal term, to be treated as either a whole word
+     * or as a substring, or a regex.
+     *
+     * NOTE: The addition of keyword list name and original search term was
+     * added to facilitate proper de-duping of results of periodic keyword
+     * searches that does not lose any keyword hits. Without this addition when
+     * using substring search feature during ingest, if there are multiple
+     * searches on different keyword lists that produce the same keyword hit,
+     * that hit is only going to be displayed in results of one of the list. For
+     * example, two substring searches, such as "pass" and "enger", will be
+     * missing one copy of any shared entries (i.e., "passenger" will only show
+     * up on one list). See JIRA story 2495.
+     *
+     * @param searchTerm   The search term.
+     * @param isLiteral    Whether or not the search term is a literal term,
+     *                     instead of a regex.
+     * @param isWholeWord  Whether or not the search term, if it is a literal
+     *                     search term, should be treated as a whole word rather
+     *                     than a substring.
+     * @param listName     Keyword list name.
+     * @param originalTerm The original search term that was entered into the
+     *                     keyword list. For substring searches, original search
+     *                     term (e.g. "pass" or "enger") can be different from
+     *                     the search term (e.g. "passenger") that is found and
+     *                     used (e.g. for highlighting purposes).
+     */
+    Keyword(String searchTerm, boolean isLiteral, boolean isWholeWord, String listName, String originalTerm) {
+        this.searchTerm = searchTerm;
+        this.isLiteral = isLiteral;
+        this.isWholeWord = isWholeWord;
+        this.listName = listName;
+        this.originalTerm = originalTerm;
     }
 
     /**
@@ -106,7 +115,7 @@ class Keyword {
      * @param keywordType The artifact attribute type.
      */
     Keyword(String searchTerm, boolean isLiteral, BlackboardAttribute.ATTRIBUTE_TYPE artifactAtrributeType) {
-        this(searchTerm, isLiteral);
+        this(searchTerm, isLiteral, true);
         this.artifactAtrributeType = artifactAtrributeType;
     }
 
@@ -195,7 +204,9 @@ class Keyword {
         Keyword other = (Keyword) obj;
         return (this.searchTerm.equals(other.getSearchTerm())
                 && this.isLiteral == other.searchTermIsLiteral()
-                && this.isWholeWord == other.searchTermIsWholeWord());
+                && this.isWholeWord == other.searchTermIsWholeWord()
+                && this.listName.equals(other.getListName())
+                && this.originalTerm.equals(other.getOriginalTerm()));
     }
 
     @Override

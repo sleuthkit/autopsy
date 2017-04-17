@@ -162,7 +162,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                     final Keyword keyword = new Keyword(newWord, !dialog.isKeywordRegex(), dialog.isKeywordExact(), currentKeywordList.getName(), newWord);
                     if (currentKeywordList.hasKeyword(keyword)) {
                         dupeCount++;
-                        continue;
+                        continue; 
                     }
 
                     //check if valid
@@ -282,7 +282,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
         keywordsLabel.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "KeywordSearchEditListPanel.keywordsLabel.text")); // NOI18N
 
-        newKeywordsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/new16.png"))); // NOI18N
+        newKeywordsButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/keywordsearch/add16.png"))); // NOI18N
         newKeywordsButton.setText(org.openide.util.NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.newKeywordsButton.text")); // NOI18N
         newKeywordsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {

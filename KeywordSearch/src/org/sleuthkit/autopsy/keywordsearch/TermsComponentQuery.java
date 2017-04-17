@@ -306,16 +306,16 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * query.
              */
             String escapedTerm = KeywordSearchUtil.escapeLuceneQuery(term.getTerm());
-            LuceneQuery termQuery = new LuceneQuery(keywordList, new Keyword(escapedTerm, true));
+            LuceneQuery termQuery = new LuceneQuery(keywordList, new Keyword(escapedTerm, true, true));
             filters.forEach(termQuery::addFilter); // This appears to be unused
             QueryResults termQueryResult = termQuery.performQuery();
             Set<KeywordHit> termHits = new HashSet<>();
             for (Keyword word : termQueryResult.getKeywords()) {
                 termHits.addAll(termQueryResult.getResults(word));
             }
-            results.addResult(new Keyword(term.getTerm(), false, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), new ArrayList<>(termHits));
+            results.addResult(new Keyword(term.getTerm(), false, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), new ArrayList<>(termHits));
         }
-        return results;
+        return results; 
     }
 
     /**
