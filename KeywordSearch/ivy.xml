@@ -20,7 +20,7 @@
     <dependencies>
         <!-- Solr -->
         <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="4.9.1"/>
-        <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1"/> <!-- the war file -->
+        <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->
         
         <!-- Solr index upgrade -->
         <dependency conf="solr4to5->default" org="org.apache.lucene" name="lucene-analyzers-common" rev="5.5.1"/>
