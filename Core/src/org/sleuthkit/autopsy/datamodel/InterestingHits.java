@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -336,6 +337,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     private class HitFactory extends ChildFactory<Long> implements Observer {
 
         private final String setName;
+        private Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
 
         private HitFactory(String setName) {
             super();
@@ -345,23 +347,28 @@ public class InterestingHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
-            for (long l : interestingResults.getArtifactIds(setName)) {
-                list.add(l);
+            
+            if (skCase == null) {
+               return true;
             }
+            
+            interestingResults.getArtifactIds(setName).forEach((id) -> {
+                try {
+                    BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                    
+                    artifactHits.put(id, art);
+                    list.add(id);
+                } catch (TskCoreException ex) {
+                    logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
+                }
+            });
             return true;
         }
 
         @Override
         protected Node createNodeForKey(Long l) {
-            if (skCase == null) {
-                return null;
-            }
-            try {
-                return new BlackboardArtifactNode(skCase.getBlackboardArtifact(l));
-            } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Error creating new Blackboard Artifact node", ex); //NON-NLS
-                return null;
-            }
+            BlackboardArtifact art = artifactHits.get(l);
+            return (null == art) ? null : new BlackboardArtifactNode(art);
         }
 
         @Override
