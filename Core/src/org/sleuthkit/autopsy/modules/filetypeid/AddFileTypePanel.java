@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,11 +24,14 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import static org.sleuthkit.autopsy.modules.filetypeid.AddFileTypePanel.EVENT.SIG_LIST_CHANGED;
 import org.sleuthkit.autopsy.modules.filetypeid.AddFileTypeSignatureDialog.BUTTON_PRESSED;
 import org.sleuthkit.autopsy.modules.filetypeid.FileType.Signature;
+
 @Messages("AddFileTypePanel.mimeFormatLabel.text=Form of MIME type should be: media type/media subtype")
 
 /**
@@ -40,7 +43,7 @@ class AddFileTypePanel extends javax.swing.JPanel {
 
     private AddFileTypeSignatureDialog addSigDialog;
     private DefaultListModel<FileType.Signature> signaturesListModel;
-    
+
     /**
      * Creates a panel for a new file type.
      */
@@ -89,11 +92,18 @@ class AddFileTypePanel extends javax.swing.JPanel {
         "AddMimeTypePanel.emptySigList.title=Invalid Signature List",
         "AddMimeTypePanel.emptySetName.message=Interesting files set name is required if alert is requested.",
         "AddMimeTypePanel.emptySetName.title=Missing Interesting Files Set Name",
+        "# {0} - media subtype",
         "AddFileTypePanel.nonStandardMIMEType.message="
-                + "Files of this MIME type will not appear under the Views, File Types, By MIME Type tree because it is not in the format of: media type/media subtype",
+        + "MIME type must be of form: media type/media subtype. Custom/{0} has been suggested instead.",
+        "# {0} - type name",
+        "AddFileTypePanel.containsIllegalCharacter.message=Invalid character in MIME type, {0} has been suggested instead",
+        "AddFileTypePanel.containsIllegalCharacter.title=Invalid Character in MIME Type",
         "AddFileTypePanel.nonStandardMIMEType.title=Non-standard MIME Type"})
+
     FileType getFileType() {
         String typeName = mimeTypeTextField.getText();
+
+        //if typeName does not equal sanitized typeName display message saying this name will be used instead 
         if (typeName.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "FileTypeIdGlobalSettingsPanel.JOptionPane.invalidMIMEType.message"),
@@ -101,18 +111,44 @@ class AddFileTypePanel extends javax.swing.JPanel {
                     JOptionPane.ERROR_MESSAGE);
             return null;
         }
-        if (typeName.split("/").length != 2) {
+        //if we need to remove more characters could use matches instead of contains and regex "[^\\w\s\\-\\/] to remove everything that isnt a letter, number, underscore, whitespace, dash, or forward slash.
+        if (typeName.contains("\'")) {  //remove single apostraphes as they are an easy way to accidently screw up PostgreSQL
+            typeName = typeName.replaceAll("[\\']", "");
             JOptionPane.showMessageDialog(null,
-                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message"),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.containsIllegalCharacter.message", typeName),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.containsIllegalCharacter.title"),
+                    JOptionPane.WARNING_MESSAGE);
+            mimeTypeTextField.setText(typeName);
+            return null;
+        }
+        //if the MIME type is lacking two parts or the first part is empty ask if they want to use 'custom' as the first part
+        //if the MIME type has more than 2 parts the first part will be used as a media type and the remainder of the string as the sub-type
+        String[] splitName = typeName.split("/");
+        if (splitName.length < 2 || splitName[0].isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", typeName),
                     NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
                     JOptionPane.WARNING_MESSAGE);
+            mimeTypeTextField.setText("custom/" + typeName);
+            return null;
+        }
+        //Make sure the mimetype will piece back together to be the same string it was entered 
+        //trailing forward slashes will cause this mismatch to happen
+        //suggests a mime_type that will be the same after it is split appart and rejoined
+        if (!StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/").equals(typeName)) {
+            String rejoinedMimeType = StringUtils.join(ArrayUtils.subarray(splitName, 0, splitName.length), "/");  
+            JOptionPane.showMessageDialog(null,
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.message", rejoinedMimeType),
+                    NbBundle.getMessage(FileTypeIdGlobalSettingsPanel.class, "AddFileTypePanel.nonStandardMIMEType.title"),
+                    JOptionPane.WARNING_MESSAGE);  
+            mimeTypeTextField.setText(rejoinedMimeType);
+            return null;
         }
         if (this.signaturesListModel.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     Bundle.AddMimeTypePanel_emptySigList_message(),
                     Bundle.AddMimeTypePanel_emptySigList_title(),
                     JOptionPane.ERROR_MESSAGE);
-
             return null;
         }
         List<Signature> sigList = new ArrayList<>();
