@@ -173,9 +173,10 @@ public class Server {
     @Deprecated
     public static final char ID_CHUNK_SEP = '_';
     public static final String CHUNK_ID_SEPARATOR = "_";
-    private String javaHome = "";
+    private String javaPath = "java";
     public static final Charset DEFAULT_INDEXED_TEXT_CHARSET = Charset.forName("UTF-8"); ///< default Charset to index text as
     private Process curSolrProcess = null;
+    private static final int MAX_SOLR_MEM_MB = 512; //TODO set dynamically based on avail. system resources
     static final String PROPERTIES_FILE = KeywordSearchSettings.MODULE_NAME;
     static final String PROPERTIES_CURRENT_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     static final String PROPERTIES_CURRENT_STOP_PORT = "IndexingServerStopPort"; //NON-NLS
@@ -205,7 +206,6 @@ public class Server {
     private final ReentrantReadWriteLock currentCoreLock;
 
     private final File solrFolder;
-    private Path solrCmdPath;
     private Path solrHome;
     private final ServerAction serverAction;
     private InputStreamPrinterThread errorRedirectThread;
@@ -220,26 +220,7 @@ public class Server {
         this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
-
-        // Figure out where Java is located. For installed versions of Autopsy
-        // it will be in the installation folder/jre. For development environments
-        // we expect the JAVA_HOME environment variable to be set.
-        // The Java home location will be passed as the SOLR_JAVA_HOME environment
-        // variable to the Solr script but it can be overridden by the user in
-        // either autopsy-solr.cmd or autopsy-solr-in.cmd.
-        File jrePath = new File(PlatformUtil.getInstallPath() + File.separator + "jre"); // NON-NLS
-        if (jrePath.exists() && jrePath.isDirectory()) {
-            javaHome = jrePath.getAbsolutePath();
-        } else {
-            javaHome = System.getenv("JAVA_HOME"); // NON-NLS
-        }
-
-        if (javaHome == null || javaHome.isEmpty()) {
-            logger.log(Level.WARNING, "Java not found. Keyword search functionality may not work."); //NON-NLS
-        }
-
-        // This is our customized version of the Solr batch script to start/stop Solr.
-        solrCmdPath = Paths.get(solrFolder.getAbsolutePath(), "bin", "autopsy-solr.cmd"); //NON-NLS
+        javaPath = PlatformUtil.getJavaPath();
 
         solrHome = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "solr"); //NON-NLS
         if (!solrHome.toFile().exists()) {
@@ -253,7 +234,7 @@ public class Server {
         }
         currentCoreLock = new ReentrantReadWriteLock(true);
 
-        logger.log(Level.INFO, "Created Server instance using Java at {0}", javaHome); //NON-NLS
+        logger.log(Level.INFO, "Created Server instance using Java at {0}", javaPath); //NON-NLS
     }
 
     private void initSettings() {
@@ -375,8 +356,16 @@ public class Server {
      * @throws IOException
      */
     private Process runSolrCommand(List<String> solrArguments) throws IOException {
+        final String MAX_SOLR_MEM_MB_PAR = "-Xmx" + Integer.toString(MAX_SOLR_MEM_MB) + "m"; //NON-NLS
         List<String> commandLine = new ArrayList<>();
-        commandLine.add(solrCmdPath.toString());
+        commandLine.add(javaPath);
+        commandLine.add(MAX_SOLR_MEM_MB_PAR);
+        commandLine.add("-DSTOP.PORT=" + currentSolrStopPort); //NON-NLS
+        commandLine.add("-Djetty.port=" + currentSolrServerPort); //NON-NLS
+        commandLine.add("-DSTOP.KEY=" + KEY); //NON-NLS
+        commandLine.add("-jar"); //NON-NLS
+        commandLine.add("start.jar"); //NON-NLS
+
         commandLine.addAll(solrArguments);
 
         ProcessBuilder solrProcessBuilder = new ProcessBuilder(commandLine);
@@ -388,10 +377,6 @@ public class Server {
 
         Path solrStderrPath = Paths.get(Places.getUserDirectory().getAbsolutePath(), "var", "log", "solr.log.stderr"); //NON-NLS
         solrProcessBuilder.redirectError(solrStderrPath.toFile());
-
-        solrProcessBuilder.environment().put("SOLR_JAVA_HOME", javaHome); // NON-NLS
-        solrProcessBuilder.environment().put("SOLR_HOME", solrHome.toString()); // NON-NLS
-        solrProcessBuilder.environment().put("STOP_KEY", KEY); // NON-NLS
 
         logger.log(Level.INFO, "Running Solr command: {0}", solrProcessBuilder.command()); //NON-NLS
         Process process = solrProcessBuilder.start();
@@ -474,10 +459,9 @@ public class Server {
         if (isPortAvailable(currentSolrServerPort)) {
             logger.log(Level.INFO, "Port [{0}] available, starting Solr", currentSolrServerPort); //NON-NLS
             try {
-                curSolrProcess = runSolrCommand(new ArrayList<>(Arrays.asList("start", "-c", "-p", //NON-NLS
-                        Integer.toString(currentSolrServerPort),
-                        "-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
-                        "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
+                curSolrProcess = runSolrCommand(new ArrayList<>(
+                        Arrays.asList("-Dbootstrap_confdir=../solr/configsets/AutopsyConfig/conf", //NON-NLS
+                                "-Dcollection.configName=AutopsyConfig"))); //NON-NLS
 
                 try {
                     //block for 10 seconds, give time to fully start the process
@@ -570,7 +554,7 @@ public class Server {
             logger.log(Level.INFO, "Stopping Solr server from: {0}", solrFolder.getAbsolutePath()); //NON-NLS
 
             //try graceful shutdown
-            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("stop", "-k", KEY, "-p", Integer.toString(currentSolrServerPort)))); //NON-NLS
+            Process process = runSolrCommand(new ArrayList<>(Arrays.asList("--stop"))); //NON-NLS
 
             logger.log(Level.INFO, "Waiting for Solr server to stop"); //NON-NLS
             process.waitFor();
