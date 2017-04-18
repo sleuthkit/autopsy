@@ -384,7 +384,7 @@ public class HashsetHits implements AutopsyVisitableItem {
                     artifactHits.put(id, art);
                     list.add(id);
                 } catch (TskException ex) {
-                    logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                 }
             });
             return true;
