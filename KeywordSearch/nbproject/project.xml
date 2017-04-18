@@ -154,10 +154,6 @@
                 <binary-origin>release/modules/ext/tika-core-1.14.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpmime-4.4.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpmime-4.4.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/lucene-queryparser-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/lucene-queryparser-4.0.0.jar</binary-origin>
             </class-path-extension>
@@ -242,6 +238,10 @@
                 <binary-origin>release/modules/ext/jj2000-5.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/httpclient-4.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpclient-4.3.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/jhighlight-1.0.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/jhighlight-1.0.2.jar</binary-origin>
             </class-path-extension>
@@ -256,10 +256,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/ctakes-utils-3.2.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/ctakes-utils-3.2.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-6.2.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-6.2.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/apache-mime4j-dom-0.7.2.jar</runtime-relative-path>
@@ -286,8 +282,8 @@
                 <binary-origin>release/modules/ext/cxf-rt-rs-client-3.0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-annotations-2.5.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-annotations-2.5.4.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-4.9.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-4.9.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/findstructapi-0.0.1.jar</runtime-relative-path>
@@ -338,12 +334,12 @@
                 <binary-origin>release/modules/ext/poi-scratchpad-3.15.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-vfs2-2.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-vfs2-2.0.jar</binary-origin>
+                <runtime-relative-path>ext/solr-solrj-4.9.1-sources.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-4.9.1-sources.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jcl-over-slf4j-1.7.7.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jcl-over-slf4j-1.7.7.jar</binary-origin>
+                <runtime-relative-path>ext/commons-vfs2-2.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-vfs2-2.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/tika-parsers-1.14.jar</runtime-relative-path>
@@ -378,8 +374,16 @@
                 <binary-origin>release/modules/ext/libsvm-3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
+                <runtime-relative-path>ext/noggit-0.5.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/noggit-0.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
                 <runtime-relative-path>ext/xmlschema-core-2.1.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/xmlschema-core-2.1.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpmime-4.3.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpmime-4.3.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jna-4.1.0.jar</runtime-relative-path>
@@ -446,10 +450,6 @@
                 <binary-origin>release/modules/ext/commons-validator-1.5.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-6.2.1-javadoc.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-6.2.1-javadoc.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/lucene-sandbox-4.0.0.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/lucene-sandbox-4.0.0.jar</binary-origin>
             </class-path-extension>
@@ -480,6 +480,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/spring-beans-3.1.2.RELEASE.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/spring-beans-3.1.2.RELEASE.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/solr-solrj-4.9.1-javadoc.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/solr-solrj-4.9.1-javadoc.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/asm-all-3.1.jar</runtime-relative-path>
@@ -594,10 +598,6 @@
                 <binary-origin>release/modules/ext/pdfbox-debugger-2.0.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/jackson-databind-2.5.4.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/jackson-databind-2.5.4.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/spring-core-3.1.2.RELEASE.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/spring-core-3.1.2.RELEASE.jar</binary-origin>
             </class-path-extension>
@@ -606,24 +606,8 @@
                 <binary-origin>release/modules/ext/netcdf4-4.5.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/httpclient-4.4.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpclient-4.4.1.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/noggit-0.6.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/noggit-0.6.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/solr-solrj-6.2.1-sources.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/solr-solrj-6.2.1-sources.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/spring-asm-3.1.2.RELEASE.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/spring-asm-3.1.2.RELEASE.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-io-2.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/junit-4.11.jar</runtime-relative-path>
@@ -640,10 +624,6 @@
             <class-path-extension>
                 <runtime-relative-path>ext/javax.annotation-api-1.2.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/javax.annotation-api-1.2.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/httpcore-4.4.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/httpcore-4.4.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jericho-html-3.3-sources.jar</runtime-relative-path>
@@ -684,6 +664,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/rome-utils-1.5.1.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/rome-utils-1.5.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/httpcore-4.3.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/httpcore-4.3.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/pdfbox-tools-2.0.3.jar</runtime-relative-path>

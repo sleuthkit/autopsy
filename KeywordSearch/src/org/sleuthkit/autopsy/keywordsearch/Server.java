@@ -46,8 +46,7 @@ import javax.swing.AbstractAction;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.impl.XMLResponseParser;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
 import org.apache.solr.client.solrj.response.CoreAdminResponse;
@@ -196,12 +195,11 @@ public class Server {
     };
 
     // A reference to the locally running Solr instance.
-    private final HttpSolrClient localSolrServer;
-    private final Builder builder;
+    private final HttpSolrServer localSolrServer;
 
     // A reference to the Solr server we are currently connected to for the Case.
     // This could be a local or remote server.
-    private HttpSolrClient currentSolrServer;
+    private HttpSolrServer currentSolrServer;
 
     private Core currentCore;
     private final ReentrantReadWriteLock currentCoreLock;
@@ -219,8 +217,7 @@ public class Server {
     Server() {
         initSettings();
 
-        this.builder = new Builder("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
-        this.localSolrServer = this.builder.build();
+        this.localSolrServer = new HttpSolrServer("http://localhost:" + currentSolrServerPort + "/solr"); //NON-NLS
         serverAction = new ServerAction();
         solrFolder = InstalledFileLocator.getDefault().locate("solr", Server.class.getPackage().getName(), false); //NON-NLS
 
@@ -766,7 +763,7 @@ public class Server {
         }
              
         try {
-            HttpSolrClient solrServer = new Builder("http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr").build(); //NON-NLS
+            HttpSolrServer solrServer = new HttpSolrServer("http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr"); //NON-NLS
             connectToSolrServer(solrServer);
             org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer); 
         } catch (SolrServerException | IOException ex) {
@@ -794,7 +791,7 @@ public class Server {
             } else {
                 String host = UserPreferences.getIndexingServerHost();
                 String port = UserPreferences.getIndexingServerPort();
-                currentSolrServer = new Builder("http://" + host + ":" + port + "/solr").build(); //NON-NLS
+                currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
             }
             connectToSolrServer(currentSolrServer);
 
@@ -871,7 +868,7 @@ public class Server {
         }
     }
 
-    NamedList<Object> request(SolrRequest<?> request) throws SolrServerException, NoOpenCoreException {
+    NamedList<Object> request(SolrRequest request) throws SolrServerException, NoOpenCoreException {
         currentCoreLock.readLock().lock();
         try {
             if (null == currentCore) {
@@ -1202,7 +1199,7 @@ public class Server {
      * @throws SolrServerException
      * @throws IOException
      */
-    void connectToSolrServer(HttpSolrClient solrServer) throws SolrServerException, IOException {
+    void connectToSolrServer(HttpSolrServer solrServer) throws SolrServerException, IOException {
         CoreAdminRequest.getStatus(null, solrServer);
     }
 
@@ -1257,14 +1254,14 @@ public class Server {
 
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
-        private final HttpSolrClient solrCore;
+        private final HttpSolrServer solrCore;
 
         private Core(String name, CaseType caseType, Index index) {
             this.name = name;
             this.caseType = caseType;
             this.textIndex = index;
 
-            this.solrCore = new Builder(currentSolrServer.getBaseURL() + "/" + name).build(); //NON-NLS
+            this.solrCore = new HttpSolrServer(currentSolrServer.getBaseURL() + "/" + name); //NON-NLS
 
             //TODO test these settings
             //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
@@ -1296,7 +1293,7 @@ public class Server {
             return solrCore.query(sq);
         }
 
-        private NamedList<Object> request(SolrRequest<?> request) throws SolrServerException {
+        private NamedList<Object> request(SolrRequest request) throws SolrServerException {
             try {
                 return solrCore.request(request);
             } catch (IOException e) {
@@ -1375,7 +1372,7 @@ public class Server {
                         }
                     }
                 }
-            } catch (SolrServerException | IOException ex) {
+            } catch (SolrServerException ex) {
                 logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
                 return null;
             }
