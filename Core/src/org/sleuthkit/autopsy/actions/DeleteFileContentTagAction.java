@@ -1,0 +1,202 @@
+/*
+ * Autopsy Forensic Browser
+ * 
+ * Copyright 2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.actions;
+
+import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javax.swing.AbstractAction;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
+import org.openide.util.actions.Presenter;
+import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.TskCoreException;
+
+/**
+ * Instances of this Action allow users to delete tags applied to content.
+ */
+@NbBundle.Messages({
+    "DeleteFileContentTagAction.deleteTag=Remove File Tag"
+})
+public class DeleteFileContentTagAction extends AbstractAction implements Presenter.Popup {
+    
+    private static final Logger LOGGER = Logger.getLogger(DeleteFileContentTagAction.class.getName());
+
+    private static final long serialVersionUID = 1L;
+    private static final String MENU_TEXT = NbBundle.getMessage(DeleteFileContentTagAction.class,
+            "DeleteFileContentTagAction.deleteTag");
+
+    // This class is a singleton to support multi-selection of nodes, since 
+    // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
+    // node in the array returns a reference to the same action object from Node.getActions(boolean).    
+    private static DeleteFileContentTagAction instance;
+
+    public static synchronized DeleteFileContentTagAction getInstance() {
+        if (null == instance) {
+            instance = new DeleteFileContentTagAction();
+        }
+        return instance;
+    }
+
+    private DeleteFileContentTagAction() {
+        super(MENU_TEXT);
+    }
+
+    @Override
+    public JMenuItem getPopupPresenter() {
+        return new TagMenu();
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+    }
+
+    protected String getActionDisplayName() {
+        return MENU_TEXT;
+    }
+
+    @NbBundle.Messages({"# {0} - fileID",
+            "DeleteFileContentTagAction.deleteTag.alert=Unable to untag file {0}."})
+    protected void deleteTag(TagName tagName, ContentTag contentTag, long fileId) {
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                
+                // Pull the from the global context to avoid unnecessary calls
+                // to the database.
+                final Collection<AbstractFile> selectedFilesList =
+                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+                AbstractFile file = selectedFilesList.iterator().next();
+                
+                try {
+                    LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), file.getName()}); //NON-NLS
+                    tagsManager.deleteContentTag(contentTag);
+                } catch (TskCoreException tskCoreException) {
+                    LOGGER.log(Level.SEVERE, "Error untagging file", tskCoreException); //NON-NLS
+                    Platform.runLater(() ->
+                            new Alert(Alert.AlertType.ERROR, Bundle.DeleteFileContentTagAction_deleteTag_alert(fileId)).show()
+                    );
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while untagging file", ex); //NON-NLS
+                }
+            }
+        }.execute();
+    }
+
+    /**
+     * Instances of this class implement a context menu user interface for
+     * creating or selecting a tag name for a tag and specifying an optional tag
+     * comment.
+     */
+    // @@@ This user interface has some significant usability issues and needs
+    // to be reworked.
+    private class TagMenu extends JMenu {
+
+        private static final long serialVersionUID = 1L;
+
+        TagMenu() {
+            super(getActionDisplayName());
+            
+            final Collection<AbstractFile> selectedAbstractFilesList =
+                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+            
+            if(!selectedAbstractFilesList.isEmpty()) {
+                AbstractFile file = selectedAbstractFilesList.iterator().next();
+                
+                // Get the current set of tag names.
+                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+
+                Map<String, TagName> tagNamesMap = null;
+                try {
+                    tagNamesMap = new TreeMap<>(tagsManager.getDisplayNamesToTagNamesMap());
+                } catch (TskCoreException ex) {
+                    Logger.getLogger(TagsManager.class.getName()).log(Level.SEVERE, "Failed to get tag names", ex); //NON-NLS
+                }
+
+                // Each tag name in the current set of tags gets its own menu item in
+                // the "Quick Tags" sub-menu. Selecting one of these menu items adds
+                // a tag with the associated tag name.
+                if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
+                    try {
+                        /*List<BlackboardArtifactTag> existingTagsList =
+                                Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);*/
+                        List<ContentTag> existingTagsList =
+                                Case.getCurrentCase().getServices().getTagsManager()
+                                        .getContentTagsByContent(file);
+
+                        for (Map.Entry<String, TagName> entry : tagNamesMap.entrySet()) {
+                            String tagDisplayName = entry.getKey();
+
+                            TagName tagName = entry.getValue();
+                            for(ContentTag contentTag : existingTagsList) {
+                                if(tagDisplayName.equals(contentTag.getName().getDisplayName())) {
+                                    JMenuItem tagNameItem = new JMenuItem(tagDisplayName);
+                                    // for the bookmark tag name only, added shortcut label
+                                    if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
+                                        tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
+                                    }
+                                    tagNameItem.addActionListener((ActionEvent e) -> {
+                                        deleteTag(tagName, contentTag, file.getId());
+                                    });
+                                    add(tagNameItem);
+                                }
+                            }
+                        }
+                    } catch (TskCoreException ex) {
+                        Logger.getLogger(TagMenu.class.getName())
+                                .log(Level.SEVERE, "Error retrieving tags for TagMenu", ex); //NON-NLS
+                    }
+                }
+
+                if(getItemCount() == 0) {
+                    setEnabled(false);
+                }
+            }
+        }
+    }
+
+}

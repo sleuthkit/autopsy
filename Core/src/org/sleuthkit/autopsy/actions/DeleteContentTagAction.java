@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,25 +20,40 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this Action allow users to delete tags applied to content.
  */
+@NbBundle.Messages({
+    "DeleteContentTagAction.deleteTag=Delete Tag",
+    "DeleteContentTagAction.unableToDelTag.msg=Unable to delete tag {0}.",
+    "DeleteContentTagAction.tagDelErr=Tag Deletion Error"
+})
 public class DeleteContentTagAction extends AbstractAction {
+    
+    private static final Logger LOGGER = Logger.getLogger(DeleteContentTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteContentTagAction.class,
-            "DeleteContentTagAction.deleteTags");
+            "DeleteContentTagAction.deleteTag");
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
@@ -64,7 +79,7 @@ public class DeleteContentTagAction extends AbstractAction {
                 try {
                     Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
+                    Logger.getLogger(DeleteContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
@@ -101,6 +116,49 @@ public class DeleteContentTagAction extends AbstractAction {
      */
     @Deprecated
     protected void refreshDirectoryTree() {
+    }
+
+    protected String getActionDisplayName() {
+        return MENU_TEXT;
+    }
+
+    @NbBundle.Messages({"# {0} - fileID",
+            "DeleteContentTagAction.deleteTag.alert=Unable to untag file {0}."})
+    protected void deleteTag(TagName tagName, ContentTag contentTag, long fileId) {
+        new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+                
+                // Pull the from the global context to avoid unnecessary calls
+                // to the database.
+                final Collection<AbstractFile> selectedFilesList =
+                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+                AbstractFile file = selectedFilesList.iterator().next();
+                
+                try {
+                    LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), file.getName()}); //NON-NLS
+                    tagsManager.deleteContentTag(contentTag);
+                } catch (TskCoreException tskCoreException) {
+                    LOGGER.log(Level.SEVERE, "Error untagging file", tskCoreException); //NON-NLS
+                    Platform.runLater(() ->
+                            new Alert(Alert.AlertType.ERROR, Bundle.DeleteContentTagAction_deleteTag_alert(fileId)).show()
+                    );
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                super.done();
+                try {
+                    get();
+                } catch (InterruptedException | ExecutionException ex) {
+                    LOGGER.log(Level.SEVERE, "Unexpected exception while untagging file", ex); //NON-NLS
+                }
+            }
+        }.execute();
     }
 
 }

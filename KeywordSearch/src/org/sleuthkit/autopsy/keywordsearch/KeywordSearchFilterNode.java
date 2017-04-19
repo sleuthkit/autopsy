@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
@@ -26,14 +28,17 @@ import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -107,16 +112,23 @@ class KeywordSearchFilterNode extends FilterNode {
         }
 
         private List<Action> getFileActions() {
-            List<Action> actions = new ArrayList<>();
-            actions.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
-            actions.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
-            actions.add(null);
-            actions.add(ExtractAction.getInstance());
-            actions.add(new HashSearchAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.searchSameMd5"), getOriginal()));
-            actions.add(null); // creates a menu separator
-            actions.add(AddContentTagAction.getInstance());
-            actions.addAll(ContextMenuExtensionPoint.getActions());
-            return actions;
+            List<Action> actionsList = new ArrayList<>();
+            actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
+            actionsList.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
+            actionsList.add(null);
+            actionsList.add(ExtractAction.getInstance());
+            actionsList.add(new HashSearchAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.searchSameMd5"), getOriginal()));
+            actionsList.add(null); // creates a menu separator
+            actionsList.add(AddContentTagAction.getInstance());
+        
+            final Collection<AbstractFile> selectedFilesList =
+                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+            if(selectedFilesList.size() == 1) {
+                actionsList.add(DeleteFileContentTagAction.getInstance());
+            }
+            
+            actionsList.addAll(ContextMenuExtensionPoint.getActions());
+            return actionsList;
         }
 
         @Override

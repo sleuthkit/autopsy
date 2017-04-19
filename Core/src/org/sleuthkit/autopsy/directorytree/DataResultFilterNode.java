@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.directorytree;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
@@ -33,8 +35,11 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileBlackboardArtifactTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -70,6 +75,8 @@ import org.sleuthkit.datamodel.VirtualDirectory;
  * defines the actions that the node should have.
  */
 public class DataResultFilterNode extends FilterNode {
+    
+    private static final Logger LOGGER = Logger.getLogger(DataResultFilterNode.class.getName());
 
     private static boolean filterKnownFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
     private static boolean filterKnownFromViews = UserPreferences.hideKnownFilesInViewsTree();
@@ -260,29 +267,29 @@ public class DataResultFilterNode extends FilterNode {
             //they should be set in individual Node subclass and using a utility to get Actions per Content sub-type
             // TODO UPDATE: There is now a DataModelActionsFactory utility;
 
-            List<Action> actions = new ArrayList<>();
+            List<Action> actionsList = new ArrayList<>();
 
             //merge predefined specific node actions if bban subclasses have their own
             for (Action a : ban.getActions(true)) {
-                actions.add(a);
+                actionsList.add(a);
             }
             BlackboardArtifact ba = ban.getLookup().lookup(BlackboardArtifact.class);
             final int artifactTypeID = ba.getArtifactTypeID();
 
             if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT.getTypeID()
                     || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
-                actions.add(new ViewContextAction(
+                actionsList.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file
                 Content c = findLinked(ban);
                 if (c != null) {
-                    actions.add(new ViewContextAction(
+                    actionsList.add(new ViewContextAction(
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), c));
                 }
                 // action to go to the source file of the artifact
-                actions.add(new ViewContextAction(
+                actionsList.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
             }
             Content c = ban.getLookup().lookup(File.class);
@@ -304,28 +311,44 @@ public class DataResultFilterNode extends FilterNode {
                 n = new SlackFileNode((SlackFile) c);
             }
             if (n != null) {
-                actions.add(null); // creates a menu separator
-                actions.add(new NewWindowViewAction(
+                actionsList.add(null); // creates a menu separator
+                actionsList.add(new NewWindowViewAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInNewWin.text"), n));
-                actions.add(new ExternalViewerAction(
+                actionsList.add(new ExternalViewerAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.openInExtViewer.text"), n));
-                actions.add(null); // creates a menu separator
-                actions.add(ExtractAction.getInstance());
+                actionsList.add(null); // creates a menu separator
+                actionsList.add(ExtractAction.getInstance());
                 if (md5Action) {
-                    actions.add(new HashSearchAction(
+                    actionsList.add(new HashSearchAction(
                             NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.searchFilesSameMd5.text"), n));
                 }
-                actions.add(null); // creates a menu separator
-                actions.add(AddContentTagAction.getInstance());
-                actions.add(AddBlackboardArtifactTagAction.getInstance());
-                actions.addAll(ContextMenuExtensionPoint.getActions());
+                actionsList.add(null); // creates a menu separator
+                actionsList.add(AddContentTagAction.getInstance());
+                actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+                
+                final Collection<AbstractFile> selectedFilesList =
+                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+                if(selectedFilesList.size() == 1) {
+                    actionsList.add(DeleteFileContentTagAction.getInstance());
+                }
             } else {
                 // There's no specific file associated with the artifact, but
                 // we can still tag the artifact itself
-                actions.add(null);
-                actions.add(AddBlackboardArtifactTagAction.getInstance());
+                actionsList.add(null);
+                actionsList.add(AddBlackboardArtifactTagAction.getInstance());
             }
-            return actions;
+            
+            final Collection<BlackboardArtifact> selectedArtifactsList =
+                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if(selectedArtifactsList.size() == 1) {
+                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
+            }
+            
+            if(n != null) {
+                actionsList.addAll(ContextMenuExtensionPoint.getActions());
+            }
+            
+            return actionsList;
         }
 
         @Override
