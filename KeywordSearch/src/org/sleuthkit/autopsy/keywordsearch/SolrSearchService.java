@@ -182,7 +182,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
-     * Creates/opens/upgrades the Solr core/text index for a case
+     * Creates/opens the Solr core/text index for a case
      *
      * @param context The case context.
      *
@@ -253,8 +253,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 // found existing index(es) but none were for latest Solr version and schema version
                 progressUnitsCompleted++;
                 progress.progress(Bundle.SolrSearch_indentifyingIndex_msg(), progressUnitsCompleted);
-                Index indexToUpgrade = IndexFinder.identifyIndexToUse(indexes);
-                if (indexToUpgrade == null) {
+                Index indexToUse = IndexFinder.identifyIndexToUse(indexes);
+                if (indexToUse == null) {
                     // unable to find index that can be used
                     throw new AutopsyServiceException("Unable to find index that can be used for this case");
                 }
@@ -264,7 +264,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                 }
 
                 double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
-                double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
+                double indexSolrVersion = NumberUtils.toDouble(indexToUse.getSolrVersion());
                 if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but not latest schema. index should be used in read-only mode
                     if (RuntimeProperties.runningWithGUI()) {
@@ -286,7 +286,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                         }
                     }
                     // proceed with case open
-                    currentVersionIndex = indexToUpgrade;
+                    currentVersionIndex = indexToUse;
                 } else {
                     // index needs to be upgraded to latest supported version of Solr
                     throw new AutopsyServiceException("Unable to find index to use for Case open");
