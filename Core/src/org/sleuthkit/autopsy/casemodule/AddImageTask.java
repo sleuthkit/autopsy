@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
@@ -61,7 +62,9 @@ class AddImageTask implements Runnable {
      * TODO (AUT-2021): Merge SleuthkitJNI.AddImageProcess and AddImageTask
      */
     private final Object tskAddImageProcessLock;
-    volatile private boolean tskAddImageProcessStopped;
+    
+    @GuardedBy("tskAddImageProcessLock")
+    private boolean tskAddImageProcessStopped;
     private SleuthkitJNI.CaseDbHandle.AddImageProcess tskAddImageProcess;
 
     /**
