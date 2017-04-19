@@ -42,7 +42,7 @@ class IndexFinder {
     private static final String KWS_OUTPUT_FOLDER_NAME = "keywordsearch";
     private static final String KWS_DATA_FOLDER_NAME = "data";
     private static final String INDEX_FOLDER_NAME = "index";
-    private static final String CURRENT_SOLR_VERSION = "6";
+    private static final String CURRENT_SOLR_VERSION = "4";
     private static final String CURRENT_SOLR_SCHEMA_VERSION = "2.0";
 
     static String getCurrentSolrVersion() {
@@ -54,10 +54,8 @@ class IndexFinder {
     }
 
     static Index findLatestVersionIndexDir(List<Index> allIndexes) {
-        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + CURRENT_SOLR_SCHEMA_VERSION;
         for (Index index : allIndexes) {
-            String path = index.getIndexPath();
-            if (path.contains(indexFolderName)) {
+            if (index.getSolrVersion().equals(CURRENT_SOLR_VERSION) && index.getSchemaVersion().equals(CURRENT_SOLR_SCHEMA_VERSION)) {
                 return index;
             }
         }
@@ -98,50 +96,6 @@ class IndexFinder {
             }
         }
         return bestCandidateIndex;
-    }
-
-    /**
-     * Creates a copy of an existing Solr index.
-     *
-     * @param indexToUpgrade Index object to create a copy of
-     * @param context        AutopsyService.CaseContext object
-     *
-     * @return The absolute path of the new Solr index directory
-     *
-     * @throws
-     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
-     */
-    static String copyExistingIndex(Index indexToUpgrade, AutopsyService.CaseContext context) throws AutopsyService.AutopsyServiceException {
-        // folder name for the upgraded index should be latest Solr version BUT schema verion of the existing index
-        String indexFolderName = "solr" + CURRENT_SOLR_VERSION + "_schema" + indexToUpgrade.getSchemaVersion();
-        try {
-            // new index should be stored in "\ModuleOutput\keywordsearch\data\solrX_schemaY\index"
-            File targetDirPath = Paths.get(context.getCase().getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName, INDEX_FOLDER_NAME).toFile(); //NON-NLS
-            if (targetDirPath.exists()) {
-                // targetDirPath should not exist, at least the target directory should be empty
-                List<File> contents = getAllContentsInFolder(targetDirPath.getAbsolutePath());
-                if (!contents.isEmpty()) {
-                    // target directory is not empty
-                    try {
-                        FileUtils.deleteDirectory(targetDirPath.getParentFile()); //We don't want partial copies
-                    } catch (IOException | IllegalArgumentException deleteEx) {
-                        throw new AutopsyService.AutopsyServiceException("Failed to delete existing directory to store the upgraded index " + targetDirPath.getAbsolutePath() + "which was not empty", deleteEx);
-                    }
-                    logger.log(Level.WARNING, String.format("Directory %s existed with contents and was deleted so the upgrade could proceed", indexFolderName));
-                }
-            }
-            targetDirPath.mkdirs();
-            FileUtils.copyDirectory(new File(indexToUpgrade.getIndexPath()), targetDirPath);
-            return targetDirPath.getAbsolutePath();
-        } catch (AutopsyService.AutopsyServiceException | IOException ex) {
-            try {
-                Path targetDirPath = Paths.get(context.getCase().getModuleDirectory(), KWS_OUTPUT_FOLDER_NAME, KWS_DATA_FOLDER_NAME, indexFolderName); //NON-NLS
-                FileUtils.deleteDirectory(targetDirPath.toFile()); //We don't want partial copies
-            } catch (IOException | IllegalArgumentException deleteEx) {
-                logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", indexFolderName), deleteEx);
-            }
-            throw new AutopsyService.AutopsyServiceException("Error occurred while creating a copy of keyword search index", ex);
-        }
     }
 
     /**

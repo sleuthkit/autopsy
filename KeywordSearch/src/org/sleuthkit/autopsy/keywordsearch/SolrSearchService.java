@@ -268,10 +268,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
                 double currentSolrVersion = NumberUtils.toDouble(IndexFinder.getCurrentSolrVersion());
                 double indexSolrVersion = NumberUtils.toDouble(indexToUpgrade.getSolrVersion());
-                if (indexSolrVersion > currentSolrVersion) {
-                    // oops!
-                    throw new AutopsyServiceException("Unable to find index to use for Case open");
-                } else if (indexSolrVersion == currentSolrVersion) {
+                if (indexSolrVersion == currentSolrVersion) {
                     // latest Solr version but not latest schema. index should be used in read-only mode and not be upgraded.
                     if (RuntimeProperties.runningWithGUI()) {
                         // pop up a message box to indicate the read-only restrictions.
@@ -295,58 +292,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
                     currentVersionIndex = indexToUpgrade;
                 } else {
                     // index needs to be upgraded to latest supported version of Solr
-                    if (RuntimeProperties.runningWithGUI()) {
-                        //pop up a message box to indicate the restrictions on adding additional 
-                        //text and performing regex searches
-                        JOptionPane optionPane = new JOptionPane(
-                                NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.msg"),
-                                JOptionPane.WARNING_MESSAGE,
-                                JOptionPane.YES_NO_OPTION);
-                        try {
-                            SwingUtilities.invokeAndWait(() -> {
-                                JDialog dialog = optionPane.createDialog(NbBundle.getMessage(this.getClass(), "SolrSearchService.IndexUpgradeDialog.title"));
-                                dialog.setVisible(true);
-                            });
-                        } catch (InterruptedException ex) {
-                            // Cancelled
-                            return;
-                        } catch (InvocationTargetException ex) {
-                            throw new AutopsyServiceException("Error displaying upgrade confirmation dialog", ex);
-                        }
-                        Object response = optionPane.getValue();
-                        if (JOptionPane.NO_OPTION == (int) response) {
-                            return;
-                        }
-                    }
-
-                    // Copy the existing index and config set into ModuleOutput/keywordsearch/data/solrX_schema_Y/
-                    progressUnitsCompleted++;
-                    progress.progress(Bundle.SolrSearch_copyIndex_msg(), progressUnitsCompleted);
-                    String newIndexDirPath = IndexFinder.copyExistingIndex(indexToUpgrade, context);
-                    File newIndexVersionDir = new File(newIndexDirPath).getParentFile();
-                    if (context.cancelRequested()) {
-                        try {
-                            FileUtils.deleteDirectory(newIndexVersionDir);
-                        } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
-                        }
-                        return;
-                    }
-
-                    // upgrade the existing index to the latest supported Solr version
-                    IndexUpgrader indexUpgrader = new IndexUpgrader();
-                    currentVersionIndex = indexUpgrader.performIndexUpgrade(newIndexDirPath, indexToUpgrade, context, progressUnitsCompleted);
-                    if (currentVersionIndex == null) {
-                        try {
-                            FileUtils.deleteDirectory(newIndexVersionDir);
-                        } catch (IOException ex) {
-                            logger.log(Level.SEVERE, String.format("Failed to delete %s when upgrade cancelled", newIndexVersionDir), ex);
-                        }
-                        return;
-                    }
-
-                    // add current index to the list of indexes that exist for this case
-                    indexes.add(currentVersionIndex);
+                    throw new AutopsyServiceException("Unable to find index to use for Case open");
                 }
             }
         }
