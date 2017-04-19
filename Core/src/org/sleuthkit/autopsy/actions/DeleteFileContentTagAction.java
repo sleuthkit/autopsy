@@ -31,8 +31,6 @@ import javafx.scene.control.Alert;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -88,8 +86,9 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
         return MENU_TEXT;
     }
 
-    @NbBundle.Messages({"# {0} - fileID",
-            "DeleteFileContentTagAction.deleteTag.alert=Unable to untag file {0}."})
+    @NbBundle.Messages({
+        "# {0} - fileID",
+        "DeleteFileContentTagAction.deleteTag.alert=Unable to untag file {0}."})
     protected void deleteTag(TagName tagName, ContentTag contentTag, long fileId) {
         new SwingWorker<Void, Void>() {
 
@@ -132,8 +131,6 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
      * creating or selecting a tag name for a tag and specifying an optional tag
      * comment.
      */
-    // @@@ This user interface has some significant usability issues and needs
-    // to be reworked.
     private class TagMenu extends JMenu {
 
         private static final long serialVersionUID = 1L;

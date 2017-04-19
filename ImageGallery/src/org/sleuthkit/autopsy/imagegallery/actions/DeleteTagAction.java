@@ -156,9 +156,4 @@ public class DeleteTagAction extends Action {
             }
         }
     }
-
-    static private Window getIGWindow() {
-        TopComponent etc = WindowManager.getDefault().findTopComponent(ImageGalleryTopComponent.PREFERRED_ID);
-        return SwingUtilities.getWindowAncestor(etc);
-    }
 }

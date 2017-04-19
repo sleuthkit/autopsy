@@ -44,6 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @NbBundle.Messages({
     "DeleteContentTagAction.deleteTag=Delete Tag",
+    "# {0} - tagName",
     "DeleteContentTagAction.unableToDelTag.msg=Unable to delete tag {0}.",
     "DeleteContentTagAction.tagDelErr=Tag Deletion Error"
 })
@@ -116,10 +117,6 @@ public class DeleteContentTagAction extends AbstractAction {
      */
     @Deprecated
     protected void refreshDirectoryTree() {
-    }
-
-    protected String getActionDisplayName() {
-        return MENU_TEXT;
     }
 
     @NbBundle.Messages({"# {0} - fileID",

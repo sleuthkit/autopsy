@@ -31,8 +31,6 @@ import javafx.scene.control.Alert;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
@@ -134,8 +132,6 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
      * creating or selecting a tag name for a tag and specifying an optional tag
      * comment.
      */
-    // @@@ This user interface has some significant usability issues and needs
-    // to be reworked.
     @NbBundle.Messages({"# {0} - artifactID",
             "DeleteFileBlackboardArtifactTagAction.deleteTags.alert=Unable to untag artifact {0}."})
     private class TagMenu extends JMenu {

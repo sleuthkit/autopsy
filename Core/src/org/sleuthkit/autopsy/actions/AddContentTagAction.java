@@ -38,10 +38,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({
     "AddContentTagAction.singularTagFile=Tag File",
     "AddContentTagAction.pluralTagFile=Tag Files",
+    "# {0} - fileName",
     "AddContentTagAction.unableToTag.msg=Unable to tag {0}, not a regular file.",
     "AddContentTagAction.cannotApplyTagErr=Cannot Apply Tag",
+    "# {0} - fileName",
     "AddContentTagAction.unableToTag.msg2=Unable to tag {0}.",
     "AddContentTagAction.taggingErr=Tagging Error",
+    "# {0} - fileName", "# {1} - tagName",
     "AddContentTagAction.tagExists={0} has been tagged as {1}. Cannot reapply the same tag."
 })
 public class AddContentTagAction extends AddTagAction {

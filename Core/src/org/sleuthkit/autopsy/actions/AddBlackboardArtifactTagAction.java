@@ -37,6 +37,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 @NbBundle.Messages({
     "AddBlackboardArtifactTagAction.singularTagResult=Tag Result",
     "AddBlackboardArtifactTagAction.pluralTagResult=Tag Results",
+    "# {0} - artifactName",
     "AddBlackboardArtifactTagAction.unableToTag.msg=Unable to tag {0}.",
     "AddBlackboardArtifactTagAction.taggingErr=Tagging Error"
 })

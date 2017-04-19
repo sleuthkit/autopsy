@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @NbBundle.Messages({
     "DeleteBlackboardArtifactTagAction.deleteTag=Delete Tag",
+    "# {0} - tagName",
     "DeleteBlackboardArtifactTagAction.unableToDelTag.msg=Unable to delete tag {0}.",
     "DeleteBlackboardArtifactTagAction.tagDelErr=Tag Deletion Error"
 })
@@ -94,10 +95,6 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
                 }
             }
         }).start();
-    }
-
-    protected String getActionDisplayName() {
-        return MENU_TEXT;
     }
 
     @NbBundle.Messages({"# {0} - artifactID",
