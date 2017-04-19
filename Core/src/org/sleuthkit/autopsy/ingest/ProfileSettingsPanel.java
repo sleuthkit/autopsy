@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.ingest;
 
 import java.awt.Cursor;
+import java.awt.event.ActionEvent;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.swing.DefaultListModel;
@@ -27,6 +28,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponents.AdvancedConfigurationDialog;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.ingest.IngestProfiles.IngestProfile;
@@ -54,7 +56,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
     private Map<String, IngestProfile> profiles;
     private ProfilePanel panel;
     private boolean canBeEnabled;  //if something can be enabled ingest is not running
-
+    private int option = JOptionPane.CANCEL_OPTION;
     /**
      * Creates new form ProfileOptionsPanel
      */
@@ -108,10 +110,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         newProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/add16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(newProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.newProfileButton.text")); // NOI18N
-        newProfileButton.setMargin(new java.awt.Insets(2, 8, 2, 8));
-        newProfileButton.setMaximumSize(new java.awt.Dimension(97, 23));
-        newProfileButton.setMinimumSize(new java.awt.Dimension(97, 23));
-        newProfileButton.setPreferredSize(new java.awt.Dimension(97, 23));
+        newProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        newProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        newProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        newProfileButton.setPreferredSize(new java.awt.Dimension(111, 25));
         newProfileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newProfileButtonActionPerformed(evt);
@@ -120,10 +122,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         editProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/edit16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(editProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.editProfileButton.text")); // NOI18N
-        editProfileButton.setMargin(new java.awt.Insets(2, 8, 2, 8));
-        editProfileButton.setMaximumSize(new java.awt.Dimension(97, 23));
-        editProfileButton.setMinimumSize(new java.awt.Dimension(97, 23));
-        editProfileButton.setPreferredSize(new java.awt.Dimension(97, 23));
+        editProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        editProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        editProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        editProfileButton.setPreferredSize(new java.awt.Dimension(111, 25));
         editProfileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 editProfileButtonActionPerformed(evt);
@@ -132,8 +134,10 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
 
         deleteProfileButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/delete16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(deleteProfileButton, org.openide.util.NbBundle.getMessage(ProfileSettingsPanel.class, "ProfileSettingsPanel.deleteProfileButton.text")); // NOI18N
-        deleteProfileButton.setMargin(new java.awt.Insets(2, 8, 2, 8));
-        deleteProfileButton.setPreferredSize(new java.awt.Dimension(97, 23));
+        deleteProfileButton.setMargin(new java.awt.Insets(2, 6, 2, 6));
+        deleteProfileButton.setMaximumSize(new java.awt.Dimension(111, 25));
+        deleteProfileButton.setMinimumSize(new java.awt.Dimension(111, 25));
+        deleteProfileButton.setPreferredSize(new java.awt.Dimension(111, 25));
         deleteProfileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 deleteProfileButtonActionPerformed(evt);
@@ -208,11 +212,11 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                 .addGroup(layout.createSequentialGroup()
-                                    .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                    .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 346, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(profileListLabel))
                         .addGap(6, 6, 6))
@@ -277,21 +281,21 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(selectedModulesLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(selectedModulesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE))
+                                .addComponent(selectedModulesPane, javax.swing.GroupLayout.DEFAULT_SIZE, 171, Short.MAX_VALUE))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(profileListLabel)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 346, Short.MAX_VALUE)
-                                .addGap(9, 9, 9)))
-                        .addGap(4, 4, 4)
+                                .addComponent(profileListPane, javax.swing.GroupLayout.DEFAULT_SIZE, 356, Short.MAX_VALUE)
+                                .addGap(0, 0, 0)))
+                        .addGap(6, 6, 6)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(newProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(editProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(deleteProfileButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(ingestWarningLabel))
-                        .addContainerGap())
+                        .addGap(6, 6, 6))
                     .addComponent(jSeparator2)))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -368,6 +372,7 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
      */
     private void doProfileDialog(IngestProfile selectedProfile) {
         // Create a files set defintion panel.
+         final AdvancedConfigurationDialog dialog = new AdvancedConfigurationDialog(true);
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         //start wait cursor for ingest job settings construction
         if (selectedProfile != null) {
@@ -377,12 +382,21 @@ class ProfileSettingsPanel extends IngestModuleGlobalSettingsPanel implements Op
             // Creating a new set definition.
             panel = new ProfilePanel();
         }
+         dialog.addApplyButtonListener(
+                    (ActionEvent e) -> {
+                        panel.store();
+                        option = JOptionPane.OK_OPTION;
+                        dialog.close();
+                    }
+            );
+           
+        
         //end wait Cursor for ingest job settings construction
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         // Do a dialog box with the profilePanel till the user enters a name or chooses cancel
-        int option = JOptionPane.OK_OPTION;
         do {
-            option = JOptionPane.showConfirmDialog(null, panel, Bundle.ProfileSettingsPanel_title(), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            option = JOptionPane.CANCEL_OPTION; 
+            dialog.display(panel);
         } while (option == JOptionPane.OK_OPTION && !panel.isValidDefinition());
 
         if (option == JOptionPane.OK_OPTION) {

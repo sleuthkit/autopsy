@@ -5,9 +5,8 @@
 <project name="org.sleuthkit.autopsy.testing" default="netbeans" basedir=".">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.testing.</description>
     <import file="nbproject/build-impl.xml"/>
-    
-
-    
+    <property name="regression" value="qa-functional"/>
+ 
     <target name="check-args"> 
         <fail message="Missing required argument: img_path" unless="img_path"/>
         <fail message="Missing required argument: gold_path" unless="gold_path"/>
@@ -16,14 +15,32 @@
         <fail message="Missing required argument: nsrl_path" unless="nsrl_path"/>
         <fail message="Missing required argument: keyword_path" unless="keyword_path"/>
     </target>
-    
-    <target name="regression-test" depends="check-args,init,test-init,test-build" if="exists.test.qa-functional.src.dir">
-        <test test.type="qa-functional"/>
+
+    <!-- use manifestclasspath (http://ant.apache.org/manual/Tasks/manifestclasspath.html) to put all the jar files that we need for junit/regression test
+                  to a single jar file: allJarsInUse.jar. Then we put this new jar to classpath for testing program to avoid command line Java classpath too long problem. -->    
+    <target name="manifest-classpath">
+        <manifestclasspath property="tem.classpath" jarfile="allJarsInUse.jar">
+            <classpath refid="test.${regression}.run.cp"/>
+        </manifestclasspath>
+        <jar destfile="allJarsInUse.jar" basedir="build/classes">
+            <manifest>
+                <attribute name="Class-Path" value="${tem.classpath}"/>
+            </manifest>
+        </jar>
+        <path id="test.classpath">
+            <pathelement path="allJarsInUse.jar"/>
+        </path>
+    </target>
+
+    <target name="regression-test" depends="check-args,init,test-init,test-build, manifest-classpath" if="exists.test.qa-functional.src.dir">
+        <test test.type="${regression}"/>
+        <delete file="allJarsInUse.jar"/>
     </target>
     
     <macrodef name="test">
         <attribute name="test.type"/>
         <attribute name="disable.apple.ui" default="false"/>
+
         <sequential>
             <property name="test.config" value="default"/>
             <property name="test.config.default.includes" value="**/*Test.class"/>
@@ -36,7 +53,7 @@
                 <batchtest todir="${build.test.@{test.type}.results.dir}">
                     <fileset dir="${build.test.@{test.type}.classes.dir}" includes="${test.includes}" excludes="${test.excludes}"/>
                 </batchtest>
-                <classpath refid="test.@{test.type}.run.cp"/>
+                <classpath refid="test.classpath"/>
                 <syspropertyset refid="test.@{test.type}.properties"/>
                 <jvmarg line="${test.bootclasspath.prepend.args}"/>
                 <jvmarg line="${test.run.args}"/>

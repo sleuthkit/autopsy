@@ -19,7 +19,9 @@
 package org.sleuthkit.autopsy.timeline.explorernodes;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
@@ -82,6 +84,8 @@ public class EventRootNode extends DisplayableItemNode {
          * filteredEvents is used to lookup the events from their IDs
          */
         private final FilteredEventsModel filteredEvents;
+        private Map<Long, Node > nodesMap = new HashMap<>();
+        
 
         EventNodeChildFactory(Collection<Long> fileIds, FilteredEventsModel filteredEvents) {
             this.eventIDs = fileIds;
@@ -95,8 +99,12 @@ public class EventRootNode extends DisplayableItemNode {
              * indicate this.
              */
             if (eventIDs.size() < MAX_EVENTS_TO_DISPLAY) {
-                toPopulate.addAll(eventIDs);
+                for (Long eventId: eventIDs){
+                     nodesMap.put(eventId, createNode(eventId));
+                     toPopulate.add(eventId);
+                }
             } else {
+                nodesMap.put(-1L, createNode(-1L));
                 toPopulate.add(-1L);
             }
             return true;
@@ -104,6 +112,11 @@ public class EventRootNode extends DisplayableItemNode {
 
         @Override
         protected Node createNodeForKey(Long eventID) {
+            return nodesMap.get(eventID);
+        }
+        
+        private Node createNode(Long eventID) {
+            
             if (eventID < 0) {
                 /*
                  * If the eventId is a the special value ( -1 ), return a node

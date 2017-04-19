@@ -275,12 +275,12 @@ public class AutopsyTestCases {
         Date date = new Date();
         String datenotime = dateFormat.format(date);
         listOperator.clickOnItem(0, 1);
-        new Timeout("pausing", 1000).sleep();
+        new Timeout("pausing", 2000).sleep();
         jbo0.pushNoBlock();
-        new Timeout("pausing", 1000).sleep();
+        new Timeout("pausing", 2000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 500).sleep();
+        new Timeout("pausing", 1000).sleep();
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);

@@ -32,10 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -64,7 +61,6 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -77,7 +73,6 @@ import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
@@ -106,7 +101,6 @@ import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestJobStartResult;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleError;
-import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.Content;
 
 /**
@@ -781,44 +775,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
     }
 
-    /**
-     * Tries to unload the Solr core for a case.
-     *
-     * @param caseName The case name.
-     * @param coreName The name of the core to unload.
-     *
-     * @throws Exception if there is a problem unloading the core or it has
-     *                   already been unloaded (e.g., by the server due to
-     *                   resource constraints), or there is a problem deleting
-     *                   files associated with the core
-     */
-    private void unloadSolrCore(String coreName) throws Exception {
-        /*
-         * Send a core unload request to the Solr server, with the parameters
-         * that request deleting the index and the instance directory
-         * (deleteInstanceDir removes everything related to the core, the index
-         * directory, the configuration files, etc.) set to true.
-         */
-        String url = "http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr";
-        HttpSolrServer solrServer = new HttpSolrServer(url);
-        org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer);
-    }
-
-    /**
-     * Tries to delete the case database for a case.
-     *
-     * @param caseFolderPath  The case name.
-     * @param caseDatbaseName The case database name.
-     */
-    private void deleteCaseDatabase(String caseDatbaseName) throws UserPreferencesException, ClassNotFoundException, SQLException {
-        CaseDbConnectionInfo db = UserPreferences.getDatabaseConnectionInfo();
-        Class.forName("org.postgresql.Driver"); //NON-NLS
-        try (Connection connection = DriverManager.getConnection("jdbc:postgresql://" + db.getHost() + ":" + db.getPort() + "/postgres", db.getUserName(), db.getPassword()); //NON-NLS
-                Statement statement = connection.createStatement();) {
-            String deleteCommand = "DROP DATABASE \"" + caseDatbaseName + "\""; //NON-NLS
-            statement.execute(deleteCommand);
-        }
-    }
+    
 
     /**
      * Removes a set of auto ingest jobs from a collection of jobs.
@@ -1932,38 +1889,50 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             }
             SYS_LOGGER.log(Level.INFO, "Opening case {0} ({1}) for {2}", new Object[]{caseDisplayName, caseName, manifest.getFilePath()});
             currentJob.setStage(AutoIngestJob.Stage.OPENING_CASE);
-            try {
-                Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);
-                if (null != caseDirectoryPath) {
-                    Path metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
-                    Case.openAsCurrentCase(metadataFilePath.toString());
-                } else {
-                    caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
-                    Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
-                    /*
-                     * Sleep a bit before releasing the lock to ensure that the
-                     * new case folder is visible on the network.
-                     */
-                    Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
-                }
-                currentJob.setCaseDirectoryPath(caseDirectoryPath);
-                Case caseForJob = Case.getCurrentCase();
-                SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
-                return caseForJob;
+            /*
+             * Acquire and hold a case name lock so that only one node at as
+             * time can scan the output directory at a time. This prevents
+             * making duplicate cases for the saem auto ingest case.
+             */
+            try (Lock caseLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.CASES, caseName, 30, TimeUnit.MINUTES)) {
+                if (null != caseLock) {
+                    try {
+                        Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, caseName);
+                        if (null != caseDirectoryPath) {
+                            Path metadataFilePath = caseDirectoryPath.resolve(caseName + CaseMetadata.getFileExtension());
+                            Case.openAsCurrentCase(metadataFilePath.toString());
+                        } else {
+                            caseDirectoryPath = PathUtils.createCaseFolderPath(rootOutputDirectory, caseName);
+                            Case.createAsCurrentCase(caseDirectoryPath.toString(), caseName, "", "", CaseType.MULTI_USER_CASE);
+                            /*
+                             * Sleep a bit before releasing the lock to ensure
+                             * that the new case folder is visible on the
+                             * network.
+                             */
+                            Thread.sleep(AutoIngestUserPreferences.getSecondsToSleepBetweenCases() * 1000);
+                        }
+                        currentJob.setCaseDirectoryPath(caseDirectoryPath);
+                        Case caseForJob = Case.getCurrentCase();
+                        SYS_LOGGER.log(Level.INFO, "Opened case {0} for {1}", new Object[]{caseForJob.getName(), manifest.getFilePath()});
+                        return caseForJob;
 
-            } catch (CaseActionException ex) {
-                throw new CaseManagementException(String.format("Error creating or opening case %s (%s) for %s", manifest.getCaseName(), caseName, manifest.getFilePath()), ex);
-            } catch (IllegalStateException ex) {
-                /*
-                 * Deal with the unfortunate fact that Case.getCurrentCase
-                 * throws IllegalStateException.
-                 */
-                throw new CaseManagementException(String.format("Error getting current case %s (%s) for %s", caseName, manifest.getCaseName(), manifest.getFilePath()), ex);
+                    } catch (CaseActionException ex) {
+                        throw new CaseManagementException(String.format("Error creating or opening case %s (%s) for %s", manifest.getCaseName(), caseName, manifest.getFilePath()), ex);
+                    } catch (IllegalStateException ex) {
+                        /*
+                         * Deal with the unfortunate fact that
+                         * Case.getCurrentCase throws IllegalStateException.
+                         */
+                        throw new CaseManagementException(String.format("Error getting current case %s (%s) for %s", caseName, manifest.getCaseName(), manifest.getFilePath()), ex);
+                    }
+                } else {
+                    throw new CaseManagementException(String.format("Timed out acquiring case name lock for %s for %s", manifest.getCaseName(), manifest.getFilePath()));
+                }
             }
         }
 
         /**
-         * Runs the ingest porocess for the current job.
+         * Runs the ingest process for the current job.
          *
          * @param caseForJob The case for the job.
          *

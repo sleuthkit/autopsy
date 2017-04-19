@@ -5,18 +5,7 @@
 <project name="org.sleuthkit.autopsy.corelibs" default="netbeans" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.corelibs.</description>
     <import file="nbproject/build-impl.xml"/>
-    
-    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
-    <property name="lib.dir" value="release/modules/lib" />
-    
-    
-    <property name="ivy.install.version" value="2.3.0-rc2" />
-    <condition property="ivy.home" value="${env.IVY_HOME}">
-        <isset property="env.IVY_HOME" />
-    </condition>
-    <property name="ivy.home" value="${user.home}/.ant" />
-    <property name="ivy.jar.dir" value="${ivy.home}/lib" />
-    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+    <import file="../BootstrapIvy.xml"/>
     
     <condition property="os.family" value="unix">  
         <os family="unix"/>  
@@ -29,42 +18,21 @@
     </condition>  
     <import file="build-${os.family}.xml"/> 
 
-    <target name="download-ivy" unless="offline">
-        <available file="${ivy.jar.file}" property="ivy.available"/>
-        <antcall target="-download-ivy" />
-    </target>
-    
-    <target name="-download-ivy" unless="ivy.available">
-        <mkdir dir="${ivy.jar.dir}"/>
-        <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
-             dest="${ivy.jar.file}" usetimestamp="true"/>
-    </target>
-
-    <!-- init-ivy will bootstrap Ivy if the user doesn't have it already -->
-    <target name="init-ivy" depends="download-ivy" unless="ivy.lib.path">
-        <path id="ivy.lib.path">
-            <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
-        </path>
-        <taskdef resource="org/apache/ivy/ant/antlib.xml"
-                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
-    </target>
-        
-    <target name="retrieve-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="lib.dir" value="${basedir}/release/modules/lib" />
+   
+    <target name="get-deps" description="retrieve dependencies using ivy" depends="init-ivy,build-native-libs">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
-        <ivy:retrieve sync="false" pattern="release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
+        <ivy:retrieve pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />    
     </target>
     
-    <target name="init" depends="basic-init,files-init,build-init,-javac-init,init-ivy,retrieve-deps">
-        <!-- overrode depends attribute -->
-        
-    </target>
-    
-    <property name="ext.dir" value="release/modules/ext" />
+    <target name="init" depends="get-deps,harness.init"/>
+
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy, 
         or copied in from thirdparty folder.  This way we don't end up with 
         out-of-date/unneeded stuff in the installer-->
-        <delete dir="${ext.dir}"/>
+        <delete dir="${basedir}/release"/>
     </target>
 </project>

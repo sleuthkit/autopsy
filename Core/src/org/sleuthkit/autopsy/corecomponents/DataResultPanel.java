@@ -68,8 +68,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
     private static final Logger logger = Logger.getLogger(DataResultPanel.class.getName());
     private boolean listeningToTabbedPane = false;
-    private static final String DUMMY_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class,
-            "DataResultPanel.dummyNodeDisplayName");
+    private static final String PLEASEWAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class,
+            "DataResultPanel.pleasewaitNodeDisplayName");
 
     /**
      * Creates new DataResultPanel Default constructor, needed mostly for the
@@ -662,7 +662,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
 
         private boolean containsReal(Node[] delta) {
             for (Node n : delta) {
-                if (!n.getDisplayName().equals(DUMMY_NODE_DISPLAY_NAME)) {
+                if (!n.getDisplayName().equals(PLEASEWAIT_NODE_DISPLAY_NAME)) {
                     return true;
                 }
             }
