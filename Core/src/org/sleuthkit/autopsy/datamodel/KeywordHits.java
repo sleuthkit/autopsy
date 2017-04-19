@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -678,6 +679,8 @@ public class KeywordHits implements AutopsyVisitableItem {
     public class RegExpInstancesFactory extends ChildFactory.Detachable<RegExpInstanceKey> implements Observer {
         private final String keyword;
         private final String setName;
+        
+        private Map<RegExpInstanceKey, DisplayableItemNode > nodesMap = new HashMap<>();
 
         public RegExpInstancesFactory(String setName, String keyword) {
             super();
@@ -703,11 +706,16 @@ public class KeywordHits implements AutopsyVisitableItem {
             // Exact/substring matches don't. 
             if ((instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME))) {
                 for (Long id : keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME) ) {
-                    list.add(new RegExpInstanceKey(id));
+                    RegExpInstanceKey key = new RegExpInstanceKey(id);
+                    nodesMap.put(key, createNode(key));
+                    list.add(key);
+                    
                 }
             } else {
                 for (String instance : instances) {
-                    list.add(new RegExpInstanceKey(instance));
+                    RegExpInstanceKey key = new RegExpInstanceKey(instance);
+                    nodesMap.put(key, createNode(key));
+                    list.add(key);
                 }
                 
             }
@@ -716,14 +724,18 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(RegExpInstanceKey key) {
-            // if it isn't not a regexp, then skip the 'instance' layer of the tree
+            return nodesMap.get(key);
+        }
+
+        private DisplayableItemNode createNode(RegExpInstanceKey key) {
+			// if it isn't a regexp, then skip the 'instance' layer of the tree
             if (key.isRegExp() == false) {
                 return createBlackboardArtifactNode(key.getIdKey());
             } else {
                 return new RegExpInstanceNode(setName, keyword, key.getRegExpKey());
             }
+            
         }
-
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);
@@ -863,6 +875,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String keyword;
         private final String setName;
         private final String instance;
+        
+        private Map<Long, BlackboardArtifactNode > nodesMap = new HashMap<>();
 
         public HitsFactory(String setName, String keyword, String instance) {
             super();
@@ -884,12 +898,16 @@ public class KeywordHits implements AutopsyVisitableItem {
         @Override
         protected boolean createKeys(List<Long> list) {
             list.addAll(keywordResults.getArtifactIds(setName, keyword, instance));
+            for (Long id : keywordResults.getArtifactIds(setName, keyword, instance) ) {
+                    nodesMap.put(id,  createBlackboardArtifactNode(id));
+                    list.add(id);
+                }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(Long artifactId) {
-            return createBlackboardArtifactNode(artifactId);
+            return nodesMap.get(artifactId);
         }
 
         @Override
