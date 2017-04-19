@@ -19,15 +19,11 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -72,7 +68,7 @@ class IndexFinder {
         return new Index(targetDirPath.getAbsolutePath(), CURRENT_SOLR_VERSION, CURRENT_SOLR_SCHEMA_VERSION, "", theCase.getName());
     }
 
-    static Index identifyIndexToUpgrade(List<Index> allIndexes) {
+    static Index identifyIndexToUse(List<Index> allIndexes) {
         /*
          * NOTE: All of the following paths are valid multi-user index paths:
          * (Solr 4, schema 1.8)
