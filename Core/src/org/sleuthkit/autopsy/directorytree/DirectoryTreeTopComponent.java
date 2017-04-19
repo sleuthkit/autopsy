@@ -64,7 +64,6 @@ import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
-import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
@@ -414,8 +413,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 tree.expandNode(results);
 
                 Children resultsChilds = results.getChildren();
-                tree.expandNode(resultsChilds.findChild(KeywordHits.NAME));
-                tree.expandNode(resultsChilds.findChild(ExtractedContent.NAME));
+                for (Node n : resultsChilds.getNodes()) {
+                    tree.expandNode(n);
+                }
 
                 Accounts accounts = resultsChilds.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
                 showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
