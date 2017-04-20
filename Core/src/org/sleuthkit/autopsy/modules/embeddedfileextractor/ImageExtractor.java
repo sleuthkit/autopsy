@@ -246,8 +246,6 @@ class ImageExtractor {
             try {
                 data = picture.getContent();
             } catch (Exception ex) {
-                // log internal Java and Apache errors as WARNING
-                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.processing.err", af.getName()), ex); //NON-NLS
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
@@ -295,7 +293,6 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
         List<ExtractedImage> listOfExtractedImages = new ArrayList<>();
@@ -305,8 +302,6 @@ class ImageExtractor {
             try {
                 data = xwpfPicture.getData();
             } catch (Exception ex) {
-                // log internal Java and Apache errors as WARNING
-                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.processing.err", af.getName()), ex); //NON-NLS
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
@@ -352,7 +347,6 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 
@@ -390,8 +384,6 @@ class ImageExtractor {
             try {
                 data = pictureData.getData();
             } catch (Exception ex) {
-                // log internal Java and Apache errors as WARNING
-                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.processing.err", af.getName()), ex); //NON-NLS
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
@@ -438,7 +430,6 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 
@@ -452,8 +443,6 @@ class ImageExtractor {
             try {
                 data = xslsPicture.getData();
             } catch (Exception ex) {
-                // log internal Java and Apache errors as WARNING
-                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.processing.err", af.getName()), ex); //NON-NLS
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, fileName).toString(), data);
@@ -502,7 +491,6 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 
@@ -514,8 +502,6 @@ class ImageExtractor {
             try {
                 data = pictureData.getData();
             } catch (Exception ex) {
-                // log internal Java and Apache errors as WARNING
-                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.processing.err", af.getName()), ex); //NON-NLS
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
@@ -563,7 +549,6 @@ class ImageExtractor {
             outputFolderPath = getOutputFolderPath(this.parentFileName);
         }
         if (outputFolderPath == null) {
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.extractImageFrom.outputPath.exception.msg", af.getName())); //NON-NLS
             return null;
         }
 
@@ -575,8 +560,6 @@ class ImageExtractor {
             try {
                 data = pictureData.getData();
             } catch (Exception ex) {
-                // log internal Java and Apache errors as WARNING
-                logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.processing.err", af.getName()), ex); //NON-NLS
                 return null;
             }
             writeExtractedImage(Paths.get(outputFolderPath, imageName).toString(), data);
