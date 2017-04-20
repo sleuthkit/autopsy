@@ -65,7 +65,6 @@ class AccountsText implements IndexedText {
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
     private static final BlackboardAttribute.Type TSK_CARD_NUMBER = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
-    private static final BlackboardAttribute.Type TSK_KEYWORD_REGEXP = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP);
 
     private static final String FIELD = Server.Schema.CONTENT_STR.toString();
 
@@ -218,21 +217,49 @@ class AccountsText implements IndexedText {
             return;
         }
 
-        try {
-            this.numberPagesForFile = solrServer.queryNumFileChunks(this.solrObjectId);
-        } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Could not get number pages for content " + this.solrObjectId, ex); //NON-NLS
-            return;
-        }
+        this.numberPagesForFile = solrServer.queryNumFileChunks(this.solrObjectId);
+
+        boolean needsQuery = false;
 
         for (BlackboardArtifact artifact : artifacts) {
-            addToPagingInfo(artifact);
+            if (solrObjectId != artifact.getObjectID()) {
+                throw new IllegalStateException("not all artifacts are from the same object!");
+            }
+
+            //add both the canonical form and the form in the text as accountNumbers to highlight.
+            this.accountNumbers.add(artifact.getAttribute(TSK_KEYWORD).getValueString());
+            this.accountNumbers.add(artifact.getAttribute(TSK_CARD_NUMBER).getValueString());
+            
+            //if the chunk id is present just use that.
+            Optional<Integer> chunkID = 
+                    Optional.ofNullable(artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID))
+                            .map(BlackboardAttribute::getValueString)
+                            .map(String::trim)
+                            .map(kwsdocID -> StringUtils.substringAfterLast(kwsdocID, Server.CHUNK_ID_SEPARATOR))
+                            .map(Integer::valueOf);
+            if (chunkID.isPresent()) {
+                numberOfHitsPerPage.put(chunkID.get(), 0);
+                currentHitPerPage.put(chunkID.get(), 0);
+            } else {
+                //otherwise we need to do a query to figure out the paging.
+                needsQuery = true;
+            }
+        }
+        
+        if (needsQuery) {
+            // Run a query to figure out which chunks for the current object have hits.
+            Keyword queryKeyword = new Keyword(CCN_REGEX, false, false); 
+            KeywordSearchQuery chunksQuery = KeywordSearchUtil.getQueryForKeyword(queryKeyword, new KeywordList(Arrays.asList(queryKeyword)));
+            chunksQuery.addFilter(new KeywordQueryFilter(KeywordQueryFilter.FilterType.CHUNK, this.solrObjectId));
+            //load the chunks/pages from the result of the query.
+            loadPageInfoFromHits(chunksQuery.performQuery());
         }
 
         this.currentPage = pages.stream().findFirst().orElse(1);
 
         isPageInfoLoaded = true;
     }
+    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";
 
     /**
      * Load the paging info from the QueryResults object.
@@ -242,46 +269,14 @@ class AccountsText implements IndexedText {
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();
-                    if (chunkID != 0 && this.solrObjectId == hit.getSolrObjectId()) {
-                        String hit1 = hit.getHit();
-                        if (accountNumbers.stream().anyMatch(hit1::contains)) {
-                            numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
-                            currentHitPerPage.put(chunkID, 0); //set current hit to 0th
-                        }
+                if (chunkID != 0 && this.solrObjectId == hit.getSolrObjectId()) {
+                    String hitString = hit.getHit();
+                    if (accountNumbers.stream().anyMatch(hitString::contains)) {
+                        numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
+                        currentHitPerPage.put(chunkID, 0); //set current hit to 0th
                     }
+                }
             }
-        }
-    }
-
-    private void addToPagingInfo(BlackboardArtifact artifact) throws IllegalStateException, TskCoreException, KeywordSearchModuleException, NoOpenCoreException {
-        if (solrObjectId != artifact.getObjectID()) {
-            throw new IllegalStateException("not all artifacts are from the same object!");
-        }
-
-        final String keyword = artifact.getAttribute(TSK_KEYWORD).getValueString();
-        this.accountNumbers.add(keyword);
-        accountNumbers.add(artifact.getAttribute(TSK_CARD_NUMBER).getValueString());
-
-        Optional<Integer> chunkID =
-                Optional.ofNullable(artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID))
-                        .map(BlackboardAttribute::getValueString)
-                        .map(String::trim)
-                        .map(kwsdocID -> StringUtils.substringAfterLast(kwsdocID, Server.CHUNK_ID_SEPARATOR))
-                        .map(Integer::valueOf);
-
-        if (chunkID.isPresent()) {
-            numberOfHitsPerPage.put(chunkID.get(), 0);
-            currentHitPerPage.put(chunkID.get(), 0);
-        } else {
-            // Run a query to figure out which chunks for the current object have
-            // hits for this keyword.
-            Keyword keywordQuery = new Keyword("(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)", false, false, "", keyword);
-            KeywordSearchQuery chunksQuery = KeywordSearchUtil.getQueryForKeyword(keywordQuery, new KeywordList(Arrays.asList(keywordQuery)));
-
-            chunksQuery.addFilter(new KeywordQueryFilter(KeywordQueryFilter.FilterType.CHUNK, this.solrObjectId));
-
-            QueryResults hits = chunksQuery.performQuery();
-            loadPageInfoFromHits(hits);
         }
     }
 

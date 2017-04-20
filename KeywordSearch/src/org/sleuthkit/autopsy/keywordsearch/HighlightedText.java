@@ -183,7 +183,7 @@ class HighlightedText implements IndexedText {
                 break;
             case REGEX:
                 String regexp = artifact.getAttribute(TSK_KEYWORD_REGEXP).getValueString();
-                keywordQuery = new Keyword(regexp, false, false, "", keyword);
+                keywordQuery = new Keyword(regexp, false, false);
                 break;
         }
         KeywordSearchQuery chunksQuery = KeywordSearchUtil.getQueryForKeyword(keywordQuery, new KeywordList(Arrays.asList(keywordQuery)));
