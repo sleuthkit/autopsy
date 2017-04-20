@@ -18,8 +18,13 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.io.File;
+import javax.swing.JFileChooser;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.report.ReportBranding;
 
 /**
  * Options panel that allow users to set application preferences.
@@ -27,9 +32,14 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
+    private final JFileChooser fc;
 
     AutopsyOptionsPanel() {
         initComponents();
+        fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setMultiSelectionEnabled(false);
+        fc.setFileFilter(new GeneralFilter(GeneralFilter.GRAPHIC_IMAGE_EXTS, GeneralFilter.GRAPHIC_IMG_DECR));
     }
 
     void load() {
@@ -43,6 +53,7 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         boolean useLocalTime = UserPreferences.displayTimesInLocalTime();
         useLocalTimeRB.setSelected(useLocalTime);
         useGMTTimeRB.setSelected(!useLocalTime);
+        agencyLogoPathField.setText(ModuleSettings.getConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP));
     }
 
     void store() {
@@ -52,6 +63,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         UserPreferences.setHideSlackFilesInDataSourcesTree(dataSourcesHideSlackCB.isSelected());
         UserPreferences.setHideSlackFilesInViewsTree(viewsHideSlackCB.isSelected());
         UserPreferences.setDisplayTimesInLocalTime(useLocalTimeRB.isSelected());
+        if (!agencyLogoPathField.getText().isEmpty()) {
+            File image = new File(agencyLogoPathField.getText());
+            if (image.exists()) {
+                ModuleSettings.setConfigSetting(ReportBranding.MODULE_NAME, ReportBranding.AGENCY_LOGO_PATH_PROP, agencyLogoPathField.getText());
+            }
+        }
     }
 
     boolean valid() {
@@ -82,6 +99,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
         dataSourcesHideSlackCB = new javax.swing.JCheckBox();
         viewsHideSlackCB = new javax.swing.JCheckBox();
         jLabelHideSlackFiles = new javax.swing.JLabel();
+        agencyLogoImageLabel = new javax.swing.JLabel();
+        agencyLogoPathField = new javax.swing.JTextField();
+        browseLogosButton = new javax.swing.JButton();
 
         jScrollPane1.setBorder(null);
 
@@ -155,6 +175,12 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(jLabelHideSlackFiles, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.jLabelHideSlackFiles.text")); // NOI18N
 
+        org.openide.awt.Mnemonics.setLocalizedText(agencyLogoImageLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoImageLabel.text")); // NOI18N
+
+        agencyLogoPathField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPathField.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(browseLogosButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.browseLogosButton.text")); // NOI18N
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -162,33 +188,32 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabelTimeDisplay)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(useLocalTimeRB)
-                                    .addComponent(useGMTTimeRB))))
-                        .addContainerGap(512, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabelTimeDisplay)
                             .addComponent(jLabelHideKnownFiles)
                             .addComponent(jLabelSelectFile)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(useLocalTimeRB)
+                                    .addComponent(useGMTTimeRB)
                                     .addComponent(keepCurrentViewerRB)
                                     .addComponent(useBestViewerRB)
                                     .addComponent(dataSourcesHideKnownCB)
                                     .addComponent(viewsHideKnownCB))))
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap(140, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabelHideSlackFiles)
+                            .addComponent(agencyLogoImageLabel)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(agencyLogoPathField, javax.swing.GroupLayout.PREFERRED_SIZE, 259, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(browseLogosButton))
                                     .addComponent(dataSourcesHideSlackCB)
                                     .addComponent(viewsHideSlackCB))))
                         .addGap(0, 0, Short.MAX_VALUE))))
@@ -220,7 +245,13 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
                 .addComponent(useLocalTimeRB)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(useGMTTimeRB)
-                .addContainerGap(148, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(agencyLogoImageLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(agencyLogoPathField)
+                    .addComponent(browseLogosButton))
+                .addGap(35, 35, 35))
         );
 
         jScrollPane1.setViewportView(jPanel1);
@@ -270,6 +301,9 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
     }//GEN-LAST:event_viewsHideSlackCBActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel agencyLogoImageLabel;
+    private javax.swing.JTextField agencyLogoPathField;
+    private javax.swing.JButton browseLogosButton;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup3;
     private javax.swing.JCheckBox dataSourcesHideKnownCB;

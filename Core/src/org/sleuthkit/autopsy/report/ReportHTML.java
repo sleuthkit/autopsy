@@ -1,19 +1,19 @@
 /*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2014 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -628,7 +628,7 @@ class ReportHTML implements TableReportModule {
             }
 
             if (totalCount == MAX_THUMBS_PER_PAGE) {
-                // manually set the row count so the count of items shown in the 
+                // manually set the row count so the count of items shown in the
                 // navigation page reflects the number of thumbnails instead of
                 // the number of rows.
                 rowCount = totalCount;
@@ -759,7 +759,7 @@ class ReportHTML implements TableReportModule {
         localFilePath.append(File.separator);
         localFilePath.append(fileName);
 
-        // If the local file doesn't already exist, create it now. 
+        // If the local file doesn't already exist, create it now.
         // The existence check is necessary because it is possible to apply multiple tags with the same tagName to a file.
         File localFile = new File(localFilePath.toString());
         if (!localFile.exists()) {
