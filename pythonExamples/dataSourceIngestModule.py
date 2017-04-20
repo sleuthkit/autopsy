@@ -127,7 +127,7 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
         numFiles = len(files)
         self.log(Level.INFO, "found " + str(numFiles) + " files")
         progressBar.switchToDeterminate(numFiles)
-        fileCount = 0;
+        fileCount = 0
         for file in files:
 
             # Check if the user pressed cancel while we were busy
@@ -169,4 +169,4 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             "Sample Jython Data Source Ingest Module", "Found %d files" % fileCount)
         IngestServices.getInstance().postMessage(message)
 
-        return IngestModule.ProcessResult.OK;
+        return IngestModule.ProcessResult.OK

@@ -110,8 +110,8 @@ class SampleJythonFileIngestModule(FileIngestModule):
     # TODO: Add your analysis code in here.
     def process(self, file):
         # Skip non-files
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
-            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or 
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or
+            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or
             (file.isFile() == False)):
             return IngestModule.ProcessResult.OK
 
@@ -128,7 +128,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artifact.  Refer to the developer docs for other examples.
             art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, 
+            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
                   SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
             art.addAttribute(att)
 
@@ -141,15 +141,15 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
             # Fire an event to notify the UI and others that there is a new artifact
             IngestServices.getInstance().fireModuleDataEvent(
-                ModuleDataEvent(SampleJythonFileIngestModuleFactory.moduleName, 
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None));
+                ModuleDataEvent(SampleJythonFileIngestModuleFactory.moduleName,
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
 
             # For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
             # by other modules. We then iterate over its attributes.  We'll just print them, but you would probably
-            # want to do something with them. 
+            # want to do something with them.
             artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
             for artifact in artifactList:
-                attributeList = artifact.getAttributes();
+                attributeList = artifact.getAttributes()
                 for attrib in attributeList:
                     self.log(Level.INFO, attrib.toString())
 
@@ -169,6 +169,6 @@ class SampleJythonFileIngestModule(FileIngestModule):
     def shutDown(self):
         # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
         message = IngestMessage.createMessage(
-            IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName, 
+            IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName,
                 str(self.filesFound) + " files found")
         ingestServices = IngestServices.getInstance().postMessage(message)
