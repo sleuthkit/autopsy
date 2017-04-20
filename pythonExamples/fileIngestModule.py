@@ -29,7 +29,7 @@
 
 # Simple file-level ingest module for Autopsy.
 # Search for TODO for the things that you need to change
-# See http://sleuthkit.org/autopsy/docs/api-docs/4.1/index.html for documentation
+# See http://sleuthkit.org/autopsy/docs/api-docs/4.4/index.html for documentation
 
 import jarray
 import inspect
@@ -94,7 +94,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.4/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
         self.filesFound = 0
@@ -105,12 +105,12 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
     # Where the analysis is done.  Each file will be passed into here.
     # The 'file' object being passed in is of type org.sleuthkit.datamodel.AbstractFile.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.4/classorg_1_1sleuthkit_1_1datamodel_1_1_abstract_file.html
     # TODO: Add your analysis code in here.
     def process(self, file):
         # Skip non-files
-        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or 
-            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or 
+        if ((file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) or
+            (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS) or
             (file.isFile() == False)):
             return IngestModule.ProcessResult.OK
 
@@ -126,7 +126,7 @@ class SampleJythonFileIngestModule(FileIngestModule):
             # Make an artifact on the blackboard.  TSK_INTERESTING_FILE_HIT is a generic type of
             # artifact.  Refer to the developer docs for other examples.
             art = file.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
-            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, 
+            att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME,
                   SampleJythonFileIngestModuleFactory.moduleName, "Text Files")
             art.addAttribute(att)
 
@@ -138,15 +138,15 @@ class SampleJythonFileIngestModule(FileIngestModule):
 
             # Fire an event to notify the UI and others that there is a new artifact
             IngestServices.getInstance().fireModuleDataEvent(
-                ModuleDataEvent(SampleJythonFileIngestModuleFactory.moduleName, 
-                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None));
+                ModuleDataEvent(SampleJythonFileIngestModuleFactory.moduleName,
+                    BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, None))
 
             # For the example (this wouldn't be needed normally), we'll query the blackboard for data that was added
             # by other modules. We then iterate over its attributes.  We'll just print them, but you would probably
-            # want to do something with them. 
+            # want to do something with them.
             artifactList = file.getArtifacts(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT)
             for artifact in artifactList:
-                attributeList = artifact.getAttributes();
+                attributeList = artifact.getAttributes()
                 for attrib in attributeList:
                     self.log(Level.INFO, attrib.toString())
 
@@ -166,6 +166,6 @@ class SampleJythonFileIngestModule(FileIngestModule):
     def shutDown(self):
         # As a final part of this example, we'll send a message to the ingest inbox with the number of files found (in this thread)
         message = IngestMessage.createMessage(
-            IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName, 
+            IngestMessage.MessageType.DATA, SampleJythonFileIngestModuleFactory.moduleName,
                 str(self.filesFound) + " files found")
         ingestServices = IngestServices.getInstance().postMessage(message)
