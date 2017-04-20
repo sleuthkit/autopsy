@@ -97,43 +97,4 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
         }).start();
     }
 
-    @NbBundle.Messages({"# {0} - artifactID",
-            "DeleteBlackboardArtifactTagAction.deleteTag.alert=Unable to untag artifact {0}."})
-    protected void deleteTag(TagName tagName, BlackboardArtifactTag artifactTag, long artifactId) {
-        new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
-                
-                // Pull the from the global context to avoid unnecessary calls
-                // to the database.
-                final Collection<AbstractFile> selectedFilesList =
-                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                AbstractFile file = selectedFilesList.iterator().next();
-                
-                try {
-                    LOGGER.log(Level.INFO, "Removing tag {0} from {1}", new Object[]{tagName.getDisplayName(), file.getName()}); //NON-NLS
-                    tagsManager.deleteBlackboardArtifactTag(artifactTag);
-                } catch (TskCoreException tskCoreException) {
-                    LOGGER.log(Level.SEVERE, "Error untagging artifact", tskCoreException); //NON-NLS
-                    Platform.runLater(() ->
-                            new Alert(Alert.AlertType.ERROR, Bundle.DeleteBlackboardArtifactTagAction_deleteTag_alert(artifactId)).show()
-                    );
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                try {
-                    get();
-                } catch (InterruptedException | ExecutionException ex) {
-                    LOGGER.log(Level.SEVERE, "Unexpected exception while untagging artifact", ex); //NON-NLS
-                }
-            }
-        }.execute();
-    }
-
 }
