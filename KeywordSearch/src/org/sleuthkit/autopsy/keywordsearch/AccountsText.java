@@ -18,23 +18,19 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.concurrent.GuardedBy;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -69,6 +65,7 @@ class AccountsText implements IndexedText {
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
     private static final BlackboardAttribute.Type TSK_CARD_NUMBER = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
+    private static final BlackboardAttribute.Type TSK_KEYWORD_REGEXP = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP);
 
     private static final String FIELD = Server.Schema.CONTENT_STR.toString();
 
@@ -89,7 +86,8 @@ class AccountsText implements IndexedText {
      */
     private final TreeMap<Integer, Integer> numberOfHitsPerPage = new TreeMap<>();
     /*
-     * set of pages, used for iterating back and forth. Only stores pages with hits
+     * set of pages, used for iterating back and forth. Only stores pages with
+     * hits
      */
     private final Set<Integer> pages = numberOfHitsPerPage.keySet();
     /*
@@ -142,7 +140,7 @@ class AccountsText implements IndexedText {
     @NbBundle.Messages("AccountsText.nextPage.exception.msg=No next page.")
     public int nextPage() {
         if (hasNextPage()) {
-            currentPage =Iterators.get(pages.iterator(),getIndexOfCurrentPage() + 1);
+            currentPage = Iterators.get(pages.iterator(), getIndexOfCurrentPage() + 1);
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_nextPage_exception_msg());
@@ -153,7 +151,7 @@ class AccountsText implements IndexedText {
     @NbBundle.Messages("AccountsText.previousPage.exception.msg=No previous page.")
     public int previousPage() {
         if (hasPreviousPage()) {
-            currentPage = Iterators.get(pages.iterator(),getIndexOfCurrentPage() - 1);
+            currentPage = Iterators.get(pages.iterator(), getIndexOfCurrentPage() - 1);
             return currentPage;
         } else {
             throw new IllegalStateException(Bundle.AccountsText_previousPage_exception_msg());
@@ -215,7 +213,7 @@ class AccountsText implements IndexedText {
      * Initialize this object with information about which pages/chunks have
      * hits. Multiple calls will not change the initial results.
      */
-    synchronized private void loadPageInfo() throws IllegalStateException, TskCoreException {
+    synchronized private void loadPageInfo() throws IllegalStateException, TskCoreException, KeywordSearchModuleException, NoOpenCoreException {
         if (isPageInfoLoaded) {
             return;
         }
@@ -236,31 +234,55 @@ class AccountsText implements IndexedText {
         isPageInfoLoaded = true;
     }
 
-    private void addToPagingInfo(BlackboardArtifact artifact) throws IllegalStateException, TskCoreException {
+    /**
+     * Load the paging info from the QueryResults object.
+     */
+    synchronized private void loadPageInfoFromHits(QueryResults hits) {
+        //organize the hits by page, filter as needed
+        for (Keyword k : hits.getKeywords()) {
+            for (KeywordHit hit : hits.getResults(k)) {
+                int chunkID = hit.getChunkId();
+                    if (chunkID != 0 && this.solrObjectId == hit.getSolrObjectId()) {
+                        String hit1 = hit.getHit();
+                        if (accountNumbers.stream().anyMatch(hit1::contains)) {
+                            numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
+                            currentHitPerPage.put(chunkID, 0); //set current hit to 0th
+                        }
+                    }
+            }
+        }
+    }
+
+    private void addToPagingInfo(BlackboardArtifact artifact) throws IllegalStateException, TskCoreException, KeywordSearchModuleException, NoOpenCoreException {
         if (solrObjectId != artifact.getObjectID()) {
             throw new IllegalStateException("not all artifacts are from the same object!");
         }
 
+        final String keyword = artifact.getAttribute(TSK_KEYWORD).getValueString();
+        this.accountNumbers.add(keyword);
         accountNumbers.add(artifact.getAttribute(TSK_CARD_NUMBER).getValueString());
-        final BlackboardAttribute keywordAttribute = artifact.getAttribute(TSK_KEYWORD);
-        if (keywordAttribute != null) {
-            accountNumbers.add(keywordAttribute.getValueString());
-        }
-        List<String> rawDocIDs = new ArrayList<>();
 
-        final BlackboardAttribute docID = artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID);
-        if (docID != null) {
-            rawDocIDs.add(docID.getValueString());
-        }
+        Optional<Integer> chunkID =
+                Optional.ofNullable(artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID))
+                        .map(BlackboardAttribute::getValueString)
+                        .map(String::trim)
+                        .map(kwsdocID -> StringUtils.substringAfterLast(kwsdocID, Server.CHUNK_ID_SEPARATOR))
+                        .map(Integer::valueOf);
 
-        rawDocIDs.stream()
-                .map(String::trim)
-                .map(t -> StringUtils.substringAfterLast(t, Server.CHUNK_ID_SEPARATOR))
-                .map(Integer::valueOf)
-                .forEach(chunkID -> {
-                    numberOfHitsPerPage.put(chunkID, 0);
-                    currentHitPerPage.put(chunkID, 0);
-                });
+        if (chunkID.isPresent()) {
+            numberOfHitsPerPage.put(chunkID.get(), 0);
+            currentHitPerPage.put(chunkID.get(), 0);
+        } else {
+            // Run a query to figure out which chunks for the current object have
+            // hits for this keyword.
+            Keyword keywordQuery = new Keyword("(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)", false, false, "", keyword);
+            KeywordSearchQuery chunksQuery = KeywordSearchUtil.getQueryForKeyword(keywordQuery, new KeywordList(Arrays.asList(keywordQuery)));
+
+            chunksQuery.addFilter(new KeywordQueryFilter(KeywordQueryFilter.FilterType.CHUNK, this.solrObjectId));
+
+            QueryResults hits = chunksQuery.performQuery();
+            loadPageInfoFromHits(hits);
+        }
     }
 
     @Override
@@ -288,8 +310,8 @@ class AccountsText implements IndexedText {
 
             QueryResponse queryResponse = solrServer.query(q, METHOD.POST);
 
-            String highlightedText
-                    = HighlightedText.attemptManualHighlighting(
+            String highlightedText =
+                    HighlightedText.attemptManualHighlighting(
                             queryResponse.getResults(),
                             Server.Schema.CONTENT_STR.toString(),
                             accountNumbers

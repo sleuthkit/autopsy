@@ -206,16 +206,12 @@ class HighlightedText implements IndexedText {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();
                 if (artifact != null) {
-
                     if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
                         String hit1 = hit.getHit();
                         if (keywords.stream().anyMatch(hit1::contains)) {
                             numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
                             currentHitPerPage.put(chunkID, 0); //set current hit to 0th
 
-//                        if (StringUtils.isNotBlank(hit.getHit())) {
-//                            this.keywords.add(hit.getHit());
-//                        }
                         }
                     }
                 } else {
