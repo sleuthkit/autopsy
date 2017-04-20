@@ -41,7 +41,6 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.keywordsearch.KeywordQueryFilter.FilterType;
-import org.sleuthkit.autopsy.keywordsearch.KeywordSearch.QueryType;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -59,6 +58,7 @@ class HighlightedText implements IndexedText {
     private static final BlackboardAttribute.Type TSK_KEYWORD_SEARCH_TYPE = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE);
     private static final BlackboardAttribute.Type TSK_KEYWORD = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD);
     static private final BlackboardAttribute.Type TSK_ASSOCIATED_ARTIFACT = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT);
+    static private final BlackboardAttribute.Type TSK_KEYWORD_REGEXP = new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP);
 
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
@@ -175,13 +175,21 @@ class HighlightedText implements IndexedText {
         qt = (queryTypeAttribute != null)
                 ? KeywordSearch.QueryType.values()[queryTypeAttribute.getValueInt()] : null;
 
-        isLiteral = qt != QueryType.REGEX;
-
+        Keyword keywordQuery = null;
+        switch (qt) {
+            case LITERAL:
+            case SUBSTRING:
+                keywordQuery = new Keyword(keyword, true, true);
+                break;
+            case REGEX:
+                String regexp = artifact.getAttribute(TSK_KEYWORD_REGEXP).getValueString();
+                keywordQuery = new Keyword(regexp, false, false, "", keyword);
+                break;
+        }
+        KeywordSearchQuery chunksQuery = KeywordSearchUtil.getQueryForKeyword(keywordQuery, new KeywordList(Arrays.asList(keywordQuery)));
         // Run a query to figure out which chunks for the current object have
         // hits for this keyword.
-        Keyword keywordQuery =  new Keyword(keyword, isLiteral, true);
-        KeywordSearchQuery chunksQuery = new LuceneQuery(new KeywordList(Arrays.asList(keywordQuery)), keywordQuery);
-        chunksQuery.escape();
+
         chunksQuery.addFilter(new KeywordQueryFilter(FilterType.CHUNK, this.objectId));
 
         hits = chunksQuery.performQuery();
@@ -197,11 +205,28 @@ class HighlightedText implements IndexedText {
         for (Keyword k : hits.getKeywords()) {
             for (KeywordHit hit : hits.getResults(k)) {
                 int chunkID = hit.getChunkId();
-                if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
-                    numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
-                    currentHitPerPage.put(chunkID, 0); //set current hit to 0th
-                    if (StringUtils.isNotBlank(hit.getHit())) {
-                        this.keywords.add(hit.getHit());
+                if (artifact != null) {
+
+                    if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
+                        String hit1 = hit.getHit();
+                        if (keywords.stream().anyMatch(hit1::contains)) {
+                            numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
+                            currentHitPerPage.put(chunkID, 0); //set current hit to 0th
+
+//                        if (StringUtils.isNotBlank(hit.getHit())) {
+//                            this.keywords.add(hit.getHit());
+//                        }
+                        }
+                    }
+                } else {
+                    if (chunkID != 0 && this.objectId == hit.getSolrObjectId()) {
+
+                        numberOfHitsPerPage.put(chunkID, 0); //unknown number of matches in the page
+                        currentHitPerPage.put(chunkID, 0); //set current hit to 0th
+
+                        if (StringUtils.isNotBlank(hit.getHit())) {
+                            this.keywords.add(hit.getHit());
+                        }
                     }
                 }
             }
