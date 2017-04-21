@@ -35,6 +35,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
+from org.sleuthkit.autopsy.ingest import IngestServices
+from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
@@ -98,9 +100,11 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
         if not databasePath:
             return
 
+        bbartifacts = list()
         try:
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
             statement = connection.createStatement()
+
 
             for tableName in CallLogAnalyzer._tableNames:
                 try:
@@ -126,6 +130,8 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                             artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, directionString))
                             artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
 
+                            bbartifacts.add(artifact)
+
                             try:
                                 # index the artifact for keyword search
                                 blackboard = Case.getCurrentCase().getServices().getBlackboard()
@@ -143,3 +149,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
         except SQLException as ex:
             self._logger.log(Level.SEVERE, "Could not parse call log; error connecting to db " + databasePath, ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
+        finally:
+            if bbartifacts:
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG, bbartifacts))
+

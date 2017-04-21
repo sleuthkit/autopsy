@@ -35,6 +35,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
+from org.sleuthkit.autopsy.ingest import IngestServices
+from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
@@ -71,6 +73,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
         if not databasePath:
             return
 
+        bbartifacts = list()
         try:
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
@@ -102,6 +105,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, body))
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "SMS Message"))
 
+                bbartifacts.add(artifact)
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getServices().getBlackboard()
@@ -115,6 +119,9 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error parsing text messages to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
+            if bbartifacts:
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE, bbartifacts))
+
             try:
                 if resultSet is not None:
                     resultSet.close()

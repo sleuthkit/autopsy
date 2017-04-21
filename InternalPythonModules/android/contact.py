@@ -34,6 +34,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.coreutils import MessageNotifyUtil
 from org.sleuthkit.autopsy.datamodel import ContentUtils
 from org.sleuthkit.autopsy.ingest import IngestJobContext
+from org.sleuthkit.autopsy.ingest import IngestServices
+from org.sleuthkit.autopsy.ingest import ModuleDataEvent
 from org.sleuthkit.datamodel import AbstractFile
 from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
@@ -77,6 +79,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
         if not databasePath:
             return
 
+        bbartifacts = list()
         try:
             Class.forName("org.sqlite.JDBC") # load JDBC driver
             connection = DriverManager.getConnection("jdbc:sqlite:" + databasePath)
@@ -131,6 +134,8 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
                 oldName = name
 
+                bbartifacts.add(artifact)
+
                 try:
                     # index the artifact for keyword search
                     blackboard = Case.getCurrentCase().getServices().getBlackboard()
@@ -146,6 +151,9 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             self._logger.log(Level.SEVERE, "Error posting to blackboard", ex)
             self._logger.log(Level.SEVERE, traceback.format_exc())
         finally:
+            if bbartifacts:
+                IngestServices.getInstance().fireModuleDataEvent(ModuleDataEvent(general.MODULE_NAME, BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT, bbartifacts))
+
             try:
                 if resultSet is not None:
                     resultSet.close()
