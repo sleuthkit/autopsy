@@ -177,7 +177,11 @@ final class AutopsyOptionsPanel extends javax.swing.JPanel {
 
         org.openide.awt.Mnemonics.setLocalizedText(agencyLogoImageLabel, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoImageLabel.text")); // NOI18N
 
+        agencyLogoPathField.setEditable(false);
+        agencyLogoPathField.setBackground(new java.awt.Color(255, 255, 255));
         agencyLogoPathField.setText(org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.agencyLogoPathField.text")); // NOI18N
+        agencyLogoPathField.setFocusable(false);
+        agencyLogoPathField.setRequestFocusEnabled(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(browseLogosButton, org.openide.util.NbBundle.getMessage(AutopsyOptionsPanel.class, "AutopsyOptionsPanel.browseLogosButton.text")); // NOI18N
         browseLogosButton.addActionListener(new java.awt.event.ActionListener() {
