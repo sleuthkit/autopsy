@@ -156,7 +156,11 @@ public class SnapShotReportWriter {
         summaryContext.put("generationDateTime", new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(generationDate)); //NON-NLS
         summaryContext.put("ingestRunning", IngestManager.getInstance().isIngestRunning()); //NON-NLS
         summaryContext.put("currentCase", currentCase); //NON-NLS
-        summaryContext.put("agencyLogoFileName", Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString());
+        String agencyLogo = "agency_logo.png"; //default name for agency logo.
+        if (StringUtils.isNotBlank(reportBranding.getAgencyLogoPath())){
+            agencyLogo = Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString();
+        }
+        summaryContext.put("agencyLogoFileName", agencyLogo);
         fillTemplateAndWrite("/org/sleuthkit/autopsy/timeline/snapshot/summary_template.html", "Summary", summaryContext, reportFolderPath.resolve("summary.html")); //NON-NLS
     }
 
