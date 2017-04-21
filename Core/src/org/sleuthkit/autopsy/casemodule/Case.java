@@ -730,10 +730,8 @@ public class Case {
      * @param caseDisplayName A case display name.
      *
      * @return The unique case name.
-     *
-     * @throws IllegalCaseNameException If the transformation fails.
      */
-    private static String displayNameToUniqueName(String caseDisplayName) throws IllegalCaseNameException {
+    private static String displayNameToUniqueName(String caseDisplayName) {
         /*
          * Replace all non-ASCII characters.
          */
@@ -1682,7 +1680,7 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "Case.exceptionMessage.illegalCaseName=Case name contains one or more illegal characters (\\,/,:,*,?,<,>,|).",
+        "Case.exceptionMessage.emptyCaseName=Case name is empty.",
         "Case.progressMessage.creatingCaseDirectory=Creating case directory...",
         "Case.progressMessage.creatingCaseDatabase=Creating case database...",
         "Case.exceptionMessage.couldNotCreateCaseDatabaseName=Failed to create case database name from case name.",
@@ -1691,6 +1689,14 @@ public class Case {
         "Case.exceptionMessage.couldNotCreateCaseDatabase=Failed to create case database."
     })
     private void create(CaseType caseType, String caseDir, String caseDisplayName, String caseNumber, String examiner, ProgressIndicator progressIndicator) throws CaseActionException {
+        /*
+         * Create a unique and immutable case name from the case display name.
+         */
+        if (caseDisplayName.isEmpty()) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseName());            
+        }
+        String caseName = displayNameToUniqueName(caseDisplayName);
+
         /*
          * Create the case directory, if it does not already exist.
          *
@@ -1714,16 +1720,6 @@ public class Case {
         progressIndicator.progress(Bundle.Case_progressMessage_creatingCaseDirectory());
         if (new File(caseDir).exists() == false) {
             Case.createCaseDirectory(caseDir, caseType);
-        }
-
-        /*
-         * Create a unique and immutable case name from the case display name.
-         */
-        String caseName;
-        try {
-            caseName = displayNameToUniqueName(caseDisplayName);
-        } catch (IllegalCaseNameException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_illegalCaseName()), ex);
         }
 
         /*
@@ -2355,36 +2351,6 @@ public class Case {
             }
         }
 
-    }
-
-    /**
-     * An exception to throw when a case name with invalid characters is
-     * encountered.
-     */
-    final static class IllegalCaseNameException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        /**
-         * Constructs an exception to throw when a case name with invalid
-         * characters is encountered.
-         *
-         * @param message The exception message.
-         */
-        IllegalCaseNameException(String message) {
-            super(message);
-        }
-
-        /**
-         * Constructs an exception to throw when a case name with invalid
-         * characters is encountered.
-         *
-         * @param message The exception message.
-         * @param cause   The exceptin cause.
-         */
-        IllegalCaseNameException(String message, Throwable cause) {
-            super(message, cause);
-        }
     }
 
     /**
