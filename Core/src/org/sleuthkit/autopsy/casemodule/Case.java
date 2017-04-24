@@ -113,10 +113,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class Case {
 
-    private static final int NAME_LOCK_TIMOUT_HOURS = 12;
-    private static final int SHARED_DIR_LOCK_TIMOUT_HOURS = 12;
-    private static final int RESOURCE_LOCK_TIMOUT_HOURS = 12;
-    private static final int MAX_CASEDB_NAME_LEN_MINUS_TIMESTAMP = 47; //Truncate to 63-16=47 chars to accomodate the timestamp
+    private static final int DIR_LOCK_TIMOUT_HOURS = 12;
+    private static final int RESOURCES_LOCK_TIMOUT_HOURS = 12;
     private static final String SINGLE_USER_CASE_DB_NAME = "autopsy.db";
     private static final String EVENT_CHANNEL_NAME = "%s-Case-Events"; //NON-NLS
     private static final String CACHE_FOLDER = "Cache"; //NON-NLS
@@ -475,18 +473,21 @@ public class Case {
             }
 
             if (null != currentCase) {
+                String previousCaseDisplayName = currentCase.getDisplayName();
+                String previousCaseName = currentCase.getName();
+                String previousCaseDir = currentCase.getCaseDirectory();
                 try {
                     closeCurrentCase();
                 } catch (CaseActionException ex) {
-                    logger.log(Level.SEVERE, "Error closing the previous current case", ex); //NON-NLS 
+                    logger.log(Level.SEVERE, String.format("Error closing the previous current case %s (%s) in %s", previousCaseDisplayName, previousCaseName, previousCaseDir), ex); //NON-NLS 
                 }
             }
 
-            logger.log(Level.INFO, "Creating current case with display name {0} in {1}", new Object[]{caseDisplayName, caseDir}); //NON-NLS  
+            logger.log(Level.INFO, "Creating current case {0} in {1}", new Object[]{caseDisplayName, caseDir}); //NON-NLS  
             Case newCurrentCase = new Case();
-            newCurrentCase.open(caseDir, caseDisplayName, caseNumber, examiner, caseType);
+            newCurrentCase.create(caseType, caseDir, caseDisplayName, caseNumber, examiner);
             currentCase = newCurrentCase;
-            logger.log(Level.INFO, "Created currrent case {0} (display name {1}) in {2}", new Object[]{newCurrentCase.getName(), caseDisplayName, caseDir}); //NON-NLS
+            logger.log(Level.INFO, "Created currrent case {0} ({1}) in {2}", new Object[]{newCurrentCase.getDisplayName(), newCurrentCase.getName(), newCurrentCase.getCaseDirectory()}); //NON-NLS
             if (RuntimeProperties.runningWithGUI()) {
                 updateGUIForCaseOpened(newCurrentCase);
             }
@@ -723,83 +724,42 @@ public class Case {
     }
 
     /**
-     * Transforms the display name for a case to make a suitable case name for
-     * use in case directory paths, coordination service locks, Active MQ
-     * message channels, etc.
-     *
-     * ActiveMQ:
-     * http://activemq.2283324.n4.nabble.com/What-are-limitations-restrictions-on-destination-name-td4664141.html
-     * may not be ?
+     * Transforms a case display name into a unique case name that can be used
+     * to identify the case even if the display name is changed.
      *
      * @param caseDisplayName A case display name.
      *
-     * @return The case display name transformed into a corresponding case name.
-     *
-     * @throws org.sleuthkit.autopsy.casemodule.Case.IllegalCaseNameException
+     * @return The unique case name.
      */
-    public static String displayNameToCaseName(String caseDisplayName) throws IllegalCaseNameException {
+    private static String displayNameToUniqueName(String caseDisplayName) {
+        /*
+         * Replace all non-ASCII characters.
+         */
+        String uniqueCaseName = caseDisplayName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
 
         /*
-         * Remove all non-ASCII characters.
+         * Replace all control characters.
          */
-        String caseName = caseDisplayName.replaceAll("[^\\p{ASCII}]", "_"); //NON-NLS
+        uniqueCaseName = uniqueCaseName.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
 
         /*
-         * Remove all control characters.
+         * Replace /, \, :, ?, space, ' ".
          */
-        caseName = caseName.replaceAll("[\\p{Cntrl}]", "_"); //NON-NLS
-
-        /*
-         * Remove /, \, :, ?, space, ' ".
-         */
-        caseName = caseName.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
+        uniqueCaseName = uniqueCaseName.replaceAll("[ /?:'\"\\\\]", "_"); //NON-NLS
 
         /*
          * Make it all lowercase.
          */
-        caseName = caseName.toLowerCase();
-
-        if (caseName.isEmpty()) {
-            throw new IllegalCaseNameException(String.format("Failed to convert case name '%s'", caseDisplayName));
-        }
-
-        return caseName;
-    }
-
-    /**
-     * Transforms a case name into a name for a PostgreSQL database that can be
-     * safely used in SQL commands as described at
-     * http://www.postgresql.org/docs/9.4/static/sql-syntax-lexical.html: 63
-     * chars max, must start with a letter or underscore, following chars can be
-     * letters, underscores, or digits. A timestamp suffix is added to ensure
-     * uniqueness.
-     *
-     * @param caseName The case name.
-     *
-     * @return The case name transformed into a corresponding PostgreSQL case
-     *         database name.
-     */
-    private static String caseNameToCaseDbName(String caseName) throws IllegalCaseNameException {
-        /*
-         * Must start with letter or underscore. If not, prepend an underscore.
-         */
-        String dbName = caseName;
-        if (dbName.length() > 0 && !(Character.isLetter(dbName.codePointAt(0))) && !(dbName.codePointAt(0) == '_')) {
-            dbName = "_" + dbName;
-        }
+        uniqueCaseName = uniqueCaseName.toLowerCase();
 
         /*
-         * Truncate to 63-16=47 chars to accomodate the timestamp, then add the
-         * timestamp.
+         * Add a time stamp for uniqueness.
          */
-        if (dbName.length() > MAX_CASEDB_NAME_LEN_MINUS_TIMESTAMP) {
-            dbName = dbName.substring(0, MAX_CASEDB_NAME_LEN_MINUS_TIMESTAMP);
-        }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         Date date = new Date();
-        dbName = dbName + "_" + dateFormat.format(date);
+        uniqueCaseName = uniqueCaseName + "_" + dateFormat.format(date);
 
-        return dbName;
+        return uniqueCaseName;
     }
 
     /**
@@ -973,7 +933,7 @@ public class Case {
     private static CoordinationService.Lock acquireExclusiveCaseResourcesLock(String caseDir) throws CaseActionException {
         try {
             String resourcesNodeName = caseDir + "_resources";
-            Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCE_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
+            Lock lock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, resourcesNodeName, RESOURCES_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             if (null == lock) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireResourcesLock());
             }
@@ -1585,6 +1545,7 @@ public class Case {
     }
 
     /**
+     * @param caseType        The type of case (single-user or multi-user).
      * @param caseDir         The full path of the case directory. The directory
      *                        will be created if it doesn't already exist; if it
      *                        exists, it is ASSUMED it was created by calling
@@ -1594,7 +1555,6 @@ public class Case {
      * @param caseNumber      The case number, can be the empty string.
      * @param examiner        The examiner to associate with the case, can be
      *                        the empty string.
-     * @param caseType        The type of case (single-user or multi-user).
      *
      * @throws CaseActionException if there is a problem creating the case. The
      *                             exception will have a user-friendly message
@@ -1602,24 +1562,12 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "Case.exceptionMessage.illegalCaseName=Case name contains illegal characters.",
         "Case.progressIndicatorTitle.creatingCase=Creating Case",
         "Case.progressIndicatorCancelButton.label=Cancel",
         "Case.progressMessage.preparing=Preparing...",
         "Case.progressMessage.openingCaseResources=<html>Preparing to open case resources.<br>This may take time if another user is upgrading the case.</html>"
     })
-    private void open(String caseDir, String caseDisplayName, String caseNumber, String examiner, CaseType caseType) throws CaseActionException {
-        /*
-         * Clean up the display name for the case to make a suitable immutable
-         * case name.
-         */
-        String caseName;
-        try {
-            caseName = displayNameToCaseName(caseDisplayName);
-        } catch (IllegalCaseNameException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(Bundle.Case_exceptionMessage_illegalCaseName()), ex);
-        }
-
+    private void create(CaseType caseType, String caseDir, String caseDisplayName, String caseNumber, String examiner) throws CaseActionException {
         /*
          * Set up either a GUI progress indicator or a logging progress
          * indicator.
@@ -1648,7 +1596,7 @@ public class Case {
         caseLockingExecutor = Executors.newSingleThreadExecutor();
         Future<Void> future = caseLockingExecutor.submit(() -> {
             if (CaseType.SINGLE_USER_CASE == caseType) {
-                open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
+                create(caseType, caseDir, caseDisplayName, caseNumber, examiner, progressIndicator);
             } else {
                 /*
                  * Acquire a shared case directory lock that will be held as
@@ -1657,6 +1605,7 @@ public class Case {
                  */
                 progressIndicator.start(Bundle.Case_progressMessage_openingCaseResources());
                 acquireSharedCaseDirLock(caseDir);
+
                 /*
                  * Acquire an exclusive case resources lock to ensure only one
                  * node at a time can create/open/upgrade/close the case
@@ -1665,14 +1614,14 @@ public class Case {
                 try (CoordinationService.Lock resourcesLock = acquireExclusiveCaseResourcesLock(caseDir)) {
                     assert (null != resourcesLock);
                     try {
-                        open(caseDir, caseName, caseDisplayName, caseNumber, examiner, caseType, progressIndicator);
+                        create(caseType, caseDir, caseDisplayName, caseNumber, examiner, progressIndicator);
                     } catch (CaseActionException ex) {
                         /*
                          * Release the case directory lock immediately if there
                          * was a problem opening the case.
                          */
                         if (CaseType.MULTI_USER_CASE == caseType) {
-                            releaseSharedCaseDirLock(caseName);
+                            releaseSharedCaseDirLock(caseDir);
                         }
                         throw ex;
                     }
@@ -1696,7 +1645,6 @@ public class Case {
          */
         try {
             future.get();
-
         } catch (InterruptedException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_wrapperMessage(ex.getMessage()), ex);
         } catch (ExecutionException ex) {
@@ -1711,18 +1659,20 @@ public class Case {
     }
 
     /**
-     * Creates and opens a new case.
+     * Creates a new case.
      *
-     * @param caseDir         The full path of the case directory. The directory
-     *                        will be created if it doesn't already exist; if it
-     *                        exists, it is ASSUMED it was created by calling
-     *                        createCaseDirectory.
-     * @param caseDisplayName The display name of case, which may be changed
-     *                        later by the user.
-     * @param caseNumber      The case number, can be the empty string.
-     * @param examiner        The examiner to associate with the case, can be
-     *                        the empty string.
-     * @param caseType        The type of case (single-user or multi-user).
+     * @param caseType          The type of case (single-user or multi-user).
+     * @param caseDir           The full path of the case directory. The
+     *                          directory will be created if it doesn't already
+     *                          exist; if it exists, it is ASSUMED it was
+     *                          created by calling createCaseDirectory.
+     * @param caseName          The case name.
+     * @param caseDisplayName   The display name of case, which may be changed
+     *                          later by the user.
+     * @param caseNumber        The case number, can be the empty string.
+     * @param examiner          The examiner to associate with the case, can be
+     *                          the empty string.
+     * @param progressIndicator A progress indicator.
      *
      * @throws CaseActionException if there is a problem creating the case. The
      *                             exception will have a user-friendly message
@@ -1730,6 +1680,7 @@ public class Case {
      *                             exception.
      */
     @Messages({
+        "Case.exceptionMessage.emptyCaseName=Case name is empty.",
         "Case.progressMessage.creatingCaseDirectory=Creating case directory...",
         "Case.progressMessage.creatingCaseDatabase=Creating case database...",
         "Case.exceptionMessage.couldNotCreateCaseDatabaseName=Failed to create case database name from case name.",
@@ -1737,7 +1688,15 @@ public class Case {
         "Case.exceptionMessage.couldNotCreateMetadataFile=Failed to create case metadata file.",
         "Case.exceptionMessage.couldNotCreateCaseDatabase=Failed to create case database."
     })
-    private void open(String caseDir, String caseName, String caseDisplayName, String caseNumber, String examiner, CaseType caseType, ProgressIndicator progressIndicator) throws CaseActionException {
+    private void create(CaseType caseType, String caseDir, String caseDisplayName, String caseNumber, String examiner, ProgressIndicator progressIndicator) throws CaseActionException {
+        /*
+         * Create a unique and immutable case name from the case display name.
+         */
+        if (caseDisplayName.isEmpty()) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_emptyCaseName());            
+        }
+        String caseName = displayNameToUniqueName(caseDisplayName);
+
         /*
          * Create the case directory, if it does not already exist.
          *
@@ -1770,30 +1729,24 @@ public class Case {
         String dbName = null;
         try {
             if (CaseType.SINGLE_USER_CASE == caseType) {
-                dbName = SINGLE_USER_CASE_DB_NAME;
-            } else if (CaseType.MULTI_USER_CASE == caseType) {
-                dbName = caseNameToCaseDbName(caseName);
-            }
-        } catch (IllegalCaseNameException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabaseName(), ex);
-        }
-        try {
-            if (CaseType.SINGLE_USER_CASE == caseType) {
                 /*
                  * For single-user cases, the case database is a SQLite database
-                 * physically located in the root of the case directory.
+                 * with a standard name, physically located in the root of the
+                 * case directory.
                  */
+                dbName = SINGLE_USER_CASE_DB_NAME;
                 this.caseDb = SleuthkitCase.newCase(Paths.get(caseDir, SINGLE_USER_CASE_DB_NAME).toString());
             } else if (CaseType.MULTI_USER_CASE == caseType) {
                 /*
                  * For multi-user cases, the case database is a PostgreSQL
-                 * database physically located on the database server.
+                 * database with a name derived from the case display name,
+                 * physically located on the database server.
                  */
-                this.caseDb = SleuthkitCase.newCase(dbName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                this.caseDb = SleuthkitCase.newCase(caseDisplayName, UserPreferences.getDatabaseConnectionInfo(), caseDir);
+                dbName = this.caseDb.getDatabaseName();
             }
         } catch (TskCoreException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabase(), ex);
-
         } catch (UserPreferencesException ex) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         }
@@ -1814,7 +1767,7 @@ public class Case {
     /**
      * Opens an existing case.
      *
-     * @param caseMetadataFilePath The apth to the case metadata file.
+     * @param caseMetadataFilePath The path to the case metadata file.
      *
      * @throws CaseActionException if there is a problem creating the case. The
      *                             exception will have a user-friendly message
@@ -1980,7 +1933,8 @@ public class Case {
         "Case.progressMessage.settingUpNetworkCommunications=Setting up network communications...",})
     private void openServices(ProgressIndicator progressIndicator) throws CaseActionException {
         /*
-         * Switch to writing to the application logs in the logs subdirectory.
+         * Switch to writing to the application logs in the logs subdirectory of
+         * the case directory.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_switchingLogDirectory());
         Logger.setLogDirectory(getLogDirectoryPath());
@@ -1989,12 +1943,11 @@ public class Case {
          * Hook up a SleuthKit layer error reporter.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_settingUpTskErrorReporting());
-
         this.sleuthkitErrorReporter = new SleuthkitErrorReporter(MIN_SECS_BETWEEN_TSK_ERROR_REPORTS, NbBundle.getMessage(Case.class, "IntervalErrorReport.ErrorText"));
         this.caseDb.addErrorObserver(this.sleuthkitErrorReporter);
 
         /*
-         * Clear the temp subdirectory.
+         * Clear the temp subdirectory of the case directory.
          */
         progressIndicator.progress(Bundle.Case_progressMessage_clearingTempDirectory());
         Case.clearTempSubDir(this.getTempDirectory());
@@ -2335,7 +2288,7 @@ public class Case {
     @Messages({"Case.creationException.couldNotAcquireDirLock=Failed to get lock on case directory."})
     private void acquireSharedCaseDirLock(String caseDir) throws CaseActionException {
         try {
-            caseDirLock = CoordinationService.getInstance().tryGetSharedLock(CategoryNode.CASES, caseDir, SHARED_DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
+            caseDirLock = CoordinationService.getInstance().tryGetSharedLock(CategoryNode.CASES, caseDir, DIR_LOCK_TIMOUT_HOURS, TimeUnit.HOURS);
             if (null == caseDirLock) {
                 throw new CaseActionException(Bundle.Case_creationException_couldNotAcquireDirLock());
             }
@@ -2398,36 +2351,6 @@ public class Case {
             }
         }
 
-    }
-
-    /**
-     * An exception to throw when a case name with invalid characters is
-     * encountered.
-     */
-    public final static class IllegalCaseNameException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        /**
-         * Constructs an exception to throw when a case name with invalid
-         * characters is encountered.
-         *
-         * @param message The exception message.
-         */
-        IllegalCaseNameException(String message) {
-            super(message);
-        }
-
-        /**
-         * Constructs an exception to throw when a case name with invalid
-         * characters is encountered.
-         *
-         * @param message The exception message.
-         * @param cause   The exceptin cause.
-         */
-        IllegalCaseNameException(String message, Throwable cause) {
-            super(message, cause);
-        }
     }
 
     /**

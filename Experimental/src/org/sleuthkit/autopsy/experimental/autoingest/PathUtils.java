@@ -46,18 +46,12 @@ final class PathUtils {
      * @return The path of the case folder, or null if it is not found.
      */
     static Path findCaseDirectory(Path folderToSearch, String caseName) {
-        String sanitizedCaseName;
-        try {
-            sanitizedCaseName = Case.displayNameToCaseName(caseName);
-        } catch (Case.IllegalCaseNameException unused) {
-            return null;
-        }
         File searchFolder = new File(folderToSearch.toString());
         if (!searchFolder.isDirectory()) {
             return null;
         }
         Path caseFolderPath = null;
-        String[] candidateFolders = searchFolder.list(new CaseFolderFilter(sanitizedCaseName));
+        String[] candidateFolders = searchFolder.list(new CaseFolderFilter(caseName));
         long mostRecentModified = 0;
         for (String candidateFolder : candidateFolders) {
             File file = new File(candidateFolder);
