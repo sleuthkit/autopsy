@@ -226,7 +226,7 @@ class ImageExtractor {
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -280,7 +280,7 @@ class ImageExtractor {
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.docxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -334,7 +334,7 @@ class ImageExtractor {
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -417,7 +417,7 @@ class ImageExtractor {
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.pptxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -478,7 +478,7 @@ class ImageExtractor {
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.WARNING, String.format("%s%s", NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()), af.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("%s%s", NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsContainer.init.err", af.getName()), af.getName()), ex); //NON-NLS
             return null;
         }
 
@@ -536,7 +536,7 @@ class ImageExtractor {
             return null;
         } catch (Throwable ex) {
             // instantiating POI containers throw RuntimeExceptions
-            logger.log(Level.WARNING, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
+            logger.log(Level.SEVERE, NbBundle.getMessage(this.getClass(), "EmbeddedFileExtractorIngestModule.ImageExtractor.xlsxContainer.init.err", af.getName()), ex); //NON-NLS
             return null;
         }
 
