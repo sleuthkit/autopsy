@@ -43,7 +43,7 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  * Import a case from single-user to multi-user.
- * 
+ *
  * DO NOT USE, NEEDS TO BE UPDATED
  */
 public class SingleUserCaseConverter {
@@ -175,9 +175,15 @@ public class SingleUserCaseConverter {
         }
 
         // Create sanitized names for PostgreSQL and Solr 
+        /*
+         * RJC: Removed package access sanitizeCaseName method, so this is no
+         * longer correct, but this whole class is currently out-of-date (out of
+         * synch with case database schema) and probably belongs in the TSK
+         * layer anyway, see JIRA-1984.
+         */
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss"); //NON-NLS
         Date date = new Date();
-        String dbName = Case.displayNameToCaseName(icd.getNewCaseName()) + "_" + dateFormat.format(date); //NON-NLS
+        String dbName = icd.getNewCaseName() + "_" + dateFormat.format(date); //NON-NLS
         icd.setPostgreSQLDbName(dbName);
 
         // Copy items to new hostname folder structure
@@ -493,12 +499,12 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                
+
                 // If the entry contains an encoding type, copy it. Otherwise use NONE.
                 // The test on column count can be removed if we upgrade the database before conversion.
                 int encoding = TskData.EncodingType.NONE.getType();
                 ResultSetMetaData rsMetaData = inputResultSet.getMetaData();
-                if(rsMetaData.getColumnCount() == 3){
+                if (rsMetaData.getColumnCount() == 3) {
                     encoding = inputResultSet.getInt(3);
                 }
                 outputStatement.executeUpdate("INSERT INTO tsk_files_path (obj_id, path, encoding_type) VALUES (" //NON-NLS

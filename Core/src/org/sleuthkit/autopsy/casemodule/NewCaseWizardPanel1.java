@@ -204,25 +204,19 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
 
     @Override
     public void validate() throws WizardValidationException {
-        String caseDisplayName = getComponent().getCaseName();
-        String caseParentDir = getComponent().getCaseParentDir();
-
-        // check if case Name contain one of this following symbol:
-        //  \ / : * ? " < > |
-        if (!Case.isValidName(caseDisplayName)) {
+        /*
+         * Check whether or not the case name is valid. To be valid, the case
+         * name must not contain any characters that are not allowed in file
+         * names, since it will be used as the name of the case directory.
+         */
+        String caseName = getComponent().getCaseName();
+        if (!Case.isValidName(caseName)) {
             String errorMsg = NbBundle
                     .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.invalidSymbols");
             validationError(errorMsg);
         } else {
-            String caseName = "";
-            try {
-                caseName = Case.displayNameToCaseName(caseDisplayName);
-            } catch (Case.IllegalCaseNameException ex) {
-                String errorMsg = NbBundle
-                        .getMessage(this.getClass(), "NewCaseWizardPanel1.validate.errMsg.invalidSymbols");
-                validationError(errorMsg);
-            }
 
+            String caseParentDir = getComponent().getCaseParentDir();
             String caseDirPath = caseParentDir + caseName;
 
             // check if the directory exist
