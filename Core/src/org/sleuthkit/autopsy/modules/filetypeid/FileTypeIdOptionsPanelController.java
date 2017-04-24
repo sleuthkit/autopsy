@@ -31,7 +31,7 @@ import org.openide.util.Lookup;
         iconBase = "org/sleuthkit/autopsy/modules/filetypeid/user-defined-file-types-settings.png",
         keywords = "#OptionsCategory_Keywords_FileTypeId",
         keywordsCategory = "FileTypeId",
-        position = 8
+        position = 9
 )
 public final class FileTypeIdOptionsPanelController extends OptionsPanelController {
 

@@ -14,23 +14,16 @@
         </copy>
     </target>
     
-    <target name="get-solr-upgrader-jars" description="copy the solr index upgrader jars into release"> 
-        <copy  file="SolrUpgradeTools/Solr4IndexUpgrade.jar"
-               todir="${basedir}/release/Solr4to5IndexUpgrade" />
-        <copy file="SolrUpgradeTools/Solr5IndexUpgrade.jar"
-              todir="${basedir}/release/Solr5to6IndexUpgrade" />
-    </target>
-    
-    <target name="get-deps" depends="init-ivy, get-solr-deployment,get-solr-upgrader-jars">
+    <target name="get-deps" depends="init-ivy, get-solr-deployment">
          <!-- fetch all the dependencies from Ivy and stick them in the right places -->
         <ivy:resolve/>
         <ivy:retrieve conf="autopsy"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />
+        <ivy:retrieve conf="solr-war"  pattern="${basedir}/release/solr/webapps/solr.war" />
+        <ivy:retrieve conf="start-solr"  pattern="${basedir}/release/solr/start.jar" />
         <ivy:retrieve conf="jetty-libs"  pattern="${basedir}/release/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="solr-libs"  pattern="${basedir}/release/solr/solr/lib/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="slf4j-libs"  pattern="${basedir}/release/solr/lib/ext/[artifact]-[revision](-[classifier]).[ext]" />
         <ivy:retrieve conf="servlet"  pattern="${basedir}/release/solr/lib/servlet-api-3.0.jar" />
-        <ivy:retrieve conf="solr4to5" pattern="${basedir}/release/Solr4to5IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
-        <ivy:retrieve conf="solr5to6"  pattern="${basedir}/release/Solr5to6IndexUpgrade/lib/[artifact]-[revision](-[classifier]).[ext]" />
     </target>
     
     <target name="init" depends="get-deps, harness.init"/>

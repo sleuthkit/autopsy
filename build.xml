@@ -82,16 +82,12 @@
         <copy file="${basedir}/KNOWN_ISSUES.txt" tofile="${zip-tmp}/${app.name}/KNOWN_ISSUES.txt"/>
         <unzip src="${thirdparty.dir}/gstreamer/${os.family}/i386/0.10.7/gstreamer.zip" dest="${zip-tmp}/${app.name}/gstreamer"/>
         <copy file="${basedir}/icons/icon.ico" tofile="${zip-tmp}/${app.name}/icon.ico" overwrite="true"/>
-        <!-- Copy the Autopsy documentation to the docs folder if user-docs exist -->
-        <if>
-            <available file="${basedir}/docs/doxygen-user/user-docs" type="dir"/>
-            <then>
-                <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
-                    <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
-                </copy>
-            </then>
-        </if>
         
+        <!-- Copy the Autopsy documentation to the docs folder -->
+        <copy flatten="true" todir="${zip-tmp}/${app.name}/docs">
+            <fileset dir="${basedir}/docs/doxygen-user/user-docs"/>
+        </copy>
+
         <property name="app.property.file" value="${zip-tmp}/${app.name}/etc/${app.name}.conf" />
         <!-- for Japanese localized version add option:  -Duser.language=ja -->        
         <property name="jvm.options" value="&quot;--branding ${app.name} -J-Xms24m -J-XX:MaxPermSize=128M -J-Xverify:none -J-Xdock:name=${app.title}&quot;" />
@@ -221,19 +217,21 @@
     
     
     <target name="doxygen" description="build doxygen docs, requires doxygen in PATH" depends="-init,-hide-excluded-modules">
-        <property environment="env" /> 
-        <if>
-            <available file="doxygen"  
-                 filepath="${env.PATH}"/>
-            <then>
-            <exec executable="doxygen" dir="${basedir}/docs/doxygen">
-                <arg value="Doxyfile"/>
-            </exec>
-            <exec executable="doxygen" dir="${basedir}/docs/doxygen-user">
-                <arg value="Doxyfile"/>
-            </exec>
-            </then>
-        </if>
+        <!-- Delete older versions -->
+        <delete includeemptydirs="true">
+            <fileset dir="${basedir}/docs/doxygen/doxygen_docs" includes="**/*"/>
+        </delete>
+        <delete includeemptydirs="true" failonerror="false">
+            <fileset dir="${basedir}/docs/doxygen-user/user-docs" includes="**/*"/>
+        </delete>
+        
+        <!-- Generate new -->
+        <exec executable="doxygen" dir="${basedir}/docs/doxygen">
+            <arg value="Doxyfile"/>
+        </exec>
+        <exec executable="doxygen" dir="${basedir}/docs/doxygen-user">
+            <arg value="Doxyfile"/>
+        </exec>
     </target>
     
     <target name="check-release">
