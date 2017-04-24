@@ -45,7 +45,7 @@ public class GeneralFilter extends FileFilter {
     public static final List<String> EXECUTABLE_EXTS = Arrays.asList(new String[]{".exe"}); //NON-NLS
     public static final String EXECUTABLE_DESC = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.executableDesc.text");
 
-    public static final List<String> GRAPHIC_IMAGE_EXTS = Arrays.asList(new String[]{".png", ".jpeg", ".jpg", ".gif"}); //NON-NLS
+    public static final List<String> GRAPHIC_IMAGE_EXTS = Arrays.asList(new String[]{".png", ".jpeg", ".jpg", ".gif", ".bmp"}); //NON-NLS
     public static final String GRAPHIC_IMG_DECR = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.graphicImageDesc.text");
 
     private List<String> extensions;
