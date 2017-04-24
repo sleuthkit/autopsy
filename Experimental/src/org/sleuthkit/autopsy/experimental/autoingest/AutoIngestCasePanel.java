@@ -234,7 +234,7 @@ public final class AutoIngestCasePanel extends JPanel {
         try {
             int selectedRow = casesTable.getSelectedRow();
             if (selectedRow >= 0 && selectedRow < casesTable.getRowCount()) {
-                return Paths.get(caseTableModel.getValueAt(selectedRow, COLUMN_HEADERS.CASE.ordinal()).toString());
+                return Paths.get(caseTableModel.getValueAt(casesTable.convertRowIndexToModel(selectedRow), COLUMN_HEADERS.CASE.ordinal()).toString());
             }
         } catch (Exception ignored) {
             return null;
@@ -251,7 +251,7 @@ public final class AutoIngestCasePanel extends JPanel {
         if (path != null) {
             try {
                 for (int row = 0; row < casesTable.getRowCount(); ++row) {
-                    Path temp = Paths.get(caseTableModel.getValueAt(row, COLUMN_HEADERS.CASE.ordinal()).toString());
+                    Path temp = Paths.get(caseTableModel.getValueAt(casesTable.convertRowIndexToModel(row), COLUMN_HEADERS.CASE.ordinal()).toString());
                     if (temp.compareTo(path) == 0) { // found it
                         casesTable.setRowSelectionInterval(row, row);
                         return;
@@ -546,9 +546,10 @@ public final class AutoIngestCasePanel extends JPanel {
      * @param evt -- The event that caused this to be called
      */
     private void bnOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenActionPerformed
-        Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(casesTable.getSelectedRow(),
+        int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
+        Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(modelRow,
                 COLUMN_HEADERS.OUTPUTFOLDER.ordinal()),
-                caseTableModel.getValueAt(casesTable.getSelectedRow(), COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
+                caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
         openCase(caseMetadataFilePath);
     }//GEN-LAST:event_bnOpenActionPerformed
 
@@ -587,7 +588,7 @@ public final class AutoIngestCasePanel extends JPanel {
     }//GEN-LAST:event_rbWeeksItemStateChanged
 
     private void bnShowLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnShowLogActionPerformed
-        int selectedRow = casesTable.getSelectedRow();
+        int selectedRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
         int rowCount = casesTable.getRowCount();
         if (selectedRow >= 0 && selectedRow < rowCount) {
             String thePath = (String) caseTableModel.getValueAt(selectedRow, COLUMN_HEADERS.OUTPUTFOLDER.ordinal());
@@ -611,9 +612,10 @@ public final class AutoIngestCasePanel extends JPanel {
 
     private void casesTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_casesTableMouseClicked
         if (evt.getClickCount() == 2) {
-            Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(casesTable.getSelectedRow(),
+            int modelRow = casesTable.convertRowIndexToModel(casesTable.getSelectedRow());
+            Path caseMetadataFilePath = Paths.get((String) caseTableModel.getValueAt(modelRow,
                     COLUMN_HEADERS.OUTPUTFOLDER.ordinal()),
-                    caseTableModel.getValueAt(casesTable.getSelectedRow(), COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
+                    caseTableModel.getValueAt(modelRow, COLUMN_HEADERS.CASE.ordinal()) + CaseMetadata.getFileExtension());
             openCase(caseMetadataFilePath);
         }
     }//GEN-LAST:event_casesTableMouseClicked
