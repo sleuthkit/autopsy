@@ -134,7 +134,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
                 oldName = name
 
-                bbartifacts.add(artifact)
+                bbartifacts.append(artifact)
 
                 try:
                     # index the artifact for keyword search

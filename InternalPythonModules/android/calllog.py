@@ -130,7 +130,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                             artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, directionString))
                             artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
 
-                            bbartifacts.add(artifact)
+                            bbartifacts.append(artifact)
 
                             try:
                                 # index the artifact for keyword search
