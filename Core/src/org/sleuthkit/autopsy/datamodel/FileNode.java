@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,13 +19,18 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -41,6 +46,8 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * children.
  */
 public class FileNode extends AbstractFsContentNode<AbstractFile> {
+    
+    private static final Logger LOGGER = Logger.getLogger(FileNode.class.getName());
 
     /**
      * Constructor
@@ -96,6 +103,12 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.add(new HashSearchAction(Bundle.FileNode_getActions_searchFilesSameMD5_text(), this));
         actionsList.add(null); // creates a menu separator        
         actionsList.add(AddContentTagAction.getInstance());
+        
+        final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if(selectedFilesList.size() == 1) {
+            actionsList.add(DeleteFileContentTagAction.getInstance());
+        }
+        
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
         return actionsList.toArray(new Action[actionsList.size()]);
     }
