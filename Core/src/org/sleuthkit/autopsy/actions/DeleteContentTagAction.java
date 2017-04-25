@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,25 +20,41 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this Action allow users to delete tags applied to content.
  */
+@NbBundle.Messages({
+    "DeleteContentTagAction.deleteTag=Delete Tag",
+    "# {0} - tagName",
+    "DeleteContentTagAction.unableToDelTag.msg=Unable to delete tag {0}.",
+    "DeleteContentTagAction.tagDelErr=Tag Deletion Error"
+})
 public class DeleteContentTagAction extends AbstractAction {
+    
+    private static final Logger LOGGER = Logger.getLogger(DeleteContentTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteContentTagAction.class,
-            "DeleteContentTagAction.deleteTags");
+            "DeleteContentTagAction.deleteTag");
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
@@ -64,7 +80,7 @@ public class DeleteContentTagAction extends AbstractAction {
                 try {
                     Case.getCurrentCase().getServices().getTagsManager().deleteContentTag(tag);
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
+                    Logger.getLogger(DeleteContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
