@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-MODULE_NAME = "Android Analyzer Python"
+MODULE_NAME = "Android Analyzer"
 
 """
 A parent class of the analyzers
