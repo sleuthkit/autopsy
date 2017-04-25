@@ -1,19 +1,19 @@
 /*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2012-2014 Basis Technology Corp.
- * 
+ *
  * Copyright 2012 42six Solutions.
  * Contact: aebadirad <at> 42six <dot> com
  * Project Contact/Architect: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,6 +32,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -628,7 +631,7 @@ class ReportHTML implements TableReportModule {
             }
 
             if (totalCount == MAX_THUMBS_PER_PAGE) {
-                // manually set the row count so the count of items shown in the 
+                // manually set the row count so the count of items shown in the
                 // navigation page reflects the number of thumbnails instead of
                 // the number of rows.
                 rowCount = totalCount;
@@ -759,7 +762,7 @@ class ReportHTML implements TableReportModule {
         localFilePath.append(File.separator);
         localFilePath.append(fileName);
 
-        // If the local file doesn't already exist, create it now. 
+        // If the local file doesn't already exist, create it now.
         // The existence check is necessary because it is possible to apply multiple tags with the same tagName to a file.
         File localFile = new File(localFilePath.toString());
         if (!localFile.exists()) {
@@ -856,7 +859,7 @@ class ReportHTML implements TableReportModule {
                 // use default Autopsy icon if custom icon is not set
                 iconPath = "favicon.ico";
             } else {
-                iconPath = "agency_logo"; //ref to writeNav() for agency_logo
+                iconPath = Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString(); //ref to writeNav() for agency_logo
             }
             index.append("<head>\n<title>").append(reportTitle).append(" ").append(
                     NbBundle.getMessage(this.getClass(), "ReportHTML.writeIndex.title", currentCase.getDisplayName())).append(
@@ -949,9 +952,8 @@ class ReportHTML implements TableReportModule {
 
             String agencyLogoPath = reportBranding.getAgencyLogoPath();
             if (agencyLogoPath != null && !agencyLogoPath.isEmpty()) {
-                File from = new File(agencyLogoPath);
-                File to = new File(path);
-                FileUtil.copyFile(FileUtil.toFileObject(from), FileUtil.toFileObject(to), "agency_logo"); //NON-NLS
+                Path destinationPath = Paths.get(path);
+                Files.copy(Files.newInputStream(Paths.get(agencyLogoPath)), destinationPath.resolve(Paths.get(agencyLogoPath).getFileName())); //NON-NLS     
             }
 
             in = getClass().getResourceAsStream("/org/sleuthkit/autopsy/report/images/favicon.ico"); //NON-NLS
@@ -1049,7 +1051,9 @@ class ReportHTML implements TableReportModule {
             summary.append("<div class=\"title\">\n"); //NON-NLS
             if (agencyLogoSet) {
                 summary.append("<div class=\"left\">\n"); //NON-NLS
-                summary.append("<img src=\"agency_logo.png\" />\n"); //NON-NLS
+                summary.append("<img src=\"");
+                summary.append(Paths.get(reportBranding.getAgencyLogoPath()).getFileName().toString());
+                summary.append("\" />\n"); //NON-NLS
                 summary.append("</div>\n"); //NON-NLS
             }
             final String align = agencyLogoSet ? "right" : "left"; //NON-NLS NON-NLS

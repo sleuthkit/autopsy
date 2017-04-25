@@ -55,15 +55,16 @@ public final class UserPreferences {
     public static final String EXTERNAL_DATABASE_NAME = "ExternalDatabaseName"; //NON-NLS
     public static final String EXTERNAL_DATABASE_USER = "ExternalDatabaseUsername"; //NON-NLS
     public static final String EXTERNAL_DATABASE_PASSWORD = "ExternalDatabasePassword"; //NON-NLS
-    public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS    
+    public static final String EXTERNAL_DATABASE_TYPE = "ExternalDatabaseType"; //NON-NLS
     public static final String INDEXING_SERVER_HOST = "IndexingServerHost"; //NON-NLS
     public static final String INDEXING_SERVER_PORT = "IndexingServerPort"; //NON-NLS
     private static final String MESSAGE_SERVICE_PASSWORD = "MessageServicePassword"; //NON-NLS
     private static final String MESSAGE_SERVICE_USER = "MessageServiceUser"; //NON-NLS
     private static final String MESSAGE_SERVICE_HOST = "MessageServiceHost"; //NON-NLS
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
-    public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS     
-    public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS  
+    public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
+    public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
+    public static final String AGENCY_LOGO_IMAGE_PATH = "AgencyLogoImagePath"; //NON-NLS
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
     private static final String DEFAULT_PORT_STRING = "61616";
     private static final int DEFAULT_PORT_INT = 61616;
@@ -302,7 +303,7 @@ public final class UserPreferences {
     public static void setIsTimeOutEnabled(boolean enabled) {
         preferences.putBoolean(PROCESS_TIME_OUT_ENABLED, enabled);
     }
-    
+
     /**
      * Get the display name for this program
      * @return Name of this program
@@ -310,17 +311,17 @@ public final class UserPreferences {
     public static String getAppName(){
         return preferences.get(APP_NAME, "Autopsy");
     }
-    
+
     /**
      * Set the display name for this program
-     * 
+     *
      * @param name Display name
      */
     public static void setAppName(String name){
         preferences.put(APP_NAME, name);
     }
-    
-    
+
+
     /**
      * Provides ability to convert text to hex text.
      */
