@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -337,7 +338,6 @@ class HighlightedText implements IndexedText {
 
     @Override
     public String getText() {
-
         try {
             loadPageInfo(); //inits once
             SolrQuery q = new SolrQuery();
@@ -349,15 +349,22 @@ class HighlightedText implements IndexedText {
                 contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
             }
             final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
+
+            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
+            //choose field to highlight based on isLiteral and Solr index schema version.
+            String highlightField = (isLiteral || (indexSchemaVersion < 2.0))
+                    ? LuceneQuery.HIGHLIGHT_FIELD
+                    : Server.Schema.CONTENT_STR.toString();
             if (isLiteral) {
+                //if the query is literal try to get solr to do the highlighting
                 final String highlightQuery = keywords.stream()
                         .map(HighlightedText::constructEscapedSolrQuery)
                         .collect(Collectors.joining(" "));
 
                 q.setQuery(highlightQuery);
-                q.addField(Server.Schema.TEXT.toString());
+                q.addField(highlightField);
                 q.addFilterQuery(filterQuery);
-                q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
+                q.addHighlightField(highlightField);
                 q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
                 //tune the highlighter
@@ -369,8 +376,12 @@ class HighlightedText implements IndexedText {
                 //docs says makes sense for the original Highlighter only, but not really
                 q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
             } else {
+                /*
+                 * if the query is not literal just pull back the text. We will
+                 * do the highlighting in autopsy.
+                 */
                 q.setQuery(filterQuery);
-                q.addField(Server.Schema.CONTENT_STR.toString());
+                q.addField(highlightField);
             }
 
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -383,9 +394,7 @@ class HighlightedText implements IndexedText {
             }
             String highlightedContent;
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
-            String highlightField = isLiteral
-                    ? LuceneQuery.HIGHLIGHT_FIELD
-                    : Server.Schema.CONTENT_STR.toString();
+
             if (responseHighlight == null) {
                 highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
             } else {
@@ -433,6 +442,7 @@ class HighlightedText implements IndexedText {
             return 0;
         }
         return this.numberOfHitsPerPage.get(this.currentPage);
+
     }
 
     /**
@@ -450,7 +460,8 @@ class HighlightedText implements IndexedText {
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
+            return NbBundle.getMessage(HighlightedText.class,
+                    "HighlightedMatchesSource.getMarkup.noMatchMsg");
         }
 
         // It doesn't make sense for there to be more than a single document in
@@ -490,7 +501,8 @@ class HighlightedText implements IndexedText {
             highlightedText.append(text.substring(textOffset, text.length()));
 
             if (highlightedText.length() == 0) {
-                return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
+                return NbBundle.getMessage(HighlightedText.class,
+                        "HighlightedMatchesSource.getMarkup.noMatchMsg");
             }
             //reset for next pass
             text = highlightedText.toString();
