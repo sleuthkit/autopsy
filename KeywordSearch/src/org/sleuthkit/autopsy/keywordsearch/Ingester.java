@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
@@ -180,7 +181,7 @@ class Ingester {
         } catch (IOException ex) {
             // There was a problem reading the file. This error will be
             // suppressed.
-			return false;
+            return false;
         } catch (Exception ex) {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
