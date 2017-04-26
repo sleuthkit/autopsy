@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2016 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,26 +20,42 @@ package org.sleuthkit.autopsy.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import org.openide.util.NbBundle;
 import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Instances of this Action allow users to delete tags applied to blackboard
  * artifacts.
  */
+@NbBundle.Messages({
+    "DeleteBlackboardArtifactTagAction.deleteTag=Delete Tag",
+    "# {0} - tagName",
+    "DeleteBlackboardArtifactTagAction.unableToDelTag.msg=Unable to delete tag {0}.",
+    "DeleteBlackboardArtifactTagAction.tagDelErr=Tag Deletion Error"
+})
 public class DeleteBlackboardArtifactTagAction extends AbstractAction {
+    
+    private static final Logger LOGGER = Logger.getLogger(DeleteBlackboardArtifactTagAction.class.getName());
 
     private static final long serialVersionUID = 1L;
     private static final String MENU_TEXT = NbBundle.getMessage(DeleteBlackboardArtifactTagAction.class,
-            "DeleteBlackboardArtifactTagAction.deleteTags");
+            "DeleteBlackboardArtifactTagAction.deleteTag");
 
     // This class is a singleton to support multi-selection of nodes, since 
     // org.openide.nodes.NodeOp.findActions(Node[] nodes) will only pick up an Action if every 
@@ -65,7 +81,7 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
                 try {
                     Case.getCurrentCase().getServices().getTagsManager().deleteBlackboardArtifactTag(tag);
                 } catch (TskCoreException ex) {
-                    Logger.getLogger(AddContentTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
+                    Logger.getLogger(DeleteBlackboardArtifactTagAction.class.getName()).log(Level.SEVERE, "Error deleting tag", ex); //NON-NLS
                     SwingUtilities.invokeLater(() -> {
                         JOptionPane.showMessageDialog(null,
                                 NbBundle.getMessage(this.getClass(),
@@ -79,30 +95,6 @@ public class DeleteBlackboardArtifactTagAction extends AbstractAction {
                 }
             }
         }).start();
-    }
-
-    /**
-     * Deprecated, use actionPerformed() instead.
-     *
-     * @param event The event associated with the action.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    protected void doAction(ActionEvent event) {
-        actionPerformed(event);
-    }
-
-    /**
-     * Deprecated, does nothing. The TagManager methods to create, update or
-     * delete tags now notify the case that there is a tag change. The case then
-     * publishes an event that triggers a refresh of the tags sub-tree in the
-     * tree view.
-     *
-     * @deprecated
-     */
-    @Deprecated
-    protected void refreshDirectoryTree() {
     }
 
 }

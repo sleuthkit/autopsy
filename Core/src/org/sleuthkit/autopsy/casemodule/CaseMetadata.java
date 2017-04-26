@@ -125,7 +125,7 @@ public final class CaseMetadata {
      *                               created.
      */
     CaseMetadata(String caseDirectory, Case.CaseType caseType, String caseName, String caseDisplayName, String caseNumber, String examiner, String caseDatabase) throws CaseMetadataException {
-        metadataFilePath = Paths.get(caseDirectory, caseName + FILE_EXTENSION);
+        metadataFilePath = Paths.get(caseDirectory, caseDisplayName + FILE_EXTENSION);
         this.caseType = caseType;
         this.caseName = caseName;
         this.caseDisplayName = caseDisplayName;
