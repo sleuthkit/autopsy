@@ -66,7 +66,6 @@ class HighlightedText implements IndexedText {
 
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String HIGHLIGHT_POST = "</span>"; //NON-NLS
-    private static final int HIGHLIGHT_MARKUP_LENGTH = HIGHLIGHT_PRE.length() + HIGHLIGHT_POST.length();
     private static final String ANCHOR_PREFIX = HighlightedText.class.getName() + "_"; //NON-NLS
 
     final private Server solrServer = KeywordSearch.getServer();
@@ -459,7 +458,7 @@ class HighlightedText implements IndexedText {
      *                         to a Solr query. We expect there to only ever be
      *                         a single document.
      *
-     * @return Either a string with the keyword highlighted or a string
+     * @return Either a string with the keyword highlighted via HTML span tags or a string
      *         indicating that we did not find a hit in the document.
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
@@ -481,7 +480,7 @@ class HighlightedText implements IndexedText {
 
         TreeRangeSet<Integer> highlights = TreeRangeSet.create();
 
-        //do a highlighting pass for each keyword
+        //for each keyword find the locations of hits and record them in the RangeSet
         for (String keyword : keywords) {
             //we also need to escape the keyword so that it matches the escaped text
             final String escapedKeyword = StringEscapeUtils.escapeHtml(keyword);
@@ -491,7 +490,7 @@ class HighlightedText implements IndexedText {
                 // Advance the search offset past the keyword.
                 searchOffset = hitOffset + escapedKeyword.length();
 
-                //record the location of th hir, possibly merging it with other hits
+                //record the location of the hir, possibly merging it with other hits
                 highlights.add(Range.closedOpen(hitOffset, searchOffset));
 
                 //look for next hit
