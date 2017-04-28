@@ -419,9 +419,9 @@ class TestRunner(object):
 
         # if need autopsyPlatform setup
         if len(test_data.main_config.autopsyPlatform) > 0:
-            test_data.ant.append("-Dnbplatform.Autopsy_4.3.0.netbeans.dest.dir=" + test_data.main_config.autopsyPlatform)
+            test_data.ant.append("-Dnbplatform.Autopsy_4.4.0.netbeans.dest.dir=" + test_data.main_config.autopsyPlatform)
             test_data.ant.append("-Dnbplatform.default.harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
-            test_data.ant.append("-Dnbplatform.Autopsy_4.3.0.harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
+            test_data.ant.append("-Dnbplatform.Autopsy_4.4.0.harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
  
         Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
         Errors.print_out("CMD: " + " ".join(test_data.ant))
