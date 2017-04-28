@@ -66,7 +66,7 @@ public class InterestingHits implements AutopsyVisitableItem {
     private class InterestingResults extends Observable {
 
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
-        private final Map<String, Map<BlackboardArtifact.ARTIFACT_TYPE, Set<Long>>> interestingItemsMap = new LinkedHashMap<>();
+        private final Map<String, Map<String, Set<Long>>> interestingItemsMap = new LinkedHashMap<>();
 
         public List<String> getSetNames() {
             List<String> setNames;
@@ -77,9 +77,9 @@ public class InterestingHits implements AutopsyVisitableItem {
             return setNames;
         }
 
-        public Set<Long> getArtifactIds(String setName, BlackboardArtifact.ARTIFACT_TYPE type) {
+        public Set<Long> getArtifactIds(String setName, String typeName) {
             synchronized (interestingItemsMap) {
-                return interestingItemsMap.get(setName).get(type);
+                return interestingItemsMap.get(setName).get(typeName);
             }
         }
 
@@ -119,10 +119,10 @@ public class InterestingHits implements AutopsyVisitableItem {
                         long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                         if (!interestingItemsMap.containsKey(value)) {
                             interestingItemsMap.put(value, new LinkedHashMap<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT, new HashSet<>());
-                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT, new HashSet<>());
+                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName(), new HashSet<>());
+                            interestingItemsMap.get(value).put(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName(), new HashSet<>());
                         }
-                        interestingItemsMap.get(value).get(artType).add(artifactId);
+                        interestingItemsMap.get(value).get(artType.getDisplayName()).add(artifactId);
                     }
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -291,8 +291,8 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            int sizeOfSet = interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT).size()
-                    + interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT).size();
+            int sizeOfSet = interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName()).size()
+                    + interestingResults.getArtifactIds(setName, BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName()).size();
             super.setDisplayName(setName + " (" + sizeOfSet + ")");
         }
 
@@ -338,7 +338,7 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
     }
 
-    private class HitTypeFactory extends ChildFactory<BlackboardArtifact.ARTIFACT_TYPE> implements Observer {
+    private class HitTypeFactory extends ChildFactory<String> implements Observer {
 
         private final String setName;
         private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
@@ -350,14 +350,14 @@ public class InterestingHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<BlackboardArtifact.ARTIFACT_TYPE> list) {
-            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
-            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
+        protected boolean createKeys(List<String> list) {
+            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getDisplayName());
+            list.add(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getDisplayName());
             return true;
         }
 
         @Override
-        protected Node createNodeForKey(BlackboardArtifact.ARTIFACT_TYPE key) {
+        protected Node createNodeForKey(String key) {
             return new InterestingItemTypeNode(setName, key);
         }
 
@@ -369,21 +369,21 @@ public class InterestingHits implements AutopsyVisitableItem {
 
     public class InterestingItemTypeNode extends DisplayableItemNode implements Observer {
 
-        private final BlackboardArtifact.ARTIFACT_TYPE type;
+        private final String typeName;
         private final String setName;
 
-        private InterestingItemTypeNode(String setName, BlackboardArtifact.ARTIFACT_TYPE type) {
-            super(Children.create(new HitFactory(setName, type), true), Lookups.singleton(setName));
-            this.type = type;
+        private InterestingItemTypeNode(String setName, String typeName) {
+            super(Children.create(new HitFactory(setName, typeName), true), Lookups.singleton(setName));
+            this.typeName = typeName;
             this.setName = setName;
-            super.setName(type.getDisplayName());
+            super.setName(typeName);
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/interesting_item.png"); //NON-NLS
             interestingResults.addObserver(this);
         }
 
         private void updateDisplayName() {
-            super.setDisplayName(type.getDisplayName() + " (" + interestingResults.getArtifactIds(setName, type).size() + ")");
+            super.setDisplayName(typeName + " (" + interestingResults.getArtifactIds(setName, typeName).size() + ")");
         }
 
         @Override
@@ -399,12 +399,10 @@ public class InterestingHits implements AutopsyVisitableItem {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.name"),
                     NbBundle.getMessage(this.getClass(), "InterestingHits.createSheet.name.desc"),
                     getName()));
-
             return s;
         }
 
@@ -431,13 +429,13 @@ public class InterestingHits implements AutopsyVisitableItem {
     private class HitFactory extends ChildFactory<Long> implements Observer {
 
         private final String setName;
-        private final BlackboardArtifact.ARTIFACT_TYPE type;
+        private final String typeName;
         private final Map<Long, BlackboardArtifact> artifactHits = new HashMap<>();
 
-        private HitFactory(String setName, BlackboardArtifact.ARTIFACT_TYPE type) {
+        private HitFactory(String setName, String typeName) {
             super();
             this.setName = setName;
-            this.type = type;
+            this.typeName = typeName;
             interestingResults.addObserver(this);
         }
 
@@ -448,12 +446,11 @@ public class InterestingHits implements AutopsyVisitableItem {
                 return true;
             }
 
-            interestingResults.getArtifactIds(setName, type).forEach((id) -> {
+            interestingResults.getArtifactIds(setName, typeName).forEach((id) -> {
                 try {
                     BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                     artifactHits.put(id, art);
                     list.add(id);
-
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                 }
