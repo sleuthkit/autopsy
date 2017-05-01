@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,6 +47,7 @@ import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
@@ -54,6 +55,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
 import org.openide.nodes.Node.PropertySet;
+import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeEvent;
 import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
@@ -61,6 +63,7 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
 /**
  * DataResult sortable table viewer
@@ -90,7 +93,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // the column started and where it ended up.
     private int startColumnIndex = -1;
     private int endColumnIndex = -1;
-    private OutlineView ov;
+    private OutlineView outlineView;
+    private Outline outline;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -114,17 +118,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
-        ov = ((OutlineView) this.tableScrollPanel);
-        ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        outlineView = ((OutlineView) this.tableScrollPanel);
+        outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        outline = outlineView.getOutline();
 
-        ov.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // don't show the root node
-        ov.getOutline().setRootVisible(false);
-        ov.getOutline().setDragEnabled(false);
+        outline.setRootVisible(false);
+        outline.setDragEnabled(false);
 
         // add a listener so that when columns are moved, the new order is stored
-        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+        outline.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
             @Override
             public void columnAdded(TableColumnModelEvent e) {
             }
@@ -200,7 +205,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         });
 
         // add a listener to move columns back if user tries to move the first column out of place
-        ov.getOutline().getTableHeader().addMouseListener(new MouseAdapter() {
+        outline.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 /*
@@ -215,7 +220,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                  * without having moved any columns.
                  */
                 if (startColumnIndex != -1 && (startColumnIndex == 0 || endColumnIndex == 0)) {
-                    ov.getOutline().moveColumn(endColumnIndex, startColumnIndex);
+                    outline.moveColumn(endColumnIndex, startColumnIndex);
                 }
                 startColumnIndex = -1;
             }
@@ -237,8 +242,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         super.expandNode(n);
 
         if (this.tableScrollPanel != null) {
-            OutlineView ov = ((OutlineView) this.tableScrollPanel);
-            ov.expandNode(n);
+            outlineView.expandNode(n);
         }
     }
 
@@ -317,8 +321,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param selectedNode
      */
     @Override
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node selectedNode) {
-        final OutlineView ov = ((OutlineView) this.tableScrollPanel);
+
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -326,7 +331,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * applied the number of rows do not match the number of rows in the
          * model."
          */
-        ov.getOutline().unsetQuickFilter();
+        outlineView.getOutline().unsetQuickFilter();
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
@@ -350,8 +355,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
-                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                ov.setPropertyColumns(); // set the empty property header
+                outlineView.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+                outlineView.setPropertyColumns(); // set the empty property header
             }
         } finally {
             this.setCursor(null);
@@ -367,9 +372,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void setupTable(final Node root) {
 
         em.setRootContext(root);
-        final OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
-        if (ov == null) {
+        if (outlineView == null) {
             return;
         }
         currentRoot = root;
@@ -388,7 +392,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         if (props.size() > 0) {
             Node.Property<?> prop = props.remove(0);
-            ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
+            ((DefaultOutlineModel) outlineView.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
         }
 
         // Get the columns setup with respect to names and sortability
@@ -404,46 +408,46 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             propStrings[2 * i + 1] = props.get(i).getDisplayName();
         }
 
-        ov.setPropertyColumns(propStrings);
+        outlineView.setPropertyColumns(propStrings);
 
         // show the horizontal scroll panel and show all the content & header
         // If there is only one column (which was removed from props above)
         // Just let the table resize itself.
-        ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
+        outline.setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         if (root.getChildren().getNodesCount() != 0) {
-            final Graphics graphics = ov.getGraphics();
+            final Graphics graphics = outlineView.getGraphics();
             if (graphics != null) {
                 final FontMetrics metrics = graphics.getFontMetrics();
 
                 int margin = 4;
                 int padding = 8;
 
-                for (int column = 0; column < ov.getOutline().getModel().getColumnCount(); column++) {
+                for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
                     int columnWidthLimit = (column == 0) ? 350 : 300;
                     int valuesWidth = 0;
 
                     // find the maximum width needed to fit the values for the first 100 rows, at most
-                    for (int row = 0; row < Math.min(100, ov.getOutline().getRowCount()); row++) {
-                        TableCellRenderer renderer = ov.getOutline().getCellRenderer(row, column);
-                        Component comp = ov.getOutline().prepareRenderer(renderer, row, column);
+                    for (int row = 0; row < Math.min(100, outline.getRowCount()); row++) {
+                        TableCellRenderer renderer = outline.getCellRenderer(row, column);
+                        Component comp = outline.prepareRenderer(renderer, row, column);
                         valuesWidth = Math.max(comp.getPreferredSize().width, valuesWidth);
                     }
 
-                    int headerWidth = metrics.stringWidth(ov.getOutline().getColumnName(column));
+                    int headerWidth = metrics.stringWidth(outline.getColumnName(column));
                     valuesWidth += firstColumnPadding; // add extra padding for first column
 
                     int columnWidth = Math.max(valuesWidth, headerWidth);
                     columnWidth += 2 * margin + padding; // add margin and regular padding
                     columnWidth = Math.min(columnWidth, columnWidthLimit);
 
-                    ov.getOutline().getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
+                    outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }
             }
         } else {
             // if there's no content just auto resize all columns
-            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
 
         loadSort();
@@ -490,7 +494,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 return component;
             }
         }
-        ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
+        outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
     }
 
     /**
@@ -634,7 +638,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     @Override
     public String getTitle() {
-        return NbBundle.getMessage(this.getClass(), "DataResultViewerTable.title");
+        return NbBundle.getMessage(DataResultViewerTable.class, "DataResultViewerTable.title");
     }
 
     @Override
@@ -650,7 +654,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         super.clearComponent();
     }
 
-    private class PleasewaitNodeListener implements NodeListener {
+    private class PleasewaitNodeListener extends NodeAdapter{
 
         private volatile boolean load = true;
 
@@ -663,39 +667,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             Node[] delta = nme.getDelta();
             if (load && containsReal(delta)) {
                 load = false;
+                //JMTODO: this looks suspicious
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTable(nme.getNode());
                 } else {
-                    SwingUtilities.invokeLater(() -> {
-                        setupTable(nme.getNode());
-                    });
+                    SwingUtilities.invokeLater(() -> setupTable(nme.getNode()));
                 }
             }
         }
 
         private boolean containsReal(Node[] delta) {
-            for (Node n : delta) {
-                if (!n.getDisplayName().equals(PLEASEWAIT_NODE_DISPLAY_NAME)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public void childrenRemoved(NodeMemberEvent nme) {
-        }
-
-        @Override
-        public void childrenReordered(NodeReorderEvent nre) {
-        }
-
-        @Override
-        public void nodeDestroyed(NodeEvent ne) {
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
+            return Stream.of(delta)
+                    .map(Node::getDisplayName)
+                    .noneMatch(PLEASEWAIT_NODE_DISPLAY_NAME::equals);
         }
     }
 }
