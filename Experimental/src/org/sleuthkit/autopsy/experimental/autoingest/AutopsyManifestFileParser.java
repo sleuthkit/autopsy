@@ -62,10 +62,6 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
 
     @Override
     public Manifest parse(Path filePath) throws ManifestFileParserException {
-        if (!fileIsManifest(filePath)) {
-            throw new ManifestFileParserException(String.format("%s not recognized as a manifest", filePath));
-        }
-
         try {
             Document doc = this.createManifestDOM(filePath);
             XPath xpath = XPathFactory.newInstance().newXPath();            
