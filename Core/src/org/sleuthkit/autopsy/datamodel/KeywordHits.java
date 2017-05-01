@@ -897,7 +897,6 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
-            list.addAll(keywordResults.getArtifactIds(setName, keyword, instance));
             for (Long id : keywordResults.getArtifactIds(setName, keyword, instance) ) {
                     nodesMap.put(id,  createBlackboardArtifactNode(id));
                     list.add(id);
