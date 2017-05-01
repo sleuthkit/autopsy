@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -150,8 +152,13 @@ class Ingester {
 
         Map<String, String> fields = getContentFields(source);
         //Get a reader for the content of the given source
-        try (BufferedReader reader = new BufferedReader(extractor.getReader(source));) {
-            Chunker chunker = new Chunker(reader);
+        try (Reader reader = extractor.getReader(source)) {
+            if(reader == null) {
+                return false;
+            }
+            
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            Chunker chunker = new Chunker(bufferedReader);
             for (Chunk chunk : chunker) {
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
@@ -171,6 +178,10 @@ class Ingester {
                 extractor.logWarning("Error chunking content from " + sourceID + ": " + sourceName, chunker.getException());
                 return false;
             }
+        } catch (IOException ex) {
+            // There was a problem reading the file. This error will be
+            // suppressed.
+            return false;
         } catch (Exception ex) {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;

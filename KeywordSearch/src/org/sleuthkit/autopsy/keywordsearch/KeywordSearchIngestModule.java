@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -446,7 +446,6 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
             }
 
             if (extractor == null) {
-                logger.log(Level.INFO, "No text extractor found for file id:{0}, name: {1}, detected format: {2}", new Object[]{aFile.getId(), aFile.getName(), detectedFormat}); //NON-NLS
                 return false;
             }
 
@@ -561,7 +560,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
                     return;
                 }
                 if (!extractTextAndIndex(aFile, fileType)) {
-                    logger.log(Level.WARNING, "Text extractor not found for file. Extracting strings only. File: ''{0}'' (id:{1}).", new Object[]{aFile.getName(), aFile.getId()}); //NON-NLS
+                    // Text extractor not found for file. Extract strings only.
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.SKIPPED_ERROR_TEXTEXTRACT);
                 } else {
                     putIngestStatus(jobId, aFile.getId(), IngestStatus.TEXT_INGESTED);

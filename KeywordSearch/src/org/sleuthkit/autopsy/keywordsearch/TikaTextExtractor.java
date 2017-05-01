@@ -65,6 +65,9 @@ class TikaTextExtractor extends FileTextExtractor {
         ReadContentInputStream stream = new ReadContentInputStream(sourceFile);
 
         Metadata metadata = new Metadata();
+        
+        Reader retValue = null;
+        
         //Parse the file in a task, a convenient way to have a timeout...
         final Future<Reader> future = tikaParseExecutor.submit(() -> new Tika().parse(stream, metadata));
         try {
@@ -73,20 +76,20 @@ class TikaTextExtractor extends FileTextExtractor {
             //check if the reader is empty
             PushbackReader pushbackReader = new PushbackReader(tikaReader);
             int read = pushbackReader.read();
-            if (read == -1) {
-                throw new TextExtractorException("Unable to extract text: Tika returned empty reader for " + sourceFile);
-            }
-            pushbackReader.unread(read);
+            if (read != -1) {
+                pushbackReader.unread(read);
 
-            //concatenate parsed content and meta data into a single reader.
-            CharSource metaDataCharSource = getMetaDataCharSource(metadata);
-            return CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
-        } catch (TimeoutException te) {
+                //concatenate parsed content and meta data into a single reader.
+                CharSource metaDataCharSource = getMetaDataCharSource(metadata);
+                retValue = CharSource.concat(new ReaderCharSource(pushbackReader), metaDataCharSource).openStream();
+            }
+        } catch (TimeoutException ex) {
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.tikaParseTimeout.text", sourceFile.getId(), sourceFile.getName());
-            logWarning(msg, te);
-            throw new TextExtractorException(msg, te);
-        } catch (TextExtractorException ex) {
-            throw ex;
+            logWarning(msg, ex);
+            throw new TextExtractorException(msg, ex);
+        } catch (IOException ex) {
+            // There was a problem reading the file. This error will be
+            // suppressed.
         } catch (Exception ex) {
             KeywordSearch.getTikaLogger().log(Level.WARNING, "Exception: Unable to Tika parse the content" + sourceFile.getId() + ": " + sourceFile.getName(), ex.getCause()); //NON-NLS
             final String msg = NbBundle.getMessage(this.getClass(), "AbstractFileTikaTextExtract.index.exception.tikaParse.msg", sourceFile.getId(), sourceFile.getName());
@@ -95,6 +98,8 @@ class TikaTextExtractor extends FileTextExtractor {
         } finally {
             future.cancel(true);
         }
+        
+        return retValue;
     }
 
     /**
