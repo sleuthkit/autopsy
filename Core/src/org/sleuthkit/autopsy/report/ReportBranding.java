@@ -1,15 +1,15 @@
  /*
  *
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2013-2014 Basis Technology Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public final class ReportBranding implements ReportBrandingProviderI {
 
     //property names
-    private static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath"; //NON-NLS
+    public static final String AGENCY_LOGO_PATH_PROP = "AgencyLogoPath"; //NON-NLS
     private static final String REPORT_TITLE_PROP = "ReportTitle"; //NON-NLS
     private static final String REPORT_FOOTER_PROP = "ReportFooter"; //NON-NLS
     //default settings
@@ -46,7 +46,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
     private static final String DEFAULT_REPORT_FOOTER = NbBundle
             .getMessage(ReportBranding.class, "ReportBranding.defaultReportFooter.text");
     private String reportsBrandingDir; //dir with extracted reports branding resources
-    private static final String MODULE_NAME = ReportBranding.class.getSimpleName();
+    public static final String MODULE_NAME = ReportBranding.class.getSimpleName();
     private static final Logger logger = Logger.getLogger(ReportBranding.class.getName());
 
     // this is static so that it can be set by another object
@@ -130,7 +130,7 @@ public final class ReportBranding implements ReportBrandingProviderI {
 
     @Override
     public void setAgencyLogoPath(String path) {
-        // Use properties to persist the logo to use. 
+        // Use properties to persist the logo to use.
         // Should use static variable instead
         ModuleSettings.setConfigSetting(MODULE_NAME, AGENCY_LOGO_PATH_PROP, path);
     }

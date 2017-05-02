@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.casemodule;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorCallback.DataSourceProcessorResult;
@@ -61,6 +62,8 @@ class AddImageTask implements Runnable {
      * TODO (AUT-2021): Merge SleuthkitJNI.AddImageProcess and AddImageTask
      */
     private final Object tskAddImageProcessLock;
+    
+    @GuardedBy("tskAddImageProcessLock")
     private boolean tskAddImageProcessStopped;
     private SleuthkitJNI.CaseDbHandle.AddImageProcess tskAddImageProcess;
 
@@ -77,8 +80,9 @@ class AddImageTask implements Runnable {
      *                             java.util.TimeZone.getID.
      * @param ignoreFatOrphanFiles Whether to parse orphans if the image has a
      *                             FAT filesystem.
-     * @param imageWriterPath  Path that a copy of the image should be written to.
-     *                         Use empty string to disable image writing
+     * @param imageWriterPath      Path that a copy of the image should be
+     *                             written to. Use empty string to disable image
+     *                             writing
      * @param progressMonitor      Progress monitor to report progress during
      *                             processing.
      * @param callback             Callback to call when processing is done.
@@ -104,7 +108,7 @@ class AddImageTask implements Runnable {
         progressMonitor.setProgress(0);
         Case currentCase = Case.getCurrentCase();
         String imageWriterPath = "";
-        if(imageWriterSettings != null){
+        if (imageWriterSettings != null) {
             imageWriterPath = imageWriterSettings.getPath();
         }
         List<String> errorMessages = new ArrayList<>();
@@ -112,8 +116,12 @@ class AddImageTask implements Runnable {
         try {
             currentCase.getSleuthkitCase().acquireExclusiveLock();
             synchronized (tskAddImageProcessLock) {
-                tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, true, 
-                        ignoreFatOrphanFiles, imageWriterPath);
+                if (!tskAddImageProcessStopped) {  //if we have already cancelled don't bother making an addImageProcess
+                    tskAddImageProcess = currentCase.getSleuthkitCase().makeAddImageProcess(timeZone, true,
+                            ignoreFatOrphanFiles, imageWriterPath);
+                } else {
+                    return; //we have already cancelled so we do not want to add the image, returning will execute the finally block 
+                }
             }
             Thread progressUpdateThread = new Thread(new ProgressUpdater(progressMonitor, tskAddImageProcess));
             progressUpdateThread.start();
@@ -142,6 +150,7 @@ class AddImageTask implements Runnable {
      */
     public void cancelTask() {
         synchronized (tskAddImageProcessLock) {
+            tskAddImageProcessStopped = true;
             if (null != tskAddImageProcess) {
                 try {
                     /*
@@ -153,7 +162,7 @@ class AddImageTask implements Runnable {
                      * called.
                      */
                     tskAddImageProcess.stop();
-                    tskAddImageProcessStopped = true;
+
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, String.format("Error cancelling adding image %s to the case database", imagePath), ex); //NON-NLS
                 }
@@ -213,13 +222,13 @@ class AddImageTask implements Runnable {
                         if (!verificationError.isEmpty()) {
                             errorMessages.add(verificationError);
                         }
-                        if(imageWriterSettings != null){
-                            ImageWriterService.createImageWriter(imageId, imageWriterSettings);                            
+                        if (imageWriterSettings != null) {
+                            ImageWriterService.createImageWriter(imageId, imageWriterSettings);
                         }
                         newDataSources.add(newImage);
                     } else {
                         String errorMessage = String.format("Error commiting adding image %s to the case database, no object id returned", imagePath); //NON-NLS
-                        logger.log(Level.SEVERE, errorMessage); 
+                        logger.log(Level.SEVERE, errorMessage);
                         errorMessages.add(errorMessage);
                         criticalErrorOccurred = true;
                     }

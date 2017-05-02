@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2013 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +19,16 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import javax.swing.Action;
 import org.openide.util.NbBundle;
+import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
+import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -37,6 +42,8 @@ import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
  * are more directories.
  */
 public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
+    
+    private static final Logger LOGGER = Logger.getLogger(DirectoryNode.class.getName());
 
     public static final String DOTDOTDIR = NbBundle.getMessage(DirectoryNode.class, "DirectoryNode.parFolder.text");
     public static final String DOTDIR = NbBundle.getMessage(DirectoryNode.class, "DirectoryNode.curFolder.text");
@@ -71,23 +78,29 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
      */
     @Override
     public Action[] getActions(boolean popup) {
-        List<Action> actions = new ArrayList<>();
+        List<Action> actionsList = new ArrayList<>();
         for (Action a : super.getActions(true)) {
-            actions.add(a);
+            actionsList.add(a);
         }
         if (!getDirectoryBrowseMode()) {
-            actions.add(new ViewContextAction(
+            actionsList.add(new ViewContextAction(
                     NbBundle.getMessage(this.getClass(), "DirectoryNode.getActions.viewFileInDir.text"), this));
-            actions.add(null); // creates a menu separator
+            actionsList.add(null); // creates a menu separator
         }
-        actions.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "DirectoryNode.viewInNewWin.text"), this));
-        actions.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
-        actions.add(null); // creates a menu separator
-        actions.add(ExtractAction.getInstance());
-        actions.add(null); // creates a menu separator
-        actions.add(AddContentTagAction.getInstance());
-        actions.addAll(ContextMenuExtensionPoint.getActions());
-        return actions.toArray(new Action[actions.size()]);
+        actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "DirectoryNode.viewInNewWin.text"), this));
+        actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(ExtractAction.getInstance());
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(AddContentTagAction.getInstance());
+        
+        final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if(selectedFilesList.size() == 1) {
+            actionsList.add(DeleteFileContentTagAction.getInstance());
+        }
+        
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     @Override
