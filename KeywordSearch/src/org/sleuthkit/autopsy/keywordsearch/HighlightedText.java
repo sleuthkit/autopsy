@@ -490,7 +490,7 @@ class HighlightedText implements IndexedText {
                 // Advance the search offset past the keyword.
                 searchOffset = hitOffset + escapedKeyword.length();
 
-                //record the location of the hir, possibly merging it with other hits
+                //record the location of the hit, possibly merging it with other hits
                 highlights.add(Range.closedOpen(hitOffset, searchOffset));
 
                 //look for next hit
