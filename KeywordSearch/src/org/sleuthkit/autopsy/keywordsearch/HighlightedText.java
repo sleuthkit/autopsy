@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.common.collect.TreeRangeSet;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -455,13 +458,12 @@ class HighlightedText implements IndexedText {
      *                         to a Solr query. We expect there to only ever be
      *                         a single document.
      *
-     * @return Either a string with the keyword highlighted or a string
+     * @return Either a string with the keyword highlighted via HTML span tags or a string
      *         indicating that we did not find a hit in the document.
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
         if (solrDocumentList.isEmpty()) {
-            return NbBundle.getMessage(HighlightedText.class,
-                    "HighlightedMatchesSource.getMarkup.noMatchMsg");
+            return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
         }
 
         // It doesn't make sense for there to be more than a single document in
@@ -476,39 +478,41 @@ class HighlightedText implements IndexedText {
         // not see highlighted text in the content viewer.
         text = StringEscapeUtils.escapeHtml(text);
 
-        StringBuilder highlightedText = new StringBuilder("");
+        TreeRangeSet<Integer> highlights = TreeRangeSet.create();
 
-        //do a highlighting pass for each keyword
+        //for each keyword find the locations of hits and record them in the RangeSet
         for (String keyword : keywords) {
-            //we also need to escape the keyword so that it matches the escpared text
+            //we also need to escape the keyword so that it matches the escaped text
             final String escapedKeyword = StringEscapeUtils.escapeHtml(keyword);
-            int textOffset = 0;
-            int hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset);
+            int searchOffset = 0;
+            int hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, searchOffset);
             while (hitOffset != -1) {
-                // Append the portion of text up to (but not including) the hit.
-                highlightedText.append(text.substring(textOffset, hitOffset));
-                // Add in the highlighting around the keyword.
-                highlightedText.append(HIGHLIGHT_PRE);
-                highlightedText.append(keyword);
-                highlightedText.append(HIGHLIGHT_POST);
+                // Advance the search offset past the keyword.
+                searchOffset = hitOffset + escapedKeyword.length();
 
-                // Advance the text offset past the keyword.
-                textOffset = hitOffset + escapedKeyword.length();
+                //record the location of the hir, possibly merging it with other hits
+                highlights.add(Range.closedOpen(hitOffset, searchOffset));
 
-                hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset);
+                //look for next hit
+                hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, searchOffset);
             }
-            // Append the remainder of text field
-            highlightedText.append(text.substring(textOffset, text.length()));
-
-            if (highlightedText.length() == 0) {
-                return NbBundle.getMessage(HighlightedText.class,
-                        "HighlightedMatchesSource.getMarkup.noMatchMsg");
-            }
-            //reset for next pass
-            text = highlightedText.toString();
-            highlightedText = new StringBuilder("");
         }
-        return text;
+
+        StringBuilder highlightedText = new StringBuilder(text);
+        int totalHighLightLengthInserted = 0;
+        //for each range to be highlighted...
+        for (Range<Integer> highlightRange : highlights.asRanges()) {
+            int hStart = highlightRange.lowerEndpoint();
+            int hEnd = highlightRange.upperEndpoint();
+
+            //insert the pre and post tag, adjusting indices for previously added tags
+            highlightedText.insert(hStart + totalHighLightLengthInserted, HIGHLIGHT_PRE);
+            totalHighLightLengthInserted += HIGHLIGHT_PRE.length();
+            highlightedText.insert(hEnd + totalHighLightLengthInserted, HIGHLIGHT_POST);
+            totalHighLightLengthInserted += HIGHLIGHT_POST.length();
+        }
+
+        return highlightedText.toString();
     }
 
     /**
