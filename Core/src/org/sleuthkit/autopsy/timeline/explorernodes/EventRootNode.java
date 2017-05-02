@@ -100,12 +100,16 @@ public class EventRootNode extends DisplayableItemNode {
              */
             if (eventIDs.size() < MAX_EVENTS_TO_DISPLAY) {
                 for (Long eventId: eventIDs){
-                     nodesMap.put(eventId, createNode(eventId));
-                     toPopulate.add(eventId);
+                    if (!nodesMap.containsKey(eventId)) {
+                        nodesMap.put(eventId, createNode(eventId));
+                        toPopulate.add(eventId);
+                    }
                 }
             } else {
-                nodesMap.put(-1L, createNode(-1L));
-                toPopulate.add(-1L);
+                if (!nodesMap.containsKey(-1L)) {
+                    nodesMap.put(-1L, createNode(-1L));
+                    toPopulate.add(-1L);
+                }
             }
             return true;
         }

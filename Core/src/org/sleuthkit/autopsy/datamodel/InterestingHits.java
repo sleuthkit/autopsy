@@ -354,10 +354,12 @@ public class InterestingHits implements AutopsyVisitableItem {
             
             interestingResults.getArtifactIds(setName).forEach((id) -> {
                 try {
-                    BlackboardArtifact art = skCase.getBlackboardArtifact(id);
-                    
-                    artifactHits.put(id, art);
-                    list.add(id);
+                    if (!artifactHits.containsKey(id)) {
+                        BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+
+                        artifactHits.put(id, art);
+                        list.add(id);
+                    }
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS
                 }
