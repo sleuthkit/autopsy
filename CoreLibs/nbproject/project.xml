@@ -708,8 +708,8 @@
                 <binary-origin>release/modules/ext/jna-3.4.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-schemas-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/poi-ooxml-schemas-3.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-schemas-3.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/gson-1.4.jar</runtime-relative-path>
@@ -768,8 +768,8 @@
                 <binary-origin>release/modules/ext/jcalendarbutton-1.4.6.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-ooxml-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-ooxml-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/poi-ooxml-3.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-ooxml-3.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-psd-3.2.jar</runtime-relative-path>
@@ -784,8 +784,8 @@
                 <binary-origin>release/modules/ext/servlet-api-2.5.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-excelant-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-excelant-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/poi-excelant-3.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-excelant-3.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/imageio-pcx-3.2.jar</runtime-relative-path>
@@ -824,8 +824,8 @@
                 <binary-origin>release/modules/ext/geronimo-jms_1.1_spec-1.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-scratchpad-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-scratchpad-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/poi-scratchpad-3.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-scratchpad-3.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/joda-time-2.4-sources.jar</runtime-relative-path>
@@ -896,8 +896,8 @@
                 <binary-origin>release/modules/ext/commons-io-2.4.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/poi-3.8.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/poi-3.8.jar</binary-origin>
+                <runtime-relative-path>ext/poi-3.10.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/poi-3.10.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/controlsfx-8.40.11.jar</runtime-relative-path>
