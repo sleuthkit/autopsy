@@ -200,6 +200,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.openCore.msg=Opening text index",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
+        if (context.cancelRequested()) {
+            return;
+        }
+                
         ProgressIndicator progress = context.getProgressIndicator();
         int totalNumProgressUnits = 7;
         int progressUnitsCompleted = 0;
