@@ -54,7 +54,7 @@ public class SilentProgressIndicator implements ProgressIndicator {
     }
 
     @Override
-    public void finish(String message) {
+    public void finish() {
     }
     
 }

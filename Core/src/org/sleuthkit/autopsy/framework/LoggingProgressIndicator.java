@@ -59,7 +59,7 @@ public final class LoggingProgressIndicator implements ProgressIndicator {
 
     @Override
     public void progress(int workUnitsCompleted) {
-        LOGGER.log(Level.INFO, "{1} of {2} total work units completed", new Object[]{workUnitsCompleted, this.totalWorkUnits});
+        LOGGER.log(Level.INFO, "{0} of {1} total work units completed", new Object[]{workUnitsCompleted, this.totalWorkUnits});
     }
 
     @Override
@@ -68,8 +68,8 @@ public final class LoggingProgressIndicator implements ProgressIndicator {
     }
 
     @Override
-    public void finish(String message) {
-        LOGGER.log(Level.INFO, "{0} finished", message);
+    public void finish() {
+        LOGGER.log(Level.INFO, "Finished");
     }
 
 }

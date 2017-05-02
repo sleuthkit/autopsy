@@ -22,7 +22,6 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import javax.swing.Action;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
@@ -43,11 +42,11 @@ final class CasePropertiesAction extends CallableSystemAction {
     CasePropertiesAction() {
         putValue(Action.NAME, NbBundle.getMessage(CasePropertiesAction.class, "CTL_CasePropertiesAction"));
         this.setEnabled(false);
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                setEnabled(null != evt.getNewValue());
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+            if (null == evt.getNewValue()) {
+                casePropertiesDialog = null;                
             }
+            setEnabled(null != evt.getNewValue());
         });
     }
 

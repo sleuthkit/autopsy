@@ -35,7 +35,7 @@ class ProgressPanel extends javax.swing.JPanel {
         this.progressMessage.setText(message);
     }
 
-    void setInderminate(boolean indeterminate) {
+    void setIndeterminate(boolean indeterminate) {
         this.progressBar.setIndeterminate(indeterminate);
     }
 

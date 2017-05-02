@@ -125,13 +125,15 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
                     try {
                         Case.openAsCurrentCase(casePath);
                     } catch (CaseActionException ex) {
-                        logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
                         SwingUtilities.invokeLater(() -> {
-                            JOptionPane.showMessageDialog(
-                                    WindowManager.getDefault().getMainWindow(),
-                                    ex.getMessage(), // Should be user-friendly
-                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                                    JOptionPane.ERROR_MESSAGE);
+                            if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
+                                JOptionPane.showMessageDialog(
+                                        WindowManager.getDefault().getMainWindow(),
+                                        ex.getMessage(), // Should be user-friendly
+                                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                        JOptionPane.ERROR_MESSAGE);
+                            }
                             StartupWindowProvider.getInstance().open();
                         });
                     }
