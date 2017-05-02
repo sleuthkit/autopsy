@@ -2008,7 +2008,7 @@ public class Case {
             }
 
             if (Thread.currentThread().isInterrupted()) {
-                return;
+                throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
             }
         }
     }
