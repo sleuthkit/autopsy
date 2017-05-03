@@ -587,15 +587,15 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "# {0} - exception message", "Case.deleteException.couldNotDeleteCase=Could not delete case: {0}",
         "Case.progressIndicatorTitle.deletingCase=Deleting Case",
         "Case.exceptionMessage.cannotDeleteCurrentCase=Cannot delete current case, it must be closed first.",
         "Case.progressMessage.checkingForOtherUser=Checking to see if another user has the case open...",
-        "Case.exceptionMessage.cannotDeleteCaseOpenForOtherUser=Cannot delete the case, it is open for another user.",})
+        "Case.exceptionMessage.cannotGetLockToDeleteCase=Cannot delete case because it is open for another user or there is a problem with the coordination service."
+    })
     public static void deleteCase(CaseMetadata metadata) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
             if (null != currentCase) {
-                throw new CaseActionException(Bundle.Case_deleteException_couldNotDeleteCase(Bundle.Case_exceptionMessage_cannotDeleteCurrentCase()));
+                throw new CaseActionException(Bundle.Case_exceptionMessage_cannotDeleteCurrentCase());
             }
         }
 
@@ -623,7 +623,7 @@ public class Case {
                     assert (null != dirLock);
                     deleteCase(metadata, progressIndicator);
                 } catch (CoordinationServiceException ex) {
-                    // RJCTODO: need to throw here, could not delete case at all
+                    throw new CaseActionException(Bundle.Case_exceptionMessage_cannotGetLockToDeleteCase(), ex);
                 }
             }
         } finally {

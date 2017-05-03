@@ -68,16 +68,6 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
         this.buttonLabels = buttonLabels;
         this.focusedButtonLabel = focusedButtonLabel;
         this.buttonListener = buttonListener;
-//        DialogDescriptor dialogDescriptor = new DialogDescriptor(
-//                progressPanel,
-//                title,
-//                true,
-//                buttonLabels,
-//                focusedButtonLabel,
-//                DialogDescriptor.BOTTOM_ALIGN,
-//                HelpCtx.DEFAULT_HELP,
-//                buttonListener);
-//        dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
     }
 
     /**
@@ -95,9 +85,6 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
         this.buttonLabels = null;
         this.focusedButtonLabel = null;
         this.buttonListener = null;
-//        dialog = new JDialog(parent, title, true);
-//        dialog.add(progressPanel);
-//        dialog.pack();
     }
 
     /**
@@ -115,8 +102,6 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
             progressPanel.setMessage(message);
             progressPanel.setMaximum(totalWorkUnits);
             displayDialog();
-//            dialog.setLocationRelativeTo(parent);
-//            this.dialog.setVisible(true);
         });
     }
 
@@ -133,8 +118,6 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
             progressPanel.setIndeterminate(true);
             progressPanel.setMessage(message);
             displayDialog();
-//            dialog.setLocationRelativeTo(parent);
-//            this.dialog.setVisible(true);
         });
     }
 
@@ -251,16 +234,28 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * Creates and dislpays the dialog for the progress indicator.
      */
     private void displayDialog() {
-        DialogDescriptor dialogDescriptor = new DialogDescriptor(
-                progressPanel,
-                title,
-                true,
-                buttonLabels,
-                focusedButtonLabel,
-                DialogDescriptor.BOTTOM_ALIGN,
-                HelpCtx.DEFAULT_HELP,
-                buttonListener);
-        dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+        if (null != buttonLabels && null != focusedButtonLabel && null != buttonListener) {
+            /*
+             * Dialog with buttons.
+             */
+            DialogDescriptor dialogDescriptor = new DialogDescriptor(
+                    progressPanel,
+                    title,
+                    true,
+                    buttonLabels,
+                    focusedButtonLabel,
+                    DialogDescriptor.BOTTOM_ALIGN,
+                    HelpCtx.DEFAULT_HELP,
+                    buttonListener);
+            dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+        } else {
+            /*
+             * Dialog without buttons.
+             */
+            dialog = new JDialog(parent, title, true);
+            dialog.add(progressPanel);
+            dialog.pack();
+        }
         dialog.setLocationRelativeTo(parent);
         this.dialog.setVisible(true);
     }

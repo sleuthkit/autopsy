@@ -721,55 +721,30 @@ public class Server {
     @NbBundle.Messages({
         "# {0} - core name", "Server.deleteCore.exception.msg=Failed to delete Solr core {0}",})
     void deleteCore(String coreName, Case.CaseType caseType) throws KeywordSearchServiceException {
-        if (null != currentSolrServer) {
-            /*
-             * If there is a Solr server connection and the core to delete is
-             * open, then close it.
-             */
-            currentCoreLock.readLock().lock();
-            try {
-                if (null != currentCore) {
-                    if (currentCore.getName().equals(coreName)) {
-                        // close current core first
-                        closeCore();
-                    }
-                }
-            } catch (KeywordSearchModuleException ex) {
-                throw new KeywordSearchServiceException(NbBundle.getMessage(Server.class, "Server.close.exception.msg"), ex);
-            } finally {
-                currentCoreLock.readLock().unlock();
-            }
-        }
-
-        /*
-         * Send a core unload request to the Solr server, with the parameter set
-         * that request deleting the index and the instance directory
-         * (deleteInstanceDir = true). Note that this removes everything related
-         * to the core on the server (the index directory, the configuration
-         * files, etc.), but does not delete the actual Solr index directory in
-         * the case directory.
-         */
-        HttpSolrServer solrServer;
-        if (null != currentSolrServer) {
-            solrServer = currentSolrServer;
-        } else {
-            try {
-                if (caseType == CaseType.SINGLE_USER_CASE) {
-                    Integer localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
-                    solrServer = new HttpSolrServer("http://localhost:" + localSolrServerPort + "/solr"); //NON-NLS
-                } else {
-                    String host = UserPreferences.getIndexingServerHost();
-                    String port = UserPreferences.getIndexingServerPort();
-                    solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
-                }
-                connectToSolrServer(solrServer);
-            } catch (SolrServerException | IOException ex) {
-                throw new KeywordSearchServiceException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
-            }
-        }
-
         try {
-            org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer);
+            HttpSolrServer solrServer;
+            if (caseType == CaseType.SINGLE_USER_CASE) {
+                Integer localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
+                solrServer = new HttpSolrServer("http://localhost:" + localSolrServerPort + "/solr"); //NON-NLS
+            } else {
+                String host = UserPreferences.getIndexingServerHost();
+                String port = UserPreferences.getIndexingServerPort();
+                solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
+            }
+            connectToSolrServer(solrServer);
+            CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, solrServer);
+            if (null != response.getCoreStatus(coreName).get("instanceDir")) {             //NON-NLS
+                /*
+                 * Send a core unload request to the Solr server, with the
+                 * parameter set that request deleting the index and the
+                 * instance directory (deleteInstanceDir = true). Note that this
+                 * removes everything related to the core on the server (the
+                 * index directory, the configuration files, etc.), but does not
+                 * delete the actual Solr text index because it is currently
+                 * stored in the case directory.
+                 */
+                org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer);
+            }
         } catch (SolrServerException | HttpSolrServer.RemoteSolrException | IOException ex) {
             throw new KeywordSearchServiceException(Bundle.Server_deleteCore_exception_msg(coreName), ex);
         }
