@@ -19,31 +19,31 @@
 package org.sleuthkit.autopsy.casemodule;
 
 /**
- * Exception thrown when a case action (e.g., create, open, close, delete)
- * experiences an error condition.
+ * Exception thrown when a case action (e.g., create, open, close, delete) is
+ * cancelled before it is completed.
  */
-public class CaseActionException extends Exception {
+class CaseActionCancelledException extends CaseActionException {
 
     private static final long serialVersionUID = 1L;
 
     /**
      * Constructs an exception thrown when a case action (e.g., create, open,
-     * close, delete) experiences an error condition.
+     * close, delete) is cancelled before it is completed.
      *
      * @param message An error message.
      */
-    public CaseActionException(String message) {
+    CaseActionCancelledException(String message) {
         super(message);
     }
 
     /**
      * Constructs an exception thrown when a case action (e.g., create, open,
-     * close, delete) experiences an error condition.
+     * close, delete) is cancelled before it is completed.
      *
      * @param message An error message.
      * @param cause   An excception that caused this exception to be thrown.
      */
-    public CaseActionException(String message, Throwable cause) {
+    CaseActionCancelledException(String message, Throwable cause) {
         super(message, cause);
     }
 }

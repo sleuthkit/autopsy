@@ -19,6 +19,9 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Range;
+import com.google.common.collect.RangeSet;
+import com.google.common.collect.TreeRangeSet;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -32,6 +35,7 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrRequest.METHOD;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -337,7 +341,6 @@ class HighlightedText implements IndexedText {
 
     @Override
     public String getText() {
-
         try {
             loadPageInfo(); //inits once
             SolrQuery q = new SolrQuery();
@@ -349,15 +352,22 @@ class HighlightedText implements IndexedText {
                 contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
             }
             final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
+
+            double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
+            //choose field to highlight based on isLiteral and Solr index schema version.
+            String highlightField = (isLiteral || (indexSchemaVersion < 2.0))
+                    ? LuceneQuery.HIGHLIGHT_FIELD
+                    : Server.Schema.CONTENT_STR.toString();
             if (isLiteral) {
+                //if the query is literal try to get solr to do the highlighting
                 final String highlightQuery = keywords.stream()
                         .map(HighlightedText::constructEscapedSolrQuery)
                         .collect(Collectors.joining(" "));
 
                 q.setQuery(highlightQuery);
-                q.addField(Server.Schema.TEXT.toString());
+                q.addField(highlightField);
                 q.addFilterQuery(filterQuery);
-                q.addHighlightField(LuceneQuery.HIGHLIGHT_FIELD);
+                q.addHighlightField(highlightField);
                 q.setHighlightFragsize(0); // don't fragment the highlight, works with original highlighter, or needs "single" list builder with FVH
 
                 //tune the highlighter
@@ -369,8 +379,12 @@ class HighlightedText implements IndexedText {
                 //docs says makes sense for the original Highlighter only, but not really
                 q.setParam("hl.maxAnalyzedChars", Server.HL_ANALYZE_CHARS_UNLIMITED); //NON-NLS
             } else {
+                /*
+                 * if the query is not literal just pull back the text. We will
+                 * do the highlighting in autopsy.
+                 */
                 q.setQuery(filterQuery);
-                q.addField(Server.Schema.CONTENT_STR.toString());
+                q.addField(highlightField);
             }
 
             QueryResponse response = solrServer.query(q, METHOD.POST);
@@ -383,9 +397,7 @@ class HighlightedText implements IndexedText {
             }
             String highlightedContent;
             Map<String, Map<String, List<String>>> responseHighlight = response.getHighlighting();
-            String highlightField = isLiteral
-                    ? LuceneQuery.HIGHLIGHT_FIELD
-                    : Server.Schema.CONTENT_STR.toString();
+
             if (responseHighlight == null) {
                 highlightedContent = attemptManualHighlighting(response.getResults(), highlightField, keywords);
             } else {
@@ -433,6 +445,7 @@ class HighlightedText implements IndexedText {
             return 0;
         }
         return this.numberOfHitsPerPage.get(this.currentPage);
+
     }
 
     /**
@@ -445,7 +458,7 @@ class HighlightedText implements IndexedText {
      *                         to a Solr query. We expect there to only ever be
      *                         a single document.
      *
-     * @return Either a string with the keyword highlighted or a string
+     * @return Either a string with the keyword highlighted via HTML span tags or a string
      *         indicating that we did not find a hit in the document.
      */
     static String attemptManualHighlighting(SolrDocumentList solrDocumentList, String highlightField, Collection<String> keywords) {
@@ -465,38 +478,41 @@ class HighlightedText implements IndexedText {
         // not see highlighted text in the content viewer.
         text = StringEscapeUtils.escapeHtml(text);
 
-        StringBuilder highlightedText = new StringBuilder("");
+        TreeRangeSet<Integer> highlights = TreeRangeSet.create();
 
-        //do a highlighting pass for each keyword
+        //for each keyword find the locations of hits and record them in the RangeSet
         for (String keyword : keywords) {
-            //we also need to escape the keyword so that it matches the escpared text
+            //we also need to escape the keyword so that it matches the escaped text
             final String escapedKeyword = StringEscapeUtils.escapeHtml(keyword);
-            int textOffset = 0;
-            int hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset);
+            int searchOffset = 0;
+            int hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, searchOffset);
             while (hitOffset != -1) {
-                // Append the portion of text up to (but not including) the hit.
-                highlightedText.append(text.substring(textOffset, hitOffset));
-                // Add in the highlighting around the keyword.
-                highlightedText.append(HIGHLIGHT_PRE);
-                highlightedText.append(keyword);
-                highlightedText.append(HIGHLIGHT_POST);
+                // Advance the search offset past the keyword.
+                searchOffset = hitOffset + escapedKeyword.length();
 
-                // Advance the text offset past the keyword.
-                textOffset = hitOffset + escapedKeyword.length();
+                //record the location of the hit, possibly merging it with other hits
+                highlights.add(Range.closedOpen(hitOffset, searchOffset));
 
-                hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, textOffset);
+                //look for next hit
+                hitOffset = StringUtils.indexOfIgnoreCase(text, escapedKeyword, searchOffset);
             }
-            // Append the remainder of text field
-            highlightedText.append(text.substring(textOffset, text.length()));
-
-            if (highlightedText.length() == 0) {
-                return NbBundle.getMessage(HighlightedText.class, "HighlightedMatchesSource.getMarkup.noMatchMsg");
-            }
-            //reset for next pass
-            text = highlightedText.toString();
-            highlightedText = new StringBuilder("");
         }
-        return text;
+
+        StringBuilder highlightedText = new StringBuilder(text);
+        int totalHighLightLengthInserted = 0;
+        //for each range to be highlighted...
+        for (Range<Integer> highlightRange : highlights.asRanges()) {
+            int hStart = highlightRange.lowerEndpoint();
+            int hEnd = highlightRange.upperEndpoint();
+
+            //insert the pre and post tag, adjusting indices for previously added tags
+            highlightedText.insert(hStart + totalHighLightLengthInserted, HIGHLIGHT_PRE);
+            totalHighLightLengthInserted += HIGHLIGHT_PRE.length();
+            highlightedText.insert(hEnd + totalHighLightLengthInserted, HIGHLIGHT_POST);
+            totalHighLightLengthInserted += HIGHLIGHT_POST.length();
+        }
+
+        return highlightedText.toString();
     }
 
     /**

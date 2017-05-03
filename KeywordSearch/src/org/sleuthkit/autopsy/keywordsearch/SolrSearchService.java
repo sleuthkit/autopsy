@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
@@ -37,6 +38,7 @@ import org.openide.util.lookup.ServiceProviders;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.coreutils.FileUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.framework.AutopsyService;
 import org.sleuthkit.autopsy.framework.ProgressIndicator;
@@ -50,7 +52,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * text indexing and search.
  */
 @ServiceProviders(value = {
-    @ServiceProvider(service = KeywordSearchService.class),
+    @ServiceProvider(service = KeywordSearchService.class)
+    ,
     @ServiceProvider(service = AutopsyService.class)}
 )
 public class SolrSearchService implements KeywordSearchService, AutopsyService {
@@ -138,16 +141,17 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         }
     }
 
-    @NbBundle.Messages({"# {0} - case directory",
-        "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from caseDirectory: {0}",
-        "# {0} - case directory",
-        "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case"
-    })
     /**
      * Deletes Solr core for a case.
      *
      * @param metadata The CaseMetadata which will have its core deleted.
      */
+    @NbBundle.Messages({"# {0} - case directory",
+        "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from caseDirectory: {0}",
+        "# {0} - case directory",
+        "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case",
+        "SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}"
+    })
     @Override
     public void deleteTextIndex(CaseMetadata metadata) throws KeywordSearchServiceException {
         String caseDirectory = metadata.getCaseDirectory();
@@ -163,13 +167,23 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         String currentSolr = IndexFinder.getCurrentSolrVersion();
         for (Index index : indexMetadata.getIndexes()) {
             if (index.getSolrVersion().equals(currentSolr) && index.getSchemaVersion().equals(currentSchema)) {
-                KeywordSearch.getServer().deleteCore(index.getIndexName());
-                return; //only one core exists for each combination of solr and schema version
+                /*
+                 * Unload/delete the core on the server and then delete the text
+                 * index files.
+                 */
+                KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata.getCaseType());
+                if (!FileUtil.deleteDir(new File(index.getIndexPath()).getParentFile())) {
+                    throw new KeywordSearchServiceException(Bundle.SolrSearchService_exceptionMessage_failedToDeleteIndexFiles(index.getIndexPath()));                    
+                }
             }
+            return; //only one core exists for each combination of solr and schema version
         }
+
         //this code this code will only execute if an index for the current core was not found 
-        logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
-        throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class, "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
+        logger.log(Level.WARNING, NbBundle.getMessage(SolrSearchService.class,
+                 "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
+        throw new KeywordSearchServiceException(NbBundle.getMessage(SolrSearchService.class,
+                 "SolrSearchService.exceptionMessage.noCurrentSolrCore"));
     }
 
     @Override
@@ -200,6 +214,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.openCore.msg=Opening text index",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
+        if (context.cancelRequested()) {
+            return;
+        }
+
         ProgressIndicator progress = context.getProgressIndicator();
         int totalNumProgressUnits = 7;
         int progressUnitsCompleted = 0;

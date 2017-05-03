@@ -21,6 +21,8 @@ package org.sleuthkit.autopsy.framework;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.event.ActionListener;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 import org.openide.DialogDescriptor;
@@ -30,14 +32,21 @@ import org.openide.util.HelpCtx;
 /**
  * A progress indicator that displays progress using a modal dialog with a
  * message label, a progress bar, and optionally, a configurable set of buttons
- * with a button listener.
+ * with a button listener. Setting a cancelling flag which locks in a cancelling
+ * message and an indeterminate progress bar is supported.
  */
+@ThreadSafe
 public final class ModalDialogProgressIndicator implements ProgressIndicator {
 
     private final Frame parent;
+    private final String title;
     private final ProgressPanel progressPanel;
-    private final Dialog dialog;
+    private final Object[] buttonLabels;
+    private final Object focusedButtonLabel;
     private final ActionListener buttonListener;
+    private Dialog dialog;
+    @GuardedBy("this")
+    private boolean cancelling;
 
     /**
      * Creates a progress indicator that displays progress using a modal dialog
@@ -53,17 +62,11 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      */
     public ModalDialogProgressIndicator(Frame parent, String title, Object[] buttonLabels, Object focusedButtonLabel, ActionListener buttonListener) {
         this.parent = parent;
+        this.title = title;
         progressPanel = new ProgressPanel();
-        DialogDescriptor dialogDescriptor = new DialogDescriptor(
-                progressPanel,
-                title,
-                true,
-                buttonLabels,
-                focusedButtonLabel,
-                DialogDescriptor.BOTTOM_ALIGN,
-                HelpCtx.DEFAULT_HELP,
-                buttonListener);
-        dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+        progressPanel.setIndeterminate(true);
+        this.buttonLabels = buttonLabels;
+        this.focusedButtonLabel = focusedButtonLabel;
         this.buttonListener = buttonListener;
     }
 
@@ -76,32 +79,12 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      */
     public ModalDialogProgressIndicator(Frame parent, String title) {
         this.parent = parent;
+        this.title = title;
         progressPanel = new ProgressPanel();
-        dialog = new JDialog(parent, title, true);
-        dialog.add(progressPanel);
-        dialog.pack();
-        buttonListener = null;
-    }
-
-    /**
-     * Calls setVisible on the underlying modal dialog.
-     *
-     * @param isVisible True or false.
-     */
-    public void setVisible(boolean isVisible) {
-        if (isVisible) {
-            dialog.setLocationRelativeTo(parent);
-        }
-        this.dialog.setVisible(isVisible);
-    }
-
-    /**
-     * Gets the button listener for the dialog, if there is one.
-     *
-     * @return The button listener or null.
-     */
-    public ActionListener getButtonListener() {
-        return buttonListener;
+        progressPanel.setIndeterminate(true);
+        this.buttonLabels = null;
+        this.focusedButtonLabel = null;
+        this.buttonListener = null;
     }
 
     /**
@@ -112,14 +95,13 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * @param totalWorkUnits The total number of work units.
      */
     @Override
-    public void start(String message, int totalWorkUnits) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressPanel.setInderminate(false);
-                progressPanel.setMessage(message);
-                progressPanel.setMaximum(totalWorkUnits);
-            }
+    public synchronized void start(String message, int totalWorkUnits) {
+        cancelling = false;
+        SwingUtilities.invokeLater(() -> {
+            progressPanel.setIndeterminate(false);
+            progressPanel.setMessage(message);
+            progressPanel.setMaximum(totalWorkUnits);
+            displayDialog();
         });
     }
 
@@ -130,13 +112,27 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * @param message The initial progress message.
      */
     @Override
-    public void start(String message) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressPanel.setInderminate(true);
-                progressPanel.setMessage(message);
-            }
+    public synchronized void start(String message) {
+        cancelling = false;
+        SwingUtilities.invokeLater(() -> {
+            progressPanel.setIndeterminate(true);
+            progressPanel.setMessage(message);
+            displayDialog();
+        });
+    }
+
+    /**
+     * Sets a cancelling message and makes the progress bar indeterminate. Once
+     * cancel has been called, the progress indicator no longer accepts updates
+     * unless start is called again.
+     *
+     * @param cancellingMessage
+     */
+    public synchronized void setCancelling(String cancellingMessage) {
+        cancelling = true;
+        SwingUtilities.invokeLater(() -> {
+            progressPanel.setIndeterminate(false);
+            progressPanel.setMessage(cancellingMessage);
         });
     }
 
@@ -147,14 +143,13 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * @param message The initial progress message.
      */
     @Override
-    public void switchToIndeterminate(String message) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressPanel.setInderminate(true);
+    public synchronized void switchToIndeterminate(String message) {
+        if (!cancelling) {
+            SwingUtilities.invokeLater(() -> {
+                progressPanel.setIndeterminate(true);
                 progressPanel.setMessage(message);
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -166,16 +161,15 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * @param totalWorkUnits     The total number of work units to be completed.
      */
     @Override
-    public void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressPanel.setInderminate(false);
+    public synchronized void switchToDeterminate(String message, int workUnitsCompleted, int totalWorkUnits) {
+        if (!cancelling) {
+            SwingUtilities.invokeLater(() -> {
+                progressPanel.setIndeterminate(false);
                 progressPanel.setMessage(message);
                 progressPanel.setMaximum(totalWorkUnits);
                 progressPanel.setCurrent(workUnitsCompleted);
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -184,13 +178,12 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * @param message The progress message.
      */
     @Override
-    public void progress(String message) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
+    public synchronized void progress(String message) {
+        if (!cancelling) {
+            SwingUtilities.invokeLater(() -> {
                 progressPanel.setMessage(message);
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -201,13 +194,12 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * @param workUnitsCompleted Number of work units completed so far.
      */
     @Override
-    public void progress(int workUnitsCompleted) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
+    public synchronized void progress(int workUnitsCompleted) {
+        if (!cancelling) {
+            SwingUtilities.invokeLater(() -> {
                 progressPanel.setCurrent(workUnitsCompleted);
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -219,29 +211,52 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      * @param workUnitsCompleted Number of work units completed so far.
      */
     @Override
-    public void progress(String message, int workUnitsCompleted) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
+    public synchronized void progress(String message, int workUnitsCompleted) {
+        if (!cancelling) {
+            SwingUtilities.invokeLater(() -> {
                 progressPanel.setMessage(message);
                 progressPanel.setCurrent(workUnitsCompleted);
-            }
-        });
+            });
+        }
     }
 
     /**
      * Finishes the progress indicator when the task is completed.
-     *
-     * @param message The finished message.
      */
     @Override
-    public void finish(String message) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                progressPanel.setMessage(message);
-            }
+    public synchronized void finish() {
+        SwingUtilities.invokeLater(() -> {
+            this.dialog.setVisible(false);
         });
     }
 
+    /**
+     * Creates and dislpays the dialog for the progress indicator.
+     */
+    private void displayDialog() {
+        if (null != buttonLabels && null != focusedButtonLabel && null != buttonListener) {
+            /*
+             * Dialog with buttons.
+             */
+            DialogDescriptor dialogDescriptor = new DialogDescriptor(
+                    progressPanel,
+                    title,
+                    true,
+                    buttonLabels,
+                    focusedButtonLabel,
+                    DialogDescriptor.BOTTOM_ALIGN,
+                    HelpCtx.DEFAULT_HELP,
+                    buttonListener);
+            dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+        } else {
+            /*
+             * Dialog without buttons.
+             */
+            dialog = new JDialog(parent, title, true);
+            dialog.add(progressPanel);
+            dialog.pack();
+        }
+        dialog.setLocationRelativeTo(parent);
+        this.dialog.setVisible(true);
+    }
 }

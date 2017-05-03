@@ -39,10 +39,10 @@ import org.xml.sax.SAXException;
 public final class AutopsyManifestFileParser implements ManifestFileParser {
 
     private static final String MANIFEST_FILE_NAME_SIGNATURE = "_Manifest.xml";
-    private static final String ROOT_ELEM_TAG_NAME = "Manifest";
-    private static final String CASE_NAME_XPATH = "/Manifest/Collection/Name/text()";
-    private static final String DEVICE_ID_XPATH = "/Manifest/Collection/Image/ID/text()";
-    private static final String DATA_SOURCE_NAME_XPATH = "/Manifest/Collection/Image/Name/text()";
+    private static final String ROOT_ELEM_TAG_NAME = "AutopsyManifest";
+    private static final String CASE_NAME_XPATH = "/AutopsyManifest/CaseName/text()";
+    private static final String DEVICE_ID_XPATH = "/AutopsyManifest/DeviceId/text()";
+    private static final String DATA_SOURCE_NAME_XPATH = "/AutopsyManifest/DataSourcePath/text()";
     
     @Override
     public boolean fileIsManifest(Path filePath) {
@@ -62,10 +62,6 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
 
     @Override
     public Manifest parse(Path filePath) throws ManifestFileParserException {
-        if (!fileIsManifest(filePath)) {
-            throw new ManifestFileParserException(String.format("%s not recognized as a manifest", filePath));
-        }
-
         try {
             Document doc = this.createManifestDOM(filePath);
             XPath xpath = XPathFactory.newInstance().newXPath();            

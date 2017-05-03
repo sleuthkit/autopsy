@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * The action associated with the Delete button of the Case Properties panel. It
  * deletes the current case.
- * 
+ *
  * This action should only be invoked in the event dispatch thread (EDT).
  */
 final class CaseDeleteAction extends CallableSystemAction {
@@ -90,7 +90,7 @@ final class CaseDeleteAction extends CallableSystemAction {
                             logger.log(Level.SEVERE, String.format("Failed to delete case %s at %s", caseName, caseDirectory), ex);
                             JOptionPane.showMessageDialog(
                                     null,
-                                    Bundle.Case_deleteCaseFailureMessageBox_message(ex.getMessage()),
+                                    Bundle.Case_deleteCaseFailureMessageBox_message(ex.getLocalizedMessage()),
                                     Bundle.Case_deleteCaseFailureMessageBox_title(),
                                     JOptionPane.ERROR_MESSAGE);
                         }
@@ -99,6 +99,7 @@ final class CaseDeleteAction extends CallableSystemAction {
                          * of the Delete button that invokes this action.
                          */
                         CasePropertiesAction.closeCasePropertiesWindow();
+                        StartupWindowProvider.getInstance().open();
                     }
                 }.execute();
             }

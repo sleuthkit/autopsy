@@ -76,6 +76,8 @@
         <unzip src="${nbdist.dir}/${app.name}.zip" dest="${zip-tmp}"/>
 
         <!-- step (3) do your copying stuff here, check the ant doc for copy, move, etc file -->
+        <copy file="${nbplatform.active.dir}/platform/modules/ext/junit-4.10.jar"
+              tofile="${zip-tmp}/${app.name}/platform/modules/ext/junit-4.10.jar"/>
         <copy file="${basedir}/README.txt" tofile="${zip-tmp}/${app.name}/README.txt"/>
         <copy file="${basedir}/LICENSE-2.0.txt" tofile="${zip-tmp}/${app.name}/LICENSE-2.0.txt"/>
         <copy file="${basedir}/NEWS.txt" tofile="${zip-tmp}/${app.name}/NEWS.txt"/>

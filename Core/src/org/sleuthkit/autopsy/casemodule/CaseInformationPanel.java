@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2016 Basis Technology Corp.
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,6 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionListener;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 import javax.swing.event.ChangeEvent;
 import org.openide.util.NbBundle.Messages;
 
@@ -32,44 +28,40 @@ import org.openide.util.NbBundle.Messages;
  */
 class CaseInformationPanel extends javax.swing.JPanel {
 
-    private static final Logger logger = Logger.getLogger(CaseInformationPanel.class.getName());
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Creates new form CaseInformationPanel
+     * Constructs a panel for displaying the case information, including both
+     * case details and ingest job history.
      */
     CaseInformationPanel() {
         initComponents();
         customizeComponents();
     }
 
-    @Messages({"CaseInformationPanel.caseDetails.header=Case Details",
-        "CaseInformationPanel.ingestJobInfo.header=Ingest History",
-        "CaseInformationPanel.loadMetadataFail.message=Failed to load case metadata.",
-        "CaseInformationPanel.loadMetadataFail.title=Metadata load failure",})
+    @Messages({
+        "CaseInformationPanel.caseDetails.header=Case Details",
+        "CaseInformationPanel.ingestJobInfo.header=Ingest History"
+    })
     private void customizeComponents() {
-        try {
-            Case currentCase = Case.getCurrentCase();
-            String crDate = currentCase.getCreatedDate();
-            String caseDir = currentCase.getCaseDirectory();
-
-            // put the image paths information into hashmap
-            Map<Long, String> imgPaths = Case.getImagePaths(currentCase.getSleuthkitCase());
-            CasePropertiesPanel cpf = new CasePropertiesPanel(currentCase, crDate, caseDir, imgPaths);
-            cpf.setSize(cpf.getPreferredSize());
-            this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), cpf);
-            this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
-            this.tabbedPane.addChangeListener((ChangeEvent e) -> {
-                tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
-            });
-        } catch (CaseMetadata.CaseMetadataException ex) {
-            logger.log(Level.SEVERE, "Failed to load case metadata.", ex);
-            JOptionPane.showMessageDialog(null, Bundle.IngestJobInfoPanel_loadIngestJob_error_text(), Bundle.IngestJobInfoPanel_loadIngestJob_error_title(), JOptionPane.ERROR_MESSAGE);
-        }
+        CasePropertiesPanel propertiesPanel = new CasePropertiesPanel(Case.getCurrentCase());
+        propertiesPanel.setSize(propertiesPanel.getPreferredSize());
+        this.tabbedPane.addTab(Bundle.CaseInformationPanel_caseDetails_header(), propertiesPanel);
+        this.tabbedPane.addTab(Bundle.CaseInformationPanel_ingestJobInfo_header(), new IngestJobInfoPanel());
+        this.tabbedPane.addChangeListener((ChangeEvent e) -> {
+            tabbedPane.getSelectedComponent().setSize(tabbedPane.getSelectedComponent().getPreferredSize());
+        });
     }
-    
+
+    /**
+     * Adds an action listener to the Close button of the panel.
+     *
+     * @param action
+     */
     void addCloseButtonAction(ActionListener action) {
         this.closeButton.addActionListener(action);
     }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -127,7 +119,7 @@ class CaseInformationPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-        // TODO add your handling code here:
+        // Used by CasePropertiesAction
     }//GEN-LAST:event_closeButtonActionPerformed
 
 
