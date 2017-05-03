@@ -162,8 +162,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         String currentSchema = IndexFinder.getCurrentSchemaVersion();
         String currentSolr = IndexFinder.getCurrentSolrVersion();
         for (Index index : indexMetadata.getIndexes()) {
-            if (index.getSolrVersion().equals(currentSolr) && index.getSchemaVersion().equals(currentSchema)) {
-                KeywordSearch.getServer().deleteCore(index.getIndexName());
+            if (index.getSolrVersion().equals(currentSolr) && index.getSchemaVersion().equals(currentSchema)) { // RJCTODO
+                KeywordSearch.getServer().deleteCore(index.getIndexName(), metadata.getCaseType());
                 return; //only one core exists for each combination of solr and schema version
             }
         }

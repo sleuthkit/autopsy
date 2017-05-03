@@ -594,7 +594,7 @@ public class Case {
         "Case.exceptionMessage.cannotDeleteCaseOpenForOtherUser=Cannot delete the case, it is open for another user.",})
     public static void deleteCase(CaseMetadata metadata) throws CaseActionException {
         synchronized (caseActionSerializationLock) {
-            if (null != currentCase && 0 == metadata.getCaseDirectory().compareTo(metadata.getCaseDirectory())) {
+            if (null != currentCase) {
                 throw new CaseActionException(Bundle.Case_deleteException_couldNotDeleteCase(Bundle.Case_exceptionMessage_cannotDeleteCurrentCase()));
             }
         }
@@ -610,7 +610,6 @@ public class Case {
             progressIndicator = new LoggingProgressIndicator();
         }
         progressIndicator.start(Bundle.Case_progressMessage_preparing());
-
         try {
             if (CaseType.SINGLE_USER_CASE == metadata.getCaseType()) {
                 deleteCase(metadata, progressIndicator);
@@ -624,6 +623,7 @@ public class Case {
                     assert (null != dirLock);
                     deleteCase(metadata, progressIndicator);
                 } catch (CoordinationServiceException ex) {
+                    // RJCTODO: need to throw here, could not delete case at all
                 }
             }
         } finally {
@@ -860,7 +860,7 @@ public class Case {
              * Delete the case database from the database server.
              */
             try {
-                progressIndicator.start(Bundle.Case_progressMessage_deletingCaseDatabase());
+                progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDatabase());
                 CaseDbConnectionInfo db;
                 db = UserPreferences.getDatabaseConnectionInfo();
                 Class.forName("org.postgresql.Driver"); //NON-NLS
@@ -878,7 +878,7 @@ public class Case {
         /*
          * Delete the text index.
          */
-        progressIndicator.start(Bundle.Case_progressMessage_deletingTextIndex());
+        progressIndicator.progress(Bundle.Case_progressMessage_deletingTextIndex());
         for (KeywordSearchService searchService : Lookup.getDefault().lookupAll(KeywordSearchService.class)) {
             try {
                 searchService.deleteTextIndex(metadata);
@@ -891,7 +891,7 @@ public class Case {
         /*
          * Delete the case directory.
          */
-        progressIndicator.start(Bundle.Case_progressMessage_deletingCaseDirectory());
+        progressIndicator.progress(Bundle.Case_progressMessage_deletingCaseDirectory());
         if (!FileUtil.deleteDir(new File(metadata.getCaseDirectory()))) {
             logger.log(Level.SEVERE, String.format("Failed to delete case directory for %s (%s) in %s", metadata.getCaseDisplayName(), metadata.getCaseName(), metadata.getCaseDirectory()));
             errorsOccurred = true;
