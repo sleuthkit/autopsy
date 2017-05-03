@@ -39,8 +39,12 @@ import org.openide.util.HelpCtx;
 public final class ModalDialogProgressIndicator implements ProgressIndicator {
 
     private final Frame parent;
+    private final String title;
     private final ProgressPanel progressPanel;
-    private final Dialog dialog;
+    private final Object[] buttonLabels;
+    private final Object focusedButtonLabel;
+    private final ActionListener buttonListener;
+    private Dialog dialog;
     @GuardedBy("this")
     private boolean cancelling;
 
@@ -58,18 +62,22 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      */
     public ModalDialogProgressIndicator(Frame parent, String title, Object[] buttonLabels, Object focusedButtonLabel, ActionListener buttonListener) {
         this.parent = parent;
+        this.title = title;
         progressPanel = new ProgressPanel();
         progressPanel.setIndeterminate(true);
-        DialogDescriptor dialogDescriptor = new DialogDescriptor(
-                progressPanel,
-                title,
-                true,
-                buttonLabels,
-                focusedButtonLabel,
-                DialogDescriptor.BOTTOM_ALIGN,
-                HelpCtx.DEFAULT_HELP,
-                buttonListener);
-        dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+        this.buttonLabels = buttonLabels;
+        this.focusedButtonLabel = focusedButtonLabel;
+        this.buttonListener = buttonListener;
+//        DialogDescriptor dialogDescriptor = new DialogDescriptor(
+//                progressPanel,
+//                title,
+//                true,
+//                buttonLabels,
+//                focusedButtonLabel,
+//                DialogDescriptor.BOTTOM_ALIGN,
+//                HelpCtx.DEFAULT_HELP,
+//                buttonListener);
+//        dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
     }
 
     /**
@@ -81,11 +89,15 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
      */
     public ModalDialogProgressIndicator(Frame parent, String title) {
         this.parent = parent;
+        this.title = title;
         progressPanel = new ProgressPanel();
         progressPanel.setIndeterminate(true);
-        dialog = new JDialog(parent, title, true);
-        dialog.add(progressPanel);
-        dialog.pack();
+        this.buttonLabels = null;
+        this.focusedButtonLabel = null;
+        this.buttonListener = null;
+//        dialog = new JDialog(parent, title, true);
+//        dialog.add(progressPanel);
+//        dialog.pack();
     }
 
     /**
@@ -102,8 +114,9 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
             progressPanel.setIndeterminate(false);
             progressPanel.setMessage(message);
             progressPanel.setMaximum(totalWorkUnits);
-            dialog.setLocationRelativeTo(parent);
-            this.dialog.setVisible(true);
+            displayDialog();
+//            dialog.setLocationRelativeTo(parent);
+//            this.dialog.setVisible(true);
         });
     }
 
@@ -119,8 +132,9 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
         SwingUtilities.invokeLater(() -> {
             progressPanel.setIndeterminate(true);
             progressPanel.setMessage(message);
-            dialog.setLocationRelativeTo(parent);
-            this.dialog.setVisible(true);
+            displayDialog();
+//            dialog.setLocationRelativeTo(parent);
+//            this.dialog.setVisible(true);
         });
     }
 
@@ -233,4 +247,21 @@ public final class ModalDialogProgressIndicator implements ProgressIndicator {
         });
     }
 
+    /**
+     * Creates and dislpays the dialog for the progress indicator.
+     */
+    private void displayDialog() {
+        DialogDescriptor dialogDescriptor = new DialogDescriptor(
+                progressPanel,
+                title,
+                true,
+                buttonLabels,
+                focusedButtonLabel,
+                DialogDescriptor.BOTTOM_ALIGN,
+                HelpCtx.DEFAULT_HELP,
+                buttonListener);
+        dialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+        dialog.setLocationRelativeTo(parent);
+        this.dialog.setVisible(true);
+    }
 }
