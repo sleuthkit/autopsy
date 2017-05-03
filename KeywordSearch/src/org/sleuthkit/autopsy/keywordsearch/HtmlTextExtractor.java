@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
 import net.htmlparser.jericho.Config;
-import static net.htmlparser.jericho.Config.LoggerProvider;
+import net.htmlparser.jericho.LoggerProvider;
 import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
