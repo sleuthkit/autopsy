@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.prefs.Preferences;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -43,6 +44,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
+import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.openide.explorer.ExplorerManager;
@@ -88,6 +90,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // the column started and where it ended up.
     private int startColumnIndex = -1;
     private int endColumnIndex = -1;
+    private OutlineView ov;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -111,7 +114,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
-        OutlineView ov = ((OutlineView) this.tableScrollPanel);
+        ov = ((OutlineView) this.tableScrollPanel);
         ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
 
         ov.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -215,6 +218,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                     ov.getOutline().moveColumn(endColumnIndex, startColumnIndex);
                 }
                 startColumnIndex = -1;
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                storeState();
             }
         });
     }
@@ -369,7 +377,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return;
         }
         currentRoot = root;
-        List<Node.Property<?>> props = loadState();
+        List<Node.Property<?>> props = loadColumnOrder();
 
         /**
          * OutlineView makes the first column be the result of
@@ -442,6 +450,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
 
+        loadSort();
+
         /**
          * This custom renderer extends the renderer that was already being used
          * by the outline table. This renderer colors a row if the tags property
@@ -494,20 +504,53 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (currentRoot == null || propertiesMap.isEmpty()) {
             return;
         }
-
-        TableFilterNode tfn;
         if (currentRoot instanceof TableFilterNode) {
-            tfn = (TableFilterNode) currentRoot;
-        } else {
+            TableFilterNode tfn = (TableFilterNode) currentRoot;
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+            // Store the current order of the columns into settings
+            for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
+                preferences.put(getColumnPositionKey(tfn.getColumnOrderKey(), entry.getValue().getName()), String.valueOf(entry.getKey()));
+            }
+
+            int numCols = ov.getOutline().getColumnModel().getColumnCount();
+            for (int i = 0; i < numCols; i++) {
+                ETableColumn etc = (ETableColumn) ov.getOutline().getColumnModel().getColumn(i);
+                if (etc.isSorted()) {
+                    preferences.put(getColumnSortOrderKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()), String.valueOf(etc.isAscending()));
+                    preferences.put(getColumnSortRankKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()), String.valueOf(etc.getSortRank()));
+                } else {
+                    preferences.remove(getColumnSortOrderKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()));
+                    preferences.remove(getColumnSortRankKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()));
+                }
+            }
+        }
+    }
+
+    private synchronized void loadSort() {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
             return;
         }
+        if (currentRoot instanceof TableFilterNode) {
 
-        // Store the current order of the columns into settings
-        for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
-            Property<?> prop = entry.getValue();
-            int storeValue = entry.getKey();
-            NbPreferences.forModule(this.getClass()).put(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), String.valueOf(storeValue));
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+            TableFilterNode tfn = (TableFilterNode) currentRoot;
+
+            Map<Integer, Boolean> orderMap = new TreeMap<>();
+            Map<Integer, Integer> indexMap = new TreeMap<>();
+
+            propertiesMap.entrySet().forEach((entry) -> {
+                //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
+                Integer sortRank = Integer.valueOf(preferences.get(getColumnSortRankKey(tfn.getColumnOrderKey(), entry.getValue().getName()), "0"));
+                Boolean sortOrder = Boolean.valueOf(preferences.get(getColumnSortOrderKey(tfn.getColumnOrderKey(), entry.getValue().getName()), "true"));
+                orderMap.put(sortRank, sortOrder);
+                indexMap.put(sortRank, ov.getOutline().getColumn(entry.getValue().getName()).getModelIndex());
+            });
+
+            orderMap.entrySet().forEach((entry) -> {
+                ov.getOutline().setColumnSorted(indexMap.get(entry.getKey()), orderMap.get(entry.getKey()), entry.getKey());
+            });
         }
+
     }
 
     /**
@@ -515,7 +558,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *
      * @return a List<Node.Property<?>> of the preferences in order
      */
-    private synchronized List<Node.Property<?>> loadState() {
+    private synchronized List<Node.Property<?>> loadColumnOrder() {
         // This is a set because we add properties of up to 100 child nodes, and we want unique properties
         Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
         this.getAllChildPropertyHeadersRec(currentRoot, 100, propertiesAcc);
@@ -541,7 +584,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         int offset = props.size();
         boolean noPreviousSettings = true;
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPreferenceKey(prop, tfn.getColumnOrderKey()), "-1"));
+            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPositionKey(tfn.getColumnOrderKey(), prop.getName()), "-1"));
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
                 noPreviousSettings = false;
@@ -573,9 +616,24 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *
      * @return A generated key for the preference file
      */
-    private String getColumnPreferenceKey(Property<?> prop, String type) {
-        return type.replaceAll("[^a-zA-Z0-9_]", "") + "."
-                + prop.getName().replaceAll("[^a-zA-Z0-9_]", "") + ".column";
+    private String getColumnPositionKey(String type, String propName) {
+        return getColumnKeyBase(type, propName) + ".column";
+    }
+
+    private String getColumnSortOrderKey(String type, String propName) {
+        return getColumnKeyBase(type, propName) + ".sortOrder";
+    }
+
+    private String getColumnSortRankKey(String type, String propName) {
+        return getColumnKeyBase(type, propName) + ".sortRank";
+    }
+
+    private static String getColumnKeyBase(String type, String propName) {
+        return stripNonAlphanumeric(type) + "." + stripNonAlphanumeric(propName);
+    }
+
+    private static String stripNonAlphanumeric(String str) {
+        return str.replaceAll("[^a-zA-Z0-9_]", "");
     }
 
     @Override
