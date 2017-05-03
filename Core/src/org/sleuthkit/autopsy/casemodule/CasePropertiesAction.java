@@ -43,9 +43,6 @@ final class CasePropertiesAction extends CallableSystemAction {
         putValue(Action.NAME, NbBundle.getMessage(CasePropertiesAction.class, "CTL_CasePropertiesAction"));
         this.setEnabled(false);
         Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
-            if (null == evt.getNewValue()) {
-                casePropertiesDialog = null;                
-            }
             setEnabled(null != evt.getNewValue());
         });
     }
@@ -53,23 +50,21 @@ final class CasePropertiesAction extends CallableSystemAction {
     @Override
     public void performAction() {
         SwingUtilities.invokeLater(() -> {
-            if (null == casePropertiesDialog) {
-                String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
-                casePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), title, false);
-                CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
-                caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
-                    casePropertiesDialog.setVisible(false);
-                });
-                casePropertiesDialog.add(caseInformationPanel);
-                casePropertiesDialog.setResizable(true);
-                casePropertiesDialog.pack();
+            String title = NbBundle.getMessage(this.getClass(), "CasePropertiesAction.window.title");
+            casePropertiesDialog = new JDialog(WindowManager.getDefault().getMainWindow(), title, false);
+            CaseInformationPanel caseInformationPanel = new CaseInformationPanel();
+            caseInformationPanel.addCloseButtonAction((ActionEvent e) -> {
+                casePropertiesDialog.setVisible(false);
+            });
+            casePropertiesDialog.add(caseInformationPanel);
+            casePropertiesDialog.setResizable(true);
+            casePropertiesDialog.pack();
 
-                Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
-                double w = casePropertiesDialog.getSize().getWidth();
-                double h = casePropertiesDialog.getSize().getHeight();
-                casePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
-                casePropertiesDialog.setVisible(true);
-            }
+            Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+            double w = casePropertiesDialog.getSize().getWidth();
+            double h = casePropertiesDialog.getSize().getHeight();
+            casePropertiesDialog.setLocation((int) ((screenDimension.getWidth() - w) / 2), (int) ((screenDimension.getHeight() - h) / 2));
+            casePropertiesDialog.setVisible(true);
             casePropertiesDialog.setVisible(true);
             casePropertiesDialog.toFront();
         });
@@ -86,6 +81,9 @@ final class CasePropertiesAction extends CallableSystemAction {
     }
 
     static void closeCasePropertiesWindow() {
-        casePropertiesDialog.setVisible(false);
+        if (null != casePropertiesDialog) {
+            casePropertiesDialog.setVisible(false);
+            casePropertiesDialog = null;
+        }
     }
 }
