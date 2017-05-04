@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.framework;
+package org.sleuthkit.autopsy.progress;
 
 /**
  * An interface for progress indicators. A progress indicator can run in

@@ -25,7 +25,7 @@ import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
-import org.sleuthkit.autopsy.framework.AutopsyService;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
 
 /**
  * Creates and handles closing of ImageWriter objects. Currently, ImageWriter is

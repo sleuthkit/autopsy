@@ -22,7 +22,7 @@ package org.sleuthkit.autopsy.casemodule;
  * Exception thrown when a case action (e.g., create, open, close, delete) is
  * cancelled before it is completed.
  */
-class CaseActionCancelledException extends CaseActionException {
+public final class CaseActionCancelledException extends CaseActionException {
 
     private static final long serialVersionUID = 1L;
 

@@ -92,11 +92,11 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.framework.AutopsyService;
-import org.sleuthkit.autopsy.framework.AutopsyService.CaseContext;
-import org.sleuthkit.autopsy.framework.LoggingProgressIndicator;
-import org.sleuthkit.autopsy.framework.ModalDialogProgressIndicator;
-import org.sleuthkit.autopsy.framework.ProgressIndicator;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
+import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
+import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
+import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
@@ -463,7 +463,8 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata."
+        "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata.",
+        "Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case."
     })
     public static void openAsCurrentCase(String caseMetadataFilePath) throws CaseActionException {
         CaseMetadata metadata;
@@ -472,6 +473,9 @@ public class Case {
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_failedToReadMetadata(), ex);
         }
+        if (CaseType.MULTI_USER_CASE == metadata.getCaseType() && !UserPreferences.getIsMultiUserModeEnabled()) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_cannotOpenMultiUserCaseNoSettings());            
+        }        
         openAsCurrentCase(new Case(metadata), false);
     }
 

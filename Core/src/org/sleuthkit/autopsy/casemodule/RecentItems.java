@@ -64,9 +64,10 @@ class RecentItems implements ActionListener {
             new Thread(() -> {
                 try {
                     Case.openAsCurrentCase(caseMetaDataFilePath);
+                    StartupWindowProvider.getInstance().close();
                 } catch (CaseActionException ex) {
                     SwingUtilities.invokeLater(() -> {
-                        if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                        if (!(ex instanceof CaseActionCancelledException)) {
                             logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetaDataFilePath), ex); //NON-NLS
                             JOptionPane.showMessageDialog(
                                     WindowManager.getDefault().getMainWindow(),
@@ -77,8 +78,7 @@ class RecentItems implements ActionListener {
                         StartupWindowProvider.getInstance().open();
                     });
                 }
-            }).
-                    start();
+            }).start();
         }
     }
 }

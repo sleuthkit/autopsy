@@ -42,7 +42,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
     private static final String ROOT_ELEM_TAG_NAME = "AutopsyManifest";
     private static final String CASE_NAME_XPATH = "/AutopsyManifest/CaseName/text()";
     private static final String DEVICE_ID_XPATH = "/AutopsyManifest/DeviceId/text()";
-    private static final String DATA_SOURCE_NAME_XPATH = "/AutopsyManifest/DataSourcePath/text()";
+    private static final String DATA_SOURCE_NAME_XPATH = "/AutopsyManifest/DataSource/text()";
     
     @Override
     public boolean fileIsManifest(Path filePath) {
