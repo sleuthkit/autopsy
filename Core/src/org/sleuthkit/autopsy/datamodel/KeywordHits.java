@@ -708,18 +708,17 @@ public class KeywordHits implements AutopsyVisitableItem {
                 for (Long id : keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME) ) {
                     RegExpInstanceKey key = new RegExpInstanceKey(id);
                     if (!nodesMap.containsKey(key)) {
-                        nodesMap.put(key, createNode(key));
-                        list.add(key);
+                        nodesMap.put(key, createNode(key));  
                     }
-                    
+                    list.add(key);
                 }
             } else {
                 for (String instance : instances) {
                     RegExpInstanceKey key = new RegExpInstanceKey(instance);
                     if (!nodesMap.containsKey(key)) {
                         nodesMap.put(key, createNode(key));
-                        list.add(key);
                     }
+                    list.add(key);
                 }
                 
             }
@@ -904,8 +903,8 @@ public class KeywordHits implements AutopsyVisitableItem {
             for (Long id : keywordResults.getArtifactIds(setName, keyword, instance) ) {
                 if (!nodesMap.containsKey(id)) {
                     nodesMap.put(id,  createBlackboardArtifactNode(id));
-                    list.add(id);
                 }
+                list.add(id); 
             }
             return true;
         }
