@@ -115,19 +115,9 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                     protected void done() {
                         try {
                             get();
-                        } catch (InterruptedException ex) {
-                            logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
-                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                            JOptionPane.showMessageDialog(
-                                    WindowManager.getDefault().getMainWindow(),
-                                    ex.getMessage(),
-                                    NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                                    JOptionPane.ERROR_MESSAGE);
-                            StartupWindowProvider.getInstance().open();
-                        } catch (ExecutionException ex) {
-                            if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                        } catch (InterruptedException | ExecutionException ex) {
+                            if (ex instanceof InterruptedException || (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException))) {
                                 logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", path), ex); //NON-NLS
-                                WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                                 JOptionPane.showMessageDialog(
                                         WindowManager.getDefault().getMainWindow(),
                                         ex.getCause().getMessage(), //get the message of the wrapped exception
@@ -135,8 +125,9 @@ public final class CaseOpenAction extends CallableSystemAction implements Action
                                         JOptionPane.ERROR_MESSAGE);
                             }
                             StartupWindowProvider.getInstance().open();
+                        } finally {
+                            WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                         }
-                        WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     }
                 }.execute();
             }

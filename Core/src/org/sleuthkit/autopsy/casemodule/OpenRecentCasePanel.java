@@ -100,9 +100,9 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
         if (casePaths.length < 1) {
             return;
         }
-        final String casePath = casePaths[imagesTable.getSelectedRow()];
+        final String caseMetadataFilePath = casePaths[imagesTable.getSelectedRow()];
         final String caseName = caseNames[imagesTable.getSelectedRow()];
-        if (!casePath.isEmpty()) {
+        if (!caseMetadataFilePath.isEmpty()) {
             try {
                 StartupWindowProvider.getInstance().close();
                 CueBannerPanel.closeOpenRecentCasesWindow();
@@ -113,25 +113,25 @@ class OpenRecentCasePanel extends javax.swing.JPanel {
             /*
              * Open the case.
              */
-            if (caseName.isEmpty() || casePath.isEmpty() || (!new File(casePath).exists())) {
+            if (caseName.isEmpty() || caseMetadataFilePath.isEmpty() || (!new File(caseMetadataFilePath).exists())) {
                 JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                         NbBundle.getMessage(this.getClass(), "RecentItems.openRecentCase.msgDlg.text", caseName),
                         NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"),
                         JOptionPane.ERROR_MESSAGE);
-                RecentCases.getInstance().removeRecentCase(caseName, casePath); // remove the recent case if it doesn't exist anymore
+                RecentCases.getInstance().removeRecentCase(caseName, caseMetadataFilePath); // remove the recent case if it doesn't exist anymore
                 StartupWindowProvider.getInstance().open();
             } else {
                 new Thread(() -> {
                     try {
-                        Case.openAsCurrentCase(casePath);
+                        Case.openAsCurrentCase(caseMetadataFilePath);
                     } catch (CaseActionException ex) {
                         SwingUtilities.invokeLater(() -> {
-                            if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
-                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", casePath), ex); //NON-NLS                            
+                            if (!(ex instanceof CaseActionCancelledException)) {
+                                logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
                                 JOptionPane.showMessageDialog(
                                         WindowManager.getDefault().getMainWindow(),
-                                        ex.getMessage(), // Should be user-friendly
-                                        NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
+                                        ex.getMessage(),
+                                        NbBundle.getMessage(OpenRecentCasePanel.this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
                                         JOptionPane.ERROR_MESSAGE);
                             }
                             StartupWindowProvider.getInstance().open();

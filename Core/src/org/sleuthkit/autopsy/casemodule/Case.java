@@ -463,7 +463,8 @@ public class Case {
      *                             exception.
      */
     @Messages({
-        "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata."
+        "Case.exceptionMessage.failedToReadMetadata=Failed to read case metadata.",
+        "Case.exceptionMessage.cannotOpenMultiUserCaseNoSettings=Multi-user settings are missing (see Tools, Options, Multi-user tab), cannot open a multi-user case."
     })
     public static void openAsCurrentCase(String caseMetadataFilePath) throws CaseActionException {
         CaseMetadata metadata;
@@ -472,6 +473,9 @@ public class Case {
         } catch (CaseMetadataException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_failedToReadMetadata(), ex);
         }
+        if (CaseType.MULTI_USER_CASE == metadata.getCaseType() && !UserPreferences.getIsMultiUserModeEnabled()) {
+            throw new CaseActionException(Bundle.Case_exceptionMessage_cannotOpenMultiUserCaseNoSettings());            
+        }        
         openAsCurrentCase(new Case(metadata), false);
     }
 
