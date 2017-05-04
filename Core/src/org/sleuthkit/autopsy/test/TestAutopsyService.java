@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.test;
 import java.util.logging.Level;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.framework.AutopsyService;
-import org.sleuthkit.autopsy.framework.ProgressIndicator;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An implementation of the Autopsy service interface used for test purposes.
