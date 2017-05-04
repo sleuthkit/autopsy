@@ -243,7 +243,6 @@
                 <package>net.sf.sevenzipjbinding.simple</package>
                 <package>net.sf.sevenzipjbinding.simple.impl</package>
                 <package>org.sleuthkit.autopsy.actions</package>
-                <package>org.sleuthkit.autopsy.appservices</package>
                 <package>org.sleuthkit.autopsy.casemodule</package>
                 <package>org.sleuthkit.autopsy.casemodule.events</package>
                 <package>org.sleuthkit.autopsy.casemodule.services</package>
@@ -255,18 +254,17 @@
                 <package>org.sleuthkit.autopsy.corecomponents</package>
                 <package>org.sleuthkit.autopsy.coreutils</package>
                 <package>org.sleuthkit.autopsy.datamodel</package>
-                <package>org.sleuthkit.autopsy.datasourceprocessors</package>
                 <package>org.sleuthkit.autopsy.directorytree</package>
                 <package>org.sleuthkit.autopsy.events</package>
                 <package>org.sleuthkit.autopsy.externalresults</package>
                 <package>org.sleuthkit.autopsy.filesearch</package>
+                <package>org.sleuthkit.autopsy.framework</package>
                 <package>org.sleuthkit.autopsy.ingest</package>
                 <package>org.sleuthkit.autopsy.keywordsearchservice</package>
                 <package>org.sleuthkit.autopsy.menuactions</package>
                 <package>org.sleuthkit.autopsy.modules.filetypeid</package>
                 <package>org.sleuthkit.autopsy.modules.hashdatabase</package>
                 <package>org.sleuthkit.autopsy.modules.vmextractor</package>
-                <package>org.sleuthkit.autopsy.progress</package>
                 <package>org.sleuthkit.autopsy.report</package>
                 <package>org.sleuthkit.datamodel</package>
             </public-packages>
