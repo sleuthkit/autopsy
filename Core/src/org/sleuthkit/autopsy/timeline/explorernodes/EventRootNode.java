@@ -102,14 +102,14 @@ public class EventRootNode extends DisplayableItemNode {
                 for (Long eventId: eventIDs){
                     if (!nodesMap.containsKey(eventId)) {
                         nodesMap.put(eventId, createNode(eventId));
-                        toPopulate.add(eventId);
                     }
+                    toPopulate.add(eventId);
                 }
             } else {
                 if (!nodesMap.containsKey(-1L)) {
                     nodesMap.put(-1L, createNode(-1L));
-                    toPopulate.add(-1L);
                 }
+                toPopulate.add(-1L);
             }
             return true;
         }
