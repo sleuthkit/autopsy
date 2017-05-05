@@ -35,6 +35,7 @@ import org.openide.util.actions.Presenter;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.Installer;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryModule;
@@ -64,7 +65,7 @@ public final class OpenAction extends CallableSystemAction implements Presenter.
         toolbarButton.addActionListener(actionEvent -> performAction());
         pcl = (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                 setEnabled(evt.getNewValue() != null);
+                 setEnabled(RuntimeProperties.runningWithGUI() && evt.getNewValue() != null);
             }
         };
         Case.addPropertyChangeListener(pcl);
