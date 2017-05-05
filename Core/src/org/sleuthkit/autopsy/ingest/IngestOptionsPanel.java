@@ -138,9 +138,6 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
 
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
         filterPanel.addPropertyChangeListener(l);
@@ -148,9 +145,6 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         profilePanel.addPropertyChangeListener(l);
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
         filterPanel.removePropertyChangeListener(l);
@@ -158,9 +152,6 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         profilePanel.removePropertyChangeListener(l);
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void saveSettings() {
         saveTabByIndex(tabbedPane.getSelectedIndex());
@@ -189,17 +180,11 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void store() {
         saveSettings();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void load() {
         filterPanel.load();

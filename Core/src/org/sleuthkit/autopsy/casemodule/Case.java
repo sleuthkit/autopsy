@@ -2019,8 +2019,6 @@ public class Case {
 
     /**
      * Closes the case.
-     *
-     * @param progressIndicator A progress indicator.
      */
     private void close() throws CaseActionException {
         /*
@@ -2655,7 +2653,7 @@ public class Case {
      * @param textIndexName The text index name.
      *
      * @throws CaseMetadataException
-     * @dprecated Do not use.
+     * @deprecated Do not use.
      */
     @Deprecated
     public void setTextIndexName(String textIndexName) throws CaseMetadataException {
