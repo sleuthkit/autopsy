@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessorProgress
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.imagewriter.ImageWriterSettings;
-import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
 
 /**
  * A local drive data source processor that implements the DataSourceProcessor

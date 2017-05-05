@@ -16,63 +16,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.sleuthkit.autopsy.casemodule;
 
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.logging.Level;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import org.openide.DialogDescriptor;
-import org.openide.DialogDisplayer;
-import org.openide.NotifyDescriptor;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
- * A panel that allows the user to view various properties of the current case
- * and change the display name of the case.
+ * A panel that allows the user to view various properties of a case and change
+ * the display name of the case.
  */
 class CasePropertiesPanel extends javax.swing.JPanel {
 
     private static final long serialVersionUID = 1L;
-    private Case current = null;
-    private static JPanel caller;    // panel for error
+    private static final Logger LOGGER = Logger.getLogger(CasePropertiesPanel.class.getName());
+    private final Case theCase;
 
-    CasePropertiesPanel(Case currentCase, String crDate, String caseDir, Map<Long, String> imgPaths) throws CaseMetadata.CaseMetadataException {
+    /**
+     * Constructs a panel that allows the user to view various properties of the
+     * current case and change the display name of the case.
+     *
+     * @param aCase A case.
+     */
+    CasePropertiesPanel(Case aCase) {
         initComponents();
-        caseNameTextField.setText(currentCase.getDisplayName());
-        String caseNumber = currentCase.getNumber();
+        theCase = aCase;
+        caseNameTextField.setText(theCase.getDisplayName());
+        String caseNumber = theCase.getNumber();
         if (!caseNumber.isEmpty()) {
             caseNumberField.setText(caseNumber);
         } else {
             caseNumberField.setText("N/A");
         }
-        String examiner = currentCase.getExaminer();
+        String examiner = theCase.getExaminer();
         if (!examiner.isEmpty()) {
             examinerField.setText(examiner);
         } else {
             examinerField.setText("N/A");
         }
-        crDateField.setText(crDate);
-        caseDirField.setText(caseDir);
-        current = currentCase;
-
-        CaseMetadata caseMetadata = currentCase.getCaseMetadata();
-        if (caseMetadata.getCaseType() == Case.CaseType.SINGLE_USER_CASE) {
-            dbNameField.setText(Paths.get(caseMetadata.getCaseDirectory(), caseMetadata.getCaseDatabaseName()).toString());
+        crDateField.setText(theCase.getCreatedDate());
+        caseDirField.setText(theCase.getCaseDirectory());
+        if (Case.CaseType.SINGLE_USER_CASE == theCase.getCaseType()) {
+            dbNameField.setText(Paths.get(theCase.getCaseDirectory(), theCase.getMetadata().getCaseDatabaseName()).toString());
         } else {
-            dbNameField.setText(caseMetadata.getCaseDatabaseName());
+            dbNameField.setText(theCase.getMetadata().getCaseDatabaseName());
         }
-        Case.CaseType caseType = caseMetadata.getCaseType();
-        caseTypeField.setText(caseType.getLocalizedDisplayName());
-        if (caseType == Case.CaseType.SINGLE_USER_CASE) {
-            deleteCaseButton.setEnabled(true);
-        } else {
-            deleteCaseButton.setEnabled(false);
-        }
+        Case.CaseType caseType = theCase.getCaseType();
+        caseTypeField.setText(caseType.getLocalizedDisplayName());        
+        deleteCaseButton.setEnabled(Case.CaseType.SINGLE_USER_CASE == caseType);
     }
 
     /**
@@ -259,59 +253,35 @@ class CasePropertiesPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Updates the case name.
+     * Updates the case display name.
      *
      * @param evt The action event
      */
+    @NbBundle.Messages({
+        "CasePropertiesPanel.errorDialog.emptyCaseNameMessage=No case name entered.",
+        "CasePropertiesPanel.errorDialog.invalidCaseNameMessage=Case names cannot include the following symbols: \\, /, :, *, ?, \", <, >, |"
+    })
     private void updateCaseNameButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateCaseNameButtonActionPerformed
-        String oldCaseName = Case.getCurrentCase().getDisplayName();
-        String newCaseName = caseNameTextField.getText();
-        // check if the old and new case name is not equal
-        if (!oldCaseName.equals(newCaseName)) {
+        String newCaseDisplayName = caseNameTextField.getText();
+        if (newCaseDisplayName.equals(theCase.getDisplayName())) {
+            return;
+        }
 
-            // check if the case name is empty
-            if (newCaseName.trim().isEmpty()) {
-                JOptionPane.showMessageDialog(caller,
-                        NbBundle.getMessage(this.getClass(),
-                                "CasePropertiesForm.updateCaseName.msgDlg.empty.msg"),
-                        NbBundle.getMessage(this.getClass(),
-                                "CasePropertiesForm.updateCaseName.msgDlg.empty.title"),
-                        JOptionPane.ERROR_MESSAGE);
-            } else // check if case Name contain one of this following symbol:
-            //  \ / : * ? " < > |
-            {
-                if (newCaseName.contains("\\") || newCaseName.contains("/") || newCaseName.contains(":")
-                        || newCaseName.contains("*") || newCaseName.contains("?") || newCaseName.contains("\"")
-                        || newCaseName.contains("<") || newCaseName.contains(">") || newCaseName.contains("|")) {
-                    String errorMsg = NbBundle
-                            .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.msg");
-                    JOptionPane.showMessageDialog(caller, errorMsg,
-                            NbBundle.getMessage(this.getClass(),
-                                    "CasePropertiesForm.updateCaseName.msgDlg.invalidSymbols.title"),
-                            JOptionPane.ERROR_MESSAGE);
-                } else {
-                    // ask for the confirmation first
-                    String confMsg = NbBundle
-                            .getMessage(this.getClass(), "CasePropertiesForm.updateCaseName.confMsg.msg", oldCaseName,
-                                    newCaseName);
-                    NotifyDescriptor d = new NotifyDescriptor.Confirmation(confMsg,
-                            NbBundle.getMessage(this.getClass(),
-                                    "CasePropertiesForm.updateCaseName.confMsg.title"),
-                            NotifyDescriptor.YES_NO_OPTION, NotifyDescriptor.WARNING_MESSAGE);
-                    d.setValue(NotifyDescriptor.NO_OPTION);
+        if (newCaseDisplayName.trim().isEmpty()) {
+            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_emptyCaseNameMessage());
+            return;
+        }
 
-                    Object res = DialogDisplayer.getDefault().notify(d);
-                    if (res != null && res == DialogDescriptor.YES_OPTION) {
-                        // if user select "Yes"
-                        String oldPath = current.getCaseMetadata().getFilePath().toString();
-                        try {
-                            current.updateCaseName(oldCaseName, oldPath, newCaseName, oldPath);
-                        } catch (CaseActionException ex) {
-                            Logger.getLogger(CasePropertiesPanel.class.getName()).log(Level.WARNING, "Error: problem updating case name.", ex); //NON-NLS
-                        }
-                    }
-                }
-            }
+        if (!Case.isValidName(newCaseDisplayName)) {
+            MessageNotifyUtil.Message.error(Bundle.CasePropertiesPanel_errorDialog_invalidCaseNameMessage());
+            return;
+        }
+
+        try {
+            theCase.updateDisplayName(newCaseDisplayName);
+        } catch (CaseActionException ex) {
+            MessageNotifyUtil.Message.error(ex.getLocalizedMessage());
+            LOGGER.log(Level.SEVERE, "Failed to update case display name", ex); //NON-NLS
         }
     }//GEN-LAST:event_updateCaseNameButtonActionPerformed
 

@@ -38,29 +38,21 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- * The "New Case" wizard panel with a component on it. This class represents
- * data of wizard step. It defers creation and initialization of UI component of
- * wizard panel into getComponent() method.
+ * The first panel of the New Case wizard.
  */
 class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDescriptor> {
 
-    /**
-     * The visual component that displays this panel. If you need to access the
-     * component from this class, just use getComponent().
-     */
-    private NewCaseVisualPanel1 component;
-    private Boolean isFinish = false;
-    private static String createdDirectory;
-    private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
     private static final Logger logger = Logger.getLogger(NewCaseWizardPanel1.class.getName());
+    private static final String PROP_BASECASE = "LBL_BaseCase_PATH"; //NON-NLS
+    private static String createdDirectory;
+    private final Set<ChangeListener> listeners = new HashSet<>(1);
+    private NewCaseVisualPanel1 component;
+    private boolean isFinish;
 
     /**
-     * Get the visual component for the panel. In this template, the component
-     * is kept separate. This can be more efficient: if the wizard is created
-     * but never displayed, or not all panels are displayed, it is better to
-     * create only those which really need to be visible.
+     * Get the visual component for the panel.
      *
-     * @return component the UI component of this wizard panel
+     * @return The UI component of this wizard panel
      */
     @Override
     public NewCaseVisualPanel1 getComponent() {
@@ -71,65 +63,57 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
     }
 
     /**
-     * Help for this panel. When the panel is active, this is used as the help
-     * for the wizard dialog.
+     * Gets the help object for this panel. When the panel is active, this is
+     * used as the help for the wizard dialog.
      *
-     * @return HelpCtx.DEFAULT_HELP the help for this panel
+     * @return The help for this panel.
      */
     @Override
     public HelpCtx getHelp() {
-        // Show no Help button for this panel:
+        /*
+         * Currently, no help is provided for this panel.
+         */
         return HelpCtx.DEFAULT_HELP;
-        // If you have context help:
-        // return new HelpCtx(SampleWizardPanel1.class);
     }
 
     /**
      * Tests whether the panel is finished. If the panel is valid, the "Finish"
      * button will be enabled.
      *
-     * @return boolean true if all the fields are correctly filled, false
-     *         otherwise
+     * @return boolean True if all the fields are correctly filled, false
+     *         otherwise.
      */
     @Override
     public boolean isValid() {
-        // If it is always OK to press Next or Finish, then:
         return isFinish;
-        // If it depends on some condition (form filled out...), then:
-        // return someCondition();
-        // and when this condition changes (last form field filled in...) then:
-        // fireChangeEvent();
-        // and uncomment the complicated stuff below.
     }
-    private final Set<ChangeListener> listeners = new HashSet<>(1); // or can use ChangeSupport in NB 6.0
 
     /**
-     * Adds a listener to changes of the panel's validity.
+     * Adds a change listener to this panel.
      *
-     * @param l the change listener to add
+     * @param listener The change listener to add.
      */
     @Override
-    public final void addChangeListener(ChangeListener l) {
+    public final void addChangeListener(ChangeListener listener) {
         synchronized (listeners) {
-            listeners.add(l);
+            listeners.add(listener);
         }
     }
 
     /**
-     * Removes a listener to changes of the panel's validity.
+     * Removes a change listener from this panel.
      *
-     * @param l the change listener to move
+     * @param listener The change listener to remove.
      */
     @Override
-    public final void removeChangeListener(ChangeListener l) {
+    public final void removeChangeListener(ChangeListener listener) {
         synchronized (listeners) {
-            listeners.remove(l);
+            listeners.remove(listener);
         }
     }
 
     /**
-     * This method is auto-generated. It seems that this method is used to
-     * listen to any change in this wizard panel.
+     * Notifies any registerd change listeners of a change in the panel.
      */
     protected final void fireChangeEvent() {
         Iterator<ChangeListener> it;
@@ -153,12 +137,8 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
         fireChangeEvent();
     }
 
-    // You can use a settings object to keep track of state. Normally the
-    // settings object will be the WizardDescriptor, so you can use
-    // WizardDescriptor.getProperty & putProperty to store information entered
-    // by the user.
     /**
-     * Provides the wizard panel with the current data--either the default data
+     * Provides the wizard panel with the current data - either the default data
      * or already-modified settings, if the user used the previous and/or next
      * buttons. This method can be called multiple times on one instance of
      * WizardDescriptor.Panel.
@@ -322,4 +302,5 @@ class NewCaseWizardPanel1 implements WizardDescriptor.ValidatingPanel<WizardDesc
             }
         }
     }
+    
 }

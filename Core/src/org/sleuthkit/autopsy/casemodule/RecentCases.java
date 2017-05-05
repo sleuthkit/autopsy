@@ -407,9 +407,11 @@ final class RecentCases extends CallableSystemAction implements Presenter.Menu {
         String[] casePaths = new String[LENGTH];
         String currentCasePath = null;
         try {
-            currentCasePath = Case.getCurrentCase().getCaseMetadata().getFilePath().toString();
+            currentCasePath = Case.getCurrentCase().getMetadata().getFilePath().toString();
         } catch (IllegalStateException ex) {
-            // in case there is no current case.
+            /*
+             * There may be no current case.
+             */
         }
 
         Iterator<RecentCase> mostRecentFirst = recentCases.descendingIterator();

@@ -92,8 +92,8 @@ import static org.sleuthkit.autopsy.experimental.autoingest.ManifestNodeData.Pro
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration;
 import org.sleuthkit.autopsy.experimental.configuration.SharedConfiguration.SharedConfigurationException;
-import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor;
-import org.sleuthkit.autopsy.framework.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
+import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor;
+import org.sleuthkit.autopsy.datasourceprocessors.AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestJob.CancellationReason;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;

@@ -16,9 +16,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.framework;
+package org.sleuthkit.autopsy.appservices;
 
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An interface for services that report status and may manage case and

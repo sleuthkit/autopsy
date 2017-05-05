@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,7 @@ public class GroupSortBy implements Comparator<DrawableGroup> {
     /**
      * sort the groups by some priority metric to be determined and implemented
      */
-    public final static GroupSortBy PRIORITY = new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png", Comparator.comparing(DrawableGroup::getHashHitDensity).thenComparing(Comparator.comparing(DrawableGroup::getUncategorizedCount)));
+    public final static GroupSortBy PRIORITY = new GroupSortBy(Bundle.GroupSortBy_priority(), "hashset_hits.png", Comparator.comparing(DrawableGroup::getHashHitDensity).thenComparing(Comparator.comparing(DrawableGroup::getUncategorizedCount)).reversed());
 
     @Override
     public int compare(DrawableGroup o1, DrawableGroup o2) {
