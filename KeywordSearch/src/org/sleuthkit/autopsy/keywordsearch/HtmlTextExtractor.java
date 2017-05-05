@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import net.htmlparser.jericho.Attributes;
+import net.htmlparser.jericho.Config;
+import net.htmlparser.jericho.LoggerProvider;
 import net.htmlparser.jericho.Renderer;
 import net.htmlparser.jericho.Source;
 import net.htmlparser.jericho.StartTag;
@@ -49,6 +51,11 @@ class HtmlTextExtractor extends FileTextExtractor {
             "text/html", //NON-NLS NON-NLS
             "text/javascript" //NON-NLS
     );
+    
+    static {
+        // Disable Jericho HTML Parser log messages.
+        Config.LoggerProvider = LoggerProvider.DISABLED;
+    }
 
     @Override
     boolean isContentTypeSpecific() {

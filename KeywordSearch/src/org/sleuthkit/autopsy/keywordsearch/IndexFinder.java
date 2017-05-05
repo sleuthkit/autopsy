@@ -27,7 +27,7 @@ import java.util.List;
 import org.apache.commons.lang.math.NumberUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.framework.AutopsyService;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
 
 /**
  * This class handles the task of finding and identifying KWS index folders.

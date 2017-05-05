@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.framework;
+package org.sleuthkit.autopsy.progress;
 
 /**
  * An interface for progress indicators. A progress indicator can run in
@@ -46,6 +46,7 @@ public interface ProgressIndicator {
     /**
      * Switches the progress indicator to indeterminate mode (the total number
      * of work units to be completed is unknown).
+     *
      * @param message The initial progress message.
      */
     public void switchToIndeterminate(String message);
@@ -54,7 +55,7 @@ public interface ProgressIndicator {
      * Switches the progress indicator to determinate mode (the total number of
      * work units to be completed is known).
      *
-     * @param message The initial progress message.
+     * @param message            The initial progress message.
      * @param workUnitsCompleted The number of work units completed so far.
      * @param totalWorkUnits     The total number of work units to be completed.
      */
@@ -88,9 +89,7 @@ public interface ProgressIndicator {
 
     /**
      * Finishes the progress indicator when the task is completed.
-     *
-     * @param message The finished message.
      */
-    void finish(String message);
+    void finish();
 
 }

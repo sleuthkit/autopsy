@@ -57,7 +57,6 @@ class TikaTextExtractor extends FileTextExtractor {
     @Override
     public void logWarning(final String msg, Exception ex) {
         KeywordSearch.getTikaLogger().log(Level.WARNING, msg, ex);
-        logger.log(Level.WARNING, msg, ex); //NON-NLS  }
     }
 
     @Override

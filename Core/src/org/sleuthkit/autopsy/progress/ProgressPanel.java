@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.framework;
+package org.sleuthkit.autopsy.progress;
 
 /**
  * A progress panel consisting of a message label and a progress bar.
@@ -35,7 +35,7 @@ class ProgressPanel extends javax.swing.JPanel {
         this.progressMessage.setText(message);
     }
 
-    void setInderminate(boolean indeterminate) {
+    void setIndeterminate(boolean indeterminate) {
         this.progressBar.setIndeterminate(indeterminate);
     }
 
