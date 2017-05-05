@@ -167,9 +167,11 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                 }
             });
 
+            //make a comparatator that will sort the nodes.
             return propMap.keySet().stream()
                     .map(rank -> {
-                        Comparator<Node> c = Comparator.nullsLast(Comparator.comparing(node -> getPropertyValue(node, propMap.get(rank))));
+                        Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, propMap.get(rank)),
+                                Comparator.nullsFirst(Comparator.naturalOrder()));
                         return orderMap.get(rank) ? c : c.reversed();
                     })
                     .collect(Collectors.reducing(Comparator::thenComparing))
