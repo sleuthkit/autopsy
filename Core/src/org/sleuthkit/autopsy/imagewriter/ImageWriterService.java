@@ -42,7 +42,8 @@ public class ImageWriterService implements AutopsyService {
     /**
      * Create an image writer object for the given data source ID.
      *
-     * @param imageId ID for the image
+     * @param imageId ID for the image.
+     * @param settings Image writer settings to be used when writing the image.
      */
     public static void createImageWriter(Long imageId, ImageWriterSettings settings) {
 

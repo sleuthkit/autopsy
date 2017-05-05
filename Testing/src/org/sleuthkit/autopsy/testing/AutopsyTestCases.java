@@ -59,11 +59,9 @@ public class AutopsyTestCases {
     private long start;
 
     /**
-     * This method is used to escape file/directory path. Example:
-     * \\NetworkLocation\foo\bar get escaped to \\\\NetworkLocation\foo\bar so
-     * that it can be used as intended.
+     * Escapes the slashes in a file or directory path.
      *
-     * @param path
+     * @param path The path to be escaped.
      *
      * @return escaped path the the file/directory location.
      */
@@ -78,7 +76,7 @@ public class AutopsyTestCases {
         }
     }
 
-    public AutopsyTestCases () {
+    public AutopsyTestCases() {
         start = 0;
     }
 
