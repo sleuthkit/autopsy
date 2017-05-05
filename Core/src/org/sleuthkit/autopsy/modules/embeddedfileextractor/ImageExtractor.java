@@ -21,20 +21,24 @@ package org.sleuthkit.autopsy.modules.embeddedfileextractor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.IllegalArgumentException;
+import java.lang.IndexOutOfBoundsException;
+import java.lang.NullPointerException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.apache.poi.OldFileFormatException;
 import org.apache.poi.POIXMLException;
 import org.apache.poi.hwpf.usermodel.Picture;
 import org.apache.poi.hslf.usermodel.HSLFPictureData;
 import org.apache.poi.hslf.usermodel.HSLFSlideShow;
+import org.apache.poi.hssf.record.RecordInputStream.LeftoverDataException;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.model.PicturesTable;
 import org.apache.poi.sl.usermodel.PictureData.PictureType;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.util.RecordFormatException;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFPictureData;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -216,13 +220,24 @@ class ImageExtractor {
             HWPFDocument doc = new HWPFDocument(new ReadContentInputStream(af));
             PicturesTable pictureTable = doc.getPicturesTable();
             listOfAllPictures = pictureTable.getAllPictures();
-        } catch (OldFileFormatException | IOException ex) {
-            // OldFileFormatException:
-            // Thrown when the document version is unsupported (Word 95 and
-            // older)
-            
+        } catch (IOException | IllegalArgumentException |
+                IndexOutOfBoundsException | NullPointerException ex) {
             // IOException:
             // Thrown when the document has issues being read.
+            
+            // IllegalArgumentException:
+            // This will catch OldFileFormatException, which is thrown when the
+            // document's format is Word 95 or older. Alternatively, this is
+            // thrown when attempting to load an RTF file as a DOC file.
+            // However, our code verifies the file format before ever running it
+            // through the ImageExtractor. This exception gets thrown in the
+            // "IN10-0137.E01" image regardless. The reason is unknown.
+            
+            // IndexOutOfBoundsException:
+            // NullPointerException:
+            // These get thrown in certain images. The reason is unknown. It is
+            // likely due to problems with the file formats that POI is poorly
+            // handling.
             
             return null;
         } catch (Throwable ex) {
@@ -325,12 +340,20 @@ class ImageExtractor {
         try {
             HSLFSlideShow ppt = new HSLFSlideShow(new ReadContentInputStream(af));
             listOfAllPictures = ppt.getPictureData();
-        } catch (OldFileFormatException | IOException ex) {
-            // OldFileFormatException:
-            // Thrown when the document version is unsupported
+        } catch (IOException | IllegalArgumentException |
+                IndexOutOfBoundsException ex) {
+            // IllegalArgumentException:
+            // This will catch OldFileFormatException, which is thrown when the
+            // document version is unsupported. The IllegalArgumentException may
+            // also get thrown for unknown reasons.
             
             // IOException:
-            // Thrown when the document has issues being read
+            // Thrown when the document has issues being read.
+            
+            // IndexOutOfBoundsException:
+            // This gets thrown in certain images. The reason is unknown. It is
+            // likely due to problems with the file formats that POI is poorly
+            // handling.
             
             return null;
         } catch (Throwable ex) {
@@ -469,12 +492,30 @@ class ImageExtractor {
         try {
             Workbook xls = new HSSFWorkbook(new ReadContentInputStream(af));
             listOfAllPictures = xls.getAllPictures();
-        } catch (OldFileFormatException | IOException ex) {
-            // OldFileFormatException:
-            // Thrown when the document version is unsupported
+        } catch (IOException | LeftoverDataException |
+                RecordFormatException | IllegalArgumentException |
+                IndexOutOfBoundsException ex) {
+            // IllegalArgumentException:
+            // This will catch OldFileFormatException, which is thrown when the
+            // document version is unsupported. The IllegalArgumentException may
+            // also get thrown for unknown reasons.
             
             // IOException:
-            // Thrown when the document has issues being read
+            // Thrown when the document has issues being read.
+            
+            // LeftoverDataException:
+            // This is thrown for poorly formatted files that have more data
+            // than expected.
+            
+            // RecordFormatException:
+            // This is thrown for poorly formatted files that have less data
+            // that expected.
+            
+            // IllegalArgumentException:
+            // IndexOutOfBoundsException:
+            // These get thrown in certain images. The reason is unknown. It is
+            // likely due to problems with the file formats that POI is poorly
+            // handling.
             
             return null;
         } catch (Throwable ex) {

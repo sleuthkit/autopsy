@@ -451,7 +451,6 @@ public class InterestingHits implements AutopsyVisitableItem {
                     if (!artifactHits.containsKey(id)) {
                         BlackboardArtifact art = skCase.getBlackboardArtifact(id);
                         artifactHits.put(id, art);
-                        
                     }
                     list.add(id);
                 } catch (TskCoreException ex) {
