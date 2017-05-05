@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-15 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,32 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.lang.ref.SoftReference;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
+import javax.swing.SwingWorker;
+import javax.swing.Timer;
+import org.apache.commons.lang3.StringUtils;
+import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
+import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
+import org.openide.util.NbPreferences;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -41,16 +61,20 @@ import org.sleuthkit.datamodel.Content;
  */
 class ThumbnailViewChildren extends Children.Keys<Integer> {
 
+    private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
+
     static final int IMAGES_PER_PAGE = 200;
-    private Node parent;
+    private final Node parent;
     private final HashMap<Integer, List<Node>> pages = new HashMap<>();
     private int totalImages = 0;
     private int totalPages = 0;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
-    private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
     /**
      * the constructor
+     *
+     * @param arg
+     * @param iconSize
      */
     ThumbnailViewChildren(Node arg, int iconSize) {
         super(true); //support lazy loading
@@ -89,7 +113,8 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                 suppContent.add(child);
             }
         }
-
+        //sort suppContent!
+        Collections.sort(suppContent, loadSort());
         if (totalImages == 0) {
             return;
         }
@@ -119,6 +144,55 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         setKeys(pageNums);
     }
 
+    private synchronized Comparator<Node> loadSort() {
+        Comparator<Node> comp = (node1, node2) -> 0;
+
+        if (!(parent instanceof TableFilterNode)) {
+            return comp;
+        } else {
+            List<Node.Property<?>> properties = ResultViewerPersistence.getAllChildProperties(parent);
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+            TableFilterNode tfn = (TableFilterNode) parent;
+
+            java.util.Map<Integer, Boolean> orderMap = new TreeMap<>();
+            java.util.Map<Integer, Node.Property<?>> propMap = new TreeMap<>();
+
+            properties.forEach((prop) -> {
+                //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
+                Integer sortRank = Integer.valueOf(preferences.get(ResultViewerPersistence.getColumnSortRankKey(tfn, prop.getName()), "0"));
+                Boolean sortOrder = Boolean.valueOf(preferences.get(ResultViewerPersistence.getColumnSortOrderKey(tfn, prop.getName()), "true"));
+                if (sortRank != 0) {
+                    orderMap.put(sortRank, sortOrder);
+                    propMap.put(sortRank, prop);
+                }
+            });
+
+            return propMap.keySet().stream()
+                    .map(rank -> {
+                        Comparator<Node> c = Comparator.nullsLast(Comparator.comparing(node -> getPropertyValue(node, propMap.get(rank))));
+                        return orderMap.get(rank) ? c : c.reversed();
+                    })
+                    .collect(Collectors.reducing(Comparator::thenComparing))
+                    .orElse(comp);
+
+        }
+    }
+
+    Comparable getPropertyValue(Node node, Node.Property<?> prop) {
+        for (Node.PropertySet ps : node.getPropertySets()) {
+            for (Node.Property<?> p : ps.getProperties()) {
+                if (p.equals(prop)) {
+                    try {
+                        return (Comparable) p.getValue();
+                    } catch (IllegalAccessException | InvocationTargetException ex) {
+                        Exceptions.printStackTrace(ex);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
     protected void removeNotify() {
         super.removeNotify();
@@ -130,11 +204,13 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     protected Node[] createNodes(Integer pageNum) {
         final ThumbnailPageNode pageNode = new ThumbnailPageNode(pageNum);
         return new Node[]{pageNode};
+
     }
 
     static boolean isSupported(Node node) {
         if (node != null) {
-            Content content = node.getLookup().lookup(Content.class);
+            Content content = node.getLookup().lookup(Content.class
+            );
             if (content != null) {
                 return ImageUtils.thumbnailSupported(content);
             }
@@ -144,6 +220,93 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     public void setIconSize(int iconSize) {
         this.iconSize = iconSize;
+
+    }
+
+    /**
+     * Node that wraps around original node and adds the bitmap icon
+     * representing the picture
+     */
+    static class ThumbnailViewNode extends FilterNode {
+
+        private static final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"));
+        private SoftReference<Image> iconCache = null;
+        private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
+        private SwingWorker<Image, Object> swingWorker;
+        private Timer timer;
+
+        /**
+         * the constructor
+         */
+        ThumbnailViewNode(Node arg, int iconSize) {
+            super(arg, Children.LEAF);
+            this.iconSize = iconSize;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return StringUtils.abbreviate(super.getDisplayName(), 18);
+        }
+
+        @Override
+        @NbBundle.Messages(value = {"# {0} - file name", "ThumbnailViewNode.progressHandle.text=Generating thumbnail for {0}"})
+        public Image getIcon(int type) {
+            Image icon = null;
+            if (iconCache != null) {
+                icon = iconCache.get();
+            }
+            if (icon != null) {
+                return icon;
+            } else {
+                final Content content = this.getLookup().lookup(Content.class);
+                if (content == null) {
+                    return ImageUtils.getDefaultThumbnail();
+                }
+                if (swingWorker == null || swingWorker.isDone()) {
+                    swingWorker = new SwingWorker<Image, Object>() {
+                        private final ProgressHandle progressHandle = ProgressHandle.createHandle(Bundle.ThumbnailViewNode_progressHandle_text(content.getName()));
+
+                        @Override
+                        protected Image doInBackground() throws Exception {
+                            progressHandle.start();
+                            return ImageUtils.getThumbnail(content, iconSize);
+                        }
+
+                        @Override
+                        protected void done() {
+                            super.done();
+                            try {
+                                iconCache = new SoftReference<>(super.get());
+                                fireIconChange();
+                            } catch (InterruptedException | ExecutionException ex) {
+                                Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                            } finally {
+                                progressHandle.finish();
+                                if (timer != null) {
+                                    timer.stop();
+                                    timer = null;
+                                }
+                                swingWorker = null;
+                            }
+                        }
+                    };
+                    swingWorker.execute();
+                }
+                if (timer == null) {
+                    timer = new Timer(100, (ActionEvent e) -> {
+                        fireIconChange();
+                    });
+                    timer.start();
+                }
+                return waitingIcon;
+            }
+        }
+
+        public void setIconSize(int iconSize) {
+            this.iconSize = iconSize;
+            iconCache = null;
+            swingWorker = null;
+        }
     }
 
     /**
@@ -165,7 +328,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         }
     }
 
-    //TODO insert node at beginning pressing which goes back to page view
+//TODO insert node at beginning pressing which goes back to page view
     private class ThumbnailPageNodeChildren extends Children.Keys<Node> {
 
         //wrapped original nodes

@@ -272,7 +272,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
             for (Node page : root.getChildren().getNodes()) {
                 for (Node node : page.getChildren().getNodes()) {
-                    ((ThumbnailViewNode) node).setIconSize(iconSize);
+                    ((ThumbnailViewChildren.ThumbnailViewNode) node).setIconSize(iconSize);
                 }
             }
 

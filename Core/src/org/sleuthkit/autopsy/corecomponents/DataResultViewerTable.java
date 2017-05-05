@@ -26,14 +26,11 @@ import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import javax.swing.JTable;
@@ -47,17 +44,15 @@ import javax.swing.table.TableCellRenderer;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
+import org.netbeans.swing.outline.Outline;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
-import org.openide.nodes.Node.PropertySet;
-import org.openide.nodes.NodeEvent;
-import org.openide.nodes.NodeListener;
+import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeMemberEvent;
-import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -90,7 +85,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     // the column started and where it ended up.
     private int startColumnIndex = -1;
     private int endColumnIndex = -1;
-    private OutlineView ov;
+    private OutlineView outlineView;
+    /**
+     * Convenience reference to internal Outline
+     */
+    private Outline outline;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -114,17 +113,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void initialize() {
         initComponents();
 
-        ov = ((OutlineView) this.tableScrollPanel);
-        ov.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        outlineView = ((OutlineView) this.tableScrollPanel);
+        outlineView.setAllowedDragActions(DnDConstants.ACTION_NONE);
+        outline = outlineView.getOutline();
 
-        ov.getOutline().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        outline.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // don't show the root node
-        ov.getOutline().setRootVisible(false);
-        ov.getOutline().setDragEnabled(false);
+        outline.setRootVisible(false);
+        outline.setDragEnabled(false);
 
         // add a listener so that when columns are moved, the new order is stored
-        ov.getOutline().getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+        outline.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
             @Override
             public void columnAdded(TableColumnModelEvent e) {
             }
@@ -200,7 +200,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         });
 
         // add a listener to move columns back if user tries to move the first column out of place
-        ov.getOutline().getTableHeader().addMouseListener(new MouseAdapter() {
+        outline.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 /*
@@ -215,7 +215,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                  * without having moved any columns.
                  */
                 if (startColumnIndex != -1 && (startColumnIndex == 0 || endColumnIndex == 0)) {
-                    ov.getOutline().moveColumn(endColumnIndex, startColumnIndex);
+                    outline.moveColumn(endColumnIndex, startColumnIndex);
                 }
                 startColumnIndex = -1;
             }
@@ -278,33 +278,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private javax.swing.JScrollPane tableScrollPanel;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Gets regular Bean property set properties from all children and,
-     * recursively, subchildren of Node. Note: won't work out the box for lazy
-     * load - you need to set all children props for the parent by hand
-     *
-     * @param parent Node with at least one child to get properties from
-     * @param rows   max number of rows to retrieve properties for (can be used
-     *               for memory optimization)
-     */
-    private void getAllChildPropertyHeadersRec(Node parent, int rows, Set<Property<?>> propertiesAcc) {
-        Children children = parent.getChildren();
-        int childCount = 0;
-        for (Node child : children.getNodes()) {
-            if (++childCount > rows) {
-                return;
-            }
-            for (PropertySet ps : child.getPropertySets()) {
-                final Property<?>[] props = ps.getProperties();
-                final int propsNum = props.length;
-                for (int j = 0; j < propsNum; ++j) {
-                    propertiesAcc.add(props[j]);
-                }
-            }
-            getAllChildPropertyHeadersRec(child, rows, propertiesAcc);
-        }
-    }
-
     @Override
     public boolean isSupported(Node selectedNode) {
         return true;
@@ -318,7 +291,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      */
     @Override
     public void setNode(Node selectedNode) {
-        final OutlineView ov = ((OutlineView) this.tableScrollPanel);
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -326,7 +298,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * applied the number of rows do not match the number of rows in the
          * model."
          */
-        ov.getOutline().unsetQuickFilter();
+        outline.unsetQuickFilter();
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
@@ -350,8 +322,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
-                ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-                ov.setPropertyColumns(); // set the empty property header
+                outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+                outlineView.setPropertyColumns(); // set the empty property header
             }
         } finally {
             this.setCursor(null);
@@ -367,13 +339,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void setupTable(final Node root) {
 
         em.setRootContext(root);
-        final OutlineView ov = ((OutlineView) this.tableScrollPanel);
 
-        if (ov == null) {
-            return;
-        }
         currentRoot = root;
-        List<Node.Property<?>> props = loadColumnOrder();
+        List<Node.Property<?>> props = loadColumnOrder(currentRoot, propertiesMap);
 
         /**
          * OutlineView makes the first column be the result of
@@ -388,7 +356,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         if (props.size() > 0) {
             Node.Property<?> prop = props.remove(0);
-            ((DefaultOutlineModel) ov.getOutline().getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
+            ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
         }
 
         // Get the columns setup with respect to names and sortability
@@ -404,46 +372,46 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             propStrings[2 * i + 1] = props.get(i).getDisplayName();
         }
 
-        ov.setPropertyColumns(propStrings);
+        outlineView.setPropertyColumns(propStrings);
 
         // show the horizontal scroll panel and show all the content & header
         // If there is only one column (which was removed from props above)
         // Just let the table resize itself.
-        ov.getOutline().setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
+        outline.setAutoResizeMode((props.size() > 0) ? JTable.AUTO_RESIZE_OFF : JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         if (root.getChildren().getNodesCount() != 0) {
-            final Graphics graphics = ov.getGraphics();
+            final Graphics graphics = outlineView.getGraphics();
             if (graphics != null) {
                 final FontMetrics metrics = graphics.getFontMetrics();
 
                 int margin = 4;
                 int padding = 8;
 
-                for (int column = 0; column < ov.getOutline().getModel().getColumnCount(); column++) {
+                for (int column = 0; column < outline.getModel().getColumnCount(); column++) {
                     int firstColumnPadding = (column == 0) ? 32 : 0;
                     int columnWidthLimit = (column == 0) ? 350 : 300;
                     int valuesWidth = 0;
 
                     // find the maximum width needed to fit the values for the first 100 rows, at most
-                    for (int row = 0; row < Math.min(100, ov.getOutline().getRowCount()); row++) {
-                        TableCellRenderer renderer = ov.getOutline().getCellRenderer(row, column);
-                        Component comp = ov.getOutline().prepareRenderer(renderer, row, column);
+                    for (int row = 0; row < Math.min(100, outline.getRowCount()); row++) {
+                        TableCellRenderer renderer = outline.getCellRenderer(row, column);
+                        Component comp = outline.prepareRenderer(renderer, row, column);
                         valuesWidth = Math.max(comp.getPreferredSize().width, valuesWidth);
                     }
 
-                    int headerWidth = metrics.stringWidth(ov.getOutline().getColumnName(column));
+                    int headerWidth = metrics.stringWidth(outline.getColumnName(column));
                     valuesWidth += firstColumnPadding; // add extra padding for first column
 
                     int columnWidth = Math.max(valuesWidth, headerWidth);
                     columnWidth += 2 * margin + padding; // add margin and regular padding
                     columnWidth = Math.min(columnWidth, columnWidthLimit);
 
-                    ov.getOutline().getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
+                    outline.getColumnModel().getColumn(column).setPreferredWidth(columnWidth);
                 }
             }
         } else {
             // if there's no content just auto resize all columns
-            ov.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+            outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         }
 
         loadSort();
@@ -490,7 +458,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 return component;
             }
         }
-        ov.getOutline().setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
+        outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
     }
 
     /**
@@ -505,18 +473,22 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             // Store the current order of the columns into settings
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
-                preferences.put(getColumnPositionKey(tfn.getColumnOrderKey(), entry.getValue().getName()), String.valueOf(entry.getKey()));
+                String columnPositionKey = ResultViewerPersistence.getColumnPositionKey(tfn, entry.getValue().getName());
+                preferences.put(columnPositionKey, String.valueOf(entry.getKey()));
             }
 
-            int numCols = ov.getOutline().getColumnModel().getColumnCount();
+            int numCols = outlineView.getOutline().getColumnModel().getColumnCount();
             for (int i = 0; i < numCols; i++) {
-                ETableColumn etc = (ETableColumn) ov.getOutline().getColumnModel().getColumn(i);
+                ETableColumn etc = (ETableColumn) outlineView.getOutline().getColumnModel().getColumn(i);
+                String columnIdentifier = etc.getIdentifier().toString();
+                String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnIdentifier);
+                String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnIdentifier);
                 if (etc.isSorted()) {
-                    preferences.put(getColumnSortOrderKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()), String.valueOf(etc.isAscending()));
-                    preferences.put(getColumnSortRankKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()), String.valueOf(etc.getSortRank()));
+                    preferences.put(columnSortOrderKey, String.valueOf(etc.isAscending()));
+                    preferences.put(columnSortRankKey, String.valueOf(etc.getSortRank()));
                 } else {
-                    preferences.remove(getColumnSortOrderKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()));
-                    preferences.remove(getColumnSortRankKey(tfn.getColumnOrderKey(), etc.getIdentifier().toString()));
+                    preferences.remove(columnSortOrderKey);
+                    preferences.remove(columnSortRankKey);
                 }
             }
         }
@@ -535,15 +507,21 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             Map<Integer, Integer> indexMap = new TreeMap<>();
 
             propertiesMap.entrySet().forEach((entry) -> {
+                String propName = entry.getValue().getName();
+                String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, propName);
+                String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, propName);
+
                 //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-                Integer sortRank = Integer.valueOf(preferences.get(getColumnSortRankKey(tfn.getColumnOrderKey(), entry.getValue().getName()), "0"));
-                Boolean sortOrder = Boolean.valueOf(preferences.get(getColumnSortOrderKey(tfn.getColumnOrderKey(), entry.getValue().getName()), "true"));
+                Integer sortRank = Integer.valueOf(preferences.get(columnSortRankKey, "0"));
+
+                indexMap.put(sortRank, outline.getColumn(propName).getModelIndex());
+                Boolean sortOrder = Boolean.valueOf(preferences.get(columnSortOrderKey, "true"));
+
                 orderMap.put(sortRank, sortOrder);
-                indexMap.put(sortRank, ov.getOutline().getColumn(entry.getValue().getName()).getModelIndex());
             });
 
             orderMap.entrySet().forEach((entry) -> {
-                ov.getOutline().setColumnSorted(indexMap.get(entry.getKey()), orderMap.get(entry.getKey()), entry.getKey());
+                outline.setColumnSorted(indexMap.get(entry.getKey()), orderMap.get(entry.getKey()), entry.getKey());
             });
         }
 
@@ -554,23 +532,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *
      * @return a List<Node.Property<?>> of the preferences in order
      */
-    private synchronized List<Node.Property<?>> loadColumnOrder() {
-        // This is a set because we add properties of up to 100 child nodes, and we want unique properties
-        Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
-        this.getAllChildPropertyHeadersRec(currentRoot, 100, propertiesAcc);
-
-        List<Node.Property<?>> props = new ArrayList<>(propertiesAcc);
+    private synchronized List<Node.Property<?>> loadColumnOrder(Node Node, Map<Integer, Property<?>> propMap) {
+        List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(Node);
 
         // If node is not table filter node, use default order for columns
         TableFilterNode tfn;
-        if (currentRoot instanceof TableFilterNode) {
-            tfn = (TableFilterNode) currentRoot;
+        if (Node instanceof TableFilterNode) {
+            tfn = (TableFilterNode) Node;
         } else {
             // The node is not a TableFilterNode, columns are going to be in default order
             return props;
         }
 
-        propertiesMap.clear();
+        propMap.clear();
         /*
          * We load column index values into the properties map. If a property's
          * index is outside the range of the number of properties or the index
@@ -579,13 +553,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         int offset = props.size();
         boolean noPreviousSettings = true;
+        final Preferences preferences = NbPreferences.forModule(this.getClass());
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(NbPreferences.forModule(this.getClass()).get(getColumnPositionKey(tfn.getColumnOrderKey(), prop.getName()), "-1"));
-            if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
-                propertiesMap.put(value, prop);
+            final String columnPositionKey = ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName());
+            Integer value = Integer.valueOf(preferences.get(columnPositionKey, "-1"));
+            if (value >= 0 && value < offset && !propMap.containsKey(value)) {
+                propMap.put(value, prop);
                 noPreviousSettings = false;
             } else {
-                propertiesMap.put(offset, prop);
+                propMap.put(offset, prop);
                 offset++;
             }
         }
@@ -593,43 +569,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // If none of the properties had previous settings, we should decrement
         // each value by the number of properties to make the values 0-indexed.
         if (noPreviousSettings) {
-            Integer[] keys = propertiesMap.keySet().toArray(new Integer[propertiesMap.keySet().size()]);
+            Integer[] keys = propMap.keySet().toArray(new Integer[propMap.keySet().size()]);
             for (int key : keys) {
-                propertiesMap.put(key - props.size(), propertiesMap.get(key));
-                propertiesMap.remove(key);
+                propMap.put(key - props.size(), propMap.get(key));
+                propMap.remove(key);
             }
         }
 
-        return new ArrayList<>(propertiesMap.values());
-    }
-
-    /**
-     * Gets a key for the current node and a property of its child nodes to
-     * store the column position into a preference file.
-     *
-     * @param prop Property of the column
-     * @param type The type of the current node
-     *
-     * @return A generated key for the preference file
-     */
-    private String getColumnPositionKey(String type, String propName) {
-        return getColumnKeyBase(type, propName) + ".column";
-    }
-
-    private String getColumnSortOrderKey(String type, String propName) {
-        return getColumnKeyBase(type, propName) + ".sortOrder";
-    }
-
-    private String getColumnSortRankKey(String type, String propName) {
-        return getColumnKeyBase(type, propName) + ".sortRank";
-    }
-
-    private static String getColumnKeyBase(String type, String propName) {
-        return stripNonAlphanumeric(type) + "." + stripNonAlphanumeric(propName);
-    }
-
-    private static String stripNonAlphanumeric(String str) {
-        return str.replaceAll("[^a-zA-Z0-9_]", "");
+        return new ArrayList<>(propMap.values());
     }
 
     @Override
@@ -650,7 +597,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         super.clearComponent();
     }
 
-    private class PleasewaitNodeListener implements NodeListener {
+    private class PleasewaitNodeListener extends NodeAdapter {
 
         private volatile boolean load = true;
 
@@ -680,22 +627,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
             }
             return false;
-        }
-
-        @Override
-        public void childrenRemoved(NodeMemberEvent nme) {
-        }
-
-        @Override
-        public void childrenReordered(NodeReorderEvent nre) {
-        }
-
-        @Override
-        public void nodeDestroyed(NodeEvent ne) {
-        }
-
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
         }
     }
 }
