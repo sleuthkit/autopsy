@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,19 +85,19 @@ public class ViewContextAction extends AbstractAction {
             ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
             List<Content> hierarchy = content.accept(vtor);
             Collections.reverse(hierarchy);
-            
+
             Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
             Children genChilds = generated.getChildren();
-            
+
             final DirectoryTreeTopComponent dirTree = DirectoryTreeTopComponent.findInstance();
             TreeView dirTreeView = dirTree.getTree();
             ExplorerManager dirTreeExplorerManager = dirTree.getExplorerManager();
             Node dirTreeRootNode = dirTreeExplorerManager.getRootContext();
             Children dirChilds = dirTreeRootNode.getChildren();
             Children currentChildren = dirChilds.findChild(DataSourcesNode.NAME).getChildren();
-            
+
             Node dirExplored = null;
-            
+
             // Find the parent node of the content in the directory tree
             for (int i = 0; i < genChilds.getNodesCount() - 1; i++) {
                 Node currentGeneratedNode = genChilds.getNodeAt(i);
@@ -111,7 +111,7 @@ public class ViewContextAction extends AbstractAction {
                     }
                 }
             }
-            
+
             // Set the parent node of the content as the selection in the
             // directory tree
             try {
@@ -122,7 +122,7 @@ public class ViewContextAction extends AbstractAction {
             } catch (PropertyVetoException ex) {
                 logger.log(Level.WARNING, "Couldn't set selected node", ex); //NON-NLS
             }
-            
+
             EventQueue.invokeLater(() -> {
                 DataResultTopComponent dataResultTC = dirTree.getDirectoryListing();
                 Node currentRootNodeOfDataResultTC = dataResultTC.getRootNode();
