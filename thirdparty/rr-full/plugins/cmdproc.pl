@@ -26,7 +26,7 @@ my %config = (hive          => "NTUSER\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Autostart - get Command Processor\\AutoRun value from NTUSER\.DAT hive";	
+	return "Autostart - get Command Processor\\AutoRun value from NTUSER.DAT hive";	
 }
 sub getDescr{}
 sub getRefs {}

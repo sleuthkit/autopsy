@@ -54,7 +54,7 @@ sub pluginmain {
 			::rptMsg("CupdTime = ".$cupd);
 			
 			my $o = $key->get_subkey("\$MACHINE\.ACC\\OupdTime")->get_value("")->get_data();
-			my @v = unpack("VV",$c);
+			@v = unpack("VV",$c);
 			my $oupd = gmtime(::getTime($v[0],$v[1]));
 			::rptMsg("OupdTime = ".$oupd);
 		};

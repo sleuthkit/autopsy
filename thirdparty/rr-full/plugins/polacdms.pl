@@ -67,8 +67,7 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 	::rptMsg("");
-	my $key_path = "Policy\\PolPrDmS";
-	my $key;
+	$key_path = "Policy\\PolPrDmS";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("PolPrDmS");
 		::rptMsg($key_path);

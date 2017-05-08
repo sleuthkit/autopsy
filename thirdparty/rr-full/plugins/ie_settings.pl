@@ -102,8 +102,7 @@ sub pluginmain {
 #
 #
 #-----------------------------------------------------------
-	my $key_path = 'Software\\Microsoft\\Internet Explorer\\Main\\WindowsSearch';
-	my $key;
+	$key_path = 'Software\\Microsoft\\Internet Explorer\\Main\\WindowsSearch';
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("");
 		::rptMsg($key_path);
