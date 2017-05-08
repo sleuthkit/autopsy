@@ -108,6 +108,9 @@ public class AutopsyTestCases {
     public void testStartAddImageFileDataSource() {
         logger.info("Starting Add Image process");
         WizardOperator wo = new WizardOperator("Add Data Source");
+        while(!wo.btNext().isEnabled()){
+            new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
+        }
         //select the toggle button for Disk Image or VM File it will be the first button created and proceed to next panel
         JToggleButtonOperator jtbo = new JToggleButtonOperator(wo, 0);
         jtbo.clickMouse();
@@ -124,6 +127,9 @@ public class AutopsyTestCases {
     public void testStartAddLogicalFilesDataSource() {
         logger.info("Starting Add Logical Files process");
         WizardOperator wo = new WizardOperator("Add Data Source");
+        while(!wo.btNext().isEnabled()){
+            new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
+        }
         //select the toggle button for Logical Files it will be the third button created and proceed to next panel
         JToggleButtonOperator jtbo = new JToggleButtonOperator(wo, 2);
         jtbo.clickMouse();
@@ -156,6 +162,9 @@ public class AutopsyTestCases {
 
         logger.info("Looking for hash lookup module in ingest job settings panel");
         WizardOperator wo = new WizardOperator("Add Data Source");
+        while(!wo.btNext().isEnabled()){
+            new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
+        }
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Hash Lookup", 2, 0);
         jto.clickOnCell(row, 1);
@@ -202,6 +211,9 @@ public class AutopsyTestCases {
     public void testConfigureIngest2() {
         logger.info("Looking for keyword search module in ingest job settings panel");
         WizardOperator wo = new WizardOperator("Add Data Source");
+        while(!wo.btNext().isEnabled()){
+            new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
+        }
         JTableOperator jto = new JTableOperator(wo, 0);
         int row = jto.findCellRow("Keyword Search", 2, 0);
         jto.clickOnCell(row, 1);
