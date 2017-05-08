@@ -29,7 +29,7 @@ my %config = (hive          => "NTUSER\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Detect artifacts of a Troj\.Brisv\.A infection";	
+	return "Detect artifacts of a Troj.Brisv.A infection";	
 }
 sub getDescr{}
 sub getRefs {}

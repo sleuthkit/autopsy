@@ -5,6 +5,7 @@
 #
 #
 # Change History:
+#    20150812 - updated to include Nla\Cache data
 #    20120608 - updated from networklist.pl to add TLN output
 #    20090812 - updated code to parse DateCreated and DateLastConnected
 #               values; modified output, as well
@@ -12,7 +13,7 @@
 #
 # References
 #
-# copyright 2012 Quantum Analytics Research, LLC
+# copyright 2015 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package networklist_tln;
@@ -23,7 +24,7 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20120608);
+              version       => 20150812);
 
 sub getConfig{return %config}
 
@@ -130,6 +131,18 @@ sub pluginmain {
 				
 				::rptMsg($nl{$n}{LastWrite}."|REG|||[".$nl{$n}{Type}." Connect] - Last Connected to ".$nl{$n}{ProfileName}." (".$nl{$n}{DefaultGatewayMac}.")");
 			}		
+			
+# Get NLA info
+  		$key_path = $base_path."\\Nla\\Cache\\Intranet";
+  		if ($key = $root_key->get_subkey($key_path)) { 
+  			my @subkeys = $key->get_list_of_subkeys();
+  			if (scalar(@subkeys) > 0) {
+  				foreach my $s (@subkeys) {
+  					::rptMsg($s->get_timestamp()."|REG|||First connected to: ".$s->get_name());
+  				}
+  			}
+  		}
+
 		}
 		else {
 #			::rptMsg($key_path." has not subkeys");

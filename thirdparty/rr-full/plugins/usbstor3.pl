@@ -51,8 +51,7 @@ sub pluginmain {
 		return;
 	}
 
-	my $key_path = $ccs."\\Enum\\USBStor";
-	my $key;
+	$key_path = $ccs."\\Enum\\USBStor";
 	if ($key = $root_key->get_subkey($key_path)) {
 #		::rptMsg("USBStor");
 #		::rptMsg($key_path);

@@ -25,8 +25,9 @@ my %config = (hive          => "Software",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get the Windows event log policy from the Winevt'\'Channels key";	
+	return "Get the Windows event log policy from the Winevt\\Channels key";	
 }
+
 sub getDescr{}
 sub getRefs {}
 sub getHive {return $config{hive};}
@@ -44,14 +45,10 @@ sub pluginmain {
 	my $hive = shift;
 	my $reg = Parse::Win32Registry->new($hive);
 	
-sub getShortDescr {
-	return "Get the Windows event log policy from the Winevt\Channels key";	
-}
-	
-my $root_key = $reg->get_root_key;
-my $key_path = "Microsoft\\Windows\\CurrentVersion\\WINEVT\\Channels";
-my $key;
-if ($key = $root_key->get_subkey($key_path)) {
+	my $root_key = $reg->get_root_key;
+	my $key_path = "Microsoft\\Windows\\CurrentVersion\\WINEVT\\Channels";
+	my $key;
+	if ($key = $root_key->get_subkey($key_path)) {
 	::rptMsg("");
 	::rptMsg($key_path);
 	::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

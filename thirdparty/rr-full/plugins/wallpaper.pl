@@ -85,8 +85,8 @@ sub pluginmain {
 #-----------------------------------------------------------
 sub getStringValue {
 	my $bin = shift;
-	my $str = (split(/\00\00/,$bin,2))[0];
-	$str =~ s/\00//g;
+	my $str = (split(/\x00\x00/,$bin,2))[0];
+	$str =~ s/\x00//g;
 	return $str;
 }
 1;

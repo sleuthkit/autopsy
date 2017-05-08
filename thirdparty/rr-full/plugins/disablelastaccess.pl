@@ -48,8 +48,7 @@ sub pluginmain {
 		$ccs = "ControlSet00".$current;
 	}
 
-	my $key_path = $ccs."\\Control\\FileSystem";
-	my $key;
+	$key_path = $ccs."\\Control\\FileSystem";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("NtfsDisableLastAccessUpdate");
 		::rptMsg($key_path);

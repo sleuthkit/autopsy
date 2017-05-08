@@ -1,3 +1,5 @@
-# 20120918 *ALL* Plugins that apply on USRCLASS hive, alphabetical order
-muicache
+# 20161213 *ALL* Plugins that apply on USRCLASS hive, alphabetical order
+cmd_shell_u
+photos
 shellbags
+shellbags_tln
