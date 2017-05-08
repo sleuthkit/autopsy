@@ -70,8 +70,7 @@ sub pluginmain {
 			::rptMsg("Default Printer (via CurrentVersion\\Windows): ".$def);
 		};
 # another attempt to get the default printer
-		my $def_path = "Printers";
-		my $def;
+		$def_path = "Printers";
 		eval {
 			$def = $root_key->get_subkey($def_path)->get_value("DeviceOld")->get_data();
 			::rptMsg("Default Printer (via Printers->DeviceOld): ".$def);

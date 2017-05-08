@@ -4,6 +4,7 @@
 # contents of the TimeZoneInformation key
 # 
 # Change history
+#   20160318 - added display of TimeZoneKeyName value
 #   20130830 - updated
 #   20080324 - created
 #
@@ -24,7 +25,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20130830);
+              version       => 20160318);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -73,6 +74,7 @@ sub pluginmain {
 
 				::rptMsg("  Bias           -> ".$b." (".($b/60)." hours)");
 				::rptMsg("  ActiveTimeBias -> ".$a." (".($a/60)." hours)");
+				::rptMsg("  TimeZoneKeyName-> ".$tz_vals{"TimeZoneKeyName"}) if exists ($tz_vals{"TimeZoneKeyName"});
 				
 			}
 			else {

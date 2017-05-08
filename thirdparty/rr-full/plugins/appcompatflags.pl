@@ -76,8 +76,6 @@ sub pluginmain {
 	             "Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers",
 	             "Wow6432Node\\Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Layers");
 	
-	
-	
 	foreach my $key_path (@paths) {
 	# If AppCompatFlags path exists #
 		if ($key = $root_key->get_subkey($key_path)) {
@@ -169,6 +167,60 @@ sub pluginmain {
 #			::rptMsg($key_path." not found\.");
 		}
 	}	
+	
+# Added check for use of AppCompat DB for persistence
+# 21051021, H. Carvey	
+	my $key_path = "Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\Custom";
+	if ($key = $root_key->get_subkey($key_path)){
+		my @subkeys = $key->get_list_of_subkeys($key);
+		if (scalar @subkeys > 0) {
+			foreach my $sk (@subkeys) {
+				::rptMsg("Key name: ".$sk->get_name());
+				::rptMsg("LastWrite time: ".gmtime($sk->get_timestamp()));
+				
+				my @vals = $sk->get_list_of_values();
+				if (scalar @vals > 0) {
+					foreach my $v (@vals) {
+						my $name = $v->get_name();
+						my ($t0,$t1) = unpack("VV",$v->get_data());
+						my $l = ::getTime($t0,$t1);
+						my $ts   = gmtime($l);
+						::rptMsg("  ".$name."  ".$ts);
+					}
+				}
+				::rptMsg("");
+			}
+		}
+	}
+	
+	$key_path = "Microsoft\\Windows NT\\CurrentVersion\\AppCompatFlags\\InstalledSDB";
+	if ($key = $root_key->get_subkey($key_path)) {
+		my @subkeys = $key->get_list_of_subkeys($key);
+		if (scalar @subkeys > 0) {
+			foreach my $sk (@subkeys) {
+				my($path, $descr, $ts);
+				eval {
+					$descr = $sk->get_value("DatabaseDescription")->get_data();
+					::rptMsg("Description: ".$descr);
+				};
+				
+				eval {
+					$path = $sk->get_value("DatabasePath")->get_data();
+					::rptMsg("  Path: ".$path);
+				};
+				
+				eval {
+					my ($t0,$t1) = unpack("VV",$sk->get_value("DatabaseInstallTimeStamp")->get_data());
+					my $l = ::getTime($t0,$t1);
+					$ts = gmtime($l);
+					::rptMsg("  Install TimeStamp: ".$ts);
+				};
+				
+				::rptMsg("");
+				
+			}
+		}
+	}
 }
 
 1;

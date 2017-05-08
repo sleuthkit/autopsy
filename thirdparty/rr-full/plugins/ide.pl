@@ -50,8 +50,7 @@ sub pluginmain {
 		return
 	}
 
-	my $key_path = $ccs."\\Enum\\IDE";
-	my $key;
+	$key_path = $ccs."\\Enum\\IDE";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
@@ -84,8 +83,7 @@ sub pluginmain {
 		::logMsg($key_path." not found.");
 	}
 	
-	my $key_path = $ccs."\\Control\\DeviceClasses\\{53f56307-b6bf-11d0-94f2-00a0c91efb8b}";
-	my $key;
+	$key_path = $ccs."\\Control\\DeviceClasses\\{53f56307-b6bf-11d0-94f2-00a0c91efb8b}";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("DevClasses - Disks");
 		::rptMsg($key_path);

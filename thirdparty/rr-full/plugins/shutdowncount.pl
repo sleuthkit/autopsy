@@ -52,8 +52,7 @@ sub pluginmain {
 		return
 	}
 
-	my $key_path = $ccs."\\Control\\Watchdog\\Display";
-	my $key;
+	$key_path = $ccs."\\Control\\Watchdog\\Display";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("ShutdownCount");
 		::rptMsg($key_path);

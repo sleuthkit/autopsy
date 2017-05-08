@@ -1,4 +1,8 @@
-# 20120528 *ALL* Plugins that apply on SECURITY hive, alphabetical order
+# 20161213 *ALL* Plugins that apply on SECURITY hive, alphabetical order
 auditpol
+auditpol_xp
 lsasecrets
 polacdms
+secrets
+secrets_tln
+securityproviders

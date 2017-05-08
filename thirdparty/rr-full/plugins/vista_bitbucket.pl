@@ -23,7 +23,7 @@ my %config = (hive          => "NTUSER\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get BitBucket settings from Vista via NTUSER\.DAT";	
+	return "Get BitBucket settings from Vista via NTUSER.DAT";	
 }
 sub getDescr{}
 sub getRefs {}

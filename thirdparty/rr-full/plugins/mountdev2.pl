@@ -104,7 +104,7 @@ sub pluginmain {
 					$offset{$v->get_name()} = $o;
 				}
 				elsif ($len > 12) {
-					$data =~ s/\00//g;
+					$data =~ s/\x00//g;
 					push(@{$md{$data}},$v->get_name());
 				}
 				else {
@@ -120,15 +120,15 @@ sub pluginmain {
 			}
 			::rptMsg("");
 			foreach my $v (sort keys %vol) {
-				next unless ($v =~ m/^\\\?\?\\Volume{/);
+				next unless ($v =~ m/^\\\?\?\\Volume\{/);
 				my $id = $v;
-				$id =~ s/^\\\?\?\\Volume{//;
+				$id =~ s/^\\\?\?\\Volume\{//;
 				$id =~ s/}$//;
 				$id =~ s/-//g;
 				my $l = hex(substr($id,0,8));
 				my $m = hex(substr($id,8,4));
 				my $h = hex(substr($id,12,4)) & 0x0fff;
-				my $h = $m | $h << 16;
+				$h = $m | $h << 16;
 				my $t = (::getTime($l,$h) - 574819200);
 				::rptMsg($v);
 				::rptMsg("  ".gmtime($t));
@@ -141,7 +141,7 @@ sub pluginmain {
 					
 					if ($item =~ m/^\\\?\?\\Volume/) {
 						my $id = $item;
-						$id =~ s/^\\\?\?\\Volume{//;
+						$id =~ s/^\\\?\?\\Volume\{//;
 						$id =~ s/}$//;
 #						$id =~ s/-//g;
 #						my $l = hex(substr($id,0,8));
