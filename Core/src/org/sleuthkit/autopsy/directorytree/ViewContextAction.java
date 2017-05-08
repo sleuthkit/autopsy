@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011 Basis Technology Corp.
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,13 +58,13 @@ import org.sleuthkit.datamodel.VolumeSystem;
  */
 public class ViewContextAction extends AbstractAction {
 
-    private Content content;
+    private static final long serialVersionUID = 1L;
+    private final Content content;
     private static final Logger logger = Logger.getLogger(ViewContextAction.class.getName());
 
     public ViewContextAction(String title, BlackboardArtifactNode node) {
         super(title);
         this.content = node.getLookup().lookup(Content.class);
-
     }
 
     public ViewContextAction(String title, AbstractFsContentNode<? extends AbstractFile> node) {
@@ -79,62 +79,56 @@ public class ViewContextAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                // create a list of Content objects starting with content's
-                // Image and ends with content
-                ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
-                List<Content> hierarchy = content.accept(vtor);
-                Collections.reverse(hierarchy);
+        EventQueue.invokeLater(() -> {
+            // create a list of Content objects starting with content's
+            // Image and ends with content
+            ReverseHierarchyVisitor vtor = new ReverseHierarchyVisitor();
+            List<Content> hierarchy = content.accept(vtor);
+            Collections.reverse(hierarchy);
 
-                Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
-                Children genChilds = generated.getChildren();
+            Node generated = new DirectoryTreeFilterNode(new AbstractNode(new RootContentChildren(hierarchy)), true);
+            Children genChilds = generated.getChildren();
 
-                final DirectoryTreeTopComponent dirTree = DirectoryTreeTopComponent.findInstance();
-                TreeView dirTreeView = dirTree.getTree();
-                ExplorerManager dirTreeExplorerManager = dirTree.getExplorerManager();
-                Node dirTreeRootNode = dirTreeExplorerManager.getRootContext();
-                Children dirChilds = dirTreeRootNode.getChildren();
-                Children currentChildren = dirChilds.findChild(DataSourcesNode.NAME).getChildren();
+            final DirectoryTreeTopComponent dirTree = DirectoryTreeTopComponent.findInstance();
+            TreeView dirTreeView = dirTree.getTree();
+            ExplorerManager dirTreeExplorerManager = dirTree.getExplorerManager();
+            Node dirTreeRootNode = dirTreeExplorerManager.getRootContext();
+            Children dirChilds = dirTreeRootNode.getChildren();
+            Children currentChildren = dirChilds.findChild(DataSourcesNode.NAME).getChildren();
 
-                Node dirExplored = null;
+            Node dirExplored = null;
 
-                // Find the parent node of the content in the directory tree
-                for (int i = 0; i < genChilds.getNodesCount() - 1; i++) {
-                    Node currentGeneratedNode = genChilds.getNodeAt(i);
-                    for (int j = 0; j < currentChildren.getNodesCount(); j++) {
-                        Node currentDirectoryTreeNode = currentChildren.getNodeAt(j);
-                        if (currentGeneratedNode.getDisplayName().equals(currentDirectoryTreeNode.getDisplayName())) {
-                            dirExplored = currentDirectoryTreeNode;
-                            dirTreeView.expandNode(dirExplored);
-                            currentChildren = currentDirectoryTreeNode.getChildren();
-                            break;
-                        }
-                    }
-                }
-
-                // Set the parent node of the content as the selection in the
-                // directory tree
-                try {
-                    if (dirExplored != null) {
+            // Find the parent node of the content in the directory tree
+            for (int i = 0; i < genChilds.getNodesCount() - 1; i++) {
+                Node currentGeneratedNode = genChilds.getNodeAt(i);
+                for (int j = 0; j < currentChildren.getNodesCount(); j++) {
+                    Node currentDirectoryTreeNode = currentChildren.getNodeAt(j);
+                    if (currentGeneratedNode.getDisplayName().equals(currentDirectoryTreeNode.getDisplayName())) {
+                        dirExplored = currentDirectoryTreeNode;
                         dirTreeView.expandNode(dirExplored);
-                        dirTreeExplorerManager.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
+                        currentChildren = currentDirectoryTreeNode.getChildren();
+                        break;
                     }
-                } catch (PropertyVetoException ex) {
-                    logger.log(Level.WARNING, "Couldn't set selected node", ex); //NON-NLS
                 }
-
-                EventQueue.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        DataResultTopComponent dataResultTC = dirTree.getDirectoryListing();
-                        Node currentRootNodeOfDataResultTC = dataResultTC.getRootNode();
-                        Node contentNode = content.accept(new RootContentChildren.CreateSleuthkitNodeVisitor());
-                        new SelectionWorker(dataResultTC, contentNode.getName(), currentRootNodeOfDataResultTC).execute();
-                    }
-                });
             }
+
+            // Set the parent node of the content as the selection in the
+            // directory tree
+            try {
+                if (dirExplored != null) {
+                    dirTreeView.expandNode(dirExplored);
+                    dirTreeExplorerManager.setExploredContextAndSelection(dirExplored, new Node[]{dirExplored});
+                }
+            } catch (PropertyVetoException ex) {
+                logger.log(Level.WARNING, "Couldn't set selected node", ex); //NON-NLS
+            }
+
+            EventQueue.invokeLater(() -> {
+                DataResultTopComponent dataResultTC = dirTree.getDirectoryListing();
+                Node currentRootNodeOfDataResultTC = dataResultTC.getRootNode();
+                Node contentNode = content.accept(new RootContentChildren.CreateSleuthkitNodeVisitor());
+                new SelectionWorker(dataResultTC, contentNode.getName(), currentRootNodeOfDataResultTC).execute();
+            });
         });
     }
 
@@ -215,14 +209,14 @@ public class ViewContextAction extends AbstractAction {
      */
     private class ReverseHierarchyVisitor extends ContentVisitor.Default<List<Content>> {
 
-        List<Content> ret = new ArrayList<Content>();
+        List<Content> ret = new ArrayList<>();
 
         private List<Content> visitParentButDontAddMe(Content content) {
             Content parent = null;
             try {
                 parent = content.getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content); //NON-NLS
+                logger.log(Level.WARNING, "Could not get parent of Content object: {0}", content); //NON-NLS
             }
             return parent == null ? ret : parent.accept(this);
         }
@@ -234,7 +228,7 @@ public class ViewContextAction extends AbstractAction {
             try {
                 parent = content.getParent();
             } catch (TskCoreException ex) {
-                logger.log(Level.WARNING, "Couldn't get parent of Content object: " + content); //NON-NLS
+                logger.log(Level.WARNING, "Could not get parent of Content object: {0}", content); //NON-NLS
             }
             return parent == null ? ret : parent.accept(this);
         }
