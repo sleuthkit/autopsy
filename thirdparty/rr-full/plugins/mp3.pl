@@ -92,7 +92,7 @@ sub pluginmain {
 					my $l = hex(substr($id,0,8));
 					my $m = hex(substr($id,8,4));
 					my $h = hex(substr($id,12,4)) & 0x0fff;
-					my $h = $m | $h << 16;
+					$h = $m | $h << 16;
 					my $t2 = (::getTime($l,$h) - 574819200);
 					
 					::rptMsg($t2."|REG|Server|User|".$id2." Vol GUID date");

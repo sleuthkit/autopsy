@@ -59,9 +59,9 @@ sub pluginmain {
 			eval {
 				::rptMsg("ArcHistory:");
 				my $copy = $key->get_subkey("Compression")->get_value("ArcHistory")->get_data();
-				my @c = split(/\00\00/,$copy);
+				my @c = split(/\x00\x00/,$copy);
 				foreach my $hist (@c) {
-					$hist =~ s/\00//g;
+					$hist =~ s/\x00//g;
 					::rptMsg("  ".$hist);
 				}
 			};
@@ -69,9 +69,9 @@ sub pluginmain {
 			eval {
 				::rptMsg("PathHistory:");
 				my $copy = $key->get_subkey("Extraction")->get_value("PathHistory")->get_data();
-				my @c = split(/\00\00/,$copy);
+				my @c = split(/\x00\x00/,$copy);
 				foreach my $hist (@c) {
-					$hist =~ s/\00//g;
+					$hist =~ s/\x00//g;
 					::rptMsg("  ".$hist);
 				}
 				::rptMsg("");
@@ -80,9 +80,9 @@ sub pluginmain {
 			eval {
 				::rptMsg("CopyHistory:");
 				my $copy = $key->get_subkey("FM")->get_value("CopyHistory")->get_data();
-				my @c = split(/\00\00/,$copy);
+				my @c = split(/\x00\x00/,$copy);
 				foreach my $hist (@c) {
-					$hist =~ s/\00//g;
+					$hist =~ s/\x00//g;
 					::rptMsg("  ".$hist);
 				}
 				::rptMsg("");
@@ -91,9 +91,9 @@ sub pluginmain {
 			eval {
 				::rptMsg("FolderHistory:");
 				my $copy = $key->get_subkey("FM")->get_value("FolderHistory")->get_data();
-				my @c = split(/\00\00/,$copy);
+				my @c = split(/\x00\x00/,$copy);
 				foreach my $hist (@c) {
-					$hist =~ s/\00//g;
+					$hist =~ s/\x00//g;
 					::rptMsg("  ".$hist);
 				}
 			};

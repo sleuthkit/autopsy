@@ -72,8 +72,7 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 	
-	my $key_path = "Software\\RealVNC\\VNCViewer4\\MRU";
-	my $key; 
+	$key_path = "Software\\RealVNC\\VNCViewer4\\MRU";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

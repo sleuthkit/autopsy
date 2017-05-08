@@ -23,7 +23,7 @@ my %config = (hive          => "USRCLASS\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Gets shell open cmds for various file types from USRCLASS\.DAT";	
+	return "Gets shell open cmds for various file types from USRCLASS.DAT";	
 }
 sub getDescr{}
 sub getRefs {}
