@@ -375,11 +375,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void setupTable(final Node root) {
 
         em.setRootContext(root);
-        ov = ((OutlineView) this.tableScrollPanel);
 
-        if (ov == null) {
-            return;
-        }
         currentRoot = root;
         List<Node.Property<?>> props = loadColumnOrder();
 
