@@ -39,7 +39,6 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
@@ -281,9 +280,6 @@ public final class AutoIngestCasePanel extends JPanel {
      *
      * @param caseMetadataFilePath The path to the case metadata file.
      */
-    @NbBundle.Messages({
-        "# {0} - exception message", "AutoIngestCasePanel.openCaseException.couldNotOpenCase=Error opening case: {0}",
-    })
     private void openCase(Path caseMetadataFilePath) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         new SwingWorker<Void, Void>() {
