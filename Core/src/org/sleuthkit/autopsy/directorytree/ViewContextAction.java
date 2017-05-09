@@ -56,11 +56,11 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * the DataResultViewer. 3. Waits for all the Children to be contentNode in the
  * DataResultViewer and selects the Node that represents the Content.
  */
-public class ViewContextAction extends AbstractAction {
+public final class ViewContextAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-    private final Content content;
     private static final Logger logger = Logger.getLogger(ViewContextAction.class.getName());
+    private Content content;
 
     public ViewContextAction(String title, BlackboardArtifactNode node) {
         super(title);
@@ -132,6 +132,17 @@ public class ViewContextAction extends AbstractAction {
         });
     }
 
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        ViewContextAction clone = (ViewContextAction)super.clone();
+        clone.setContent(this.content);
+        return clone;
+    }
+
+    private void setContent(Content content) {
+        this.content = content;
+    }
+    
     /**
      * Waits for a Node's children to be generated, regardless of whether they
      * are lazily loaded, then sets the correct selection in a specified
