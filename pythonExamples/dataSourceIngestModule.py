@@ -29,7 +29,7 @@
 
 # Simple data source-level ingest module for Autopsy.
 # Search for TODO for the things that you need to change
-# See http://sleuthkit.org/autopsy/docs/api-docs/4.4/index.html for documentation
+# See http://sleuthkit.org/autopsy/docs/api-docs/3.1/index.html for documentation
 
 import jarray
 import inspect
@@ -51,7 +51,8 @@ from org.sleuthkit.autopsy.coreutils import Logger
 from org.sleuthkit.autopsy.casemodule import Case
 from org.sleuthkit.autopsy.casemodule.services import Services
 from org.sleuthkit.autopsy.casemodule.services import FileManager
-from org.sleuthkit.autopsy.casemodule.services import Blackboard
+# This will work in 4.0.1 and beyond
+# from org.sleuthkit.autopsy.casemodule.services import Blackboard
 
 
 # Factory that defines the name and details of the module and allows Autopsy
@@ -94,32 +95,32 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
 
     # Where any setup and configuration is done
     # 'context' is an instance of org.sleuthkit.autopsy.ingest.IngestJobContext.
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.4/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_ingest_job_context.html
     # TODO: Add any setup code that you need here.
     def startUp(self, context):
-        
-        # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
-        # raise IngestModuleException("Oh No!")
         self.context = context
+        # Throw an IngestModule.IngestModuleException exception if there was a problem setting up
+		# raise IngestModuleException("Oh No!")
 
     # Where the analysis is done.
     # The 'dataSource' object being passed in is of type org.sleuthkit.datamodel.Content.
-    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.4/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
+    # See: http://www.sleuthkit.org/sleuthkit/docs/jni-docs/4.3/interfaceorg_1_1sleuthkit_1_1datamodel_1_1_content.html
     # 'progressBar' is of type org.sleuthkit.autopsy.ingest.DataSourceIngestModuleProgress
-    # See: http://sleuthkit.org/autopsy/docs/api-docs/4.4/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
+    # See: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1ingest_1_1_data_source_ingest_module_progress.html
     # TODO: Add your analysis code in here.
     def process(self, dataSource, progressBar):
 
         # we don't know how much work there is yet
         progressBar.switchToIndeterminate()
 
+        # This will work in 4.0.1 and beyond
         # Use blackboard class to index blackboard artifacts for keyword search
-        blackboard = Case.getCurrentCase().getServices().getBlackboard()
+        # blackboard = Case.getCurrentCase().getServices().getBlackboard()
 
         # For our example, we will use FileManager to get all
         # files with the word "test"
         # in the name and then count and read them
-        # FileManager API: http://sleuthkit.org/autopsy/docs/api-docs/4.4/classorg_1_1sleuthkit_1_1autopsy_1_1casemodule_1_1services_1_1_file_manager.html
+        # FileManager API: http://sleuthkit.org/autopsy/docs/api-docs/3.1/classorg_1_1sleuthkit_1_1autopsy_1_1casemodule_1_1services_1_1_file_manager.html
         fileManager = Case.getCurrentCase().getServices().getFileManager()
         files = fileManager.findFiles(dataSource, "%test%")
 
@@ -142,11 +143,12 @@ class SampleJythonDataSourceIngestModule(DataSourceIngestModule):
             att = BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, SampleJythonDataSourceIngestModuleFactory.moduleName, "Test file")
             art.addAttribute(att)
 
-            try:
-                # index the artifact for keyword search
-                blackboard.indexArtifact(art)
-            except Blackboard.BlackboardException as e:
-                self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
+            # This will work in 4.0.1 and beyond
+            #try:
+            #    # index the artifact for keyword search
+            #    blackboard.indexArtifact(art)
+            #except Blackboard.BlackboardException as e:
+            #    self.log(Level.SEVERE, "Error indexing artifact " + art.getDisplayName())
 
             # To further the example, this code will read the contents of the file and count the number of bytes
             inputStream = ReadContentInputStream(file)
