@@ -194,6 +194,7 @@ public class LocalDiskDSProcessor implements DataSourceProcessor, AutoIngestData
      * processor.
      */
     @Override
+    @Deprecated
     public void reset() {
         deviceId = null;
         drivePath = null;
