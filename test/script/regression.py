@@ -762,7 +762,9 @@ class TestConfiguration(object):
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
         if not dir_exists(self.output_parent_dir):
-            os.makedirs(self.output_parent_dir)
+            os.chdir('..')
+            os.makedirs(wgetcwd().decode("utf-8") + "/output/results")
+            os.chdir('script')
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
         self.csv = make_local_path(self.output_dir, "CSV.txt")
