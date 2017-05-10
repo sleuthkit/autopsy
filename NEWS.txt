@@ -8,6 +8,7 @@ Improvements:
 module settings.
 - Artifact attributes can be marked to indicate discovery by multiple tools.
 - Import/export of interesting files set membership rules.
+- High DPI display support added.
 - Support for application service plug-in modules (Java only).
 - Progress dialogs for case create/open/close/delete operations that support 
 cancellation of create/open operations and cancellation of the opening of case 
