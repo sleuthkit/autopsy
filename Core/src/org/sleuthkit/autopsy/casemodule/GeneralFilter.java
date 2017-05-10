@@ -31,7 +31,7 @@ import javax.swing.filechooser.FileFilter;
 public class GeneralFilter extends FileFilter {
 
     // Extensions & Descriptions for commonly used filters
-    public static final List<String> RAW_IMAGE_EXTS = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw", ".bin"}); //NON-NLS
+    public static final List<String> RAW_IMAGE_EXTS = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw", ".bin", ".vhd"}); //NON-NLS
     public static final String RAW_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.rawImageDesc.text");
 
     public static final List<String> ENCASE_IMAGE_EXTS = Arrays.asList(new String[]{".e01"}); //NON-NLS
