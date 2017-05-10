@@ -22,7 +22,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,6 +34,7 @@ import org.openide.util.io.NbObjectOutputStream;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.coreutils.XMLUtil;
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -44,6 +47,7 @@ import org.w3c.dom.NodeList;
 class FileExtMismatchSettings implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private long settingsVersionNumber;
     private HashMap<String, Set<String>> mimeTypeToExtsMap;
     private static final Logger logger = Logger.getLogger(FileExtMismatchSettings.class.getName());
     private static final String SIG_EL = "signature"; //NON-NLS
@@ -94,10 +98,11 @@ class FileExtMismatchSettings implements Serializable {
     static synchronized FileExtMismatchSettings readSettings() throws FileExtMismatchSettingsException {
         File serializedFile = new File(DEFAULT_SERIALIZED_FILE_PATH);
         //Tries reading the serialized file first, as this is the prioritized settings.
-        if (serializedFile.exists()) {
-            return readSerializedSettings();
+        if (!serializedFile.exists()) {
+            FileExtMismatchSettings settings = readXmlSettings();
+            writeSettings(settings);
         }
-        return readXmlSettings();
+        return readSerializedSettings();
     }
 
     private static FileExtMismatchSettings readSerializedSettings() throws FileExtMismatchSettingsException {
@@ -105,6 +110,20 @@ class FileExtMismatchSettings implements Serializable {
         try {
             try (NbObjectInputStream in = new NbObjectInputStream(new FileInputStream(serializedFile))) {
                 FileExtMismatchSettings fileExtMismatchSettings = (FileExtMismatchSettings) in.readObject();
+                /*
+                 * If the settings version number is set to the Java field default value of
+                 * zero, then settingsVersionNumber is a new field. Upgrade from version 0 to version 1 of the settings.
+                 */
+                if (fileExtMismatchSettings.settingsVersionNumber == 0) {
+                    fileExtMismatchSettings.mimeTypeToExtsMap.putIfAbsent("application/x-msdownload", new HashSet<>());
+                    fileExtMismatchSettings.mimeTypeToExtsMap.putIfAbsent("application/x-dosexec", new HashSet<>());
+                    fileExtMismatchSettings.mimeTypeToExtsMap.get("application/x-msdownload").addAll(Arrays.asList("exe", "dll", "com"));
+                    fileExtMismatchSettings.mimeTypeToExtsMap.get("application/x-dosexec").addAll(Arrays.asList("exe", "dll", "com"));
+                    fileExtMismatchSettings.settingsVersionNumber = 1;
+                    // Then write new settings back out
+                    writeSettings(fileExtMismatchSettings);
+                }
+
                 return fileExtMismatchSettings;
             }
         } catch (IOException | ClassNotFoundException ex) {
@@ -154,7 +173,7 @@ class FileExtMismatchSettings implements Serializable {
                     }
                 }
 
-            } catch (Exception e) {
+            } catch (FileExtMismatchSettingsException | DOMException e) {
                 throw new FileExtMismatchSettingsException("Error loading config file.", e); //NON-NLS
             }
         }
