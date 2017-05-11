@@ -30,8 +30,9 @@ my %config = (hive          => "Software",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Get logfile name of registry backup tasks";	
+	return "List all backup tasks along with logfile name and last written date/time";
 }
+
 sub getDescr{}
 sub getRefs {}
 sub getHive {return $config{hive};}
@@ -42,8 +43,8 @@ my $VERSION = getVersion();
 sub pluginmain {
 
 	::logMsg("Launching regback v.".$VERSION);
-  ::rptMsg("regback v.".$VERSION); # 20110830 [fpi] + banner
-  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+	::rptMsg("regback v.".$VERSION); # 20110830 [fpi] + banner
+	::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
 
 	my $class = shift;
 	my $hive = shift;
@@ -71,18 +72,13 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 	
-	my $class = shift;
-	my $hive = shift;
+	$class = shift;
+	$hive = shift;
 	
 	my %tasks;
 	
-sub getShortDescr {
-	return "List all tasks along with logfile name and last written date/time";	
-}
-	
-	my $root_key = $reg->get_root_key;
-	my $key_path = "Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache\\Tasks";
-	my $key;
+	$root_key = $reg->get_root_key;
+	$key_path = "Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache\\Tasks";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

@@ -130,6 +130,6 @@ sub parsePath {
 			}
 		}
 	}	
-	$str =~ s/\00//g;
+	$str =~ s/\x00//g;
 	return $str;
 }

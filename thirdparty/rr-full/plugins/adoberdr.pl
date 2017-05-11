@@ -4,16 +4,20 @@
 # Parse Adobe Reader MRU keys
 #
 # Change history
+#   20150717 - updated IAW Jason Hale's blog post (see ref), added
+#              .csv output format
 #   20120716 - added version 10.0 to @versions
 #   20100218 - added checks for versions 4.0, 5.0, 9.0
 #   20091125 - modified output to make a bit more clear
 #
 # References
+#   http://dfstream.blogspot.com/2015/07/adobe-readers-not-so-crecentfiles.html
 #
 # Note: LastWrite times on c subkeys will all be the same,
 #       as each subkey is modified as when a new entry is added
 #
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2015 Quantum Analytics Research, LLC
+# Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package adoberdr;
 use strict;
@@ -23,7 +27,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20120716);
+              version       => 20150717);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -41,14 +45,14 @@ sub pluginmain {
 	my $ntuser = shift;
 	::logMsg("Launching adoberdr v.".$VERSION);
 	::rptMsg("adoberdr v.".$VERSION); # banner
-    ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
+  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	::rptMsg("Adoberdr v.".$VERSION);
 # First, let's find out which version of Adobe Acrobat Reader is installed
 	my $version;
 	my $tag = 0;
-	my @versions = ("4\.0","5\.0","6\.0","7\.0","8\.0","9\.0","10\.0","11\.0","12\.0");
+	my @versions = ("4\.0","5\.0","6\.0","7\.0","8\.0","9\.0","10\.0","11\.0","12\.0","13\.0","14\.0", "DC");
 	foreach my $ver (@versions) {		
 		my $key_path = "Software\\Adobe\\Acrobat Reader\\".$ver."\\AVGeneral\\cRecentFiles";
 		if (defined($root_key->get_subkey($key_path))) {
@@ -74,10 +78,30 @@ sub pluginmain {
 					$num =~ s/^c//;
 					$arkeys{$num}{lastwrite} = $s->get_timestamp();
 					$arkeys{$num}{data} = $data;
+					
+					eval {
+						$arkeys{$num}{tDIText} = $s->get_value('tDIText')->get_data();
+					};
+					
+					eval {
+						$arkeys{$num}{sDate} = $s->get_value('sDate')->get_data();
+						$arkeys{$num}{sDate} =~ s/^D://;
+					};
+					
+					eval {
+						$arkeys{$num}{uFileSize} = $s->get_value('uFileSize')->get_data();
+					};
+					
+					eval {
+						$arkeys{$num}{uPageCount} = $s->get_value('uPageCount')->get_data();
+					};
+					
+					
 				}
 				::rptMsg("Most recent PDF opened: ".gmtime($arkeys{1}{lastwrite})." (UTC)");
-				foreach my $k (sort keys %arkeys) {
-					::rptMsg("  c".$k."   ".$arkeys{$k}{data});
+				::rptMsg("Key name,file name,sDate,uFileSize,uPageCount");
+				foreach my $k (sort {$a <=> $b} keys %arkeys) {
+					::rptMsg("c".$k.",".$arkeys{$k}{data}.",".$arkeys{$k}{sDate}.",".$arkeys{$k}{uFileSize}.",".$arkeys{$k}{uPageCount});
 				}
 			}
 			else {

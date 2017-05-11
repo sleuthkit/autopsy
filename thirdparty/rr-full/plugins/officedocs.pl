@@ -67,7 +67,7 @@ sub pluginmain {
 					::rptMsg("LastWrite Time ".gmtime($word_key->get_timestamp())." (UTC)");
 					::rptMsg("");
 					my $value = $word_key->get_value("Value")->get_data();
-					my @data = split(/\00/,$value);
+					my @data = split(/\x00/,$value);
 					map{::rptMsg("$_");}@data;
 				}
 				else {

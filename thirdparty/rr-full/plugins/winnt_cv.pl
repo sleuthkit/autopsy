@@ -4,6 +4,8 @@
 # Output sorted based on length of data
 #
 # Change History:
+# 20161123: added translation of InstallTime time (found in Win10) - Phill Moore, randomaccess3@gmail.com
+#			InstallTime should match InstallDate
 # 20080609: added translation of InstallDate time
 #
 # copyright 2008 H. Carvey, keydet89@yahoo.com
@@ -16,7 +18,7 @@ my %config = (hive          => "Software",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20080609);
+              version       => 20161123);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -51,6 +53,12 @@ sub pluginmain {
 				my $name = $v->get_name();
 				my $data = $v->get_data();
 				$data = gmtime($data)." (UTC)" if ($name eq "InstallDate");
+				
+				if ($name eq "InstallTime"){ 
+					my @t = unpack("VV",$data); 
+					$data = gmtime(::getTime($t[0],$t[1]))." (UTC)"; 
+				}
+				
 				my $len  = length($data);
 				next if ($name eq "");
 				if ($v->get_type() == 3) {

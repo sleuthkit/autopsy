@@ -58,7 +58,6 @@ sub pluginmain {
 		
 		foreach my $s (@svcs) {
 			$cf_path = $ccs."\\Services\\".$s;
-			$cf;
 			if ($cf = $root_key->get_subkey($cf_path)) {
 				::rptMsg($cf_path);
 				::rptMsg("LastWrite Time ".gmtime($cf->get_subkey("Parameters")->get_timestamp())." (UTC)");

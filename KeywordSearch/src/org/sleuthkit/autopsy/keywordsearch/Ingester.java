@@ -315,16 +315,16 @@ class Ingester {
          *
          * @return The field map of fields that are common to all file classes.
          */
-        private Map<String, String> getCommonFields(AbstractFile af) {
+        private Map<String, String> getCommonFields(AbstractFile file) {
             Map<String, String> params = new HashMap<>();
-            params.put(Server.Schema.ID.toString(), Long.toString(af.getId()));
+            params.put(Server.Schema.ID.toString(), Long.toString(file.getId()));
             try {
-                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(af.getDataSource().getId()));
+                params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(file.getDataSource().getId()));
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + af.getId(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Could not get data source id to properly index the file " + file.getId(), ex); //NON-NLS
                 params.put(Server.Schema.IMAGE_ID.toString(), Long.toString(-1));
             }
-            params.put(Server.Schema.FILE_NAME.toString(), af.getName());
+            params.put(Server.Schema.FILE_NAME.toString(), file.getName());
             return params;
         }
 

@@ -39,12 +39,11 @@ import javax.swing.SwingWorker;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CaseActionCancelledException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
 /**
  * A panel that allows a user to open cases created by auto ingest.
@@ -300,11 +299,7 @@ public final class AutoIngestCasePanel extends JPanel {
                 } catch (InterruptedException | ExecutionException ex) {
                     if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
                         logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseMetadataFilePath), ex); //NON-NLS
-                        JOptionPane.showMessageDialog(
-                                WindowManager.getDefault().getMainWindow(),
-                                ex.getCause().getMessage(), //get the message of the wrapped exception
-                                NbBundle.getMessage(this.getClass(), "CaseOpenAction.msgDlg.cantOpenCase.title"), //NON-NLS
-                                JOptionPane.ERROR_MESSAGE);
+                        MessageNotifyUtil.Message.error(ex.getCause().getLocalizedMessage());
                     }
                     StartupWindowProvider.getInstance().open();
                 } finally {
