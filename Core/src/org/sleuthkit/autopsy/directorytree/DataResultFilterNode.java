@@ -75,7 +75,7 @@ import org.sleuthkit.datamodel.VirtualDirectory;
  * defines the actions that the node should have.
  */
 public class DataResultFilterNode extends FilterNode {
-    
+
     private static final Logger LOGGER = Logger.getLogger(DataResultFilterNode.class.getName());
 
     private static boolean filterKnownFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
@@ -126,7 +126,7 @@ public class DataResultFilterNode extends FilterNode {
      * @param node Root node to be passed to DataResult viewers
      * @param em   ExplorerManager for component that is creating the node
      */
-  private  DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
+    private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
         this.sourceEm = em;
     }
@@ -201,9 +201,9 @@ public class DataResultFilterNode extends FilterNode {
      * DataResultFilterNode that created in the DataResultFilterNode.java.
      *
      */
-  private  static class DataResultFilterChildren extends FilterNode.Children {
+    private static class DataResultFilterChildren extends FilterNode.Children {
 
-        private final  ExplorerManager sourceEm;
+        private final ExplorerManager sourceEm;
 
         private boolean filterKnown;
         private boolean filterSlack;
@@ -211,7 +211,7 @@ public class DataResultFilterNode extends FilterNode {
         /**
          * the constructor
          */
-     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
+        private DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
             super(arg);
             switch (SelectionContext.getSelectionContext(arg)) {
                 case DATA_SOURCES:
@@ -230,7 +230,7 @@ public class DataResultFilterNode extends FilterNode {
             this.sourceEm = sourceEm;
         }
 
-     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
+        private DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
             super(arg);
             this.filterKnown = filterKnown;
             this.filterSlack = filterSlack;
@@ -280,6 +280,12 @@ public class DataResultFilterNode extends FilterNode {
                     || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actionsList.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
+            } else if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                //action to go to the source artifact
+                actionsList.add(new ViewSourceArtifactAction("View Source Result...", ba));
+                // action to go to the source file of the artifact
+                actionsList.add(new ViewContextAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file
@@ -325,10 +331,10 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(AddContentTagAction.getInstance());
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-                
-                final Collection<AbstractFile> selectedFilesList =
-                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                if(selectedFilesList.size() == 1) {
+
+                final Collection<AbstractFile> selectedFilesList
+                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+                if (selectedFilesList.size() == 1) {
                     actionsList.add(DeleteFileContentTagAction.getInstance());
                 }
             } else {
@@ -337,17 +343,17 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(null);
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
             }
-            
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
-            
-            if(n != null) {
+
+            if (n != null) {
                 actionsList.addAll(ContextMenuExtensionPoint.getActions());
             }
-            
+
             return actionsList;
         }
 
@@ -361,8 +367,7 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(FileTypesNode fileTypes) {
             return defaultVisit(fileTypes);
         }
-        
-        
+
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
@@ -454,14 +459,12 @@ public class DataResultFilterNode extends FilterNode {
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return openChild(c);
         }
-        
+
         @Override
         public AbstractAction visit(FileTypesNode fileTypes) {
             return openChild(fileTypes);
         }
-        
 
-        
         /**
          * Tell the originating ExplorerManager to display the given
          * dataModelNode.
