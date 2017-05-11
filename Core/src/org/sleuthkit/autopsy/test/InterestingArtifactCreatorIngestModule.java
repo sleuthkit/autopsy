@@ -39,7 +39,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapter {
 
     private static final Logger logger = Logger.getLogger(InterestingArtifactCreatorIngestModule.class.getName());
-    private static final String MODULE_NAME = CustomArtifactsCreatorIngestModuleFactory.getModuleName();
+    private static final String MODULE_NAME = InterestingArtifactCreatorIngestModuleFactory.getModuleName();
     private static final String[] ARTIFACT_TYPE_NAMES = {"TSK_WEB_BOOKMARK", "TSK_KEYWORD_HIT", "TSK_CALLLOG"};
     private static final String[] ARTIFACT_DISPLAY_NAMES = {"Web Bookmarks", "Keyword Hits", "Call Logs"};
     private static final String INT_ARTIFACT_TYPE_NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getLabel();
