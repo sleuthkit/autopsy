@@ -55,8 +55,7 @@ sub pluginmain {
 		return;
 	}
 	
-	my $key_path = $ccs."\\Control\\Class\\{6BDD1FC6-810F-11D0-BEC7-08002BE2092F}";
-	my $key;
+	$key_path = $ccs."\\Control\\Class\\{6BDD1FC6-810F-11D0-BEC7-08002BE2092F}";
 	if ($key = $root_key->get_subkey($key_path)) {
 		
 		my @subkeys = $key->get_list_of_subkeys();
@@ -89,8 +88,7 @@ sub pluginmain {
 
 # http://msdn.microsoft.com/en-us/library/ms791870.aspx
 # StillImage logging levels
-	my $key_path = $ccs."\\Control\\StillImage\\Logging";
-	my $key;
+	$key_path = $ccs."\\Control\\StillImage\\Logging";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("");
 		::rptMsg("StillImage Logging Level");

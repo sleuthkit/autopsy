@@ -87,7 +87,7 @@ sub parseSearchMRU {
 	
 	foreach my $i (0..($num - 1)) {
 		$item{$i} = substr($data,$ofs[$i], $ofs[$i + 1] - $ofs[$i]);
-		$item{$i} =~ s/\00//g;
+		$item{$i} =~ s/\x00//g;
 	}
 	return %item;
 }

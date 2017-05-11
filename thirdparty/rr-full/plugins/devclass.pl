@@ -56,8 +56,7 @@ sub pluginmain {
 		return
 	}
 # Get devices from the Disk GUID
-	my $key_path = $ccs."\\Control\\DeviceClasses\\{53f56307-b6bf-11d0-94f2-00a0c91efb8b}";
-	my $key;
+	$key_path = $ccs."\\Control\\DeviceClasses\\{53f56307-b6bf-11d0-94f2-00a0c91efb8b}";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("DevClasses - Disks");
 		::rptMsg($key_path);
@@ -90,8 +89,7 @@ sub pluginmain {
 	}
 	::rptMsg("");
 # Get devices from the Volume GUID
-	my $key_path = $ccs."\\Control\\DeviceClasses\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}";
-	my $key;
+	$key_path = $ccs."\\Control\\DeviceClasses\\{53f5630d-b6bf-11d0-94f2-00a0c91efb8b}";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("DevClasses - Volumes");
 		::rptMsg($key_path);

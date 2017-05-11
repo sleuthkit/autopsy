@@ -54,8 +54,7 @@ sub pluginmain {
 		return;
 	}
 	
-	my $key_path = $ccs."\\Enum\\USB";
-	my $key;
+	$key_path = $ccs."\\Enum\\USB";
 	if ($key = $root_key->get_subkey($key_path)) {
 		
 		my @subkeys = $key->get_list_of_subkeys();

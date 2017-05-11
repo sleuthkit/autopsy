@@ -64,8 +64,7 @@ sub pluginmain {
 	}
 	::rptMsg("");
 	
-	my $key_path = 'Software\\Microsoft\\Terminal Server Client\\Servers';
-	my $key;
+	$key_path = 'Software\\Microsoft\\Terminal Server Client\\Servers';
 	if ($key = $root_key->get_subkey($key_path)) {
 #		::rptMsg($key_path);
 #		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

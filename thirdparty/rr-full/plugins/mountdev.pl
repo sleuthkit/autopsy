@@ -63,7 +63,7 @@ sub pluginmain {
 					
 				}
 				elsif ($len > 12) {
-					$data =~ s/\00//g;
+					$data =~ s/\x00//g;
 					push(@{$md{$data}},$v->get_name());
 				}
 				else {

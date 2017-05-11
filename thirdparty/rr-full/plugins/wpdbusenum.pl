@@ -59,8 +59,7 @@ sub pluginmain {
 		return;
 	}
 	
-	my $key_path = $ccs."\\Enum\\WpdBusEnumRoot";
-	my $key;
+	$key_path = $ccs."\\Enum\\WpdBusEnumRoot";
 	if ($key = $root_key->get_subkey($key_path)) {
 
 		my @subkeys = $key->get_list_of_subkeys();
@@ -129,8 +128,7 @@ sub pluginmain {
 # number of references to USBOblivion, a tool described as being able to wipe
 # out (all) indications of USB removable storage devices being connected to
 # the system.
-	my $key_path = $ccs."\\Control\\DeviceClasses\\{10497b1b-ba51-44e5-8318-a65c837b6661}";
-	my $key;
+	$key_path = $ccs."\\Control\\DeviceClasses\\{10497b1b-ba51-44e5-8318-a65c837b6661}";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		my @subkeys = $key->get_list_of_subkeys();

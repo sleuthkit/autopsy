@@ -47,7 +47,7 @@ class StringsTextExtractor extends FileTextExtractor {
         EXTRACT_UTF16, ///< extract UTF16 text, true/false
         EXTRACT_UTF8, ///< extract UTF8 text, true/false
     };
-    
+
     private final List<SCRIPT> extractScripts = new ArrayList<>();
     private Map<String, String> extractOptions = new HashMap<>();
 
@@ -174,13 +174,10 @@ class StringsTextExtractor extends FileTextExtractor {
         private final byte[] oneCharBuf = new byte[1];
 
         /**
-         * Construct new string stream from FsContent Do not attempt to fill
+         * Construct new string stream from FsContent. Do not attempt to fill
          * entire read buffer if that would break a string
          *
-         * @param content       to extract strings from
-         * @param outputCharset target charset to encode into bytes and index
-         *                      as, e.g. UTF-8
-         *
+         * @param content Content object from which to extract strings.
          */
         private EnglishOnlyStream(AbstractFile content) {
             this.content = content;
@@ -378,8 +375,10 @@ class StringsTextExtractor extends FileTextExtractor {
         private final AbstractFile content;
         private final byte[] oneCharBuf = new byte[1];
         private final StringExtract stringExtractor;
-        /** true if there is nothing to do because neither extractUTF8 nor
-         * extractUTF16 was true in constructor */
+        /**
+         * true if there is nothing to do because neither extractUTF8 nor
+         * extractUTF16 was true in constructor
+         */
         private final boolean nothingToDo;
         private final byte[] fileReadBuff = new byte[FILE_BUF_SIZE];
         private long fileReadOffset = 0L;

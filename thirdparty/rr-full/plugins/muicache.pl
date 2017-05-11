@@ -65,8 +65,7 @@ sub pluginmain {
 		::rptMsg("");
 	}
 # Added for access to USRCLASS.DAT
-	my $key_path = 'Local Settings\\Software\\Microsoft\\Windows\\Shell\\MUICache';
-	my $key;
+	$key_path = 'Local Settings\\Software\\Microsoft\\Windows\\Shell\\MUICache';
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

@@ -72,8 +72,7 @@ sub pluginmain {
 	}
 # Section added 17 Feb 2013, to address Trojan.Swaylib
 #
-	my $key_path = "Software\\Microsoft\\CTF\\LangBarAddIn";
-	my $key;
+	$key_path = "Software\\Microsoft\\CTF\\LangBarAddIn";
 	if ($key = $root_key->get_subkey($key_path)) {
 		my @subkeys = $key->get_list_of_subkeys();
 		if (scalar(@subkeys) > 0) {

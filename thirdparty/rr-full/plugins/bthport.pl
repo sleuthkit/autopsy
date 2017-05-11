@@ -6,10 +6,11 @@
 # 
 # Change history
 #   20130115 - created
+#   20170129 - added support for http://www.hexacorn.com/blog/2017/01/29/beyond-good-ol-run-key-part-59/
 #
 # Category:
 # 
-# copyright 2013 Quantum Analytics Research, LLC
+# copyright 2017 Quantum Analytics Research, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package bthport;
@@ -20,7 +21,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20130115);
+              version       => 20170129);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -38,7 +39,7 @@ sub pluginmain {
 	my $hive = shift;
 	::logMsg("Launching bthport v.".$VERSION);
 	::rptMsg("bthport v.".$VERSION); # banner
-::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
+  ::rptMsg("(".$config{hive}.") ".getShortDescr()."\n"); # banner 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 # First thing to do is get the ControlSet00x marked current...this is
@@ -91,11 +92,25 @@ sub pluginmain {
 		else {
 			::rptMsg($cn_path." not found.");
 		}
+		
+		my $rs_path = $ccs."\\services\\BTHPORT\\Parameters\\Radio Support";
+		my $rs;
+		if ($rs = $root_key->get_subkey($rs_path)) {
+			::rptMsg($rs_path);
+			::rptMsg("LastWrite: ".gmtime($rs->get_timestamp())." UTC");
+			
+			eval {
+				my $spt = $rs->get_value("SupportDLL")->get_data();
+				::rptMsg("SupportDLL = ".$spt);
+			};
+		}
+		else {
+			::rptMsg($rs_path." not found.");
+		}
 	}
 	else {
 		::rptMsg($key_path." not found.");
 	}
-
 }
 
 1;

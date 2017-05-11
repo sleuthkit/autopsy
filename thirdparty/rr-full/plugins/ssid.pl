@@ -109,8 +109,7 @@ sub pluginmain {
 # Now, go to the EAPOL key, locate the appropriate subkeys and parse out
 # any available SSIDs	
 # EAPOL is Extensible Authentication Protocol over LAN
-	my $key_path = "Microsoft\\EAPOL\\Parameters\\Interfaces";
-	my $key;
+	$key_path = "Microsoft\\EAPOL\\Parameters\\Interfaces";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("");
 		::rptMsg($key_path);

@@ -2,6 +2,8 @@
 # amcache.pl 
 #   
 # Change history
+#   20170315 - added output for Product Name and File Description values
+#   20160818 - added check for value 17
 #   20131218 - fixed bug computing compile time
 #   20131213 - updated 
 #   20131204 - created
@@ -9,7 +11,7 @@
 # References
 #   http://www.swiftforensics.com/2013/12/amcachehve-in-windows-8-goldmine-for.html
 #
-# Copyright (c) 2013 QAR, LLC
+# Copyright (c) 2017 QAR, LLC
 # Author: H. Carvey, keydet89@yahoo.com
 #-----------------------------------------------------------
 package amcache;
@@ -21,7 +23,7 @@ my %config = (hive          => "amcache",
               hasRefs       => 1,
               osmask        => 22,
               category      => "program execution",
-              version       => 20131218);
+              version       => 20170315);
 my $VERSION = getVersion();
 
 # Functions #
@@ -62,8 +64,9 @@ sub pluginmain {
 			if (scalar(@sk) > 0) {
 				foreach my $s (@sk) {
 					::rptMsg("File Reference: ".$s->get_name());
+					::rptMsg("LastWrite     : ".gmtime($s->get_timestamp())." Z");
 # update 20131213: based on trial and error, it appears that not all file
-# references will have all of the values, such as Path, or SHA-1					
+# references will have all of the values, such as Path, or SHA-1		
 					eval {
 						::rptMsg("Path          : ".$s->get_value("15")->get_data());
 					};
@@ -73,27 +76,44 @@ sub pluginmain {
 					};
 					
 					eval {
+						::rptMsg("Product Name  : ".$s->get_value("0")->get_data());
+					};
+					
+					eval {
+						::rptMsg("File Descr    : ".$s->get_value("c")->get_data());
+					};
+					
+					eval {
+						::rptMsg("Lang Code     : ".$s->get_value("3")->get_data());
+					};
+					
+					eval {
 						::rptMsg("SHA-1         : ".$s->get_value("101")->get_data());
 					};
 					
 					eval {
 						@t = unpack("VV",$s->get_value("11")->get_data());
 						$gt = gmtime(::getTime($t[0],$t[1]));
-						::rptMsg("Last Mod Time : ".$gt);
+						::rptMsg("Last Mod Time : ".$gt." Z");
+					};
+					
+					eval {
+						@t = unpack("VV",$s->get_value("17")->get_data());
+						$gt = gmtime(::getTime($t[0],$t[1]));
+						::rptMsg("Last Mod Time2: ".$gt." Z");
 					};
 					
 					eval {
 						@t = unpack("VV",$s->get_value("12")->get_data());
 						$gt = gmtime(::getTime($t[0],$t[1]));
-						::rptMsg("Create Time   : ".$gt);
+						::rptMsg("Create Time   : ".$gt." Z");
 					};
 					
 					eval {
 						$gt = gmtime($s->get_value("f")->get_data());
 #						$gt = gmtime(unpack("V",$s->get_value("f")->get_data()));
-						::rptMsg("Compile Time  : ".$gt);
+						::rptMsg("Compile Time  : ".$gt." Z");
 					};
-					
 					::rptMsg("");
 				}
 			}
