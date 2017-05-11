@@ -30,6 +30,7 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.directorytree.ViewTaggedArtifactAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -45,7 +46,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * either content or blackboard artifact tag nodes.
  */
 public class BlackboardArtifactTagNode extends DisplayableItemNode {
-  private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactTagNode.class.getName());
+
+    private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactTagNode.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/green-tag-icon-16.png"; //NON-NLS
     private final BlackboardArtifactTag tag;
 
@@ -103,6 +105,7 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
         actions.addAll(Arrays.asList(super.getActions(context)));
 
         BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
+        actions.add(new ViewTaggedArtifactAction("View Source Result...", artifact));
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
             if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {

@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class InterestingHits implements AutopsyVisitableItem {
 
-    private static final String INTERESTING_ITEMS = NbBundle
+    public static final String INTERESTING_ITEMS = NbBundle
             .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text");
     private static final String DISPLAY_NAME = NbBundle.getMessage(InterestingHits.class, "InterestingHits.displayName.text");
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
