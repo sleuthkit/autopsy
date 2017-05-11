@@ -18,8 +18,10 @@
  */
 package org.sleuthkit.autopsy.test;
 
+import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
+import org.sleuthkit.autopsy.ingest.IngestModuleFactory;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 
@@ -53,7 +55,7 @@ public final class InterestingArtifactCreatorIngestModuleFactory extends IngestM
 
     @Override
     public FileIngestModule createFileIngestModule(IngestModuleIngestJobSettings settings) {
-        return new CustomArtifactsCreatorIngestModule();
+        return new InterestingArtifactCreatorIngestModule();
     }
 
     static String getModuleName() {
