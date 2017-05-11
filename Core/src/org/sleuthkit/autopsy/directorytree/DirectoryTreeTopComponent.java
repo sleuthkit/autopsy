@@ -35,6 +35,7 @@ import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
@@ -58,12 +59,14 @@ import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
+import org.sleuthkit.autopsy.datamodel.InterestingHits;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
@@ -72,7 +75,9 @@ import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
@@ -893,6 +898,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             try {
                 String listName = null;
                 String keywordName = null;
+                String regex = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
                     int typeId = att.getAttributeType().getTypeID();
@@ -900,6 +906,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         listName = att.getValueString();
                     } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                         keywordName = att.getValueString();
+                    } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
+                        regex = att.getValueString();
                     }
                 }
                 Node listNode = keywordRootChilds.findChild(listName);
@@ -910,13 +918,26 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 if (listChildren == null) {
                     return;
                 }
-                treeNode = listChildren.findChild(keywordName);
+                if (regex != null) {  //For support of URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
+                    Node regexNode = listChildren.findChild(regex);
+                    if (regexNode == null) {
+                        return;
+                    }
+                    Children regexChildren = regexNode.getChildren();
+                    if (regexChildren == null) {
+                        return;
+                    }
+                    treeNode = regexChildren.findChild(null);  //WJS-TODO what is the name of the node!? it isn't the keywordName at this point
+                } else {
+                    treeNode = listChildren.findChild(keywordName);
+                }
+
             } catch (TskException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                 || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-            Node interestingItemsRootNode = resultsChilds.findChild(typeName);
+            Node interestingItemsRootNode = resultsChilds.findChild(InterestingHits.INTERESTING_ITEMS);
             Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
             try {
                 String setName = null;
@@ -927,7 +948,62 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         setName = att.getValueString();
                     }
                 }
-                treeNode = interestingItemsRootChildren.findChild(setName);
+                Node setNode = interestingItemsRootChildren.findChild(setName);
+                if (setNode == null) {
+                    return;
+                }
+                Children interestingChildren = setNode.getChildren();
+                if (interestingChildren == null) {
+                    return;
+                }
+                treeNode = interestingChildren.findChild(art.getDisplayName());
+            } catch (TskException ex) {
+                LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+            }
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+            Node emailMsgRootNode = resultsChilds.findChild(typeName);
+            Children emailMsgRootChilds = emailMsgRootNode.getChildren();
+            Node defaultNode = emailMsgRootChilds.findChild("Default");  //WJS-TODO what about non-default folders
+            Children defaultChildren = defaultNode.getChildren();
+            treeNode = defaultChildren.findChild("Default");
+
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+            Node accountRootNode = resultsChilds.findChild(art.getDisplayName());
+            Children accountRootChilds = accountRootNode.getChildren();
+            Node ccNode = accountRootChilds.findChild(Account.Type.CREDIT_CARD.getDisplayName());  //or Credit Cards or Default
+            Children ccChildren = ccNode.getChildren();
+            Node binNode = ccChildren.findChild("By BIN");  //WJS-TODO get this string from somewhere
+            Children binChildren = binNode.getChildren();
+            String accountNumberName = null;
+            List<BlackboardAttribute> attributes;
+            try {
+                attributes = art.getAttributes();
+                for (BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeType().getTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID()) {  //WJS-TODO can this be another value
+                        accountNumberName = att.getValueString();
+                    }
+                }
+                if (accountNumberName == null) {
+                    return;
+                }
+                //right padded with 0s to 8 digits when single number
+                //when a range of numbers, the first 6 digits are rightpadded with 0s to 8 digits then a dash then 3 digits, the 6,7,8, digits of the end number right padded with 9s
+                String binName = StringUtils.rightPad(accountNumberName, 8, "0");
+                binName = binName.substring(0, 8);
+                int bin = Integer.parseInt(binName);
+                CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
+                if (binInfo != null) {
+                    int startBin = ((BINRange) binInfo).getBINstart();
+                    int endBin = ((BINRange) binInfo).getBINend();
+                    if (startBin != endBin) {
+                        binName = Integer.toString(startBin) + "-" + Integer.toString(endBin).substring(5); //if there is a range re-construct the name it appears as 
+                    }
+                }
+                if (binName == null) {
+                    return;
+                }
+                treeNode = binChildren.findChild(binName);
             } catch (TskException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
@@ -966,14 +1042,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     @Override
-    public void viewArtifactContent(BlackboardArtifact art) {
+    public void viewArtifactContent(BlackboardArtifact art
+    ) {
         new ViewContextAction(
                 NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
                 new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
     @Override
-    public void addOnFinishedListener(PropertyChangeListener l) {
+    public void addOnFinishedListener(PropertyChangeListener l
+    ) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
     }
 
