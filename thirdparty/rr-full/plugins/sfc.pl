@@ -75,8 +75,7 @@ sub pluginmain {
 # According to http://support.microsoft.com/kb/222193, sfc* values in this key, if 
 # it exists, take precedence over and are copied into the values within the Winlogon
 # key; see also http://support.microsoft.com/kb/222473/
-	my $key_path = "Policies\\Microsoft\\Windows NT\\Windows File Protection";
-	my $key;
+	$key_path = "Policies\\Microsoft\\Windows NT\\Windows File Protection";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

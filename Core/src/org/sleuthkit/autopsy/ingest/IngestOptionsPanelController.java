@@ -40,9 +40,6 @@ public class IngestOptionsPanelController extends OptionsPanelController {
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void update() {
         getPanel().load();
@@ -69,9 +66,6 @@ public class IngestOptionsPanelController extends OptionsPanelController {
         return panel;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void applyChanges() {
         if (changed) {
@@ -85,57 +79,36 @@ public class IngestOptionsPanelController extends OptionsPanelController {
         }
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void cancel() {
         getPanel().cancel();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean isValid() {
         return getPanel().valid();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public boolean isChanged() {
         return changed;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public JComponent getComponent(Lookup lkp) {
         return getPanel();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public HelpCtx getHelpCtx() {
         return null;
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void addPropertyChangeListener(PropertyChangeListener pl) {
         pcs.addPropertyChangeListener(pl);
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void removePropertyChangeListener(PropertyChangeListener pl) {
         pcs.removePropertyChangeListener(pl);

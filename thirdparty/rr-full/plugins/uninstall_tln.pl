@@ -30,7 +30,7 @@ my %config = (hive          => "Software, NTUSER\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Gets contents of Uninstall keys from Software, NTUSER\.DAT hives(TLN format)";	
+	return "Gets contents of Uninstall keys from Software, NTUSER.DAT hives(TLN format)";	
 }
 sub getDescr{}
 sub getRefs {}

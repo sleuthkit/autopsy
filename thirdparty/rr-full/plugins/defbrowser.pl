@@ -41,7 +41,8 @@ sub pluginmain {
 	my $root_key = $reg->get_root_key;
 
 	my $key_path = "Clients\\StartMenuInternet";
-	if (my $key = $root_key->get_subkey($key_path)) {
+	my $key;
+	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg("Default Browser Check #1");
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
@@ -55,9 +56,8 @@ sub pluginmain {
 
 	::rptMsg("");
 
-	my $key_path = "Classes\\HTTP\\shell\\open\\command";
-	my $key;
-	if ($key = $root_key->get_subkey($key_path)) {
+	$key_path = "Classes\\HTTP\\shell\\open\\command";
+	if (my $key = $root_key->get_subkey($key_path)) {
 		::rptMsg("Default Browser Check #2");
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

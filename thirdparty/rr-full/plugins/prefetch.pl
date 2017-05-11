@@ -3,7 +3,7 @@
 #   Access System hive file to get the Prefetch Parameters
 # 
 # Change history
-#   
+#   2016-05-06  Added check for SysMain service start method. James Habben
 #
 # References
 #   http://msdn.microsoft.com/en-us/library/bb499146(v=winembedded.5).aspx
@@ -18,7 +18,13 @@ my %config = (hive          => "SYSTEM",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20120914);
+              version       => 20160506);
+			  
+my %starts = (0x00 => "Boot Start",
+              0x01 => "System Start",
+              0x02 => "Auto Start",
+              0x03 => "Manual",
+              0x04 => "Disabled");
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -64,6 +70,24 @@ sub pluginmain {
 		else {
 			::rptMsg($pp_path." not found.");
 			::logMsg($pp_path." not found.");
+		}
+		
+		my $pfsvc_path = $ccs."\\services\\SysMain";
+		my $pfsvc;
+		if ($pfsvc = $root_key->get_subkey($pfsvc_path)) {
+			my $svc_start = $pfsvc->get_value("Start")->get_data();
+			if (exists $starts{$svc_start}) {
+				$svc_start = $starts{$svc_start};
+			}
+			::rptMsg("");
+			::rptMsg("Superfetch service runs both Superfetch and Prefetch functions. Shortname is SysMain.");
+			::rptMsg("SysMain Service    = ".$svc_start);
+
+			
+		}
+		else {
+			::rptMsg($pfsvc_path." not found.");
+			::logMsg($pfsvc_path." not found.");
 		}
 	}
 	else {

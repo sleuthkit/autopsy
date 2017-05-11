@@ -43,7 +43,6 @@ public abstract class ShortcutWizardDescriptorPanel implements WizardDescriptor.
 
     /**
      * Whether or not the panel immediately following this one should be skipped
-     * .
      *
      * @return true or false
      */

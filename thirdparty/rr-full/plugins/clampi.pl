@@ -26,7 +26,7 @@ my %config = (hive          => "NTUSER\.DAT",
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "TEST - Checks for keys set by Trojan\.Clampi PROT module";	
+	return "TEST - Checks for keys set by Trojan.Clampi PROT module";	
 }
 sub getDescr{}
 sub getRefs {}
@@ -77,8 +77,7 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 	::rptMsg("");
-	my $key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\AutoComplete";
-	my $key;
+	$key_path = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\AutoComplete";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");
@@ -94,8 +93,7 @@ sub pluginmain {
 		::rptMsg($key_path." not found.");
 	}
 	::rptMsg("");
-	my $key_path = "Software\\Microsoft\\Internet Account Manager\\Accounts";
-	my $key;
+	$key_path = "Software\\Microsoft\\Internet Account Manager\\Accounts";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

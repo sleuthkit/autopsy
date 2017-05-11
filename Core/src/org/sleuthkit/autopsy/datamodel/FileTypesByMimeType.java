@@ -453,7 +453,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * @return query.toString - portion of SQL query which will follow a
          *         WHERE clause.
          */
-        private String createQuery(String mime_type) {
+        private String createQuery(String mimeType) {
             StringBuilder query = new StringBuilder();
             query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
             query.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(",");  //NON-NLS
@@ -466,7 +466,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             if (UserPreferences.hideKnownFilesInViewsTree()) {
                 query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
             }
-            query.append(" AND mime_type = '").append(mime_type).append("'");  //NON-NLS
+            query.append(" AND mime_type = '").append(mimeType).append("'");  //NON-NLS
             return query.toString();
         }
 

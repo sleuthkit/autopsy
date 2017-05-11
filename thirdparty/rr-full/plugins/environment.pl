@@ -3,23 +3,23 @@
 #   Extracts user's Environment paths from NTUSER.DAT
 # 
 # Change history
+#   20150910 - added check for specific value, per Hexacorn blog
 #   20110830 [fpi] + banner, no change to the version number
 #
 # References
-# 
+#  http://www.hexacorn.com/blog/2014/11/14/beyond-good-ol-run-key-part-18/
+#
 # Copyright (c) 2011-02-04 Brendan Coles <bcoles@gmail.com>
 #-----------------------------------------------------------
-# Require #
 package environment;
 use strict;
 
-# Declarations #
 my %config = (hive          => "NTUSER\.DAT",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20110204);
+              version       => 20150910);
 my $VERSION = getVersion();
 
 # Functions #
@@ -32,9 +32,6 @@ sub getShortDescr {
 	return "Extracts user's Environment paths from NTUSER.DAT";
 }
 
-############################################################
-# pluginmain #
-############################################################
 sub pluginmain {
 
 	# Declarations #
@@ -43,8 +40,8 @@ sub pluginmain {
 
 	# Initialize #
 	::logMsg("Launching environment v.".$VERSION);
-    ::rptMsg("environment v.".$VERSION); # 20110830 [fpi] + banner
-    ::rptMsg("(".getHive().") ".getShortDescr()."\n"); # 20110830 [fpi] + banner
+  ::rptMsg("environment v.".$VERSION); 
+  ::rptMsg("(".getHive().") ".getShortDescr()."\n"); 
 	my $reg = Parse::Win32Registry->new($hive);
 	my $root_key = $reg->get_root_key;
 	my $key;
@@ -67,23 +64,27 @@ sub pluginmain {
 
 			# Extract # all key names+values for Environment registry path #
 			foreach my $v (@vals) {
-				::rptMsg($v->get_name()." -> ".$v->get_data());
+				my $name = $v->get_name();
+				::rptMsg($name." -> ".$v->get_data());
+				
+				if ($name eq "UserInitMprLogonScript") {
+					::rptMsg("**ALERT: UserInitMprLogonScript value found: ".$v->get_data());
+				}
+
 			}
 
 		# Error # key value is null #
-		} else {
+		} 
+		else {
 			::rptMsg($key_path." has no values.");
 		}
 
 	# Error # Environment isn't here, try another castle #
 	} else {
 		::rptMsg($key_path." not found.");
-		::logMsg($key_path." not found.");
 	}
-
 	# Return # obligatory new-line #
 	::rptMsg("");
 }
-
 # Error # oh snap! #
 1;

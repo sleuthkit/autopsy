@@ -136,8 +136,7 @@ sub pluginmain {
 #status
 
   ::rptMsg("");
-  my $key_path = "Microsoft\\Windows\\CurrentVersion\\WindowsBackup\\Status";
-	my $key;
+	$key_path = "Microsoft\\Windows\\CurrentVersion\\WindowsBackup\\Status";
 	if ($key = $root_key->get_subkey($key_path)) {
 #		::rptMsg("{name}");
 		::rptMsg($key_path);

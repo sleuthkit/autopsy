@@ -71,8 +71,9 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * This class wraps nodes as they are passed to the DataResult viewers. It
- * defines the actions that the node should have.
+ * A node used to wrap another node before passing it to the result viewers. The
+ * wrapper node defines the actions associated with the wrapped node and may
+ * filter out some of its children.
  */
 public class DataResultFilterNode extends FilterNode {
 
@@ -111,20 +112,31 @@ public class DataResultFilterNode extends FilterNode {
     private final ExplorerManager sourceEm;
 
     /**
+     * Constructs a node used to wrap another node before passing it to the
+     * result viewers. The wrapper node defines the actions associated with the
+     * wrapped node and may filter out some of its children.
      *
-     * @param node Root node to be passed to DataResult viewers
-     * @param em   ExplorerManager for component that is creating the node
+     * @param node The node to wrap.
+     * @param em   The ExplorerManager for the component that is creating the
+     *             node.
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
-
     }
 
     /**
+     * Constructs a node used to wrap another node before passing it to the
+     * result viewers. The wrapper node defines the actions associated with the
+     * wrapped node and may filter out some of its children.
      *
-     * @param node Root node to be passed to DataResult viewers
-     * @param em   ExplorerManager for component that is creating the node
+     * @param node        The node to wrap.
+     * @param em          The ExplorerManager for the component that is creating
+     *                    the node.
+     * @param filterKnown Whether or not to filter out children that represent
+     *                    known files.
+     * @param filterSlack Whether or not to filter out children that represent
+     *                    virtual slack space files.
      */
     private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));

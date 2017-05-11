@@ -3,6 +3,7 @@
 # Plugin for Registry Ripper; 
 # 
 # Change history
+#   20160224 - added SysProcs info
 #   20131007 - updated with Sticky Keys info
 #   20130307 - updated with autostart locations
 #   20100713 - Updated to include additional values, based on references
@@ -12,6 +13,7 @@
 # Category: Autostart
 #
 # References
+#   SysProcs - https://support.microsoft.com/en-us/kb/899867
 #   Change TS listening port number - http://support.microsoft.com/kb/187623
 #   Examining TS key - http://support.microsoft.com/kb/243215
 #   Win2K8 TS stops listening - http://support.microsoft.com/kb/954398
@@ -30,7 +32,7 @@ my %config = (hive          => "System",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20130307);
+              version       => 20160224);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -148,6 +150,19 @@ sub pluginmain {
 				::rptMsg("Analysis Tip: Maybe be empty; appears as '{blank}'");
 			};
 			::rptMsg(" InitialProgram value not found\.") if ($@);
+
+# Added 20160224			
+			eval {
+				my $sys = $ts->get_subkey("SysProcs");
+				my @vals = $sys->get_list_of_values();
+				if ((scalar @vals) > 0) {
+					::rptMsg("SysProcs key values");
+					::rptMsg("LastWrite: ".gmtime($sys->get_timestamp())." Z");
+					foreach my $v (@vals) {
+						::rptMsg("  ".$v->get_name()." - ".$v->get_data());
+					}
+				} 
+			};
 
 # Sticky Keys info, added 20131007
 # ref: http://www.room362.com/blog/2012/5/25/sticky-keys-and-utilman-against-nla.html					

@@ -97,7 +97,7 @@ sub pluginmain {
 
 # Determine of the AutoShareServer/Wks values have been set
 	my $path = $key_path."\\".$lanman;
-	my $tag  = "parameters";
+	$tag  = "parameters";
 	my $para = getKeyPath($path,$tag);
 	eval {
 		if ($key = $root_key->get_subkey($path."\\".$para)) {

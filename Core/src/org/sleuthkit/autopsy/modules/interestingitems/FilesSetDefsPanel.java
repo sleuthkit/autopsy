@@ -169,9 +169,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         this.equalitySignComboBox.setSelectedIndex(2);
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void saveSettings() {
         try {
@@ -203,17 +200,11 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         ingestWarningLabel.setVisible(!isEnabled);
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void store() {
         this.saveSettings();
     }
 
-    /**
-     * @inheritDoc
-     */
     @Override
     public void load() {
         this.resetComponents();
