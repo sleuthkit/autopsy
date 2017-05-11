@@ -194,6 +194,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
+    @NbBundle.Messages({"# {0} - artifactDisplayName","BlackboardArtifactNode.displayName.artifact={0} Artifact"})
     /**
      * Set the filter node display name. The value will either be the file name
      * or something along the lines of e.g. "Messages Artifact" for keyword hits
@@ -219,7 +220,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                             if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() && associated != null) {
                                 artifact.getDisplayName();
                             } else {
-                                displayName = associatedArtifact.getDisplayName() + " " + NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.displayName.artifact");
+                                displayName = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.displayName.artifact", associatedArtifact.getDisplayName());
                             }
                         }
                     }
