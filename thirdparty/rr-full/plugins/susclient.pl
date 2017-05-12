@@ -90,8 +90,8 @@ sub parseSN {
 	my $sz     = unpack("C",substr($data,2,1));
 	
 	$sn = substr($data,$offset,$sz);
-	$sn =~ s/\00//g;
-	$sn =~ s/\20//g;
+	$sn =~ s/\x00//g;
+	$sn =~ s/\x20//g;
 	return $sn;
 }
 

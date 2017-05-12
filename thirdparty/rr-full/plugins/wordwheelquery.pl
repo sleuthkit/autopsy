@@ -57,7 +57,7 @@ sub pluginmain {
 				}
 				else {
 					my $data = $v->get_data();
-					$data =~ s/\00//g;
+					$data =~ s/\x00//g;
 					$wwq{$name} = $data;
 				}
 			}

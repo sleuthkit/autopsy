@@ -26,7 +26,7 @@ my %config = (hive          => "USRCLASS\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "Shell/BagMRU traversal in Win7 USRCLASS\.DAT hives";	
+	return "Shell/BagMRU traversal in Win7 USRCLASS.DAT hives";	
 }
 sub getDescr{}
 sub getRefs {}

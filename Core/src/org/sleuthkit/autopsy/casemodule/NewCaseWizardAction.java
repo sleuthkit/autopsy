@@ -94,15 +94,17 @@ final class NewCaseWizardAction extends CallableSystemAction {
                         AddImageAction addImageAction = SystemAction.get(AddImageAction.class);
                         addImageAction.actionPerformed(null);
                     } catch (InterruptedException | ExecutionException ex) {
-                        logger.log(Level.SEVERE, String.format("Error creating case %s", wizardDescriptor.getProperty("caseName")), ex); //NON-NLS                                                
-                        JOptionPane.showMessageDialog(
-                                WindowManager.getDefault().getMainWindow(),
-                                (ex instanceof ExecutionException ? ex.getCause().getMessage() : ex.getMessage()),
-                                NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"), //NON-NLS
-                                JOptionPane.ERROR_MESSAGE);
+                        if (null != ex.getCause() && !(ex.getCause() instanceof CaseActionCancelledException)) {
+                            logger.log(Level.SEVERE, String.format("Error creating case %s", wizardDescriptor.getProperty("caseName")), ex); //NON-NLS                                                
+                            JOptionPane.showMessageDialog(
+                                    WindowManager.getDefault().getMainWindow(),
+                                    (ex instanceof ExecutionException ? ex.getCause().getMessage() : ex.getMessage()),
+                                    NbBundle.getMessage(this.getClass(), "CaseCreateAction.msgDlg.cantCreateCase.msg"), //NON-NLS
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                        doFailedCaseCleanup(wizardDescriptor);
                         StartupWindowProvider.getInstance().close();
                         StartupWindowProvider.getInstance().open();
-                        doFailedCaseCleanup(wizardDescriptor);
                     } finally {
                         WindowManager.getDefault().getMainWindow().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                     }

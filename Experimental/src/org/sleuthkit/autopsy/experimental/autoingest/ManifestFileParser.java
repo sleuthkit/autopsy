@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,28 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.nio.file.Path;
 
+/**
+ * Responsible for parsing the manifest files that
+ * describe cases, devices, and data sources.
+ * These are used by autoingest to create cases and add
+ * data sources to the correct case.
+ */
 public interface ManifestFileParser {
     
+    /**
+     * Checks if a file is this type of manifest file
+     * @param filePath Path to potential manifest file
+     * @return True if the file is a manifest that this parser supports
+     */ 
     boolean fileIsManifest(Path filePath);
+    
+    /**
+     * Parses the given file.  Will only be called if 
+     * fileIsManifest() previously returned true. 
+     * @param filePath Path to manifest file
+     * @return Parsed results
+     * @throws org.sleuthkit.autopsy.experimental.autoingest.ManifestFileParser.ManifestFileParserException 
+     */
     Manifest parse(Path filePath) throws ManifestFileParserException;
     
     public final static class ManifestFileParserException extends Exception {

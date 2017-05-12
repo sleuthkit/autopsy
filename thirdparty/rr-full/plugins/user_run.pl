@@ -33,7 +33,7 @@ my %config = (hive          => "NTUSER\.DAT",
 sub getConfig{return %config}
 
 sub getShortDescr {
-	return "[Autostart] Get autostart key contents from NTUSER\.DAT hive";	
+	return "[Autostart] Get autostart key contents from NTUSER.DAT hive";	
 }
 sub getDescr{}
 sub getRefs {

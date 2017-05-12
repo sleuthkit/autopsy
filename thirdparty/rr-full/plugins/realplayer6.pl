@@ -25,7 +25,7 @@ my %config = (hive          => "NTUSER\.DAT",
 
 sub getConfig{return %config}
 sub getShortDescr {
-	return "Gets user's RealPlayer v6 MostRecentClips\(Default) values";	
+	return "Gets user's RealPlayer v6 MostRecentClips(Default) values";	
 }
 sub getDescr{}
 sub getRefs {}

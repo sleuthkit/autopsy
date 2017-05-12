@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-2014 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -80,15 +80,15 @@ class ReportExcel implements TableReportModule {
         Font titleFont = wb.createFont();
         titleFont.setFontHeightInPoints((short) 12);
         titleStyle.setFont(titleFont);
-        titleStyle.setAlignment(CellStyle.ALIGN_LEFT);
+        titleStyle.setAlignment(HorizontalAlignment.LEFT);
         titleStyle.setWrapText(true);
 
         setStyle = wb.createCellStyle();
         Font setFont = wb.createFont();
         setFont.setFontHeightInPoints((short) 14);
-        setFont.setBoldweight((short) 10);
+        setFont.setBold(true);
         setStyle.setFont(setFont);
-        setStyle.setAlignment(CellStyle.ALIGN_LEFT);
+        setStyle.setAlignment(HorizontalAlignment.LEFT);
         setStyle.setWrapText(true);
 
         elementStyle = wb.createCellStyle();
@@ -96,7 +96,7 @@ class ReportExcel implements TableReportModule {
         Font elementFont = wb.createFont();
         elementFont.setFontHeightInPoints((short) 14);
         elementStyle.setFont(elementFont);
-        elementStyle.setAlignment(CellStyle.ALIGN_LEFT);
+        elementStyle.setAlignment(HorizontalAlignment.LEFT);
         elementStyle.setWrapText(true);
 
         writeSummaryWorksheet();

@@ -121,7 +121,7 @@ sub pluginmain {
 					my $c_descr = "Acct Created (".$v_val{type}.")";
 					eval {
 						$pw_hint = $u->get_value("UserPasswordHint")->get_data();
-						$pw_hint =~ s/\00//g;
+						$pw_hint =~ s/\x00//g;
 						$c_descr .= " (Pwd Hint: ".$pw_hint.")";
 					};
 					
@@ -278,7 +278,7 @@ sub _translateSID {
 #---------------------------------------------------------------------
 sub _uniToAscii {
   my $str = $_[0];
-  $str =~ s/\00//g;
+  $str =~ s/\x00//g;
   return $str;
 }
 

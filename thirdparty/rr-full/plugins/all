@@ -1,6 +1,17 @@
-# 20120528 *ALL* Plugins that apply on any HIVES, alphabetical order
+# 20161213 *ALL* Plugins that apply on any HIVES, alphabetical order
 baseline
-findexes
-regtime
-rlo
 del
+del_tln
+fileless
+findexes
+installedcomp
+installer
+malware
+null
+regtime
+regtime_tln
+rlo
+sizes
+uninstall
+uninstall_tln
+wallpaper

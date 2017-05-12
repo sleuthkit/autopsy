@@ -417,11 +417,19 @@ class TestRunner(object):
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
 
+        # Note: test_data has autopys_version attribute, but we couldn't see it from here. It's set after run ingest.
+        autopsyVersionPath = os.path.join("..", "..", "nbproject", "project.properties")
+
+        autopsyVersion = search_properties("app.version", autopsyVersionPath)
+        if len(autopsyVersion) == 0:
+            print("Couldn't get the autopsy version from: " + autopsyVersionPath)
+            sys.exit(1)
+
         # if need autopsyPlatform setup
         if len(test_data.main_config.autopsyPlatform) > 0:
-            test_data.ant.append("-Dnbplatform.Autopsy_4.4.0.netbeans.dest.dir=" + test_data.main_config.autopsyPlatform)
+            test_data.ant.append("-Dnbplatform.Autopsy_" + autopsyVersion + ".netbeans.dest.dir=" + test_data.main_config.autopsyPlatform)
             test_data.ant.append("-Dnbplatform.default.harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
-            test_data.ant.append("-Dnbplatform.Autopsy_4.4.0.harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
+            test_data.ant.append("-Dnbplatform.Autopsy_" + autopsyVersion + ".harness.dir=" + test_data.main_config.autopsyPlatform + "/harness")
  
         Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
         Errors.print_out("CMD: " + " ".join(test_data.ant))
@@ -1978,6 +1986,29 @@ def find_file_in_dir(dir, name, ext):
         raise FileNotFoundException(dir)
     except:
         raise DirNotFoundException(dir)
+
+def search_properties(string, properties_file):
+    """Find a property value.
+
+    Args:
+        string: the String to search for.
+        properties_file: the properties file to search.
+
+    Returns:
+        a string, the value for the given String.
+    """
+    result = ""
+    pf = codecs.open(properties_file, "r", "utf-8")
+    try:
+        for line in pf:
+            if string in line:
+                result = line.split('=')[1].rstrip('\n\r ')
+                break
+        pf.close()
+    except:
+        print_error("Couldn't find property:" + string + " from: " + properties_file)
+        sys.exit(1)
+    return result
 
 
 class OS:

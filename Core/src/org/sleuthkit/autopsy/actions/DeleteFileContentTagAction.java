@@ -159,8 +159,6 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                 // a tag with the associated tag name.
                 if (null != tagNamesMap && !tagNamesMap.isEmpty()) {
                     try {
-                        /*List<BlackboardArtifactTag> existingTagsList =
-                                Case.getCurrentCase().getServices().getTagsManager().getBlackboardArtifactTagsByArtifact(artifact);*/
                         List<ContentTag> existingTagsList =
                                 Case.getCurrentCase().getServices().getTagsManager()
                                         .getContentTagsByContent(file);
@@ -172,10 +170,6 @@ public class DeleteFileContentTagAction extends AbstractAction implements Presen
                             for(ContentTag contentTag : existingTagsList) {
                                 if(tagDisplayName.equals(contentTag.getName().getDisplayName())) {
                                     JMenuItem tagNameItem = new JMenuItem(tagDisplayName);
-                                    // for the bookmark tag name only, added shortcut label
-                                    if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
-                                        tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
-                                    }
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, contentTag, file.getId());
                                     });

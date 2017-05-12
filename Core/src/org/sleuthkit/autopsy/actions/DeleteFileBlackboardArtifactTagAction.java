@@ -174,10 +174,6 @@ public class DeleteFileBlackboardArtifactTagAction extends AbstractAction implem
                             for(BlackboardArtifactTag artifactTag : existingTagsList) {
                                 if(tagDisplayName.equals(artifactTag.getName().getDisplayName())) {
                                     JMenuItem tagNameItem = new JMenuItem(tagDisplayName);
-                                    // for the bookmark tag name only, added shortcut label
-                                    if (tagDisplayName.equals(NbBundle.getMessage(AddTagAction.class, "AddBookmarkTagAction.bookmark.text"))) {
-                                        tagNameItem.setAccelerator(AddBookmarkTagAction.BOOKMARK_SHORTCUT);
-                                    }
                                     tagNameItem.addActionListener((ActionEvent e) -> {
                                         deleteTag(tagName, artifactTag, artifact.getArtifactID());
                                     });

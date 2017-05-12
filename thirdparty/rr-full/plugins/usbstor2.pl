@@ -30,6 +30,8 @@ my $VERSION = getVersion();
 my $reg;
 
 sub pluginmain {
+	::logMsg("Launching usbstor2 v.".$VERSION);
+	::rptMsg("usbstor2 v.".$VERSION); # banner
 	my $class = shift;
 	my $hive = shift;
 	$reg = Parse::Win32Registry->new($hive);
@@ -56,8 +58,7 @@ sub pluginmain {
 	};
 	$comp_name = "Test" if ($@);
 	
-	my $key_path = $ccs."\\Enum\\USBStor";
-	my $key;
+	$key_path = $ccs."\\Enum\\USBStor";
 	if ($key = $root_key->get_subkey($key_path)) {
 
 		my @subkeys = $key->get_list_of_subkeys();
@@ -119,7 +120,7 @@ sub checkMountedDevices {
 				next unless ($name =~ m/^\\DosDevices/);
 				my $data = $v->get_data();
 				if (length($data) > 12) {
-					$data =~ s/\00//g; 
+					$data =~ s/\x00//g; 
 					return $name if (grep(/$pip/,$data));
 				}
 			}

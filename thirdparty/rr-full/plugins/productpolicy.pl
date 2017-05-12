@@ -69,31 +69,28 @@ sub pluginmain {
 	my $key;
 	my $key_path = "ControlSet00".$curr."\\Control\\ProductOptions";
 	if ($key = $root_key->get_subkey($key_path)) {
+		my $prod;
 		eval {
-			my $v1 = $key->get_value("ProductPolicy");
-                        if (defined $v1) {
-                            my $prod = $v1->get_data();
-                            my %pol = parseData($prod);	
-                            ::rptMsg("");
-                            ::rptMsg("Note: This plugin applies to Vista and Windows 2008 ONLY.");
-                            ::rptMsg("For a listing of names and values, see:");
-                            ::rptMsg("http://www.geoffchappell.com/viewer.htm?doc=notes/windows/license/install.htm&tx=3,5,6;4");
-                            ::rptMsg("");	
-                            foreach my $p (sort keys %pol) {
-                                    ::rptMsg($p." - ".$pol{$p});
-                            }
-
-                            if (exists $prodinfo{$pol{"Kernel\-ProductInfo"}}) {
-                                    ::rptMsg("");
-                                    ::rptMsg("Kernel\-ProductInfo = ".$prodinfo{$pol{"Kernel\-ProductInfo"}});
-                            }
-                        }
-                        else {
-                            ::rptMsg("Error getting ProductPolicy value");
-                        }
+			$prod = $key->get_value("ProductPolicy")->get_data();
 		};
 		if ($@) {
 			::rptMsg("Error getting ProductPolicy value: $@");
+		}
+		else {	
+			my %pol = parseData($prod);	
+			::rptMsg("");
+			::rptMsg("Note: This plugin applies to Vista and Windows 2008 ONLY.");
+			::rptMsg("For a listing of names and values, see:");
+			::rptMsg("http://www.geoffchappell.com/viewer.htm?doc=notes/windows/license/install.htm&tx=3,5,6;4");
+			::rptMsg("");	
+			foreach my $p (sort keys %pol) {
+				::rptMsg($p." - ".$pol{$p});
+			}
+			
+			if (exists $prodinfo{$pol{"Kernel\-ProductInfo"}}) {
+				::rptMsg("");
+				::rptMsg("Kernel\-ProductInfo = ".$prodinfo{$pol{"Kernel\-ProductInfo"}});
+			}
 		}
 	}
 	else {
@@ -125,7 +122,7 @@ sub parseData {
 		my @vals = unpack("v4V2",	substr($pd,$cursor,0x10));	
 		my $value = substr($pd,$cursor,$vals[0]);
 		my $name = substr($value,0x10,$vals[1]);
-		$name =~ s/\00//g;
+		$name =~ s/\x00//g;
 		
 		my $data = substr($value,0x10 + $vals[1],$vals[3]);
 		if ($vals[2] == 4) {
@@ -133,7 +130,7 @@ sub parseData {
 			$data = unpack("V",$data);
 		}
 		elsif ($vals[2] == 1) {
-			$data =~ s/\00//g;
+			$data =~ s/\x00//g;
 		}
 		elsif ($vals[2] == 3) {
 			$data = unpack("H*",$data);

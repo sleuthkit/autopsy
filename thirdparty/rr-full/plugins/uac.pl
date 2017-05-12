@@ -28,7 +28,7 @@ my %config = (hive => "Software",
 sub getConfig{return %config}
 
 sub getShortDescr {
-    return "Get Select User Account Control (UAC) Values from HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System";
+    return "Get Select User Account Control (UAC) Values from HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System";
 }
 sub getDescr{}
 sub getRefs {}

@@ -5,6 +5,7 @@
 # UserAssist values 
 #
 # Change history
+#  20170304 - removed alerts, added printing of values with no timestamps in the data
 #  20130603 - added alert functionality
 #  20100322 - Added CLSID list reference
 #  20100308 - created, based on original userassist.pl plugin
@@ -13,7 +14,7 @@
 #  Control Panel Applets - http://support.microsoft.com/kb/313808
 #  CLSIDs - http://www.autohotkey.com/docs/misc/CLSID-List.htm
 # 
-# copyright 2010 Quantum Analytics Research, LLC
+# copyright 2017 Quantum Analytics Research, LLC
 #-----------------------------------------------------------
 package userassist;
 use strict;
@@ -23,12 +24,7 @@ my %config = (hive          => "NTUSER\.DAT",
               hasDescr      => 0,
               hasRefs       => 0,
               osmask        => 22,
-              version       => 20130603);
-
-my @paths = ("recycle","globalroot","temp","system volume information","appdata",
-	              "application data");
-
-my @alerts = ();
+              version       => 20170204);
 
 sub getConfig{return %config}
 sub getShortDescr {
@@ -44,7 +40,7 @@ my $VERSION = getVersion();
 sub pluginmain {
 	my $class = shift;
 	my $ntuser = shift;
-	::logMsg("Launching userassist2 v.".$VERSION);
+	::logMsg("Launching userassist v.".$VERSION);
 	my $reg = Parse::Win32Registry->new($ntuser);
 	my $root_key = $reg->get_root_key;
 	
@@ -78,7 +74,8 @@ sub processKey {
 	
 	my $key = $ua->get_subkey("Count");
 
-	my %ua;
+	my %ua = ();
+	my @no_time = ();
 	my $hrzr = "HRZR";
 	
 	my @vals = $key->get_list_of_values();
@@ -98,6 +95,9 @@ sub processKey {
 					$count -= 5 if ($count > 5);
 					push(@{$ua{$time_value}},$value_name." (".$count.")");
 				}
+				else {
+					push(@no_time,$value_name);
+				}
 			}
 # Windows 7				
 			elsif (length($data) == 72) { 
@@ -112,9 +112,16 @@ sub processKey {
 #				}
 				my $count = unpack("V",substr($data,4,4));
 				my @t = unpack("VV",substr($data,60,8));
-				next if ($t[0] == 0 && $t[1] == 0);
-				my $time_val = ::getTime($t[0],$t[1]);	
-				push(@{$ua{$time_val}},$value_name." (".$count.")");
+				if ($t[0] == 0 && $t[1] == 0) {
+					push(@no_time,$value_name);
+				}
+				else {
+#				
+#				print "Value name: ".$value_name."\n";
+#				
+					my $time_val = ::getTime($t[0],$t[1]);
+					push(@{$ua{$time_val}},$value_name." (".$count.")");
+				}
 			}
 			else {
 # Nothing else to do
@@ -124,22 +131,14 @@ sub processKey {
 			::rptMsg(gmtime($t)." Z");
 			foreach my $i (@{$ua{$t}}) {
 				::rptMsg("  ".$i);
-				
-				my $lci = lc($i);
-				foreach my $a (@paths) {
-					push(@alerts,"ALERT: userassist: ".$a." found in path: ".$i) if (grep(/$a/,$lci));
-				}
-				
 			}
 		}
-	}
-	
-	if (scalar(@alerts) > 0) {
-		print "\n";
-		print "Alerts:\n";
-		foreach (@alerts) {
-			::alertMsg($_);
+		::rptMsg("");
+		::rptMsg("Value names with no time stamps:");
+		foreach my $n (@no_time) {
+			::rptMsg("  ".$n);
 		}
+		
 	}
 }
 1;

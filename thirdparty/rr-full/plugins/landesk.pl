@@ -3,7 +3,11 @@
 # parses LANDESK Monitor Logs
 #
 #
+#  https://community.landesk.com/docs/DOC-3249
+#
 # Change history
+#   20160823 - added "Current Duration" parsing
+#   20160822 - updated based on client engagement
 #   20130326 - added Wow6432Node path
 #   20130214 - updated w/ Logon info
 #   20090729 - updates, H. Carvey
@@ -19,7 +23,7 @@ my %config = (hive          => "Software",
               hasShortDescr => 1,
               hasDescr      => 0,
               hasRefs       => 0,
-              version       => 20130326);
+              version       => 20160823);
 
 sub getConfig{return %config}
 
@@ -32,7 +36,7 @@ sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
 
 my $VERSION = getVersion();
-my %ls;
+my (@ts,$d);
 
 sub pluginmain {
 	my $class = shift;
@@ -53,18 +57,49 @@ sub pluginmain {
 			my @subkeys = $key->get_list_of_subkeys();
 			if (scalar(@subkeys) > 0) {
 				foreach my $s (@subkeys) {
+				  ::rptMsg($s->get_name());
+					::rptMsg("  LastWrite: ".gmtime($s->get_timestamp())." Z");
+					
 					eval {
-						my $lw = $s->get_timestamp();
-# Push the data into a hash of arrays 
-						push(@{$ls{$lw}},$s->get_name());
+						@ts = unpack("VV",$s->get_value("Last Started")->get_data());
+						::rptMsg("  Last Started: ".gmtime(::getTime($ts[0],$ts[1]))." Z");
 					};
-				}
-			
-				foreach my $t (reverse sort {$a <=> $b} keys %ls) {
-					::rptMsg(gmtime($t)." (UTC)");
-					foreach my $item (@{$ls{$t}}) {
-						::rptMsg("  $item");
-					}
+					
+					eval {
+						@ts = unpack("VV",$s->get_value("Last Duration")->get_data());
+						my $i = c64($ts[0],$ts[1]);
+						$i = $i/10000000;
+						::rptMsg("  Last Duration: ".$i." sec");
+					};
+					
+					eval {
+						@ts = unpack("VV",$s->get_value("Current Duration")->get_data());
+						my $i = c64($ts[0],$ts[1]);
+						$i = $i/10000000;
+						::rptMsg("  Current Duration: ".$i." sec");
+					};
+					
+					eval {
+						@ts = unpack("VV",$s->get_value("Total Duration")->get_data());
+						my $i = c64($ts[0],$ts[1]);
+						$i = $i/10000000;
+						::rptMsg("  Total Duration: ".$i." sec");
+					};
+					
+					eval {
+						@ts = unpack("VV",$s->get_value("First Started")->get_data());
+						::rptMsg("  First Started: ".gmtime(::getTime($ts[0],$ts[1]))." Z");
+					};
+					
+					eval {
+						::rptMsg("  Total Runs: ".$s->get_value("Total Runs")->get_data());
+					};
+					
+					eval {
+						::rptMsg("  Current User: ".$s->get_value("Current User")->get_data());
+					};
+					
+					::rptMsg("");
 				}
 			}
 			else {
@@ -76,6 +111,7 @@ sub pluginmain {
 		}
 	}
 	
+	::rptMsg("");
 # update added 20130327
 	my @paths = ("LANDesk\\Inventory\\LogonHistory\\Logons",
 	             "Wow6432Node\\LANDesk\\Inventory\\LogonHistory\\Logons");
@@ -105,6 +141,21 @@ sub pluginmain {
 			::rptMsg($key_path." not found\.");
 		}
 	}	
+}
+
+# Thanks to David Cowen for sharing this code
+sub c64 {
+	my $n1 = shift;
+	my $n2 = shift;
+	
+	if ($n2 != 0) {
+		$n2 = ($n2 * 4294967296);
+		my $n = $n1 + $n2;
+		return $n;
+	}
+	else {
+		return $n1;
+	}
 }
 
 1;
