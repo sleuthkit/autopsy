@@ -463,7 +463,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (noPreviousSettings) {
             ArrayList<Integer> keys = new ArrayList<>(propertiesMap.keySet());
             for (int key : keys) {
-                propertiesMap.put(key - offset, propertiesMap.remove(key));
+                propertiesMap.put(key - props.size(), propertiesMap.remove(key));
             }
         }
 
