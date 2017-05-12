@@ -27,9 +27,6 @@
   </Layout>
   <SubComponents>
     <Container class="org.openide.explorer.view.OutlineView" name="outlineView">
-      <Events>
-        <EventHandler event="componentResized" listener="java.awt.event.ComponentListener" parameters="java.awt.event.ComponentEvent" handler="outlineViewComponentResized"/>
-      </Events>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new OutlineView(DataResultViewerTable.FIRST_COLUMN_LABEL);"/>
       </AuxValues>
