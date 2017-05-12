@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.test;
 import java.util.logging.Level;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.framework.AutopsyService;
-import org.sleuthkit.autopsy.framework.ProgressIndicator;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 
 /**
  * An implementation of the Autopsy service interface used for test purposes.
@@ -53,7 +53,7 @@ public class TestAutopsyService implements AutopsyService {
             progressIndicator.progress(80);
             Thread.sleep(1000L);
             progressIndicator.progress(100);
-            progressIndicator.finish("First task completed by Test Autopsy Service.");
+            progressIndicator.finish();
             progressIndicator.start("Test Autopsy Service doing second task...");
             for (int i = 0; i < 10000; ++i) {
                 logger.log(Level.INFO, "Test Autopsy Service simulating work on second task");
@@ -62,7 +62,7 @@ public class TestAutopsyService implements AutopsyService {
                     break;
                 }
             }
-            progressIndicator.finish("Second task completed by Test Autopsy Service.");
+            progressIndicator.finish();
         } catch (InterruptedException ex) {
             logger.log(Level.INFO, "Test Autopsy Service interrupted (cancelled) while doing first task, cancel requested = {0}", context.cancelRequested());
         }

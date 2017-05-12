@@ -17,9 +17,11 @@
     </target>
 
     <!-- use manifestclasspath (http://ant.apache.org/manual/Tasks/manifestclasspath.html) to put all the jar files that we need for junit/regression test
-                  to a single jar file: allJarsInUse.jar. Then we put this new jar to classpath for testing program to avoid command line Java classpath too long problem. -->    
+                  to a single jar file: allJarsInUse.jar. Then we put this new jar to classpath for testing program to avoid command line Java classpath too long problem.
+      Note: Started from ant 1.10, maxParentLevels are enforced. If you get error from manifestclasspath complaines 'No suitable relative path from ...' then it's time to
+            increase your maxParentLevels -->
     <target name="manifest-classpath">
-        <manifestclasspath property="tem.classpath" jarfile="allJarsInUse.jar">
+        <manifestclasspath property="tem.classpath" jarfile="allJarsInUse.jar" maxParentLevels="5">
             <classpath refid="test.${regression}.run.cp"/>
         </manifestclasspath>
         <jar destfile="allJarsInUse.jar" basedir="build/classes">

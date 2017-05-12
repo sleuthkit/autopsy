@@ -4,6 +4,7 @@
 #
 #
 # Change history
+#   20160822 - minor updates based on client engagement
 #   20130214 - updated with Logon info
 #   20090729 - updates, H. Carvey
 #
@@ -31,7 +32,7 @@ sub getHive {return $config{hive};}
 sub getVersion {return $config{version};}
 
 my $VERSION = getVersion();
-my %ls;
+my (@f,$first);
 
 sub pluginmain {
 	my $class = shift;
@@ -62,17 +63,23 @@ sub pluginmain {
 					$user = "" if ($@);
 				
 #				::rptMsg($lw."|REG||".$user."|M... LanDesk - ".$name." key last modified");
-				
+# "Current User" value not included in "First Started" data, as the user value applies only to the
+# "Last Started" value				
 					eval {
-						my @f = unpack("VV",$s->get_value("First Started")->get_data());
-						my $first = ::getTime($f[0],$f[1]);
-						::rptMsg($first."|REG||".$user."|LanDesk - ".$name." First Started");
+						@f = unpack("VV",$s->get_value("First Started")->get_data());
+						$first = ::getTime($f[0],$f[1]);
+						::rptMsg($first."|REG|||LanDesk - ".$name." First Started");
 					};
 				
 					eval {
-						my @f = unpack("VV",$s->get_value("Last Started")->get_data());
-						my $first = ::getTime($f[0],$f[1]);
-						::rptMsg($first."|REG||".$user."|LanDesk - ".$name." Last Started");
+						@f = unpack("VV",$s->get_value("Last Started")->get_data());
+						$first = ::getTime($f[0],$f[1]);
+						
+						@f = unpack("VV",$s->get_value("Last Duration")->get_data());
+						my $i = c64($f[0],$f[1]);
+						$i = $i/10000000;
+						
+						::rptMsg($first."|REG||".$user."|LanDesk - ".$name." Last Started, Last Duration : ".$i." sec. - Total Runs: ".$s->get_value("Total Runs")->get_data());
 					};
 				}
 			}
@@ -112,6 +119,21 @@ sub pluginmain {
 		else {
 #		::rptMsg($key_path." not found\.");
 		}
+	}
+}
+
+# Thanks to David Cowen for sharing this code
+sub c64 {
+	my $n1 = shift;
+	my $n2 = shift;
+	
+	if ($n2 != 0) {
+		$n2 = ($n2 * 4294967296);
+		my $n = $n1 + $n2;
+		return $n;
+	}
+	else {
+		return $n1;
 	}
 }
 

@@ -379,9 +379,10 @@ public class HashsetHits implements AutopsyVisitableItem {
             
             hashsetResults.getArtifactIds(hashsetName).forEach((id) -> {
                 try {
-                    BlackboardArtifact art = skCase.getBlackboardArtifact(id);
-                    
-                    artifactHits.put(id, art);
+                    if (!artifactHits.containsKey(id)) {
+                        BlackboardArtifact art = skCase.getBlackboardArtifact(id);
+                        artifactHits.put(id, art);
+                    }
                     list.add(id);
                 } catch (TskException ex) {
                     logger.log(Level.SEVERE, "TSK Exception occurred", ex); //NON-NLS

@@ -83,8 +83,7 @@ sub pluginmain {
 		::logMsg($key_path." not found.");
 	}
 
-my $key_path = "Microsoft\\Windows NT\\CurrentVersion\\Winlogon";
-	my $key;
+	$key_path = "Microsoft\\Windows NT\\CurrentVersion\\Winlogon";
 	if ($key = $root_key->get_subkey($key_path)) {
 		::rptMsg($key_path);
 		::rptMsg("LastWrite Time ".gmtime($key->get_timestamp())." (UTC)");

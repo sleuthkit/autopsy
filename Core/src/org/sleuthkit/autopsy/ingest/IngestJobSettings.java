@@ -393,6 +393,9 @@ public class IngestJobSettings {
     /**
      * Gets the module names for a given key within these ingest job settings.
      *
+     * @param context        The identifier for the context for which to get the
+     *                       module names, e.g., the Add Data Source wizard or
+     *                       Run Ingest Modules context.
      * @param key            The key string.
      * @param defaultSetting The default list of module names.
      *

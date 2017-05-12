@@ -187,7 +187,7 @@ public class Server {
     private int currentSolrServerPort = 0;
     private int currentSolrStopPort = 0;
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
-   private static final String SOLR = "solr";
+    private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
 
     public enum CORE_EVT_STATES {
@@ -636,7 +636,7 @@ public class Server {
      * Creates/opens a Solr core (index) for a case.
      *
      * @param theCase The case for which the core is to be created/opened.
-     * @param index The text index that the Solr core should be using.
+     * @param index   The text index that the Solr core should be using.
      *
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
@@ -645,14 +645,14 @@ public class Server {
         currentCoreLock.writeLock().lock();
         try {
             currentCore = openCore(theCase, index);
-            
+
             try {
                 // execute a test query. if it fails, an exception will be thrown
                 queryNumIndexedFiles();
             } catch (NoOpenCoreException ex) {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
             }
-            
+
             serverAction.putValue(CORE_EVT, CORE_EVT_STATES.STARTED);
         } finally {
             currentCoreLock.writeLock().unlock();
@@ -684,7 +684,7 @@ public class Server {
             currentCoreLock.readLock().unlock();
         }
     }
-    
+
     void closeCore() throws KeywordSearchModuleException {
         currentCoreLock.writeLock().lock();
         try {
@@ -713,7 +713,6 @@ public class Server {
     /**
      * ** end single-case specific methods ***
      */
-    
     /**
      * Deletes the keyword search core for a case.
      *
@@ -721,46 +720,41 @@ public class Server {
      */
     @NbBundle.Messages({
         "# {0} - core name", "Server.deleteCore.exception.msg=Failed to delete Solr core {0}",})
-    void deleteCore(String coreName) throws KeywordSearchServiceException {
-        /*
-         * Send a core unload request to the Solr server, with the parameters
-         * that request deleting the index and the instance directory
-         * (deleteInstanceDir removes everything related to the core, the index
-         * directory, the configuration files, etc.) set to true.
-         * NOTE: this method doesn't delete the actual Solr index directory. That is 
-         * done as part of deleting case output directory.
-         */
-                
-        // check whether the core we are deleting is the currently open core
-        currentCoreLock.readLock().lock();
+    void deleteCore(String coreName, Case.CaseType caseType) throws KeywordSearchServiceException {
         try {
-            if (null != currentCore) {
-                if (currentCore.getName().equals(coreName)) {
-                    // close current core first
-                    closeCore();
-                }
+            HttpSolrServer solrServer;
+            if (caseType == CaseType.SINGLE_USER_CASE) {
+                Integer localSolrServerPort = Integer.decode(ModuleSettings.getConfigSetting(PROPERTIES_FILE, PROPERTIES_CURRENT_SERVER_PORT));
+                solrServer = new HttpSolrServer("http://localhost:" + localSolrServerPort + "/solr"); //NON-NLS
+            } else {
+                String host = UserPreferences.getIndexingServerHost();
+                String port = UserPreferences.getIndexingServerPort();
+                solrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
             }
-        } catch (KeywordSearchModuleException ex) {
-            throw new KeywordSearchServiceException(NbBundle.getMessage(Server.class, "Server.close.exception.msg"), ex);
-        } finally {
-            currentCoreLock.readLock().unlock();
-        }
-             
-        try {
-            HttpSolrServer solrServer = new HttpSolrServer("http://" + UserPreferences.getIndexingServerHost() + ":" + UserPreferences.getIndexingServerPort() + "/solr"); //NON-NLS
             connectToSolrServer(solrServer);
-            org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer); 
-        } catch (SolrServerException | IOException ex) {
+            CoreAdminResponse response = CoreAdminRequest.getStatus(coreName, solrServer);
+            if (null != response.getCoreStatus(coreName).get("instanceDir")) {             //NON-NLS
+                /*
+                 * Send a core unload request to the Solr server, with the
+                 * parameter set that request deleting the index and the
+                 * instance directory (deleteInstanceDir = true). Note that this
+                 * removes everything related to the core on the server (the
+                 * index directory, the configuration files, etc.), but does not
+                 * delete the actual Solr text index because it is currently
+                 * stored in the case directory.
+                 */
+                org.apache.solr.client.solrj.request.CoreAdminRequest.unloadCore(coreName, true, true, solrServer);
+            }
+        } catch (SolrServerException | HttpSolrServer.RemoteSolrException | IOException ex) {
             throw new KeywordSearchServiceException(Bundle.Server_deleteCore_exception_msg(coreName), ex);
         }
     }
 
-    
     /**
      * Creates/opens a Solr core (index) for a case.
      *
      * @param theCase The case for which the core is to be created/opened.
-     * @param index The text index that the Solr core should be using.
+     * @param index   The text index that the Solr core should be using.
      *
      * @return An object representing the created/opened core.
      *
@@ -780,7 +774,7 @@ public class Server {
             connectToSolrServer(currentSolrServer);
 
         } catch (SolrServerException | IOException ex) {
-            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg"), ex);
+            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
         }
 
         try {
@@ -891,8 +885,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr file chunks (not
-     * logical files) indexed without actually returning the content.
+     * Execute query that gets only number of all Solr file chunks (not logical
+     * files) indexed without actually returning the content.
      *
      * @return int representing number of indexed chunks
      *
@@ -916,8 +910,8 @@ public class Server {
     }
 
     /**
-     * Execute query that gets only number of all Solr documents indexed
-     * (files and chunks) without actually returning the documents
+     * Execute query that gets only number of all Solr documents indexed (files
+     * and chunks) without actually returning the documents
      *
      * @return int representing number of indexed files (files and chunks)
      *
@@ -970,11 +964,10 @@ public class Server {
     /**
      * Execute query that gets number of indexed file chunks for a file
      *
-     * @param fileID file id of the original file broken into chunks and
-     *               indexed
+     * @param fileID file id of the original file broken into chunks and indexed
      *
-     * @return int representing number of indexed file chunks, 0 if there is
-     *         no chunks
+     * @return int representing number of indexed file chunks, 0 if there is no
+     *         chunks
      *
      * @throws KeywordSearchModuleException
      * @throws NoOpenCoreException
@@ -1206,8 +1199,7 @@ public class Server {
     }
 
     /**
-     * Determines whether or not the index files folder for a Solr core
-     * exists.
+     * Determines whether or not the index files folder for a Solr core exists.
      *
      * @param coreName the name of the core.
      *
@@ -1233,7 +1225,7 @@ public class Server {
         private final String name;
 
         private final CaseType caseType;
-        
+
         private final Index textIndex;
 
         // the server to access a core needs to be built from a URL with the
@@ -1272,7 +1264,7 @@ public class Server {
         private Index getIndexInfo() {
             return this.textIndex;
         }
-        
+
         private QueryResponse query(SolrQuery sq) throws SolrServerException, IOException {
             return solrCore.query(sq);
         }
@@ -1385,8 +1377,8 @@ public class Server {
          * Execute query that gets only number of all Solr files (not chunks)
          * indexed without actually returning the files
          *
-         * @return int representing number of indexed files (entire files,
-         *         not chunks)
+         * @return int representing number of indexed files (entire files, not
+         *         chunks)
          *
          * @throws SolrServerException
          */
@@ -1447,11 +1439,11 @@ public class Server {
         /**
          * Execute query that gets number of indexed file chunks for a file
          *
-         * @param contentID file id of the original file broken into chunks
-         *                  and indexed
+         * @param contentID file id of the original file broken into chunks and
+         *                  indexed
          *
-         * @return int representing number of indexed file chunks, 0 if there
-         *         is no chunks
+         * @return int representing number of indexed file chunks, 0 if there is
+         *         no chunks
          *
          * @throws SolrServerException
          */

@@ -71,11 +71,12 @@ import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * This class wraps nodes as they are passed to the DataResult viewers. It
- * defines the actions that the node should have.
+ * A node used to wrap another node before passing it to the result viewers. The
+ * wrapper node defines the actions associated with the wrapped node and may
+ * filter out some of its children.
  */
 public class DataResultFilterNode extends FilterNode {
-    
+
     private static final Logger LOGGER = Logger.getLogger(DataResultFilterNode.class.getName());
 
     private static boolean filterKnownFromDataSources = UserPreferences.hideKnownFilesInDataSourcesTree();
@@ -111,22 +112,33 @@ public class DataResultFilterNode extends FilterNode {
     private final ExplorerManager sourceEm;
 
     /**
+     * Constructs a node used to wrap another node before passing it to the
+     * result viewers. The wrapper node defines the actions associated with the
+     * wrapped node and may filter out some of its children.
      *
-     * @param node Root node to be passed to DataResult viewers
-     * @param em   ExplorerManager for component that is creating the node
+     * @param node The node to wrap.
+     * @param em   The ExplorerManager for the component that is creating the
+     *             node.
      */
     public DataResultFilterNode(Node node, ExplorerManager em) {
         super(node, new DataResultFilterChildren(node, em));
         this.sourceEm = em;
-
     }
 
     /**
+     * Constructs a node used to wrap another node before passing it to the
+     * result viewers. The wrapper node defines the actions associated with the
+     * wrapped node and may filter out some of its children.
      *
-     * @param node Root node to be passed to DataResult viewers
-     * @param em   ExplorerManager for component that is creating the node
+     * @param node        The node to wrap.
+     * @param em          The ExplorerManager for the component that is creating
+     *                    the node.
+     * @param filterKnown Whether or not to filter out children that represent
+     *                    known files.
+     * @param filterSlack Whether or not to filter out children that represent
+     *                    virtual slack space files.
      */
-  private  DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
+    private DataResultFilterNode(Node node, ExplorerManager em, boolean filterKnown, boolean filterSlack) {
         super(node, new DataResultFilterChildren(node, em, filterKnown, filterSlack));
         this.sourceEm = em;
     }
@@ -201,9 +213,9 @@ public class DataResultFilterNode extends FilterNode {
      * DataResultFilterNode that created in the DataResultFilterNode.java.
      *
      */
-  private  static class DataResultFilterChildren extends FilterNode.Children {
+    private static class DataResultFilterChildren extends FilterNode.Children {
 
-        private final  ExplorerManager sourceEm;
+        private final ExplorerManager sourceEm;
 
         private boolean filterKnown;
         private boolean filterSlack;
@@ -211,7 +223,7 @@ public class DataResultFilterNode extends FilterNode {
         /**
          * the constructor
          */
-     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
+        private DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
             super(arg);
             switch (SelectionContext.getSelectionContext(arg)) {
                 case DATA_SOURCES:
@@ -230,7 +242,7 @@ public class DataResultFilterNode extends FilterNode {
             this.sourceEm = sourceEm;
         }
 
-     private   DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
+        private DataResultFilterChildren(Node arg, ExplorerManager sourceEm, boolean filterKnown, boolean filterSlack) {
             super(arg);
             this.filterKnown = filterKnown;
             this.filterSlack = filterSlack;
@@ -325,10 +337,10 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(null); // creates a menu separator
                 actionsList.add(AddContentTagAction.getInstance());
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
-                
-                final Collection<AbstractFile> selectedFilesList =
-                        new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-                if(selectedFilesList.size() == 1) {
+
+                final Collection<AbstractFile> selectedFilesList
+                        = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+                if (selectedFilesList.size() == 1) {
                     actionsList.add(DeleteFileContentTagAction.getInstance());
                 }
             } else {
@@ -337,17 +349,17 @@ public class DataResultFilterNode extends FilterNode {
                 actionsList.add(null);
                 actionsList.add(AddBlackboardArtifactTagAction.getInstance());
             }
-            
-            final Collection<BlackboardArtifact> selectedArtifactsList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
-            if(selectedArtifactsList.size() == 1) {
+
+            final Collection<BlackboardArtifact> selectedArtifactsList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if (selectedArtifactsList.size() == 1) {
                 actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
             }
-            
-            if(n != null) {
+
+            if (n != null) {
                 actionsList.addAll(ContextMenuExtensionPoint.getActions());
             }
-            
+
             return actionsList;
         }
 
@@ -361,8 +373,7 @@ public class DataResultFilterNode extends FilterNode {
         public List<Action> visit(FileTypesNode fileTypes) {
             return defaultVisit(fileTypes);
         }
-        
-        
+
         @Override
         protected List<Action> defaultVisit(DisplayableItemNode ditem) {
             //preserve the default node's actions
@@ -454,14 +465,12 @@ public class DataResultFilterNode extends FilterNode {
         protected AbstractAction defaultVisit(DisplayableItemNode c) {
             return openChild(c);
         }
-        
+
         @Override
         public AbstractAction visit(FileTypesNode fileTypes) {
             return openChild(fileTypes);
         }
-        
 
-        
         /**
          * Tell the originating ExplorerManager to display the given
          * dataModelNode.
