@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
@@ -891,7 +892,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     }
                 }
                 treeNode = hashsetRootChilds.findChild(setName);
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
@@ -939,7 +940,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
                 treeNode = listChildren.findChild(keywordName);
 
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
@@ -964,26 +965,31 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     return;
                 }
                 treeNode = interestingChildren.findChild(art.getDisplayName());
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
             Node emailMsgRootNode = resultsChilds.findChild(typeName);
             Children emailMsgRootChilds = emailMsgRootNode.getChildren();
+            Map<String, String> parsedPath = null;
             try {
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
                     int typeId = att.getAttributeType().getTypeID();
-                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
-                        String setName = att.getValueString();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
+                        parsedPath = EmailExtracted.parsePath(att.getValueString());
+                        break;
                     }
                 }
-            } catch (TskException ex) {
+                if (parsedPath == null) {
+                    return;
+                }
+                Node defaultNode = emailMsgRootChilds.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text")));
+                Children defaultChildren = defaultNode.getChildren();
+                treeNode = defaultChildren.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text")));
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
-            Node defaultNode = emailMsgRootChilds.findChild(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));  //WJS-TODO what about non-default folders
-            Children defaultChildren = defaultNode.getChildren();
-            treeNode = defaultChildren.findChild(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
 
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             Node accountRootNode = resultsChilds.findChild(art.getDisplayName());
@@ -1022,7 +1028,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     return;
                 }
                 treeNode = binChildren.findChild(binName);
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else {
