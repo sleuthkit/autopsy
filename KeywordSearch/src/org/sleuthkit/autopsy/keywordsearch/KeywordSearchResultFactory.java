@@ -18,13 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.TreeMultimap;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +38,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -143,6 +141,15 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             logger.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
+        } catch (IllegalStateException ex) {
+            // Check if the case was already closed. If so, we gracefully leave
+            // this method without errors.
+            if(!Case.isCaseOpen()) {
+                return false;
+            }
+            
+            // It's possible this may never happen, but better safe than sorry.
+            throw ex;
         }
 
         int hitNumber = 0;

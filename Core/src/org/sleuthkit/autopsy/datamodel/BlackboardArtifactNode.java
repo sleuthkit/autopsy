@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
-import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
@@ -383,6 +382,15 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(associated));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
+        } catch (IllegalStateException ex) {
+            // Check if the case was already closed. If so, we gracefully leave
+            // this method without errors.
+            if(!Case.isCaseOpen()) {
+                return s;
+            }
+            
+            // It's possible this may never happen, but better safe than sorry.
+            throw ex;
         }
         ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
                 NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
