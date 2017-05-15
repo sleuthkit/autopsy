@@ -30,13 +30,13 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.actions.DeleteBlackboardArtifactTagAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.directorytree.ViewTaggedArtifactAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 
 /**
  * Instances of this class wrap BlackboardArtifactTag objects. In the Autopsy
@@ -98,14 +98,14 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
 
         return propertySheet;
     }
-
+    @NbBundle.Messages("BlackboardArtifactTagNode.viewSourceArtifact.text=View Source Result...")
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), true);
         actions.addAll(Arrays.asList(super.getActions(context)));
 
         BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
-        actions.add(new ViewTaggedArtifactAction("View Source Result...", artifact));
+        actions.add(new ViewTaggedArtifactAction(BlackboardArtifactTagNode_viewSourceArtifact_text(), artifact));
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
             if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {

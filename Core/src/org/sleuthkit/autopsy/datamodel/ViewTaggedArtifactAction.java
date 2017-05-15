@@ -16,26 +16,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sleuthkit.autopsy.directorytree;
+package org.sleuthkit.autopsy.datamodel;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
-import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.BlackboardAttribute;
-import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Action for navigating the tree to view the artifact this artifact was 
+ * Action for navigating the tree to view the artifact this tag was 
  * generated off of.
  */
-class ViewSourceArtifactAction extends AbstractAction {
+class ViewTaggedArtifactAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
 
     private final BlackboardArtifact artifact;
 
-    ViewSourceArtifactAction(String title, final BlackboardArtifact artifact) {
+    ViewTaggedArtifactAction(String title, final BlackboardArtifact artifact) {
         super(title);
         this.artifact = artifact;
     }
@@ -43,19 +41,8 @@ class ViewSourceArtifactAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         final DirectoryTreeTopComponent dirTree = DirectoryTreeTopComponent.findInstance();
-        try {
-            for (BlackboardAttribute attribute : artifact.getAttributes()) {
-                if (attribute.getAttributeType().getTypeID() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
-                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
-                    if (associatedArtifact != null) {
-                        dirTree.viewArtifact(associatedArtifact);
-                        break;
-                    }
+        dirTree.viewArtifact(artifact);
 
-                }
-            }
-        } catch (TskCoreException ex) {
-        }
     }
 
     @Override

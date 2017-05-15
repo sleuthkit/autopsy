@@ -51,7 +51,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 public class InterestingHits implements AutopsyVisitableItem {
 
-    public static final String INTERESTING_ITEMS = NbBundle
+    private static final String INTERESTING_ITEMS = NbBundle
             .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text");
     private static final String DISPLAY_NAME = NbBundle.getMessage(InterestingHits.class, "InterestingHits.displayName.text");
     private static final Logger logger = Logger.getLogger(InterestingHits.class.getName());
@@ -450,7 +450,7 @@ public class InterestingHits implements AutopsyVisitableItem {
                 try {
                     if (!artifactHits.containsKey(id)) {
                         BlackboardArtifact art = skCase.getBlackboardArtifact(id);
-                        artifactHits.put(id, art);
+                        artifactHits.put(id, art);  
                     }
                     list.add(id);
                 } catch (TskCoreException ex) {

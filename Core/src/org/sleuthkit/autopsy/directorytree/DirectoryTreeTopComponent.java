@@ -944,7 +944,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                 || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-            Node interestingItemsRootNode = resultsChilds.findChild(InterestingHits.INTERESTING_ITEMS);
+            Node interestingItemsRootNode = resultsChilds.findChild(NbBundle
+                    .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text"));
             Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
             try {
                 String setName = null;
@@ -1021,7 +1022,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         return;
                     }
                     Node binNode = accountChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
-                    if (binNode == null){
+                    if (binNode == null) {
                         return;
                     }
                     Children binChildren = binNode.getChildren();
