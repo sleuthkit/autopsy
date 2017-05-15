@@ -1089,7 +1089,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     @Override
     public void viewArtifactContent(BlackboardArtifact art) {
         new ViewContextAction(
-                NbBundle.getMessage(this.getClass(), "torytoryTreeTopComponent.action.viewArtContent.text"),
+                NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
                 new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
