@@ -59,7 +59,6 @@ public class AutopsyTestCases {
 
     private static final Logger logger = Logger.getLogger(AutopsyTestCases.class.getName());
     private long start;
-    private Timeouts timeouts; //Set a new timeout value for WizardOpertor
     
     /**
      * Escapes the slashes in a file or directory path.
@@ -81,12 +80,6 @@ public class AutopsyTestCases {
 
     public AutopsyTestCases() {
         start = 0;
-        /*
-        * Nightly test failed at this point because of TimeoutExpiredException. So we set 4 minutes (This number is based on test experience) for WizardOperator
-        * to override the default WaitWindowTimeouts=60000
-        */
-        timeouts = JemmyProperties.getCurrentTimeouts();
-        timeouts.setTimeout("WindowWaiter.WaitWindowTimeOut", 240000);
     }
 
     public void testNewCaseWizardOpen(String title) {
@@ -119,7 +112,7 @@ public class AutopsyTestCases {
         new Timeout("pausing", 120000).sleep();
         logger.info("Starting Add Image process");
         WizardOperator wo = new WizardOperator("Add Data Source");
-        wo.setTimeouts(timeouts);
+        wo.setTimeouts(resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000));
         while(!wo.btNext().isEnabled()){
             new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
         }
@@ -143,7 +136,7 @@ public class AutopsyTestCases {
         new Timeout("pausing", 120000).sleep();
         logger.info("Starting Add Logical Files process");
         WizardOperator wo = new WizardOperator("Add Data Source");
-        wo.setTimeouts(timeouts);
+        wo.setTimeouts(resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000));
         while(!wo.btNext().isEnabled()){
             new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
         }
@@ -335,5 +328,16 @@ public class AutopsyTestCases {
             logger.log(Level.WARNING, "AWTException taking screenshot.", ex);
 
         }
+    }
+    
+    /*
+     * Nightly test failed at WindowWaiter.WaitWindowTimeOut because of TimeoutExpiredException. So we 
+     * use this conveninent method to override the default Jemmy Timeouts value. 
+    */
+
+    private Timeouts resetTimeouts(String name, int value) {
+        Timeouts timeouts = JemmyProperties.getCurrentTimeouts();
+        timeouts.setTimeout(name, value);
+        return timeouts;
     }
 }
