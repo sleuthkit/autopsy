@@ -42,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -100,7 +101,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 }
             } else if (eventType.equals(Case.Events.CONTENT_TAG_DELETED.toString())) {
                 ContentTagDeletedEvent event = (ContentTagDeletedEvent) evt;
-                if (event.getDeletedTagInfo().getContentID()== associated.getId()) {
+                if (event.getDeletedTagInfo().getContentID() == associated.getId()) {
                     updateSheet();
                 }
             } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
@@ -194,6 +195,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         return actionsList.toArray(new Action[actionsList.size()]);
     }
 
+    @NbBundle.Messages({"# {0} - artifactDisplayName", "BlackboardArtifactNode.displayName.artifact={0} Artifact"})
     /**
      * Set the filter node display name. The value will either be the file name
      * or something along the lines of e.g. "Messages Artifact" for keyword hits
@@ -208,15 +210,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         // If this is a node for a keyword hit on an artifact, we set the
         // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
-        if (artifact != null && 
-                (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() || 
-                artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID())) {
+        if (artifact != null
+                && (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()
+                || artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID())) {
             try {
                 for (BlackboardAttribute attribute : artifact.getAttributes()) {
                     if (attribute.getAttributeType().getTypeID() == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()) {
                         BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                         if (associatedArtifact != null) {
-                            displayName = associatedArtifact.getDisplayName() + " Artifact";
+                            if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                                artifact.getDisplayName();
+                            } else {
+                                displayName = NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.displayName.artifact", associatedArtifact.getDisplayName());
+                            }
                         }
                     }
                 }
@@ -226,6 +232,13 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         }
         this.setDisplayName(displayName);
     }
+
+    @NbBundle.Messages({
+        "BlackboardArtifactNode.createSheet.artifactType.displayName=Artifact Type",
+        "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
+        "BlackboardArtifactNode.createSheet.artifactDetails.displayName=Artifact Details",
+        "BlackboardArtifactNode.createSheet.artifactDetails.name=Artifact Details",
+        "BlackboardArtifactNode.artifact.displayName=Artifact"})
 
     @Override
     protected Sheet createSheet() {
@@ -244,6 +257,24 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
                 this.getDisplayName()));
+        if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+            try {
+                BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.name"),
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactType.displayName"),
+                            NO_DESCR,
+                            associatedArtifact.getDisplayName() + " " + NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.artifact.displayName")));
+                    ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.name"),
+                            NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.artifactDetails.displayName"),
+                            NO_DESCR,
+                            associatedArtifact.getShortDescription()));
+                }
+            } catch (TskCoreException ex) {
+                // Do nothing since the display name will be set to the file name.
+            }
+        }
 
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(),
@@ -354,7 +385,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             LOGGER.log(Level.SEVERE, "Failed to get tags for artifact " + artifact.getDisplayName(), ex);
         }
         ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "BlackboardArtifactNode.createSheet.tags.displayName"),
-                    NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
 
         return s;
     }
@@ -468,7 +499,6 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         throw new IllegalArgumentException(
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
-
 
     @Override
     public boolean isLeafTypeNode() {
