@@ -39,7 +39,9 @@ import javax.swing.text.JTextComponent;
 import org.netbeans.jellytools.MainWindowOperator;
 import org.netbeans.jellytools.NbDialogOperator;
 import org.netbeans.jellytools.WizardOperator;
+import org.netbeans.jemmy.JemmyProperties;
 import org.netbeans.jemmy.Timeout;
+import org.netbeans.jemmy.Timeouts;
 import org.netbeans.jemmy.operators.JButtonOperator;
 import org.netbeans.jemmy.operators.JCheckBoxOperator;
 import org.netbeans.jemmy.operators.JComboBoxOperator;
@@ -57,7 +59,7 @@ public class AutopsyTestCases {
 
     private static final Logger logger = Logger.getLogger(AutopsyTestCases.class.getName());
     private long start;
-
+    
     /**
      * Escapes the slashes in a file or directory path.
      *
@@ -104,8 +106,13 @@ public class AutopsyTestCases {
     }
 
     public void testStartAddImageFileDataSource() {
+        /*
+        * This time out is to give time for creating case database and opening solr index
+        */
+        new Timeout("pausing", 120000).sleep();
         logger.info("Starting Add Image process");
         WizardOperator wo = new WizardOperator("Add Data Source");
+        wo.setTimeouts(resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000));
         while(!wo.btNext().isEnabled()){
             new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
         }
@@ -123,8 +130,13 @@ public class AutopsyTestCases {
     }
 
     public void testStartAddLogicalFilesDataSource() {
+        /*
+        * This time out is to give time for creating case database and opening solr index
+        */
+        new Timeout("pausing", 120000).sleep();
         logger.info("Starting Add Logical Files process");
         WizardOperator wo = new WizardOperator("Add Data Source");
+        wo.setTimeouts(resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000));
         while(!wo.btNext().isEnabled()){
             new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
         }
@@ -316,5 +328,16 @@ public class AutopsyTestCases {
             logger.log(Level.WARNING, "AWTException taking screenshot.", ex);
 
         }
+    }
+    
+    /*
+     * Nightly test failed at WindowWaiter.WaitWindowTimeOut because of TimeoutExpiredException. So we 
+     * use this conveninent method to override the default Jemmy Timeouts value. 
+    */
+
+    private Timeouts resetTimeouts(String name, int value) {
+        Timeouts timeouts = JemmyProperties.getCurrentTimeouts();
+        timeouts.setTimeout(name, value);
+        return timeouts;
     }
 }

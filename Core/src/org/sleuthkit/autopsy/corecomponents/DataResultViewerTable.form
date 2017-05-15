@@ -16,23 +16,19 @@
   <Layout>
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="tableScrollPanel" alignment="0" pref="691" max="32767" attributes="0"/>
+          <Component id="outlineView" alignment="0" pref="691" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="tableScrollPanel" alignment="0" pref="366" max="32767" attributes="0"/>
+          <Component id="outlineView" alignment="0" pref="366" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Container class="javax.swing.JScrollPane" name="tableScrollPanel">
-      <Events>
-        <EventHandler event="componentResized" listener="java.awt.event.ComponentListener" parameters="java.awt.event.ComponentEvent" handler="tableScrollPanelComponentResized"/>
-      </Events>
+    <Container class="org.openide.explorer.view.OutlineView" name="outlineView">
       <AuxValues>
-        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new OutlineView(this.firstColumnLabel);"/>
-        <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="//new TreeTableView()"/>
+        <AuxValue name="JavaCodeGenerator_CreateCodeCustom" type="java.lang.String" value="new OutlineView(DataResultViewerTable.FIRST_COLUMN_LABEL);"/>
       </AuxValues>
 
       <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
