@@ -86,7 +86,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Top component which displays something.
@@ -994,40 +993,54 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             Node accountRootNode = resultsChilds.findChild(art.getDisplayName());
             Children accountRootChilds = accountRootNode.getChildren();
-            Node ccNode = accountRootChilds.findChild(Account.Type.CREDIT_CARD.getDisplayName());  //or Credit Cards or Default
-            Children ccChildren = ccNode.getChildren();
-            Node binNode = ccChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
-            Children binChildren = binNode.getChildren();
-            String accountNumberName = null;
             List<BlackboardAttribute> attributes;
+            String accountType = null;
+            String ccNumberName = null;
             try {
                 attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
                     int typeId = att.getAttributeType().getTypeID();
-                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID()) {  //WJS-TODO can this be another value
-                        accountNumberName = att.getValueString();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID()) {
+                        accountType = att.getValueString();
+                    }
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID()) {
+                        ccNumberName = att.getValueString();
                     }
                 }
-                if (accountNumberName == null) {
+                Node accountNode = accountRootChilds.findChild(accountType);  //or Credit Cards or Default
+                if (accountNode == null) {
                     return;
                 }
-                //right padded with 0s to 8 digits when single number
-                //when a range of numbers, the first 6 digits are rightpadded with 0s to 8 digits then a dash then 3 digits, the 6,7,8, digits of the end number right padded with 9s
-                String binName = StringUtils.rightPad(accountNumberName, 8, "0");
-                binName = binName.substring(0, 8);
-                int bin = Integer.parseInt(binName);
-                CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
-                if (binInfo != null) {
-                    int startBin = ((BINRange) binInfo).getBINstart();
-                    int endBin = ((BINRange) binInfo).getBINend();
-                    if (startBin != endBin) {
-                        binName = Integer.toString(startBin) + "-" + Integer.toString(endBin).substring(5); //if there is a range re-construct the name it appears as 
+                if (accountType == Account.Type.CREDIT_CARD.name()) {
+                    Children accountChildren = accountNode.getChildren();
+                    if (accountChildren == null) {
+                        return;
                     }
+                    Node binNode = accountChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
+                    Children binChildren = binNode.getChildren();
+                    if (ccNumberName == null) {
+                        return;
+                    }
+                    //right padded with 0s to 8 digits when single number
+                    //when a range of numbers, the first 6 digits are rightpadded with 0s to 8 digits then a dash then 3 digits, the 6,7,8, digits of the end number right padded with 9s
+                    String binName = StringUtils.rightPad(ccNumberName, 8, "0");
+                    binName = binName.substring(0, 8);
+                    int bin = Integer.parseInt(binName);
+                    CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
+                    if (binInfo != null) {
+                        int startBin = ((BINRange) binInfo).getBINstart();
+                        int endBin = ((BINRange) binInfo).getBINend();
+                        if (startBin != endBin) {
+                            binName = Integer.toString(startBin) + "-" + Integer.toString(endBin).substring(5); //if there is a range re-construct the name it appears as 
+                        }
+                    }
+                    if (binName == null) {
+                        return;
+                    }
+                    treeNode = binChildren.findChild(binName);
+                } else { //default account type
+                    treeNode = accountNode;
                 }
-                if (binName == null) {
-                    return;
-                }
-                treeNode = binChildren.findChild(binName);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
@@ -1066,8 +1079,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     @Override
-    public void viewArtifactContent(BlackboardArtifact art
-    ) {
+    public void viewArtifactContent(BlackboardArtifact art) {
         new ViewContextAction(
                 NbBundle.getMessage(this.getClass(), "torytoryTreeTopComponent.action.viewArtContent.text"),
                 new BlackboardArtifactNode(art)).actionPerformed(null);
