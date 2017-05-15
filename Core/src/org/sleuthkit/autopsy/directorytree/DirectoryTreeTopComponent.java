@@ -1007,16 +1007,23 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         ccNumberName = att.getValueString();
                     }
                 }
-                Node accountNode = accountRootChilds.findChild(accountType);  //or Credit Cards or Default
-                if (accountNode == null) {
+                if (accountType == null) {
                     return;
                 }
-                if (accountType == Account.Type.CREDIT_CARD.name()) {
+
+                if (accountType.equals(Account.Type.CREDIT_CARD.name())) {
+                    Node accountNode = accountRootChilds.findChild(Account.Type.CREDIT_CARD.getDisplayName());
+                    if (accountNode == null) {
+                        return;
+                    }
                     Children accountChildren = accountNode.getChildren();
                     if (accountChildren == null) {
                         return;
                     }
                     Node binNode = accountChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
+                    if (binNode == null){
+                        return;
+                    }
                     Children binChildren = binNode.getChildren();
                     if (ccNumberName == null) {
                         return;
@@ -1039,7 +1046,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     }
                     treeNode = binChildren.findChild(binName);
                 } else { //default account type
-                    treeNode = accountNode;
+                    treeNode = accountRootChilds.findChild(accountType);;
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
