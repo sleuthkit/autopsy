@@ -63,10 +63,12 @@ import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
 import org.sleuthkit.autopsy.datamodel.InterestingHits;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
@@ -910,6 +912,13 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         regex = att.getValueString();
                     }
                 }
+                if (listName == null) {
+                    if (regex == null) {  //using same labels used for creation 
+                        listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
+                    } else {
+                        listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
+                    }
+                }
                 Node listNode = keywordRootChilds.findChild(listName);
                 if (listNode == null) {
                     return;
@@ -918,19 +927,17 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 if (listChildren == null) {
                     return;
                 }
-                if (regex != null) {  //For support of URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
+                if (regex != null) {  //For support of regex nodes such as URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
                     Node regexNode = listChildren.findChild(regex);
                     if (regexNode == null) {
                         return;
                     }
-                    Children regexChildren = regexNode.getChildren();
-                    if (regexChildren == null) {
+                    listChildren = regexNode.getChildren();
+                    if (listChildren == null) {
                         return;
                     }
-                    treeNode = regexChildren.findChild(null);  //WJS-TODO what is the name of the node!? it isn't the keywordName at this point
-                } else {
-                    treeNode = listChildren.findChild(keywordName);
                 }
+                treeNode = listChildren.findChild(keywordName);
 
             } catch (TskException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
@@ -963,16 +970,27 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
             Node emailMsgRootNode = resultsChilds.findChild(typeName);
             Children emailMsgRootChilds = emailMsgRootNode.getChildren();
-            Node defaultNode = emailMsgRootChilds.findChild("Default");  //WJS-TODO what about non-default folders
+            try {
+                List<BlackboardAttribute> attributes = art.getAttributes();
+                for (BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeType().getTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()) {
+                        String setName = att.getValueString();
+                    }
+                }
+            } catch (TskException ex) {
+                LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+            }
+            Node defaultNode = emailMsgRootChilds.findChild(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));  //WJS-TODO what about non-default folders
             Children defaultChildren = defaultNode.getChildren();
-            treeNode = defaultChildren.findChild("Default");
+            treeNode = defaultChildren.findChild(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
 
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
             Node accountRootNode = resultsChilds.findChild(art.getDisplayName());
             Children accountRootChilds = accountRootNode.getChildren();
             Node ccNode = accountRootChilds.findChild(Account.Type.CREDIT_CARD.getDisplayName());  //or Credit Cards or Default
             Children ccChildren = ccNode.getChildren();
-            Node binNode = ccChildren.findChild("By BIN");  //WJS-TODO get this string from somewhere
+            Node binNode = ccChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
             Children binChildren = binNode.getChildren();
             String accountNumberName = null;
             List<BlackboardAttribute> attributes;
@@ -1045,7 +1063,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public void viewArtifactContent(BlackboardArtifact art
     ) {
         new ViewContextAction(
-                NbBundle.getMessage(this.getClass(), "DirectoryTreeTopComponent.action.viewArtContent.text"),
+                NbBundle.getMessage(this.getClass(), "torytoryTreeTopComponent.action.viewArtContent.text"),
                 new BlackboardArtifactNode(art)).actionPerformed(null);
     }
 
