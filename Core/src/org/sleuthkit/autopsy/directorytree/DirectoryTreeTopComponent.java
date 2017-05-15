@@ -1094,8 +1094,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     }
 
     @Override
-    public void addOnFinishedListener(PropertyChangeListener l
-    ) {
+    public void addOnFinishedListener(PropertyChangeListener l) {
         DirectoryTreeTopComponent.this.addPropertyChangeListener(l);
     }
 
