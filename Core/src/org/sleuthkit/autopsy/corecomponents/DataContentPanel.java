@@ -74,7 +74,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
             }
             viewers.add(new UpdateWrapper(dcv));
             jTabbedPane1.addTab(dcv.getTitle(), null,
-                    dcv.getComponent(), dcv.getToolTip());
+                    new javax.swing.JScrollPane(dcv.getComponent()), dcv.getToolTip());
         }
 
         // disable the tabs
