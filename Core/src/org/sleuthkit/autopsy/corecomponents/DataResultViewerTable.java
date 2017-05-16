@@ -178,30 +178,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
 
-    /**
-     * Get the properties from all children and, recursively, subchildren of
-     * Node. Note: won't work out the box for lazy load - you need to set all
-     * children props for the parent by hand
-     *
-     * @param parent        Node with at least one child to get properties from
-     * @param maxRows       max number of rows to retrieve properties for (can
-     *                      be used for memory optimization)
-     * @param propertiesAcc Accumulator for properties.
-     */
-    static private void getAllChildProperties(Node parent, int maxRows, Set<Property<?>> propertiesAcc) {
-        Children children = parent.getChildren();
-        int childCount = 0;
-        for (Node child : children.getNodes()) {
-            if (++childCount > maxRows) {
-                return;
-            }
-            for (PropertySet ps : child.getPropertySets()) {
-                propertiesAcc.addAll(Arrays.asList(ps.getProperties()));
-            }
-            getAllChildProperties(child, maxRows, propertiesAcc);
-        }
-    }
-
     @Override
     public boolean isSupported(Node selectedNode) {
         return true;
@@ -369,12 +345,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             for (int i = 0; i < numCols; i++) {
                 ETableColumn etc = (ETableColumn) columnModel.getColumn(i);
                 String columnName = outline.getColumnName(i);
+                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
+                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
                 if (etc.isSorted()) {
-                    preferences.put(ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName), String.valueOf(etc.isAscending()));
-                    preferences.put(ResultViewerPersistence.getColumnSortRankKey(tfn, columnName), String.valueOf(etc.getSortRank()));
+                    preferences.put(columnSortOrderKey, String.valueOf(etc.isAscending()));
+                    preferences.put(columnSortRankKey, String.valueOf(etc.getSortRank()));
                 } else {
-                    preferences.remove(ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName));
-                    preferences.remove(ResultViewerPersistence.getColumnSortRankKey(tfn, columnName));
+                    preferences.remove(columnSortOrderKey);
+                    preferences.remove(columnSortRankKey);
                 }
             }
         }
@@ -421,10 +399,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *         order.
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
-        // This is a set because we only want unique properties
-        Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
-        getAllChildProperties(currentRoot, 100, propertiesAcc);
-        List<Property<?>> props = new ArrayList<>(propertiesAcc);
+
+        List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(currentRoot, 100);
 
         // If node is not table filter node, use default order for columns
         if (!(currentRoot instanceof TableFilterNode)) {

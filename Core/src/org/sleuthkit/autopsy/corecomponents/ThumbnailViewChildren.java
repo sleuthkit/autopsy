@@ -99,7 +99,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return totalImages;
     }
 
-    private void setupKeys() {
+     void setupKeys() {
         //divide the supported content into buckets
         totalImages = 0;
         //TODO when lazy loading of original nodes is fixed
@@ -115,7 +115,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             }
         }
         //sort suppContent!
-        Collections.sort(suppContent, loadSort());
+         Collections.sort(suppContent, loadSort());
         if (totalImages == 0) {
             return;
         }
@@ -143,6 +143,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             pageNums[i] = i + 1;
         }
         setKeys(pageNums);
+        refresh();
     }
 
     private synchronized Comparator<Node> loadSort() {
@@ -151,7 +152,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         if (!(parent instanceof TableFilterNode)) {
             return comp;
         } else {
-            List<Node.Property<?>> properties = ResultViewerPersistence.getAllChildProperties(parent);
+            List<Node.Property<?>> properties = ResultViewerPersistence.getAllChildProperties(parent, 100);
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             TableFilterNode tfn = (TableFilterNode) parent;
 

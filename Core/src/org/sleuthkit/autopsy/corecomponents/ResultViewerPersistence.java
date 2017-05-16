@@ -44,10 +44,10 @@ final public class ResultViewerPersistence {
         return str.replaceAll("[^a-zA-Z0-9_]", "");
     }
 
-    static List<Node.Property<?>> getAllChildProperties(Node Node) {
+    static List<Node.Property<?>> getAllChildProperties(Node Node, int maxRows) {
         // This is a set because we add properties of up to 100 child nodes, and we want unique properties
         Set<Node.Property<?>> propertiesAcc = new LinkedHashSet<>();
-        getAllChildPropertyHeadersRec(Node, 100, propertiesAcc);
+        getAllChildPropertyHeadersRec(Node, maxRows, propertiesAcc);
         return new ArrayList<>(propertiesAcc);
     }
 
