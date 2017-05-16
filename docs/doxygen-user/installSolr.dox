@@ -92,7 +92,7 @@ The following steps will configure Solr to run using an account that will have a
        You will very likely see a result that says "The solrJetty service is not started." This is okay.
 
  3. Create a folder <i>"C:\Bitnami\zookeeper"</i>  if it does not exist.
- 4. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\server\solr\zoo.cfg"</i> to include the text <i>dataDir=C:/Bitnami/zookeeper</i> as shown in the screenshot below
+ 4. Edit <i>"C:\Bitnami\solr-4.10.3-0\apache-solr\solr\zoo.cfg"</i> to include the text <i>dataDir=C:/Bitnami/zookeeper</i> as shown in the screenshot below
  <br><br>
  \image html zooDir.PNG
  <br>
