@@ -41,7 +41,7 @@ import org.netbeans.junit.NbModuleSuite;
 public class RegressionTest extends TestCase {
 
     private static final Logger logger = Logger.getLogger(RegressionTest.class.getName());
-    private static final AutopsyTestCases autopsyTests = new AutopsyTestCases();
+    private static AutopsyTestCases autopsyTests = new AutopsyTestCases(Boolean.parseBoolean(System.getProperty("isMultiUser")));
 
     /**
      * Constructor required by JUnit
