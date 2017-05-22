@@ -2639,16 +2639,4 @@ public class Case {
         deleteReports(reports);
     }
 
-    /**
-     * Sets the name of the keyword search index for the case.
-     *
-     * @param textIndexName The text index name.
-     *
-     * @throws CaseMetadataException
-     * @deprecated Do not use.
-     */
-    @Deprecated
-    public void setTextIndexName(String textIndexName) throws CaseMetadataException {
-    }
-
 }
