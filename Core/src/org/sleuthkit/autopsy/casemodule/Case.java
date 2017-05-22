@@ -140,7 +140,6 @@ public class Case {
     private volatile ExecutorService caseLockingExecutor;
     private CoordinationService.Lock caseDirLock;
     private SleuthkitCase caseDb;
-    private SleuthkitErrorReporter sleuthkitErrorReporter;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     private boolean hasDataSources;
@@ -1811,7 +1810,6 @@ public class Case {
      */
     @Messages({
         "Case.progressMessage.switchingLogDirectory=Switching log directory...",
-        "Case.progressMessage.settingUpTskErrorReporting=Setting up SleuthKit error reporting...",
         "Case.progressMessage.clearingTempDirectory=Clearing case temp directory...",
         "Case.progressMessage.openingCaseLevelServices=Opening case-level services...",
         "Case.progressMessage.openingApplicationServiceResources=Opening application service case resources...",
@@ -1823,18 +1821,6 @@ public class Case {
          */
         progressIndicator.progress(Bundle.Case_progressMessage_switchingLogDirectory());
         Logger.setLogDirectory(getLogDirectoryPath());
-        if (Thread.currentThread().isInterrupted()) {
-            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
-        }
-
-        /*
-         * Hook up a SleuthKit layer error reporter.
-         */
-        progressIndicator.progress(Bundle.Case_progressMessage_settingUpTskErrorReporting());
-        sleuthkitErrorReporter
-                = new SleuthkitErrorReporter(MIN_SECS_BETWEEN_TSK_ERROR_REPORTS, NbBundle.getMessage(Case.class,
-                        "IntervalErrorReport.ErrorText"));
-        caseDb.addErrorObserver(this.sleuthkitErrorReporter);
         if (Thread.currentThread().isInterrupted()) {
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         }
@@ -2073,8 +2059,8 @@ public class Case {
         "Case.progressMessage.shuttingDownNetworkCommunications=Shutting down network communications...",
         "Case.progressMessage.closingApplicationServiceResources=Closing case-specific application service resources...",
         "Case.progressMessage.closingCaseLevelServices=Closing case-level services...",
-        "Case.progressMessage.closingCaseDatabase=Closing case database...",
-        "Case.progressMessage.shuttingDownTskErrorReporting=Shutting down SleuthKit error reporting..."})
+        "Case.progressMessage.closingCaseDatabase=Closing case database..."
+    })
     private void close(ProgressIndicator progressIndicator) {
         IngestManager.getInstance().cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
 
@@ -2115,10 +2101,6 @@ public class Case {
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());
             caseDb.close();
-            if (null != sleuthkitErrorReporter) {
-                progressIndicator.progress(Bundle.Case_progressMessage_shuttingDownTskErrorReporting());
-                caseDb.removeErrorObserver(sleuthkitErrorReporter);
-            }
         }
 
         /*
