@@ -57,6 +57,12 @@ final class CustomArtifactType {
     private static BlackboardAttribute.Type bytesAttrType;
     private static BlackboardAttribute.Type stringAttrType;
 
+    /**
+     * Adds the custom artifact type, with its associated custom attribute
+     * types, to the case database of the current case.
+     *
+     * @throws BlackboardException If there is an error adding any of the types.
+     */
     static void addToCaseDatabase() throws Blackboard.BlackboardException {
         Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();
         artifactType = blackboard.getOrAddArtifactType(ARTIFACT_TYPE_NAME, ARTIFACT_DISPLAY_NAME);
@@ -68,6 +74,15 @@ final class CustomArtifactType {
         stringAttrType = blackboard.getOrAddAttributeType(STRING_ATTR_TYPE_NAME, BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.STRING, STRING_ATTR_DISPLAY_NAME);
     }
 
+    /**
+     * Creates and instance of the custom artifact type.
+     *
+     * @param source The artifact source content.
+     *
+     * @return A BlackboardArtifact object.
+     *
+     * @throws TskCoreException If there is an error creating the artifact.
+     */
     static BlackboardArtifact createInstance(Content source) throws TskCoreException {
         BlackboardArtifact artifact = source.newArtifact(artifactType.getTypeID());
         List<BlackboardAttribute> attributes = new ArrayList<>();
@@ -78,7 +93,7 @@ final class CustomArtifactType {
         attributes.add(new BlackboardAttribute(bytesAttrType, MODULE_NAME, DatatypeConverter.parseHexBinary("ABCD")));
         attributes.add(new BlackboardAttribute(stringAttrType, MODULE_NAME, "Zero"));
         artifact.addAttributes(attributes);
-        
+
         /*
          * Add a second source module to the attributes. Try to do it twice. The
          * second attempt should have no effect on the data.
@@ -87,10 +102,13 @@ final class CustomArtifactType {
             attr.addSource(ADDITIONAL_MODULE_NAME);
             attr.addSource(ADDITIONAL_MODULE_NAME);
         }
-        
+
         return artifact;
     }
 
+    /**
+     * Prevents instantiation of this utility class.
+     */
     private CustomArtifactType() {
     }
 

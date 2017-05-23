@@ -29,8 +29,8 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * A data source ingest module that associates custom artifacts and attributes with
- * data sources for test purposes.
+ * A data source ingest module that associates custom artifacts and attributes
+ * with data sources for test purposes.
  */
 @NbBundle.Messages({
     "CustomArtifactsCreatorDataSourceIngestModule.exceptionMessage.errorCreatingCustomType=Error creating custom artifact type."
@@ -39,6 +39,16 @@ public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceInge
 
     private static final Logger logger = Logger.getLogger(CustomArtifactsCreatorDataSourceIngestModule.class.getName());
 
+    /**
+     * Adds the custom artifact type this module uses to the case database of
+     * the current case.
+     *
+     * @param context Provides data and services specific to the ingest job and
+     *                the ingest pipeline of which the module is a part.
+     *
+     * @throws IngestModuleException If there is an error adding the custom
+     *                               artifact type.
+     */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
@@ -48,6 +58,15 @@ public class CustomArtifactsCreatorDataSourceIngestModule extends DataSourceInge
         }
     }
 
+    /**
+     * Creates a custom artifact instance associated with the data source to be
+     * processed.
+     *
+     * @param dataSource  The data source to process.
+     * @param progressBar A progress bar to be used to report progress.
+     *
+     * @return A result code indicating success or failure of the processing.
+     */
     @Override
     public ProcessResult process(Content dataSource, DataSourceIngestModuleProgress progressBar) {
         try {

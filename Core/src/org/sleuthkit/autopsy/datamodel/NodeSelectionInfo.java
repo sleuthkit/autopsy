@@ -21,16 +21,18 @@ package org.sleuthkit.autopsy.datamodel;
 import org.openide.nodes.Node;
 
 /**
- * RJCTODO
+ * Implementations store sufficient information to identify a node that is
+ * intended to be selected in a view.
  */
 public interface NodeSelectionInfo {
 
     /**
-     * RJCTODO
+     * Determines whether or not a given node satisfies the stored node
+     * selection criteria.
      *
-     * @param candidateNode
+     * @param candidateNode A node to evaluate.
      *
-     * @return
+     * @return True or false.
      */
     boolean matches(Node candidateNode);
 

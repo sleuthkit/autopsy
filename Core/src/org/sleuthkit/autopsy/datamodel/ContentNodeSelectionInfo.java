@@ -22,27 +22,30 @@ import org.openide.nodes.Node;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * RJCTODO
+ * Stores sufficient information to identify a content node that is intended to
+ * be selected in a view.
  */
 public class ContentNodeSelectionInfo implements NodeSelectionInfo {
 
     private final long contentId;
 
     /**
-     * RJCTODO
+     * Constructs an object that stores sufficient information to identify a
+     * content node that is intended to be selected in a view.
      *
-     * @param content
+     * @param content The content represented by the node to be selected.
      */
     public ContentNodeSelectionInfo(Content content) {
         this.contentId = content.getId();
     }
 
     /**
-     * RJCTODO
+     * Determines whether or not a given node satisfies the stored node
+     * selection criteria.
      *
-     * @param candidateNode
+     * @param candidateNode A node to evaluate.
      *
-     * @return
+     * @return True or false.
      */
     @Override
     public boolean matches(Node candidateNode) {

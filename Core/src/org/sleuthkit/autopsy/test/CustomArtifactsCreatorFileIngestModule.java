@@ -38,6 +38,16 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
 
     private static final Logger logger = Logger.getLogger(CustomArtifactsCreatorFileIngestModule.class.getName());
 
+    /**
+     * Adds the custom artifact type this module uses to the case database of
+     * the current case.
+     *
+     * @param context Provides data and services specific to the ingest job and
+     *                the ingest pipeline of which the module is a part.
+     *
+     * @throws IngestModuleException If there is an error adding the custom
+     *                               artifact type.
+     */
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
         try {
@@ -47,6 +57,14 @@ final class CustomArtifactsCreatorFileIngestModule extends FileIngestModuleAdapt
         }
     }
 
+    /**
+     * Creates a custom artifact instance associated with the file to be
+     * processed.
+     *
+     * @param file The file to be processed.
+     *
+     * @return A result code indicating success or failure of the processing.
+     */
     @Override
     public ProcessResult process(AbstractFile file) {
         if (file.isDir() || file.isVirtual()) {
