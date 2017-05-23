@@ -62,7 +62,7 @@ class DirectoryTreeFilterNode extends FilterNode {
     DirectoryTreeFilterNode(Node nodeToWrap, boolean createChildren) {
         super(nodeToWrap,
                 DirectoryTreeFilterChildren.createInstance(nodeToWrap, createChildren),
-                new ProxyLookup(Lookups.singleton(new OriginalNode(nodeToWrap)), nodeToWrap.getLookup()));
+                new ProxyLookup(Lookups.singleton(nodeToWrap), nodeToWrap.getLookup()));
     }
 
     /**
@@ -168,17 +168,27 @@ class DirectoryTreeFilterNode extends FilterNode {
         return actions.toArray(new Action[actions.size()]);
     }
 
-    //FIXME: this seems like a big hack -jm
-    public static class OriginalNode {
-
-        private final Node original;
-
-        OriginalNode(Node original) {
-            this.original = original;
-        }
-
-        Node getNode() {
-            return original;
-        }
+    /**
+     * RJCTODO
+     *
+     * @return
+     */
+    @Override
+    public Node getOriginal() {
+        return super.getOriginal();
     }
+    
+//    //FIXME: this seems like a big hack -jm
+//    public static class OriginalNode {
+//
+//        private final Node original;
+//
+//        OriginalNode(Node original) {
+//            this.original = original;
+//        }
+//
+//        Node getNode() {
+//            return original;
+//        }
+//    }
 }
