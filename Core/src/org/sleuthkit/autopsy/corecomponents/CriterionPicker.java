@@ -73,9 +73,11 @@ public class CriterionPicker extends javax.swing.JPanel {
 
         label1.setText("Sort By: ");
 
+        sortOrderGroup.add(ascendingRadio);
         ascendingRadio.setSelected(true);
         org.openide.awt.Mnemonics.setLocalizedText(ascendingRadio, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.ascendingRadio.text")); // NOI18N
 
+        sortOrderGroup.add(descendingRadio);
         org.openide.awt.Mnemonics.setLocalizedText(descendingRadio, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.descendingRadio.text")); // NOI18N
 
         removeButton.setLabel(org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.removeButton.label")); // NOI18N

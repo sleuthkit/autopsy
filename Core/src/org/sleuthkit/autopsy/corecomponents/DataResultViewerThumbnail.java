@@ -366,10 +366,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     preferences.remove(columnSortRankKey);
                 }
             }
-            ((ThumbnailViewChildren) getExplorerManager().getRootContext().getChildren()).setupKeys();
-//            setNode(tfn);
-//            em.setExploredContext(em.getRootContext());
-//            switchPage();
+            setNode(tfn); //this is just to force a refresh
         } else if (DialogDescriptor.CANCEL_OPTION == value) {
             //do nothing.
         }
