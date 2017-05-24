@@ -9,8 +9,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.prefs.Preferences;
+import javax.swing.SortOrder;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.NbPreferences;
 
 final public class ResultViewerPersistence {
 
@@ -75,6 +79,51 @@ final public class ResultViewerPersistence {
                 }
             }
             getAllChildPropertyHeadersRec(child, rows, propertiesAcc);
+        }
+    }
+
+    /**
+     *
+     * @param node the value of node
+     */
+    static java.util.SortedMap<Integer, SortCriterion> loadCriteria(TableFilterNode node) {
+        List<Node.Property<?>> availableProperties = ResultViewerPersistence.getAllChildProperties(node, 100);
+        final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+        java.util.SortedMap<Integer, SortCriterion> criteriaMap = new TreeMap<>();
+        availableProperties.forEach(prop -> {
+            //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
+            Integer sortRank = Integer.valueOf(preferences.get(ResultViewerPersistence.getColumnSortRankKey(node, prop.getName()), "0"));
+
+            if (sortRank != 0) {
+                Boolean sortOrder = Boolean.valueOf(preferences.get(ResultViewerPersistence.getColumnSortOrderKey(node, prop.getName()), "true"));
+
+                final SortCriterion sortCriterion = new SortCriterion(prop, sortOrder
+                        ? SortOrder.ASCENDING
+                        : SortOrder.DESCENDING);
+                criteriaMap.put(sortRank, sortCriterion);
+            }
+        });
+        return criteriaMap;
+    }
+
+    
+    
+    static class SortCriterion {
+
+        private final Node.Property<?> prop;
+        private final SortOrder order;
+
+        Node.Property<?> getProp() {
+            return prop;
+        }
+
+        SortOrder getOrder() {
+            return order;
+        }
+
+        SortCriterion(Node.Property<?> prop, SortOrder order) {
+            this.prop = prop;
+            this.order = order;
         }
     }
 }

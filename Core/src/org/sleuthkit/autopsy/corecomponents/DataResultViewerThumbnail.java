@@ -22,15 +22,14 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -39,7 +38,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SortOrder;
 import javax.swing.SwingWorker;
 import org.netbeans.api.progress.ProgressHandle;
-import org.netbeans.swing.etable.ETableColumn;
 import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
@@ -54,6 +52,7 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -141,7 +140,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         thumbnailSizeComboBox = new javax.swing.JComboBox<>();
         iconView = new org.openide.explorer.view.IconView();
         sortLabel = new java.awt.Label();
-        sortButton = new java.awt.Button();
+        sortButton = new javax.swing.JButton();
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageLabel.text")); // NOI18N
 
@@ -203,8 +202,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         sortLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text")); // NOI18N
 
-        sortButton.setActionCommand(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortButton.actionCommand")); // NOI18N
-        sortButton.setLabel(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortButton.label")); // NOI18N
+        sortButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortButton.text")); // NOI18N
         sortButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sortButtonActionPerformed(evt);
@@ -238,44 +236,35 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(28, 28, 28)
                         .addComponent(sortLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(iconView, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(filePathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(sortButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addComponent(sortButton)
+                .addGap(6, 6, 6))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(pageLabel)
-                                .addComponent(pagesLabel)
-                                .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(pageNumLabel))
-                            .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(imagesLabel)
-                                .addComponent(imagesRangeLabel)
-                                .addComponent(goToPageLabel)
-                                .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(13, 13, 13))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(sortButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(sortLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-                .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 324, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(pageLabel)
+                    .addComponent(pageNumLabel)
+                    .addComponent(pagesLabel)
+                    .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(goToPageLabel)
+                    .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(imagesLabel)
+                    .addComponent(imagesRangeLabel)
+                    .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sortLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sortButton))
+                .addGap(13, 13, 13)
+                .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(filePathLabel))
         );
-
-        sortButton.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortButton.AccessibleContext.accessibleName")); // NOI18N
     }// </editor-fold>//GEN-END:initComponents
 
     private void pagePrevButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pagePrevButtonActionPerformed
@@ -329,7 +318,10 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
 
     private void sortButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortButtonActionPerformed
+        sort();
+    }//GEN-LAST:event_sortButtonActionPerformed
 
+    private void sort() {
         List<Node.Property<?>> allChildProperties = ResultViewerPersistence.getAllChildProperties(em.getRootContext(), 100);
         final SortChooser sortChooser = new SortChooser(allChildProperties);
         final DialogDescriptor dialogDescriptor = new DialogDescriptor(sortChooser, "Choose Sort Criteria");
@@ -338,16 +330,16 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         final Object value = dialogDescriptor.getValue();
         if (DialogDescriptor.OK_OPTION == value) {
             //apply new sort
-            List<CriterionPicker.Criterion> criteria = sortChooser.getCriteria();
+            List<SortCriterion> criteria = sortChooser.getCriteria();
             final Preferences preferences = NbPreferences.forModule(DataResultViewerThumbnail.class);
-
+            
             Map<Node.Property<?>, SortOrder> sortOrderMap = criteria.stream()
                     .collect(Collectors.toMap(
-                            CriterionPicker.Criterion::getProp,
-                            CriterionPicker.Criterion::getOrder));
+                            SortCriterion::getProp,
+                            SortCriterion::getOrder));
             Map<Node.Property<?>, Integer> rankMap = criteria.stream()
                     .collect(Collectors.toMap(
-                            CriterionPicker.Criterion::getProp,
+                            SortCriterion::getProp,
                             criteria::indexOf));
             //store the sorting information
             int numCols = allChildProperties.size();
@@ -357,7 +349,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 SortOrder sortOrder = sortOrderMap.get(prop);
                 final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
                 final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
-
+                
                 if (sortOrder != null) {
                     preferences.put(columnSortOrderKey, String.valueOf(sortOrder == SortOrder.ASCENDING));
                     preferences.put(columnSortRankKey, String.valueOf(rankMap.get(prop) + 1));
@@ -370,7 +362,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         } else if (DialogDescriptor.CANCEL_OPTION == value) {
             //do nothing.
         }
-    }//GEN-LAST:event_sortButtonActionPerformed
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filePathLabel;
@@ -384,7 +376,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private javax.swing.JLabel pageNumLabel;
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
-    private java.awt.Button sortButton;
+    private javax.swing.JButton sortButton;
     private java.awt.Label sortLabel;
     private javax.swing.JComboBox<String> thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
@@ -563,6 +555,16 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             thumbnailSizeComboBox.setEnabled(true);
         }
 
+        if (tfn != null) {
+            SortedMap<Integer, SortCriterion> loadCriteria = ResultViewerPersistence.loadCriteria(tfn);
+            String sortString = loadCriteria.keySet().stream().map(rank -> {
+                SortCriterion criteria = loadCriteria.get(rank);
+                return rank + " " + criteria.getProp().getName() + " " + criteria.getOrder().toString();
+            }).collect(Collectors.joining());
+            sortLabel.setText("Sorted by: " + sortString);
+        } else {
+            sortLabel.setText("Sorted by: ---");
+        }
     }
 
     /**

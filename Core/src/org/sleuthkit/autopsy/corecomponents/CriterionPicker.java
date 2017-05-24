@@ -10,46 +10,33 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.SortOrder;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 
 public class CriterionPicker extends javax.swing.JPanel {
 
     private final List<Node.Property<?>> availableProps;
     private final DefaultComboBoxModel<Node.Property<?>> defaultComboBoxModel;
-
-    static class Criterion {
-
-        private final Node.Property<?> prop;
-        private final SortOrder order;
-
-        Node.Property<?> getProp() {
-            return prop;
-        }
-
-        SortOrder getOrder() {
-            return order;
-        }
-
-        Criterion(Node.Property<?> prop, SortOrder order) {
-            this.prop = prop;
-            this.order = order;
-        }
-    }
+    private final SortChooser chooser;
 
     /**
      * Creates new form CriteriaPicker
      */
-    public CriterionPicker(List<Node.Property<?>> availableProps) {
+    public CriterionPicker(List<Node.Property<?>> availableProps, SortChooser chooser) {
         initComponents();
         this.availableProps = availableProps;
         defaultComboBoxModel = new DefaultComboBoxModel<>(availableProps.toArray(new Node.Property<?>[availableProps.size()]));
         propComboBox.setModel(defaultComboBoxModel);
         propComboBox.setRenderer((list, value, index, isSelected, cellHasFocus)
                 -> defaultListCellRenderer.getListCellRendererComponent(list, value == null ? "" : value.getName(), index, isSelected, cellHasFocus));
+        this.chooser = chooser;
+        if (chooser == null){
+           removeButton.setEnabled(false);
+        }
     }
     private DefaultListCellRenderer defaultListCellRenderer = new DefaultListCellRenderer();
 
-    public Criterion getSelectedCriteria() {
-        return new Criterion((Node.Property<?>) propComboBox.getSelectedItem(),
+    SortCriterion getSelectedCriteria() {
+        return new SortCriterion((Node.Property<?>) propComboBox.getSelectedItem(),
                 ascendingRadio.isSelected() ? SortOrder.ASCENDING : SortOrder.DESCENDING);
     }
 
@@ -65,13 +52,21 @@ public class CriterionPicker extends javax.swing.JPanel {
         sortOrderGroup = new javax.swing.ButtonGroup();
         propComboBox = new javax.swing.JComboBox<>();
         label1 = new java.awt.Label();
+        removeButton = new javax.swing.JButton();
+        jSeparator1 = new javax.swing.JSeparator();
+        jPanel1 = new javax.swing.JPanel();
         ascendingRadio = new javax.swing.JRadioButton();
         descendingRadio = new javax.swing.JRadioButton();
-        removeButton = new java.awt.Button();
-
-        setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         label1.setText("Sort By: ");
+
+        removeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/cross-script.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(removeButton, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.removeButton.text")); // NOI18N
+        removeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                removeButtonActionPerformed(evt);
+            }
+        });
 
         sortOrderGroup.add(ascendingRadio);
         ascendingRadio.setSelected(true);
@@ -80,30 +75,43 @@ public class CriterionPicker extends javax.swing.JPanel {
         sortOrderGroup.add(descendingRadio);
         org.openide.awt.Mnemonics.setLocalizedText(descendingRadio, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.descendingRadio.text")); // NOI18N
 
-        removeButton.setLabel(org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.removeButton.label")); // NOI18N
-        removeButton.setName(""); // NOI18N
-        removeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeButtonActionPerformed(evt);
-            }
-        });
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(descendingRadio)
+                    .addComponent(ascendingRadio))
+                .addGap(0, 0, 0))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(ascendingRadio)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(descendingRadio)
+                .addGap(0, 0, 0))
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(propComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jSeparator1)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(ascendingRadio)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(descendingRadio))
+                        .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(propComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(removeButton)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -111,28 +119,30 @@ public class CriterionPicker extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
-                    .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(ascendingRadio)
-                        .addGap(0, 0, 0)
-                        .addComponent(descendingRadio))
+                    .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(propComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                    .addComponent(removeButton)
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
-        // TODO add your handling code here:
+        if (chooser != null) {
+            chooser.removeCriterionPicker(this);
+        }
     }//GEN-LAST:event_removeButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JRadioButton ascendingRadio;
     private javax.swing.JRadioButton descendingRadio;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JSeparator jSeparator1;
     private java.awt.Label label1;
     private javax.swing.JComboBox<Node.Property<?>> propComboBox;
-    private java.awt.Button removeButton;
+    private javax.swing.JButton removeButton;
     private javax.swing.ButtonGroup sortOrderGroup;
     // End of variables declaration//GEN-END:variables
 }

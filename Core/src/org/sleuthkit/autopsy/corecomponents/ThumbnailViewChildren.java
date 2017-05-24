@@ -28,12 +28,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.logging.Level;
-import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
+import javax.swing.SortOrder;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.apache.commons.lang3.StringUtils;
@@ -44,8 +42,9 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
-import org.openide.util.NbPreferences;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
+import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadCriteria;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -99,7 +98,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return totalImages;
     }
 
-     void setupKeys() {
+    void setupKeys() {
         //divide the supported content into buckets
         totalImages = 0;
         //TODO when lazy loading of original nodes is fixed
@@ -109,13 +108,12 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         for (Node child : parent.getChildren().getNodes()) {
             if (isSupported(child)) {
                 ++totalImages;
-                //Content content = child.getLookup().lookup(Content.class);
-                //suppContent.add(content);
                 suppContent.add(child);
             }
         }
         //sort suppContent!
-         Collections.sort(suppContent, loadSort());
+        Collections.sort(suppContent, getComparator());
+
         if (totalImages == 0) {
             return;
         }
@@ -146,41 +144,29 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         refresh();
     }
 
-    private synchronized Comparator<Node> loadSort() {
+    private synchronized Comparator<Node> getComparator() {
         Comparator<Node> comp = (node1, node2) -> 0;
 
         if (!(parent instanceof TableFilterNode)) {
             return comp;
         } else {
-            List<Node.Property<?>> properties = ResultViewerPersistence.getAllChildProperties(parent, 100);
-            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-            TableFilterNode tfn = (TableFilterNode) parent;
-
-            java.util.Map<Integer, Boolean> orderMap = new TreeMap<>();
-            java.util.Map<Integer, Node.Property<?>> propMap = new TreeMap<>();
-
-            properties.forEach((prop) -> {
-                //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-                Integer sortRank = Integer.valueOf(preferences.get(ResultViewerPersistence.getColumnSortRankKey(tfn, prop.getName()), "0"));
-                Boolean sortOrder = Boolean.valueOf(preferences.get(ResultViewerPersistence.getColumnSortOrderKey(tfn, prop.getName()), "true"));
-                if (sortRank != 0) {
-                    orderMap.put(sortRank, sortOrder);
-                    propMap.put(sortRank, prop);
-                }
-            });
+            java.util.Map<Integer, SortCriterion> criteriaMap = loadCriteria((TableFilterNode) parent);
 
             //make a comparatator that will sort the nodes.
-            return propMap.keySet().stream()
+            return criteriaMap.keySet().stream()
                     .map(rank -> {
-                        Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, propMap.get(rank)),
+                        SortCriterion criterion = criteriaMap.get(rank);
+                        Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProp()),
                                 Comparator.nullsFirst(Comparator.naturalOrder()));
-                        return orderMap.get(rank) ? c : c.reversed();
+                        return criterion.getOrder() == SortOrder.DESCENDING ? c : c.reversed();
                     })
                     .collect(Collectors.reducing(Comparator::thenComparing))
                     .orElse(comp);
 
         }
     }
+
+   
 
     Comparable getPropertyValue(Node node, Node.Property<?> prop) {
         for (Node.PropertySet ps : node.getPropertySets()) {
