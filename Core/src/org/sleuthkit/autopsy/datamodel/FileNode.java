@@ -151,17 +151,17 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         actionsList.addAll(Arrays.asList(super.getActions(true)));
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
-            actionsList.add(null); // Creates a item separator
+            actionsList.add(null); // Creates an item separator
         }
 
         actionsList.add(new NewWindowViewAction(Bundle.FileNode_getActions_viewInNewWin_text(), this));
         actionsList.add(new ExternalViewerAction(Bundle.FileNode_getActions_openInExtViewer_text(), this));
         actionsList.add(ViewFileInTimelineAction.createViewFileAction(getContent()));
-        actionsList.add(null); // Creates a item separator
+        actionsList.add(null); // Creates an item separator
 
         actionsList.add(ExtractAction.getInstance());
         actionsList.add(new HashSearchAction(Bundle.FileNode_getActions_searchFilesSameMD5_text(), this));
-        actionsList.add(null); // Creates a item separator
+        actionsList.add(null); // Creates an item separator
 
         actionsList.add(AddContentTagAction.getInstance());
         final Collection<AbstractFile> selectedFilesList = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
