@@ -40,7 +40,7 @@ public abstract class DisplayableItemNode extends AbstractNode {
      * An item type shared by DisplayableItemNodes that can be the parents of
      * file nodes.
      */
-    final static String FILE_PARENT_NODE_KEY = "orgsleuthkitautopsydatamodel" + "FileTypeParentNode";
+    static final String FILE_PARENT_NODE_KEY = "orgsleuthkitautopsydatamodel" + "FileTypeParentNode";
 
     /**
      * Gets the file, if any, linked to an artifact via a TSK_PATH_ID attribute
@@ -61,6 +61,8 @@ public abstract class DisplayableItemNode extends AbstractNode {
         }
         return null;
     }
+
+    private NodeSelectionInfo selectedChildNodeInfo;
 
     /**
      * Constructs a node that is eligible for display in the tree view or
@@ -102,7 +104,8 @@ public abstract class DisplayableItemNode extends AbstractNode {
     public abstract <T> T accept(DisplayableItemNodeVisitor<T> visitor);
 
     /**
-     * Indicates whether or not the node is a leaf node.
+     * Indicates whether or not the node is capable of having child nodes.
+     * Should only return true if the node is ALWAYS a leaf node.
      *
      * @return True or false.
      */
@@ -114,5 +117,26 @@ public abstract class DisplayableItemNode extends AbstractNode {
      * @return A String representing the item type of node.
      */
     public abstract String getItemType();
+
+    /**
+     * Adds information about which child node of this node, if any, should be
+     * selected. Can be null.
+     *
+     * @param selectedChildNodeInfo The child node selection information.
+     */
+    public void setChildNodeSelectionInfo(NodeSelectionInfo selectedChildNodeInfo) {
+        this.selectedChildNodeInfo = selectedChildNodeInfo;
+    }
+
+    /**
+     * Gets information about which child node of this node, if any, should be
+     * selected.
+     *
+     * @return The child node selection information, or null if no child should
+     *         be selected.
+     */
+    public NodeSelectionInfo getChildNodeSelectionInfo() {
+        return selectedChildNodeInfo;
+    }
 
 }

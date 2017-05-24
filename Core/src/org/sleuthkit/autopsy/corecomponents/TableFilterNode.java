@@ -22,12 +22,13 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
+import org.sleuthkit.autopsy.directorytree.DataResultFilterNode;
 
 /**
  * A filter node that creates at most one layer of child nodes for the node it
- * wraps. It is designed to be used for nodes displayed in Autopsy table views.
- * This ensures that the table view for the node will not recursively display
- * child nodes and display only the first layer of child nodes.
+ * wraps. It is designed to be used in the results view to ensure the individual
+ * viewers display only the first layer of child nodes.
  */
 public class TableFilterNode extends FilterNode {
 
@@ -36,37 +37,40 @@ public class TableFilterNode extends FilterNode {
 
     /**
      * Constructs a filter node that creates at most one layer of child nodes
-     * for the node it wraps. It is designed to be used for nodes displayed in
-     * Autopsy table views.
+     * for the node it wraps. It is designed to be used in the results view to
+     * ensure the individual viewers display only the first layer of child
+     * nodes.
      *
-     * @param wrappedNode    The node to wrap in the filter node.
-     * @param createChildren True if a children (child factory) object should be
-     *                       created for the wrapped node.
-     * The constructor should include column order key. (See getColumnOrderKey)
+     * @param node           The node to wrap in the filter node.
+     * @param createChildren True if a Children object should be created for the
+     *                       wrapped node.
      */
-    public TableFilterNode(Node wrappedNode, boolean createChildren) {
-        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren) , Lookups.proxy(wrappedNode));
+    public TableFilterNode(Node node, boolean createChildren) {
+        super(node, TableFilterChildren.createInstance(node, createChildren), Lookups.proxy(node));
         this.createChildren = createChildren;
     }
 
     /**
-     * Constructs a filter node that has information about the node's type.
-     * 
-     * @param wrappedNode    The node to wrap in the filter node.
-     * @param createChildren True if a children (child factory) object should be
-     *                       created for the wrapped node.
+     * Constructs a filter node that creates at most one layer of child nodes
+     * for the node it wraps. It is designed to be used in the results view to
+     * ensure the individual viewers display only the first layer of child
+     * nodes.
+     *
+     * @param node           The node to wrap in the filter node.
+     * @param createChildren True if a Children object should be created for the
+     *                       wrapped node.
      * @param columnOrderKey A key that represents the type of the original
      *                       wrapped node and what is being displayed under that
      *                       node.
      */
-    public TableFilterNode(Node wrappedNode, boolean createChildren, String columnOrderKey) {
-        super(wrappedNode, TableFilterChildren.createInstance(wrappedNode, createChildren));
+    public TableFilterNode(Node node, boolean createChildren, String columnOrderKey) {
+        super(node, TableFilterChildren.createInstance(node, createChildren));
         this.createChildren = createChildren;
         this.columnOrderKey = columnOrderKey;
     }
 
     /**
-     * Returns a display name for the wrapped node, for use in the first column
+     * Gets the display name for the wrapped node, for use in the first column
      * of an Autopsy table view.
      *
      * @return The display name.
@@ -81,6 +85,41 @@ public class TableFilterNode extends FilterNode {
     }
 
     /**
+     * Adds information about which child node of this node, if any, should be
+     * selected. Can be null.
+     *
+     * @param selectedChildNodeInfo The child node selection information.
+     */
+    public void setChildNodeSelectionInfo(NodeSelectionInfo selectedChildNodeInfo) {
+        /*
+         * Currently, child selection is only supported for nodes selected in
+         * the tree view and decorated with a DataResultFilterNode.
+         */
+        if (getOriginal() instanceof DataResultFilterNode) {
+            ((DataResultFilterNode) getOriginal()).setChildNodeSelectionInfo(selectedChildNodeInfo);
+        }
+    }
+
+    /**
+     * Gets information about which child node of this node, if any, should be
+     * selected.
+     *
+     * @return The child node selection information, or null if no child should
+     *         be selected.
+     */
+    public NodeSelectionInfo getChildNodeSelectionInfo() {
+        /*
+         * Currently, child selection is only supported for nodes selected in
+         * the tree view and decorated with a DataResultFilterNode.
+         */
+        if (getOriginal() instanceof DataResultFilterNode) {
+            return ((DataResultFilterNode) getOriginal()).getChildNodeSelectionInfo();
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * @return the column order key, which allows custom column ordering to be
      *         written into a properties file and be reloaded for future use in
      *         a table with the same root node or for different cases. This is
@@ -90,4 +129,5 @@ public class TableFilterNode extends FilterNode {
     String getColumnOrderKey() {
         return columnOrderKey;
     }
+
 }

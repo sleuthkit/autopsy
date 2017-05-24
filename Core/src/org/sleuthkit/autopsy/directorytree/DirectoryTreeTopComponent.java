@@ -605,9 +605,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             } // change in node selection
             else if (changed.equals(ExplorerManager.PROP_SELECTED_NODES)) {
-                SwingUtilities.invokeLater(() -> {
-                    respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
-                });
+                respondSelection((Node[]) evt.getOldValue(), (Node[]) evt.getNewValue());
             } else if (changed.equals(IngestManager.IngestModuleEvent.DATA_ADDED.toString())) {
                 // nothing to do here.
                 // all nodes should be listening for these events and update accordingly.
@@ -615,7 +613,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         }
     }
 
-    @NbBundle.Messages("DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.")
     /**
      * Event handler to run when selection changed
      *
@@ -624,10 +621,9 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @param oldNodes
      * @param newNodes
      */
+    @NbBundle.Messages("DirectoryTreeTopComponent.emptyMimeNode.text=Data not available. Run file type identification module.")
     private void respondSelection(final Node[] oldNodes, final Node[] newNodes) {
         if (!Case.isCaseOpen()) {
-            //handle in-between condition when case is being closed
-            //and legacy selection events are pumped
             return;
         }
 
@@ -636,65 +632,52 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         // selection-change event is processed.
         //TODO find a different way to refresh data result viewer, scheduling this
         //to EDT breaks loading of nodes in the background
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                // change the cursor to "waiting cursor" for this operation
-                DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                try {
-
-                    Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
-                    if (treeNode != null) {
-                        DirectoryTreeFilterNode.OriginalNode origin = treeNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
-                        if (origin == null) {
-                            return;
-                        }
-
-                        Node originNode = origin.getNode();
-
-                        //set node, wrap in filter node first to filter out children
-                        Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
-
-                        // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
-                        if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
-                            //Special case for when File Type Identification has not yet been run and 
-                            //there are no mime types to populate Files by Mime Type Tree
-                            EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
-                            dataResult.setNode(new TableFilterNode(emptyNode, true, "This Node Is Empty")); //NON-NLS
-                        } else if (originNode instanceof DisplayableItemNode) {
-                            dataResult.setNode(new TableFilterNode(drfn, true, ((DisplayableItemNode) originNode).getItemType()));
-                        } else {
-                            dataResult.setNode(new TableFilterNode(drfn, true));
-                        }
-
-                        String displayName = "";
-                        Content content = originNode.getLookup().lookup(Content.class);
-                        if (content != null) {
-                            try {
-                                displayName = content.getUniquePath();
-                            } catch (TskCoreException ex) {
-                                LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: {0}", originNode); //NON-NLS
-                            }
-                        } else if (originNode.getLookup().lookup(String.class) != null) {
-                            displayName = originNode.getLookup().lookup(String.class);
-                        }
-                        dataResult.setPath(displayName);
+        EventQueue.invokeLater(() -> {
+            // change the cursor to "waiting cursor" for this operation
+            DirectoryTreeTopComponent.this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            try {
+                Node treeNode = DirectoryTreeTopComponent.this.getSelectedNode();
+                if (treeNode != null) {
+                    Node originNode = ((DirectoryTreeFilterNode) treeNode).getOriginal();
+                    //set node, wrap in filter node first to filter out children
+                    Node drfn = new DataResultFilterNode(originNode, DirectoryTreeTopComponent.this.em);
+                    // Create a TableFilterNode with knowledge of the node's type to allow for column order settings
+                    if (FileTypesByMimeType.isEmptyMimeTypeNode(originNode)) {
+                        //Special case for when File Type Identification has not yet been run and
+                        //there are no mime types to populate Files by Mime Type Tree
+                        EmptyNode emptyNode = new EmptyNode(Bundle.DirectoryTreeTopComponent_emptyMimeNode_text());
+                        dataResult.setNode(new TableFilterNode(emptyNode, true, "This Node Is Empty")); //NON-NLS
+                    } else if (originNode instanceof DisplayableItemNode) {
+                        dataResult.setNode(new TableFilterNode(drfn, true, ((DisplayableItemNode) originNode).getItemType()));
+                    } else {
+                        dataResult.setNode(new TableFilterNode(drfn, true));
                     }
-
-                    // set the directory listing to be active
-                    if (oldNodes != null && newNodes != null
-                            && (oldNodes.length == newNodes.length)) {
-                        boolean sameNodes = true;
-                        for (int i = 0; i < oldNodes.length; i++) {
-                            sameNodes = sameNodes && oldNodes[i].getName().equals(newNodes[i].getName());
+                    String displayName = "";
+                    Content content = originNode.getLookup().lookup(Content.class);
+                    if (content != null) {
+                        try {
+                            displayName = content.getUniquePath();
+                        } catch (TskCoreException ex) {
+                            LOGGER.log(Level.SEVERE, "Exception while calling Content.getUniquePath() for node: {0}", originNode); //NON-NLS
                         }
-                        if (!sameNodes) {
-                            dataResult.requestActive();
-                        }
+                    } else if (originNode.getLookup().lookup(String.class) != null) {
+                        displayName = originNode.getLookup().lookup(String.class);
                     }
-                } finally {
-                    setCursor(null);
+                    dataResult.setPath(displayName);
                 }
+                // set the directory listing to be active
+                if (oldNodes != null && newNodes != null
+                        && (oldNodes.length == newNodes.length)) {
+                    boolean sameNodes = true;
+                    for (int i = 0; i < oldNodes.length; i++) {
+                        sameNodes = sameNodes && oldNodes[i].getName().equals(newNodes[i].getName());
+                    }
+                    if (!sameNodes) {
+                        dataResult.requestActive();
+                    }
+                }
+            } finally {
+                setCursor(null);
             }
         });
 
@@ -776,29 +759,16 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     private void refreshDataSourceTree() {
         Node selectedNode = getSelectedNode();
         final String[] selectedPath = NodeOp.createPath(selectedNode, em.getRootContext());
-
         Children rootChildren = em.getRootContext().getChildren();
         Node dataSourcesFilterNode = rootChildren.findChild(DataSourcesNode.NAME);
         if (dataSourcesFilterNode == null) {
             LOGGER.log(Level.SEVERE, "Cannot find data sources filter node, won't refresh the content tree"); //NON-NLS
             return;
         }
-        DirectoryTreeFilterNode.OriginalNode imagesNodeOrig = dataSourcesFilterNode.getLookup().lookup(DirectoryTreeFilterNode.OriginalNode.class);
-
-        if (imagesNodeOrig == null) {
-            LOGGER.log(Level.SEVERE, "Cannot find data sources node, won't refresh the content tree"); //NON-NLS
-            return;
-        }
-
-        Node imagesNode = imagesNodeOrig.getNode();
-
-        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) imagesNode.getChildren();
+        Node dataSourcesNode = ((DirectoryTreeFilterNode) dataSourcesFilterNode).getOriginal();
+        DataSourcesNode.DataSourcesNodeChildren contentRootChildren = (DataSourcesNode.DataSourcesNodeChildren) dataSourcesNode.getChildren();
         contentRootChildren.refreshContentKeys();
-
-        //final TreeView tree = getTree();
-        //tree.expandNode(imagesNode);
         setSelectedNode(selectedPath, DataSourcesNode.NAME);
-
     }
 
     /**
