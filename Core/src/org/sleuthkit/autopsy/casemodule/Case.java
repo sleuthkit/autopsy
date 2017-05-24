@@ -140,10 +140,27 @@ public class Case {
     private volatile ExecutorService caseLockingExecutor;
     private CoordinationService.Lock caseDirLock;
     private SleuthkitCase caseDb;
-    private SleuthkitErrorReporter sleuthkitErrorReporter;
     private CollaborationMonitor collaborationMonitor;
     private Services caseServices;
     private boolean hasDataSources;
+
+    /*
+     * Get a reference to the main window of the desktop application to use to
+     * parent pop up dialogs and initialize the application name for use in
+     * changing the main window title. 
+     *
+     * TODO (JIRA-2231): Make the application name a RuntimeProperties item set
+     * by Installers.
+     */
+    static {
+        WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
+            @Override
+            public void run() {
+                mainFrame = WindowManager.getDefault().getMainWindow();
+                appName = mainFrame.getTitle();
+            }
+        });
+    }
 
     /**
      * An enumeration of case types.
@@ -474,8 +491,8 @@ public class Case {
             throw new CaseActionException(Bundle.Case_exceptionMessage_failedToReadMetadata(), ex);
         }
         if (CaseType.MULTI_USER_CASE == metadata.getCaseType() && !UserPreferences.getIsMultiUserModeEnabled()) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_cannotOpenMultiUserCaseNoSettings());            
-        }        
+            throw new CaseActionException(Bundle.Case_exceptionMessage_cannotOpenMultiUserCaseNoSettings());
+        }
         openAsCurrentCase(new Case(metadata), false);
     }
 
@@ -634,28 +651,6 @@ public class Case {
         "Case.exceptionMessage.cannotLocateMainWindow=Cannot locate main application window"
     })
     private static void openAsCurrentCase(Case newCurrentCase, boolean isNewCase) throws CaseActionException, CaseActionCancelledException {
-        if (RuntimeProperties.runningWithGUI() && null == mainFrame) {
-            /*
-             * Get a reference to the main window of the desktop application to
-             * use to parent pop up dialogs and initialize the application name
-             * for use in changing the main window title. This is tricky and
-             * fragile. The application name aspect can be resolved thus:
-             *
-             * TODO (JIRA-2231): Make the application name a RuntimeProperties
-             * item set by Installers.
-             *
-             * And the getting of the main frame should be resolved when the
-             * code is refactored to separate the presentation layer fomr the
-             * business layer.
-             *
-             * TODO (JIRA-multiple): Make it possible to run "headless."
-             */
-            assert (!SwingUtilities.isEventDispatchThread());
-            SwingUtilities.invokeLater(() -> {
-                mainFrame = WindowManager.getDefault().getMainWindow();
-                appName = mainFrame.getTitle();
-            });
-        }
         synchronized (caseActionSerializationLock) {
             if (null != currentCase) {
                 try {
@@ -1815,7 +1810,6 @@ public class Case {
      */
     @Messages({
         "Case.progressMessage.switchingLogDirectory=Switching log directory...",
-        "Case.progressMessage.settingUpTskErrorReporting=Setting up SleuthKit error reporting...",
         "Case.progressMessage.clearingTempDirectory=Clearing case temp directory...",
         "Case.progressMessage.openingCaseLevelServices=Opening case-level services...",
         "Case.progressMessage.openingApplicationServiceResources=Opening application service case resources...",
@@ -1827,18 +1821,6 @@ public class Case {
          */
         progressIndicator.progress(Bundle.Case_progressMessage_switchingLogDirectory());
         Logger.setLogDirectory(getLogDirectoryPath());
-        if (Thread.currentThread().isInterrupted()) {
-            throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
-        }
-
-        /*
-         * Hook up a SleuthKit layer error reporter.
-         */
-        progressIndicator.progress(Bundle.Case_progressMessage_settingUpTskErrorReporting());
-        sleuthkitErrorReporter
-                = new SleuthkitErrorReporter(MIN_SECS_BETWEEN_TSK_ERROR_REPORTS, NbBundle.getMessage(Case.class,
-                        "IntervalErrorReport.ErrorText"));
-        caseDb.addErrorObserver(this.sleuthkitErrorReporter);
         if (Thread.currentThread().isInterrupted()) {
             throw new CaseActionCancelledException(Bundle.Case_exceptionMessage_cancelledByUser());
         }
@@ -2077,8 +2059,8 @@ public class Case {
         "Case.progressMessage.shuttingDownNetworkCommunications=Shutting down network communications...",
         "Case.progressMessage.closingApplicationServiceResources=Closing case-specific application service resources...",
         "Case.progressMessage.closingCaseLevelServices=Closing case-level services...",
-        "Case.progressMessage.closingCaseDatabase=Closing case database...",
-        "Case.progressMessage.shuttingDownTskErrorReporting=Shutting down SleuthKit error reporting..."})
+        "Case.progressMessage.closingCaseDatabase=Closing case database..."
+    })
     private void close(ProgressIndicator progressIndicator) {
         IngestManager.getInstance().cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
 
@@ -2119,10 +2101,6 @@ public class Case {
         if (null != caseDb) {
             progressIndicator.progress(Bundle.Case_progressMessage_closingCaseDatabase());
             caseDb.close();
-            if (null != sleuthkitErrorReporter) {
-                progressIndicator.progress(Bundle.Case_progressMessage_shuttingDownTskErrorReporting());
-                caseDb.removeErrorObserver(sleuthkitErrorReporter);
-            }
         }
 
         /*
@@ -2392,6 +2370,17 @@ public class Case {
     }
 
     /**
+     * Gets the application name.
+     *
+     * @return The application name.
+     * @deprecated
+     */
+    @Deprecated
+    public static String getAppName() {
+        return appName;
+    }    
+    
+    /**
      * Creates a new, single-user Autopsy case.
      *
      * @param caseDir         The full path of the case directory. The directory
@@ -2630,18 +2619,6 @@ public class Case {
     @Deprecated
     public void deleteReports(Collection<? extends Report> reports, boolean deleteFromDisk) throws TskCoreException {
         deleteReports(reports);
-    }
-
-    /**
-     * Sets the name of the keyword search index for the case.
-     *
-     * @param textIndexName The text index name.
-     *
-     * @throws CaseMetadataException
-     * @deprecated Do not use.
-     */
-    @Deprecated
-    public void setTextIndexName(String textIndexName) throws CaseMetadataException {
     }
 
 }

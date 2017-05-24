@@ -64,7 +64,6 @@ public final class UserPreferences {
     private static final String MESSAGE_SERVICE_PORT = "MessageServicePort"; //NON-NLS
     public static final String PROCESS_TIME_OUT_ENABLED = "ProcessTimeOutEnabled"; //NON-NLS
     public static final String PROCESS_TIME_OUT_HOURS = "ProcessTimeOutHours"; //NON-NLS
-    public static final String AGENCY_LOGO_IMAGE_PATH = "AgencyLogoImagePath"; //NON-NLS
     private static final int DEFAULT_PROCESS_TIMEOUT_HR = 60;
     private static final String DEFAULT_PORT_STRING = "61616";
     private static final int DEFAULT_PORT_INT = 61616;

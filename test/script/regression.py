@@ -400,7 +400,7 @@ class TestRunner(object):
         # Set up the directories
         if dir_exists(test_data.output_path):
             shutil.rmtree(test_data.output_path)
-        os.makedirs(test_data.output_path)
+        os.makedirs(make_os_path(_platform, test_data.output_path))
         test_data.ant = ["ant"]
         test_data.ant.append("-v")
         test_data.ant.append("-f")
@@ -686,11 +686,8 @@ class TestConfiguration(object):
             args: an Args, the command line arguments.
         """
         self.args = args
+        # Default output parent dir
         self.output_parent_dir = make_path("..", "output", "results")
-        if not dir_exists(self.output_parent_dir):
-            os.chdir('..')
-            os.makedirs(wgetcwd().decode("utf-8") + "/output/results")
-            os.chdir('script')
         self.output_dir = ""
         self.input_dir = make_local_path("..","input")
         self.gold = make_path("..", "output", "gold")
@@ -762,7 +759,7 @@ class TestConfiguration(object):
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
         if not dir_exists(self.output_parent_dir):
-            os.makedirs(self.output_parent_dir)
+            os.makedirs(make_os_path(_platform, self.output_parent_dir))
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
         self.csv = make_local_path(self.output_dir, "CSV.txt")
@@ -1925,7 +1922,7 @@ def clear_dir(dir):
     try:
         if dir_exists(dir):
             shutil.rmtree(dir)
-        os.makedirs(dir)
+        os.makedirs(make_os_path(_platform, dir))
         return True;
     except OSError as e:
         print_error(test_data,"Error: Cannot clear the given directory:")
