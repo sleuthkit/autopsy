@@ -158,7 +158,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                         SortCriterion criterion = criteriaMap.get(rank);
                         Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProp()),
                                 Comparator.nullsFirst(Comparator.naturalOrder()));
-                        return criterion.getOrder() == SortOrder.DESCENDING ? c : c.reversed();
+                        return criterion.getOrder() == SortOrder.ASCENDING ? c : c.reversed();
                     })
                     .collect(Collectors.reducing(Comparator::thenComparing))
                     .orElse(comp);

@@ -39,13 +39,13 @@
                       <Component id="imagesRangeLabel" min="-2" pref="91" max="-2" attributes="0"/>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Component id="thumbnailSizeComboBox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="28" max="-2" attributes="0"/>
-                      <Component id="sortLabel" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace type="unrelated" max="32767" attributes="0"/>
+                      <Component id="sortLabel" max="32767" attributes="0"/>
                   </Group>
                   <Component id="iconView" alignment="1" max="32767" attributes="0"/>
                   <Component id="filePathLabel" alignment="0" max="32767" attributes="0"/>
               </Group>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="sortButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
           </Group>
@@ -65,8 +65,8 @@
                   <Component id="imagesLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="imagesRangeLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="thumbnailSizeComboBox" alignment="2" min="-2" max="-2" attributes="0"/>
-                  <Component id="sortLabel" alignment="2" min="-2" max="-2" attributes="0"/>
                   <Component id="sortButton" alignment="2" min="-2" max="-2" attributes="0"/>
+                  <Component id="sortLabel" alignment="2" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
               <Component id="iconView" pref="322" max="32767" attributes="0"/>
@@ -206,13 +206,6 @@
     </Component>
     <Component class="org.openide.explorer.view.IconView" name="iconView">
     </Component>
-    <Component class="java.awt.Label" name="sortLabel">
-      <Properties>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataResultViewerThumbnail.sortLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-        </Property>
-      </Properties>
-    </Component>
     <Component class="javax.swing.JButton" name="sortButton">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
@@ -222,6 +215,13 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="sortButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="sortLabel">
+      <Properties>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+          <ResourceString bundle="org/sleuthkit/autopsy/corecomponents/Bundle.properties" key="DataResultViewerThumbnail.sortLabel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+        </Property>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

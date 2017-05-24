@@ -139,8 +139,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         goToPageField = new javax.swing.JTextField();
         thumbnailSizeComboBox = new javax.swing.JComboBox<>();
         iconView = new org.openide.explorer.view.IconView();
-        sortLabel = new java.awt.Label();
         sortButton = new javax.swing.JButton();
+        sortLabel = new javax.swing.JLabel();
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageLabel.text")); // NOI18N
 
@@ -200,14 +200,14 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         });
 
-        sortLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text")); // NOI18N
-
         sortButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortButton.text")); // NOI18N
         sortButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sortButtonActionPerformed(evt);
             }
         });
+
+        sortLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -236,8 +236,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(28, 28, 28)
-                        .addComponent(sortLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(sortLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addComponent(iconView, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(filePathLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -258,8 +258,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     .addComponent(imagesLabel)
                     .addComponent(imagesRangeLabel)
                     .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sortLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(sortButton))
+                    .addComponent(sortButton)
+                    .addComponent(sortLabel))
                 .addGap(13, 13, 13)
                 .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -332,7 +332,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             //apply new sort
             List<SortCriterion> criteria = sortChooser.getCriteria();
             final Preferences preferences = NbPreferences.forModule(DataResultViewerThumbnail.class);
-            
+
             Map<Node.Property<?>, SortOrder> sortOrderMap = criteria.stream()
                     .collect(Collectors.toMap(
                             SortCriterion::getProp,
@@ -349,7 +349,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 SortOrder sortOrder = sortOrderMap.get(prop);
                 final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
                 final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
-                
+
                 if (sortOrder != null) {
                     preferences.put(columnSortOrderKey, String.valueOf(sortOrder == SortOrder.ASCENDING));
                     preferences.put(columnSortRankKey, String.valueOf(rankMap.get(prop) + 1));
@@ -377,7 +377,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
     private javax.swing.JButton sortButton;
-    private java.awt.Label sortLabel;
+    private javax.swing.JLabel sortLabel;
     private javax.swing.JComboBox<String> thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
 
@@ -559,8 +559,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             SortedMap<Integer, SortCriterion> loadCriteria = ResultViewerPersistence.loadCriteria(tfn);
             String sortString = loadCriteria.keySet().stream().map(rank -> {
                 SortCriterion criteria = loadCriteria.get(rank);
-                return rank + " " + criteria.getProp().getName() + " " + criteria.getOrder().toString();
-            }).collect(Collectors.joining());
+                return rank + ". " + criteria.getProp().getName() + " " + (criteria.getOrder() == SortOrder.ASCENDING ? "\u25B2" : "\u25BC");
+            }).collect(Collectors.joining(" "));
             sortLabel.setText("Sorted by: " + sortString);
         } else {
             sortLabel.setText("Sorted by: ---");
