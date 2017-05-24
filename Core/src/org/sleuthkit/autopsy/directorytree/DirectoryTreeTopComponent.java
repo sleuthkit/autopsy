@@ -935,7 +935,6 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         });
     }
 
-    // RJCTODO: What is this all about?
     @Override
     public void viewArtifactContent(BlackboardArtifact art) {
         new ViewContextAction(
