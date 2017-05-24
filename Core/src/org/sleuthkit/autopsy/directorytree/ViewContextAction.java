@@ -32,7 +32,9 @@ import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.TreeView;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.ContentNodeSelectionInfo;
@@ -118,6 +120,10 @@ public final class ViewContextAction extends AbstractAction {
      * @param event The action event.
      */
     @Override
+    @Messages({
+        "ViewContextAction.errorMessage.cannotFindDirectory=Failed to locate directory.",
+        "ViewContextAction.errorMessage.cannotSelectDirectory=Failed to select directory in tree.",
+    })
     public void actionPerformed(ActionEvent event) {
         EventQueue.invokeLater(() -> {
             /*
@@ -138,7 +144,7 @@ public final class ViewContextAction extends AbstractAction {
             try {
                 parentContent = content.getParent();
             } catch (TskCoreException ex) {
-                // RJCTODO: Pop up
+                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotFindDirectory());
                 logger.log(Level.SEVERE, String.format("Could not get parent of Content object: %s", content), ex); //NON-NLS
                 return;
             }
@@ -199,9 +205,9 @@ public final class ViewContextAction extends AbstractAction {
             TreeView treeView = treeViewTopComponent.getTree();
             treeView.expandNode(parentTreeViewNode);
             try {
-                // RJCTODO: Pop up
                 treeViewExplorerMgr.setExploredContextAndSelection(parentTreeViewNode, new Node[]{parentTreeViewNode});
             } catch (PropertyVetoException ex) {
+                MessageNotifyUtil.Message.error(Bundle.ViewContextAction_errorMessage_cannotSelectDirectory());
                 logger.log(Level.SEVERE, "Failed to select the parent node in the tree view", ex); //NON-NLS
             }
         });
