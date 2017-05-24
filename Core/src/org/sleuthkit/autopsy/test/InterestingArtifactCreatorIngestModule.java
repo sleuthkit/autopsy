@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.test;
 import java.util.logging.Level;
 
 import org.openide.util.Exceptions;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -35,7 +36,9 @@ import org.sleuthkit.datamodel.TskCoreException;
  * A file ingest module that creates some interestng artifacts 
  * with attributes based on files for test purposes.
  */
-
+@NbBundle.Messages({
+    "InterestingArtifactCreatorIngestModule.exceptionMessage.errorCreatingCustomType=Error creating custom artifact type."
+})
 final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapter {
 
     private static final Logger logger = Logger.getLogger(InterestingArtifactCreatorIngestModule.class.getName());
@@ -52,7 +55,7 @@ final class InterestingArtifactCreatorIngestModule extends FileIngestModuleAdapt
         try {
             artifactType = blackboard.getOrAddArtifactType(INT_ARTIFACT_TYPE_NAME, INT_ARTIFACT_DISPLAY_NAME);
          } catch (Blackboard.BlackboardException ex) {
-            throw new IngestModuleException(Bundle.ErrorCreatingCustomBlackBoardType(), ex);
+            throw new IngestModuleException(Bundle.InterestingArtifactCreatorIngestModule_exceptionMessage_errorCreatingCustomType(), ex);
         }
     }
 

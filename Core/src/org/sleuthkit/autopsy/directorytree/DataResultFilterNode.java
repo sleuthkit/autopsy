@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
@@ -207,6 +208,33 @@ public class DataResultFilterNode extends FilterNode {
         }
 
         return propertySets;
+    }
+
+    /**
+     * Adds information about which child node of this node, if any, should be
+     * selected. Can be null.
+     *
+     * @param selectedChildNodeInfo The child node selection information.
+     */
+    public void setChildNodeSelectionInfo(NodeSelectionInfo selectedChildNodeInfo) {
+        if (getOriginal() instanceof DisplayableItemNode) {
+            ((DisplayableItemNode) getOriginal()).setChildNodeSelectionInfo(selectedChildNodeInfo);
+        }
+    }
+
+    /**
+     * Gets information about which child node of this node, if any, should be
+     * selected.
+     *
+     * @return The child node selection information, or null if no child should
+     *         be selected.
+     */
+    public NodeSelectionInfo getChildNodeSelectionInfo() {
+        if (getOriginal() instanceof DisplayableItemNode) {
+            return ((DisplayableItemNode) getOriginal()).getChildNodeSelectionInfo();
+        } else {
+            return null;
+        }
     }
 
     /**
