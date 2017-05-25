@@ -242,21 +242,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 pleasewaitNodeListener.reset();
                 currentRoot.addNodeListener(pleasewaitNodeListener);
                 setupTable(selectedNode);
-                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
-                if (null != selectedChildInfo) {
-                    Node[] childNodes = currentRoot.getChildren().getNodes(true);
-                    for (int i = 0; i < childNodes.length; ++i) {
-                        Node childNode = childNodes[i];
-                        if (selectedChildInfo.matches(childNode)) {
-                            try {
-                                em.setSelectedNodes(new Node[]{childNode});
-                            } catch (PropertyVetoException ex) {
-                                logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
-                            }
-                            break;
-                        }
-                    }
-                }
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
@@ -294,7 +279,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             Node.Property<?> prop = props.remove(0);
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
         }
-        
+
         /*
          * show the horizontal scroll panel and show all the content & header If
          * there is only one column (which was removed from props above) Just
@@ -305,6 +290,29 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         assignColumns(props);
         setColumnWidths();
         loadColumnSorting();
+
+        /**
+         * If one of the child nodes of the root node is to be selected, select
+         * it.
+         */
+        if (currentRoot instanceof TableFilterNode) {
+            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
+            if (null != selectedChildInfo) {
+                Node[] childNodes = currentRoot.getChildren().getNodes(true);
+                for (int i = 0; i < childNodes.length; ++i) {
+                    Node childNode = childNodes[i];
+                    if (selectedChildInfo.matches(childNode)) {
+                        try {
+                            em.setSelectedNodes(new Node[]{childNode});
+                        } catch (PropertyVetoException ex) {
+                            logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                        }
+                        break;
+                    }
+                }
+                ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
+            }
+        }
     }
 
     private void setColumnWidths() {
