@@ -1005,7 +1005,14 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     //when a range of numbers, the first 6 digits are rightpadded with 0s to 8 digits then a dash then 3 digits, the 6,7,8, digits of the end number right padded with 9s
                     String binName = StringUtils.rightPad(ccNumberName, 8, "0");
                     binName = binName.substring(0, 8);
-                    int bin = Integer.parseInt(binName);
+                    int bin;
+                    try {
+                        bin = Integer.parseInt(binName);
+                    }
+                    catch (NumberFormatException ex){
+                        LOGGER.log(Level.WARNING, "Unable to parseInt a BIN for node selection from string binName=" + binName, ex); //NON-NLS
+                        return;
+                    }
                     CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
                     if (binInfo != null) {
                         int startBin = ((BINRange) binInfo).getBINstart();

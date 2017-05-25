@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -26,13 +28,13 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Action for navigating the tree to view the artifact this artifact was 
+ * Action for navigating the tree to view the artifact this artifact was
  * generated off of.
  */
 class ViewSourceArtifactAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
-
+    private static final Logger logger = Logger.getLogger(ViewSourceArtifactAction.class.getName());
     private final BlackboardArtifact artifact;
 
     ViewSourceArtifactAction(String title, final BlackboardArtifact artifact) {
@@ -55,6 +57,7 @@ class ViewSourceArtifactAction extends AbstractAction {
                 }
             }
         } catch (TskCoreException ex) {
+            logger.log(Level.WARNING, "Unable to perform view artifact on an associated artifact of " + artifact.getDisplayName(), ex);  //NON-NLS
         }
     }
 
