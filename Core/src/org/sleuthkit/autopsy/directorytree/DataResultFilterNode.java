@@ -70,6 +70,7 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
+import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 
 /**
  * A node used to wrap another node before passing it to the result viewers. The
@@ -294,6 +295,7 @@ public class DataResultFilterNode extends FilterNode {
         }
     }
 
+    @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result...")
     /**
      * Uses the default nodes actions per node, adds some custom ones and
      * returns them per visited node type
@@ -320,6 +322,12 @@ public class DataResultFilterNode extends FilterNode {
                     || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actionsList.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
+            } else if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                //action to go to the source artifact
+                actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
+                // action to go to the source file of the artifact
+                actionsList.add(new ViewContextAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file
