@@ -75,7 +75,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      */
     public DataResultTopComponent(boolean isMain, String title) {
         associateLookup(ExplorerUtils.createLookup(explorerManager, getActionMap()));
-        this.dataResultPanel = new DataResultPanel(isMain, title);
+        this.dataResultPanel = new DataResultPanel(title, isMain);
         initComponents();
         customizeComponent(isMain, title);
     }
