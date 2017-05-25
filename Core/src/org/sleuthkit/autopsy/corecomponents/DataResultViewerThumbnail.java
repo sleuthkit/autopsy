@@ -59,22 +59,21 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Thumbnail view of images in data result with paging support.
+ * A thumbnail viewer for the results view, with paging support.
  *
- * Paging is added to reduce memory footprint and load only up to (currently)
- * 1000 images at a time. This works whether or not the underlying content nodes
- * are being lazy loaded or not.
+ * The paging is intended to reduce memory footprint by load only up to
+ * (currently) 1000 images at a time. This works whether or not the underlying
+ * content nodes are being lazy loaded or not.
  *
+ * TODO (JIRA-2658): Fix DataResultViewer extension point. When this is done,
+ * restore implementation of DataResultViewerTable as a DataResultViewer service
+ * provider.
  */
-// @@@ Restore implementation of DataResultViewerThumbnail as a DataResultViewer 
-// service provider when DataResultViewers can be made compatible with node 
-// multi-selection actions.
 //@ServiceProvider(service = DataResultViewer.class)
 final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(DataResultViewerThumbnail.class.getName());
-    //flag to keep track if images are being loaded
     private int curPage;
     private int totalPages;
     private int curPageImages;
@@ -83,8 +82,10 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private TableFilterNode tfn;
 
     /**
-     * Creates a DataResultViewerThumbnail object that is compatible with node
-     * multiple selection actions.
+     * Constructs a thumbnail viewer for the results view, with paging support,
+     * that is compatible with node multiple selection actions.
+     *
+     * @param explorerManager The shared ExplorerManager for the result viewers.
      */
     DataResultViewerThumbnail(ExplorerManager explorerManager) {
         super(explorerManager);
@@ -92,8 +93,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }
 
     /**
-     * Creates a DataResultViewerThumbnail object that is NOT compatible with
-     * node multiple selection actions.
+     * Constructs a thumbnail viewer for the results view, with paging support,
+     * that is NOT compatible with node multiple selection actions.
      */
     DataResultViewerThumbnail() {
         initialize();
@@ -105,7 +106,6 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     })
     private void initialize() {
         initComponents();
-
         iconView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         em.addPropertyChangeListener(new ExplorerManagerNodeSelectionListener());
         thumbnailSizeComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
@@ -391,13 +391,15 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     @Override
     public void setNode(Node givenNode) {
-        // change the cursor to "waiting cursor" for this operation
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (givenNode != null) {
                 tfn = (TableFilterNode) givenNode;
+                 * Wrap the given node in a ThumbnailViewChildren that will
+                 * produce ThumbnailPageNodes with ThumbnailViewNode children
+                 * from the child nodes of the given node.
+                 */
                 ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, iconSize);
-
                 final Node root = new AbstractNode(childNode);
 
                 pageUpdater.setRoot(root);
@@ -406,8 +408,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             } else {
                 tfn = null;
                 Node emptyNode = new AbstractNode(Children.LEAF);
-                em.setRootContext(emptyNode); // make empty node
-
+                em.setRootContext(emptyNode);
                 iconView.setBackground(Color.BLACK);
             }
         } finally {
@@ -432,21 +433,18 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         this.curPage = -1;
         curPageImages = 0;
         updateControls();
-
     }
 
     @Override
     public void clearComponent() {
         this.iconView.removeAll();
         this.iconView = null;
-
         super.clearComponent();
     }
 
     private void nextPage() {
         if (curPage < totalPages) {
             curPage++;
-
             switchPage();
         }
     }
@@ -454,7 +452,6 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private void previousPage() {
         if (curPage > 1) {
             curPage--;
-
             switchPage();
         }
     }
