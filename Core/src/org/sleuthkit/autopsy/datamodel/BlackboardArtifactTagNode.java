@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -98,14 +99,13 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
 
         return propertySheet;
     }
-    @NbBundle.Messages("BlackboardArtifactTagNode.viewSourceArtifact.text=View Source Result...")
+
+    @NbBundle.Messages("BlackboardArtifactTagNode.viewSourceArtifact.text=View Source Result")
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), true);
+        List<Action> actions = new ArrayList<>();
         actions.addAll(Arrays.asList(super.getActions(context)));
-
         BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
-        actions.add(new ViewTaggedArtifactAction(BlackboardArtifactTagNode_viewSourceArtifact_text(), artifact));
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
             if (ViewArtifactInTimelineAction.hasSupportedTimeStamp(artifact)) {
@@ -126,14 +126,13 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
         }
-
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-
             actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
-
+        actions.add(new ViewTaggedArtifactAction(BlackboardArtifactTagNode_viewSourceArtifact_text(), artifact));
+        actions.addAll(DataModelActionsFactory.getActions(tag.getContent(), true));
         actions.add(DeleteBlackboardArtifactTagAction.getInstance());
         return actions.toArray(new Action[0]);
     }
