@@ -448,13 +448,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         if (hasViewerEnabled) {
             resultViewers.get(currentActiveTab).setNode(selectedNode);
         }
-
-        /*
-         * Now that the selected node has been pushed to the selected results
-         * viewer and it has had an opportunity to act on the child selection
-         * info of the node, if any, clear the child selection info.
-         */
-        ((TableFilterNode) selectedNode).setChildNodeSelectionInfo(null);
     }
 
     /**
