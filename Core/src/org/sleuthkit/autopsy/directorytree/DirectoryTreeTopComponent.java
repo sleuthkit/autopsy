@@ -59,6 +59,7 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataSources;
@@ -907,6 +908,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         return;
                     }
                 }
+
                 treeNode = listChildren.findChild(keywordName);
 
             } catch (TskCoreException ex) {
@@ -1035,25 +1037,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
 
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
+        getTree().expandNode(treeNode);
         try {
             em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
         } catch (PropertyVetoException ex) {
             LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
         }
-
         // Another thread is needed because we have to wait for dataResult to populate
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                Children resultChilds = dataResult.getRootNode().getChildren();
-                Node select = resultChilds.findChild(Long.toString(art.getArtifactID()));
-                if (select != null) {
-                    dataResult.requestActive();
-                    dataResult.setSelectedNodes(new Node[]{select});
-                    fireViewerComplete();
-                }
-            }
-        });
     }
 
     @Override
