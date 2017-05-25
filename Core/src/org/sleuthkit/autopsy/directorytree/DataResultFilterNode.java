@@ -295,7 +295,7 @@ public class DataResultFilterNode extends FilterNode {
         }
     }
 
-    @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result...")
+    @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")
     /**
      * Uses the default nodes actions per node, adds some custom ones and
      * returns them per visited node type
