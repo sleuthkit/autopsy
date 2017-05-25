@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
  * A Swing JPanel with a JTabbedPane child component. The tabbed pane contains
@@ -66,6 +67,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
     private static final long serialVersionUID = 1L;
+    private static final int NO_TAB_SELECTED = -1;
     private static final String PLEASE_WAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pleasewaitNodeDisplayName");
     private final List<DataResultViewer> resultViewers = new ArrayList<>();
     private boolean isMain;
@@ -264,7 +266,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         });
         return viewers;
     }
-    
+
     /**
      * Sets the content view for this panel. Needs to be called before the first
      * call to open.
@@ -408,45 +410,53 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private void setupTabs(Node selectedNode) {
         /*
-         * Enable or disable the child tabs based on whether or not the
+         * Enable or disable the result viewer tabs based on whether or not the
          * corresponding results viewer supports display of the selected node.
          */
-        int tabIndex = 0;
-        for (DataResultViewer viewer : resultViewers) {
-            if (viewer.isSupported(selectedNode)) {
-                dataResultTabbedPanel.setEnabledAt(tabIndex, true);
+        for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+            if (resultViewers.get(i).isSupported(selectedNode)) {
+                dataResultTabbedPanel.setEnabledAt(i, true);
             } else {
-                dataResultTabbedPanel.setEnabledAt(tabIndex, false);
+                dataResultTabbedPanel.setEnabledAt(i, false);
             }
-            ++tabIndex;
         }
 
         /*
-         * If the current tab is not enabled for the selected node, try to
-         * select a tab that is enabled.
+         * If the selected node has a child to be selected, default the selected
+         * tab to the table result viewer. Otherwise, use the last selected tab,
+         * if it is enabled. If not, select the first enabled tab that can be
+         * found.
          */
-        boolean hasViewerEnabled = true;
-        int currentActiveTab = dataResultTabbedPanel.getSelectedIndex();
-        if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
-            hasViewerEnabled = false;
-            for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
-                if (dataResultTabbedPanel.isEnabledAt(i)) {
-                    currentActiveTab = i;
-                    hasViewerEnabled = true;
-                    break;
+        int tabToSelect = NO_TAB_SELECTED;
+        if (selectedNode instanceof TableFilterNode) {
+            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) selectedNode).getChildNodeSelectionInfo();
+            if (null != selectedChildInfo) {
+                for (int i = 0; i < resultViewers.size(); ++i) {
+                    if (resultViewers.get(i) instanceof DataResultViewerTable && dataResultTabbedPanel.isEnabledAt(i)) {
+                        tabToSelect = i;
+                    }
                 }
             }
-
-            if (hasViewerEnabled) {
-                dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+        };
+        if (NO_TAB_SELECTED == tabToSelect) {
+            tabToSelect = dataResultTabbedPanel.getSelectedIndex();
+            if ((NO_TAB_SELECTED == tabToSelect) || (!dataResultTabbedPanel.isEnabledAt(tabToSelect))) {
+                for (int i = 0; i < dataResultTabbedPanel.getTabCount(); ++i) {
+                    if (dataResultTabbedPanel.isEnabledAt(i)) {
+                        tabToSelect = i;
+                        break;
+                    }
+                }
             }
         }
 
         /*
-         * Push the node to the selected results viewer.
+         * If there is a tab to sele3ct, do so, and push the selected node to
+         * the corresponding result viewer.
          */
-        if (hasViewerEnabled) {
-            resultViewers.get(currentActiveTab).setNode(selectedNode);
+        if (NO_TAB_SELECTED != tabToSelect) {
+            dataResultTabbedPanel.setSelectedIndex(tabToSelect);
+            resultViewers.get(tabToSelect).setNode(selectedNode);
         }
     }
 
