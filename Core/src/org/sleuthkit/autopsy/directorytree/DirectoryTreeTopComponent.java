@@ -47,6 +47,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -92,12 +93,14 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Top component which displays something.
  */
 // Registered as a service provider for DataExplorer in layer.xml
+@Messages({
+    "DirectoryTreeTopComponent.resultsView.title=Listing"
+})
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider, BlackboardResultViewer {
 
     private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
-            "DirectoryTreeTopComponent.title.text"));
+    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, Bundle.DirectoryTreeTopComponent_resultsView_title());
     private final LinkedList<String[]> backList;
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
@@ -1008,8 +1011,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     int bin;
                     try {
                         bin = Integer.parseInt(binName);
-                    }
-                    catch (NumberFormatException ex){
+                    } catch (NumberFormatException ex) {
                         LOGGER.log(Level.WARNING, "Unable to parseInt a BIN for node selection from string binName=" + binName, ex); //NON-NLS
                         return;
                     }
