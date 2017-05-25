@@ -241,7 +241,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 currentRoot = selectedNode;
                 pleasewaitNodeListener.reset();
                 currentRoot.addNodeListener(pleasewaitNodeListener);
-                setupTable(selectedNode);
+                em.setRootContext(currentRoot);
+                setupTable();
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
@@ -256,13 +257,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Create Column Headers based on the Content represented by the Nodes in
      * the table.
-     *
-     * @param root The parent Node of the ContentNodes
      */
-    private void setupTable(final Node root) {
-        em.setRootContext(root);
-        currentRoot = root;
-
+    private void setupTable() {
         /**
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -295,6 +291,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * If one of the child nodes of the root node is to be selected, select
          * it.
          */
+        SwingUtilities.invokeLater(()->{
         if (currentRoot instanceof TableFilterNode) {
             NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
             if (null != selectedChildInfo) {
@@ -312,7 +309,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 }
                 ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
             }
-        }
+        }});
     }
 
     private void setColumnWidths() {
@@ -702,9 +699,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 load = false;
                 //JMTODO: this looks suspicious
                 if (SwingUtilities.isEventDispatchThread()) {
-                    setupTable(nme.getNode());
+                    setupTable();
                 } else {
-                    SwingUtilities.invokeLater(() -> setupTable(nme.getNode()));
+                    SwingUtilities.invokeLater(() -> setupTable());
                 }
             }
         }
