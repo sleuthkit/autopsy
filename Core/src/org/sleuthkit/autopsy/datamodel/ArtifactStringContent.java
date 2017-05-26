@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.openide.util.NbBundle;
@@ -35,7 +34,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  * HTML, so any styling needs to be supplied by the display mechansim. For
  * example, GUI components such as content viewers might use HTMLEditorKit to
  * add styling.
+ * 
+ * @deprecated - No longer used by DataContentViewerArtifact because the table is no longer HTML
  */
+@Deprecated
 public class ArtifactStringContent implements StringContent {
 
     private final static SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
