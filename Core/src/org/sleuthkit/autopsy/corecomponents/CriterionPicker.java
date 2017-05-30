@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-17 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.corecomponents;
 
@@ -12,7 +25,7 @@ import javax.swing.SortOrder;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 
-public class CriterionPicker extends javax.swing.JPanel {
+ class CriterionPicker extends javax.swing.JPanel {
 
     private final List<Node.Property<?>> availableProps;
     private final DefaultComboBoxModel<Node.Property<?>> defaultComboBoxModel;
@@ -29,15 +42,18 @@ public class CriterionPicker extends javax.swing.JPanel {
         propComboBox.setRenderer((list, value, index, isSelected, cellHasFocus)
                 -> defaultListCellRenderer.getListCellRendererComponent(list, value == null ? "" : value.getName(), index, isSelected, cellHasFocus));
         this.chooser = chooser;
-        if (chooser == null){
-           removeButton.setEnabled(false);
+        if (chooser == null) {
+            removeButton.setEnabled(false);
         }
     }
     private DefaultListCellRenderer defaultListCellRenderer = new DefaultListCellRenderer();
 
-    SortCriterion getSelectedCriteria() {
-        return new SortCriterion((Node.Property<?>) propComboBox.getSelectedItem(),
-                ascendingRadio.isSelected() ? SortOrder.ASCENDING : SortOrder.DESCENDING);
+    SortCriterion getSelectedCriteria(int rank) {
+        return new SortCriterion(
+                (Node.Property<?>) propComboBox.getSelectedItem(),
+                ascendingRadio.isSelected() ? SortOrder.ASCENDING : SortOrder.DESCENDING,
+                rank
+        );
     }
 
     /**
@@ -117,13 +133,13 @@ public class CriterionPicker extends javax.swing.JPanel {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(3, 3, 3)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(propComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(removeButton)
                     .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents

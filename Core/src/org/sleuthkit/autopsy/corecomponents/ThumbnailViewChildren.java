@@ -44,10 +44,10 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
-import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadCriteria;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadSortCriteria;
 
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
@@ -150,23 +150,24 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         if (!(parent instanceof TableFilterNode)) {
             return comp;
         } else {
-            java.util.Map<Integer, SortCriterion> criteriaMap = loadCriteria((TableFilterNode) parent);
+            List<SortCriterion> sortCriteria = loadSortCriteria((TableFilterNode) parent);
 
             //make a comparatator that will sort the nodes.
-            return criteriaMap.keySet().stream()
-                    .map(rank -> {
-                        SortCriterion criterion = criteriaMap.get(rank);
-                        Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProp()),
-                                Comparator.nullsFirst(Comparator.naturalOrder()));
-                        return criterion.getOrder() == SortOrder.ASCENDING ? c : c.reversed();
-                    })
+            return sortCriteria.stream()
+                    .map(this::getCriterionComparator)
                     .collect(Collectors.reducing(Comparator::thenComparing))
                     .orElse(comp);
 
         }
     }
 
-    Comparable getPropertyValue(Node node, Node.Property<?> prop) {
+    private Comparator<Node> getCriterionComparator(SortCriterion criterion) {
+        Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProperty()),
+                Comparator.nullsFirst(Comparator.naturalOrder()));
+        return criterion.getSortOrder() == SortOrder.ASCENDING ? c : c.reversed();
+    }
+
+    private Comparable getPropertyValue(Node node, Node.Property<?> prop) {
         for (Node.PropertySet ps : node.getPropertySets()) {
             for (Node.Property<?> p : ps.getProperties()) {
                 if (p.equals(prop)) {

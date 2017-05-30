@@ -1,13 +1,25 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-17 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 
@@ -17,21 +29,24 @@ public class SortChooser extends javax.swing.JPanel {
     private final ArrayList<CriterionPicker> pickers = new ArrayList<>();
 
     /**
-     * Creates new form SortChooserDialog
+     * @param availableProps The properties that are available for selection in
+     *                       this SortChooser.
      */
     public SortChooser(List<Node.Property<?>> availableProps) {
         super();
         initComponents();
-        final CriterionPicker criterionPicker = new CriterionPicker(availableProps, null);
-        pickers.add(criterionPicker);
-        scrollContent.add(criterionPicker);
+
         this.availableProps = availableProps;
+        addCriteria(null);
     }
 
     List<SortCriterion> getCriteria() {
-        return pickers.stream()
-                .map(CriterionPicker::getSelectedCriteria)
-                .collect(Collectors.toList());
+        List<SortCriterion> list = new ArrayList<>();
+        for (int i = 0; i < pickers.size(); i++) {
+            list.add(pickers.get(i).getSelectedCriteria(i));
+        }
+        return list;
+
     }
 
     /**
@@ -83,14 +98,14 @@ public class SortChooser extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void addCriteriaButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addCriteriaButtonActionPerformed
-        addCriteria();
+        addCriteria(this);
+        revalidate();
     }//GEN-LAST:event_addCriteriaButtonActionPerformed
 
-    private void addCriteria() {
-        final CriterionPicker criterionPicker = new CriterionPicker(availableProps, this);
+    private void addCriteria(SortChooser parent) {
+        final CriterionPicker criterionPicker = new CriterionPicker(availableProps, parent);
         pickers.add(criterionPicker);
         scrollContent.add(criterionPicker);
-        revalidate();
     }
 
 

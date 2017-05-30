@@ -337,12 +337,10 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerThumbnail.class);
 
             Map<Node.Property<?>, SortOrder> sortOrderMap = criteria.stream()
-                    .collect(Collectors.toMap(
-                            SortCriterion::getProp,
-                            SortCriterion::getOrder));
+                    .collect(Collectors.toMap(SortCriterion::getProperty,
+                            SortCriterion::getSortOrder));
             Map<Node.Property<?>, Integer> rankMap = criteria.stream()
-                    .collect(Collectors.toMap(
-                            SortCriterion::getProp,
+                    .collect(Collectors.toMap(SortCriterion::getProperty,
                             criteria::indexOf));
             //store the sorting information
             int numCols = allChildProperties.size();
@@ -557,11 +555,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
 
         if (tfn != null) {
-            SortedMap<Integer, SortCriterion> loadCriteria = ResultViewerPersistence.loadCriteria(tfn);
-            String sortString = loadCriteria.keySet().stream().map(rank -> {
-                SortCriterion criteria = loadCriteria.get(rank);
-                return rank + ". " + criteria.getProp().getName() + " " + (criteria.getOrder() == SortOrder.ASCENDING ? "\u25B2" : "\u25BC");
-            }).collect(Collectors.joining(" "));
+            String sortString = ResultViewerPersistence.loadSortCriteria(tfn).stream()
+                    .map(SortCriterion::toString)
+                    .collect(Collectors.joining(" "));
             sortLabel.setText("Sorted by: " + StringUtils.defaultIfBlank(sortString, "---"));
         } else {
             sortLabel.setText("Sorted by: ---");
