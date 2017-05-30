@@ -66,7 +66,7 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         }
         Case.CaseType caseType = theCase.getCaseType();
         caseTypeField.setText(caseType.getLocalizedDisplayName());        
-        deleteCaseButton.setEnabled(Case.CaseType.SINGLE_USER_CASE == caseType);
+        deleteCaseButton.setEnabled(true);
     }
 
     /**
