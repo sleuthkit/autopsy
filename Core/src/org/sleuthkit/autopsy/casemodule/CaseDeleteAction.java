@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -47,6 +48,9 @@ final class CaseDeleteAction extends CallableSystemAction {
     CaseDeleteAction() {
         putValue(Action.NAME, NbBundle.getMessage(CaseDeleteAction.class, "CTL_CaseDeleteAction"));
         this.setEnabled(false);
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+            setEnabled(null != evt.getNewValue());
+        });
     }
 
     @Override
@@ -98,7 +102,6 @@ final class CaseDeleteAction extends CallableSystemAction {
                          * Close the Case Properties dialog that is the parent
                          * of the Delete button that invokes this action.
                          */
-                        CasePropertiesAction.closeCasePropertiesWindow();
                         StartupWindowProvider.getInstance().open();
                     }
                 }.execute();

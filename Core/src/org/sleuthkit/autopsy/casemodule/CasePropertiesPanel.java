@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 
@@ -66,7 +65,6 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         }
         Case.CaseType caseType = theCase.getCaseType();
         caseTypeField.setText(caseType.getLocalizedDisplayName());        
-        deleteCaseButton.setEnabled(true);
     }
 
     /**
@@ -95,7 +93,6 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         caseDirLabel = new javax.swing.JLabel();
         caseNameTextField = new javax.swing.JTextField();
         updateCaseNameButton = new javax.swing.JButton();
-        deleteCaseButton = new javax.swing.JButton();
         caseNumberLabel = new javax.swing.JLabel();
         examinerLabel = new javax.swing.JLabel();
         lbDbType = new javax.swing.JLabel();
@@ -128,14 +125,6 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         updateCaseNameButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 updateCaseNameButtonActionPerformed(evt);
-            }
-        });
-
-        deleteCaseButton.setFont(deleteCaseButton.getFont().deriveFont(deleteCaseButton.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        deleteCaseButton.setText(org.openide.util.NbBundle.getMessage(CasePropertiesPanel.class, "CasePropertiesPanel.deleteCaseButton.text")); // NOI18N
-        deleteCaseButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                deleteCaseButtonActionPerformed(evt);
             }
         });
 
@@ -187,10 +176,7 @@ class CasePropertiesPanel extends javax.swing.JPanel {
                                 .addComponent(caseNameTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(updateCaseNameButton, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(crDateField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(deleteCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(crDateField, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
@@ -230,9 +216,7 @@ class CasePropertiesPanel extends javax.swing.JPanel {
                             .addComponent(lbDbName)
                             .addComponent(dbNameField, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addComponent(caseNumberLabel))
-                .addGap(10, 10, 10)
-                .addComponent(deleteCaseButton)
-                .addContainerGap())
+                .addGap(44, 44, 44))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addContainerGap()
@@ -248,7 +232,7 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -285,10 +269,6 @@ class CasePropertiesPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_updateCaseNameButtonActionPerformed
 
-    private void deleteCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCaseButtonActionPerformed
-        CallableSystemAction.get(CaseDeleteAction.class).actionPerformed(evt);
-    }//GEN-LAST:event_deleteCaseButtonActionPerformed
-
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel caseDirField;
@@ -301,7 +281,6 @@ class CasePropertiesPanel extends javax.swing.JPanel {
     private javax.swing.JLabel crDateField;
     private javax.swing.JLabel crDateLabel;
     private javax.swing.JLabel dbNameField;
-    private javax.swing.JButton deleteCaseButton;
     private javax.swing.JLabel examinerField;
     private javax.swing.JLabel examinerLabel;
     private javax.swing.JPanel jPanel1;

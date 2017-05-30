@@ -3,8 +3,8 @@
 <filesystem>
 
     <!-- ======================================================
-         General
-         ====================================================== -->
+    General
+    ====================================================== -->
     <attr name="Toolbars\Case\org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance\iconBase" stringvalue="org/sleuthkit/autopsy/images/close-icon.gif"/>
     <attr name="Menu\Case\org-netbeans-modules-print-action-PageSetupAction.shadow_hidden\position" intvalue="300"/>
     <attr name="Menu\Case\org-netbeans-modules-print-action-PrintAction.shadow_hidden\position" intvalue="500"/>
@@ -36,8 +36,8 @@
 
 
     <!-- ======================================================
-         Actions
-         ====================================================== -->
+    Actions
+    ====================================================== -->
     <folder name="Actions">
         <folder name="Case">
             <file name="org-sleuthkit-autopsy-casemodule-AddImageAction.instance"/>
@@ -48,6 +48,7 @@
                 <attr name="noIconInMenu" boolvalue="false"/>
             </file>
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
+            <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
             <file name="org-sleuthkit-autopsy-casemodule-CaseOpenAction.instance">
                 <attr name="delegate" newvalue="org.sleuthkit.autopsy.casemodule.CaseOpenAction"/>
                 <attr name="displayName" bundlevalue="org.sleuthkit.autopsy.casemodule.Bundle#CTL_OpenAction"/>
@@ -132,15 +133,15 @@
             <file name="org-sleuthkit-autopsy-actions-OpenLogFolder.instance_hidden"/>
         </folder>
         <folder name="Toolbars">
-             <folder name="QuickSearch_hidden"/>
+            <folder name="QuickSearch_hidden"/>
         </folder>
     </folder>
 
 
 
     <!-- ======================================================
-         Menu
-         ====================================================== -->
+    Menu
+    ====================================================== -->
     <folder name="Menu">
         <file name="GoTo_hidden"/>
         <file name="Reports_hidden"/>
@@ -185,6 +186,14 @@
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
                 <attr name="position" intvalue="301"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction-separatorBefore.instance">
+                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
+                <attr name="position" intvalue="400"/>
+            </file>
+            <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
+                <attr name="position" intvalue="401"/>
             </file>
             <file name="org-netbeans-modules-print-action-PageSetupAction.shadow_hidden"/>
             <file name="org-netbeans-modules-print-action-PrintAction.shadow_hidden"/>
@@ -279,8 +288,8 @@
 
 
     <!-- ======================================================
-         Services
-         ====================================================== -->
+    Services
+    ====================================================== -->
     <folder name="Services">
         <folder name="AutoupdateType">
             <file name="org_sleuthkit_autopsy_core_update_center.settings" url="org_sleuthkit_autopsy_core_update_centerSettings.xml">
@@ -298,7 +307,7 @@
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
             <attr name="position" intvalue="125"/>
         </file>
-         <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent2.instance">
+        <file name="org-sleuthkit-autopsy-directorytree-DirectoryTreeTopComponent2.instance">
             <attr name="instanceOf" stringvalue="org.sleuthkit.autopsy.corecomponentinterfaces.BlackboardResultViewer"/>
             <attr name="instanceCreate" methodvalue="org.sleuthkit.autopsy.directorytree.DirectoryTreeTopComponent.getDefault"/>
             <attr name="position" intvalue="150"/>
@@ -356,8 +365,8 @@
 
 
     <!-- ======================================================
-         Toolbars
-         ====================================================== -->
+    Toolbars
+    ====================================================== -->
     <folder name="Toolbars">
         <file name="Clipboard_hidden"/>
         <file name="Memory_hidden"/>
@@ -408,8 +417,8 @@
 
 
     <!-- ======================================================
-         Shortcuts
-         ====================================================== -->
+    Shortcuts
+    ====================================================== -->
     <folder name="Shortcuts">
         <file name="D-N.shadow">
             <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseNewAction.instance"/>
@@ -422,8 +431,8 @@
 
 
     <!-- ======================================================
-         Windows2
-         ====================================================== -->
+    Windows2
+    ====================================================== -->
     <folder name="Windows2">
         <folder name="Components">
             <file name="DirectoryTreeTopComponent.settings" url="DirectoryTreeTopComponentSettings.xml"/>
