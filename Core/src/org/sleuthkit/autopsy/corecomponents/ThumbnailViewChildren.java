@@ -166,8 +166,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         }
     }
 
-   
-
     Comparable getPropertyValue(Node node, Node.Property<?> prop) {
         for (Node.PropertySet ps : node.getPropertySets()) {
             for (Node.Property<?> p : ps.getProperties()) {
@@ -199,8 +197,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     static boolean isSupported(Node node) {
         if (node != null) {
-            Content content = node.getLookup().lookup(Content.class
-            );
+            Content content = node.getLookup().lookup(Content.class);
             if (content != null) {
                 return ImageUtils.thumbnailSupported(content);
             }
