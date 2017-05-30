@@ -29,12 +29,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeSelectionModel;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.explorer.view.BeanTreeView;
@@ -45,6 +47,7 @@ import org.openide.nodes.Node;
 import org.openide.nodes.NodeNotFoundException;
 import org.openide.nodes.NodeOp;
 import org.openide.util.NbBundle;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -57,13 +60,18 @@ import org.sleuthkit.autopsy.corecomponents.DataResultTopComponent;
 import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.datamodel.ArtifactNodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
+import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.autopsy.datamodel.DataSources;
 import org.sleuthkit.autopsy.datamodel.DataSourcesNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
+import org.sleuthkit.autopsy.datamodel.EmailExtracted;
 import org.sleuthkit.autopsy.datamodel.EmptyNode;
 import org.sleuthkit.autopsy.datamodel.ExtractedContent;
 import org.sleuthkit.autopsy.datamodel.FileTypesByMimeType;
+import org.sleuthkit.autopsy.datamodel.InterestingHits;
+import org.sleuthkit.autopsy.datamodel.KeywordHits;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.Results;
 import org.sleuthkit.autopsy.datamodel.ResultsNode;
@@ -72,24 +80,27 @@ import org.sleuthkit.autopsy.datamodel.Tags;
 import org.sleuthkit.autopsy.datamodel.Views;
 import org.sleuthkit.autopsy.datamodel.ViewsNode;
 import org.sleuthkit.autopsy.datamodel.accounts.Accounts;
+import org.sleuthkit.autopsy.datamodel.accounts.BINRange;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Top component which displays something.
  */
 // Registered as a service provider for DataExplorer in layer.xml
+@Messages({
+    "DirectoryTreeTopComponent.resultsView.title=Listing"
+})
 public final class DirectoryTreeTopComponent extends TopComponent implements DataExplorer, ExplorerManager.Provider, BlackboardResultViewer {
 
     private final transient ExplorerManager em = new ExplorerManager();
     private static DirectoryTreeTopComponent instance;
-    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, NbBundle.getMessage(this.getClass(),
-            "DirectoryTreeTopComponent.title.text"));
+    private final DataResultTopComponent dataResult = new DataResultTopComponent(true, Bundle.DirectoryTreeTopComponent_resultsView_title());
     private final LinkedList<String[]> backList;
     private final LinkedList<String[]> forwardList;
     private static final String PREFERRED_ID = "DirectoryTreeTopComponent"; //NON-NLS
@@ -854,7 +865,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     }
                 }
                 treeNode = hashsetRootChilds.findChild(setName);
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
@@ -863,6 +874,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             try {
                 String listName = null;
                 String keywordName = null;
+                String regex = null;
                 List<BlackboardAttribute> attributes = art.getAttributes();
                 for (BlackboardAttribute att : attributes) {
                     int typeId = att.getAttributeType().getTypeID();
@@ -870,6 +882,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         listName = att.getValueString();
                     } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()) {
                         keywordName = att.getValueString();
+                    } else if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()) {
+                        regex = att.getValueString();
+                    }
+                }
+                if (listName == null) {
+                    if (regex == null) {  //using same labels used for creation 
+                        listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
+                    } else {
+                        listName = NbBundle.getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
                     }
                 }
                 Node listNode = keywordRootChilds.findChild(listName);
@@ -880,13 +901,26 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 if (listChildren == null) {
                     return;
                 }
+                if (regex != null) {  //For support of regex nodes such as URLs, IPs, Phone Numbers, and Email Addrs as they are down another level
+                    Node regexNode = listChildren.findChild(regex);
+                    if (regexNode == null) {
+                        return;
+                    }
+                    listChildren = regexNode.getChildren();
+                    if (listChildren == null) {
+                        return;
+                    }
+                }
+
                 treeNode = listChildren.findChild(keywordName);
-            } catch (TskException ex) {
+
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT.getTypeID()
                 || typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
-            Node interestingItemsRootNode = resultsChilds.findChild(typeName);
+            Node interestingItemsRootNode = resultsChilds.findChild(NbBundle
+                    .getMessage(InterestingHits.class, "InterestingHits.interestingItems.text"));
             Children interestingItemsRootChildren = interestingItemsRootNode.getChildren();
             try {
                 String setName = null;
@@ -897,8 +931,106 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         setName = att.getValueString();
                     }
                 }
-                treeNode = interestingItemsRootChildren.findChild(setName);
-            } catch (TskException ex) {
+                Node setNode = interestingItemsRootChildren.findChild(setName);
+                if (setNode == null) {
+                    return;
+                }
+                Children interestingChildren = setNode.getChildren();
+                if (interestingChildren == null) {
+                    return;
+                }
+                treeNode = interestingChildren.findChild(art.getDisplayName());
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+            }
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+            Node emailMsgRootNode = resultsChilds.findChild(typeName);
+            Children emailMsgRootChilds = emailMsgRootNode.getChildren();
+            Map<String, String> parsedPath = null;
+            try {
+                List<BlackboardAttribute> attributes = art.getAttributes();
+                for (BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeType().getTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PATH.getTypeID()) {
+                        parsedPath = EmailExtracted.parsePath(att.getValueString());
+                        break;
+                    }
+                }
+                if (parsedPath == null) {
+                    return;
+                }
+                Node defaultNode = emailMsgRootChilds.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text")));
+                Children defaultChildren = defaultNode.getChildren();
+                treeNode = defaultChildren.findChild(parsedPath.get(NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text")));
+            } catch (TskCoreException ex) {
+                LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
+            }
+
+        } else if (typeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID()) {
+            Node accountRootNode = resultsChilds.findChild(art.getDisplayName());
+            Children accountRootChilds = accountRootNode.getChildren();
+            List<BlackboardAttribute> attributes;
+            String accountType = null;
+            String ccNumberName = null;
+            try {
+                attributes = art.getAttributes();
+                for (BlackboardAttribute att : attributes) {
+                    int typeId = att.getAttributeType().getTypeID();
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE.getTypeID()) {
+                        accountType = att.getValueString();
+                    }
+                    if (typeId == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER.getTypeID()) {
+                        ccNumberName = att.getValueString();
+                    }
+                }
+                if (accountType == null) {
+                    return;
+                }
+
+                if (accountType.equals(Account.Type.CREDIT_CARD.name())) {
+                    Node accountNode = accountRootChilds.findChild(Account.Type.CREDIT_CARD.getDisplayName());
+                    if (accountNode == null) {
+                        return;
+                    }
+                    Children accountChildren = accountNode.getChildren();
+                    if (accountChildren == null) {
+                        return;
+                    }
+                    Node binNode = accountChildren.findChild(NbBundle.getMessage(Accounts.class, "Accounts.ByBINNode.name"));
+                    if (binNode == null) {
+                        return;
+                    }
+                    Children binChildren = binNode.getChildren();
+                    if (ccNumberName == null) {
+                        return;
+                    }
+                    //right padded with 0s to 8 digits when single number
+                    //when a range of numbers, the first 6 digits are rightpadded with 0s to 8 digits then a dash then 3 digits, the 6,7,8, digits of the end number right padded with 9s
+                    String binName = StringUtils.rightPad(ccNumberName, 8, "0");
+                    binName = binName.substring(0, 8);
+                    int bin;
+                    try {
+                        bin = Integer.parseInt(binName);
+                    } catch (NumberFormatException ex) {
+                        LOGGER.log(Level.WARNING, "Unable to parseInt a BIN for node selection from string binName=" + binName, ex); //NON-NLS
+                        return;
+                    }
+                    CreditCards.BankIdentificationNumber binInfo = CreditCards.getBINInfo(bin);
+                    if (binInfo != null) {
+                        int startBin = ((BINRange) binInfo).getBINstart();
+                        int endBin = ((BINRange) binInfo).getBINend();
+                        if (startBin != endBin) {
+                            binName = Integer.toString(startBin) + "-" + Integer.toString(endBin).substring(5); //if there is a range re-construct the name it appears as 
+                        }
+                    }
+                    if (binName == null) {
+                        return;
+                    }
+                    treeNode = binChildren.findChild(binName);
+                } else { //default account type
+                    treeNode = accountRootChilds.findChild(accountType);;
+                }
+            } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
             }
         } else {
@@ -914,25 +1046,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
             return;
         }
 
+        DisplayableItemNode undecoratedParentNode = (DisplayableItemNode) ((DirectoryTreeFilterNode) treeNode).getOriginal();
+        undecoratedParentNode.setChildNodeSelectionInfo(new ArtifactNodeSelectionInfo(art));
+        getTree().expandNode(treeNode);
         try {
             em.setExploredContextAndSelection(treeNode, new Node[]{treeNode});
         } catch (PropertyVetoException ex) {
             LOGGER.log(Level.WARNING, "Property Veto: ", ex); //NON-NLS
         }
-
         // Another thread is needed because we have to wait for dataResult to populate
-        EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                Children resultChilds = dataResult.getRootNode().getChildren();
-                Node select = resultChilds.findChild(Long.toString(art.getArtifactID()));
-                if (select != null) {
-                    dataResult.requestActive();
-                    dataResult.setSelectedNodes(new Node[]{select});
-                    fireViewerComplete();
-                }
-            }
-        });
     }
 
     @Override

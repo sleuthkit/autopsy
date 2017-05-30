@@ -725,10 +725,11 @@ final public class Accounts implements AutopsyVisitableItem {
             }
         }
 
+        @NbBundle.Messages("Accounts.ByBINNode.name=By BIN")
         private ByBINNode() {
             super(Children.LEAF);
             setChildren(Children.createLazy(BINFactory::new));
-            setName("By BIN");  //NON-NLS
+            setName(Bundle.Accounts_ByBINNode_name());  //NON-NLS
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/bank.png");   //NON-NLS
             reviewStatusBus.register(this);

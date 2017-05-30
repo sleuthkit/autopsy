@@ -39,43 +39,48 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContent;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
- * A Swing JPanel with a JTabbedPane child component that contains result
- * viewers (implementations of the DataResultViewer interface). The "main"
- * DataResultPanel for the desktop application has a table viewer
- * (DataResultViewerTable) and a thumbnail viewer (DataResultViewerThumbnail).
- * The "main" panel and zero to many additional DataResultPanel instances are
- * presented as tabs in the results view, the top component
- * (DataResultTopComponent) normally docked into the upper right hand side of
- * the main window of the desktop application. The result viewers in the "main
- * panel" are used to view the child nodes of a node selected in the tree view
- * (DirectoryTreeTopComponent) that is normally docked into the left hand side
- * of the main window.
+ * A Swing JPanel with a JTabbedPane child component. The tabbed pane contains
+ * result viewers.
  *
- * Nodes selected in the results view are displayed in a content view
- * (implementation of the DataContent interface). The default content view is
- * the DataContentTopComponent, normally docked into the lower right hand side
- * of the main window. A custom content view may be specified instead.
+ * The "main" DataResultPanel for the desktop application has a table viewer
+ * (DataResultViewerTable) and a thumbnail viewer (DataResultViewerThumbnail),
+ * plus zero to many additional DataResultViewers, since the DataResultViewer
+ * interface is an extension point.
+ *
+ * The "main" DataResultPanel resides in the "main" results view
+ * (DataResultTopComponent) that is normally docked into the upper right hand
+ * side of the main window of the desktop application.
+ *
+ * The result viewers in the "main panel" are used to view the child nodes of a
+ * node selected in the tree view (DirectoryTreeTopComponent) that is normally
+ * docked into the left hand side of the main window of the desktop application.
+ *
+ * Nodes selected in the child results viewers of a DataResultPanel are
+ * displayed in a content view (implementation of the DataContent interface)
+ * supplied the panel. The default content view is (DataContentTopComponent) is
+ * normally docked into the lower right hand side of the main window, underneath
+ * the results view. A custom content view may be specified instead.
  */
 public class DataResultPanel extends javax.swing.JPanel implements DataResult, ChangeListener {
 
     private static final long serialVersionUID = 1L;
+    private static final int NO_TAB_SELECTED = -1;
     private static final String PLEASE_WAIT_NODE_DISPLAY_NAME = NbBundle.getMessage(DataResultPanel.class, "DataResultPanel.pleasewaitNodeDisplayName");
     private final List<DataResultViewer> resultViewers = new ArrayList<>();
+    private boolean isMain;
     private ExplorerManager explorerManager;
     private ExplorerManagerNodeSelectionListener emNodeSelectionListener;
     private Node rootNode;
     private final RootNodeListener rootNodeListener = new RootNodeListener();
-    private DataContent customContentView;
-    private boolean isMain;
-    private String title;
     private boolean listeningToTabbedPane;
+    private DataContent contentView;
 
     /**
-     * Constructs and opens a Swing JPanel with a JTabbedPane child component
-     * that contains result viewers (implementations of the DataResultViewer
-     * interface).
+     * Constructs and opens a Swing JPanel with a JTabbedPane child component.
+     * The tabbed pane contains result viewers.
      *
      * @param title        The title for the panel.
      * @param pathText     Descriptive text about the source of the nodes
@@ -86,16 +91,15 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @return A DataResultPanel instance.
      */
     public static DataResultPanel createInstance(String title, String pathText, Node rootNode, int totalMatches) {
-        DataResultPanel newDataResult = new DataResultPanel(false, title);
-        createInstanceCommon(pathText, rootNode, totalMatches, newDataResult);
-        newDataResult.open();
-        return newDataResult;
+        DataResultPanel resultPanel = new DataResultPanel(title, false);
+        createInstanceCommon(title, pathText, rootNode, totalMatches, resultPanel);
+        resultPanel.open();
+        return resultPanel;
     }
 
     /**
-     * Constructs and opens a Swing JPanel with a JTabbedPane child component
-     * that contains result viewers (implementations of the DataResultViewer
-     * interface).
+     * Constructs and opens a Swing JPanel with a JTabbedPane child component.
+     * The tabbed pane contains result viewers.
      *
      * @param title             The title for the panel.
      * @param pathText          Descriptive text about the source of the nodes
@@ -108,17 +112,16 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @return A DataResultPanel instance.
      */
     public static DataResultPanel createInstance(String title, String pathText, Node rootNode, int totalMatches, DataContent customContentView) {
-        DataResultPanel newDataResult = new DataResultPanel(title, customContentView);
-        createInstanceCommon(pathText, rootNode, totalMatches, newDataResult);
-        newDataResult.open();
-        return newDataResult;
+        DataResultPanel resultPanel = new DataResultPanel(title, customContentView);
+        createInstanceCommon(title, pathText, rootNode, totalMatches, resultPanel);
+        resultPanel.open();
+        return resultPanel;
     }
 
     /**
-     * Constructs a Swing JPanel with a JTabbedPane child component that
-     * contains result viewers (implementations of the DataResultViewer
-     * interface). The panel is NOT opened; the client of this method must call
-     * open on the panel that is returned.
+     * Constructs a Swing JPanel with a JTabbedPane child component. The tabbed
+     * pane contains result viewers. The panel is NOT opened; the client of this
+     * method must call open on the panel that is returned.
      *
      * @param title             The title for the panel.
      * @param pathText          Descriptive text about the source of the nodes
@@ -131,25 +134,28 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @return A DataResultPanel instance.
      */
     public static DataResultPanel createInstanceUninitialized(String title, String pathText, Node rootNode, int totalMatches, DataContent customContentView) {
-        DataResultPanel newDataResult = new DataResultPanel(title, customContentView);
-        createInstanceCommon(pathText, rootNode, totalMatches, newDataResult);
-        return newDataResult;
+        DataResultPanel resultPanel = new DataResultPanel(title, customContentView);
+        createInstanceCommon(title, pathText, rootNode, totalMatches, resultPanel);
+        return resultPanel;
     }
 
     /**
      * Executes code common to all of the DataSreultPanel factory methods.
      *
-     * @param pathText          Descriptive text about the source of the nodes
-     *                          displayed.
-     * @param rootNode          The new root node.
-     * @param totalMatches      Cardinality of root node's children
-     * @param customContentView A content view to use in place of the default
-     *                          content view.
+     * @param title           The title for the panel.
+     * @param pathText        Descriptive text about the source of the nodes
+     *                        displayed.
+     * @param rootNode        The new root node.
+     * @param totalMatches    Cardinality of root node's children
+     * @param resultViewPanel A content view to use in place of the default
+     *                        content view.
      */
-    private static void createInstanceCommon(String pathText, Node rootNode, int totalMatches, DataResultPanel customContentView) {
-        customContentView.numberMatchLabel.setText(Integer.toString(totalMatches));
-        customContentView.setNode(rootNode);
-        customContentView.setPath(pathText);
+    private static void createInstanceCommon(String title, String pathText, Node rootNode, int totalMatches, DataResultPanel resultViewPanel) {
+        resultViewPanel.setTitle(title);
+        resultViewPanel.setName(title);
+        resultViewPanel.setNumMatches(totalMatches);
+        resultViewPanel.setNode(rootNode);
+        resultViewPanel.setPath(pathText);
     }
 
     /**
@@ -160,8 +166,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     private DataResultPanel() {
         this.isMain = true;
         initComponents();
-        this.title = "";
-        setName(title);
     }
 
     /**
@@ -169,15 +173,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * contains result viewers (implementations of the DataResultViewer
      * interface).
      *
+     * @param title  The title for the panel.
      * @param isMain True if the DataResultPanel being constructed is the "main"
      *               DataResultPanel.
-     * @param title  The title for the panel.
      */
-    DataResultPanel(boolean isMain, String title) {
+    DataResultPanel(String title, boolean isMain) {
         this();
         this.isMain = isMain;
-        this.title = title;
-        setName(title);
+        this.contentView = Lookup.getDefault().lookup(DataContent.class);
     }
 
     /**
@@ -190,9 +193,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *                          content view.
      */
     DataResultPanel(String title, DataContent customContentView) {
-        this(false, title);
-        setName(title);
-        this.customContentView = customContentView;
+        this(title, false);
+        this.contentView = customContentView;
     }
 
     /**
@@ -239,6 +241,33 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
     }
 
     /**
+     * Adds a result viewer to this panel.
+     *
+     * @param resultViewer The result viewer.
+     */
+    private void addResultViewer(DataResultViewer resultViewer) {
+        if (null != contentView) {
+            resultViewer.setContentViewer(contentView);
+        }
+        resultViewers.add(resultViewer);
+        dataResultTabbedPanel.addTab(resultViewer.getTitle(), resultViewer.getComponent());
+    }
+
+    /**
+     * Gets the result viewers for this panel.
+     *
+     * @return A list of result viewers.
+     */
+    @Override
+    public List<DataResultViewer> getViewers() {
+        List<DataResultViewer> viewers = new ArrayList<>();
+        resultViewers.forEach((viewer) -> {
+            viewers.add(viewer);
+        });
+        return viewers;
+    }
+
+    /**
      * Sets the content view for this panel. Needs to be called before the first
      * call to open.
      *
@@ -246,7 +275,7 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      *                          content view.
      */
     public void setContentViewer(DataContent customContentView) {
-        this.customContentView = customContentView;
+        this.contentView = customContentView;
     }
 
     /**
@@ -297,33 +326,6 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
         }
 
         this.setVisible(true);
-    }
-
-    /**
-     * Adds a result viewer to this panel.
-     *
-     * @param resultViewer The result viewer.
-     */
-    private void addResultViewer(DataResultViewer resultViewer) {
-        if (null != customContentView) {
-            resultViewer.setContentViewer(customContentView);
-        }
-        resultViewers.add(resultViewer);
-        dataResultTabbedPanel.addTab(resultViewer.getTitle(), resultViewer.getComponent());
-    }
-
-    /**
-     * Gets the result viewers for this panel.
-     *
-     * @return A list of result viewers.
-     */
-    @Override
-    public List<DataResultViewer> getViewers() {
-        List<DataResultViewer> viewers = new ArrayList<>();
-        for (DataResultViewer viewer : resultViewers) {
-            viewers.add(viewer);
-        }
-        return viewers;
     }
 
     /**
@@ -395,9 +397,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param selectedNodes The nodes to be selected.
      */
     public void setSelectedNodes(Node[] selectedNodes) {
-        for (DataResultViewer viewer : this.resultViewers) {
+        this.resultViewers.forEach((viewer) -> {
             viewer.setSelectedNodes(selectedNodes);
-        }
+        });
     }
 
     /**
@@ -408,53 +410,54 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      */
     private void setupTabs(Node selectedNode) {
         /*
-         * Enable or disable the child tabs based on whether or not the
+         * Enable or disable the result viewer tabs based on whether or not the
          * corresponding results viewer supports display of the selected node.
          */
-        int tabIndex = 0;
-        for (DataResultViewer viewer : resultViewers) {
-            if (viewer.isSupported(selectedNode)) {
-                dataResultTabbedPanel.setEnabledAt(tabIndex, true);
+        for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
+            if (resultViewers.get(i).isSupported(selectedNode)) {
+                dataResultTabbedPanel.setEnabledAt(i, true);
             } else {
-                dataResultTabbedPanel.setEnabledAt(tabIndex, false);
+                dataResultTabbedPanel.setEnabledAt(i, false);
             }
-            ++tabIndex;
         }
 
         /*
-         * If the current tab is not enabled for the selected node, try to
-         * select a tab that is enabled.
+         * If the selected node has a child to be selected, default the selected
+         * tab to the table result viewer. Otherwise, use the last selected tab,
+         * if it is enabled. If not, select the first enabled tab that can be
+         * found.
          */
-        boolean hasViewerEnabled = true;
-        int currentActiveTab = dataResultTabbedPanel.getSelectedIndex();
-        if ((currentActiveTab == -1) || (dataResultTabbedPanel.isEnabledAt(currentActiveTab) == false)) {
-            hasViewerEnabled = false;
-            for (int i = 0; i < dataResultTabbedPanel.getTabCount(); i++) {
-                if (dataResultTabbedPanel.isEnabledAt(i)) {
-                    currentActiveTab = i;
-                    hasViewerEnabled = true;
-                    break;
+        int tabToSelect = NO_TAB_SELECTED;
+        if (selectedNode instanceof TableFilterNode) {
+            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) selectedNode).getChildNodeSelectionInfo();
+            if (null != selectedChildInfo) {
+                for (int i = 0; i < resultViewers.size(); ++i) {
+                    if (resultViewers.get(i) instanceof DataResultViewerTable && dataResultTabbedPanel.isEnabledAt(i)) {
+                        tabToSelect = i;
+                    }
                 }
             }
-
-            if (hasViewerEnabled) {
-                dataResultTabbedPanel.setSelectedIndex(currentActiveTab);
+        };
+        if (NO_TAB_SELECTED == tabToSelect) {
+            tabToSelect = dataResultTabbedPanel.getSelectedIndex();
+            if ((NO_TAB_SELECTED == tabToSelect) || (!dataResultTabbedPanel.isEnabledAt(tabToSelect))) {
+                for (int i = 0; i < dataResultTabbedPanel.getTabCount(); ++i) {
+                    if (dataResultTabbedPanel.isEnabledAt(i)) {
+                        tabToSelect = i;
+                        break;
+                    }
+                }
             }
         }
 
         /*
-         * Push the node to the selected results viewer.
+         * If there is a tab to sele3ct, do so, and push the selected node to
+         * the corresponding result viewer.
          */
-        if (hasViewerEnabled) {
-            resultViewers.get(currentActiveTab).setNode(selectedNode);
+        if (NO_TAB_SELECTED != tabToSelect) {
+            dataResultTabbedPanel.setSelectedIndex(tabToSelect);
+            resultViewers.get(tabToSelect).setNode(selectedNode);
         }
-
-        /*
-         * Now that the selected node has been pushed to the selected results
-         * viewer and it has had an opportunity to act on the child selection
-         * info of the node, if any, clear the child selection info.
-         */
-        ((TableFilterNode) selectedNode).setChildNodeSelectionInfo(null);
     }
 
     /**
@@ -464,9 +467,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
      * @param unusedSelectedNode The selected node.
      */
     public void resetTabs(Node unusedSelectedNode) {
-        for (DataResultViewer viewer : this.resultViewers) {
+        this.resultViewers.forEach((viewer) -> {
             viewer.resetComponent();
-        }
+        });
     }
 
     /**
@@ -514,14 +517,14 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
             explorerManager = null;
         }
 
-        for (DataResultViewer viewer : this.resultViewers) {
+        this.resultViewers.forEach((viewer) -> {
             viewer.setNode(null);
-        }
+        });
 
         if (!this.isMain) {
-            for (DataResultViewer viewer : this.resultViewers) {
+            this.resultViewers.forEach((viewer) -> {
                 viewer.clearComponent();
-            }
+            });
             this.directoryTablePath.removeAll();
             this.directoryTablePath = null;
             this.numberMatchLabel.removeAll();
@@ -552,22 +555,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
              */
             if (evt.getPropertyName().equals(ExplorerManager.PROP_SELECTED_NODES)) {
                 setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-                /*
-                 * Use either the custom content view or the default view, if no
-                 * custom view has been set. The default content view is the
-                 * DataContentTopComponent docked into the lower right hand side
-                 * of the main window of the application.
-                 */
-                DataContent contentViewer;
-                if (null != customContentView) {
-                    contentViewer = customContentView;
-                } else {
-                    contentViewer = Lookup.getDefault().lookup(DataContent.class);
-                }
-
                 try {
-                    if (contentViewer != null) {
+                    if (contentView != null) {
                         Node[] selectedNodes = explorerManager.getSelectedNodes();
 
                         /*
@@ -585,9 +574,9 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                          * for a single node..
                          */
                         if (1 == selectedNodes.length) {
-                            contentViewer.setNode(selectedNodes[0]);
+                            contentView.setNode(selectedNodes[0]);
                         } else {
-                            contentViewer.setNode(null);
+                            contentView.setNode(null);
                         }
                     }
                 } finally {
@@ -625,11 +614,8 @@ public class DataResultPanel extends javax.swing.JPanel implements DataResult, C
                 if (SwingUtilities.isEventDispatchThread()) {
                     setupTabs(nme.getNode());
                 } else {
-                    SwingUtilities.invokeLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            setupTabs(nme.getNode());
-                        }
+                    SwingUtilities.invokeLater(() -> {
+                        setupTabs(nme.getNode());
                     });
                 }
             }
