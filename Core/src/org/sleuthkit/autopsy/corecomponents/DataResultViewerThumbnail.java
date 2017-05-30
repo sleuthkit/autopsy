@@ -27,9 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -540,6 +538,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             pageNumLabel.setText("");
             imagesRangeLabel.setText("");
             thumbnailSizeComboBox.setEnabled(false);
+            sortButton.setEnabled(false);
         } else {
             pageNumLabel.setText(
                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
@@ -551,6 +550,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             pageNextButton.setEnabled(!(curPage == totalPages));
             pagePrevButton.setEnabled(!(curPage == 1));
             goToPageField.setEnabled(totalPages > 1);
+            sortButton.setEnabled(true);
             thumbnailSizeComboBox.setEnabled(true);
         }
 

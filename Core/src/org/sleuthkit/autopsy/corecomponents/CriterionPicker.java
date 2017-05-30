@@ -19,34 +19,45 @@
 package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.List;
+import java.util.function.Consumer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.SortOrder;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 
- class CriterionPicker extends javax.swing.JPanel {
+class CriterionPicker extends javax.swing.JPanel {
 
-    private final List<Node.Property<?>> availableProps;
     private final DefaultComboBoxModel<Node.Property<?>> defaultComboBoxModel;
-    private final SortChooser chooser;
+    private DefaultListCellRenderer defaultListCellRenderer = new DefaultListCellRenderer();
+
+    static CriterionPicker create(List<Node.Property<?>> availableProps, Consumer<CriterionPicker> removeCallback) {
+        CriterionPicker criterionPicker = new CriterionPicker(availableProps);
+        if (removeCallback != null) {
+            criterionPicker.removeButton.addActionListener(event -> {
+                removeCallback.accept(criterionPicker);
+            });
+        } else {
+            criterionPicker.removeButton.setEnabled(false);
+        }
+        return criterionPicker;
+    }
+
+    static CriterionPicker create(List<Node.Property<?>> availableProps) {
+        return create(availableProps, null);
+    }
 
     /**
-     * Creates new form CriteriaPicker
+     * @param availableProps
      */
-    public CriterionPicker(List<Node.Property<?>> availableProps, SortChooser chooser) {
+    private CriterionPicker(List<Node.Property<?>> availableProps) {
         initComponents();
-        this.availableProps = availableProps;
         defaultComboBoxModel = new DefaultComboBoxModel<>(availableProps.toArray(new Node.Property<?>[availableProps.size()]));
         propComboBox.setModel(defaultComboBoxModel);
         propComboBox.setRenderer((list, value, index, isSelected, cellHasFocus)
                 -> defaultListCellRenderer.getListCellRendererComponent(list, value == null ? "" : value.getName(), index, isSelected, cellHasFocus));
-        this.chooser = chooser;
-        if (chooser == null) {
-            removeButton.setEnabled(false);
-        }
+
     }
-    private DefaultListCellRenderer defaultListCellRenderer = new DefaultListCellRenderer();
 
     SortCriterion getSelectedCriteria(int rank) {
         return new SortCriterion(
@@ -78,11 +89,6 @@ import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterio
 
         removeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/cross-script.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(removeButton, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.removeButton.text")); // NOI18N
-        removeButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                removeButtonActionPerformed(evt);
-            }
-        });
 
         sortOrderGroup.add(ascendingRadio);
         ascendingRadio.setSelected(true);
@@ -133,22 +139,16 @@ import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterio
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(3, 3, 3)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
                     .addComponent(label1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(propComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(removeButton)
                     .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
-        if (chooser != null) {
-            chooser.removeCriterionPicker(this);
-        }
-    }//GEN-LAST:event_removeButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -161,4 +161,5 @@ import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterio
     private javax.swing.JButton removeButton;
     private javax.swing.ButtonGroup sortOrderGroup;
     // End of variables declaration//GEN-END:variables
+
 }

@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import javax.swing.SwingUtilities;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 
@@ -37,7 +39,9 @@ public class SortChooser extends javax.swing.JPanel {
         initComponents();
 
         this.availableProps = availableProps;
-        addCriteria(null);
+        final CriterionPicker criterionPicker = CriterionPicker.create(availableProps);
+        pickers.add(criterionPicker);
+        scrollContent.add(criterionPicker);
     }
 
     List<SortCriterion> getCriteria() {
@@ -98,15 +102,18 @@ public class SortChooser extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void addCriteriaButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addCriteriaButtonActionPerformed
-        addCriteria(this);
-        revalidate();
-    }//GEN-LAST:event_addCriteriaButtonActionPerformed
-
-    private void addCriteria(SortChooser parent) {
-        final CriterionPicker criterionPicker = new CriterionPicker(availableProps, parent);
+        final CriterionPicker criterionPicker = CriterionPicker.create(availableProps, picker -> {
+            SwingUtilities.invokeLater(() -> {
+                pickers.remove(picker);
+                scrollContent.remove(picker);
+                revalidate();
+                repaint();
+            });
+        });
         pickers.add(criterionPicker);
         scrollContent.add(criterionPicker);
-    }
+        revalidate();
+    }//GEN-LAST:event_addCriteriaButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -116,10 +123,4 @@ public class SortChooser extends javax.swing.JPanel {
     private javax.swing.JPanel scrollContent;
     // End of variables declaration//GEN-END:variables
 
-    void removeCriterionPicker(CriterionPicker picker) {
-        pickers.remove(picker);
-        scrollContent.remove(picker);
-        revalidate();
-        repaint();
-    }
 }
