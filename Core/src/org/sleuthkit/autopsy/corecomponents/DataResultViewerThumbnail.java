@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -239,9 +240,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addGap(20, 20, 20)
                         .addComponent(sortButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(sortLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(sortLabel))
                     .addComponent(filePathLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -332,24 +333,23 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             List<SortCriterion> criteria = sortChooser.getCriteria();
             final Preferences preferences = NbPreferences.forModule(DataResultViewerThumbnail.class);
 
-            Map<Node.Property<?>, SortOrder> sortOrderMap = criteria.stream()
+            Map<Node.Property<?>, SortCriterion> sortOrderMap = criteria.stream()
                     .collect(Collectors.toMap(SortCriterion::getProperty,
-                            SortCriterion::getSortOrder));
-            Map<Node.Property<?>, Integer> rankMap = criteria.stream()
-                    .collect(Collectors.toMap(SortCriterion::getProperty,
-                            criteria::indexOf));
+                            Function.identity(),
+                            (u, v)->u));
+
             //store the sorting information
             int numCols = allChildProperties.size();
             for (int i = 0; i < numCols; i++) {
                 Node.Property<?> prop = allChildProperties.get(i);
                 String columnName = prop.getName();
-                SortOrder sortOrder = sortOrderMap.get(prop);
+                SortCriterion criterion = sortOrderMap.get(prop);
                 final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
                 final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
 
-                if (sortOrder != null) {
-                    preferences.put(columnSortOrderKey, String.valueOf(sortOrder == SortOrder.ASCENDING));
-                    preferences.put(columnSortRankKey, String.valueOf(rankMap.get(prop) + 1));
+                if (criterion != null) {
+                    preferences.putBoolean(columnSortOrderKey, criterion.getSortOrder() == SortOrder.ASCENDING);
+                    preferences.putInt(columnSortRankKey, criterion.getSortRank() + 1);
                 } else {
                     preferences.remove(columnSortOrderKey);
                     preferences.remove(columnSortRankKey);

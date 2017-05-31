@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
@@ -145,10 +146,10 @@ final class ResultViewerPersistence {
         java.util.SortedMap<Integer, SortCriterion> criteriaMap = new TreeMap<>();
         availableProperties.forEach(prop -> {
             //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-            Integer sortRank = Integer.valueOf(preferences.get(ResultViewerPersistence.getColumnSortRankKey(node, prop.getName()), "0"));
+            Integer sortRank = preferences.getInt(ResultViewerPersistence.getColumnSortRankKey(node, prop.getName()), 0);
 
             if (sortRank != 0) {
-                final SortOrder sortOrder = Boolean.valueOf(preferences.get(ResultViewerPersistence.getColumnSortOrderKey(node, prop.getName()), "true"))
+                final SortOrder sortOrder = preferences.getBoolean(ResultViewerPersistence.getColumnSortOrderKey(node, prop.getName()), true)
                         ? SortOrder.ASCENDING
                         : SortOrder.DESCENDING;
                 final SortCriterion sortCriterion = new SortCriterion(prop, sortOrder, sortRank);
@@ -167,7 +168,7 @@ final class ResultViewerPersistence {
         private final SortOrder order;
         private final int rank;
 
-        int sortRank() {
+        int getSortRank() {
             return rank;
         }
 
@@ -187,7 +188,7 @@ final class ResultViewerPersistence {
 
         @Override
         public String toString() {
-            return sortRank() + ". "
+            return getSortRank() + ". "
                     + getProperty().getName() + " "
                     + (getSortOrder() == SortOrder.ASCENDING
                             ? "\u25B2" // /\

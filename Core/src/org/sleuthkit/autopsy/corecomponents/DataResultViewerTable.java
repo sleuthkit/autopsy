@@ -29,12 +29,9 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -59,7 +56,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
-import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.NbBundle;
@@ -355,7 +351,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             // Store the current order of the columns into settings
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
-                preferences.put(ResultViewerPersistence.getColumnPositionKey(tfn, entry.getValue().getName()), String.valueOf(entry.getKey()));
+                preferences.putInt(ResultViewerPersistence.getColumnPositionKey(tfn, entry.getValue().getName()), entry.getKey());
             }
             final TableColumnModel columnModel = outline.getColumnModel();
 
@@ -367,8 +363,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
                 final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
                 if (etc.isSorted()) {
-                    preferences.put(columnSortOrderKey, String.valueOf(etc.isAscending()));
-                    preferences.put(columnSortRankKey, String.valueOf(etc.getSortRank()));
+                    preferences.putBoolean(columnSortOrderKey, etc.isAscending());
+                    preferences.putInt(columnSortRankKey, etc.getSortRank());
                 } else {
                     preferences.remove(columnSortOrderKey);
                     preferences.remove(columnSortRankKey);
@@ -397,9 +393,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             propertiesMap.entrySet().stream().forEach(entry -> {
                 final String propName = entry.getValue().getName();
                 //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-                Integer sortRank = Integer.valueOf(preferences.get(ResultViewerPersistence.getColumnSortRankKey(tfn, propName), "0"));
+                Integer sortRank = preferences.getInt(ResultViewerPersistence.getColumnSortRankKey(tfn, propName), 0);
                 //default to true => ascending
-                Boolean sortOrder = Boolean.valueOf(preferences.get(ResultViewerPersistence.getColumnSortOrderKey(tfn, propName), "true"));
+                Boolean sortOrder = preferences.getBoolean(ResultViewerPersistence.getColumnSortOrderKey(tfn, propName), true);
 
                 treeSet.add(new ColumnSortInfo(entry.getKey(), sortRank, sortOrder));
             });
@@ -441,7 +437,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(preferences.get(ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName()), "-1"));
+            Integer value = preferences.getInt(ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName()), -1);
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
                 noPreviousSettings = false;
