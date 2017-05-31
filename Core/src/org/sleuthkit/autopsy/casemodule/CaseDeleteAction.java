@@ -32,6 +32,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -49,7 +50,7 @@ final class CaseDeleteAction extends CallableSystemAction {
         putValue(Action.NAME, NbBundle.getMessage(CaseDeleteAction.class, "CTL_CaseDeleteAction"));
         this.setEnabled(false);
         Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
-            setEnabled(null != evt.getNewValue());
+            setEnabled(null != evt.getNewValue() && UserPreferences.getMode() != UserPreferences.SelectedMode.REVIEW);
         });
     }
 
