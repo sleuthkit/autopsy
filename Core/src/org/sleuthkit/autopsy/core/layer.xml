@@ -167,6 +167,10 @@
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseCloseAction.instance"/>
                 <attr name="position" intvalue="103"/>
             </file>
+            <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.shadow">
+                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
+                <attr name="position" intvalue="104"/>
+            </file>
             <file name="org-sleuthkit-autopsy-casemodule-AddImage-separatorBefore.instance">
                 <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
                 <attr name="position" intvalue="200"/>
@@ -186,14 +190,6 @@
             <file name="org-sleuthkit-autopsy-casemodule-CasePropertiesAction.shadow">
                 <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CasePropertiesAction.instance"/>
                 <attr name="position" intvalue="301"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction-separatorBefore.instance">
-                <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                <attr name="position" intvalue="400"/>
-            </file>
-            <file name="org-sleuthkit-autopsy-casemodule-CaseDeleteAction.shadow">
-                <attr name="originalFile" stringvalue="Actions/Case/org-sleuthkit-autopsy-casemodule-CaseDeleteAction.instance"/>
-                <attr name="position" intvalue="401"/>
             </file>
             <file name="org-netbeans-modules-print-action-PageSetupAction.shadow_hidden"/>
             <file name="org-netbeans-modules-print-action-PrintAction.shadow_hidden"/>
