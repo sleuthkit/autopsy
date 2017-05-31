@@ -26,6 +26,7 @@ import java.awt.Graphics;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
 import javax.swing.JTable;
@@ -47,7 +49,6 @@ import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import org.apache.commons.lang3.StringUtils;
 import org.netbeans.swing.etable.ETableColumn;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
@@ -64,20 +65,22 @@ import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 
 /**
- * DataResult sortable table viewer
+ * A tabular viewer for the results view.
  *
- * @@@ Restore implementation of DataResultViewerTable as a DataResultViewer
- * service provider when DataResultViewers can be made compatible with node
- * multiple selection actions.
+ * TODO (JIRA-2658): Fix DataResultViewer extension point. When this is done,
+ * restore implementation of DataResultViewerTable as a DataResultViewer service
+ * provider.
  */
 //@ServiceProvider(service = DataResultViewer.class)
 public class DataResultViewerTable extends AbstractDataResultViewer {
 
     private static final long serialVersionUID = 1L;
-
+    private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
     @NbBundle.Messages("DataResultViewerTable.pleasewaitNodeDisplayName=Please Wait...")
@@ -234,12 +237,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 oldNode.removeNodeListener(pleasewaitNodeListener);
             }
 
-            // if there's no selection node, do nothing
             if (hasChildren) {
-                Node root = selectedNode;
+                currentRoot = selectedNode;
                 pleasewaitNodeListener.reset();
-                root.addNodeListener(pleasewaitNodeListener);
-                setupTable(root);
+                currentRoot.addNodeListener(pleasewaitNodeListener);
+                em.setRootContext(currentRoot);
+                setupTable();
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
@@ -254,16 +257,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     /**
      * Create Column Headers based on the Content represented by the Nodes in
      * the table.
-     *
-     * @param root The parent Node of the ContentNodes
      */
-    private void setupTable(final Node root) {
-
-        em.setRootContext(root);
-
-        currentRoot = root;
-        List<Node.Property<?>> props = loadColumnOrder();
-
+    private void setupTable() {
         /**
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -275,10 +270,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * duplicates getDisplayName(). The current implementation does not
          * allow the first property column to be moved.
          */
+        List<Node.Property<?>> props = loadColumnOrder();
         if (props.isEmpty() == false) {
             Node.Property<?> prop = props.remove(0);
             ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
         }
+
         /*
          * show the horizontal scroll panel and show all the content & header If
          * there is only one column (which was removed from props above) Just
@@ -287,10 +284,32 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
 
         assignColumns(props);
-
         setColumnWidths();
-
         loadColumnSorting();
+
+        /**
+         * If one of the child nodes of the root node is to be selected, select
+         * it.
+         */
+        SwingUtilities.invokeLater(()->{
+        if (currentRoot instanceof TableFilterNode) {
+            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
+            if (null != selectedChildInfo) {
+                Node[] childNodes = currentRoot.getChildren().getNodes(true);
+                for (int i = 0; i < childNodes.length; ++i) {
+                    Node childNode = childNodes[i];
+                    if (selectedChildInfo.matches(childNode)) {
+                        try {
+                            em.setSelectedNodes(new Node[]{childNode});
+                        } catch (PropertyVetoException ex) {
+                            logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                        }
+                        break;
+                    }
+                }
+                ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
+            }
+        }});
     }
 
     private void setColumnWidths() {
@@ -680,9 +699,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 load = false;
                 //JMTODO: this looks suspicious
                 if (SwingUtilities.isEventDispatchThread()) {
-                    setupTable(nme.getNode());
+                    setupTable();
                 } else {
-                    SwingUtilities.invokeLater(() -> setupTable(nme.getNode()));
+                    SwingUtilities.invokeLater(() -> setupTable());
                 }
             }
         }

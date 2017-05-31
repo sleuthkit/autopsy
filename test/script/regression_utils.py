@@ -19,6 +19,20 @@ def make_path(*dirs):
 		path += ("\\" + str(dir))
 	return path_fix(path)
 
+# Returns a path based on the os.
+def make_os_path(platform, *dirs):
+    if platform == "cygwin":
+        path = ""
+        for dir in dirs:
+            path += str(dir).replace('\\', '/') + '/'
+        return path_fix(path)
+    elif platform == "win32":
+        return make_path(dirs)
+    else:
+        print("Couldn't make path, because we only support Windows and Cygwin at this time.")
+        sys.exit(1)
+
+
 # Fix a standard os.path by making it Windows format
 def path_fix(path):
 	return os.path.normcase(os.path.normpath(path))

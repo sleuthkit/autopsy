@@ -68,6 +68,15 @@
                 <sysproperty key="known_bad_path" value="${known_bad_path}"/>
                 <sysproperty key="nsrl_path" value="${nsrl_path}"/>
                 <sysproperty key="keyword_path" value="${keyword_path}"/>
+                <sysproperty key="dbHost" value="${dbHost}"/>
+                <sysproperty key="dbPort" value="${dbPort}"/>
+                <sysproperty key="dbUserName" value="${dbUserName}"/>
+                <sysproperty key="dbPassword" value="${dbPassword}"/>
+                <sysproperty key="solrHost" value="${solrHost}"/>
+                <sysproperty key="solrPort" value="${solrPort}"/>
+                <sysproperty key="messageServiceHost" value="${messageServiceHost}"/>
+                <sysproperty key="messageServicePort" value="${messageServicePort}"/>
+                <sysproperty key="isMultiUser" value="${isMultiUser}"/>
                 <!--needed to have tests NOT to steal focus when running, works in latest apple jdk update only.-->
                 <sysproperty key="apple.awt.UIElement" value="@{disable.apple.ui}"/>
                 <formatter type="brief" usefile="false"/>

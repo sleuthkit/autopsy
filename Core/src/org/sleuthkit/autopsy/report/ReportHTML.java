@@ -586,7 +586,7 @@ class ReportHTML implements TableReportModule {
             // save it in a folder based on the tag name
             String localFilePath = saveContent(file, contentTag.getName().getDisplayName());
             localFileLink.append(localFilePath);
-            localFileLink.append("\">");
+            localFileLink.append("\" target=\"_top\">");
         }
 
         StringBuilder builder = new StringBuilder();

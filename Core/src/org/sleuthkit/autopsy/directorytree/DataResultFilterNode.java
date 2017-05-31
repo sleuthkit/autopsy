@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
@@ -69,6 +70,7 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
+import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 
 /**
  * A node used to wrap another node before passing it to the result viewers. The
@@ -209,6 +211,33 @@ public class DataResultFilterNode extends FilterNode {
     }
 
     /**
+     * Adds information about which child node of this node, if any, should be
+     * selected. Can be null.
+     *
+     * @param selectedChildNodeInfo The child node selection information.
+     */
+    public void setChildNodeSelectionInfo(NodeSelectionInfo selectedChildNodeInfo) {
+        if (getOriginal() instanceof DisplayableItemNode) {
+            ((DisplayableItemNode) getOriginal()).setChildNodeSelectionInfo(selectedChildNodeInfo);
+        }
+    }
+
+    /**
+     * Gets information about which child node of this node, if any, should be
+     * selected.
+     *
+     * @return The child node selection information, or null if no child should
+     *         be selected.
+     */
+    public NodeSelectionInfo getChildNodeSelectionInfo() {
+        if (getOriginal() instanceof DisplayableItemNode) {
+            return ((DisplayableItemNode) getOriginal()).getChildNodeSelectionInfo();
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * This class is used for the creation of all the children for the
      * DataResultFilterNode that created in the DataResultFilterNode.java.
      *
@@ -266,6 +295,7 @@ public class DataResultFilterNode extends FilterNode {
         }
     }
 
+    @NbBundle.Messages("DataResultFilterNode.viewSourceArtifact.text=View Source Result")
     /**
      * Uses the default nodes actions per node, adds some custom ones and
      * returns them per visited node type
@@ -292,6 +322,12 @@ public class DataResultFilterNode extends FilterNode {
                     || artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID()) {
                 actionsList.add(new ViewContextAction(
                         NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewFileInDir.text"), ban));
+            } else if (artifactTypeID == BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
+                //action to go to the source artifact
+                actionsList.add(new ViewSourceArtifactAction(DataResultFilterNode_viewSourceArtifact_text(), ba));
+                // action to go to the source file of the artifact
+                actionsList.add(new ViewContextAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewSrcFileInDir.text"), ban));
             } else {
                 // if the artifact links to another file, add an action to go to
                 // that file

@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2012-2014 Basis Technology Corp.
+ *
+ * Copyright 2012-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Support for TSK_EMAIL_MSG nodes and displaying emails in the directory tree.
@@ -62,16 +61,43 @@ public class EmailExtracted implements AutopsyVisitableItem {
     private static final String MAIL_ACCOUNT = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailAccount.text");
     private static final String MAIL_FOLDER = NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.mailFolder.text");
     private static final String MAIL_PATH_SEPARATOR = "/";
+    /**
+     * Parse the path of the email msg to get the account name and folder in
+     * which the email is contained.
+     *
+     * @param path - the TSK_PATH to the email msg
+     *
+     * @return a map containg the account and folder which the email is stored
+     *         in
+     */
+    public static final Map<String, String> parsePath(String path) {
+        Map<String, String> parsed = new HashMap<>();
+        String[] split = path.split(MAIL_PATH_SEPARATOR);
+        if (split.length < 4) {
+            parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
+            parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
+            return parsed;
+        }
+        parsed.put(MAIL_ACCOUNT, split[2]);
+        parsed.put(MAIL_FOLDER, split[3]);
+        return parsed;
+    }
     private SleuthkitCase skCase;
     private final EmailResults emailResults;
+
 
     public EmailExtracted(SleuthkitCase skCase) {
         this.skCase = skCase;
         emailResults = new EmailResults();
     }
 
-    private final class EmailResults extends Observable {
 
+    @Override
+    public <T> T accept(AutopsyItemVisitor<T> v) {
+        return v.visit(this);
+    }
+    private final class EmailResults extends Observable {
+        
         // NOTE: the map can be accessed by multiple worker threads and needs to be synchronized
         private final Map<String, Map<String, List<Long>>> accounts = new LinkedHashMap<>();
 
@@ -143,24 +169,6 @@ public class EmailExtracted implements AutopsyVisitableItem {
             setChanged();
             notifyObservers();
         }
-
-        private Map<String, String> parsePath(String path) {
-            Map<String, String> parsed = new HashMap<>();
-            String[] split = path.split(MAIL_PATH_SEPARATOR);
-            if (split.length < 4) {
-                parsed.put(MAIL_ACCOUNT, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultAcct.text"));
-                parsed.put(MAIL_FOLDER, NbBundle.getMessage(EmailExtracted.class, "EmailExtracted.defaultFolder.text"));
-                return parsed;
-            }
-            parsed.put(MAIL_ACCOUNT, split[2]);
-            parsed.put(MAIL_FOLDER, split[3]);
-            return parsed;
-        }
-    }
-
-    @Override
-    public <T> T accept(AutopsyItemVisitor<T> v) {
-        return v.visit(this);
     }
 
     /**
@@ -485,7 +493,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
             try {
                 BlackboardArtifact artifact = skCase.getBlackboardArtifact(artifactId);
                 return new BlackboardArtifactNode(artifact);
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Error creating mail messages nodes", ex); //NON-NLS
             }
             return null;

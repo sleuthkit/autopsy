@@ -189,7 +189,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
     @Override
     public boolean isLeafTypeNode() {
-        return true;
+        return false;
     }
 
     /**

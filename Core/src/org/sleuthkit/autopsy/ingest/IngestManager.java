@@ -67,163 +67,79 @@ import org.sleuthkit.datamodel.Content;
  */
 public class IngestManager {
 
-    private static final Logger logger = Logger.getLogger(IngestManager.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(IngestManager.class.getName());
     private static IngestManager instance;
-    private final Object ingestMessageBoxLock = new Object();
 
     /*
-     * The ingest manager maintains a mapping of ingest job ids to running
-     * ingest jobs.
+     * Every ingest job that is submitted to the ingest manager is passed to an
+     * ingest task scheduler to be broken down into data source level and file
+     * level ingest job tasks that are put into queues for execution by the
+     * ingest manager's executors. The process of starting an ingest job is
+     * handled by a single-threaded executor, the processing of data source
+     * level ingest tasks is handled by another single-threaded executor, and
+     * the processing of file level ingest jobs is handled by an executor with a
+     * configurable number of threads.
      */
-    private final Map<Long, IngestJob> jobsById;
-
-    /*
-     * Each runnable/callable task the ingest manager submits to its thread
-     * pools is given a unique thread/task ID.
-     */
-    private final AtomicLong nextThreadId;
-
-    /*
-     * Ingest jobs may be queued to be started on a pool thread by start ingest
-     * job tasks. A mapping of task ids to the Future objects for each task is
-     * maintained to allow for task cancellation.
-     */
-    private final Map<Long, Future<Void>> startIngestJobTasks;
-    private final ExecutorService startIngestJobsThreadPool;
-
-    /*
-     * Ingest jobs use an ingest task scheduler to break themselves down into
-     * data source level and file level tasks. The ingest scheduler puts these
-     * ingest tasks into queues for execution on ingest manager pool threads by
-     * ingest task executers. There is a single data source level ingest thread
-     * and a user configurable number of file level ingest threads.
-     */
-    private final ExecutorService dataSourceIngestThreadPool;
-    private static final int MIN_NUMBER_OF_FILE_INGEST_THREADS = 1;
-    private static final int MAX_NUMBER_OF_FILE_INGEST_THREADS = 16;
-    private static final int DEFAULT_NUMBER_OF_FILE_INGEST_THREADS = 2;
+    private volatile boolean ingestJobCreationIsEnabled;
+    private final Map<Long, IngestJob> ingestJobsById = new ConcurrentHashMap<>();
+    private final AtomicLong nextIngestManagerTaskId = new AtomicLong(0L);
+    private final Map<Long, Future<Void>> startIngestJobTasks = new ConcurrentHashMap<>();
+    private final ExecutorService startIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS;
+    private final ExecutorService dataSourceLevelIngestJobTasksExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS;
+    private static final int MIN_NUM_FILE_INGEST_THREADS = 1;
+    private static final int MAX_NUM_FILE_INGEST_THREADS = 16;
+    private static final int DEFAULT_NUM_FILE_INGEST_THREADS = 2;
     private int numberOfFileIngestThreads;
-    private final ExecutorService fileIngestThreadPool;
+    private ExecutorService fileLevelIngestJobTasksExecutor;
 
+    /*
+     * The ingest manager publishes two kinds of application events: ingest job
+     * events and ingest module events. Ingest job events are published when an
+     * ingest job changes states, e.g., an ingest job is started or completed.
+     * Ingest module events are published on behalf of ingest modules working on
+     * an ingest job, e.g., content or an artifact was added to the case. Each
+     * event type is handled by a separate event publisher with its own remore
+     * event channel, but all event publishing is handled by a dedicated
+     * executor.
+     */
     private static final String JOB_EVENT_CHANNEL_NAME = "%s-Ingest-Job-Events"; //NON-NLS
+    private static final Set<String> INGEST_JOB_EVENT_NAMES = Stream.of(IngestJobEvent.values()).map(IngestJobEvent::toString).collect(Collectors.toSet());
+    private AutopsyEventPublisher jobEventPublisher = new AutopsyEventPublisher();
     private static final String MODULE_EVENT_CHANNEL_NAME = "%s-Ingest-Module-Events"; //NON-NLS
-    private static final Set<String> jobEventNames = Stream.of(IngestJobEvent.values())
-            .map(IngestJobEvent::toString)
-            .collect(Collectors.toSet());
-    private static final Set<String> moduleEventNames = Stream.of(IngestModuleEvent.values())
-            .map(IngestModuleEvent::toString)
-            .collect(Collectors.toSet());
-    private AutopsyEventPublisher jobEventPublisher;
-    private AutopsyEventPublisher moduleEventPublisher;
-    private final ExecutorService eventPublishingExecutor;
+    private static final Set<String> INGEST_MODULE_EVENT_NAMES = Stream.of(IngestModuleEvent.values()).map(IngestModuleEvent::toString).collect(Collectors.toSet());
+    private AutopsyEventPublisher moduleEventPublisher = new AutopsyEventPublisher();
+    private final ExecutorService eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS;
 
     /*
      * The ingest manager uses an ingest monitor to determine when system
-     * resources are under pressure. If the monitor detects such a situation, it
-     * calls back to the ingest manager to cancel all ingest jobs in progress.
+     * resources are under pressure. If the ingest monitor detects such a
+     * situation, it calls back to the ingest manager to cancel all ingest jobs
+     * in progress.
+     *
+     * The ingest manager also uses a service monitor to watch for service
+     * outages. If a key services goes down, the ingest manager cancels all
+     * ingest jobs in progress.
      */
-    private final IngestMonitor ingestMonitor;
+    private final ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
+    private final IngestMonitor ingestMonitor = new IngestMonitor();
 
     /*
      * The ingest manager provides access to a top component that is used by
-     * ingest module to post messages for the user. A count of the posts is used
-     * as a cap to avoid bogging down the application.
+     * ingest modules to post messages for the user. A count of the posts is
+     * used as a cap to avoid bogging down the application.
      */
     private static final int MAX_ERROR_MESSAGE_POSTS = 200;
+    private final AtomicLong ingestErrorMessagePosts = new AtomicLong(0L);
+    private final Object ingestMessageBoxLock = new Object();
     private volatile IngestMessageTopComponent ingestMessageBox;
-    private final AtomicLong ingestErrorMessagePosts;
 
     /*
      * The ingest manager supports reporting of ingest processing progress by
      * collecting snapshots of the activities of the ingest threads, ingest job
      * progress, and ingest module run times.
      */
-    private final ConcurrentHashMap<Long, IngestThreadActivitySnapshot> ingestThreadActivitySnapshots;
-    private final ConcurrentHashMap<String, Long> ingestModuleRunTimes;
-
-    /*
-     * The ingest job creation capability of the ingest manager can be turned on
-     * and off to support an orderly shut down of the application.
-     */
-    private volatile boolean jobCreationIsEnabled;
-
-    /*
-     * Ingest manager subscribes to service outage notifications. If key
-     * services are down, ingest manager cancels all ingest jobs in progress.
-     */
-    private final ServicesMonitor servicesMonitor;
-
-    /**
-     * Ingest job events.
-     */
-    public enum IngestJobEvent {
-
-        /**
-         * Property change event fired when an ingest job is started. The old
-         * value of the PropertyChangeEvent object is set to the ingest job id,
-         * and the new value is set to null.
-         */
-        STARTED,
-        /**
-         * Property change event fired when an ingest job is completed. The old
-         * value of the PropertyChangeEvent object is set to the ingest job id,
-         * and the new value is set to null.
-         */
-        COMPLETED,
-        /**
-         * Property change event fired when an ingest job is canceled. The old
-         * value of the PropertyChangeEvent object is set to the ingest job id,
-         * and the new value is set to null.
-         */
-        CANCELLED,
-        /**
-         * Property change event fired when analysis (ingest) of a data source
-         * included in an ingest job is started. Both the old and new values of
-         * the ProerptyChangeEvent are set to null - cast the
-         * PropertyChangeEvent to
-         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent to
-         * access event data.
-         */
-        DATA_SOURCE_ANALYSIS_STARTED,
-        /**
-         * Property change event fired when analysis (ingest) of a data source
-         * included in an ingest job is completed. Both the old and new values
-         * of the ProerptyChangeEvent are set to null - cast the
-         * PropertyChangeEvent to
-         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent
-         * to access event data.
-         */
-        DATA_SOURCE_ANALYSIS_COMPLETED,
-    };
-
-    /**
-     * Ingest module events.
-     */
-    public enum IngestModuleEvent {
-
-        /**
-         * Property change event fired when an ingest module adds new data to a
-         * case, usually by posting to the blackboard. The old value of the
-         * PropertyChangeEvent is a ModuleDataEvent object, and the new value is
-         * set to null.
-         */
-        DATA_ADDED,
-        /**
-         * Property change event fired when an ingest module adds new content to
-         * a case or changes a recorded attribute of existing content. For
-         * example, if a module adds an extracted or carved file to a case, the
-         * module should fire this event. The old value of the
-         * PropertyChangeEvent is a ModuleContentEvent object, and the new value
-         * is set to null.
-         */
-        CONTENT_CHANGED,
-        /**
-         * Property change event fired when the ingest of a file is completed.
-         * The old value of the PropertyChangeEvent is the Autopsy object ID of
-         * the file. The new value is the AbstractFile for that ID.
-         */
-        FILE_DONE,
-    };
+    private final ConcurrentHashMap<Long, IngestThreadActivitySnapshot> ingestThreadActivitySnapshots = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> ingestModuleRunTimes = new ConcurrentHashMap<>();
 
     /**
      * Gets the manager of the creation and execution of ingest jobs, i.e., the
@@ -247,129 +163,110 @@ public class IngestManager {
     /**
      * Constructs a manager of the creation and execution of ingest jobs, i.e.,
      * the processing of data sources by ingest modules. The manager immediately
-     * submits ingest task executers (Callable objects) to the data source level
-     * ingest and file level ingest thread pools. These ingest task executers
-     * are simple consumers that will normally run as long as the application
-     * runs.
+     * submits ingest job task ingest processing tasks to its executors. These
+     * tasks normally run as long as the application runs.
      */
     private IngestManager() {
-        this.ingestModuleRunTimes = new ConcurrentHashMap<>();
-        this.ingestThreadActivitySnapshots = new ConcurrentHashMap<>();
-        this.ingestErrorMessagePosts = new AtomicLong(0L);
-        this.ingestMonitor = new IngestMonitor();
-        this.eventPublishingExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-ingest-events-%d").build()); //NON-NLS
-        this.jobEventPublisher = new AutopsyEventPublisher();
-        this.moduleEventPublisher = new AutopsyEventPublisher();
-        this.dataSourceIngestThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-data-source-ingest-%d").build()); //NON-NLS
-        this.startIngestJobsThreadPool = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("IM-start-ingest-jobs-%d").build()); //NON-NLS
-        this.nextThreadId = new AtomicLong(0L);
-        this.jobsById = new HashMap<>();
-        this.startIngestJobTasks = new ConcurrentHashMap<>();
-
-        this.servicesMonitor = ServicesMonitor.getInstance();
         subscribeToServiceMonitorEvents();
-
-        this.startDataSourceIngestThread();
-
-        numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
-        if ((numberOfFileIngestThreads < MIN_NUMBER_OF_FILE_INGEST_THREADS) || (numberOfFileIngestThreads > MAX_NUMBER_OF_FILE_INGEST_THREADS)) {
-            numberOfFileIngestThreads = DEFAULT_NUMBER_OF_FILE_INGEST_THREADS;
-            UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
-        }
-        fileIngestThreadPool = Executors.newFixedThreadPool(numberOfFileIngestThreads, new ThreadFactoryBuilder().setNameFormat("IM-file-ingest-%d").build()); //NON-NLS
-        for (int i = 0; i < numberOfFileIngestThreads; ++i) {
-            startFileIngestThread();
-        }
+        startDataSourceLevelIngestJobTaskExecutor();
+        startFileLevelIngestJobTasksExecutor();
     }
 
     /**
-     * Submits an ingest task executer Callable to the data source level ingest
-     * thread pool.
-     */
-    private void startDataSourceIngestThread() {
-        long threadId = nextThreadId.incrementAndGet();
-        dataSourceIngestThreadPool.submit(new ExecuteIngestJobsTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
-        ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
-    }
-
-    /**
-     * Submits a ingest task executer Callable to the file level ingest thread
-     * pool.
-     */
-    private void startFileIngestThread() {
-        long threadId = nextThreadId.incrementAndGet();
-        fileIngestThreadPool.submit(new ExecuteIngestJobsTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
-        ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
-    }
-
-    /**
-     * Subscribes this ingest manager to local and remote case-related events.
-     */
-    private void subscribeToCaseEvents() {
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent event) {
-                if (event.getNewValue() != null) {
-                    handleCaseOpened();
-                } else {
-                    handleCaseClosed();
-                }
-            }
-        });
-    }
-
-    /**
-     * Subscribe ingest manager to service monitor events. Cancels ingest if one
-     * of services it's subscribed to goes down.
+     * Subscribes ingest manager to events published by its service monitor. The
+     * event handler cancels all ingest jobs if one a key service goes down.
      */
     private void subscribeToServiceMonitorEvents() {
-        PropertyChangeListener propChangeListener = new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
+        PropertyChangeListener propChangeListener = (PropertyChangeEvent evt) -> {
+            if (evt.getNewValue().equals(ServicesMonitor.ServiceStatus.DOWN.toString())) {
 
-                    // check whether a multi-user case is currently being processed
-                    try {
-                        if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
-                            return;
-                        }
-                    } catch (IllegalStateException ignore) {
-                        // Thrown by Case.getCurrentCase() when no case is open
+                /*
+                 * The application services considered to be key services are
+                 * only necessary for multi-user cases.
+                 */
+                try {
+                    if (Case.getCurrentCase().getCaseType() != Case.CaseType.MULTI_USER_CASE) {
                         return;
                     }
-
-                    // one of the services we subscribed to went down                    
-                    String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
-                    logger.log(Level.SEVERE, "Service {0} is down! Cancelling all running ingest jobs", serviceDisplayName); //NON-NLS                  
-
-                    // display notification if running interactively
-                    if (isIngestRunning() && RuntimeProperties.runningWithGUI()) {
-                        EventQueue.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                JOptionPane.showMessageDialog(null,
-                                        NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
-                                        NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
-                                        JOptionPane.ERROR_MESSAGE);
-                            }
-                        });
-                    }
-
-                    // cancel ingest if running
-                    cancelAllIngestJobs(IngestJob.CancellationReason.SERVICES_DOWN);
+                } catch (IllegalStateException noCaseOpenException) {
+                    return;
                 }
+
+                String serviceDisplayName = ServicesMonitor.Service.valueOf(evt.getPropertyName()).getDisplayName();
+                LOGGER.log(Level.SEVERE, "Service {0} is down, cancelling all running ingest jobs", serviceDisplayName); //NON-NLS
+                if (isIngestRunning() && RuntimeProperties.runningWithGUI()) {
+                    EventQueue.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            JOptionPane.showMessageDialog(null,
+                                    NbBundle.getMessage(this.getClass(), "IngestManager.cancellingIngest.msgDlg.text"),
+                                    NbBundle.getMessage(this.getClass(), "IngestManager.serviceIsDown.msgDlg.text", serviceDisplayName),
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                    });
+                }
+                cancelAllIngestJobs(IngestJob.CancellationReason.SERVICES_DOWN);
             }
         };
 
-        // subscribe to services of interest
+        /*
+         * The key services for multi-user cases are currently the case database
+         * server and the Solr server. The Solr server is a key service not
+         * because search is essential, but because the coordination service
+         * (ZooKeeper) is running embedded within the Solr server.
+         */
         Set<String> servicesList = new HashSet<>();
         servicesList.add(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString());
         servicesList.add(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH.toString());
         this.servicesMonitor.addSubscriber(servicesList, propChangeListener);
     }
 
+    /**
+     * Submits a task for processing data source level ingest job tasks to the
+     * data source level ingest job tasks executor.
+     */
+    private void startDataSourceLevelIngestJobTaskExecutor() {
+        long threadId = nextIngestManagerTaskId.incrementAndGet();
+        dataSourceLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobsTask(threadId, IngestTasksScheduler.getInstance().getDataSourceIngestTaskQueue()));
+        ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
+    }
+
+    /**
+     * Submits a configurable number of tasks for processing file level ingest
+     * job tasks to the file level ingest job tasks executor.
+     */
+    private void startFileLevelIngestJobTasksExecutor() {
+        numberOfFileIngestThreads = UserPreferences.numberOfFileIngestThreads();
+        if ((numberOfFileIngestThreads < MIN_NUM_FILE_INGEST_THREADS) || (numberOfFileIngestThreads > MAX_NUM_FILE_INGEST_THREADS)) {
+            numberOfFileIngestThreads = DEFAULT_NUM_FILE_INGEST_THREADS;
+            UserPreferences.setNumberOfFileIngestThreads(numberOfFileIngestThreads);
+        }
+        fileLevelIngestJobTasksExecutor = Executors.newFixedThreadPool(numberOfFileIngestThreads, new ThreadFactoryBuilder().setNameFormat("IM-file-ingest-%d").build()); //NON-NLS
+        for (int i = 0; i < numberOfFileIngestThreads; ++i) {
+            long threadId = nextIngestManagerTaskId.incrementAndGet();
+            fileLevelIngestJobTasksExecutor.submit(new ExecuteIngestJobsTask(threadId, IngestTasksScheduler.getInstance().getFileIngestTaskQueue()));
+            ingestThreadActivitySnapshots.put(threadId, new IngestThreadActivitySnapshot(threadId));
+        }
+    }
+
+    /**
+     * Subscribes this ingest manager to local and remote case-related events.
+     */
+    private void subscribeToCaseEvents() {
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent event) -> {
+            if (event.getNewValue() != null) {
+                handleCaseOpened();
+            } else {
+                handleCaseClosed();
+            }
+        });
+    }
+
+    /*
+     * Handles a case opened event.
+     */
     synchronized void handleCaseOpened() {
-        this.jobCreationIsEnabled = true;
+        this.ingestJobCreationIsEnabled = true;
         clearIngestMessageBox();
         try {
             /**
@@ -385,12 +282,15 @@ public class IngestManager {
                 moduleEventPublisher.openRemoteEventChannel(String.format(MODULE_EVENT_CHANNEL_NAME, channelPrefix));
             }
         } catch (IllegalStateException | AutopsyEventException ex) {
-            logger.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to open remote events channel", ex); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.Title"),
                     NbBundle.getMessage(IngestManager.class, "IngestManager.OpenEventChannel.Fail.ErrMsg"));
         }
     }
 
+    /*
+     * Handles a case closed event.
+     */
     synchronized void handleCaseClosed() {
         /*
          * TODO (JIRA-2227): IngestManager should wait for cancelled ingest jobs
@@ -399,14 +299,14 @@ public class IngestManager {
         this.cancelAllIngestJobs(IngestJob.CancellationReason.CASE_CLOSED);
         jobEventPublisher.closeRemoteEventChannel();
         moduleEventPublisher.closeRemoteEventChannel();
-        this.jobCreationIsEnabled = false;
+        this.ingestJobCreationIsEnabled = false;
         clearIngestMessageBox();
     }
 
     /**
-     * Called by the custom installer for this package once the window system is
-     * initialized, allowing the ingest manager to get the top component used to
-     * display ingest messages.
+     * Causes the ingest manager to get the top component used to display ingest
+     * inbox messages. Called by the custom installer for this package once the
+     * window system is initialized.
      */
     void initIngestMessageInbox() {
         synchronized (this.ingestMessageBoxLock) {
@@ -415,7 +315,7 @@ public class IngestManager {
     }
 
     /**
-     * Post a message to the ingest messages in box.
+     * Posts a message to the ingest messages inbox.
      *
      * @param message The message to be posted.
      */
@@ -440,6 +340,9 @@ public class IngestManager {
         }
     }
 
+    /*
+     * Clears the ingest messages inbox.
+     */
     private void clearIngestMessageBox() {
         synchronized (this.ingestMessageBoxLock) {
             if (ingestMessageBox != null) {
@@ -460,27 +363,24 @@ public class IngestManager {
     }
 
     /**
-     * Queues an ingest job that will process a collection of data sources. The
-     * job will be started on a worker thread.
+     * Queues an ingest job for a collection of data sources.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
      */
     public void queueIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        if (jobCreationIsEnabled) {
+        if (ingestJobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
             if (job.hasIngestPipeline()) {
-                long taskId = nextThreadId.incrementAndGet();
-                Future<Void> task = startIngestJobsThreadPool.submit(new StartIngestJobTask(taskId, job));
+                long taskId = nextIngestManagerTaskId.incrementAndGet();
+                Future<Void> task = startIngestJobTasksExecutor.submit(new StartIngestJobTask(taskId, job));
                 startIngestJobTasks.put(taskId, task);
             }
         }
     }
 
     /**
-     * Starts an ingest job that will process a collection of data sources. This
-     * is intended to be used in an auto-ingest context and will fail if no
-     * ingest modules are enabled.
+     * Immdiately starts an ingest job for a collection of data sources.
      *
      * @param dataSources The data sources to process.
      * @param settings    The settings for the ingest job.
@@ -489,7 +389,7 @@ public class IngestManager {
      *         start the ingest job.
      */
     public synchronized IngestJobStartResult beginIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        if (this.jobCreationIsEnabled) {
+        if (this.ingestJobCreationIsEnabled) {
             IngestJob job = new IngestJob(dataSources, settings, RuntimeProperties.runningWithGUI());
             if (job.hasIngestPipeline()) {
                 return this.startIngestJob(job); // Start job
@@ -497,21 +397,6 @@ public class IngestManager {
             return new IngestJobStartResult(null, new IngestManagerException("No ingest pipeline created, likely due to no ingest modules being enabled."), null);
         }
         return new IngestJobStartResult(null, new IngestManagerException("No case open"), null);
-    }
-
-    /**
-     * Starts an ingest job that will process a collection of data sources.
-     *
-     * @param dataSources The data sources to process.
-     * @param settings    The settings for the ingest job.
-     *
-     * @return The ingest job that was started on success or null on failure.
-     *
-     * @deprecated. Use beginIngestJob() instead.
-     */
-    @Deprecated
-    public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
-        return beginIngestJob(dataSources, settings).getJob();
     }
 
     /**
@@ -530,12 +415,10 @@ public class IngestManager {
     })
     private IngestJobStartResult startIngestJob(IngestJob job) {
         List<IngestModuleError> errors = null;
-        if (this.jobCreationIsEnabled) {
-            // multi-user cases must have multi-user database service running            
+        if (this.ingestJobCreationIsEnabled) {
             if (Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) {
                 try {
                     if (!servicesMonitor.getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString()).equals(ServicesMonitor.ServiceStatus.UP.toString())) {
-                        // display notification if running interactively
                         if (RuntimeProperties.runningWithGUI()) {
                             EventQueue.invokeLater(new Runnable() {
                                 @Override
@@ -548,7 +431,6 @@ public class IngestManager {
                                 }
                             });
                         }
-                        // abort ingest
                         return new IngestJobStartResult(null, new IngestManagerException("Ingest aborted. Remote database is down"), Collections.<IngestModuleError>emptyList());
                     }
                 } catch (ServicesMonitor.ServicesMonitorException ex) {
@@ -560,23 +442,19 @@ public class IngestManager {
                 ingestMonitor.start();
             }
 
-            synchronized (jobsById) {
-                jobsById.put(job.getId(), job);
-            }
+            ingestJobsById.put(job.getId(), job);
             errors = job.start();
             if (errors.isEmpty()) {
                 this.fireIngestJobStarted(job.getId());
-                IngestManager.logger.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
+                IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} started", job.getId()); //NON-NLS
             } else {
-                synchronized (jobsById) {
-                    this.jobsById.remove(job.getId());
-                }
+                this.ingestJobsById.remove(job.getId());
                 for (IngestModuleError error : errors) {
-                    logger.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Error starting %s ingest module for job %d", error.getModuleDisplayName(), job.getId()), error.getThrowable()); //NON-NLS
                 }
-                IngestManager.logger.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
+                IngestManager.LOGGER.log(Level.SEVERE, "Ingest job {0} could not be started", job.getId()); //NON-NLS
                 if (RuntimeProperties.runningWithGUI()) {
-                    final StringBuilder message = new StringBuilder();
+                    final StringBuilder message = new StringBuilder(1024);
                     message.append(Bundle.IngestManager_startupErr_dlgMsg()).append("\n");
                     message.append(Bundle.IngestManager_startupErr_dlgSolution()).append("\n\n");
                     message.append(Bundle.IngestManager_startupErr_dlgErrorList()).append("\n");
@@ -590,47 +468,38 @@ public class IngestManager {
                         JOptionPane.showMessageDialog(null, message, Bundle.IngestManager_startupErr_dlgTitle(), JOptionPane.ERROR_MESSAGE);
                     });
                 }
-                // abort ingest
                 return new IngestJobStartResult(null, new IngestManagerException("Errors occurred while starting ingest"), errors);
             }
         }
+
         return new IngestJobStartResult(job, null, errors);
     }
 
+    /**
+     * Cleans up a completed ingest job.
+     *
+     * @param job The completed job.
+     */
     synchronized void finishIngestJob(IngestJob job) {
         long jobId = job.getId();
-        synchronized (jobsById) {
-            jobsById.remove(jobId);
-        }
+        ingestJobsById.remove(jobId);
         if (!job.isCancelled()) {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
+            IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} completed", jobId); //NON-NLS
             fireIngestJobCompleted(jobId);
         } else {
-            IngestManager.logger.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
+            IngestManager.LOGGER.log(Level.INFO, "Ingest job {0} cancelled", jobId); //NON-NLS
             fireIngestJobCancelled(jobId);
         }
     }
 
     /**
-     * Queries whether or not any ingest jobs are in progress.
+     * Queries whether or not any ingest jobs are in progress at the time of the
+     * call.
      *
      * @return True or false.
      */
     public boolean isIngestRunning() {
-        synchronized (jobsById) {
-            return !jobsById.isEmpty();
-        }
-    }
-
-    /**
-     * Cancels all ingest jobs in progress.
-     *
-     * @deprecated Use cancelAllIngestJobs(IngestJob.CancellationReason reason)
-     * instead.
-     */
-    @Deprecated
-    public void cancelAllIngestJobs() {
-        cancelAllIngestJobs(IngestJob.CancellationReason.USER_CANCELLED);
+        return !ingestJobsById.isEmpty();
     }
 
     /**
@@ -649,79 +518,49 @@ public class IngestManager {
         /*
          * Cancel the jobs in progress.
          */
-        synchronized (jobsById) {
-            for (IngestJob job : this.jobsById.values()) {
-                job.cancel(reason);
-            }
+        for (IngestJob job : this.ingestJobsById.values()) {
+            job.cancel(reason);
         }
     }
 
     /**
      * Adds an ingest job event property change listener.
      *
-     * @param listener The PropertyChangeListener to register.
+     * @param listener The PropertyChangeListener to be added.
      */
     public void addIngestJobEventListener(final PropertyChangeListener listener) {
-        jobEventPublisher.addSubscriber(jobEventNames, listener);
+        jobEventPublisher.addSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
 
     /**
      * Removes an ingest job event property change listener.
      *
-     * @param listener The PropertyChangeListener to unregister.
+     * @param listener The PropertyChangeListener to be removed.
      */
     public void removeIngestJobEventListener(final PropertyChangeListener listener) {
-        jobEventPublisher.removeSubscriber(jobEventNames, listener);
+        jobEventPublisher.removeSubscriber(INGEST_JOB_EVENT_NAMES, listener);
     }
 
     /**
      * Adds an ingest module event property change listener.
      *
-     * @param listener The PropertyChangeListener to register.
+     * @param listener The PropertyChangeListener to be added.
      */
     public void addIngestModuleEventListener(final PropertyChangeListener listener) {
-        moduleEventPublisher.addSubscriber(moduleEventNames, listener);
+        moduleEventPublisher.addSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
     }
 
     /**
      * Removes an ingest module event property change listener.
      *
-     * @param listener The PropertyChangeListener to unregister.
+     * @param listener The PropertyChangeListener to be removed.
      */
     public void removeIngestModuleEventListener(final PropertyChangeListener listener) {
-        moduleEventPublisher.removeSubscriber(moduleEventNames, listener);
+        moduleEventPublisher.removeSubscriber(INGEST_MODULE_EVENT_NAMES, listener);
     }
 
     /**
-     * Adds an ingest job and ingest module event property change listener.
-     *
-     * @param listener The PropertyChangeListener to register.
-     *
-     * @deprecated Use addIngestJobEventListener() and/or
-     * addIngestModuleEventListener().
-     */
-    @Deprecated
-    public static void addPropertyChangeListener(final PropertyChangeListener listener) {
-        instance.jobEventPublisher.addSubscriber(jobEventNames, listener);
-        instance.moduleEventPublisher.addSubscriber(moduleEventNames, listener);
-    }
-
-    /**
-     * Removes an ingest job and ingest module event property change listener.
-     *
-     * @param listener The PropertyChangeListener to unregister.
-     *
-     * @deprecated Use removeIngestJobEventListener() and/or
-     * removeIngestModuleEventListener().
-     */
-    @Deprecated
-    public static void removePropertyChangeListener(final PropertyChangeListener listener) {
-        instance.jobEventPublisher.removeSubscriber(jobEventNames, listener);
-        instance.moduleEventPublisher.removeSubscriber(moduleEventNames, listener);
-    }
-
-    /**
-     * Fire an ingest event signifying an ingest job started.
+     * Publishes an ingest job event signifying an ingest job started.
      *
      * @param ingestJobId The ingest job id.
      */
@@ -731,7 +570,7 @@ public class IngestManager {
     }
 
     /**
-     * Fire an ingest event signifying an ingest job finished.
+     * Publishes an ingest event signifying an ingest job finished.
      *
      * @param ingestJobId The ingest job id.
      */
@@ -741,7 +580,7 @@ public class IngestManager {
     }
 
     /**
-     * Fire an ingest event signifying an ingest job was canceled.
+     * Publishes an ingest event signifying an ingest job was canceled.
      *
      * @param ingestJobId The ingest job id.
      */
@@ -751,7 +590,8 @@ public class IngestManager {
     }
 
     /**
-     * Fire an ingest event signifying analysis of a data source started.
+     * Publishes an ingest job event signifying analysis of a data source
+     * started.
      *
      * @param ingestJobId           The ingest job id.
      * @param dataSourceIngestJobId The data source ingest job id.
@@ -763,7 +603,8 @@ public class IngestManager {
     }
 
     /**
-     * Fire an ingest event signifying analysis of a data source finished.
+     * Publishes an ingest job event signifying analysis of a data source
+     * finished.
      *
      * @param ingestJobId           The ingest job id.
      * @param dataSourceIngestJobId The data source ingest job id.
@@ -775,7 +616,8 @@ public class IngestManager {
     }
 
     /**
-     * Fire an ingest event signifying analysis of a data source was canceled.
+     * Publishes an ingest job event signifying analysis of a data source was
+     * canceled.
      *
      * @param ingestJobId           The ingest job id.
      * @param dataSourceIngestJobId The data source ingest job id.
@@ -787,9 +629,10 @@ public class IngestManager {
     }
 
     /**
-     * Fire an ingest event signifying the ingest of a file is completed.
+     * Publishes an ingest module event signifying the ingest of a file was
+     * completed.
      *
-     * @param file The file that is completed.
+     * @param file The file.
      */
     void fireFileIngestDone(AbstractFile file) {
         AutopsyEvent event = new FileAnalyzedEvent(file);
@@ -797,9 +640,11 @@ public class IngestManager {
     }
 
     /**
-     * Fire an event signifying a blackboard post by an ingest module.
+     * Publishes an ingest module event signifying a blackboard post by an
+     * ingest module.
      *
-     * @param moduleDataEvent A ModuleDataEvent with the details of the posting.
+     * @param moduleDataEvent A ModuleDataEvent with the details of the
+     *                        blackboard post.
      */
     void fireIngestModuleDataEvent(ModuleDataEvent moduleDataEvent) {
         AutopsyEvent event = new BlackboardPostEvent(moduleDataEvent);
@@ -807,8 +652,8 @@ public class IngestManager {
     }
 
     /**
-     * Fire an event signifying discovery of additional content by an ingest
-     * module.
+     * Publishes an ingest module event signifying discovery of additional
+     * content by an ingest module.
      *
      * @param moduleDataEvent A ModuleContentEvent with the details of the new
      *                        content.
@@ -819,42 +664,55 @@ public class IngestManager {
     }
 
     /**
-     * Called each time a module in a data source pipeline starts
+     * Updates the ingest job snapshot when a data source level ingest job task
+     * starts to be processd by a data source ingest module in the data source
+     * ingest modules pipeline of an ingest job.
      *
-     * @param task
-     * @param ingestModuleDisplayName
+     * @param task                    The data source level ingest job task that
+     *                                was started.
+     * @param ingestModuleDisplayName The dislpay name of the data source level
+     *                                ingest module that has started processing
+     *                                the task.
      */
     void setIngestTaskProgress(DataSourceIngestTask task, String ingestModuleDisplayName) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource()));
     }
 
     /**
-     * Called each time a module in a file ingest pipeline starts
+     * Updates the ingest job snapshot when a file source level ingest job task
+     * starts to be processed by a file level ingest module in the file ingest
+     * modules pipeline of an ingest job.
      *
-     * @param task
-     * @param ingestModuleDisplayName
+     * @param task                    The file level ingest job task that was
+     *                                started.
+     * @param ingestModuleDisplayName The dislpay name of the file level ingest
+     *                                module that has started processing the
+     *                                task.
      */
     void setIngestTaskProgress(FileIngestTask task, String ingestModuleDisplayName) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
         IngestThreadActivitySnapshot newSnap = new IngestThreadActivitySnapshot(task.getThreadId(), task.getIngestJob().getId(), ingestModuleDisplayName, task.getDataSource(), task.getFile());
         ingestThreadActivitySnapshots.put(task.getThreadId(), newSnap);
-
         incrementModuleRunTime(prevSnap.getActivity(), newSnap.getStartTime().getTime() - prevSnap.getStartTime().getTime());
     }
 
     /**
-     * Called each time a data source ingest task completes
+     * Updates the ingest job snapshot when a data source level ingest job task
+     * is completed by the data source ingest modules in the data source ingest
+     * modules pipeline of an ingest job.
      *
-     * @param task
+     * @param task The data source level ingest job task that was completed.
      */
     void setIngestTaskProgressCompleted(DataSourceIngestTask task) {
         ingestThreadActivitySnapshots.put(task.getThreadId(), new IngestThreadActivitySnapshot(task.getThreadId()));
     }
 
     /**
-     * Called when a file ingest pipeline is complete for a given file
+     * Updates the ingest job snapshot when a file level ingest job task is
+     * completed by the file ingest modules in the file ingest modules pipeline
+     * of an ingest job.
      *
-     * @param task
+     * @param task The file level ingest job task that was completed.
      */
     void setIngestTaskProgressCompleted(FileIngestTask task) {
         IngestThreadActivitySnapshot prevSnap = ingestThreadActivitySnapshots.get(task.getThreadId());
@@ -864,29 +722,29 @@ public class IngestManager {
     }
 
     /**
-     * Internal method to update the times associated with each module.
+     * Updates the cumulative run time for a given ingest module.
      *
-     * @param moduleName
+     * @param moduleDisplayName The diplay name of the ingest module.
      * @param duration
      */
-    private void incrementModuleRunTime(String moduleName, Long duration) {
-        if (moduleName.equals("IDLE")) { //NON-NLS
+    private void incrementModuleRunTime(String moduleDisplayName, Long duration) {
+        if (moduleDisplayName.equals("IDLE")) { //NON-NLS
             return;
         }
 
         synchronized (ingestModuleRunTimes) {
-            Long prevTimeL = ingestModuleRunTimes.get(moduleName);
+            Long prevTimeL = ingestModuleRunTimes.get(moduleDisplayName);
             long prevTime = 0;
             if (prevTimeL != null) {
                 prevTime = prevTimeL;
             }
             prevTime += duration;
-            ingestModuleRunTimes.put(moduleName, prevTime);
+            ingestModuleRunTimes.put(moduleDisplayName, prevTime);
         }
     }
 
     /**
-     * Return the list of run times for each module
+     * Gets the cumulative run times for the ingest module.
      *
      * @return Map of module name to run time (in milliseconds)
      */
@@ -898,9 +756,10 @@ public class IngestManager {
     }
 
     /**
-     * Get the stats on current state of each thread
+     * Gets snapshots of the current state of each ingest manager ingest task
+     * (ingest thread).
      *
-     * @return
+     * @return A collection of ingest manager ingest task snapshots.
      */
     List<IngestThreadActivitySnapshot> getIngestThreadActivitySnapshots() {
         return new ArrayList<>(ingestThreadActivitySnapshots.values());
@@ -913,19 +772,17 @@ public class IngestManager {
      */
     List<DataSourceIngestJob.Snapshot> getIngestJobSnapshots() {
         List<DataSourceIngestJob.Snapshot> snapShots = new ArrayList<>();
-        synchronized (jobsById) {
-            for (IngestJob job : jobsById.values()) {
-                snapShots.addAll(job.getDataSourceIngestJobSnapshots());
-            }
-        }
+        ingestJobsById.values().forEach((job) -> {
+            snapShots.addAll(job.getDataSourceIngestJobSnapshots());
+        });
         return snapShots;
     }
 
     /**
-     * Get the free disk space of the drive where to which ingest data is being
+     * Gets the free disk space of the drive to which ingest data is being
      * written, as reported by the ingest monitor.
      *
-     * @return Free disk space, -1 if unknown
+     * @return Free disk space, -1 if unknown.
      */
     long getFreeDiskSpace() {
         if (ingestMonitor != null) {
@@ -953,9 +810,7 @@ public class IngestManager {
         public Void call() {
             try {
                 if (Thread.currentThread().isInterrupted()) {
-                    synchronized (jobsById) {
-                        jobsById.remove(job.getId());
-                    }
+                    ingestJobsById.remove(job.getId());
                     return null;
                 }
 
@@ -1110,6 +965,78 @@ public class IngestManager {
     }
 
     /**
+     * Ingest job events.
+     */
+    public enum IngestJobEvent {
+
+        /**
+         * Property change event fired when an ingest job is started. The old
+         * value of the PropertyChangeEvent object is set to the ingest job id,
+         * and the new value is set to null.
+         */
+        STARTED,
+        /**
+         * Property change event fired when an ingest job is completed. The old
+         * value of the PropertyChangeEvent object is set to the ingest job id,
+         * and the new value is set to null.
+         */
+        COMPLETED,
+        /**
+         * Property change event fired when an ingest job is canceled. The old
+         * value of the PropertyChangeEvent object is set to the ingest job id,
+         * and the new value is set to null.
+         */
+        CANCELLED,
+        /**
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is started. Both the old and new values of
+         * the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisStartedEvent to
+         * access event data.
+         */
+        DATA_SOURCE_ANALYSIS_STARTED,
+        /**
+         * Property change event fired when analysis (ingest) of a data source
+         * included in an ingest job is completed. Both the old and new values
+         * of the ProerptyChangeEvent are set to null - cast the
+         * PropertyChangeEvent to
+         * org.sleuthkit.autopsy.ingest.events.DataSourceAnalysisCompletedEvent
+         * to access event data.
+         */
+        DATA_SOURCE_ANALYSIS_COMPLETED,
+    }
+
+    /**
+     * Ingest module events.
+     */
+    public enum IngestModuleEvent {
+
+        /**
+         * Property change event fired when an ingest module adds new data to a
+         * case, usually by posting to the blackboard. The old value of the
+         * PropertyChangeEvent is a ModuleDataEvent object, and the new value is
+         * set to null.
+         */
+        DATA_ADDED,
+        /**
+         * Property change event fired when an ingest module adds new content to
+         * a case or changes a recorded attribute of existing content. For
+         * example, if a module adds an extracted or carved file to a case, the
+         * module should fire this event. The old value of the
+         * PropertyChangeEvent is a ModuleContentEvent object, and the new value
+         * is set to null.
+         */
+        CONTENT_CHANGED,
+        /**
+         * Property change event fired when the ingest of a file is completed.
+         * The old value of the PropertyChangeEvent is the Autopsy object ID of
+         * the file. The new value is the AbstractFile for that ID.
+         */
+        FILE_DONE,
+    }
+
+    /**
      * An exception thrown by the ingest manager.
      */
     public final static class IngestManagerException extends Exception {
@@ -1134,6 +1061,60 @@ public class IngestManager {
         private IngestManagerException(String message, Throwable cause) {
             super(message, cause);
         }
+    }
+
+    /**
+     * Adds an ingest job and ingest module event property change listener.
+     *
+     * @param listener The PropertyChangeListener to register.
+     *
+     * @deprecated Use addIngestJobEventListener() and/or
+     * addIngestModuleEventListener().
+     */
+    @Deprecated
+    public static void addPropertyChangeListener(final PropertyChangeListener listener) {
+        instance.addIngestJobEventListener(listener);
+        instance.addIngestModuleEventListener(listener);
+    }
+
+    /**
+     * Removes an ingest job and ingest module event property change listener.
+     *
+     * @param listener The PropertyChangeListener to unregister.
+     *
+     * @deprecated Use removeIngestJobEventListener() and/or
+     * removeIngestModuleEventListener().
+     */
+    @Deprecated
+    public static void removePropertyChangeListener(final PropertyChangeListener listener) {
+        instance.removeIngestJobEventListener(listener);
+        instance.removeIngestModuleEventListener(listener);
+    }
+
+    /**
+     * Starts an ingest job that will process a collection of data sources.
+     *
+     * @param dataSources The data sources to process.
+     * @param settings    The settings for the ingest job.
+     *
+     * @return The ingest job that was started on success or null on failure.
+     *
+     * @deprecated. Use beginIngestJob() instead.
+     */
+    @Deprecated
+    public synchronized IngestJob startIngestJob(Collection<Content> dataSources, IngestJobSettings settings) {
+        return beginIngestJob(dataSources, settings).getJob();
+    }
+
+    /**
+     * Cancels all ingest jobs in progress.
+     *
+     * @deprecated Use cancelAllIngestJobs(IngestJob.CancellationReason reason)
+     * instead.
+     */
+    @Deprecated
+    public void cancelAllIngestJobs() {
+        cancelAllIngestJobs(IngestJob.CancellationReason.USER_CANCELLED);
     }
 
 }

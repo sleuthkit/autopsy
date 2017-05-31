@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -36,6 +37,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 
 /**
  * Instances of this class wrap BlackboardArtifactTag objects. In the Autopsy
@@ -45,7 +47,8 @@ import org.sleuthkit.datamodel.TskCoreException;
  * either content or blackboard artifact tag nodes.
  */
 public class BlackboardArtifactTagNode extends DisplayableItemNode {
-  private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactTagNode.class.getName());
+
+    private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactTagNode.class.getName());
     private static final String ICON_PATH = "org/sleuthkit/autopsy/images/green-tag-icon-16.png"; //NON-NLS
     private final BlackboardArtifactTag tag;
 
@@ -97,11 +100,11 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
         return propertySheet;
     }
 
+    @NbBundle.Messages("BlackboardArtifactTagNode.viewSourceArtifact.text=View Source Result")
     @Override
     public Action[] getActions(boolean context) {
-        List<Action> actions = DataModelActionsFactory.getActions(tag.getContent(), true);
+        List<Action> actions = new ArrayList<>();
         actions.addAll(Arrays.asList(super.getActions(context)));
-
         BlackboardArtifact artifact = getLookup().lookup(BlackboardArtifact.class);
         //if this artifact has a time stamp add the action to view it in the timeline
         try {
@@ -123,14 +126,13 @@ public class BlackboardArtifactTagNode extends DisplayableItemNode {
             LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting linked file from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
             MessageNotifyUtil.Notify.error(Bundle.BlackboardArtifactNode_getAction_errorTitle(), Bundle.BlackboardArtifactNode_getAction_linkedFileMessage());
         }
-
         //if this artifact has associated content, add the action to view the content in the timeline
         AbstractFile file = getLookup().lookup(AbstractFile.class);
         if (null != file) {
-
             actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
         }
-
+        actions.add(new ViewTaggedArtifactAction(BlackboardArtifactTagNode_viewSourceArtifact_text(), artifact));
+        actions.addAll(DataModelActionsFactory.getActions(tag.getContent(), true));
         actions.add(DeleteBlackboardArtifactTagAction.getInstance());
         return actions.toArray(new Action[0]);
     }

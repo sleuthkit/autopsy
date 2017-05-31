@@ -41,8 +41,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * A node filter (decorator) that sets the actions for the nodes in the
- * directory tree and wraps the node children with a
+ * A node filter (decorator) that sets the actions for a node in the tree view
+ * and wraps the Children object of the wrapped node with a
  * DirectoryTreeFilterChildren.
  */
 class DirectoryTreeFilterNode extends FilterNode {
@@ -51,8 +51,8 @@ class DirectoryTreeFilterNode extends FilterNode {
     private static final Action collapseAllAction = new CollapseAction(NbBundle.getMessage(DirectoryTreeFilterNode.class, "DirectoryTreeFilterNode.action.collapseAll.text"));
 
     /**
-     * A node filter (decorator) that sets the actions for the nodes in the
-     * directory tree and wraps the node children with a
+     * Constructs node filter (decorator) that sets the actions for a node in
+     * the tree view and wraps the Children object of the wrapped node with a
      * DirectoryTreeFilterChildren.
      *
      * @param nodeToWrap     The node to wrap.
@@ -62,12 +62,12 @@ class DirectoryTreeFilterNode extends FilterNode {
     DirectoryTreeFilterNode(Node nodeToWrap, boolean createChildren) {
         super(nodeToWrap,
                 DirectoryTreeFilterChildren.createInstance(nodeToWrap, createChildren),
-                new ProxyLookup(Lookups.singleton(new OriginalNode(nodeToWrap)), nodeToWrap.getLookup()));
+                new ProxyLookup(Lookups.singleton(nodeToWrap), nodeToWrap.getLookup()));
     }
 
     /**
-     * Gets the display name for the node, possibly including a child count in
-     * parentheses.
+     * Gets the display name for the wrapped node, possibly including a child
+     * count in parentheses.
      *
      * @return The display name for the node.
      */
@@ -80,7 +80,7 @@ class DirectoryTreeFilterNode extends FilterNode {
             if (file != null) {
                 try {
                     int numVisibleChildren = getVisibleChildCount(file);
-                    
+
                     /*
                      * Left-to-right marks here are necessary to keep the count
                      * and parens together for mixed right-to-left and
@@ -95,39 +95,39 @@ class DirectoryTreeFilterNode extends FilterNode {
         }
         return name;
     }
-    
+
     /**
-     * This method gets the number of visible children. Depending on the user
-     * preferences, known and/or slack files will either be included or purged
-     * in the count.
-     * 
+     * Gets the number of visible children for a tree view node representing an
+     * AbstractFile. Depending on the user preferences, known and/or slack files
+     * will either be included or purged in the count.
+     *
      * @param file The AbstractFile object whose children will be counted.
      *
      * @return The number of visible children.
      */
     private int getVisibleChildCount(AbstractFile file) throws TskCoreException {
         List<Content> childList = file.getChildren();
-        
+
         int numVisibleChildren = file.getChildrenCount();
         boolean purgeKnownFiles = UserPreferences.hideKnownFilesInDataSourcesTree();
         boolean purgeSlackFiles = UserPreferences.hideSlackFilesInDataSourcesTree();
 
-        if(purgeKnownFiles || purgeSlackFiles) {
+        if (purgeKnownFiles || purgeSlackFiles) {
             // Purge known and/or slack files from the file count
-            for(int i=0; i < childList.size(); i++) {
-                AbstractFile childFile = (AbstractFile)childList.get(i);
-                if((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
-                || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+            for (int i = 0; i < childList.size(); i++) {
+                AbstractFile childFile = (AbstractFile) childList.get(i);
+                if ((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
+                        || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                     numVisibleChildren--;
                 }
             }
         }
-        
+
         return numVisibleChildren;
     }
 
     /**
-     * Gets the context mneu (right click menu) actions for the node.
+     * Gets the context mneu (right click menu) actions for the wrapped node.
      *
      * @param context Whether to find actions for context meaning or for the
      *                node itself.
@@ -168,17 +168,14 @@ class DirectoryTreeFilterNode extends FilterNode {
         return actions.toArray(new Action[actions.size()]);
     }
 
-    //FIXME: this seems like a big hack -jm
-    public static class OriginalNode {
-
-        private final Node original;
-
-        OriginalNode(Node original) {
-            this.original = original;
-        }
-
-        Node getNode() {
-            return original;
-        }
+    /**
+     * Get the wrapped node.
+     *
+     * @return
+     */
+    @Override
+    public Node getOriginal() {
+        return super.getOriginal();
     }
+
 }
