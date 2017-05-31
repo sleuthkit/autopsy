@@ -98,7 +98,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return totalImages;
     }
 
-    void setupKeys() {
+    private void setupKeys() {
         //divide the supported content into buckets
         totalImages = 0;
         //TODO when lazy loading of original nodes is fixed
@@ -141,7 +141,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             pageNums[i] = i + 1;
         }
         setKeys(pageNums);
-        refresh();
     }
 
     private synchronized Comparator<Node> getComparator() {
