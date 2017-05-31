@@ -53,7 +53,12 @@ import org.netbeans.jemmy.operators.JTabbedPaneOperator;
 import org.netbeans.jemmy.operators.JTableOperator;
 import org.netbeans.jemmy.operators.JTextFieldOperator;
 import org.netbeans.jemmy.operators.JToggleButtonOperator;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.core.UserPreferencesException;
+import org.sleuthkit.autopsy.events.MessageServiceConnectionInfo;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.CaseDbConnectionInfo;
+import org.sleuthkit.datamodel.TskData;
 
 public class AutopsyTestCases {
 
@@ -78,8 +83,13 @@ public class AutopsyTestCases {
         }
     }
 
-    public AutopsyTestCases() {
+    public AutopsyTestCases(boolean isMultiUser) {
         start = 0;
+        if (isMultiUser) {
+            setMultiUserPerferences();
+        } else {
+            UserPreferences.setIsMultiUserModeEnabled(false);
+        }
     }
 
     public void testNewCaseWizardOpen(String title) {
@@ -339,5 +349,35 @@ public class AutopsyTestCases {
         Timeouts timeouts = JemmyProperties.getCurrentTimeouts();
         timeouts.setTimeout(name, value);
         return timeouts;
+    }
+    
+    private void setMultiUserPerferences() {
+        UserPreferences.setIsMultiUserModeEnabled(true);
+        //PostgreSQL database settings
+        CaseDbConnectionInfo connectionInfo = new CaseDbConnectionInfo(
+                System.getProperty("dbHost"),
+                System.getProperty("dbPort"),
+                System.getProperty("dbUserName"),
+                System.getProperty("dbPassword"),
+                TskData.DbType.POSTGRESQL);
+        try {
+            UserPreferences.setDatabaseConnectionInfo(connectionInfo);
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error saving case database connection info", ex); //NON-NLS
+        }
+        //Solr Index settings
+        UserPreferences.setIndexingServerHost(System.getProperty("solrHost"));
+        UserPreferences.setIndexingServerPort(Integer.parseInt(System.getProperty("solrPort")));
+        //ActiveMQ Message Service Setting, username and password field are empty
+        MessageServiceConnectionInfo msgServiceInfo = new MessageServiceConnectionInfo(
+                System.getProperty("messageServiceHost"),
+                Integer.parseInt(System.getProperty("messageServicePort")),
+                "",
+                "");
+        try {
+            UserPreferences.setMessageServiceConnectionInfo(msgServiceInfo);
+        } catch (UserPreferencesException ex) {
+            logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
+        }
     }
 }
