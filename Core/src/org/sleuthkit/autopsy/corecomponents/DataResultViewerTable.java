@@ -30,6 +30,7 @@ import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
 import java.util.stream.Stream;
@@ -48,11 +50,15 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.netbeans.swing.etable.ETableColumn;
+import org.netbeans.swing.etable.ETableColumnModel;
+import org.netbeans.swing.etable.TableColumnSelector;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
+import org.netbeans.swing.outline.OutlineModel;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.view.OutlineView;
 import org.openide.nodes.AbstractNode;
@@ -105,6 +111,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Convience reference to internal Outline.
      */
     private Outline outline;
+    private TableListener tableListener;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -137,7 +144,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
 
         // add a listener so that when columns are moved, the new order is stored
-        TableListener tableListener = new TableListener();
+        tableListener = new TableListener();
         outline.getColumnModel().addColumnModelListener(tableListener);
         // the listener also moves columns back if user tries to move the first column out of place
         outline.getTableHeader().addMouseListener(tableListener);
@@ -236,7 +243,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             if (oldNode != null) {
                 oldNode.removeNodeListener(pleasewaitNodeListener);
             }
-
+            tableListener.setInitializationMode(true);
             if (hasChildren) {
                 currentRoot = selectedNode;
                 pleasewaitNodeListener.reset();
@@ -250,6 +257,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 outlineView.setPropertyColumns(); // set the empty property header
             }
         } finally {
+            tableListener.setInitializationMode(false);
             this.setCursor(null);
         }
     }
@@ -259,6 +267,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * the table.
      */
     private void setupTable() {
+
         /**
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -286,30 +295,32 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         assignColumns(props);
         setColumnWidths();
         loadColumnSorting();
+        loadColumnVisibility();
 
         /**
          * If one of the child nodes of the root node is to be selected, select
          * it.
          */
-        SwingUtilities.invokeLater(()->{
-        if (currentRoot instanceof TableFilterNode) {
-            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
-            if (null != selectedChildInfo) {
-                Node[] childNodes = currentRoot.getChildren().getNodes(true);
-                for (int i = 0; i < childNodes.length; ++i) {
-                    Node childNode = childNodes[i];
-                    if (selectedChildInfo.matches(childNode)) {
-                        try {
-                            em.setSelectedNodes(new Node[]{childNode});
-                        } catch (PropertyVetoException ex) {
-                            logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+        SwingUtilities.invokeLater(() -> {
+            if (currentRoot instanceof TableFilterNode) {
+                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
+                if (null != selectedChildInfo) {
+                    Node[] childNodes = currentRoot.getChildren().getNodes(true);
+                    for (int i = 0; i < childNodes.length; ++i) {
+                        Node childNode = childNodes[i];
+                        if (selectedChildInfo.matches(childNode)) {
+                            try {
+                                em.setSelectedNodes(new Node[]{childNode});
+                            } catch (PropertyVetoException ex) {
+                                logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                            }
+                            break;
                         }
-                        break;
                     }
+                    ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
                 }
-                ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
             }
-        }});
+        });
     }
 
     private void setColumnWidths() {
@@ -367,6 +378,41 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outlineView.setPropertyColumns(propStrings);
     }
 
+    private synchronized void storeColumnVisibility() {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
+            return;
+        }
+        if (currentRoot instanceof TableFilterNode) {
+            TableFilterNode tfn = (TableFilterNode) currentRoot;
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+
+            final ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
+            final OutlineModel outlineModel = outline.getOutlineModel();
+
+            //store the sorting information
+            int numCols = outlineModel.getColumnCount();
+            for (TableColumn tc : Collections.list(columnModel.getColumns())) {
+                ETableColumn etc = (ETableColumn) tc;
+                System.out.println(tc.getModelIndex() + etc.getIdentifier().toString());
+            }
+
+            for (int i = 0; i < numCols; i++) {
+                ETableColumn etc = (ETableColumn) columnModel.getColumn(i);
+
+                String columnName = outline.getColumnName(i);
+
+                //store hidden state
+                boolean columnHidden = columnModel.isColumnHidden(etc);
+                if (columnHidden) {
+                    preferences.putBoolean(getColumnHiddenKey(tfn.getColumnOrderKey(), columnName), columnHidden);
+                } else {
+                    preferences.remove(getColumnHiddenKey(tfn.getColumnOrderKey(), columnName));
+                }
+
+            }
+        }
+    }
+
     /**
      * Store the current column order and sort information into a preference
      * file.
@@ -380,23 +426,35 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             // Store the current order of the columns into settings
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
-
                 preferences.put(getColumnPositionKey(tfn.getColumnOrderKey(), entry.getValue().getName()), String.valueOf(entry.getKey()));
             }
-            final TableColumnModel columnModel = outline.getColumnModel();
+            final ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
 
             //store the sorting information
             int numCols = columnModel.getColumnCount();
             for (int i = 0; i < numCols; i++) {
                 ETableColumn etc = (ETableColumn) columnModel.getColumn(i);
+
                 String columnName = outline.getColumnName(i);
+                //store sort rank and order
+                final String columnSortOrderKey = getColumnSortOrderKey(tfn.getColumnOrderKey(), columnName);
+                final String columnSortRankKey = getColumnSortRankKey(tfn.getColumnOrderKey(), columnName);
                 if (etc.isSorted()) {
-                    preferences.put(getColumnSortOrderKey(tfn.getColumnOrderKey(), columnName), String.valueOf(etc.isAscending()));
-                    preferences.put(getColumnSortRankKey(tfn.getColumnOrderKey(), columnName), String.valueOf(etc.getSortRank()));
+                    preferences.putBoolean(columnSortOrderKey, etc.isAscending());
+                    preferences.putInt(columnSortRankKey, etc.getSortRank());
                 } else {
-                    preferences.remove(getColumnSortOrderKey(tfn.getColumnOrderKey(), columnName));
-                    preferences.remove(getColumnSortRankKey(tfn.getColumnOrderKey(), columnName));
+                    preferences.remove(columnSortOrderKey);
+                    preferences.remove(columnSortRankKey);
                 }
+
+                //store hidden state
+                boolean columnHidden = columnModel.isColumnHidden(etc);
+                if (columnHidden) {
+                    preferences.putBoolean(getColumnHiddenKey(tfn.getColumnOrderKey(), columnName), columnHidden);
+                } else {
+                    preferences.remove(getColumnHiddenKey(tfn.getColumnOrderKey(), columnName));
+                }
+
             }
         }
     }
@@ -430,6 +488,24 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             //apply sort information in rank order.
             treeSet.forEach(sortInfo -> outline.setColumnSorted(sortInfo.modelIndex, sortInfo.order, sortInfo.rank));
+        }
+    }
+
+    private synchronized void loadColumnVisibility() {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
+            return;
+        }
+
+        if (currentRoot instanceof TableFilterNode) {
+            final String columnKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+
+            ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
+            propertiesMap.entrySet().stream().forEach(entry -> {
+                final String propName = entry.getValue().getName();
+                boolean hidden = preferences.getBoolean(getColumnHiddenKey(columnKey, propName), false);
+                columnModel.setColumnHidden(columnModel.getColumn(entry.getKey()), hidden);
+            });
         }
     }
 
@@ -513,7 +589,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *
      * @return A generated key for the preference file
      */
-    private String getColumnSortOrderKey(String keyBase, String propName) {
+    static private String getColumnSortOrderKey(String keyBase, String propName) {
         return getColumnKeyBase(keyBase, propName) + ".sortOrder";
     }
 
@@ -527,8 +603,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *
      * @return A generated key for the preference file
      */
-    private String getColumnSortRankKey(String keyBase, String propName) {
+    static private String getColumnSortRankKey(String keyBase, String propName) {
         return getColumnKeyBase(keyBase, propName) + ".sortRank";
+    }
+
+    static private String getColumnHiddenKey(String keyBase, String propName) {
+        return getColumnKeyBase(keyBase, propName) + ".hidden";
     }
 
     private static String getColumnKeyBase(String keyBase, String propName) {
@@ -589,6 +669,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // the column started and where it ended up.
         private int startColumnIndex = -1;
         private int endColumnIndex = -1;
+        private boolean initMode;
 
         @Override
         public void columnMoved(TableColumnModelEvent e) {
@@ -669,10 +750,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         @Override
         public void columnAdded(TableColumnModelEvent e) {
+            if (initMode == false) {
+                storeColumnVisibility();
+            }
         }
 
         @Override
         public void columnRemoved(TableColumnModelEvent e) {
+            if (initMode == false) {
+                storeColumnVisibility();
+            }
         }
 
         @Override
@@ -681,6 +768,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         @Override
         public void columnSelectionChanged(ListSelectionEvent e) {
+            System.out.println("selection changed");
+        }
+
+        private void setInitializationMode(boolean b) {
+            this.initMode = b;
         }
     }
 
