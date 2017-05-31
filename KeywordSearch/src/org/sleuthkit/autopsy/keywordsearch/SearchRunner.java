@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2014 Basis Technology Corp.
+ * Copyright 2011 - 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -214,8 +214,10 @@ public final class SearchRunner {
                 // block until the search is complete
                 finalSearcher.get();
 
-            } catch (InterruptedException | ExecutionException ex) {
-                logger.log(Level.WARNING, "Job {1} final search thread failed: {2}", new Object[]{job.getJobId(), ex}); //NON-NLS
+            } catch (InterruptedException | CancellationException ex) {
+                logger.log(Level.INFO, "Final search for search job {1} interrupted or cancelled", job.getJobId()); //NON-NLS
+            } catch (ExecutionException ex) {
+                logger.log(Level.SEVERE, String.format("Final search for search job %d failed", job.getJobId()), ex); //NON-NLS
             }
         }
     }
