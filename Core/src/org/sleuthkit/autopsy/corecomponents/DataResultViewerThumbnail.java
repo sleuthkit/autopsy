@@ -237,7 +237,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                         .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
+                        .addGap(30, 30, 30)
                         .addComponent(sortButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(sortLabel))
@@ -318,34 +318,30 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
 
     private void sortButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortButtonActionPerformed
-        sort();
-    }//GEN-LAST:event_sortButtonActionPerformed
-
-    private void sort() {
-        List<Node.Property<?>> allChildProperties = ResultViewerPersistence.getAllChildProperties(em.getRootContext(), 100);
-        final SortChooser sortChooser = new SortChooser(allChildProperties);
-        final DialogDescriptor dialogDescriptor = new DialogDescriptor(sortChooser, "Choose Sort Criteria");
+        List<Node.Property<?>> childProperties = ResultViewerPersistence.getAllChildProperties(em.getRootContext(), 100);
+        SortChooser sortChooser = new SortChooser(childProperties, ResultViewerPersistence.loadSortCriteria(tfn));
+        DialogDescriptor dialogDescriptor = new DialogDescriptor(sortChooser, sortChooser.getDialogTitle());
         Dialog createDialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
         createDialog.setVisible(true);
-        final Object value = dialogDescriptor.getValue();
-        if (DialogDescriptor.OK_OPTION == value) {
+        final Object dialogReturnValue = dialogDescriptor.getValue();
+        if (DialogDescriptor.OK_OPTION == dialogReturnValue) {
             //apply new sort
             List<SortCriterion> criteria = sortChooser.getCriteria();
             final Preferences preferences = NbPreferences.forModule(DataResultViewerThumbnail.class);
 
-            Map<Node.Property<?>, SortCriterion> sortOrderMap = criteria.stream()
+            Map<Node.Property<?>, SortCriterion> criteriaMap = criteria.stream()
                     .collect(Collectors.toMap(SortCriterion::getProperty,
                             Function.identity(),
-                            (u, v)->u));
+                            (u, v) -> u)); //keep first criteria if property is selected multiple times.
 
             //store the sorting information
-            int numCols = allChildProperties.size();
-            for (int i = 0; i < numCols; i++) {
-                Node.Property<?> prop = allChildProperties.get(i);
-                String columnName = prop.getName();
-                SortCriterion criterion = sortOrderMap.get(prop);
-                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
-                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
+            int numProperties = childProperties.size();
+            for (int i = 0; i < numProperties; i++) {
+                Node.Property<?> prop = childProperties.get(i);
+                String propName = prop.getName();
+                SortCriterion criterion = criteriaMap.get(prop);
+                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, propName);
+                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, propName);
 
                 if (criterion != null) {
                     preferences.putBoolean(columnSortOrderKey, criterion.getSortOrder() == SortOrder.ASCENDING);
@@ -356,10 +352,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 }
             }
             setNode(tfn); //this is just to force a refresh
-        } else if (DialogDescriptor.CANCEL_OPTION == value) {
-            //do nothing.
         }
-    }
+    }//GEN-LAST:event_sortButtonActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filePathLabel;
@@ -465,11 +460,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         if (newPage > totalPages || newPage < 1) {
             JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "DataResultViewerThumbnail.goToPageTextField.msgDlg",
-                            totalPages),
-                    NbBundle.getMessage(this.getClass(),
-                            "DataResultViewerThumbnail.goToPageTextField.err"),
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.msgDlg", totalPages),
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.err"),
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -528,6 +520,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     }
 
+    @NbBundle.Messages({"DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}"})
     private void updateControls() {
         if (totalPages == 0) {
             pagePrevButton.setEnabled(false);
@@ -556,9 +549,10 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             String sortString = ResultViewerPersistence.loadSortCriteria(tfn).stream()
                     .map(SortCriterion::toString)
                     .collect(Collectors.joining(" "));
-            sortLabel.setText("Sorted by: " + StringUtils.defaultIfBlank(sortString, "---"));
+            sortString = StringUtils.defaultIfBlank(sortString, "---");
+            sortLabel.setText(Bundle.DataResultViewerThumbnail_sortLabel_textTemplate(sortString));
         } else {
-            sortLabel.setText("Sorted by: ---");
+            sortLabel.setText(NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text"));
         }
     }
 

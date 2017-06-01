@@ -20,37 +20,59 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import javax.swing.SwingUtilities;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
+import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 
-public class SortChooser extends javax.swing.JPanel {
+/**
+ * A dialog that allows the user to choose sort criteria for the thumbnail
+ * viewer.
+ */
+final class SortChooser extends javax.swing.JPanel {
 
+    /**
+     * The properties that will be available to the user as sort criteria.
+     */
     private final List<Node.Property<?>> availableProps;
-    private final ArrayList<CriterionPicker> pickers = new ArrayList<>();
+
+    /**
+     * List of chooser maintained so that we can get the list of selected
+     * criteria.
+     */
+    private final ArrayList<CriterionChooser> choosers = new ArrayList<>();
 
     /**
      * @param availableProps The properties that are available for selection in
      *                       this SortChooser.
+     * @param criteria       The existing sort criteria to populate choosers
+     *                       for.
      */
-    public SortChooser(List<Node.Property<?>> availableProps) {
+    SortChooser(List<Node.Property<?>> availableProps, List<SortCriterion> criteria) {
         super();
         initComponents();
 
         this.availableProps = availableProps;
-        final CriterionPicker criterionPicker = CriterionPicker.create(availableProps);
-        pickers.add(criterionPicker);
-        scrollContent.add(criterionPicker);
+        criteria.forEach(this::addCriterionChooser);
     }
 
+    /**
+     * Get the list of criteria selected in this chooser.
+     *
+     * @return the list of criteria selected in this chooser.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     List<SortCriterion> getCriteria() {
         List<SortCriterion> list = new ArrayList<>();
-        for (int i = 0; i < pickers.size(); i++) {
-            list.add(pickers.get(i).getSelectedCriteria(i));
+        for (int i = 0; i < choosers.size(); i++) {
+            list.add(choosers.get(i).getCriterion(i));
         }
         return list;
+    }
 
+    @NbBundle.Messages({"SortChooser.dialogTitle=Choose Sort Criteria"})
+    String getDialogTitle() {
+        return Bundle.SortChooser_dialogTitle();
     }
 
     /**
@@ -62,7 +84,6 @@ public class SortChooser extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
         jScrollPane1 = new javax.swing.JScrollPane();
         scrollContent = new javax.swing.JPanel();
         addCriteriaButton = new javax.swing.JButton();
@@ -101,24 +122,42 @@ public class SortChooser extends javax.swing.JPanel {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+
     private void addCriteriaButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addCriteriaButtonActionPerformed
-        final CriterionPicker criterionPicker = CriterionPicker.create(availableProps, picker -> {
-            SwingUtilities.invokeLater(() -> {
-                pickers.remove(picker);
-                scrollContent.remove(picker);
-                revalidate();
-                repaint();
-            });
-        });
-        pickers.add(criterionPicker);
-        scrollContent.add(criterionPicker);
-        revalidate();
+        addCriterionChooser(null);
+
     }//GEN-LAST:event_addCriteriaButtonActionPerformed
+
+    /**
+     * Add a chooser populated with the property and sort order of the given
+     * criterion to this dialog.
+     *
+     * @param criterion The criterion to populate the new chooser with.
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void addCriterionChooser(SortCriterion criterion) {
+        final CriterionChooser chooser = new CriterionChooser(criterion, availableProps, this::removeCriterionChooser);
+        choosers.add(chooser); // keep a reference
+        scrollContent.add(chooser); // add to GUI
+        revalidate();  //needed to force repaint.
+    }
+
+    /**
+     * Remove the given chooser form the GUI.
+     *
+     * @param chooser 
+     */
+    @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
+    private void removeCriterionChooser(CriterionChooser chooser) {
+        choosers.remove(chooser);  //remove from internal list
+        scrollContent.remove(chooser);// remove from GUI
+        revalidate();  //repaint
+        repaint();
+    }
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addCriteriaButton;
-    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPanel scrollContent;
     // End of variables declaration//GEN-END:variables

@@ -18,48 +18,69 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import java.awt.Component;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JList;
+import javax.swing.ListCellRenderer;
 import javax.swing.SortOrder;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 
-class CriterionPicker extends javax.swing.JPanel {
+/**
+ * A Gui for choosing a SortCriterion from a list of available properties.
+ */
+final class CriterionChooser extends javax.swing.JPanel {
 
-    private final DefaultComboBoxModel<Node.Property<?>> defaultComboBoxModel;
     private DefaultListCellRenderer defaultListCellRenderer = new DefaultListCellRenderer();
 
-    static CriterionPicker create(List<Node.Property<?>> availableProps, Consumer<CriterionPicker> removeCallback) {
-        CriterionPicker criterionPicker = new CriterionPicker(availableProps);
-        if (removeCallback != null) {
-            criterionPicker.removeButton.addActionListener(event -> {
-                removeCallback.accept(criterionPicker);
-            });
-        } else {
-            criterionPicker.removeButton.setEnabled(false);
+    /**
+     * @param criterion
+     * @param availableProps
+     * @param removeCallback
+     */
+    CriterionChooser(SortCriterion criterion, List<Node.Property<?>> availableProps, Consumer<CriterionChooser> removeCallback) {
+        initComponents();
+        propComboBox.setModel(new DefaultComboBoxModel<>(availableProps.toArray(new Node.Property<?>[availableProps.size()])));
+        propComboBox.setRenderer(new ListCellRenderer<Node.Property<?>>() {
+            @Override
+            public Component getListCellRendererComponent(JList<? extends Node.Property<?>> list, Node.Property<?> value, int index, boolean isSelected, boolean cellHasFocus) {
+                //override default renderer to use Property.getName()
+                return defaultListCellRenderer.getListCellRendererComponent(list, value == null ? "" : value.getName(), index, isSelected, cellHasFocus);
+            }
+        });
+        if (criterion != null) {
+            setCriterion(criterion);
         }
-        return criterionPicker;
-    }
-
-    static CriterionPicker create(List<Node.Property<?>> availableProps) {
-        return create(availableProps, null);
+        removeButton.addActionListener(event -> removeCallback.accept(this));
     }
 
     /**
-     * @param availableProps
+     * Populate this chooser with the given criterion. Property and sort order
+     * are used, rank is ignored.
+     *
+     * @param criterion The criterion to populate into this chooser.
      */
-    private CriterionPicker(List<Node.Property<?>> availableProps) {
-        initComponents();
-        defaultComboBoxModel = new DefaultComboBoxModel<>(availableProps.toArray(new Node.Property<?>[availableProps.size()]));
-        propComboBox.setModel(defaultComboBoxModel);
-        propComboBox.setRenderer((list, value, index, isSelected, cellHasFocus)
-                -> defaultListCellRenderer.getListCellRendererComponent(list, value == null ? "" : value.getName(), index, isSelected, cellHasFocus));
-
+    private void setCriterion(SortCriterion criterion) {
+        propComboBox.setSelectedItem(criterion.getProperty());
+        if (criterion.getSortOrder() == SortOrder.DESCENDING) {
+            descendingRadio.setSelected(true);
+        } else {
+            ascendingRadio.setSelected(true);
+        }
     }
 
-    SortCriterion getSelectedCriteria(int rank) {
+    /**
+     * Get the Criterion selected in this chooser. USe the given rank as the
+     * rank of the Criterion.
+     *
+     * @param rank The rank to use for the Criterion.
+     *
+     * @return The criterion chosen.
+     */
+    SortCriterion getCriterion(int rank) {
         return new SortCriterion(
                 (Node.Property<?>) propComboBox.getSelectedItem(),
                 ascendingRadio.isSelected() ? SortOrder.ASCENDING : SortOrder.DESCENDING,
@@ -88,14 +109,14 @@ class CriterionPicker extends javax.swing.JPanel {
         label1.setText("Sort By: ");
 
         removeButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/images/cross-script.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(removeButton, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.removeButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(removeButton, org.openide.util.NbBundle.getMessage(CriterionChooser.class, "CriterionChooser.removeButton.text")); // NOI18N
 
         sortOrderGroup.add(ascendingRadio);
         ascendingRadio.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(ascendingRadio, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.ascendingRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(ascendingRadio, org.openide.util.NbBundle.getMessage(CriterionChooser.class, "CriterionChooser.ascendingRadio.text")); // NOI18N
 
         sortOrderGroup.add(descendingRadio);
-        org.openide.awt.Mnemonics.setLocalizedText(descendingRadio, org.openide.util.NbBundle.getMessage(CriterionPicker.class, "CriterionPicker.descendingRadio.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(descendingRadio, org.openide.util.NbBundle.getMessage(CriterionChooser.class, "CriterionChooser.descendingRadio.text")); // NOI18N
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
