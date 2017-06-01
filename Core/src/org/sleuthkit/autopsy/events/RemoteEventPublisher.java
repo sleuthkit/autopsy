@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,6 +20,8 @@ package org.sleuthkit.autopsy.events;
 
 import java.net.URISyntaxException;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.JMSException;
@@ -34,26 +36,31 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Provides thread-safe support for publishing events to registered subscribers
- * on other Autopsy nodes and for publishing events from other Autopsy nodes.
+ * Provides support for publishing events to registered subscribers on other
+ * Autopsy nodes, and for publishing events from other Autopsy nodes.
  * Subscribers on this node are constrained to be PropertyChangeListeners to
  * integrate with the legacy use of JavaBeans PropertyChangeEvents and
  * PropertyChangeListeners as an application event system.
  */
+@ThreadSafe
 final class RemoteEventPublisher {
 
     private static final Logger logger = Logger.getLogger(RemoteEventPublisher.class.getName());
     private static final String ALL_MESSAGE_SELECTOR = "All"; //NON-NLS
-    private final LocalEventPublisher localPublisher;
+    private final LocalEventPublisher localPublisher; // LocalEventPublisher is thread-safe
+    @GuardedBy("this")
     private final Connection connection;
+    @GuardedBy("this")
     private final Session session;
+    @GuardedBy("this")
     private final MessageProducer producer;
+    @GuardedBy("this")
     private final MessageConsumer consumer;
     private final MessageReceiver receiver;
 
     /**
      * Constructs an object for publishing events to registered subscribers on
-     * other Autopsy nodes and for publishing events from other Autopsy nodes.
+     * other Autopsy nodes, and for publishing events from other Autopsy nodes.
      *
      * @param eventChannelName The name of the event channel to be used for
      *                         communication with other Autopsy nodes.
@@ -61,9 +68,9 @@ final class RemoteEventPublisher {
      *                         events from other Autopsy nodes on this node.
      * @param info             Connection info for the message service.
      *
-     * @throws URISyntaxException if the URI in the connection info is
+     * @throws URISyntaxException If the URI in the connection info is
      *                            malformed.
-     * @throws JMSException       if the connection to the message service
+     * @throws JMSException       If the connection to the message service
      *                            cannot be made.
      */
     RemoteEventPublisher(String eventChannelName, LocalEventPublisher localPublisher, MessageServiceConnectionInfo info) throws URISyntaxException, JMSException {
@@ -85,8 +92,8 @@ final class RemoteEventPublisher {
                 stop();
             } catch (JMSException ignored) {
                 /**
-                 * Not surprising if there is some error here, but it was worth
-                 * trying to clean up.
+                 * It is not surprising if there is some error here, but it was
+                 * worth trying to clean up.
                  */
             }
             throw ex;
@@ -150,8 +157,11 @@ final class RemoteEventPublisher {
                         localPublisher.publish(event);
                     }
                 }
-            } catch (Exception ex) {
+            } catch (JMSException ex) {
                 logger.log(Level.SEVERE, "Error receiving message", ex); //NON-NLS
+            } catch (Throwable ex) {
+                // Exception firewall.
+                logger.log(Level.SEVERE, "Unexpected error receiving message", ex); //NON-NLS                
             }
         }
     }
