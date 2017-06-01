@@ -63,7 +63,7 @@ final class AutoIngestCaseOpenAction extends CallableSystemAction implements Act
                 }
                 break;
                 
-            case AUTOMATED:
+            case AUTOINGEST:
                 /*
                  * New case action is disabled in auto ingest mode.
                  */               

@@ -79,7 +79,7 @@ public final class UserPreferences {
     public enum SelectedMode {
 
         STANDALONE,
-        AUTOMATED,
+        AUTOINGEST,
         REVIEW
     };
 
@@ -88,7 +88,7 @@ public final class UserPreferences {
      *
      * @return SelectedMode Selected mode.
      */
-    public static UserPreferences.SelectedMode getMode() {
+    public static SelectedMode getMode() {
         if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, MODE)) {
             int ordinal = Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, MODE));
             return UserPreferences.SelectedMode.values()[ordinal];
@@ -101,7 +101,7 @@ public final class UserPreferences {
      *
      * @param mode Selected mode.
      */
-    public static void setMode(UserPreferences.SelectedMode mode) {
+    public static void setMode(SelectedMode mode) {
         ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, MODE, Integer.toString(mode.ordinal()));
     }
 

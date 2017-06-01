@@ -29,13 +29,10 @@ import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
- * Provides convenient access to a Preferences node for auto ingest user preferences
- * with default values.
+ * Provides convenient access to a Preferences node for auto ingest user
+ * preferences with default values.
  */
 public final class AutoIngestUserPreferences {
-
-
-
 
     private static final String JOIN_AUTO_MODE_CLUSTER = "JoinAutoModeCluster"; // NON-NLS
     private static final String AUTO_MODE_IMAGES_FOLDER = "AutoModeImageFolder"; // NON-NLS
@@ -60,8 +57,7 @@ public final class AutoIngestUserPreferences {
     private AutoIngestUserPreferences() {
     }
 
-    
-    /**
+     /**
      * Get "Join Automated Ingest Cluster" setting from persistent storage.
      *
      * @return SelectedMode Selected setting.
@@ -81,7 +77,7 @@ public final class AutoIngestUserPreferences {
     public static void setJoinAutoModeCluster(boolean join) {
         ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, JOIN_AUTO_MODE_CLUSTER, Boolean.toString(join));
     }
-    
+
     /**
      * Get input folder for automated mode from persistent storage.
      *
@@ -125,8 +121,7 @@ public final class AutoIngestUserPreferences {
     }
 
     /**
-     * Get shared config folder for automated mode from persistent
-     * storage.
+     * Get shared config folder for automated mode from persistent storage.
      *
      * @return String Selected settings folder.
      */
@@ -138,16 +133,17 @@ public final class AutoIngestUserPreferences {
     }
 
     /**
-     * Set shared config folder for automated mode from persistent
-     * storage.
+     * Set shared config folder for automated mode from persistent storage.
+     *
+     * @param folder the folder which contains the shared configF
      */
     public static void setSharedConfigFolder(String folder) {
         ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, SHARED_CONFIG_FOLDER, folder);
     }
 
     /**
-     * Get shared config checkbox state for automated mode from
-     * persistent storage.
+     * Get shared config checkbox state for automated mode from persistent
+     * storage.
      *
      * @return Boolean true if shared settings are enabled.
      */
@@ -194,8 +190,7 @@ public final class AutoIngestUserPreferences {
     /**
      * Get context string for automated mode ingest module settings.
      *
-     * @return String Context string for automated mode ingest module
-     *         settings.
+     * @return String Context string for automated mode ingest module settings.
      */
     public static String getAutoModeIngestModuleContextString() {
         return AUTO_MODE_CONTEXT_STRING;
@@ -223,8 +218,7 @@ public final class AutoIngestUserPreferences {
     }
 
     /**
-     * Get the configured time to sleep between cases to prevent
-     * database locks
+     * Get the configured time to sleep between cases to prevent database locks
      *
      * @return int the value in seconds, default is 30 seconds.
      */
@@ -386,6 +380,8 @@ public final class AutoIngestUserPreferences {
      * Get the logging database password from persistent storage.
      *
      * @return logging database password
+     *
+     * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static String getLoggingPassword() throws UserPreferencesException {
         if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PASSWORD)) {
@@ -398,6 +394,8 @@ public final class AutoIngestUserPreferences {
      * Save the logging database password to persistent storage.
      *
      * @param password Logging database password
+     *
+     * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static void setLoggingPassword(String password) throws UserPreferencesException {
         ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, LOGGING_PASSWORD, TextConverter.convertTextToHexText(password));
@@ -444,10 +442,10 @@ public final class AutoIngestUserPreferences {
     public static void setMinutesOfInputScanInterval(int value) {
         ModuleSettings.setConfigSetting(UserPreferences.SETTINGS_PROPERTIES, INPUT_SCAN_INTERVAL_TIME, Integer.toString(value));
     }
-    
+
     /**
-     * Copied from Autopsy UserPreferences - can be removed once everything is merged together.
-     * Provides ability to convert text to hex text.
+     * Copied from Autopsy UserPreferences - can be removed once everything is
+     * merged together. Provides ability to convert text to hex text.
      */
     static final class TextConverter {
 

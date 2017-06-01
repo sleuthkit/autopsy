@@ -133,7 +133,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                         jRadioButtonReview.setSelected(true);
                         enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
                         break;
-                    case AUTOMATED:
+                    case AUTOINGEST:
                         jRadioButtonAutomated.setSelected(true);
                         enableOptionsBasedOnMode(OptionsUiMode.AIM);
                         break;
@@ -229,7 +229,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
 
         if (jRadioButtonAutomated.isSelected()) {
-            if (storedMode != UserPreferences.SelectedMode.AUTOMATED) {
+            if (storedMode != UserPreferences.SelectedMode.AUTOINGEST) {
                 needsRestart = true;
             }
             String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
@@ -241,7 +241,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 needsRestart = true;
             }
 
-            UserPreferences.setMode(UserPreferences.SelectedMode.AUTOMATED);
+            UserPreferences.setMode(UserPreferences.SelectedMode.AUTOINGEST);
             String imageFolderPath = getNormalizedFolderPath(inputPathTextField.getText().trim());
             AutoIngestUserPreferences.setAutoModeImageFolder(imageFolderPath);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());

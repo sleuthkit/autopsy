@@ -107,7 +107,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
         UserPreferences.SelectedMode mode = UserPreferences.getMode();
 
         switch (mode) {
-            case AUTOMATED:
+            case AUTOINGEST:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + LOCAL_HOST_NAME + ")");
                 setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
                 this.addWindowListener(new WindowAdapter() {
