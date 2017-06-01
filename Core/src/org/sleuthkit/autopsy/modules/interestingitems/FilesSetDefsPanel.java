@@ -23,10 +23,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.DefaultListModel;
@@ -51,6 +50,8 @@ import org.sleuthkit.autopsy.modules.filetypeid.FileTypeDetector;
  * A panel that allows a user to make interesting item definitions.
  */
 public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+
+    private static final long serialVersionUID = 1L;
 
     @NbBundle.Messages({"# {0} - filter name",
         "# {1} - profile name",
@@ -125,7 +126,6 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         } else {
             this.ruleDialogTitle = "FilesSetPanel.interesting.title";
             this.ingoreUnallocCheckbox.setVisible(false);
-
         }
     }
 
@@ -138,33 +138,15 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             setName(Bundle.FilesSetDefsPanel_Interesting_Title());
         }
 
-        Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
-            fileTypesCollated.add(mediaType);
-        }
-
-        FileTypeDetector fileTypeDetector;
         try {
-            fileTypeDetector = new FileTypeDetector();
-            List<String> userDefinedFileTypes = fileTypeDetector.getUserDefinedTypes();
-            fileTypesCollated.addAll(userDefinedFileTypes);
-
+            SortedSet<String> detectableMimeTypes = FileTypeDetector.getDetectedTypes();
+            detectableMimeTypes.forEach((type) -> {
+                mimeTypeComboBox.addItem(type);
+            });
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, "Unable to get user defined file types", ex);
+            logger.log(Level.SEVERE, "Unable to get detectable file types", ex);
         }
 
-        List<String> toSort = new ArrayList<>(fileTypesCollated);
-        toSort.sort((String string1, String string2) -> {
-            int result = String.CASE_INSENSITIVE_ORDER.compare(string1, string2);
-            if (result == 0) {
-                result = string1.compareTo(string2);
-            }
-            return result;
-        });
-
-        for (String file : toSort) {
-            mimeTypeComboBox.addItem(file);
-        }
         this.fileSizeUnitComboBox.setSelectedIndex(1);
         this.equalitySignComboBox.setSelectedIndex(2);
     }
@@ -226,9 +208,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
 
         // Populate the list model for the interesting files sets list
         // component.
-        for (FilesSet set : this.filesSets.values()) {
+        this.filesSets.values().forEach((set) -> {
             this.setsListModel.addElement(set);
-        }
+        });
 
         if (!this.filesSets.isEmpty()) {
             // Select the first files set by default. The list selections
@@ -308,9 +290,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
                 FilesSetDefsPanel.this.exportSetButton.setEnabled(true);
                 // Populate the rule definitions list, sorted by name.
                 TreeMap<String, FilesSet.Rule> rules = new TreeMap<>(selectedSet.getRules());
-                for (FilesSet.Rule rule : rules.values()) {
+                rules.values().forEach((rule) -> {
                     FilesSetDefsPanel.this.rulesListModel.addElement(rule);
-                }
+                });
                 // Select the first rule by default.
                 if (!FilesSetDefsPanel.this.rulesListModel.isEmpty()) {
                     FilesSetDefsPanel.this.rulesList.setSelectedIndex(0);
@@ -538,9 +520,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
         // Redo the list model for the files set list component, which will make
         // everything stays sorted as in the working copy tree set.
         FilesSetDefsPanel.this.setsListModel.clear();
-        for (FilesSet set : this.filesSets.values()) {
+        this.filesSets.values().forEach((set) -> {
             this.setsListModel.addElement(set);
-        }
+        });
 
         // Select the new/edited files set definition in the set definitions
         // list. This will cause the selection listeners to repopulate the
@@ -1198,9 +1180,9 @@ public final class FilesSetDefsPanel extends IngestModuleGlobalSettingsPanel imp
             }
             // Redo the list model for the files set list component
             FilesSetDefsPanel.this.setsListModel.clear();
-            for (FilesSet set : this.filesSets.values()) {
+            this.filesSets.values().forEach((set) -> {
                 this.setsListModel.addElement(set);
-            }
+            });
             // Select the new/edited files set definition in the set definitions
             // list. This will cause the selection listeners to repopulate the
             // subordinate components.
