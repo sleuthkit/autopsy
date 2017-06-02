@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,8 @@ import java.beans.PropertyChangeListener;
 import java.net.URISyntaxException;
 import java.util.Set;
 import java.util.logging.Level;
+import javax.annotation.concurrent.GuardedBy;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.jms.JMSException;
 import org.sleuthkit.autopsy.core.UserPreferencesException;
 import org.sleuthkit.autopsy.core.UserPreferences;
@@ -29,20 +31,20 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Provides thread-safe support for publishing events to registered subscribers
- * on both this Autopsy node and other Autopsy nodes. Subscribers are
- * constrained to be PropertyChangeListeners to integrate with the legacy use of
- * JavaBeans PropertyChangeEvents and PropertyChangeListeners as an application
- * event system.
+ * on both this Autopsy node and other Autopsy nodes. Subscribers are required
+ * to be PropertyChangeListeners to integrate with the legacy use of JavaBeans
+ * PropertyChangeEvents and PropertyChangeListeners as an application event
+ * system.
  */
+@ThreadSafe
 public final class AutopsyEventPublisher {
 
-    /**
-     * Composed of thread-safe objects.
-     */
     private static final Logger logger = Logger.getLogger(AutopsyEventPublisher.class.getName());
     private static final int MAX_REMOTE_EVENT_PUBLISH_TRIES = 1;
-    private final LocalEventPublisher localPublisher;
+    private final LocalEventPublisher localPublisher; // LocalEventPublisher is thread-safe
+    @GuardedBy("this)")
     private RemoteEventPublisher remotePublisher;
+    @GuardedBy("this)")
     private String currentChannelName;
 
     /**
@@ -56,14 +58,14 @@ public final class AutopsyEventPublisher {
     }
 
     /**
-     * Opens the event channel used for publishing events to and receiving
-     * events from other Autopsy nodes. Only one channel may be open at a time.
+     * Opens an event channel used for publishing events to, and receiving
+     * events from, other Autopsy nodes. Only one channel may be open at a time.
      *
      * @param channelName The name of the event channel.
      *
      * @throws AutopsyEventException if the channel was not opened.
      */
-    public void openRemoteEventChannel(String channelName) throws AutopsyEventException {
+    public synchronized void openRemoteEventChannel(String channelName) throws AutopsyEventException {
         currentChannelName = channelName;
         if (null != remotePublisher) {
             closeRemoteEventChannel();
@@ -85,7 +87,7 @@ public final class AutopsyEventPublisher {
      * Closes the event channel used for publishing events to and receiving
      * events from other Autopsy nodes.
      */
-    public void closeRemoteEventChannel() {
+    public synchronized void closeRemoteEventChannel() {
         stopRemotePublisher();
         currentChannelName = null;
     }
@@ -154,7 +156,7 @@ public final class AutopsyEventPublisher {
      *
      * @param event The event to publish.
      */
-    public void publishRemotely(AutopsyEvent event) {
+    public synchronized void publishRemotely(AutopsyEvent event) {
         if (null != currentChannelName) {
             boolean published = false;
             int tryCount = 1;
@@ -179,7 +181,7 @@ public final class AutopsyEventPublisher {
      * Stops the remote event publisher, but does not reset the current channel
      * name.
      */
-    private void stopRemotePublisher() {
+    private synchronized void stopRemotePublisher() {
         if (null != remotePublisher) {
             try {
                 remotePublisher.stop();

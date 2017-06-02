@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -32,6 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * PropertyChangeEvents and PropertyChangeListeners as an application event
  * system.
  */
+@ThreadSafe
 final class LocalEventPublisher {
 
     private static final Logger logger = Logger.getLogger(LocalEventPublisher.class.getName());
@@ -103,13 +105,13 @@ final class LocalEventPublisher {
     void publish(AutopsyEvent event) {
         Set<PropertyChangeListener> subscribers = subscribersByEvent.getOrDefault(event.getPropertyName(), null);
         if (null != subscribers) {
-            for (PropertyChangeListener subscriber : subscribers) {
+            subscribers.forEach((subscriber) -> {
                 try {
                     subscriber.propertyChange(event);
                 } catch (Exception ex) {
                     logger.log(Level.SEVERE, "Exception thrown by subscriber", ex); //NON-NLS
                 }
-            }
+            });
         }
     }
 
