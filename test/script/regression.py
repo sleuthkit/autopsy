@@ -107,20 +107,44 @@ def main():
         Errors.print_error("The arguments were given wrong")
         exit(1)
     test_config = TestConfiguration(args)
-
-    TestRunner.run_tests(test_config)
+    case_type = test_config.userCaseType.lower()
+    if case_type.startswith('multi'):
+        TestRunner.run_tests(test_config, True)
+    elif case_type.startswith('single'):
+        TestRunner.run_tests(test_config, False)
+    elif case_type.startswith('both'):
+        TestRunner.run_tests(test_config, False)
+        TestRunner.run_tests(test_config, True)
+    else:
+        Errors.print_error("Invalid case type inputed. Please use 'Multi-user, Single-user or Both for case type'.")
+        exit(1)
     exit(0)
 
 
 class TestRunner(object):
     """A collection of functions to run the regression tests."""
 
-    def run_tests(test_config):
+    def run_tests(test_config, isMultiUser):
         """Run the tests specified by the main TestConfiguration.
 
         Executes the AutopsyIngest for each image and dispatches the results based on
         the mode (rebuild or testing)
         """
+
+        if isMultiUser:
+            if test_config.output_parent_dir.endswith("single_user"):
+                test_config.output_parent_dir = test_config.output_parent_dir.replace("single_user", "multi_user")
+            else:
+                test_config.output_parent_dir += "\\multi_user"
+            test_config.userCaseType='multi'
+        else:
+            if test_config.output_parent_dir.endswith("multi_user"):
+                test_config.output_parent_dir = test_config.output_parent_dir.replace("multi_user", "single_user")
+            else:
+                test_config.output_parent_dir += "\\single_user"
+            test_config.userCaseType='single'
+
+        test_config._init_logs()
 
         #  get list of test images to process
         test_data_list = [ TestData(image, test_config) for image in test_config.images ]
@@ -141,7 +165,6 @@ class TestRunner(object):
             # At least one test has gold
             gold_exists = True
 
-            
 
             # Analyze the given image
             TestRunner._run_autopsy_ingest(test_data)
@@ -413,10 +436,23 @@ class TestRunner(object):
         test_data.ant.append("-Dkeyword_path=" + test_config.keyword_path)
         test_data.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
         test_data.ant.append("-Dgold_path=" + test_config.gold)
-        test_data.ant.append("-Dout_path=" + make_local_path(test_data.output_path))
+        if re.match('^[\w]:', test_data.output_path) == None or test_data.output_path.startswith('/'):
+            test_data.ant.append("-Dout_path=" + make_local_path(test_data.output_path))
+        else:
+            test_data.ant.append("-Dout_path=" + test_data.output_path)
         test_data.ant.append("-Dignore_unalloc=" + "%s" % test_config.args.unallocated)
         test_data.ant.append("-Dtest.timeout=" + str(test_config.timeout))
-
+        #multi-user settings
+        test_data.ant.append("-DdbHost=" + test_config.dbHost)
+        test_data.ant.append("-DdbPort=" + str(test_config.dbPort))
+        test_data.ant.append("-DdbUserName=" + test_config.dbUserName)
+        test_data.ant.append("-DdbPassword=" + test_config.dbPassword)
+        test_data.ant.append("-DsolrHost=" + test_config.solrHost)
+        test_data.ant.append("-DsolrPort=" + str(test_config.solrPort))
+        test_data.ant.append("-DmessageServiceHost=" + test_config.messageServiceHost)
+        test_data.ant.append("-DmessageServicePort=" + str(test_config.messageServicePort))
+        if test_config.userCaseType == "multi":
+            test_data.ant.append("-DisMultiUser=true")
         # Note: test_data has autopys_version attribute, but we couldn't see it from here. It's set after run ingest.
         autopsyVersionPath = os.path.join("..", "..", "nbproject", "project.properties")
 
@@ -434,7 +470,10 @@ class TestRunner(object):
         Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
         Errors.print_out("CMD: " + " ".join(test_data.ant))
         Errors.print_out("Starting test...\n")
-        antoutpth = make_local_path(test_data.main_config.output_dir, "antRunOutput.txt")
+        if re.match('^[\w]:', test_data.main_config.output_dir) == None or test_data.main_config.output_dir.startswith('/'):
+            antoutpth = make_local_path(test_data.main_config.output_dir, "antRunOutput.txt")
+        else:
+            antoutpth = test_data.main_config.output_dir + "\\antRunOutput.txt"
         antout = open(antoutpth, "a")
         if SYS is OS.CYGWIN:
             subprocess.call(test_data.ant, stdout=subprocess.PIPE)
@@ -528,11 +567,11 @@ class TestData(object):
         # Directory structure and files
         self.output_path = make_path(self.main_config.output_dir, self.image_name)
         self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
-        self.warning_log = make_local_path(self.output_path, "AutopsyLogs.txt")
-        self.antlog_dir = make_local_path(self.output_path, "antlog.txt")
+        self.warning_log = make_path(self.output_path, "AutopsyLogs.txt")
+        self.antlog_dir = make_path(self.output_path, "antlog.txt")
         self.test_dbdump = make_path(self.output_path, self.image_name +
         "-DBDump.txt")
-        self.common_log_path = make_local_path(self.output_path, self.image_name + "-Exceptions.txt")
+        self.common_log_path = make_path(self.output_path, self.image_name + "-Exceptions.txt")
         self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
         self.gold_data_dir = make_path(self.main_config.gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
@@ -712,12 +751,21 @@ class TestConfiguration(object):
         self.timeout = 24 * 60 * 60 * 1000 * 1000
         self.autopsyPlatform = ""
 
+        # Multi-user setting:
+        self.dbHost = ""
+        self.dbPort = ""
+        self.dbUserName = ""
+        self.dbPassword = ""
+        self.solrHost = ""
+        self.solrPort = ""
+        self.messageServiceHost = ""
+        self.messageServicePort = ""
+        self.userCaseType = "Both"
+
         if not self.args.single:
             self._load_config_file(self.args.config_file)
         else:
             self.images.append(self.args.single_file)
-        self._init_logs()
-
 
     def _load_config_file(self, config_file):
         """Updates this TestConfiguration's attributes from the config file.
@@ -746,7 +794,25 @@ class TestConfiguration(object):
                 self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("autopsyPlatform"):
                 self.autopsyPlatform = parsed_config.getElementsByTagName("autopsyPlatform")[0].getAttribute("value").encode().decode("utf_8")
-
+            # Multi-user settings
+            if parsed_config.getElementsByTagName("dbHost"):
+                self.dbHost = parsed_config.getElementsByTagName("dbHost")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("dbPort"):
+                self.dbPort = parsed_config.getElementsByTagName("dbPort")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("dbUserName"):
+                self.dbUserName = parsed_config.getElementsByTagName("dbUserName")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("dbPassword"):
+                self.dbPassword = parsed_config.getElementsByTagName("dbPassword")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("solrHost"):
+                self.solrHost = parsed_config.getElementsByTagName("solrHost")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("solrPort"):
+                self.solrPort = parsed_config.getElementsByTagName("solrPort")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("messageServiceHost"):
+                self.messageServiceHost = parsed_config.getElementsByTagName("messageServiceHost")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("messageServicePort"):
+                self.messageServicePort = parsed_config.getElementsByTagName("messageServicePort")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("userCaseType"):
+                self.userCaseType = parsed_config.getElementsByTagName("userCaseType")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -756,15 +822,33 @@ class TestConfiguration(object):
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
 
+        if self.userCaseType.lower().startswith("multi"):
+            if not self.dbHost.strip() or not self.dbPort.strip() or not self.dbUserName.strip() or not self.dbPassword.strip():
+                Errors.print_error("Please provide database connection information via configuration file. ")
+                sys.exit(1)
+            if not self.solrHost.strip() or not self.solrPort.strip():
+                Errors.print_error("Please provide solr host name and port number via configuration file. ")
+                sys.exit(1)
+            if not self.messageServiceHost.strip() or not self.messageServicePort.strip():
+                Errors.print_error("Please provide ActiveMQ host name and port number via configuration file. ")
+                sys.exit(1)
+ 
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
+        user_case_type = self.userCaseType.lower()
         if not dir_exists(self.output_parent_dir):
             os.makedirs(make_os_path(_platform, self.output_parent_dir))
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
         self.csv = make_local_path(self.output_dir, "CSV.txt")
         self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
-        log_name = self.output_dir + "\\regression.log"
+        log_name = ''
+        if SYS is OS.CYGWIN and (re.match('^[\w]:', self.output_dir) != None or not self.output_dir.startswith('/')):
+            a = ["cygpath", "-u", self.output_dir]
+            cygpath_output_dir = subprocess.check_output(a).decode('utf-8')
+            log_name = cygpath_output_dir.rstrip() + "/regression.log"
+        else:
+            log_name = self.output_dir + "\\regression.log"
         logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
     def _init_build_info(self, parsed_config):

@@ -174,11 +174,10 @@ class PstParser {
         email.setBcc(msg.getDisplayBCC());
         email.setSender(getSender(msg.getSenderName(), msg.getSenderEmailAddress()));
         email.setSentDate(msg.getMessageDeliveryTime());
-        if(msg.getTransportMessageHeaders().isEmpty()) {
-            email.setTextBody(msg.getBody());
-        } else {
-            email.setTextBody(msg.getBody() + "\n-----HEADERS-----\n\n" + msg.getTransportMessageHeaders() + "\n\n---END HEADERS--\n\n");
-        }
+        email.setTextBody(msg.getBody());
+        if(false == msg.getTransportMessageHeaders().isEmpty()) {
+            email.setHeaders("\n-----HEADERS-----\n\n" + msg.getTransportMessageHeaders() + "\n\n---END HEADERS--\n\n");
+        } 
         
         email.setHtmlBody(msg.getBodyHTML());
         String rtf = "";
