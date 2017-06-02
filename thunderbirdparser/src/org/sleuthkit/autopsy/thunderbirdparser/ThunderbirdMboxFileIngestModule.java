@@ -363,6 +363,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         String bcc = email.getBcc();
         String from = email.getSender();
         long dateL = email.getSentDate();
+        String headers = email.getHeaders();
         String body = email.getTextBody();
         String bodyHTML = email.getHtmlBody();
         String rtf = email.getRtfBody();
@@ -370,18 +371,19 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         long id = email.getId();
         String localPath = email.getLocalPath();
 
-        if (to.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO, EmailParserModuleFactory.getModuleName(), to));
-        }
-        if (cc.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC, EmailParserModuleFactory.getModuleName(), cc));
-        }
-        if (bcc.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC, EmailParserModuleFactory.getModuleName(), bcc));
+        if (headers.isEmpty() == false) {
+             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HEADERS, EmailParserModuleFactory.getModuleName(), headers));
         }
         if (from.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_FROM, EmailParserModuleFactory.getModuleName(), from));
         }
+        if (to.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_TO, EmailParserModuleFactory.getModuleName(), to));
+        }
+        if (subject.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT, EmailParserModuleFactory.getModuleName(), subject));
+        }
+         
         if (dateL > 0) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_RCVD, EmailParserModuleFactory.getModuleName(), dateL));
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DATETIME_SENT, EmailParserModuleFactory.getModuleName(), dateL));
@@ -389,22 +391,32 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (body.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN, EmailParserModuleFactory.getModuleName(), body));
         }
+        
+        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID, EmailParserModuleFactory.getModuleName(), ((id < 0L) ? NbBundle
+                .getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.notAvail") : String.valueOf(id))));
+        
+        if (localPath.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, EmailParserModuleFactory.getModuleName(), localPath));
+        } else {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, EmailParserModuleFactory.getModuleName(), "/foo/bar")); //NON-NLS
+        }
+        
+        if (cc.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CC, EmailParserModuleFactory.getModuleName(), cc));
+        }
+        if (bcc.isEmpty() == false) {
+            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_BCC, EmailParserModuleFactory.getModuleName(), bcc));
+        }
+        
         if (bodyHTML.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML, EmailParserModuleFactory.getModuleName(), bodyHTML));
         }
         if (rtf.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF, EmailParserModuleFactory.getModuleName(), rtf));
         }
-        bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_MSG_ID, EmailParserModuleFactory.getModuleName(), ((id < 0L) ? NbBundle
-                .getMessage(this.getClass(), "ThunderbirdMboxFileIngestModule.notAvail") : String.valueOf(id))));
-        if (subject.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_SUBJECT, EmailParserModuleFactory.getModuleName(), subject));
-        }
-        if (localPath.isEmpty() == false) {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, EmailParserModuleFactory.getModuleName(), localPath));
-        } else {
-            bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_PATH, EmailParserModuleFactory.getModuleName(), "/foo/bar")); //NON-NLS
-        }
+      
+       
+        
 
         try {
             BlackboardArtifact bbart;
