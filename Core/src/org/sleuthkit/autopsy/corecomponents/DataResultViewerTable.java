@@ -314,17 +314,17 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         assignColumns(props); // assign columns to match the properties
         setColumnWidths();
+        
         //Load column sorting information from preferences file and apply it to columns.
         loadColumnSorting();
+
         /*
          * Save references to columns before we deal with their visibility. This
-         * has to happen after the sorting is applied, be cause that actually
+         * has to happen after the sorting is applied, because that actually
          * causes the columns to be recreated. It has to happen before
          * loadColumnVisibility so we have referenecs to the columns to pass to
          * setColumnHidden.
-         *
-         * TODO: what about persisting hidden state of sorted columns?
-         */
+              */
         populateColumnMap();
 
         //Load column visibility information from preferences file and apply it to columns.
@@ -366,6 +366,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void populateColumnMap() {
         columnMap.clear();
         TableColumnModel columnModel = outline.getColumnModel();
+        //for each property get a reference to the column object from the column model.
         for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
             final String propName = entry.getValue().getName();
             final ETableColumn column = (ETableColumn) columnModel.getColumn(entry.getKey());
@@ -543,6 +544,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         if (currentRoot instanceof TableFilterNode) {
+
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
             final String nodeBaseKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
