@@ -46,7 +46,11 @@ public final class Manifest implements Serializable {
         this.dateFileCreated = new Date(attrs.creationTime().toMillis());
         this.caseName = caseName;
         this.deviceId = deviceId;
-        this.dataSourcePath = dataSourcePath.toString();
+        if (dataSourcePath != null) {
+            this.dataSourcePath = dataSourcePath.toString(); 
+        } else {
+            this.dataSourcePath = "";
+        }
         this.manifestProperties = new HashMap<>(manifestProperties);
     }
 
