@@ -100,8 +100,7 @@ final class CaseDeleteAction extends CallableSystemAction {
                                     JOptionPane.ERROR_MESSAGE);
                         }
                         /*
-                         * Close the Case Properties dialog that is the parent
-                         * of the Delete button that invokes this action.
+                         * Re-open the startup window.
                          */
                         StartupWindowProvider.getInstance().open();
                     }

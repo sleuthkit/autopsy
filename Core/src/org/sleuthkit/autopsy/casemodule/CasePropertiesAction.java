@@ -79,11 +79,4 @@ final class CasePropertiesAction extends CallableSystemAction {
     public HelpCtx getHelpCtx() {
         return HelpCtx.DEFAULT_HELP;
     }
-
-    static void closeCasePropertiesWindow() {
-        if (null != casePropertiesDialog) {
-            casePropertiesDialog.setVisible(false);
-            casePropertiesDialog = null;
-        }
-    }
 }
