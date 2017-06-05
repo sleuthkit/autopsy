@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2014-2016 Basis Technology Corp.
+ * Copyright 2014-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,8 @@ package org.sleuthkit.autopsy.modules.interestingitems;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -55,6 +53,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
         "FilesSetRulePanel.ZeroFileSizeError=File size condition value must not be 0 (Unless = is selected)."
     })
 
+    private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(FilesSetRulePanel.class.getName());
     private static final String SLEUTHKIT_PATH_SEPARATOR = "/"; // NON-NLS
     private static final List<String> ILLEGAL_FILE_NAME_CHARS = FilesSetsManager.getIllegalFileNameChars();
@@ -130,32 +129,13 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     }
 
     private void populateMimeTypesComboBox() {
-        Set<String> fileTypesCollated = new HashSet<>();
-        for (String mediaType : FileTypeDetector.getStandardDetectedTypes()) {
-            fileTypesCollated.add(mediaType);
-        }
-
-        FileTypeDetector fileTypeDetector;
         try {
-            fileTypeDetector = new FileTypeDetector();
-            List<String> userDefinedFileTypes = fileTypeDetector.getUserDefinedTypes();
-            fileTypesCollated.addAll(userDefinedFileTypes);
-
+            SortedSet<String> detectableMimeTypes = FileTypeDetector.getDetectedTypes();
+            detectableMimeTypes.forEach((type) -> {
+                mimeTypeComboBox.addItem(type);
+            });
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, "Unable to get user defined file types", ex);
-        }
-
-        List<String> toSort = new ArrayList<>(fileTypesCollated);
-        toSort.sort((String string1, String string2) -> {
-            int result = String.CASE_INSENSITIVE_ORDER.compare(string1, string2);
-            if (result == 0) {
-                result = string1.compareTo(string2);
-            }
-            return result;
-        });
-
-        for (String file : toSort) {
-            mimeTypeComboBox.addItem(file);
+            logger.log(Level.SEVERE, "Unable to get detectable file types", ex);
         }
         this.setOkButton();
     }
@@ -208,7 +188,7 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
      * @return
      */
     private JOptionPane getOptionPane(JComponent parent) {
-        JOptionPane pane = null;
+        JOptionPane pane;
         if (!(parent instanceof JOptionPane)) {
             pane = getOptionPane((JComponent) parent.getParent());
         } else {
@@ -226,19 +206,13 @@ final class FilesSetRulePanel extends javax.swing.JPanel {
     private void setButtons(JButton ok, JButton cancel) {
         this.okButton = ok;
         this.cancelButton = cancel;
-        okButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane pane = getOptionPane(okButton);
-                pane.setValue(okButton);
-            }
+        okButton.addActionListener((ActionEvent e) -> {
+            JOptionPane pane = getOptionPane(okButton);
+            pane.setValue(okButton);
         });
-        cancelButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane pane = getOptionPane(cancelButton);
-                pane.setValue(cancelButton);
-            }
+        cancelButton.addActionListener((ActionEvent e) -> {
+            JOptionPane pane = getOptionPane(cancelButton);
+            pane.setValue(cancelButton);
         });
         this.setOkButton();
     }

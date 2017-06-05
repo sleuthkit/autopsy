@@ -248,6 +248,7 @@ public final class IngestJob {
         } else {
             IngestManager.getInstance().fireDataSourceAnalysisCancelled(id, job.getId(), job.getDataSource());
         }
+        System.out.println("\n#####  Finished sleeping\n");        
         if (incompleteJobsCount.decrementAndGet() == 0) {
             ingestManager.finishIngestJob(this);
         }
