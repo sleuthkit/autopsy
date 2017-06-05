@@ -624,7 +624,7 @@ public class Case {
                  * First, acquire an exclusive case directory lock. The case
                  * cannot be deleted if another node has it open.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_checkingForOtherUser());
+                progressIndicator.progress(Bundle.Case_progressMessage_checkingForOtherUser());
                 try (CoordinationService.Lock dirLock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
                     assert (null != dirLock);
                     deleteCase(metadata, progressIndicator);

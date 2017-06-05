@@ -31,7 +31,7 @@ import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
-import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
+import org.sleuthkit.autopsy.core.UserPreferences;
 
 final class AutoIngestCaseOpenAction extends CallableSystemAction implements ActionListener {
 
@@ -44,7 +44,7 @@ final class AutoIngestCaseOpenAction extends CallableSystemAction implements Act
     @Override
     public void actionPerformed(ActionEvent e) {
 
-        AutoIngestUserPreferences.SelectedMode mode = AutoIngestUserPreferences.getMode();
+        UserPreferences.SelectedMode mode = UserPreferences.getMode();
         switch (mode) {
             case REVIEW:
 
@@ -63,7 +63,7 @@ final class AutoIngestCaseOpenAction extends CallableSystemAction implements Act
                 }
                 break;
                 
-            case AUTOMATED:
+            case AUTOINGEST:
                 /*
                  * New case action is disabled in auto ingest mode.
                  */               

@@ -33,6 +33,7 @@ import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCasePanel;
@@ -103,10 +104,10 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
      * user.
      */
     private void addPanelForMode() {
-        AutoIngestUserPreferences.SelectedMode mode = AutoIngestUserPreferences.getMode();
+        UserPreferences.SelectedMode mode = UserPreferences.getMode();
 
         switch (mode) {
-            case AUTOMATED:
+            case AUTOINGEST:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.AutoIngestMode") + " (" + LOCAL_HOST_NAME + ")");
                 setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
                 this.addWindowListener(new WindowAdapter() {

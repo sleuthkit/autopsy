@@ -438,7 +438,7 @@ final class AutoIngestJobLogger {
             if (null != lock) {
                 File logFile = logPath.toFile();
                 try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(logFile, logFile.exists())), true)) {
-                    writer.println(String.format("%s %s: %s: %s: %-8s: %s", logDateFormat.format((Date.from(Instant.now()).getTime())), hostName, manifestFileName, dataSourceFileName, category.toString(), message));
+                    writer.println(String.format("%-8s: %s %s: %s: %s: %s", category.toString(), logDateFormat.format((Date.from(Instant.now()).getTime())), hostName, manifestFileName, dataSourceFileName, message));
                 } catch (IOException ex) {
                     throw new AutoIngestJobLoggerException(String.format("Failed to write case auto ingest log message (\"%s\") for %s", message, manifestPath), ex);
                 }

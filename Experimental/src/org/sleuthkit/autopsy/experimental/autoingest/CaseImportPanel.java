@@ -39,7 +39,6 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences;
-import static org.sleuthkit.autopsy.experimental.configuration.AutoIngestUserPreferences.SelectedMode.AUTOMATED;
 
 /**
  * This panel shows up in a tab pane next to the copy files panel for the

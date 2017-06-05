@@ -54,6 +54,12 @@ public enum FileTypeUtils {
      * types
      */
     private static final Set<String> supportedMimeTypes = new HashSet<>();
+
+    /**
+     * Mimetypes that we disable because they create too many false positives (
+     * ie files that are not images to show up in Image Gallery)
+     */
+    private static final Set<String> disabledMimeTypes = new HashSet<>();
     /**
      * set of specific mimetypes to support as videos, in addition to any type
      * prefixed by video/
@@ -92,22 +98,22 @@ public enum FileTypeUtils {
                 .collect(Collectors.toList()));
         //add list of known image extensions
         imageExtensions.addAll(Arrays.asList(
-                "bmp" //Bitmap NON-NLS
-                , "gif" //gif NON-NLS
-                , "jpg", "jpeg", "jpe", "jp2", "jpx" //jpeg variants NON-NLS
-                , "pbm", "pgm", "ppm" // Portable image format variants NON-NLS
-                , "png" //portable network graphic NON-NLS
-                , "tga" //targa NON-NLS
-                , "psd" //photoshop NON-NLS
-                , "tif", "tiff" //tiff variants NON-NLS
-                , "yuv", "ico" //icons NON-NLS
-                , "ai" //illustrator NON-NLS
-                , "svg" //scalable vector graphics NON-NLS
-                , "sn", "ras" //sun raster NON-NLS
-                , "ico" //windows icons NON-NLS
-                , "tga" //targa NON-NLS
-                , "wmf", "emf" // windows meta file NON-NLS
-                , "wmz", "emz" //compressed windows meta file NON-NLS
+                "bmp", //Bitmap NON-NLS
+                "gif", //gif NON-NLS
+                "jpg", "jpeg", "jpe", "jp2", "jpx", //jpeg variants NON-NLS
+                "pbm", "pgm", "ppm",// Portable image format variants NON-NLS
+                "png", //portable network graphic NON-NLS
+                "tga", //targa NON-NLS
+                "psd", //photoshop NON-NLS
+                "tif", "tiff", //tiff variants NON-NLS
+                "yuv", "ico", //icons NON-NLS
+                "ai", //illustrator NON-NLS
+                "svg", //scalable vector graphics NON-NLS
+                "sn", "ras", //sun raster NON-NLS
+                "ico", //windows icons NON-NLS
+                "tga", //targa NON-NLS
+                "wmf", "emf", // windows meta file NON-NLS
+                "wmz", "emz" //compressed windows meta file NON-NLS
         ));
 
         //add list of known video extensions
@@ -131,14 +137,29 @@ public enum FileTypeUtils {
          */
         supportedMimeTypes.addAll(Arrays.asList("application/x-123")); //NON-NLS
         supportedMimeTypes.addAll(Arrays.asList("application/x-wmf")); //NON-NLS
-        supportedMimeTypes.addAll(Arrays.asList("application/x-emf")); //NON-NLS
 
+        /*
+         * We could support application/x-emf, but many files get mis-identified
+         * as it and so supporting it causes many false positive( ie files that
+         * are not images) to show up in Image Gallery.
+         * supportedMimeTypes.addAll(Arrays.asList("application/x-emf"));
+         */
         //add list of mimetypes ImageIO claims to support
         supportedMimeTypes.addAll(Stream.of(ImageIO.getReaderMIMETypes())
                 .map(String::toLowerCase)
                 .collect(Collectors.toList()));
 
-        supportedMimeTypes.removeIf("application/octet-stream"::equals); //this is rarely usefull NON-NLS
+        /**
+         * Many non image files get misidentified as image/vnd.microsoft.icon
+         * and application/x-emf, and show up in Image Gallery as 'false
+         * positives'.
+         */
+        disabledMimeTypes.addAll(Arrays.asList("application/octet-stream",//this is rarely usefull //NON-NLS 
+                "image/vnd.microsoft.icon",
+                "application/x-emf"));
+
+        supportedMimeTypes.removeAll(disabledMimeTypes);
+
     }
 
     public static Set<String> getAllSupportedMimeTypes() {
@@ -176,12 +197,13 @@ public enum FileTypeUtils {
     static boolean isDrawableMimeType(String mimeType) {
         if (StringUtils.isBlank(mimeType)) {
             return false;
-        } else {
-            String mimeTypeLower = mimeType.toLowerCase();
-            return mimeTypeLower.startsWith("image/")
-                    || mimeTypeLower.startsWith("video/")
-                    || supportedMimeTypes.contains(mimeTypeLower);
         }
+        String mimeTypeLower = mimeType.toLowerCase();
+        return (disabledMimeTypes.contains(mimeTypeLower) == false)
+                && (mimeTypeLower.startsWith("image/")
+                || mimeTypeLower.startsWith("video/")
+                || supportedMimeTypes.contains(mimeTypeLower));
+
     }
 
     /**
