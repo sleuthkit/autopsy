@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.casemodule;
 
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.Action;
@@ -31,6 +32,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -47,6 +49,9 @@ final class CaseDeleteAction extends CallableSystemAction {
     CaseDeleteAction() {
         putValue(Action.NAME, NbBundle.getMessage(CaseDeleteAction.class, "CTL_CaseDeleteAction"));
         this.setEnabled(false);
+        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+            setEnabled(null != evt.getNewValue() && UserPreferences.getMode() != UserPreferences.SelectedMode.REVIEW);
+        });
     }
 
     @Override
@@ -95,10 +100,8 @@ final class CaseDeleteAction extends CallableSystemAction {
                                     JOptionPane.ERROR_MESSAGE);
                         }
                         /*
-                         * Close the Case Properties dialog that is the parent
-                         * of the Delete button that invokes this action.
+                         * Re-open the startup window.
                          */
-                        CasePropertiesAction.closeCasePropertiesWindow();
                         StartupWindowProvider.getInstance().open();
                     }
                 }.execute();
