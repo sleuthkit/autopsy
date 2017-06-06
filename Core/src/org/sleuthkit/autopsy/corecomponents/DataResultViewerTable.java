@@ -31,6 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import org.netbeans.swing.etable.ETableColumn;
+import org.netbeans.swing.etable.ETableColumnModel;
 import org.netbeans.swing.outline.DefaultOutlineCellRenderer;
 import org.netbeans.swing.outline.DefaultOutlineModel;
 import org.netbeans.swing.outline.Outline;
@@ -86,7 +89,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @NbBundle.Messages("DataResultViewerTable.pleasewaitNodeDisplayName=Please Wait...")
     private static final String PLEASEWAIT_NODE_DISPLAY_NAME = Bundle.DataResultViewerTable_pleasewaitNodeDisplayName();
     private static final Color TAGGED_COLOR = new Color(200, 210, 220);
-    /*
+    /**
      * The properties map:
      *
      * stored value of column index -> property at that index
@@ -96,6 +99,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * current table view due to its collection of its children's properties.
      */
     private final Map<Integer, Property<?>> propertiesMap = new TreeMap<>();
+
+    /**
+     * Stores references to the actual table column objects, keyed by column
+     * name, so that we can check there visibility later in
+     * storeColumnVisibility().
+     */
+    private final Map<String, ETableColumn> columnMap = new HashMap<>();
+
     private final PleasewaitNodeListener pleasewaitNodeListener = new PleasewaitNodeListener();
 
     private Node currentRoot;
@@ -105,6 +116,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * Convience reference to internal Outline.
      */
     private Outline outline;
+
+    /**
+     * Listener for table model event and mouse clicks.
+     */
+    private TableListener tableListener;
 
     /**
      * Creates a DataResultViewerTable object that is compatible with node
@@ -137,7 +153,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.setDefaultRenderer(Object.class, new ColorTagCustomRenderer());
 
         // add a listener so that when columns are moved, the new order is stored
-        TableListener tableListener = new TableListener();
+        tableListener = new TableListener();
         outline.getColumnModel().addColumnModelListener(tableListener);
         // the listener also moves columns back if user tries to move the first column out of place
         outline.getTableHeader().addMouseListener(tableListener);
@@ -247,9 +263,16 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
                 outlineView.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+                /*
+                 * Since we are modifying the columns, we don't want to listen
+                 * to added/removed events as un-hide/hide.
+                 */
+                tableListener.listenToVisibilityChanges(false);
                 outlineView.setPropertyColumns(); // set the empty property header
             }
         } finally {
+
             this.setCursor(null);
         }
     }
@@ -259,6 +282,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * the table.
      */
     private void setupTable() {
+        /*
+         * Since we are modifying the columns, we don't want to listen to
+         * added/removed events as un-hide/hide, until the table setup is done.
+         */
+        tableListener.listenToVisibilityChanges(false);
+
         /**
          * OutlineView makes the first column be the result of
          * node.getDisplayName with the icon. This duplicates our first column,
@@ -283,33 +312,66 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
 
-        assignColumns(props);
+        assignColumns(props); // assign columns to match the properties
         setColumnWidths();
+        
+        //Load column sorting information from preferences file and apply it to columns.
         loadColumnSorting();
+
+        /*
+         * Save references to columns before we deal with their visibility. This
+         * has to happen after the sorting is applied, because that actually
+         * causes the columns to be recreated. It has to happen before
+         * loadColumnVisibility so we have referenecs to the columns to pass to
+         * setColumnHidden.
+              */
+        populateColumnMap();
+
+        //Load column visibility information from preferences file and apply it to columns.
+        loadColumnVisibility();
 
         /**
          * If one of the child nodes of the root node is to be selected, select
          * it.
          */
-        SwingUtilities.invokeLater(()->{
-        if (currentRoot instanceof TableFilterNode) {
-            NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
-            if (null != selectedChildInfo) {
-                Node[] childNodes = currentRoot.getChildren().getNodes(true);
-                for (int i = 0; i < childNodes.length; ++i) {
-                    Node childNode = childNodes[i];
-                    if (selectedChildInfo.matches(childNode)) {
-                        try {
-                            em.setSelectedNodes(new Node[]{childNode});
-                        } catch (PropertyVetoException ex) {
-                            logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+        SwingUtilities.invokeLater(() -> {
+            if (currentRoot instanceof TableFilterNode) {
+                NodeSelectionInfo selectedChildInfo = ((TableFilterNode) currentRoot).getChildNodeSelectionInfo();
+                if (null != selectedChildInfo) {
+                    Node[] childNodes = currentRoot.getChildren().getNodes(true);
+                    for (int i = 0; i < childNodes.length; ++i) {
+                        Node childNode = childNodes[i];
+                        if (selectedChildInfo.matches(childNode)) {
+                            try {
+                                em.setSelectedNodes(new Node[]{childNode});
+                            } catch (PropertyVetoException ex) {
+                                logger.log(Level.SEVERE, "Failed to select node specified by selected child info", ex);
+                            }
+                            break;
                         }
-                        break;
                     }
+                    ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
                 }
-                ((TableFilterNode) currentRoot).setChildNodeSelectionInfo(null);
             }
-        }});
+        });
+
+        //the table setup is done, so any added/removed events can now be treated as un-hide/hide.
+        tableListener.listenToVisibilityChanges(true);
+    }
+
+    /*
+     * Populate the map with references to the column objects for use when
+     * loading/storing the visibility info.
+     */
+    private void populateColumnMap() {
+        columnMap.clear();
+        TableColumnModel columnModel = outline.getColumnModel();
+        //for each property get a reference to the column object from the column model.
+        for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
+            final String propName = entry.getValue().getName();
+            final ETableColumn column = (ETableColumn) columnModel.getColumn(entry.getKey());
+            columnMap.put(propName, column);
+        }
     }
 
     private void setColumnWidths() {
@@ -349,7 +411,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
     }
 
-    private void assignColumns(List<Property<?>> props) {
+    synchronized private void assignColumns(List<Property<?>> props) {
         // Get the columns setup with respect to names and sortability
         String[] propStrings = new String[props.size() * 2];
         for (int i = 0; i < props.size(); i++) {
@@ -368,43 +430,86 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     }
 
     /**
-     * Store the current column order and sort information into a preference
-     * file.
+     * Store the current column visibility information into a preference file.
      */
-    private synchronized void storeColumnState() {
+    private synchronized void storeColumnVisibility() {
         if (currentRoot == null || propertiesMap.isEmpty()) {
             return;
         }
         if (currentRoot instanceof TableFilterNode) {
             TableFilterNode tfn = (TableFilterNode) currentRoot;
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-            // Store the current order of the columns into settings
-            for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
+            final ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
 
-                preferences.put(getColumnPositionKey(tfn.getColumnOrderKey(), entry.getValue().getName()), String.valueOf(entry.getKey()));
-            }
-            final TableColumnModel columnModel = outline.getColumnModel();
+            //store hidden state
+            for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
 
-            //store the sorting information
-            int numCols = columnModel.getColumnCount();
-            for (int i = 0; i < numCols; i++) {
-                ETableColumn etc = (ETableColumn) columnModel.getColumn(i);
-                String columnName = outline.getColumnName(i);
-                if (etc.isSorted()) {
-                    preferences.put(getColumnSortOrderKey(tfn.getColumnOrderKey(), columnName), String.valueOf(etc.isAscending()));
-                    preferences.put(getColumnSortRankKey(tfn.getColumnOrderKey(), columnName), String.valueOf(etc.getSortRank()));
+                String columnName = entry.getKey();
+                final String columnHiddenKey = getColumnHiddenKey(tfn.getColumnOrderKey(), columnName);
+                final TableColumn column = entry.getValue();
+
+                boolean columnHidden = columnModel.isColumnHidden(column);
+                if (columnHidden) {
+                    preferences.putBoolean(columnHiddenKey, true);
                 } else {
-                    preferences.remove(getColumnSortOrderKey(tfn.getColumnOrderKey(), columnName));
-                    preferences.remove(getColumnSortRankKey(tfn.getColumnOrderKey(), columnName));
+                    preferences.remove(columnHiddenKey);
                 }
             }
         }
     }
 
     /**
+     * Store the current column order information into a preference file.
+     */
+    private synchronized void storeColumnOrder() {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
+            return;
+        }
+        if (currentRoot instanceof TableFilterNode) {
+            TableFilterNode tfn = (TableFilterNode) currentRoot;
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+
+            // Store the current order of the columns into settings
+            for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
+                preferences.putInt(getColumnPositionKey(tfn.getColumnOrderKey(), entry.getValue().getName()), entry.getKey());
+            }
+        }
+    }
+
+    /**
+     * Store the current column sorting information into a preference file.
+     */
+    private synchronized void storeColumnSorting() {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
+            return;
+        }
+        if (currentRoot instanceof TableFilterNode) {
+            final String nodeBaseKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+
+            for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
+                ETableColumn etc = entry.getValue();
+                String columnName = entry.getKey();
+
+                //store sort rank and order
+                final String columnSortOrderKey = getColumnSortOrderKey(nodeBaseKey, columnName);
+                final String columnSortRankKey = getColumnSortRankKey(nodeBaseKey, columnName);
+                if (etc.isSorted()) {
+                    preferences.putBoolean(columnSortOrderKey, etc.isAscending());
+                    preferences.putInt(columnSortRankKey, etc.getSortRank());
+                } else {
+                    preferences.remove(columnSortOrderKey);
+                    preferences.remove(columnSortRankKey);
+                }
+            }
+
+        }
+    }
+
+    /**
      * Reads and applies the column sorting information persisted to the
      * preferences file. Must be called after loadColumnOrder() since it depends
-     * on propertiesMap being initialized, and before assignColumns since it
+     * on propertiesMap being initialized, and after assignColumns since it
      * cannot set the sort on columns that have not been added to the table.
      */
     private synchronized void loadColumnSorting() {
@@ -421,15 +526,35 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             propertiesMap.entrySet().stream().forEach(entry -> {
                 final String propName = entry.getValue().getName();
                 //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-                Integer sortRank = Integer.valueOf(preferences.get(getColumnSortRankKey(columnKey, propName), "0"));
+                Integer sortRank = preferences.getInt(getColumnSortRankKey(columnKey, propName), 0);
                 //default to true => ascending
-                Boolean sortOrder = Boolean.valueOf(preferences.get(getColumnSortOrderKey(columnKey, propName), "true"));
+                Boolean sortOrder = preferences.getBoolean(getColumnSortOrderKey(columnKey, propName), true);
 
                 treeSet.add(new ColumnSortInfo(entry.getKey(), sortRank, sortOrder));
             });
 
             //apply sort information in rank order.
             treeSet.forEach(sortInfo -> outline.setColumnSorted(sortInfo.modelIndex, sortInfo.order, sortInfo.rank));
+        }
+    }
+
+    private synchronized void loadColumnVisibility() {
+        if (currentRoot == null || propertiesMap.isEmpty()) {
+            return;
+        }
+
+        if (currentRoot instanceof TableFilterNode) {
+
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
+
+            final String nodeBaseKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
+            ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
+            for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
+                final String propName = entry.getValue().getName();
+                boolean hidden = preferences.getBoolean(getColumnHiddenKey(nodeBaseKey, propName), false);
+                final TableColumn column = columnMap.get(propName);
+                columnModel.setColumnHidden(column, hidden);
+            }
         }
     }
 
@@ -467,7 +592,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
         for (Property<?> prop : props) {
-            Integer value = Integer.valueOf(preferences.get(getColumnPositionKey(columnKey, prop.getName()), "-1"));
+            Integer value = preferences.getInt(getColumnPositionKey(columnKey, prop.getName()), -1);
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
                 noPreviousSettings = false;
@@ -513,7 +638,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *
      * @return A generated key for the preference file
      */
-    private String getColumnSortOrderKey(String keyBase, String propName) {
+    static private String getColumnSortOrderKey(String keyBase, String propName) {
         return getColumnKeyBase(keyBase, propName) + ".sortOrder";
     }
 
@@ -527,8 +652,12 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *
      * @return A generated key for the preference file
      */
-    private String getColumnSortRankKey(String keyBase, String propName) {
+    static private String getColumnSortRankKey(String keyBase, String propName) {
         return getColumnKeyBase(keyBase, propName) + ".sortRank";
+    }
+
+    static private String getColumnHiddenKey(String keyBase, String propName) {
+        return getColumnKeyBase(keyBase, propName) + ".hidden";
     }
 
     private static String getColumnKeyBase(String keyBase, String propName) {
@@ -581,7 +710,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Listens to mouse events and table column events and persists column order
-     * and sorting changes
+     * sorting, and visibility changes.
      */
     private class TableListener extends MouseAdapter implements TableColumnModelListener {
 
@@ -589,6 +718,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         // the column started and where it ended up.
         private int startColumnIndex = -1;
         private int endColumnIndex = -1;
+        private boolean listenToVisibilitEvents;
 
         @Override
         public void columnMoved(TableColumnModelEvent e) {
@@ -640,7 +770,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 propertiesMap.put(range.get(0), movedProp);
             }
 
-            storeColumnState();
+            storeColumnOrder();
         }
 
         @Override
@@ -664,15 +794,30 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-            storeColumnState();
+            //the user clicked a column header
+            storeColumnSorting();
         }
 
         @Override
         public void columnAdded(TableColumnModelEvent e) {
+            columnAddedOrRemoved();
         }
 
         @Override
         public void columnRemoved(TableColumnModelEvent e) {
+            columnAddedOrRemoved();
+        }
+
+        /**
+         * Process a columnAdded or columnRemoved event. If we are listening to
+         * visibilty events the assumption is that added/removed are really
+         * unhide/hide. If we are not listening do nothing.
+         */
+        private void columnAddedOrRemoved() {
+            if (listenToVisibilitEvents) {
+                SwingUtilities.invokeLater(DataResultViewerTable.this::storeColumnVisibility);
+
+            }
         }
 
         @Override
@@ -681,6 +826,19 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         @Override
         public void columnSelectionChanged(ListSelectionEvent e) {
+        }
+
+        /**
+         * Set the listener to listen or not to visibility changes. When this is
+         * true, the listener treats all column added/removed events as
+         * un-hide/hide, and persists the hidden/visible state to the
+         * preferences file. When false, the listener treats added/removed as
+         * added/removed (which it ignores).
+         *
+         * @param b
+         */
+        private void listenToVisibilityChanges(boolean b) {
+            this.listenToVisibilitEvents = b;
         }
     }
 
