@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +43,12 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
+import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
  *
@@ -92,7 +98,7 @@ class KeywordSearchFilterNode extends FilterNode {
     public Action[] getActions(boolean popup) {
 
         List<Action> actions = new ArrayList<>();
-
+        actions.addAll(Arrays.asList(super.getActions(popup)));
         Content content = this.getOriginal().getLookup().lookup(Content.class);
         actions.addAll(content.accept(new GetPopupActionsContentVisitor()));
 
@@ -111,6 +117,32 @@ class KeywordSearchFilterNode extends FilterNode {
             return getFileActions();
         }
 
+        @Override
+        public List<Action> visit(Directory d) {
+            return getFileActions();
+        }
+
+        @Override
+        public List<Action> visit(LayoutFile lf) {
+            // layout files do not have times
+            return getFileActions();
+        }
+
+        @Override
+        public List<Action> visit(LocalFile lf) {
+            return getFileActions();
+        }
+
+        @Override
+        public List<Action> visit(SlackFile f) {
+            return getFileActions();
+        }
+
+        @Override
+        public List<Action> visit(VirtualDirectory dir) {
+            return getFileActions();
+        }
+
         private List<Action> getFileActions() {
             List<Action> actionsList = new ArrayList<>();
             actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
@@ -120,20 +152,20 @@ class KeywordSearchFilterNode extends FilterNode {
             actionsList.add(new HashSearchAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.searchSameMd5"), getOriginal()));
             actionsList.add(null); // creates a menu separator
             actionsList.add(AddContentTagAction.getInstance());
-        
-            final Collection<AbstractFile> selectedFilesList =
-                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
-            if(selectedFilesList.size() == 1) {
+
+            final Collection<AbstractFile> selectedFilesList
+                    = new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+            if (selectedFilesList.size() == 1) {
                 actionsList.add(DeleteFileContentTagAction.getInstance());
             }
-            
+
             actionsList.addAll(ContextMenuExtensionPoint.getActions());
             return actionsList;
         }
 
         @Override
         protected List<Action> defaultVisit(Content c) {
-            return new ArrayList<>();
+           return getFileActions();
         }
     }
 }
