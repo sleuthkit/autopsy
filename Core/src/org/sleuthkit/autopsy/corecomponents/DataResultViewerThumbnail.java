@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 
 /**
  * A thumbnail viewer for the results view, with paging support.
@@ -520,7 +521,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     }
 
-    @NbBundle.Messages({"DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}"})
+    @NbBundle.Messages({"DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}",
+        "DataResultViewerThumbnail.sortLabel.text=Sorted by: ---"})
     private void updateControls() {
         if (totalPages == 0) {
             pagePrevButton.setEnabled(false);
@@ -530,6 +532,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             imagesRangeLabel.setText("");
             thumbnailSizeComboBox.setEnabled(false);
             sortButton.setEnabled(false);
+            sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
+
         } else {
             pageNumLabel.setText(
                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
@@ -543,16 +547,15 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             goToPageField.setEnabled(totalPages > 1);
             sortButton.setEnabled(true);
             thumbnailSizeComboBox.setEnabled(true);
-        }
-
-        if (tfn != null) {
-            String sortString = ResultViewerPersistence.loadSortCriteria(tfn).stream()
-                    .map(SortCriterion::toString)
-                    .collect(Collectors.joining(" "));
-            sortString = StringUtils.defaultIfBlank(sortString, "---");
-            sortLabel.setText(Bundle.DataResultViewerThumbnail_sortLabel_textTemplate(sortString));
-        } else {
-            sortLabel.setText(NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text"));
+            if (tfn != null) {
+                String sortString = ResultViewerPersistence.loadSortCriteria(tfn).stream()
+                        .map(SortCriterion::toString)
+                        .collect(Collectors.joining(" "));
+                sortString = StringUtils.defaultIfBlank(sortString, "---");
+                sortLabel.setText(Bundle.DataResultViewerThumbnail_sortLabel_textTemplate(sortString));
+            } else {
+                sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
+            }
         }
     }
 
@@ -620,7 +623,6 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
 
             updateControls();
-
         }
 
         @Override
