@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-16 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,10 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.lang.ref.SoftReference;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
@@ -45,6 +48,8 @@ class ThumbnailViewNode extends FilterNode {
 
     private SoftReference<Image> iconCache = null;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
+
+    static Executor executor = Executors.newFixedThreadPool(3);
 
     private SwingWorker<Image, Object> swingWorker;
     private Timer timer;
@@ -80,42 +85,16 @@ class ThumbnailViewNode extends FilterNode {
                 return ImageUtils.getDefaultThumbnail();
             }
             if (swingWorker == null || swingWorker.isDone()) {
-                swingWorker = new SwingWorker<Image, Object>() {
-                    final private ProgressHandle progressHandle = ProgressHandle.createHandle(Bundle.ThumbnailViewNode_progressHandle_text(content.getName()));
-
-                    @Override
-                    protected Image doInBackground() throws Exception {
-                        progressHandle.start();
-                        return ImageUtils.getThumbnail(content, iconSize);
-                    }
-
-                    @Override
-                    protected void done() {
-                        super.done();
-                        try {
-                            iconCache = new SoftReference<>(super.get());
-                            fireIconChange();
-                        } catch (InterruptedException | ExecutionException ex) {
-                            Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
-                        } finally {
-                            progressHandle.finish();
-                            if (timer != null) {
-                                timer.stop();
-                                timer = null;
-
-                            }
-                            swingWorker = null;
-                        }
-                    }
-                };
-                swingWorker.execute();
+                swingWorker = new ThumbnailLoadingWorker(content);
+                executor.execute(swingWorker);
+//              swingWorker.execute();
             }
-            if (timer == null) {
-                timer = new Timer(100, (ActionEvent e) -> {
-                    fireIconChange();
-                });
-                timer.start();
-            }
+//            if (timer == null) {
+////                timer = new Timer(100, (ActionEvent e) -> {
+////                    fireIconChange();
+////                });
+//                timer.start();
+//            }
             return waitingIcon;
         }
     }
@@ -124,5 +103,48 @@ class ThumbnailViewNode extends FilterNode {
         this.iconSize = iconSize;
         iconCache = null;
         swingWorker = null;
+    }
+
+    private class ThumbnailLoadingWorker extends SwingWorker<Image, Object> {
+
+        private final Content content;
+        private final ProgressHandle progressHandle;
+
+        ThumbnailLoadingWorker(Content content) {
+            this.content = content;
+            final String progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
+            progressHandle = ProgressHandle.createHandle(progressText, this::cancel);
+        }
+
+        private boolean cancel() {
+            return this.cancel(true);
+        }
+
+        @Override
+        protected Image doInBackground() throws Exception {
+            progressHandle.start();
+            return ImageUtils.getThumbnail(content, iconSize);
+        }
+
+        @Override
+        protected void done() {
+            super.done();
+            try {
+                iconCache = new SoftReference<>(super.get());
+                fireIconChange();
+            } catch (CancellationException ex) {
+                //do nothing, it was cancelled
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+            } finally {
+                progressHandle.finish();
+                if (timer != null) {
+                    timer.stop();
+                    timer = null;
+
+                }
+                swingWorker = null;
+            }
+        }
     }
 }
