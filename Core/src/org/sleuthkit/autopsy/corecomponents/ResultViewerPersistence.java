@@ -73,6 +73,19 @@ final class ResultViewerPersistence {
         return getColumnKeyBase(node, propName) + ".sortRank";
     }
 
+    /**
+     * Gets a key for the given node and a property of its child nodes to store
+     * the visibility into a preference file.
+     *
+     * @param node     The node whose type will be used to generate the key
+     * @param propName The property used to generate the key.
+     *
+     * @return A generated key for the preference file
+     */
+    static String getColumnHiddenKey(TableFilterNode node, String propName) {
+        return getColumnKeyBase(node, propName) + ".hidden";
+    }
+
     private static String getColumnKeyBase(TableFilterNode node, String propName) {
         return stripNonAlphanumeric(node.getColumnOrderKey()) + "." + stripNonAlphanumeric(propName);
     }
