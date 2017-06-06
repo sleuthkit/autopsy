@@ -49,7 +49,7 @@ class ThumbnailViewNode extends FilterNode {
     private SoftReference<Image> iconCache = null;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
 
-    static Executor executor = Executors.newFixedThreadPool(3);
+private final    static Executor executor = Executors.newFixedThreadPool(1);
 
     private SwingWorker<Image, Object> swingWorker;
     private Timer timer;
@@ -89,12 +89,12 @@ class ThumbnailViewNode extends FilterNode {
                 executor.execute(swingWorker);
 //              swingWorker.execute();
             }
-//            if (timer == null) {
-////                timer = new Timer(100, (ActionEvent e) -> {
-////                    fireIconChange();
-////                });
-//                timer.start();
-//            }
+            if (timer == null) {
+                timer = new Timer(100, (ActionEvent e) -> {
+                    fireIconChange();
+                });
+                timer.start();
+            }
             return waitingIcon;
         }
     }
