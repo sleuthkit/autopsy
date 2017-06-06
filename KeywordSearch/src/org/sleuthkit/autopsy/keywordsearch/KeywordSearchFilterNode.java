@@ -165,7 +165,7 @@ class KeywordSearchFilterNode extends FilterNode {
 
         @Override
         protected List<Action> defaultVisit(Content c) {
-           return getFileActions();
+            return getFileActions();
         }
     }
 }
