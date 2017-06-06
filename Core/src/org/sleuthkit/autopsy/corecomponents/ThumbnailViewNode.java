@@ -18,12 +18,17 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Image;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
@@ -32,7 +37,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail.ThumbnailLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -103,6 +107,23 @@ class ThumbnailViewNode extends FilterNode {
         thumbTask = null;
     }
 
+    static class ThumbnailLoader {
+
+        private final ExecutorService executor = Executors.newFixedThreadPool(4,
+                new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build() );
+
+        private final List<Future<?>> futures = new ArrayList<>();
+
+        synchronized void cancellAll() {
+            futures.forEach(future -> future.cancel(true));
+            futures.clear();
+        }
+
+        synchronized void load(ThumbnailViewNode.ThumbnailLoadTask task) {
+            futures.add(task);
+            executor.submit(task);
+        }
+    }
     class ThumbnailLoadTask extends SwingWorker<Image, Object> {
 
         private final Content content;

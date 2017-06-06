@@ -25,7 +25,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
-import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail.ThumbnailLoader;
+import org.sleuthkit.autopsy.corecomponents.ThumbnailViewNode.ThumbnailLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;

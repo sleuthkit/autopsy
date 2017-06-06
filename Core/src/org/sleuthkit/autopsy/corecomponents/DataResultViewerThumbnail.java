@@ -21,18 +21,10 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
-import java.awt.Image;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
@@ -50,6 +42,7 @@ import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.corecomponents.ThumbnailViewNode.ThumbnailLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -597,20 +590,5 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
     }
 
-    static class ThumbnailLoader {
-
-        private final ExecutorService executor = Executors.newFixedThreadPool(4);
-
-        private final List<Future<?>> futures = new ArrayList<>();
-
-        synchronized void cancellAll() {
-            futures.forEach(future -> future.cancel(true));
-            futures.clear();
-        }
-
-        synchronized void load(ThumbnailViewNode.ThumbnailLoadTask swingWorker) {
-            futures.add(swingWorker);
-            executor.submit(swingWorker);
-        }
-    }
+    
 }
