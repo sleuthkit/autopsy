@@ -29,7 +29,7 @@ import org.openide.nodes.Node;
  * allows you to easily use the UI builder for the layout.
  * 
  * DataContentViewer panels should handle their own vertical scrolling, the horizontal 
- * scrolling when under their panel's preffered size will be handled by the DataContentPanel
+ * scrolling when under their panel's preferred size will be handled by the DataContentPanel
  * which contains them.
  */
 public interface DataContentViewer {
