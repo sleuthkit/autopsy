@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,7 +41,9 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Detects the MIME type of a file by an inspection of its contents, using
  * custom file type definitions by users, custom file type definitions by
- * Autopsy, and Tika.
+ * Autopsy, and Tika. User file type definitions take precedence over both
+ * Autopsy file type definitions and Tika, and Autopsy file type definitions
+ * take precendence over Tika.
  */
 public class FileTypeDetector {
 
@@ -51,14 +53,67 @@ public class FileTypeDetector {
     private final byte buffer[] = new byte[BUFFER_SIZE];
     private final List<FileType> userDefinedFileTypes;
     private final List<FileType> autopsyDefinedFileTypes;
-    private static SortedSet<String> detectedTypes;    //no optional parameters
+    private static SortedSet<String> tikaDetectedTypes;
+
+    /**
+     * Gets a sorted set of the file types that can be detected: the MIME types
+     * detected by Tika (without optional parameters), the custom MIME types
+     * defined by Autopsy, and any custom MIME types defined by the user.
+     *
+     * @return A list of all detectable file types.
+     *
+     * @throws FileTypeDetectorInitException If an error occurs while assembling
+     *                                       the list of types
+     */
+    public static synchronized SortedSet<String> getDetectedTypes() throws FileTypeDetectorInitException {
+        TreeSet<String> detectedTypes = new TreeSet<>((String string1, String string2) -> {
+            int result = String.CASE_INSENSITIVE_ORDER.compare(string1, string2);
+            if (result == 0) {
+                result = string1.compareTo(string2);
+            }
+            return result;
+        });
+        detectedTypes.addAll(FileTypeDetector.getTikaDetectedTypes());
+        try {
+            for (FileType fileType : CustomFileTypesManager.getInstance().getAutopsyDefinedFileTypes()) {
+                detectedTypes.add(fileType.getMimeType());
+            }
+        } catch (CustomFileTypesManager.CustomFileTypesException ex) {
+            throw new FileTypeDetectorInitException("Error loading Autopsy custom file types", ex);
+        }
+        try {
+            for (FileType fileType : CustomFileTypesManager.getInstance().getUserDefinedFileTypes()) {
+                detectedTypes.add(fileType.getMimeType());
+            }
+        } catch (CustomFileTypesManager.CustomFileTypesException ex) {
+            throw new FileTypeDetectorInitException("Error loading user custom file types", ex);
+        }
+        return detectedTypes;
+    }
+
+    /**
+     * Gets a sorted set of the MIME types detected by Tika (without optional
+     * parameters).
+     *
+     * @return A list of all detectable non-custom file types.
+     *
+     */
+    private static SortedSet<String> getTikaDetectedTypes() {
+        if (null == tikaDetectedTypes) {
+            tikaDetectedTypes = org.apache.tika.mime.MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes()
+                    .stream().filter(t -> !t.hasParameters()).map(s -> s.toString()).collect(Collectors.toCollection(TreeSet::new));
+        }
+        return Collections.unmodifiableSortedSet(tikaDetectedTypes);
+    }
 
     /**
      * Constructs an object that detects the MIME type of a file by an
      * inspection of its contents, using custom file type definitions by users,
-     * custom file type definitions by Autopsy, and Tika.
+     * custom file type definitions by Autopsy, and Tika. User file type
+     * definitions take precedence over both Autopsy file type definitions and
+     * Tika, and Autopsy file type definitions take precendence over Tika.
      *
-     * @throws FileTypeDetectorInitException if an initialization error occurs,
+     * @throws FileTypeDetectorInitException If an initialization error occurs,
      *                                       e.g., user-defined file type
      *                                       definitions exist but cannot be
      *                                       loaded.
@@ -73,23 +128,6 @@ public class FileTypeDetector {
     }
 
     /**
-     * Gets the names of the custom file types defined by the user or by
-     * Autopsy.
-     *
-     * @return A list of the user-defined MIME types.
-     */
-    public List<String> getUserDefinedTypes() {
-        List<String> customFileTypes = new ArrayList<>();
-        for (FileType fileType : userDefinedFileTypes) {
-            customFileTypes.add(fileType.getMimeType());
-        }
-        for (FileType fileType : autopsyDefinedFileTypes) {
-            customFileTypes.add(fileType.getMimeType());
-        }
-        return customFileTypes;
-    }
-
-    /**
      * Determines whether or not a given MIME type is detectable by this
      * detector.
      *
@@ -101,21 +139,6 @@ public class FileTypeDetector {
         return isDetectableAsCustomType(userDefinedFileTypes, mimeType)
                 || isDetectableAsCustomType(autopsyDefinedFileTypes, mimeType)
                 || isDetectableByTika(mimeType);
-    }
-
-    /**
-     * Returns an unmodifiable list of standard MIME types that does not contain
-     * types with optional parameters. The list has no duplicate types and is in
-     * alphabetical order.
-     *
-     * @return an unmodifiable view of a set of MIME types
-     */
-    public static synchronized SortedSet<String> getStandardDetectedTypes() {
-        if (detectedTypes == null) {
-            detectedTypes = org.apache.tika.mime.MimeTypes.getDefaultMimeTypes().getMediaTypeRegistry().getTypes()
-                    .stream().filter(t -> !t.hasParameters()).map(s -> s.toString()).collect(Collectors.toCollection(TreeSet::new));
-        }
-        return Collections.unmodifiableSortedSet(detectedTypes);
     }
 
     /**
@@ -144,7 +167,7 @@ public class FileTypeDetector {
      * @return True or false.
      */
     private boolean isDetectableByTika(String mimeType) {
-        return FileTypeDetector.getStandardDetectedTypes().contains(removeOptionalParameter(mimeType));
+        return FileTypeDetector.getTikaDetectedTypes().contains(removeOptionalParameter(mimeType));
     }
 
     /**
@@ -307,12 +330,14 @@ public class FileTypeDetector {
 
     /**
      * Removes the optional parameter from a MIME type string
-     * @param  mimeType
+     *
+     * @param mimeType
+     *
      * @return MIME type without the optional parameter
      */
     private String removeOptionalParameter(String mimeType) {
-        int indexOfSemicolon = mimeType.indexOf(";");
-        if (indexOfSemicolon != -1 ) {
+        int indexOfSemicolon = mimeType.indexOf(';');
+        if (indexOfSemicolon != -1) {
             return mimeType.substring(0, indexOfSemicolon).trim();
         } else {
             return mimeType;
@@ -384,16 +409,16 @@ public class FileTypeDetector {
     }
 
     /*
-     * Exception thrown when a file type detector experiences an error
-     * condition.
+     * Exception thrown if an initialization error occurs, e.g., user-defined
+     * file type definitions exist but cannot be loaded.
      */
     public static class FileTypeDetectorInitException extends Exception {
 
         private static final long serialVersionUID = 1L;
 
         /**
-         * Constructs an exception to throw when a file type detector
-         * experiences an error condition.
+         * Constructs an exception to throw if an initialization error occurs,
+         * e.g., user-defined file type definitions exist but cannot be loaded.
          *
          * @param message The exception message,
          */
@@ -402,8 +427,8 @@ public class FileTypeDetector {
         }
 
         /**
-         * Constructs an exception to throw when a file type detector
-         * experiences an error condition.
+         * Constructs an exception to throw if an initialization error occurs,
+         * e.g., user-defined file type definitions exist but cannot be loaded.
          *
          * @param message   The exception message,
          * @param throwable The underlying cause of the exception.
@@ -412,6 +437,26 @@ public class FileTypeDetector {
             super(message, throwable);
         }
 
+    }
+
+    /**
+     * Gets the names of the custom file types defined by the user or by
+     * Autopsy.
+     *
+     * @return A list of the user-defined MIME types.
+     *
+     * @deprecated Do not use.
+     */
+    @Deprecated
+    public List<String> getUserDefinedTypes() {
+        List<String> customFileTypes = new ArrayList<>();
+        userDefinedFileTypes.forEach((fileType) -> {
+            customFileTypes.add(fileType.getMimeType());
+        });
+        autopsyDefinedFileTypes.forEach((fileType) -> {
+            customFileTypes.add(fileType.getMimeType());
+        });
+        return customFileTypes;
     }
 
     /**

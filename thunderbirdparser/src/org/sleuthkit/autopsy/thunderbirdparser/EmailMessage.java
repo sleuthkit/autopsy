@@ -36,6 +36,7 @@ class EmailMessage {
     private String cc = "";
     private String sender = "";
     private String subject = "";
+    private String headers = "";
     private String textBody = "";
     private String htmlBody = "";
     private String rtfBody = "";
@@ -79,6 +80,15 @@ class EmailMessage {
         }
     }
 
+    String getHeaders() {
+        return headers;
+    }
+
+    void setHeaders(String headers) {
+        if (headers != null) {
+            this.headers = headers;
+        }
+    }
     String getTextBody() {
         return textBody;
     }

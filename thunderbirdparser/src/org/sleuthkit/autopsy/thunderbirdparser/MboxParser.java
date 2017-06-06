@@ -229,17 +229,21 @@ class MboxParser {
         try {
             r = new BufferedReader(tb.getReader());
             StringBuilder bodyString = new StringBuilder();
+            StringBuilder headersString = new StringBuilder();
             String line;
             while ((line = r.readLine()) != null) {
                 bodyString.append(line).append("\n");
             }
-            bodyString.append("\n-----HEADERS-----\n");
+            
+            headersString.append("\n-----HEADERS-----\n");
             for(Field field: fields) {
                 String nextLine = field.getName() + ": " + field.getBody();
-                bodyString.append("\n").append(nextLine);
+                headersString.append("\n").append(nextLine);
             }
-            bodyString.append("\n\n---END HEADERS--\n\n");
+            headersString.append("\n\n---END HEADERS--\n\n");
 
+            email.setHeaders(headersString.toString());
+            
             switch (type) {
                 case ContentTypeField.TYPE_TEXT_PLAIN:
                     email.setTextBody(bodyString.toString());

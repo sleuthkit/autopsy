@@ -192,7 +192,7 @@ public final class FileExporterSettingsPanel extends JPanel {
     public FileExporterSettingsPanel(JDialog jDialog) {
         timeSettings.setFormatForDisplayTime(PickerUtilities.createFormatterFromPatternString("HH:mm:ss", timeSettings.getLocale()));
         timeSettings.setFormatForMenuTimes(PickerUtilities.createFormatterFromPatternString("HH:mm", timeSettings.getLocale()));
-        
+
         initComponents();
         rootNode = new DefaultMutableTreeNode(new Item(ROOTNODE, ROOTNODE, ItemType.RULE_SET));
         trRuleList.setModel(new DefaultTreeModel(rootNode));
@@ -511,24 +511,14 @@ public final class FileExporterSettingsPanel extends JPanel {
      * Populate the MIME types in the combo box.
      */
     void populateMimeTypes() {
-        Set<String> mimeTypesCollated = scanRulesForMimetypes();
-        for (MediaType mediaType : mediaTypes) {
-            mimeTypesCollated.add(mediaType.toString());
-        }
-
-        FileTypeDetector fileTypeDetector;
         try {
-            fileTypeDetector = new FileTypeDetector();
-            List<String> userDefinedFileTypes = fileTypeDetector.getUserDefinedTypes();
-            mimeTypesCollated.addAll(userDefinedFileTypes);
-
+            SortedSet<String> detectableMimeTypes = FileTypeDetector.getDetectedTypes();
+            detectableMimeTypes.addAll(scanRulesForMimetypes());
+            detectableMimeTypes.forEach((type) -> {
+                comboBoxMimeValue.addItem(type);
+            });
         } catch (FileTypeDetector.FileTypeDetectorInitException ex) {
-            logger.log(Level.SEVERE, "Unable to get user defined file types", ex);
-        }
-        List<String> sorted = new ArrayList<>(mimeTypesCollated);
-        Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
-        for (String mime : sorted) {
-            comboBoxMimeValue.addItem(mime);
+            logger.log(Level.SEVERE, "Unable to get detectable file types", ex);
         }
     }
 
@@ -1940,8 +1930,8 @@ public final class FileExporterSettingsPanel extends JPanel {
     }
 
     /**
-     * Allows Options Panel to tell if the root directory is valid.
-     * Throws an exception with explanatory text if it is not valid.
+     * Allows Options Panel to tell if the root directory is valid. Throws an
+     * exception with explanatory text if it is not valid.
      *
      * throws FolderDidNotValidateException
      */
@@ -1950,8 +1940,8 @@ public final class FileExporterSettingsPanel extends JPanel {
     }
 
     /**
-     * Allows Options Panel to tell if the report directory is valid.
-     * Throws an exception with explanatory text if it is not valid.
+     * Allows Options Panel to tell if the report directory is valid. Throws an
+     * exception with explanatory text if it is not valid.
      *
      * throws FolderDidNotValidateException
      */

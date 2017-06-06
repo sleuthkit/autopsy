@@ -20,16 +20,25 @@ package org.sleuthkit.autopsy.corecomponents;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dialog;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
+import javax.swing.SortOrder;
 import javax.swing.SwingWorker;
+import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
+import org.openide.DialogDescriptor;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.explorer.ExplorerManager;
@@ -41,11 +50,14 @@ import org.openide.nodes.NodeListener;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
+import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
+import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 
 /**
  * A thumbnail viewer for the results view, with paging support.
@@ -68,6 +80,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPageImages;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
     private final PageUpdater pageUpdater = new PageUpdater();
+    private TableFilterNode tfn;
 
     /**
      * Constructs a thumbnail viewer for the results view, with paging support,
@@ -127,6 +140,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         goToPageField = new javax.swing.JTextField();
         thumbnailSizeComboBox = new javax.swing.JComboBox<>();
         iconView = new org.openide.explorer.view.IconView();
+        sortButton = new javax.swing.JButton();
+        sortLabel = new javax.swing.JLabel();
 
         pageLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageLabel.text")); // NOI18N
 
@@ -135,9 +150,12 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         pagePrevButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back.png"))); // NOI18N
         pagePrevButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pagePrevButton.text")); // NOI18N
         pagePrevButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_disabled.png"))); // NOI18N
+        pagePrevButton.setFocusable(false);
+        pagePrevButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         pagePrevButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         pagePrevButton.setPreferredSize(new java.awt.Dimension(55, 23));
         pagePrevButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_back_hover.png"))); // NOI18N
+        pagePrevButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         pagePrevButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pagePrevButtonActionPerformed(evt);
@@ -147,10 +165,13 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         pageNextButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward.png"))); // NOI18N
         pageNextButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.pageNextButton.text")); // NOI18N
         pageNextButton.setDisabledIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_disabled.png"))); // NOI18N
+        pageNextButton.setFocusable(false);
+        pageNextButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         pageNextButton.setMargin(new java.awt.Insets(2, 0, 2, 0));
         pageNextButton.setMaximumSize(new java.awt.Dimension(27, 23));
         pageNextButton.setMinimumSize(new java.awt.Dimension(27, 23));
         pageNextButton.setRolloverIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/corecomponents/btn_step_forward_hover.png"))); // NOI18N
+        pageNextButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         pageNextButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pageNextButtonActionPerformed(evt);
@@ -180,57 +201,68 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         });
 
+        sortButton.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortButton.text")); // NOI18N
+        sortButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sortButtonActionPerformed(evt);
+            }
+        });
+
+        sortLabel.setText(org.openide.util.NbBundle.getMessage(DataResultViewerThumbnail.class, "DataResultViewerThumbnail.sortLabel.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(filePathLabel)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(pageLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(pageNumLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(pagesLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, 0)
-                                .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(goToPageLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(12, 12, 12)
-                                .addComponent(imagesLabel)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                    .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 563, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addComponent(pageLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(pageNumLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(pagesLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, 0)
+                        .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(goToPageLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(12, 12, 12)
+                        .addComponent(imagesLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(imagesRangeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(sortButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(sortLabel))
+                    .addComponent(filePathLabel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(pageLabel)
-                        .addComponent(pagesLabel)
-                        .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(pageNumLabel))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.CENTER)
+                    .addComponent(pageLabel)
+                    .addComponent(pageNumLabel)
+                    .addComponent(pagesLabel)
+                    .addComponent(pagePrevButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pageNextButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(imagesLabel)
-                        .addComponent(imagesRangeLabel)
-                        .addComponent(goToPageLabel)
-                        .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 330, Short.MAX_VALUE)
+                    .addComponent(goToPageLabel)
+                    .addComponent(goToPageField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(imagesLabel)
+                    .addComponent(imagesRangeLabel)
+                    .addComponent(thumbnailSizeComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sortButton)
+                    .addComponent(sortLabel))
+                .addGap(13, 13, 13)
+                .addComponent(iconView, javax.swing.GroupLayout.DEFAULT_SIZE, 322, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(filePathLabel))
         );
@@ -272,7 +304,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
             for (Node page : root.getChildren().getNodes()) {
                 for (Node node : page.getChildren().getNodes()) {
-                    ((ThumbnailViewNode) node).setIconSize(iconSize);
+                    ((ThumbnailViewChildren.ThumbnailViewNode) node).setIconSize(iconSize);
                 }
             }
 
@@ -286,6 +318,45 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
     }//GEN-LAST:event_thumbnailSizeComboBoxActionPerformed
 
+    private void sortButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortButtonActionPerformed
+        List<Node.Property<?>> childProperties = ResultViewerPersistence.getAllChildProperties(em.getRootContext(), 100);
+        SortChooser sortChooser = new SortChooser(childProperties, ResultViewerPersistence.loadSortCriteria(tfn));
+        DialogDescriptor dialogDescriptor = new DialogDescriptor(sortChooser, sortChooser.getDialogTitle());
+        Dialog createDialog = DialogDisplayer.getDefault().createDialog(dialogDescriptor);
+        createDialog.setVisible(true);
+        final Object dialogReturnValue = dialogDescriptor.getValue();
+        if (DialogDescriptor.OK_OPTION == dialogReturnValue) {
+            //apply new sort
+            List<SortCriterion> criteria = sortChooser.getCriteria();
+            final Preferences preferences = NbPreferences.forModule(DataResultViewerThumbnail.class);
+
+            Map<Node.Property<?>, SortCriterion> criteriaMap = criteria.stream()
+                    .collect(Collectors.toMap(SortCriterion::getProperty,
+                            Function.identity(),
+                            (u, v) -> u)); //keep first criteria if property is selected multiple times.
+
+            //store the sorting information
+            int numProperties = childProperties.size();
+            for (int i = 0; i < numProperties; i++) {
+                Node.Property<?> prop = childProperties.get(i);
+                String propName = prop.getName();
+                SortCriterion criterion = criteriaMap.get(prop);
+                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, propName);
+                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, propName);
+
+                if (criterion != null) {
+                    preferences.putBoolean(columnSortOrderKey, criterion.getSortOrder() == SortOrder.ASCENDING);
+                    preferences.putInt(columnSortRankKey, criterion.getSortRank() + 1);
+                } else {
+                    preferences.remove(columnSortOrderKey);
+                    preferences.remove(columnSortRankKey);
+                }
+            }
+            setNode(tfn); //this is just to force a refresh
+        }
+    }//GEN-LAST:event_sortButtonActionPerformed
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel filePathLabel;
     private javax.swing.JTextField goToPageField;
@@ -298,6 +369,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private javax.swing.JLabel pageNumLabel;
     private javax.swing.JButton pagePrevButton;
     private javax.swing.JLabel pagesLabel;
+    private javax.swing.JButton sortButton;
+    private javax.swing.JLabel sortLabel;
     private javax.swing.JComboBox<String> thumbnailSizeComboBox;
     // End of variables declaration//GEN-END:variables
 
@@ -314,6 +387,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         try {
             if (givenNode != null) {
+                tfn = (TableFilterNode) givenNode;
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
@@ -321,10 +395,12 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  */
                 ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, iconSize);
                 final Node root = new AbstractNode(childNode);
+
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
                 em.setRootContext(root);
             } else {
+                tfn = null;
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode);
                 iconView.setBackground(Color.BLACK);
@@ -385,11 +461,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
         if (newPage > totalPages || newPage < 1) {
             JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "DataResultViewerThumbnail.goToPageTextField.msgDlg",
-                            totalPages),
-                    NbBundle.getMessage(this.getClass(),
-                            "DataResultViewerThumbnail.goToPageTextField.err"),
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.msgDlg", totalPages),
+                    NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.goToPageTextField.err"),
                     JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -433,8 +506,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d
-                            = new NotifyDescriptor.Message(
+                    NotifyDescriptor d =
+                            new NotifyDescriptor.Message(
                                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
                                             ex.getMessage()),
                                     NotifyDescriptor.ERROR_MESSAGE);
@@ -448,6 +521,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     }
 
+    @NbBundle.Messages({"DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}",
+        "DataResultViewerThumbnail.sortLabel.text=Sorted by: ---"})
     private void updateControls() {
         if (totalPages == 0) {
             pagePrevButton.setEnabled(false);
@@ -456,6 +531,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             pageNumLabel.setText("");
             imagesRangeLabel.setText("");
             thumbnailSizeComboBox.setEnabled(false);
+            sortButton.setEnabled(false);
+            sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
+
         } else {
             pageNumLabel.setText(
                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.pageNumbers.curOfTotal",
@@ -467,9 +545,18 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             pageNextButton.setEnabled(!(curPage == totalPages));
             pagePrevButton.setEnabled(!(curPage == 1));
             goToPageField.setEnabled(totalPages > 1);
+            sortButton.setEnabled(true);
             thumbnailSizeComboBox.setEnabled(true);
+            if (tfn != null) {
+                String sortString = ResultViewerPersistence.loadSortCriteria(tfn).stream()
+                        .map(SortCriterion::toString)
+                        .collect(Collectors.joining(" "));
+                sortString = StringUtils.defaultIfBlank(sortString, "---");
+                sortLabel.setText(Bundle.DataResultViewerThumbnail_sortLabel_textTemplate(sortString));
+            } else {
+                sortLabel.setText(DataResultViewerThumbnail_sortLabel_text());
+            }
         }
-
     }
 
     /**
@@ -536,7 +623,6 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
 
             updateControls();
-
         }
 
         @Override

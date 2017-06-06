@@ -92,7 +92,7 @@ public class SharedConfiguration {
     private static final Logger logger = Logger.getLogger(SharedConfiguration.class.getName());
 
     private final UpdateConfigSwingWorker swingWorker;
-    private AutoIngestUserPreferences.SelectedMode mode;
+    private UserPreferences.SelectedMode mode;
     private String sharedConfigFolder;
     private int fileIngestThreads;
     private boolean sharedConfigMaster;

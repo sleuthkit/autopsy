@@ -125,7 +125,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         cbJoinAutoIngestCluster.setEnabled(UserPreferences.getIsMultiUserModeEnabled());
 
         if (inStartup) {
-            AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
+            UserPreferences.SelectedMode storedMode = UserPreferences.getMode();
             inputPathTextField.requestFocusInWindow();
             if (null != storedMode) {
                 switch (storedMode) {
@@ -133,7 +133,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                         jRadioButtonReview.setSelected(true);
                         enableOptionsBasedOnMode(OptionsUiMode.REVIEW);
                         break;
-                    case AUTOMATED:
+                    case AUTOINGEST:
                         jRadioButtonAutomated.setSelected(true);
                         enableOptionsBasedOnMode(OptionsUiMode.AIM);
                         break;
@@ -207,7 +207,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      */
     void store() {
         boolean needsRestart = false;
-        AutoIngestUserPreferences.SelectedMode storedMode = AutoIngestUserPreferences.getMode();
+        UserPreferences.SelectedMode storedMode = UserPreferences.getMode();
 
         if (AutoIngestUserPreferences.getJoinAutoModeCluster() != cbJoinAutoIngestCluster.isSelected()) {
             needsRestart = true;
@@ -215,7 +215,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
         AutoIngestUserPreferences.setJoinAutoModeCluster(cbJoinAutoIngestCluster.isSelected());
         if (!cbJoinAutoIngestCluster.isSelected()) {
-            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.STANDALONE);
+            UserPreferences.setMode(UserPreferences.SelectedMode.STANDALONE);
             //before return popup the message
             if (needsRestart) {
                 SwingUtilities.invokeLater(() -> {
@@ -229,7 +229,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
 
         if (jRadioButtonAutomated.isSelected()) {
-            if (storedMode != AutoIngestUserPreferences.SelectedMode.AUTOMATED) {
+            if (storedMode != UserPreferences.SelectedMode.AUTOINGEST) {
                 needsRestart = true;
             }
             String thePath = AutoIngestUserPreferences.getAutoModeImageFolder();
@@ -241,7 +241,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 needsRestart = true;
             }
 
-            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.AUTOMATED);
+            UserPreferences.setMode(UserPreferences.SelectedMode.AUTOINGEST);
             String imageFolderPath = getNormalizedFolderPath(inputPathTextField.getText().trim());
             AutoIngestUserPreferences.setAutoModeImageFolder(imageFolderPath);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
@@ -253,7 +253,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 AutoIngestUserPreferences.setSharedConfigMaster(masterNodeCheckBox.isSelected());
             }
         } else if (jRadioButtonReview.isSelected()) {
-            if (storedMode != AutoIngestUserPreferences.SelectedMode.REVIEW) {
+            if (storedMode != UserPreferences.SelectedMode.REVIEW) {
                 needsRestart = true;
             }
             String thePath = AutoIngestUserPreferences.getAutoModeResultsFolder();
@@ -261,7 +261,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 needsRestart = true;
             }
 
-            AutoIngestUserPreferences.setMode(AutoIngestUserPreferences.SelectedMode.REVIEW);
+            UserPreferences.setMode(UserPreferences.SelectedMode.REVIEW);
             String resultsFolderPath = getNormalizedFolderPath(outputPathTextField.getText().trim());
             AutoIngestUserPreferences.setAutoModeResultsFolder(resultsFolderPath);
         }

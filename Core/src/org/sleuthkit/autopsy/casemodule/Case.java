@@ -624,7 +624,7 @@ public class Case {
                  * First, acquire an exclusive case directory lock. The case
                  * cannot be deleted if another node has it open.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_checkingForOtherUser());
+                progressIndicator.progress(Bundle.Case_progressMessage_checkingForOtherUser());
                 try (CoordinationService.Lock dirLock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
                     assert (null != dirLock);
                     deleteCase(metadata, progressIndicator);
@@ -1602,6 +1602,7 @@ public class Case {
                     open(isNewCase, progressIndicator);
                 } catch (CaseActionException ex) {
                     releaseSharedCaseDirLock(getMetadata().getCaseDirectory());
+                    throw ex;
                 }
             }
             return null;
@@ -1716,7 +1717,7 @@ public class Case {
     @Messages({
         "Case.progressMessage.creatingCaseDirectory=Creating case directory...",
         "Case.progressMessage.creatingCaseDatabase=Creating case database...",
-        "Case.exceptionMessage.couldNotCreateCaseDatabase=Failed to create case database.",
+        "# {0} - exception message", "Case.exceptionMessage.couldNotCreateCaseDatabase=Failed to create case database:\n{0}",
         "Case.exceptionMessage.couldNotCreateMetadataFile=Failed to create case metadata file."
     })
     private void createCaseData(ProgressIndicator progressIndicator) throws CaseActionException {
@@ -1754,7 +1755,7 @@ public class Case {
                 metadata.setCaseDatabaseName(caseDb.getDatabaseName());
             }
         } catch (TskCoreException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabase(), ex);
+            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabase(ex.getLocalizedMessage()), ex);
         } catch (UserPreferencesException ex) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         } catch (CaseMetadataException ex) {

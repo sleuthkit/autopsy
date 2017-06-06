@@ -275,7 +275,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 // Do nothing since the display name will be set to the file name.
             }
         }
-
+        
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(),
                     entry.getKey(),
@@ -440,7 +440,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()) {
-                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                } 
+                else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    addEmailMsgProperty (map, attribute);
+                }  
+                else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
                     map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
@@ -456,7 +460,8 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                         value = value.substring(0, 512);
                     }
                     map.put(attribute.getAttributeType().getDisplayName(), value);
-                } else {
+                } 
+                else {
                     map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
                 }
             }
@@ -464,7 +469,46 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             LOGGER.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
         }
     }
+    
+/**
+ * Fill map with EmailMsg properties, not all attributes are filled
+ *
+ * @param map      map with preserved ordering, where property names/values
+ *                 are put
+ * @param attribute attribute to check/fill as property
+ */
+ private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute ) {
+    
+    final int attributeTypeID = attribute.getAttributeType().getTypeID();
+     
+    // Skip certain Email msg attributes
+    if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID()
+        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID() 
+        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()  
+        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
+        || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()
+            ) {
+        
+        // do nothing
+    }
+    else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
 
+        String value = attribute.getDisplayString();
+        if (value.length() > 160) {
+            value = value.substring(0, 160) + "...";
+        }
+        map.put(attribute.getAttributeType().getDisplayName(), value);
+    }
+   else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+        map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
+    }
+    else {
+        map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+    }
+     
+ }
+    
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);

@@ -29,13 +29,10 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -62,7 +59,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
-import org.openide.nodes.Node.PropertySet;
 import org.openide.nodes.NodeAdapter;
 import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.NbBundle;
@@ -110,7 +106,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private final PleasewaitNodeListener pleasewaitNodeListener = new PleasewaitNodeListener();
 
     private Node currentRoot;
-
 
     /*
      * Convience reference to internal Outline.
@@ -165,7 +160,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * @param n Node to expand
      */
     @Override
-
     public void expandNode(Node n) {
         super.expandNode(n);
 
@@ -194,34 +188,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             .addComponent(outlineView, javax.swing.GroupLayout.DEFAULT_SIZE, 366, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private org.openide.explorer.view.OutlineView outlineView;
     // End of variables declaration//GEN-END:variables
-
-    /**
-     * Get the properties from all children and, recursively, subchildren of
-     * Node. Note: won't work out the box for lazy load - you need to set all
-     * children props for the parent by hand
-     *
-     * @param parent        Node with at least one child to get properties from
-     * @param maxRows       max number of rows to retrieve properties for (can
-     *                      be used for memory optimization)
-     * @param propertiesAcc Accumulator for properties.
-     */
-    static private void getAllChildProperties(Node parent, int maxRows, Set<Property<?>> propertiesAcc) {
-        Children children = parent.getChildren();
-        int childCount = 0;
-        for (Node child : children.getNodes()) {
-            if (++childCount > maxRows) {
-                return;
-            }
-            for (PropertySet ps : child.getPropertySets()) {
-                propertiesAcc.addAll(Arrays.asList(ps.getProperties()));
-            }
-            getAllChildProperties(child, maxRows, propertiesAcc);
-        }
-    }
 
     @Override
     public boolean isSupported(Node selectedNode) {
@@ -231,6 +200,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     @Override
     @ThreadConfined(type = ThreadConfined.ThreadType.AWT)
     public void setNode(Node selectedNode) {
+
         /*
          * The quick filter must be reset because when determining column width,
          * ETable.getRowCount is called, and the documentation states that quick
@@ -262,7 +232,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             } else {
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode); // make empty node
-                outlineView.getOutline().setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+                outline.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
                 /*
                  * Since we are modifying the columns, we don't want to listen
@@ -272,14 +242,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 outlineView.setPropertyColumns(); // set the empty property header
             }
         } finally {
-
             this.setCursor(null);
         }
     }
 
     /**
      * Create Column Headers based on the Content represented by the Nodes in
-     * the table.
+     * the table.  Load persisted column order, sorting and visibility.
      */
     private void setupTable() {
         /*
@@ -314,7 +283,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
         assignColumns(props); // assign columns to match the properties
         setColumnWidths();
-        
+
         //Load column sorting information from preferences file and apply it to columns.
         loadColumnSorting();
 
@@ -324,13 +293,13 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * causes the columns to be recreated. It has to happen before
          * loadColumnVisibility so we have referenecs to the columns to pass to
          * setColumnHidden.
-              */
+         */
         populateColumnMap();
 
         //Load column visibility information from preferences file and apply it to columns.
         loadColumnVisibility();
 
-        /**
+        /*
          * If one of the child nodes of the root node is to be selected, select
          * it.
          */
@@ -445,7 +414,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
 
                 String columnName = entry.getKey();
-                final String columnHiddenKey = getColumnHiddenKey(tfn.getColumnOrderKey(), columnName);
+                final String columnHiddenKey = ResultViewerPersistence.getColumnHiddenKey(tfn, columnName);
                 final TableColumn column = entry.getValue();
 
                 boolean columnHidden = columnModel.isColumnHidden(column);
@@ -471,7 +440,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             // Store the current order of the columns into settings
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
-                preferences.putInt(getColumnPositionKey(tfn.getColumnOrderKey(), entry.getValue().getName()), entry.getKey());
+                preferences.putInt(ResultViewerPersistence.getColumnPositionKey(tfn, entry.getValue().getName()), entry.getKey());
             }
         }
     }
@@ -484,7 +453,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
             return;
         }
         if (currentRoot instanceof TableFilterNode) {
-            final String nodeBaseKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
+            final TableFilterNode tfn = ((TableFilterNode) currentRoot);
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
@@ -492,8 +461,9 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 String columnName = entry.getKey();
 
                 //store sort rank and order
-                final String columnSortOrderKey = getColumnSortOrderKey(nodeBaseKey, columnName);
-                final String columnSortRankKey = getColumnSortRankKey(nodeBaseKey, columnName);
+                final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
+                final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
+
                 if (etc.isSorted()) {
                     preferences.putBoolean(columnSortOrderKey, etc.isAscending());
                     preferences.putInt(columnSortRankKey, etc.getSortRank());
@@ -518,17 +488,18 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         if (currentRoot instanceof TableFilterNode) {
-            final String columnKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
+            final TableFilterNode tfn = (TableFilterNode) currentRoot;
+
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             //organize property sorting information, sorted by rank
             TreeSet<ColumnSortInfo> treeSet = new TreeSet<>(Comparator.comparing(ColumnSortInfo::getRank));
-
             propertiesMap.entrySet().stream().forEach(entry -> {
                 final String propName = entry.getValue().getName();
                 //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
-                Integer sortRank = preferences.getInt(getColumnSortRankKey(columnKey, propName), 0);
+
+                Integer sortRank = preferences.getInt(ResultViewerPersistence.getColumnSortRankKey(tfn, propName), 0);
                 //default to true => ascending
-                Boolean sortOrder = preferences.getBoolean(getColumnSortOrderKey(columnKey, propName), true);
+                Boolean sortOrder = preferences.getBoolean(ResultViewerPersistence.getColumnSortOrderKey(tfn, propName), true);
 
                 treeSet.add(new ColumnSortInfo(entry.getKey(), sortRank, sortOrder));
             });
@@ -547,11 +518,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
-            final String nodeBaseKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
+            final TableFilterNode tfn = ((TableFilterNode) currentRoot);
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
                 final String propName = entry.getValue().getName();
-                boolean hidden = preferences.getBoolean(getColumnHiddenKey(nodeBaseKey, propName), false);
+                boolean hidden = preferences.getBoolean(ResultViewerPersistence.getColumnHiddenKey(tfn, propName), false);
                 final TableColumn column = columnMap.get(propName);
                 columnModel.setColumnHidden(column, hidden);
             }
@@ -567,17 +538,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      *         order.
      */
     private synchronized List<Node.Property<?>> loadColumnOrder() {
-        // This is a set because we only want unique properties
-        Set<Property<?>> propertiesAcc = new LinkedHashSet<>();
-        getAllChildProperties(currentRoot, 100, propertiesAcc);
-        List<Property<?>> props = new ArrayList<>(propertiesAcc);
+
+        List<Property<?>> props = ResultViewerPersistence.getAllChildProperties(currentRoot, 100);
 
         // If node is not table filter node, use default order for columns
         if (!(currentRoot instanceof TableFilterNode)) {
             return props;
         }
 
-        final String columnKey = ((TableFilterNode) currentRoot).getColumnOrderKey();
+        final TableFilterNode tfn = ((TableFilterNode) currentRoot);
         propertiesMap.clear();
 
         /*
@@ -592,7 +561,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
         for (Property<?> prop : props) {
-            Integer value = preferences.getInt(getColumnPositionKey(columnKey, prop.getName()), -1);
+
+            Integer value = preferences.getInt(ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName()), -1);
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
                 noPreviousSettings = false;
@@ -612,60 +582,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         }
 
         return new ArrayList<>(propertiesMap.values());
-    }
-
-    /**
-     * Gets a key for the current node and a property of its child nodes to
-     * store the column position into a preference file.
-     *
-     * @param keyBase  The base of the key. Typically a fully quallified class
-     *                 name.
-     * @param propName The name of the specific property to make a key for.
-     *
-     * @return A generated key for the preference file
-     */
-    private String getColumnPositionKey(String keyBase, String propName) {
-        return getColumnKeyBase(keyBase, propName) + ".column";
-    }
-
-    /**
-     * Gets a key for the current node and a property of its child nodes to
-     * store the column sort ordering into a preference file.
-     *
-     * @param keyBase  The base of the key. Typically a fully quallified class
-     *                 name.
-     * @param propName The name of the specific property to make a key for.
-     *
-     * @return A generated key for the preference file
-     */
-    static private String getColumnSortOrderKey(String keyBase, String propName) {
-        return getColumnKeyBase(keyBase, propName) + ".sortOrder";
-    }
-
-    /**
-     * Gets a key for the current node and a property of its child nodes to
-     * store the column sort rank into a preference file.
-     *
-     * @param keyBase  The base of the key. Typically a fully quallified class
-     *                 name.
-     * @param propName The name of the specific property to make a key for.
-     *
-     * @return A generated key for the preference file
-     */
-    static private String getColumnSortRankKey(String keyBase, String propName) {
-        return getColumnKeyBase(keyBase, propName) + ".sortRank";
-    }
-
-    static private String getColumnHiddenKey(String keyBase, String propName) {
-        return getColumnKeyBase(keyBase, propName) + ".hidden";
-    }
-
-    private static String getColumnKeyBase(String keyBase, String propName) {
-        return stripNonAlphanumeric(keyBase) + "." + stripNonAlphanumeric(propName);
-    }
-
-    private static String stripNonAlphanumeric(String str) {
-        return str.replaceAll("[^a-zA-Z0-9_]", "");
     }
 
     @Override
