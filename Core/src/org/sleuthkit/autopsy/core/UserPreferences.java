@@ -32,6 +32,7 @@ import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -346,7 +347,7 @@ public final class UserPreferences {
      * @return Name of this program
      */
     public static String getAppName() {
-        return preferences.get(APP_NAME, "Autopsy");
+        return preferences.get(APP_NAME, String.format("%s %s", Version.getName(), Version.getVersion()));
     }
 
     /**

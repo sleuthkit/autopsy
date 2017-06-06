@@ -134,7 +134,6 @@ public class Case {
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
     private static volatile Frame mainFrame;
-    private static volatile String appName;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
     private volatile ExecutorService caseLockingExecutor;
@@ -147,17 +146,13 @@ public class Case {
     /*
      * Get a reference to the main window of the desktop application to use to
      * parent pop up dialogs and initialize the application name for use in
-     * changing the main window title. 
-     *
-     * TODO (JIRA-2231): Make the application name a RuntimeProperties item set
-     * by Installers.
+     * changing the main window title.
      */
     static {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
                 mainFrame = WindowManager.getDefault().getMainWindow();
-                appName = mainFrame.getTitle();
             }
         });
     }
@@ -1007,7 +1002,7 @@ public class Case {
                  *
                  * [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + appName);
+                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + UserPreferences.getAppName());
             });
         }
     }
@@ -1056,7 +1051,7 @@ public class Case {
                  * Reset the main window title to be just the application name,
                  * instead of [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(appName);
+                mainFrame.setTitle(UserPreferences.getAppName());
             });
         }
     }
@@ -1484,7 +1479,7 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldDisplayName, newDisplayName));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(newDisplayName + " - " + appName);
+                mainFrame.setTitle(newDisplayName + " - " + UserPreferences.getAppName());
                 try {
                     RecentCases.getInstance().updateRecentCase(oldDisplayName, metadata.getFilePath().toString(), newDisplayName, metadata.getFilePath().toString());
                 } catch (Exception ex) {
@@ -2374,13 +2369,14 @@ public class Case {
      * Gets the application name.
      *
      * @return The application name.
+     *
      * @deprecated
      */
     @Deprecated
     public static String getAppName() {
-        return appName;
-    }    
-    
+        return UserPreferences.getAppName();
+    }
+
     /**
      * Creates a new, single-user Autopsy case.
      *
