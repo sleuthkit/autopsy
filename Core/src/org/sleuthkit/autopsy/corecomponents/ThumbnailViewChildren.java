@@ -25,6 +25,7 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail.ThumbnailLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -48,15 +49,16 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private int totalPages = 0;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
+    private final ThumbnailLoader thumbLoader;
 
     /**
      * the constructor
      */
-    ThumbnailViewChildren(Node arg, int iconSize) {
+    ThumbnailViewChildren(Node arg, ThumbnailLoader thumbLoader) {
         super(true); //support lazy loading
 
         this.parent = arg;
-        this.iconSize = iconSize;
+        this.thumbLoader = thumbLoader;
     }
 
     @Override
@@ -188,17 +190,19 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         protected void removeNotify() {
             super.removeNotify();
 
-            setKeys(new ArrayList<Node>());
+            setKeys(new ArrayList<>());
         }
 
         @Override
         protected Node[] createNodes(Node wrapped) {
             if (wrapped != null) {
-                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped, iconSize);
+                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped, thumbLoader);
+                thumb.setIconSize(iconSize);
                 return new Node[]{thumb};
             } else {
                 return new Node[]{};
             }
         }
     }
+
 }

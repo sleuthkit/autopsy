@@ -24,8 +24,6 @@ import java.awt.event.ActionEvent;
 import java.lang.ref.SoftReference;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
@@ -34,6 +32,7 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.corecomponents.DataResultViewerThumbnail.ThumbnailLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
@@ -44,22 +43,23 @@ import org.sleuthkit.datamodel.Content;
  */
 class ThumbnailViewNode extends FilterNode {
 
+    private Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
+
     static private final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"));
 
-    private SoftReference<Image> iconCache = null;
+    private SoftReference<Image> thumbCache = null;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
 
-private final    static Executor executor = Executors.newFixedThreadPool(1);
-
-    private SwingWorker<Image, Object> swingWorker;
+    private ThumbnailLoadTask thumbTask;
     private Timer timer;
+    private final ThumbnailLoader thumbLoader;
 
     /**
      * the constructor
      */
-    ThumbnailViewNode(Node arg, int iconSize) {
+    ThumbnailViewNode(Node arg, ThumbnailLoader thumbLoader) {
         super(arg, Children.LEAF);
-        this.iconSize = iconSize;
+        this.thumbLoader = thumbLoader;
     }
 
     @Override
@@ -70,50 +70,48 @@ private final    static Executor executor = Executors.newFixedThreadPool(1);
     @Override
     @NbBundle.Messages({"# {0} - file name",
         "ThumbnailViewNode.progressHandle.text=Generating thumbnail for {0}"})
-    public Image getIcon(int type) {
-        Image icon = null;
+    synchronized public Image getIcon(int type) {
+        Image thumbnail = null;
 
-        if (iconCache != null) {
-            icon = iconCache.get();
+        if (thumbCache != null) {
+            thumbnail = thumbCache.get();
         }
 
-        if (icon != null) {
-            return icon;
+        if (thumbnail != null) {
+            return thumbnail;
         } else {
             final Content content = this.getLookup().lookup(Content.class);
             if (content == null) {
                 return ImageUtils.getDefaultThumbnail();
             }
-            if (swingWorker == null || swingWorker.isDone()) {
-                swingWorker = new ThumbnailLoadingWorker(content);
-                executor.execute(swingWorker);
-//              swingWorker.execute();
+            if (thumbTask == null || thumbTask.isDone()) {
+                thumbTask = new ThumbnailLoadTask(content);
+                thumbLoader.load(thumbTask);
+
             }
             if (timer == null) {
-                timer = new Timer(100, (ActionEvent e) -> {
-                    fireIconChange();
-                });
+                timer = new Timer(1, actionEvent -> fireIconChange());
                 timer.start();
             }
             return waitingIcon;
         }
     }
 
-    public void setIconSize(int iconSize) {
+    synchronized public void setIconSize(int iconSize) {
         this.iconSize = iconSize;
-        iconCache = null;
-        swingWorker = null;
+        thumbCache = null;
+        thumbTask = null;
     }
 
-    private class ThumbnailLoadingWorker extends SwingWorker<Image, Object> {
+    class ThumbnailLoadTask extends SwingWorker<Image, Object> {
 
         private final Content content;
         private final ProgressHandle progressHandle;
 
-        ThumbnailLoadingWorker(Content content) {
+        ThumbnailLoadTask(Content content) {
             this.content = content;
             final String progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
-            progressHandle = ProgressHandle.createHandle(progressText, this::cancel);
+            progressHandle = ProgressHandle.createHandle(progressText);
         }
 
         private boolean cancel() {
@@ -130,12 +128,12 @@ private final    static Executor executor = Executors.newFixedThreadPool(1);
         protected void done() {
             super.done();
             try {
-                iconCache = new SoftReference<>(super.get());
+                thumbCache = new SoftReference<>(super.get());
                 fireIconChange();
             } catch (CancellationException ex) {
                 //do nothing, it was cancelled
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(ThumbnailViewNode.class.getName()).log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
             } finally {
                 progressHandle.finish();
                 if (timer != null) {
@@ -143,7 +141,7 @@ private final    static Executor executor = Executors.newFixedThreadPool(1);
                     timer = null;
 
                 }
-                swingWorker = null;
+                thumbTask = null;
             }
         }
     }

@@ -21,10 +21,18 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.awt.Image;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
@@ -68,6 +76,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPageImages;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
     private final PageUpdater pageUpdater = new PageUpdater();
+    private final ThumbnailLoader thumbLoader = new ThumbnailLoader();
 
     /**
      * Constructs a thumbnail viewer for the results view, with paging support,
@@ -312,6 +321,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void setNode(Node givenNode) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        thumbLoader.cancellAll();
         try {
             if (givenNode != null) {
                 /*
@@ -319,7 +329,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
                  * from the child nodes of the given node.
                  */
-                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, iconSize);
+                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, thumbLoader);
+                childNode.setIconSize(iconSize);
                 final Node root = new AbstractNode(childNode);
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
@@ -433,8 +444,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 try {
                     get();
                 } catch (InterruptedException | ExecutionException ex) {
-                    NotifyDescriptor d
-                            = new NotifyDescriptor.Message(
+                    NotifyDescriptor d =
+                            new NotifyDescriptor.Message(
                                     NbBundle.getMessage(this.getClass(), "DataResultViewerThumbnail.switchPage.done.errMsg",
                                             ex.getMessage()),
                                     NotifyDescriptor.ERROR_MESSAGE);
@@ -583,6 +594,23 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                     setCursor(null);
                 }
             }
+        }
+    }
+
+    static class ThumbnailLoader {
+
+        private final ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        private final List<Future<?>> futures = new ArrayList<>();
+
+        synchronized void cancellAll() {
+            futures.forEach(future -> future.cancel(true));
+            futures.clear();
+        }
+
+        synchronized void load(ThumbnailViewNode.ThumbnailLoadTask swingWorker) {
+            futures.add(swingWorker);
+            executor.submit(swingWorker);
         }
     }
 }

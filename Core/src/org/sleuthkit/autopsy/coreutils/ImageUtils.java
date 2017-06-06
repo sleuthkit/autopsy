@@ -1007,5 +1007,4 @@ public class ImageUtils {
         return getCachedThumbnailFile(content, iconSize);
 
     }
-
 }
