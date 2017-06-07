@@ -169,6 +169,15 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
                 sb.append(" <br /><br />"); // NON-NLS
                 for (String str : fsFile.getMetaDataText()) {
                     sb.append(str).append("<br />"); //NON-NLS
+                    
+                    /* 
+                     * Very long results can cause the UI to hang before displaying,
+                     * so truncate the results if necessary.
+                     */
+                    if(sb.length() > 50000){
+                        sb.append(NbBundle.getMessage(this.getClass(), "Metadata.nodeText.truncated"));
+                        break;
+                    }
                 }
                 sb.append("</pre>\n"); //NON-NLS
             }
