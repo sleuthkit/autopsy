@@ -166,7 +166,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     }
 
     private Comparator<Node> getCriterionComparator(SortCriterion criterion) {
-
         Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProperty()),
                 Comparator.nullsFirst(Comparator.naturalOrder()));
         return criterion.getSortOrder() == SortOrder.ASCENDING ? c : c.reversed();
@@ -236,7 +235,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         /**
          * the constructor
          */
-        ThumbnailViewNode(Node arg, ThumbnailLoader thumbLoader) {
+        private ThumbnailViewNode(Node arg, ThumbnailLoader thumbLoader) {
             super(arg, FilterNode.Children.LEAF);
             this.thumbLoader = thumbLoader;
         }
@@ -282,7 +281,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             thumbTask = null;
         }
 
-        class ThumbnailLoadTask extends SwingWorker<Image, Object> {
+        private class ThumbnailLoadTask extends SwingWorker<Image, Object> {
 
             private final Content content;
             private final ProgressHandle progressHandle;
@@ -338,7 +337,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             futures.clear();
         }
 
-        synchronized void load(ThumbnailViewNode.ThumbnailLoadTask task) {
+        private synchronized void load(ThumbnailViewNode.ThumbnailLoadTask task) {
             futures.add(task);
             executor.submit(task);
         }

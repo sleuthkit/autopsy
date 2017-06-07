@@ -52,19 +52,19 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
+import org.sleuthkit.autopsy.corecomponents.ThumbnailViewChildren.ThumbnailLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
-import org.sleuthkit.autopsy.corecomponents.ThumbnailViewChildren.ThumbnailLoader;
 
 /**
  * A thumbnail viewer for the results view, with paging support.
  *
  * The paging is intended to reduce memory footprint by load only up to
- * (currently) 1000 images at a time. This works whether or not the underlying
+ * (currently) 200 images at a time. This works whether or not the underlying
  * content nodes are being lazy loaded or not.
  *
  * TODO (JIRA-2658): Fix DataResultViewer extension point. When this is done,
