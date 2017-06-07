@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
  */
 final class AutoIngestSystemLogger {
 
-    private static final int LOG_SIZE = 0; // In bytes, zero is unlimited
+    private static final int LOG_SIZE = 10000000; // In bytes, zero is unlimited, set to roughly 10mb currently
     private static final int LOG_FILE_COUNT = 10;
     private static final Logger LOGGER = Logger.getLogger("AutoIngest"); //NON-NLS
     private static final String NEWLINE = System.lineSeparator();

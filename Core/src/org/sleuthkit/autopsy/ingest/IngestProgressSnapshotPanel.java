@@ -150,7 +150,7 @@ public class IngestProgressSnapshotPanel extends javax.swing.JPanel {
                     cellValue = DurationFormatUtils.formatDurationHMS(elapsedTime);
                     break;
                 case 6:
-                    cellValue = snapshot.getJobId();
+                    cellValue = snapshot.getIngestJobId();
                     break;
                 default:
                     cellValue = null;

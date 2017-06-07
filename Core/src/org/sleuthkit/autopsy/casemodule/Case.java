@@ -134,7 +134,6 @@ public class Case {
     private static final AutopsyEventPublisher eventPublisher = new AutopsyEventPublisher();
     private static final Object caseActionSerializationLock = new Object();
     private static volatile Frame mainFrame;
-    private static volatile String appName;
     private static volatile Case currentCase;
     private final CaseMetadata metadata;
     private volatile ExecutorService caseLockingExecutor;
@@ -147,17 +146,13 @@ public class Case {
     /*
      * Get a reference to the main window of the desktop application to use to
      * parent pop up dialogs and initialize the application name for use in
-     * changing the main window title. 
-     *
-     * TODO (JIRA-2231): Make the application name a RuntimeProperties item set
-     * by Installers.
+     * changing the main window title.
      */
     static {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
             public void run() {
                 mainFrame = WindowManager.getDefault().getMainWindow();
-                appName = mainFrame.getTitle();
             }
         });
     }
@@ -624,7 +619,7 @@ public class Case {
                  * First, acquire an exclusive case directory lock. The case
                  * cannot be deleted if another node has it open.
                  */
-                progressIndicator.start(Bundle.Case_progressMessage_checkingForOtherUser());
+                progressIndicator.progress(Bundle.Case_progressMessage_checkingForOtherUser());
                 try (CoordinationService.Lock dirLock = CoordinationService.getInstance().tryGetExclusiveLock(CategoryNode.CASES, metadata.getCaseDirectory())) {
                     assert (null != dirLock);
                     deleteCase(metadata, progressIndicator);
@@ -1007,7 +1002,7 @@ public class Case {
                  *
                  * [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + appName);
+                mainFrame.setTitle(newCurrentCase.getDisplayName() + " - " + UserPreferences.getAppName());
             });
         }
     }
@@ -1056,7 +1051,7 @@ public class Case {
                  * Reset the main window title to be just the application name,
                  * instead of [curent case display name] - [application name].
                  */
-                mainFrame.setTitle(appName);
+                mainFrame.setTitle(UserPreferences.getAppName());
             });
         }
     }
@@ -1484,7 +1479,7 @@ public class Case {
         eventPublisher.publish(new AutopsyEvent(Events.NAME.toString(), oldDisplayName, newDisplayName));
         if (RuntimeProperties.runningWithGUI()) {
             SwingUtilities.invokeLater(() -> {
-                mainFrame.setTitle(newDisplayName + " - " + appName);
+                mainFrame.setTitle(newDisplayName + " - " + UserPreferences.getAppName());
                 try {
                     RecentCases.getInstance().updateRecentCase(oldDisplayName, metadata.getFilePath().toString(), newDisplayName, metadata.getFilePath().toString());
                 } catch (Exception ex) {
@@ -1602,6 +1597,7 @@ public class Case {
                     open(isNewCase, progressIndicator);
                 } catch (CaseActionException ex) {
                     releaseSharedCaseDirLock(getMetadata().getCaseDirectory());
+                    throw ex;
                 }
             }
             return null;
@@ -1716,7 +1712,7 @@ public class Case {
     @Messages({
         "Case.progressMessage.creatingCaseDirectory=Creating case directory...",
         "Case.progressMessage.creatingCaseDatabase=Creating case database...",
-        "Case.exceptionMessage.couldNotCreateCaseDatabase=Failed to create case database.",
+        "# {0} - exception message", "Case.exceptionMessage.couldNotCreateCaseDatabase=Failed to create case database:\n{0}",
         "Case.exceptionMessage.couldNotCreateMetadataFile=Failed to create case metadata file."
     })
     private void createCaseData(ProgressIndicator progressIndicator) throws CaseActionException {
@@ -1754,7 +1750,7 @@ public class Case {
                 metadata.setCaseDatabaseName(caseDb.getDatabaseName());
             }
         } catch (TskCoreException ex) {
-            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabase(), ex);
+            throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotCreateCaseDatabase(ex.getLocalizedMessage()), ex);
         } catch (UserPreferencesException ex) {
             throw new CaseActionException(NbBundle.getMessage(Case.class, "Case.databaseConnectionInfo.error.msg"), ex);
         } catch (CaseMetadataException ex) {
@@ -2373,13 +2369,14 @@ public class Case {
      * Gets the application name.
      *
      * @return The application name.
+     *
      * @deprecated
      */
     @Deprecated
     public static String getAppName() {
-        return appName;
-    }    
-    
+        return UserPreferences.getAppName();
+    }
+
     /**
      * Creates a new, single-user Autopsy case.
      *

@@ -30,7 +30,9 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
+import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
 import org.sleuthkit.datamodel.TskData.DbType;
 
@@ -68,9 +70,40 @@ public final class UserPreferences {
     private static final String DEFAULT_PORT_STRING = "61616";
     private static final int DEFAULT_PORT_INT = 61616;
     private static final String APP_NAME = "AppName";
+    public static final String SETTINGS_PROPERTIES = "AutoIngest";
+    private static final String MODE = "AutopsyMode"; // NON-NLS
 
     // Prevent instantiation.
     private UserPreferences() {
+    }
+
+    public enum SelectedMode {
+
+        STANDALONE,
+        AUTOINGEST,
+        REVIEW
+    };
+
+    /**
+     * Get mode from persistent storage.
+     *
+     * @return SelectedMode Selected mode.
+     */
+    public static SelectedMode getMode() {
+        if (ModuleSettings.settingExists(SETTINGS_PROPERTIES, MODE)) {
+            int ordinal = Integer.parseInt(ModuleSettings.getConfigSetting(SETTINGS_PROPERTIES, MODE));
+            return UserPreferences.SelectedMode.values()[ordinal];
+        }
+        return UserPreferences.SelectedMode.STANDALONE;
+    }
+
+    /**
+     * Set mode to persistent storage.
+     *
+     * @param mode Selected mode.
+     */
+    public static void setMode(SelectedMode mode) {
+        ModuleSettings.setConfigSetting(SETTINGS_PROPERTIES, MODE, Integer.toString(mode.ordinal()));
     }
 
     /**
@@ -160,7 +193,9 @@ public final class UserPreferences {
 
     /**
      * Reads persisted case database connection info.
+     *
      * @return An object encapsulating the database connection info.
+     *
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static CaseDbConnectionInfo getDatabaseConnectionInfo() throws UserPreferencesException {
@@ -183,6 +218,7 @@ public final class UserPreferences {
      *
      * @param connectionInfo An object encapsulating the database connection
      *                       info.
+     *
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static void setDatabaseConnectionInfo(CaseDbConnectionInfo connectionInfo) throws UserPreferencesException {
@@ -224,6 +260,7 @@ public final class UserPreferences {
      * Persists message service connection info.
      *
      * @param info An object encapsulating the message service info.
+     *
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static void setMessageServiceConnectionInfo(MessageServiceConnectionInfo info) throws UserPreferencesException {
@@ -237,6 +274,7 @@ public final class UserPreferences {
      * Reads persisted message service connection info.
      *
      * @return An object encapsulating the message service info.
+     *
      * @throws org.sleuthkit.autopsy.core.UserPreferencesException
      */
     public static MessageServiceConnectionInfo getMessageServiceConnectionInfo() throws UserPreferencesException {
@@ -305,10 +343,11 @@ public final class UserPreferences {
 
     /**
      * Get the display name for this program
+     *
      * @return Name of this program
      */
-    public static String getAppName(){
-        return preferences.get(APP_NAME, "Autopsy");
+    public static String getAppName() {
+        return preferences.get(APP_NAME, String.format("%s %s", Version.getName(), Version.getVersion()));
     }
 
     /**
@@ -316,10 +355,9 @@ public final class UserPreferences {
      *
      * @param name Display name
      */
-    public static void setAppName(String name){
+    public static void setAppName(String name) {
         preferences.put(APP_NAME, name);
     }
-
 
     /**
      * Provides ability to convert text to hex text.
