@@ -226,6 +226,7 @@ public class ServicesMonitor {
      * @param service Name of the service.
      */
     private void checkServiceStatus(String service) {
+        logger.log(Level.INFO, "ELDEBUG Checking status of {0}", service); //NON-NLS
         if (service.equals(Service.REMOTE_CASE_DATABASE.toString())) {
             checkDatabaseConnectionStatus();
         } else if (service.equals(Service.REMOTE_KEYWORD_SEARCH.toString())) {
@@ -233,6 +234,7 @@ public class ServicesMonitor {
         } else if (service.equals(Service.MESSAGING.toString())) {
             checkMessagingServerConnectionStatus();
         }
+        logger.log(Level.INFO, "ELDEBUG DONE checking status of {0}", service); //NON-NLS
     }
 
     /**
@@ -390,6 +392,7 @@ public class ServicesMonitor {
         @Override
         public void run() {
             try {
+                logger.log(Level.INFO, "ELDEBUG CrashDetectionTask.run()"); //NON-NLS
                 checkAllServices();
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Unexpected exception in CrashDetectionTask", ex); //NON-NLS
