@@ -22,6 +22,9 @@ We have found the best way to do this is to make a class in the NetBeans IDE tha
 After NetBeans makes the class for you, then have it implement DataContentViewer.  NetBeans will of course complain about missing methods and will provide default implementations for them if you click on the error messages in the UI.
 Refer to the documentation in org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer on what each method should do. 
 
+For best results, if the JPanel in your DataContentViewer contains a JScrollPane, you should should disable its horizontal scrolling, and enable horizontal resizing.  
+This will allow the org.sleuthkit.autopsy.corecomponents.DataContentPanel containing all DataContentViewers to enable horizontal scrolling when your DataContentViewer is made smaller than its preferred width. 
+
 Autopsy will find your module using the NetBeans Lookup infrastructure. To be found, you will need to register as a service provider for DataContentViewer.class by annotating your class as follows:
 
 \code
