@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SlackFile;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -109,47 +110,50 @@ class KeywordSearchFilterNode extends FilterNode {
 
         @Override
         public List<Action> visit(File f) {
-            return getFileActions();
+            return getFileActions(true);
         }
 
         @Override
         public List<Action> visit(DerivedFile f) {
-            return getFileActions();
+            return getFileActions(true);
         }
 
         @Override
         public List<Action> visit(Directory d) {
-            return getFileActions();
+            return getFileActions(false);
         }
 
         @Override
         public List<Action> visit(LayoutFile lf) {
-            // layout files do not have times
-            return getFileActions();
+            //we want hashsearch enabled on carved files but not unallocated blocks
+            boolean enableHashSearch = (lf.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.CARVED);
+            return getFileActions(enableHashSearch);
         }
 
         @Override
         public List<Action> visit(LocalFile lf) {
-            return getFileActions();
+            return getFileActions(true);
         }
 
         @Override
         public List<Action> visit(SlackFile f) {
-            return getFileActions();
+            return getFileActions(false);
         }
 
         @Override
         public List<Action> visit(VirtualDirectory dir) {
-            return getFileActions();
+            return getFileActions(false);
         }
 
-        private List<Action> getFileActions() {
+        private List<Action> getFileActions(boolean enableHashSearch) {
             List<Action> actionsList = new ArrayList<>();
             actionsList.add(new NewWindowViewAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.viewInNewWinActionLbl"), KeywordSearchFilterNode.this));
             actionsList.add(new ExternalViewerAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.openExternViewActLbl"), getOriginal()));
             actionsList.add(null);
             actionsList.add(ExtractAction.getInstance());
-            actionsList.add(new HashSearchAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.searchSameMd5"), getOriginal()));
+            Action hashSearchAction = new HashSearchAction(NbBundle.getMessage(this.getClass(), "KeywordSearchFilterNode.getFileActions.searchSameMd5"), getOriginal());
+            hashSearchAction.setEnabled(enableHashSearch);
+            actionsList.add(hashSearchAction);
             actionsList.add(null); // creates a menu separator
             actionsList.add(AddContentTagAction.getInstance());
 
@@ -165,7 +169,7 @@ class KeywordSearchFilterNode extends FilterNode {
 
         @Override
         protected List<Action> defaultVisit(Content c) {
-            return getFileActions();
+            return getFileActions(false);
         }
     }
 }
