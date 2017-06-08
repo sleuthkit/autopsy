@@ -240,7 +240,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
             @Override
             protected Void doInBackground() throws Exception {
-                SYS_LOGGER.log(Level.INFO, "ELDEBUG AID.setServicesStatusMessage.doInBackground()"); //NON-NLS
                 caseDatabaseServerStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
                 keywordSearchServiceStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH);
                 messagingStatus = getServiceStatus(ServicesMonitor.Service.MESSAGING);
@@ -618,7 +617,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * Subscribe to services monitor events.
          */
         ServicesMonitor.getInstance().addSubscriber((PropertyChangeEvent evt) -> {
-            SYS_LOGGER.log(Level.INFO, "ELDEBUG Callback to AID from ServicesMonitor.publishLocally()"); //NON-NLS
             setServicesStatusMessage();
         });
 
