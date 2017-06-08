@@ -146,11 +146,10 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      *
      * @param metadata The CaseMetadata which will have its core deleted.
      */
-    @NbBundle.Messages({"# {0} - case directory",
-        "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from caseDirectory: {0}",
-        "# {0} - case directory",
+    @NbBundle.Messages({
+        "# {0} - case directory", "SolrSearchService.exceptionMessage.noIndexMetadata=Unable to create IndexMetaData from case directory: {0}",
         "SolrSearchService.exceptionMessage.noCurrentSolrCore=IndexMetadata did not contain a current Solr core so could not delete the case",
-        "SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}"
+        "# {0} - index folder path", "SolrSearchService.exceptionMessage.failedToDeleteIndexFiles=Failed to delete text index files at {0}"
     })
     @Override
     public void deleteTextIndex(CaseMetadata metadata) throws KeywordSearchServiceException {

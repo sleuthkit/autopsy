@@ -167,6 +167,7 @@ sub parseAugM {
 		my $str = "";
 		while($tag) {
 			my $s = substr($data,0x16 + $cnt,1);
+                        return %item unless (defined $s); 
 			if ($s =~ m/\x00/ && ((($cnt + 1) % 2) == 0)) {
 				$tag = 0;
 			}
@@ -197,6 +198,7 @@ sub parseAugM {
 		$str = "";
 		while ($tag) {
 			my $s = substr($data2,$ofs + $cnt,2);
+                        return %item unless (defined $s); 
 			if (unpack("v",$s) == 0) {
 				$tag = 0;
 			}
@@ -241,6 +243,7 @@ sub parseItem {
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs + $cnt,1);
+                return %item unless (defined $s); 
 		if ($s =~ m/\x00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
@@ -285,6 +288,7 @@ sub parseItem {
 	$str = "";
 	while ($tag) {
 		my $s = substr($data2,$ofs + $cnt,2);
+                return %item unless (defined $s); 
 		if (unpack("v",$s) == 0) {
 			$tag = 0;
 		}
