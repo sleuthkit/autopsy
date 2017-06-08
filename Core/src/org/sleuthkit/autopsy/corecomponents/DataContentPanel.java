@@ -73,8 +73,10 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
                 dcv = factory.createInstance();
             }
             viewers.add(new UpdateWrapper(dcv));
+            javax.swing.JScrollPane scrollTab = new javax.swing.JScrollPane(dcv.getComponent());
+            scrollTab.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_NEVER);
             jTabbedPane1.addTab(dcv.getTitle(), null,
-                    dcv.getComponent(), dcv.getToolTip());
+                    scrollTab, dcv.getToolTip());
         }
 
         // disable the tabs
@@ -115,11 +117,11 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE)
+            .addComponent(jTabbedPane1)
         );
     }// </editor-fold>//GEN-END:initComponents
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -210,6 +212,7 @@ public class DataContentPanel extends javax.swing.JPanel implements DataContent,
 
         // set the tab to the one the user wants, then set that viewer's node.
         jTabbedPane1.setSelectedIndex(tabIndex);
+        jTabbedPane1.getSelectedComponent().repaint();
     }
 
     @Override
