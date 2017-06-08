@@ -234,15 +234,15 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private void setServicesStatusMessage() {
         new SwingWorker<Void, Void>() {
 
-            String caseDatabaseServerStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
-            String keywordSearchServiceStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
-            String messagingStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
+            String caseDatabaseServerStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
+            String keywordSearchServiceStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
+            String messagingStatus = ServicesMonitor.ServiceStatus.DOWN.toString();
 
             @Override
             protected Void doInBackground() throws Exception {
                 caseDatabaseServerStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
-                keywordSearchServiceStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
-                messagingStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_CASE_DATABASE);
+                keywordSearchServiceStatus = getServiceStatus(ServicesMonitor.Service.REMOTE_KEYWORD_SEARCH);
+                messagingStatus = getServiceStatus(ServicesMonitor.Service.MESSAGING);
                 return null;
             }
 
