@@ -40,6 +40,7 @@ import java.util.List;
 import static java.util.Objects.nonNull;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -164,8 +165,8 @@ public class ImageUtils {
     /**
      * Thread/Executor that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver
-            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver =
+            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
@@ -213,7 +214,7 @@ public class ImageUtils {
      * @param file the AbstractFile to test
      *
      * @return true if the file is an image we can read and generate thumbnail
-     * for.
+     *         for.
      */
     public static boolean isImageThumbnailSupported(AbstractFile file) {
         return isMediaThumbnailSupported(file, "image/", SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_IMAGE_EXTENSIONS) || hasImageFileHeader(file);//NON-NLS
@@ -239,16 +240,17 @@ public class ImageUtils {
      * VideoUtils both implement/extend some base interface/abstract class. That
      * would be the natural place to put this.
      *
-     * @param file the AbstractFile to test
-     * @param mimeTypePrefix a MIME 'top-level type name' such as "image/",
-     * including the "/". In addition to the list of supported MIME types, any
-     * type that starts with this prefix will be regarded as supported
+     * @param file               the AbstractFile to test
+     * @param mimeTypePrefix     a MIME 'top-level type name' such as "image/",
+     *                           including the "/". In addition to the list of
+     *                           supported MIME types, any type that starts with
+     *                           this prefix will be regarded as supported
      * @param supportedMimeTypes a collection of mimetypes that are supported
      * @param supportedExtension a collection of extensions that are supported
      *
      * @return true if a thumbnail can be generated for the given file based on
-     * the given MIME type prefix and lists of supported MIME types and
-     * extensions
+     *         the given MIME type prefix and lists of supported MIME types and
+     *         extensions
      */
     static boolean isMediaThumbnailSupported(AbstractFile file, String mimeTypePrefix, final Collection<String> supportedMimeTypes, final List<String> supportedExtension) {
         if (false == file.isFile() || file.getSize() <= 0) {
@@ -282,7 +284,7 @@ public class ImageUtils {
      * @return a FileTypeDetector
      *
      * @throws FileTypeDetectorInitException if initializing the
-     * FileTypeDetector failed.
+     *                                       FileTypeDetector failed.
      */
     synchronized private static FileTypeDetector getFileTypeDetector() throws FileTypeDetector.FileTypeDetectorInitException {
         if (fileTypeDetector == null) {
@@ -295,11 +297,11 @@ public class ImageUtils {
      * Get a thumbnail of a specified size for the given image. Generates the
      * thumbnail if it is not already cached.
      *
-     * @param content the content to generate a thumbnail for
+     * @param content  the content to generate a thumbnail for
      * @param iconSize the size (one side of a square) in pixels to generate
      *
      * @return A thumbnail for the given image or a default one if there was a
-     * problem making a thumbnail.
+     *         problem making a thumbnail.
      */
     public static BufferedImage getThumbnail(Content content, int iconSize) {
         if (content instanceof AbstractFile) {
@@ -310,8 +312,14 @@ public class ImageUtils {
                  * to rescale easily, but we lose animations.
                  */
                 try (BufferedInputStream bufferedReadContentStream = getBufferedReadContentStream(file);) {
+                    if (Thread.interrupted()) {
+                        return DEFAULT_THUMBNAIL;
+                    }
                     final BufferedImage image = ImageIO.read(bufferedReadContentStream);
                     if (image != null) {
+                        if (Thread.interrupted()) {
+                            return DEFAULT_THUMBNAIL;
+                        }
                         return ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
                     }
                 } catch (IOException iOException) {
@@ -321,6 +329,9 @@ public class ImageUtils {
             }
 
             Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
+            if (Thread.interrupted()) {
+                return DEFAULT_THUMBNAIL;
+            }
             thumbnailTask.run();
             try {
                 return SwingFXUtils.fromFXImage(thumbnailTask.get(), null);
@@ -338,7 +349,7 @@ public class ImageUtils {
      * @param file The AbstractFile to get a stream for.
      *
      * @return A BufferedInputStream wrapped around a ReadContentStream for the
-     * given AbstractFile
+     *         given AbstractFile
      */
     private static BufferedInputStream getBufferedReadContentStream(AbstractFile file) {
         return new BufferedInputStream(new ReadContentInputStream(file));
@@ -348,11 +359,11 @@ public class ImageUtils {
      * Get a thumbnail of a specified size for the given image. Generates the
      * thumbnail if it is not already cached.
      *
-     * @param content the content to generate a thumbnail for
+     * @param content  the content to generate a thumbnail for
      * @param iconSize the size (one side of a square) in pixels to generate
      *
      * @return File object for cached image. Is guaranteed to exist, as long as
-     * there was not an error generating or saving the thumbnail.
+     *         there was not an error generating or saving the thumbnail.
      */
     @Nullable
     public static File getCachedThumbnailFile(Content content, int iconSize) {
@@ -367,8 +378,8 @@ public class ImageUtils {
      * @param fileID the fileID to get the cached thumbnail location for
      *
      * @return A File object representing the location of the cached thumbnail.
-     * This file may not actually exist(yet). Returns null if there was any
-     * problem getting the file, such as no case was open.
+     *         This file may not actually exist(yet). Returns null if there was
+     *         any problem getting the file, such as no case was open.
      */
     private static File getCachedThumbnailLocation(long fileID) {
         return cacheFileMap.computeIfAbsent(fileID, id -> {
@@ -426,7 +437,7 @@ public class ImageUtils {
      * @param file the AbstractFile to parse
      *
      * @return Offset of first Start Of Image marker, or 0 if none found. This
-     * will let ImageIO try to open it from offset 0.
+     *         will let ImageIO try to open it from offset 0.
      */
     private static long getJfifStartOfImageOffset(AbstractFile file) {
         byte[] fileHeaderBuffer;
@@ -506,7 +517,7 @@ public class ImageUtils {
      * @return the width in pixels
      *
      * @throws IOException If the file is not a supported image or the width
-     * could not be determined.
+     *                     could not be determined.
      */
     static public int getImageWidth(AbstractFile file) throws IOException {
         return getImageProperty(file,
@@ -523,7 +534,7 @@ public class ImageUtils {
      * @return the height in pixels
      *
      * @throws IOException If the file is not a supported image or the height
-     * could not be determined.
+     *                     could not be determined.
      */
     static public int getImageHeight(AbstractFile file) throws IOException {
         return getImageProperty(file,
@@ -552,17 +563,18 @@ public class ImageUtils {
      * public methods that pull particular (usually meta-)data out of a image
      * file.
      *
-     * @param file the file to extract the data from
-     * @param errorTemplate a message template used to log errors. Should take
-     * one parameter: the file's unique path or name.
+     * @param file              the file to extract the data from
+     * @param errorTemplate     a message template used to log errors. Should
+     *                          take one parameter: the file's unique path or
+     *                          name.
      * @param propertyExtractor an implementation of {@link PropertyExtractor}
-     * used to retrieve the specific property.
+     *                          used to retrieve the specific property.
      *
      * @return the the value of the property extracted by the given
-     * propertyExtractor
+     *         propertyExtractor
      *
      * @throws IOException if there was a problem reading the property from the
-     * file.
+     *                     file.
      *
      * @see PropertyExtractor
      * @see #getImageHeight(org.sleuthkit.datamodel.AbstractFile)
@@ -606,8 +618,8 @@ public class ImageUtils {
      * but is not started automatically. Clients are responsible for running the
      * task, monitoring its progress, and using its result.
      *
-     * @param file The file to create a thumbnail for.
-     * @param iconSize The size of the thumbnail.
+     * @param file             The file to create a thumbnail for.
+     * @param iconSize         The size of the thumbnail.
      * @param defaultOnFailure Whether or not to default on failure.
      *
      * @return a new Task that returns a thumbnail as its result.
@@ -695,7 +707,9 @@ public class ImageUtils {
                     throw new IIOException(msg);
                 }
                 updateProgress(-1, 1);
-
+                if (isCancelled()) {
+                    return null;
+                }
                 //resize, or if that fails, crop it
                 try {
                     thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
@@ -709,6 +723,9 @@ public class ImageUtils {
                         final int cropHeight = Math.min(iconSize, height);
                         final int cropWidth = Math.min(iconSize, width);
                         try {
+                            if (isCancelled()) {
+                                return null;
+                            }
                             thumbnail = ScalrWrapper.cropImage(bufferedImage, cropWidth, cropHeight);
                         } catch (Exception cropException) {
                             LOGGER.log(Level.WARNING, "Could not crop {0}: " + cropException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
@@ -720,17 +737,15 @@ public class ImageUtils {
                 }
             }
 
-            if (isCancelled()) {
-                return null;
-            }
-
             updateProgress(-1, 1);
 
             //if we got a valid thumbnail save it
             if ((cacheFile != null) && thumbnail != null && DEFAULT_THUMBNAIL != thumbnail) {
                 saveThumbnail(thumbnail);
             }
-
+            if (isCancelled()) {
+                return null;
+            }
             return SwingFXUtils.toFXImage(thumbnail, null);
         }
 
@@ -806,6 +821,9 @@ public class ImageUtils {
         }
 
         protected javafx.scene.image.Image readImage() throws IOException {
+            if (isCancelled()) {
+                return null;
+            }
             if (ImageUtils.isGIF(file)) {
                 //use JavaFX to directly read GIF to preserve potential animation
                 javafx.scene.image.Image image = new javafx.scene.image.Image(getBufferedReadContentStream(file));
@@ -863,6 +881,14 @@ public class ImageUtils {
                 reader.abort();
                 reader.dispose();
             }
+        }
+
+        @Override
+        public boolean isCancelled() {
+            if (Thread.interrupted()) {
+                this.cancel(true);
+            }
+            return super.isCancelled();
         }
 
         @Override
@@ -976,7 +1002,7 @@ public class ImageUtils {
      * @param iconSize
      *
      * @return a thumbnail for the given image or a default one if there was a
-     * problem making a thumbnail.
+     *         problem making a thumbnail.
      *
      * @deprecated use getThumbnail(org.sleuthkit.datamodel.Content, int)
      * instead.
@@ -995,7 +1021,7 @@ public class ImageUtils {
      * @param iconSize
      *
      * @return File object for cached image. Is guaranteed to exist, as long as
-     * there was not an error generating or saving the thumbnail.
+     *         there was not an error generating or saving the thumbnail.
      *
      * @deprecated use getCachedThumbnailFile(org.sleuthkit.datamodel.Content,
      * int) instead.

@@ -32,10 +32,10 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.SortOrder;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.apache.commons.lang3.StringUtils;
@@ -213,13 +213,11 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     }
 
-    
-
     /**
      * Node that wraps around original node and adds the bitmap icon
      * representing the picture
      */
-   private class ThumbnailViewNode extends FilterNode {
+    class ThumbnailViewNode extends FilterNode {
 
         private Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
 
@@ -282,17 +280,26 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
             private final Content content;
             private final ProgressHandle progressHandle;
+            private volatile boolean started = false;
+            private final String progressText;
 
             ThumbnailLoadTask(Content content) {
                 this.content = content;
-                final String progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
+                progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
                 progressHandle = ProgressHandle.createHandle(progressText);
             }
 
             @Override
             protected Image doInBackground() throws Exception {
-                progressHandle.start();
+                synchronized (progressHandle) {
+                    progressHandle.start();
+                    started = true;
+                }
                 return ImageUtils.getThumbnail(content, iconSize);
+            }
+
+            private void cancel() {
+                SwingUtilities.invokeLater(() -> progressHandle.setDisplayName(progressText + " (Cancelling)"));
             }
 
             @Override
@@ -302,11 +309,18 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                     thumbCache = new SoftReference<>(super.get());
                     fireIconChange();
                 } catch (CancellationException ex) {
-                    //do nothing, it was cancelled
+                    //Task was cancelled, do nothing
                 } catch (InterruptedException | ExecutionException ex) {
-                    logger.log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                    if (ex.getCause() instanceof CancellationException) {
+                    } else {
+                        logger.log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                    }
                 } finally {
-                    progressHandle.finish();
+                    synchronized (progressHandle) {
+                        if (started) {
+                            progressHandle.finish();
+                        }
+                    }
                     if (timer != null) {
                         timer.stop();
                         timer = null;
@@ -314,24 +328,30 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                     thumbTask = null;
                 }
             }
+
         }
     }
 
     private final ExecutorService executor = Executors.newFixedThreadPool(4,
             new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
 
-    private final List<Future<?>> futures = new ArrayList<>();
+    private final List<ThumbnailViewNode.ThumbnailLoadTask> tasks = new ArrayList<>();
 
     synchronized void cancelLoadingThumbnails() {
-        futures.forEach(future -> future.cancel(true));
-        futures.clear();
+        tasks.forEach(ThumbnailViewNode.ThumbnailLoadTask::cancel);
+        tasks.clear();
+        executor.shutdownNow();
     }
 
     private synchronized ThumbnailViewNode.ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node, Content content) {
-        ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content);
-        futures.add(task);
-        executor.submit(task);
-        return task;
+        if (executor.isShutdown() == false) {
+            ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content);
+            tasks.add(task);
+            executor.submit(task);
+            return task;
+        } else {
+            return null;
+        }
     }
 
     /**
