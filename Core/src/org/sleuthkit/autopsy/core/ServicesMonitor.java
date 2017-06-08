@@ -390,7 +390,6 @@ public class ServicesMonitor {
         @Override
         public void run() {
             try {
-                logger.log(Level.INFO, "ELDEBUG CrashDetectionTask.run()"); //NON-NLS
                 checkAllServices();
             } catch (Exception ex) {
                 logger.log(Level.SEVERE, "Unexpected exception in CrashDetectionTask", ex); //NON-NLS
