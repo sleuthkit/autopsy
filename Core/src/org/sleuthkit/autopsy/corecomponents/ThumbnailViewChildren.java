@@ -48,10 +48,10 @@ import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
+import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadSortCriteria;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
-import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadSortCriteria;
 
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
@@ -73,7 +73,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private int totalImages = 0;
     private int totalPages = 0;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
-    private final ThumbnailLoader thumbLoader;
 
     /**
      * the constructor
@@ -81,11 +80,10 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
      * @param arg
      * @param iconSize
      */
-    ThumbnailViewChildren(Node arg, ThumbnailLoader thumbLoader) {
+    ThumbnailViewChildren(Node arg) {
         super(true); //support lazy loading
 
         this.parent = arg;
-        this.thumbLoader = thumbLoader;
     }
 
     @Override
@@ -200,7 +198,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     }
 
-    static boolean isSupported(Node node) {
+    private static boolean isSupported(Node node) {
         if (node != null) {
             Content content = node.getLookup().lookup(Content.class);
             if (content != null) {
@@ -215,11 +213,13 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     }
 
+    
+
     /**
      * Node that wraps around original node and adds the bitmap icon
      * representing the picture
      */
-    class ThumbnailViewNode extends FilterNode {
+   private class ThumbnailViewNode extends FilterNode {
 
         private Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
 
@@ -230,14 +230,12 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         private ThumbnailLoadTask thumbTask;
         private Timer timer;
-        private final ThumbnailLoader thumbLoader;
 
         /**
          * the constructor
          */
-        private ThumbnailViewNode(Node arg, ThumbnailLoader thumbLoader) {
-            super(arg, FilterNode.Children.LEAF);
-            this.thumbLoader = thumbLoader;
+        private ThumbnailViewNode(Node wrappedNode) {
+            super(wrappedNode, FilterNode.Children.LEAF);
         }
 
         @Override
@@ -263,8 +261,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                     return ImageUtils.getDefaultThumbnail();
                 }
                 if (thumbTask == null || thumbTask.isDone()) {
-                    thumbTask = new ThumbnailLoadTask(content);
-                    thumbLoader.load(thumbTask);
+                    thumbTask = loadThumbnail(this, content);
 
                 }
                 if (timer == null) {
@@ -281,7 +278,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             thumbTask = null;
         }
 
-        private class ThumbnailLoadTask extends SwingWorker<Image, Object> {
+        private class ThumbnailLoadTask extends SwingWorker<Image, Void> {
 
             private final Content content;
             private final ProgressHandle progressHandle;
@@ -290,10 +287,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                 this.content = content;
                 final String progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
                 progressHandle = ProgressHandle.createHandle(progressText);
-            }
-
-            private boolean cancel() {
-                return this.cancel(true);
             }
 
             @Override
@@ -317,7 +310,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                     if (timer != null) {
                         timer.stop();
                         timer = null;
-
                     }
                     thumbTask = null;
                 }
@@ -325,22 +317,21 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         }
     }
 
-    static class ThumbnailLoader {
+    private final ExecutorService executor = Executors.newFixedThreadPool(4,
+            new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
 
-        private final ExecutorService executor = Executors.newFixedThreadPool(4,
-                new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
+    private final List<Future<?>> futures = new ArrayList<>();
 
-        private final List<Future<?>> futures = new ArrayList<>();
+    synchronized void cancelLoadingThumbnails() {
+        futures.forEach(future -> future.cancel(true));
+        futures.clear();
+    }
 
-        synchronized void cancellAll() {
-            futures.forEach(future -> future.cancel(true));
-            futures.clear();
-        }
-
-        private synchronized void load(ThumbnailViewNode.ThumbnailLoadTask task) {
-            futures.add(task);
-            executor.submit(task);
-        }
+    private synchronized ThumbnailViewNode.ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node, Content content) {
+        ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content);
+        futures.add(task);
+        executor.submit(task);
+        return task;
     }
 
     /**
@@ -370,28 +361,25 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         ThumbnailPageNodeChildren(List<Node> contentImages) {
             super(true);
-
             this.contentImages = contentImages;
         }
 
         @Override
         protected void addNotify() {
             super.addNotify();
-
             setKeys(contentImages);
         }
 
         @Override
         protected void removeNotify() {
             super.removeNotify();
-
-            setKeys(new ArrayList<>());
+            setKeys(Collections.emptyList());
         }
 
         @Override
         protected Node[] createNodes(Node wrapped) {
             if (wrapped != null) {
-                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped, thumbLoader);
+                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped);
                 thumb.setIconSize(iconSize);
                 return new Node[]{thumb};
             } else {
@@ -399,5 +387,4 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             }
         }
     }
-
 }

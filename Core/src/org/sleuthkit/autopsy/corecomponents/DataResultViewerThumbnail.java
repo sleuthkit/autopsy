@@ -54,7 +54,6 @@ import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
-import org.sleuthkit.autopsy.corecomponents.ThumbnailViewChildren.ThumbnailLoader;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -81,8 +80,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPageImages;
     private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
     private final PageUpdater pageUpdater = new PageUpdater();
-    private final ThumbnailLoader thumbLoader = new ThumbnailLoader();
     private TableFilterNode tfn;
+    private ThumbnailViewChildren tvc;
 
     /**
      * Constructs a thumbnail viewer for the results view, with paging support,
@@ -387,7 +386,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void setNode(Node givenNode) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        thumbLoader.cancellAll();
+        if (tvc != null) {
+            tvc.cancelLoadingThumbnails();
+        }
         try {
             if (givenNode != null) {
                 tfn = (TableFilterNode) givenNode;
@@ -396,15 +397,16 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
                  * from the child nodes of the given node.
                  */
-                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, thumbLoader);
-                childNode.setIconSize(iconSize);
-                final Node root = new AbstractNode(childNode);
+                tvc = new ThumbnailViewChildren(givenNode);
+                tvc.setIconSize(iconSize);
+                final Node root = new AbstractNode(tvc);
 
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
                 em.setRootContext(root);
             } else {
                 tfn = null;
+                tvc = null;
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode);
                 iconView.setBackground(Color.BLACK);
@@ -676,5 +678,4 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
     }
 
-    
 }
