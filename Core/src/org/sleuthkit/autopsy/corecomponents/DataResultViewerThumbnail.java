@@ -78,7 +78,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPage;
     private int totalPages;
     private int curPageImages;
-    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
+    private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
     private final PageUpdater pageUpdater = new PageUpdater();
     private TableFilterNode tfn;
     private ThumbnailViewChildren tvc;
@@ -296,10 +296,10 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 break;
         }
 
-        if (iconSize != newIconSize) {
-            iconSize = newIconSize;
+        if (thumbSize != newIconSize) {
+            thumbSize = newIconSize;
             Node root = em.getRootContext();
-            ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(iconSize);
+            ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(thumbSize);
 
            
 
@@ -391,8 +391,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
                  * from the child nodes of the given node.
                  */
-                tvc = new ThumbnailViewChildren(givenNode);
-                tvc.setThumbsSize(iconSize);
+                tvc = new ThumbnailViewChildren(givenNode,thumbSize);
                 final Node root = new AbstractNode(tvc);
 
                 pageUpdater.setRoot(root);

@@ -32,7 +32,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.SortOrder;
@@ -53,6 +52,7 @@ import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadS
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
+import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
@@ -66,6 +66,9 @@ import org.sleuthkit.datamodel.Content;
  */
 class ThumbnailViewChildren extends Children.Keys<Integer> {
 
+    @NbBundle.Messages("ThumbnailViewChildren.progress.cancelling=(Cancelling)")
+    private static final String CANCELLING_POSTIX = Bundle.ThumbnailViewChildren_progress_cancelling();
+
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
     static final int IMAGES_PER_PAGE = 200;
@@ -73,17 +76,19 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private final HashMap<Integer, List<Node>> pages = new HashMap<>();
     private int totalImages = 0;
     private int totalPages = 0;
-    private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
+    private int thumbSize;
 
     /**
      * The constructor
      *
-     * @param parent The node which is the parent of this children.
+     * @param parent    The node which is the parent of this children.
+     * @param thumbSize The hight and/or width of the thumbnails in pixels.
      */
-    ThumbnailViewChildren(Node parent) {
+    ThumbnailViewChildren(Node parent, int thumbSize) {
         super(true); //support lazy loading
 
         this.parent = parent;
+        this.thumbSize = thumbSize;
     }
 
     @Override
@@ -170,7 +175,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return criterion.getSortOrder() == SortOrder.ASCENDING ? c : c.reversed();
     }
 
-     @SuppressWarnings("rawtypes")
+    @SuppressWarnings("rawtypes")
     private Comparable getPropertyValue(Node node, Node.Property<?> prop) {
         for (Node.PropertySet ps : node.getPropertySets()) {
             for (Node.Property<?> p : ps.getProperties()) {
@@ -232,10 +237,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         private final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
 
-        private final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"));
+        private final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif")); //NOI18N
 
         private SoftReference<Image> thumbCache = null;
         private int thumbSize;
+
+        int getThumbSize() {
+            return thumbSize;
+        }
 
         private ThumbnailLoadTask thumbTask;
         private Timer timer;
@@ -291,6 +300,27 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             thumbTask = null;
         }
 
+        private void completionCallback(ThumbnailLoadTask task) {
+            try {
+                thumbCache = new SoftReference<>(task.get());
+                fireIconChange();
+            } catch (CancellationException ex) {
+                //Task was cancelled, do nothing
+            } catch (InterruptedException | ExecutionException ex) {
+                if (ex.getCause() instanceof CancellationException) {
+                } else {
+                    logger.log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                }
+            } finally {
+
+                if (timer != null) {
+                    timer.stop();
+                    timer = null;
+                }
+                thumbTask = null;
+            }
+        }
+
         private class ThumbnailLoadTask extends SwingWorker<Image, Void> {
 
             private final Content content;
@@ -316,34 +346,19 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             }
 
             private void cancel() {
-                SwingUtilities.invokeLater(() -> progressHandle.setDisplayName(progressText + " (Cancelling)"));
+                SwingUtilities.invokeLater(() -> progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX));
             }
 
             @Override
             protected void done() {
                 super.done();
-                try {
-                    thumbCache = new SoftReference<>(super.get());
-                    fireIconChange();
-                } catch (CancellationException ex) {
-                    //Task was cancelled, do nothing
-                } catch (InterruptedException | ExecutionException ex) {
-                    if (ex.getCause() instanceof CancellationException) {
-                    } else {
-                        logger.log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                synchronized (progressHandle) {
+                    if (started) {
+                        progressHandle.finish();
                     }
-                } finally {
-                    synchronized (progressHandle) {
-                        if (started) {
-                            progressHandle.finish();
-                        }
-                    }
-                    if (timer != null) {
-                        timer.stop();
-                        timer = null;
-                    }
-                    thumbTask = null;
                 }
+
+                completionCallback();
             }
 
         }
@@ -362,7 +377,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private synchronized ThumbnailViewNode.ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node, Content content) {
         if (executor.isShutdown() == false) {
-            ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content, node.thumbSize);
+            ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content, node.getThumbSize());
             tasks.add(task);
             executor.submit(task);
             return task;
