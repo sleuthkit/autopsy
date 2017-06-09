@@ -61,6 +61,7 @@ import java.util.stream.Collectors;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
+import org.netbeans.spi.sendopts.ArgsProcessor;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.Case.CaseType;
@@ -69,6 +70,7 @@ import org.sleuthkit.autopsy.casemodule.CaseMetadata;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.CoordinationServiceException;
 import org.sleuthkit.autopsy.coordinationservice.CoordinationService.Lock;
+import org.sleuthkit.autopsy.core.ArgumentsProcessor;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.core.ServicesMonitor.ServicesMonitorException;
@@ -210,6 +212,38 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      */
     void startUp() throws AutoIngestManagerStartupException {
         SYS_LOGGER.log(Level.INFO, "Auto ingest starting");
+        
+        // Get the ArgumentsProcessor object.
+        Collection<? extends ArgsProcessor> argsProcessorsList = Lookup.getDefault().lookupAll(ArgsProcessor.class);
+        ArgumentsProcessor argsProcessor = null;
+        for(ArgsProcessor processor : argsProcessorsList) {
+            if(processor instanceof ArgumentsProcessor) {
+                argsProcessor = (ArgumentsProcessor) processor;
+                break;
+            }
+        }
+        
+        // Attempt to retrieve the shared config path from the ArgsProcessor.
+        if(argsProcessor != null) {
+            String sharedConfigPath = ArgumentsProcessor.getSharedConfigPath();
+            try {
+                if(sharedConfigPath != null) {
+                    // Use the path supplied by the command line argument.
+                    new SharedConfiguration().downloadConfiguration(sharedConfigPath);
+                }
+                else if(ArgumentsProcessor.isAutoIngestService()) {
+                    // Use the path stored in the user preferences.
+                    new SharedConfiguration().downloadConfiguration();
+                }
+            } catch (SharedConfigurationException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "Failed to load the shared configuration.", ex);
+                throw new AutoIngestManagerStartupException("Failed to load the shared configuration", ex);
+            } catch (InterruptedException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "An unexpected exception occurred while attempting to load the shared configuration.", ex);
+                throw new AutoIngestManagerStartupException("An unexpected exception occurred while attempting to load the shared configuration.", ex);
+            }
+        }
+        
         try {
             coordinationService = CoordinationService.getInstance();
         } catch (CoordinationServiceException ex) {
@@ -2672,7 +2706,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     /*
      * The possible states of an auto ingest manager.
      */
-    private enum State {
+    enum State {
         IDLE,
         RUNNING,
         SHUTTING_DOWN;

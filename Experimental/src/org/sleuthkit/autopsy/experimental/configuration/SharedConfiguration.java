@@ -215,7 +215,7 @@ public class SharedConfiguration {
 
         return SharedConfigResult.SUCCESS;
     }
-
+    
     /**
      * Download the multi-user settings from a shared folder.
      *
@@ -223,12 +223,41 @@ public class SharedConfiguration {
      * @throws InterruptedException
      */
     public synchronized SharedConfigResult downloadConfiguration() throws SharedConfigurationException, InterruptedException {
-        publishTask("Starting shared configuration download");
-
         // Save local settings that should not get overwritten
         saveNonSharedSettings();
 
         File remoteFolder = getSharedFolder();
+        SharedConfigResult result = downloadConfiguration(remoteFolder);
+        return result;
+    }
+    
+    /**
+     * Download the multi-user settings from a shared folder.
+     * 
+     * @param path The shared folder path.
+     *
+     * @throws SharedConfigurationException
+     * @throws InterruptedException
+     */
+    public synchronized SharedConfigResult downloadConfiguration(String path) throws SharedConfigurationException, InterruptedException {
+        // Save local settings that should not get overwritten
+        saveNonSharedSettings();
+
+        File remoteFolder = getSharedFolder(path);
+        SharedConfigResult result = downloadConfiguration(remoteFolder);
+        return result;
+    }
+
+    /**
+     * Download the multi-user settings from a shared folder.
+     * 
+     * @param remoteFolder The shared folder.
+     *
+     * @throws SharedConfigurationException
+     * @throws InterruptedException
+     */
+    private synchronized SharedConfigResult downloadConfiguration(File remoteFolder) throws SharedConfigurationException, InterruptedException {
+        publishTask("Starting shared configuration download");
 
         try (Lock readLock = CoordinationService.getInstance().tryGetSharedLock(CategoryNode.CONFIG, remoteFolder.getAbsolutePath(), 30, TimeUnit.MINUTES)) {
             if (readLock == null) {
@@ -363,17 +392,34 @@ public class SharedConfiguration {
         UserPreferences.setHideSlackFilesInDataSourcesTree(hideSlackFilesInDataSource);
         UserPreferences.setHideSlackFilesInViewsTree(hideSlackFilesInViews); 
     }
-
+    
     /**
-     * Get the base folder being used to store the shared config settings.
+     * Get the base folder being used to store the shared config settings from
+     * the AutoIngestUserPreferences class.
      *
      * @return The shared configuration folder
      *
      * @throws SharedConfigurationException
      */
     private static File getSharedFolder() throws SharedConfigurationException {
+        String path = AutoIngestUserPreferences.getSharedConfigFolder();
+        File remoteFolder = getSharedFolder(path);
+        return remoteFolder;
+    }
+
+    /**
+     * Get the base folder being used to store the shared config settings from
+     * the supplied path.
+     * 
+     * @param path The shared configuration folder path.
+     *
+     * @return The shared configuration folder
+     *
+     * @throws SharedConfigurationException
+     */
+    private static File getSharedFolder(String path) throws SharedConfigurationException {
         // Check that the shared folder is set and exists
-        String remoteConfigFolderPath = AutoIngestUserPreferences.getSharedConfigFolder();
+        String remoteConfigFolderPath = path;
         if (remoteConfigFolderPath.isEmpty()) {
             logger.log(Level.SEVERE, "Shared configuration folder is not set.");
             throw new SharedConfigurationException("Shared configuration folder is not set.");
