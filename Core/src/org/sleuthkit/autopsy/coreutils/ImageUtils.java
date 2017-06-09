@@ -654,11 +654,11 @@ public class ImageUtils {
 
         @Override
         protected javafx.scene.image.Image call() throws Exception {
-            if (isGIF(file)) {
-                return readImage();
-            }
             if (isCancelled()) {
                 return null;
+            }
+            if (isGIF(file)) {
+                return readImage();
             }
 
             // If a thumbnail file is already saved locally, just read that.
@@ -666,7 +666,13 @@ public class ImageUtils {
                 synchronized (cacheFile) {
                     if (cacheFile.exists()) {
                         try {
+                            if (isCancelled()) {
+                                return null;
+                            }
                             BufferedImage cachedThumbnail = ImageIO.read(cacheFile);
+                            if (isCancelled()) {
+                                return null;
+                            }
                             if (nonNull(cachedThumbnail) && cachedThumbnail.getWidth() == iconSize) {
                                 return SwingFXUtils.toFXImage(cachedThumbnail, null);
                             }
@@ -678,15 +684,14 @@ public class ImageUtils {
                 }
             }
 
-            if (isCancelled()) {
-                return null;
-            }
-
             //There was no correctly-sized cached thumbnail so make one.
             BufferedImage thumbnail = null;
             if (VideoUtils.isVideoThumbnailSupported(file)) {
                 if (OPEN_CV_LOADED) {
                     updateMessage(Bundle.GetOrGenerateThumbnailTask_generatingPreviewFor(file.getName()));
+                    if (isCancelled()) {
+                        return null;
+                    }
                     thumbnail = VideoUtils.generateVideoThumbnail(file, iconSize);
                 }
                 if (null == thumbnail) {
@@ -698,6 +703,9 @@ public class ImageUtils {
                 }
 
             } else {
+                if (isCancelled()) {
+                    return null;
+                }
                 //read the image into a buffered image.
                 //TODO: I don't like this, we just converted it from BufferedIamge to fx Image -jm
                 BufferedImage bufferedImage = SwingFXUtils.fromFXImage(readImage(), null);
@@ -712,6 +720,9 @@ public class ImageUtils {
                 }
                 //resize, or if that fails, crop it
                 try {
+                    if (isCancelled()) {
+                        return null;
+                    }
                     thumbnail = ScalrWrapper.resizeFast(bufferedImage, iconSize);
                 } catch (IllegalArgumentException | OutOfMemoryError e) {
                     // if resizing does not work due to extreme aspect ratio or oom, crop the image instead.
@@ -723,6 +734,9 @@ public class ImageUtils {
                         final int cropHeight = Math.min(iconSize, height);
                         final int cropWidth = Math.min(iconSize, width);
                         try {
+                            if (isCancelled()) {
+                                return null;
+                            }
                             if (isCancelled()) {
                                 return null;
                             }
@@ -841,10 +855,6 @@ public class ImageUtils {
                 }
             }
             //fall through to default image reading code if there was an error
-            if (isCancelled()) {
-                return null;
-            }
-
             return getImageProperty(file, "ImageIO could not read {0}: ",
                     imageReader -> {
                         imageReader.addIIOReadProgressListener(ReadImageTaskBase.this);
@@ -858,6 +868,9 @@ public class ImageUtils {
                         BufferedImage bufferedImage = imageReader.getImageTypes(0).next().createBufferedImage(imageReader.getWidth(0), imageReader.getHeight(0));
                         param.setDestination(bufferedImage);
                         try {
+                            if (isCancelled()) {
+                                return null;
+                            }
                             bufferedImage = imageReader.read(0, param); //should always be same bufferedImage object
                         } catch (IOException iOException) {
                             LOGGER.log(Level.WARNING, IMAGEIO_COULD_NOT_READ_UNSUPPORTED_OR_CORRUPT + ": " + iOException.toString(), ImageUtils.getContentPathSafe(file)); //NON-NLS
@@ -887,6 +900,7 @@ public class ImageUtils {
         public boolean isCancelled() {
             if (Thread.interrupted()) {
                 this.cancel(true);
+                return true;
             }
             return super.isCancelled();
         }

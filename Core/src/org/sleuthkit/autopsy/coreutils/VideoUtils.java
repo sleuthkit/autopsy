@@ -107,6 +107,9 @@ public class VideoUtils {
             progress.start(100);
             try {
                 Files.createParentDirs(tempFile);
+                if (Thread.interrupted()) {
+                    return null;
+                }
                 ContentUtils.writeToFile(file, tempFile, progress, null, true);
             } catch (IOException ex) {
                 LOGGER.log(Level.WARNING, "Error extracting temporary file for " + ImageUtils.getContentPathSafe(file), ex); //NON-NLS
@@ -114,62 +117,69 @@ public class VideoUtils {
                 progress.finish();
             }
         }
-
         VideoCapture videoFile = new VideoCapture(); // will contain the video
-
-        if (!videoFile.open(tempFile.toString())) {
-            LOGGER.log(Level.WARNING, "Error opening {0} for preview generation.", ImageUtils.getContentPathSafe(file)); //NON-NLS
-            return null;
-        }
-        double fps = videoFile.get(CV_CAP_PROP_FPS); // gets frame per second
-        double totalFrames = videoFile.get(CV_CAP_PROP_FRAME_COUNT); // gets total frames
-        if (fps <= 0 || totalFrames <= 0) {
-            LOGGER.log(Level.WARNING, "Error getting fps or total frames for {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
-            return null;
-        }
-        double milliseconds = 1000 * (totalFrames / fps); //total milliseconds
-
-        double timestamp = Math.min(milliseconds, 500); //default time to check for is 500ms, unless the files is extremely small
-
-        int framkeskip = Double.valueOf(Math.floor((milliseconds - timestamp) / (THUMB_COLUMNS * THUMB_ROWS))).intValue();
-
-        Mat imageMatrix = new Mat();
         BufferedImage bufferedImage = null;
 
-        for (int x = 0; x < THUMB_COLUMNS; x++) {
-            for (int y = 0; y < THUMB_ROWS; y++) {
-                if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip + y * framkeskip * THUMB_COLUMNS)) {
-                    LOGGER.log(Level.WARNING, "Error seeking to " + timestamp + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
-                    break; // if we can't set the time, return black for that frame
-                }
-                //read the frame into the image/matrix
-                if (!videoFile.read(imageMatrix)) {
-                    LOGGER.log(Level.WARNING, "Error reading frames at " + timestamp + "ms from {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
-                    break; //if the image for some reason is bad, return black for that frame
-                }
+        try {
 
-                if (bufferedImage == null) {
-                    bufferedImage = new BufferedImage(imageMatrix.cols() * THUMB_COLUMNS, imageMatrix.rows() * THUMB_ROWS, BufferedImage.TYPE_3BYTE_BGR);
-                }
-
-                byte[] data = new byte[imageMatrix.rows() * imageMatrix.cols() * (int) (imageMatrix.elemSize())];
-                imageMatrix.get(0, 0, data); //copy the image to data
-
-                //todo: this looks like we are swapping the first and third channels.  so we can use  BufferedImage.TYPE_3BYTE_BGR
-                if (imageMatrix.channels() == 3) {
-                    for (int k = 0; k < data.length; k += 3) {
-                        byte temp = data[k];
-                        data[k] = data[k + 2];
-                        data[k + 2] = temp;
-                    }
-                }
-
-                bufferedImage.getRaster().setDataElements(imageMatrix.cols() * x, imageMatrix.rows() * y, imageMatrix.cols(), imageMatrix.rows(), data);
+            if (!videoFile.open(tempFile.toString())) {
+                LOGGER.log(Level.WARNING, "Error opening {0} for preview generation.", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                return null;
             }
+            double fps = videoFile.get(CV_CAP_PROP_FPS); // gets frame per second
+            double totalFrames = videoFile.get(CV_CAP_PROP_FRAME_COUNT); // gets total frames
+            if (fps <= 0 || totalFrames <= 0) {
+                LOGGER.log(Level.WARNING, "Error getting fps or total frames for {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                return null;
+            }
+            double milliseconds = 1000 * (totalFrames / fps); //total milliseconds
+
+            double timestamp = Math.min(milliseconds, 500); //default time to check for is 500ms, unless the files is extremely small
+
+            int framkeskip = Double.valueOf(Math.floor((milliseconds - timestamp) / (THUMB_COLUMNS * THUMB_ROWS))).intValue();
+
+            Mat imageMatrix = new Mat();
+
+            for (int x = 0; x < THUMB_COLUMNS; x++) {
+                for (int y = 0; y < THUMB_ROWS; y++) {
+                    if (Thread.interrupted()) {
+                        return null;
+                    }
+                    if (!videoFile.set(CV_CAP_PROP_POS_MSEC, timestamp + x * framkeskip + y * framkeskip * THUMB_COLUMNS)) {
+                        LOGGER.log(Level.WARNING, "Error seeking to " + timestamp + "ms in {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                        break; // if we can't set the time, return black for that frame
+                    }
+                    //read the frame into the image/matrix
+                    if (!videoFile.read(imageMatrix)) {
+                        LOGGER.log(Level.WARNING, "Error reading frames at " + timestamp + "ms from {0}", ImageUtils.getContentPathSafe(file)); //NON-NLS
+                        break; //if the image for some reason is bad, return black for that frame
+                    }
+
+                    if (bufferedImage == null) {
+                        bufferedImage = new BufferedImage(imageMatrix.cols() * THUMB_COLUMNS, imageMatrix.rows() * THUMB_ROWS, BufferedImage.TYPE_3BYTE_BGR);
+                    }
+
+                    byte[] data = new byte[imageMatrix.rows() * imageMatrix.cols() * (int) (imageMatrix.elemSize())];
+                    imageMatrix.get(0, 0, data); //copy the image to data
+
+                    //todo: this looks like we are swapping the first and third channels.  so we can use  BufferedImage.TYPE_3BYTE_BGR
+                    if (imageMatrix.channels() == 3) {
+                        for (int k = 0; k < data.length; k += 3) {
+                            byte temp = data[k];
+                            data[k] = data[k + 2];
+                            data[k + 2] = temp;
+                        }
+                    }
+
+                    bufferedImage.getRaster().setDataElements(imageMatrix.cols() * x, imageMatrix.rows() * y, imageMatrix.cols(), imageMatrix.rows(), data);
+                }
+            }
+        } finally {
+            videoFile.release(); // close the file}
         }
-
-        videoFile.release(); // close the file
-
+        if (Thread.interrupted()) {
+            return null;
+        }
         return bufferedImage == null ? null : ScalrWrapper.resizeFast(bufferedImage, iconSize);
     }
 }
