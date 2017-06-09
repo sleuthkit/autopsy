@@ -72,18 +72,17 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private final HashMap<Integer, List<Node>> pages = new HashMap<>();
     private int totalImages = 0;
     private int totalPages = 0;
-    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
+    private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
 
     /**
-     * the constructor
+     * The constructor
      *
-     * @param arg
-     * @param iconSize
+     * @param parent The node which is the parent of this children.
      */
-    ThumbnailViewChildren(Node arg) {
+    ThumbnailViewChildren(Node parent) {
         super(true); //support lazy loading
 
-        this.parent = arg;
+        this.parent = parent;
     }
 
     @Override
@@ -193,8 +192,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     @Override
     protected Node[] createNodes(Integer pageNum) {
-        final ThumbnailPageNode pageNode = new ThumbnailPageNode(pageNum);
-        return new Node[]{pageNode};
+        return new Node[]{new ThumbnailPageNode(pageNum)};
 
     }
 
@@ -208,32 +206,40 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return false;
     }
 
-    public void setIconSize(int iconSize) {
-        this.iconSize = iconSize;
-
+    public void setThumbsSize(int thumbSize) {
+        this.thumbSize = thumbSize;
+        for (Node page : getNodes()) {
+            for (Node node : page.getChildren().getNodes()) {
+                ((ThumbnailViewNode) node).setThumbSize(thumbSize);
+            }
+        }
     }
 
     /**
-     * Node that wraps around original node and adds the bitmap icon
-     * representing the picture
+     * Node that wraps around original node and adds the thumbnail representing
+     * the image/video.
      */
-    class ThumbnailViewNode extends FilterNode {
+    private class ThumbnailViewNode extends FilterNode {
 
-        private Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
+        private  final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
 
         private final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"));
 
         private SoftReference<Image> thumbCache = null;
-        private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
+        private int thumbSize;
 
         private ThumbnailLoadTask thumbTask;
         private Timer timer;
 
         /**
-         * the constructor
+         * The constructor
+         *
+         * @param wrappedNode The original node that this Node wraps.
+         * @param thumbSize   The hight and/or width of the thumbnail in pixels.
          */
-        private ThumbnailViewNode(Node wrappedNode) {
+        private ThumbnailViewNode(Node wrappedNode, int thumbSize) {
             super(wrappedNode, FilterNode.Children.LEAF);
+            this.thumbSize = thumbSize;
         }
 
         @Override
@@ -259,7 +265,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                     return ImageUtils.getDefaultThumbnail();
                 }
                 if (thumbTask == null || thumbTask.isDone()) {
-                    thumbTask = loadThumbnail(this, content);
+                    thumbTask = loadThumbnail(ThumbnailViewNode.this, content);
 
                 }
                 if (timer == null) {
@@ -270,8 +276,8 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             }
         }
 
-        synchronized public void setIconSize(int iconSize) {
-            this.iconSize = iconSize;
+        synchronized void setThumbSize(int iconSize) {
+            this.thumbSize = iconSize;
             thumbCache = null;
             thumbTask = null;
         }
@@ -282,11 +288,13 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             private final ProgressHandle progressHandle;
             private volatile boolean started = false;
             private final String progressText;
+            private final int thumbSize;
 
-            ThumbnailLoadTask(Content content) {
+            ThumbnailLoadTask(Content content, int thumbSize) {
                 this.content = content;
                 progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
                 progressHandle = ProgressHandle.createHandle(progressText);
+                this.thumbSize = thumbSize;
             }
 
             @Override
@@ -295,7 +303,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                     progressHandle.start();
                     started = true;
                 }
-                return ImageUtils.getThumbnail(content, iconSize);
+                return ImageUtils.getThumbnail(content, thumbSize);
             }
 
             private void cancel() {
@@ -345,7 +353,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private synchronized ThumbnailViewNode.ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node, Content content) {
         if (executor.isShutdown() == false) {
-            ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content);
+            ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content, node.thumbSize);
             tasks.add(task);
             executor.submit(task);
             return task;
@@ -369,25 +377,30 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             setDisplayName(from + "-" + to);
 
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
-
         }
     }
 
-//TODO insert node at beginning pressing which goes back to page view
+    /**
+     * Children.Keys implementation which uses nodes as keys, and wraps them in
+     * ThumbnailViewNodes as the child nodes.
+     *
+     */
     private class ThumbnailPageNodeChildren extends Children.Keys<Node> {
 
-        //wrapped original nodes
-        private List<Node> contentImages = null;
+        /*
+         * wrapped original nodes
+         */
+        private List<Node> keyNodes = null;
 
-        ThumbnailPageNodeChildren(List<Node> contentImages) {
+        ThumbnailPageNodeChildren(List<Node> keyNodes) {
             super(true);
-            this.contentImages = contentImages;
+            this.keyNodes = keyNodes;
         }
 
         @Override
         protected void addNotify() {
             super.addNotify();
-            setKeys(contentImages);
+            setKeys(keyNodes);
         }
 
         @Override
@@ -399,8 +412,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         @Override
         protected Node[] createNodes(Node wrapped) {
             if (wrapped != null) {
-                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped);
-                thumb.setIconSize(iconSize);
+                final ThumbnailViewNode thumb = new ThumbnailViewNode(wrapped, thumbSize);
                 return new Node[]{thumb};
             } else {
                 return new Node[]{};

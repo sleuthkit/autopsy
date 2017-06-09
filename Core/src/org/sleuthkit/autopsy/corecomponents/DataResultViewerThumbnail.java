@@ -299,15 +299,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         if (iconSize != newIconSize) {
             iconSize = newIconSize;
             Node root = em.getRootContext();
-            for (Children c : Arrays.asList(root.getChildren())) {
-                ((ThumbnailViewChildren) c).setIconSize(iconSize);
-            }
+            ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(iconSize);
 
-            for (Node page : root.getChildren().getNodes()) {
-                for (Node node : page.getChildren().getNodes()) {
-                    ((ThumbnailViewChildren.ThumbnailViewNode) node).setIconSize(iconSize);
-                }
-            }
+           
 
             // Temporarily set the explored context to the root, instead of a child node.
             // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
@@ -398,7 +392,7 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  * from the child nodes of the given node.
                  */
                 tvc = new ThumbnailViewChildren(givenNode);
-                tvc.setIconSize(iconSize);
+                tvc.setThumbsSize(iconSize);
                 final Node root = new AbstractNode(tvc);
 
                 pageUpdater.setRoot(root);
