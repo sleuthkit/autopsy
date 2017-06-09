@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,13 +18,18 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import javax.swing.Action;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -92,5 +97,27 @@ public class KeyValueNode extends AbstractNode {
         }
 
         return s;
+    }
+
+    /**
+     * Right click action for the nodes that we want to pass to the directory
+     * table and the output view.
+     *
+     * @param popup
+     *
+     * @return actions
+     */
+    @Override
+    public Action[] getActions(boolean popup) {
+        List<Action> actions = new ArrayList<>();
+        actions.addAll(Arrays.asList(super.getActions(popup)));
+        //if this artifact has associated content, add the action to view the content in the timeline
+        AbstractFile file = getLookup().lookup(AbstractFile.class);
+        if (null != file) {
+            actions.add(ViewFileInTimelineAction.createViewSourceFileAction(file));
+        }
+        actions.add(null); // creates a menu separator
+
+        return actions.toArray(new Action[actions.size()]);
     }
 }
