@@ -109,17 +109,17 @@ public class AutoIngestServiceTask implements Runnable {
                         List<AutoIngestJob> completedJobs = new ArrayList<>(0);
                         manager.getJobs(pendingJobs, runningJobs, completedJobs);
                         
-                        outputLine = String.format("\n\n[PENDING JOBS]  %d jobs...\n", Integer.toString(pendingJobs.size()));
+                        outputLine = String.format("\n\n[PENDING JOBS]  %d jobs...\n", pendingJobs.size());
                         for(AutoIngestJob job: pendingJobs) {
                             outputLine += String.format("%-14s  %-14s  %s\n", job.getManifest().getCaseName(), job.getNodeName(), job.getCaseDirectoryPath());
                         }
                         
-                        outputLine = String.format("\n[RUNNING JOBS]  %d jobs...\n", Integer.toString(runningJobs.size()));
+                        outputLine += String.format("\n[RUNNING JOBS]  %d jobs...\n", runningJobs.size());
                         for(AutoIngestJob job: runningJobs) {
                             outputLine += String.format("%-14s  %-14s  %s\n", job.getManifest().getCaseName(), job.getNodeName(), job.getCaseDirectoryPath());
                         }
                         
-                        outputLine = String.format("\n[COMPLETED JOBS]  %d jobs...\n", Integer.toString(completedJobs.size()));
+                        outputLine += String.format("\n[COMPLETED JOBS]  %d jobs...\n", completedJobs.size());
                         for(AutoIngestJob job: completedJobs) {
                             outputLine += String.format("%-14s  %-14s  %s\n", job.getManifest().getCaseName(), job.getNodeName(), job.getCaseDirectoryPath());
                         }
