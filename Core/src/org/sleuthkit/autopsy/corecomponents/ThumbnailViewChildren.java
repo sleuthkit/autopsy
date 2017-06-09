@@ -32,6 +32,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.SortOrder;
@@ -163,17 +164,25 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     }
 
     private Comparator<Node> getCriterionComparator(SortCriterion criterion) {
+        @SuppressWarnings("unchecked")
         Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProperty()),
                 Comparator.nullsFirst(Comparator.naturalOrder()));
         return criterion.getSortOrder() == SortOrder.ASCENDING ? c : c.reversed();
     }
 
+     @SuppressWarnings("rawtypes")
     private Comparable getPropertyValue(Node node, Node.Property<?> prop) {
         for (Node.PropertySet ps : node.getPropertySets()) {
             for (Node.Property<?> p : ps.getProperties()) {
                 if (p.equals(prop)) {
                     try {
-                        return (Comparable) p.getValue();
+                        if (p.getValue() instanceof Comparable) {
+                            return (Comparable) p.getValue();
+                        } else {
+                            //if the value is not comparable use its string representation
+                            return p.getValue().toString();
+                        }
+
                     } catch (IllegalAccessException | InvocationTargetException ex) {
                         Exceptions.printStackTrace(ex);
                     }
@@ -221,7 +230,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
      */
     private class ThumbnailViewNode extends FilterNode {
 
-        private  final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
+        private final Logger logger = Logger.getLogger(ThumbnailViewNode.class.getName());
 
         private final Image waitingIcon = Toolkit.getDefaultToolkit().createImage(ThumbnailViewNode.class.getResource("/org/sleuthkit/autopsy/images/working_spinner.gif"));
 
