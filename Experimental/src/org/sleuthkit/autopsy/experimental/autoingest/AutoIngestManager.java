@@ -1880,7 +1880,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         private Case openCase() throws CoordinationServiceException, CaseManagementException, InterruptedException {
             Manifest manifest = currentJob.getManifest();
             String caseName = manifest.getCaseName();
-            SYS_LOGGER.log(Level.INFO, "Opening case {0} for {2}", new Object[]{caseName, manifest.getFilePath()});
+            SYS_LOGGER.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
             currentJob.setStage(AutoIngestJob.Stage.OPENING_CASE);
             /*
              * Acquire and hold a case name lock so that only one node at as
@@ -2293,7 +2293,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                                     jobLogger.logAnalysisCancelled();
                                     CancellationReason cancellationReason = snapshot.getCancellationReason();
                                     if (CancellationReason.NOT_CANCELLED != cancellationReason && CancellationReason.USER_CANCELLED != cancellationReason) {
-                                        throw new AnalysisStartupException(String.format("Analysis cacelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));
+                                        throw new AnalysisStartupException(String.format("Analysis cancelled due to %s for %s", cancellationReason.getDisplayName(), manifestPath));
                                     }
                                 }
                             }

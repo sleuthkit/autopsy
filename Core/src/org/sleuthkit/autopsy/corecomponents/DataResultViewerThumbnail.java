@@ -521,7 +521,8 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
 
     }
 
-    @NbBundle.Messages({"DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}",
+    @NbBundle.Messages({
+        "# {0} - sort criteria", "DataResultViewerThumbnail.sortLabel.textTemplate=Sorted by: {0}",
         "DataResultViewerThumbnail.sortLabel.text=Sorted by: ---"})
     private void updateControls() {
         if (totalPages == 0) {

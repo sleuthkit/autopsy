@@ -787,7 +787,8 @@ class TestConfiguration(object):
                 self.output_parent_dir = parsed_config.getElementsByTagName("outdir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("global_csv"):
                 self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
-                self.global_csv = make_local_path(self.global_csv)
+                if re.match('^[\w]:', self.global_csv) == None or self.global_csv.startswith('/'):
+                    self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("golddir"):
                 self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("timing"):
@@ -840,7 +841,7 @@ class TestConfiguration(object):
             os.makedirs(make_os_path(_platform, self.output_parent_dir))
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
-        self.csv = make_local_path(self.output_dir, "CSV.txt")
+        self.csv = make_path(self.output_dir, "CSV.txt")
         self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
         log_name = ''
         if SYS is OS.CYGWIN and (re.match('^[\w]:', self.output_dir) != None or not self.output_dir.startswith('/')):

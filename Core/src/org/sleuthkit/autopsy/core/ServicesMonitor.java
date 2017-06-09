@@ -176,7 +176,7 @@ public class ServicesMonitor {
             MessageNotifyUtil.Notify.info(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.title"),
                     NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.restoredService.notify.msg", serviceDisplayName));
         } else if (status.equals(ServiceStatus.DOWN.toString())) {
-            logger.log(Level.SEVERE, "Failed to connect to {0}", serviceDisplayName); //NON-NLS
+            logger.log(Level.SEVERE, "Failed to connect to {0}. Reason: {1}", new Object[]{serviceDisplayName, details}); //NON-NLS
             MessageNotifyUtil.Notify.error(NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.title"),
                     NbBundle.getMessage(ServicesMonitor.class, "ServicesMonitor.failedService.notify.msg", serviceDisplayName));
         } else {
