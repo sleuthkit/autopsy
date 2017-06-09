@@ -1,3 +1,20 @@
+---------------- VERSION 4.4.1  --------------
+- Case deletion is now done using a Case menu item and both single-user and 
+general (not auto ingest) multi-user cases can be deleted.
+- Results viewer (top right area of desktop application) sorts are persistent 
+and can be applied to either the table viewer or the thumbnail viewer. 
+- Content viewers (bottom right area of desktop application) now resize 
+correctly.
+- The View Source File in Directory context menu item now works correctly.
+- Tagged image files in the HTML report are now displayed full-size. 
+- A new enterprise artifact manager feature has been added to the optional 
+Experimental plug-in (NetBeans module; this optional feature includes a database 
+(SQLite or PostgreSQL) and logic for correlating artifacts across cases; results
+are displayed using an Interesting Artifacts branch of the Interesting Items 
+tree and a content viewer. 
+- Some potential deadlocks during ingest have been eliminated.
+- Assorted small enhancements and bug fixes.
+
 ---------------- VERSION 4.4.0  --------------
 Improvements:
 - Keyword search supports regular expressions that include spaces.
