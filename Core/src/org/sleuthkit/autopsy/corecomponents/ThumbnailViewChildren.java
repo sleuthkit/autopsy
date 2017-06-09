@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.corecomponents;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -26,7 +27,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +34,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -52,30 +54,31 @@ import static org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.loadS
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
-import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 
 /**
  * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
  * original data result children nodes of the passed in parent node, and creates
- * filter nodes for the supported children nodes, adding the bitmap data. If
- * original nodes are lazy loaded, this will support lazy loading. Currently, we
- * add a page node hierarchy to divide children nodes into "pages".
+ * filter nodes for the supported children nodes, adding the thumbnail. If
+ * original nodes are lazy loaded, this will support lazy loading. We add a page
+ * node hierarchy to divide children nodes into "pages".
  *
  * Filter-node like class, but adds additional hierarchy (pages) as parents of
  * the filtered nodes.
  */
 class ThumbnailViewChildren extends Children.Keys<Integer> {
 
-    @NbBundle.Messages("ThumbnailViewChildren.progress.cancelling=(Cancelling)")
-    private static final String CANCELLING_POSTIX = Bundle.ThumbnailViewChildren_progress_cancelling();
-
     private static final Logger logger = Logger.getLogger(ThumbnailViewChildren.class.getName());
 
+    @NbBundle.Messages("ThumbnailViewChildren.progress.cancelling=(Cancelling)")
+    private static final String CANCELLING_POSTIX = Bundle.ThumbnailViewChildren_progress_cancelling();
     static final int IMAGES_PER_PAGE = 200;
+
+    private final ExecutorService executor = Executors.newFixedThreadPool(4,
+            new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
+    private final List<ThumbnailLoadTask> tasks = new ArrayList<>();
+
     private final Node parent;
-    private final HashMap<Integer, List<Node>> pages = new HashMap<>();
-    private int totalImages = 0;
-    private int totalPages = 0;
+    private final List<List<Node>> pages = new ArrayList<>();
     private int thumbSize;
 
     /**
@@ -95,62 +98,37 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     protected void addNotify() {
         super.addNotify();
 
-        setupKeys();
-    }
+        /*
+         * TODO: When lazy loading of original nodes is fixed, we should be
+         * asking the datamodel for the children instead and not counting the
+         * children nodes (which might not be preloaded at this point).
+         */
+        // get list of supported children sorted by persisted criteria
+        final List<Node> suppContent =
+                Stream.of(parent.getChildren().getNodes())
+                        .filter(ThumbnailViewChildren::isSupported)
+                        .sorted(getComparator())
+                        .collect(Collectors.toList());
 
-    int getTotalPages() {
-        return totalPages;
-    }
-
-    int getTotalImages() {
-        return totalImages;
-    }
-
-    private void setupKeys() {
-        //divide the supported content into buckets
-        totalImages = 0;
-        //TODO when lazy loading of original nodes is fixed
-        //we should be asking the datamodel for the children instead
-        //and not counting the children nodes (which might not be preloaded at this point)
-        final List<Node> suppContent = new ArrayList<>();
-        for (Node child : parent.getChildren().getNodes()) {
-            if (isSupported(child)) {
-                ++totalImages;
-                suppContent.add(child);
-            }
-        }
-        //sort suppContent!
-        Collections.sort(suppContent, getComparator());
-
-        if (totalImages == 0) {
+        if (suppContent.isEmpty()) {
+            //if there are no images, there is nothing more to do
             return;
         }
 
-        totalPages = 0;
-        if (totalImages < IMAGES_PER_PAGE) {
-            totalPages = 1;
-        } else {
-            totalPages = totalImages / IMAGES_PER_PAGE;
-            if (totalPages % totalImages != 0) {
-                ++totalPages;
-            }
-        }
+        //divide the supported content into buckets
+        pages.addAll(Lists.partition(suppContent, IMAGES_PER_PAGE));
 
-        int prevImages = 0;
-        for (int page = 1; page <= totalPages; ++page) {
-            int toAdd = Math.min(IMAGES_PER_PAGE, totalImages - prevImages);
-            List<Node> pageContent = suppContent.subList(prevImages, prevImages + toAdd);
-            pages.put(page, pageContent);
-            prevImages += toAdd;
-        }
-
-        Integer[] pageNums = new Integer[totalPages];
-        for (int i = 0; i < totalPages; ++i) {
-            pageNums[i] = i + 1;
-        }
-        setKeys(pageNums);
+        //the keys are just the indices into the pages list.
+        setKeys(IntStream.rangeClosed(0, pages.size()).boxed().collect(Collectors.toList()));
     }
 
+    /**
+     * Get a comparator for the child nodes loadeded from the persisted
+     * sort criteria. The comparator is a composite one that applies all the sort
+     * criteria at once.
+     *
+     * @return A Coparator used to sort the child nodes.
+     */
     private synchronized Comparator<Node> getComparator() {
         Comparator<Node> comp = (node1, node2) -> 0;
 
@@ -201,12 +179,11 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     protected void removeNotify() {
         super.removeNotify();
         pages.clear();
-        totalImages = 0;
     }
 
     @Override
     protected Node[] createNodes(Integer pageNum) {
-        return new Node[]{new ThumbnailPageNode(pageNum)};
+        return new Node[]{new ThumbnailPageNode(pageNum, pages.get(pageNum))};
 
     }
 
@@ -229,6 +206,23 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         }
     }
 
+    synchronized void cancelLoadingThumbnails() {
+        tasks.forEach(ThumbnailLoadTask::cancel);
+        tasks.clear();
+        executor.shutdownNow();
+    }
+
+    private synchronized ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node, Content content) {
+        if (executor.isShutdown() == false) {
+            ThumbnailLoadTask task = new ThumbnailLoadTask(node, content, node.getThumbSize());
+            tasks.add(task);
+            executor.submit(task);
+            return task;
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Node that wraps around original node and adds the thumbnail representing
      * the image/video.
@@ -241,6 +235,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
         private SoftReference<Image> thumbCache = null;
         private int thumbSize;
+        private final Content content;
 
         int getThumbSize() {
             return thumbSize;
@@ -258,6 +253,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         private ThumbnailViewNode(Node wrappedNode, int thumbSize) {
             super(wrappedNode, FilterNode.Children.LEAF);
             this.thumbSize = thumbSize;
+            this.content = this.getLookup().lookup(Content.class);
         }
 
         @Override
@@ -278,7 +274,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             if (thumbnail != null) {
                 return thumbnail;
             } else {
-                final Content content = this.getLookup().lookup(Content.class);
+
                 if (content == null) {
                     return ImageUtils.getDefaultThumbnail();
                 }
@@ -321,83 +317,64 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             }
         }
 
-        private class ThumbnailLoadTask extends SwingWorker<Image, Void> {
+    }
 
-            private final Content content;
-            private final ProgressHandle progressHandle;
-            private volatile boolean started = false;
-            private final String progressText;
-            private final int thumbSize;
+    private class ThumbnailLoadTask extends SwingWorker<Image, Void> {
 
-            ThumbnailLoadTask(Content content, int thumbSize) {
-                this.content = content;
-                progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
-                progressHandle = ProgressHandle.createHandle(progressText);
-                this.thumbSize = thumbSize;
-            }
+        private final ThumbnailViewNode node;
 
-            @Override
-            protected Image doInBackground() throws Exception {
-                synchronized (progressHandle) {
-                    progressHandle.start();
-                    started = true;
-                }
-                return ImageUtils.getThumbnail(content, thumbSize);
-            }
+        private final Content content;
+        private final ProgressHandle progressHandle;
+        private volatile boolean started = false;
+        private final String progressText;
+        private final int thumbSize;
 
-            private void cancel() {
-                SwingUtilities.invokeLater(() -> progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX));
-            }
-
-            @Override
-            protected void done() {
-                super.done();
-                synchronized (progressHandle) {
-                    if (started) {
-                        progressHandle.finish();
-                    }
-                }
-
-                completionCallback();
-            }
-
+        ThumbnailLoadTask(ThumbnailViewNode node, Content content, int thumbSize) {
+            this.node = node;
+            this.content = content;
+            progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
+            progressHandle = ProgressHandle.createHandle(progressText);
+            this.thumbSize = thumbSize;
         }
-    }
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(4,
-            new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
+        @Override
+        protected Image doInBackground() throws Exception {
+            synchronized (progressHandle) {
+                progressHandle.start();
+                started = true;
+            }
+            return ImageUtils.getThumbnail(content, thumbSize);
+        }
 
-    private final List<ThumbnailViewNode.ThumbnailLoadTask> tasks = new ArrayList<>();
+        private void cancel() {
+            SwingUtilities.invokeLater(() -> progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX));
+        }
 
-    synchronized void cancelLoadingThumbnails() {
-        tasks.forEach(ThumbnailViewNode.ThumbnailLoadTask::cancel);
-        tasks.clear();
-        executor.shutdownNow();
-    }
+        @Override
+        protected void done() {
+            super.done();
+            synchronized (progressHandle) {
+                if (started) {
+                    progressHandle.finish();
+                }
+            }
 
-    private synchronized ThumbnailViewNode.ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node, Content content) {
-        if (executor.isShutdown() == false) {
-            ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask(content, node.getThumbSize());
-            tasks.add(task);
-            executor.submit(task);
-            return task;
-        } else {
-            return null;
+            node.completionCallback(this);
         }
     }
 
     /**
-     * Node representing page node, a parent of image nodes, with a name showing
-     * children range
+     * Node representing a page of thumbnails, a parent of image nodes, with a
+     * name showing children range
      */
     private class ThumbnailPageNode extends AbstractNode {
 
-        ThumbnailPageNode(Integer pageNum) {
-            super(new ThumbnailPageNodeChildren(pages.get(pageNum)), Lookups.singleton(pageNum));
-            setName(Integer.toString(pageNum));
-            int from = 1 + ((pageNum - 1) * IMAGES_PER_PAGE);
-            int showImages = Math.min(IMAGES_PER_PAGE, totalImages - (from - 1));
-            int to = from + showImages - 1;
+        private ThumbnailPageNode(Integer pageNum, List<Node> childNodes) {
+
+            super(new ThumbnailPageNodeChildren(childNodes), Lookups.singleton(pageNum));
+            setName(Integer.toString(pageNum + 1));
+            int from = 1 + (pageNum * IMAGES_PER_PAGE);
+            int to = from + ((ThumbnailPageNodeChildren) getChildren()).getChildCount() - 1;
             setDisplayName(from + "-" + to);
 
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
@@ -431,6 +408,10 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         protected void removeNotify() {
             super.removeNotify();
             setKeys(Collections.emptyList());
+        }
+
+        int getChildCount() {
+            return keyNodes.size();
         }
 
         @Override
