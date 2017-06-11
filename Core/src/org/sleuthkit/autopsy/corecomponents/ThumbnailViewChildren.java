@@ -28,17 +28,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
@@ -75,7 +76,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(4,
             new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
-    private final List<ThumbnailLoadTask> tasks = new ArrayList<>();
+    private final List<ThumbnailViewNode.ThumbnailLoadTask> tasks = new ArrayList<>();
 
     private final Node parent;
     private final List<List<Node>> pages = new ArrayList<>();
@@ -119,12 +120,12 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         pages.addAll(Lists.partition(suppContent, IMAGES_PER_PAGE));
 
         //the keys are just the indices into the pages list.
-        setKeys(IntStream.rangeClosed(0, pages.size()).boxed().collect(Collectors.toList()));
+        setKeys(IntStream.range(0, pages.size()).boxed().collect(Collectors.toList()));
     }
 
     /**
-     * Get a comparator for the child nodes loadeded from the persisted
-     * sort criteria. The comparator is a composite one that applies all the sort
+     * Get a comparator for the child nodes loadeded from the persisted sort
+     * criteria. The comparator is a composite one that applies all the sort
      * criteria at once.
      *
      * @return A Coparator used to sort the child nodes.
@@ -207,14 +208,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     }
 
     synchronized void cancelLoadingThumbnails() {
-        tasks.forEach(ThumbnailLoadTask::cancel);
-        tasks.clear();
+        tasks.forEach(task -> task.cancel(Boolean.TRUE));
         executor.shutdownNow();
+        tasks.clear();
     }
 
-    private synchronized ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node, Content content) {
+    private synchronized ThumbnailViewNode.ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node) {
         if (executor.isShutdown() == false) {
-            ThumbnailLoadTask task = new ThumbnailLoadTask(node, content, node.getThumbSize());
+            ThumbnailViewNode.ThumbnailLoadTask task = node.createLoadTask();
             tasks.add(task);
             executor.submit(task);
             return task;
@@ -237,12 +238,8 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         private int thumbSize;
         private final Content content;
 
-        int getThumbSize() {
-            return thumbSize;
-        }
-
         private ThumbnailLoadTask thumbTask;
-        private Timer timer;
+        private Timer waitSpinnerTimer;
 
         /**
          * The constructor
@@ -265,6 +262,10 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         @NbBundle.Messages({"# {0} - file name",
             "ThumbnailViewNode.progressHandle.text=Generating thumbnail for {0}"})
         synchronized public Image getIcon(int type) {
+            if (content == null) {
+                return ImageUtils.getDefaultThumbnail();
+            }
+
             Image thumbnail = null;
 
             if (thumbCache != null) {
@@ -275,16 +276,13 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                 return thumbnail;
             } else {
 
-                if (content == null) {
-                    return ImageUtils.getDefaultThumbnail();
-                }
-                if (thumbTask == null || thumbTask.isDone()) {
-                    thumbTask = loadThumbnail(ThumbnailViewNode.this, content);
+                if (thumbTask == null) {
+                    thumbTask = loadThumbnail(ThumbnailViewNode.this);
 
                 }
-                if (timer == null) {
-                    timer = new Timer(1, actionEvent -> fireIconChange());
-                    timer.start();
+                if (waitSpinnerTimer == null) {
+                    waitSpinnerTimer = new Timer(1, actionEvent -> fireIconChange());
+                    waitSpinnerTimer.start();
                 }
                 return waitingIcon;
             }
@@ -296,70 +294,55 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             thumbTask = null;
         }
 
-        private void completionCallback(ThumbnailLoadTask task) {
-            try {
-                thumbCache = new SoftReference<>(task.get());
-                fireIconChange();
-            } catch (CancellationException ex) {
-                //Task was cancelled, do nothing
-            } catch (InterruptedException | ExecutionException ex) {
-                if (ex.getCause() instanceof CancellationException) {
-                } else {
-                    logger.log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
-                }
-            } finally {
-
-                if (timer != null) {
-                    timer.stop();
-                    timer = null;
-                }
-                thumbTask = null;
-            }
+        ThumbnailViewNode.ThumbnailLoadTask createLoadTask() {
+            return new ThumbnailLoadTask();
         }
 
-    }
+        private class ThumbnailLoadTask extends FutureTask<Image> {
 
-    private class ThumbnailLoadTask extends SwingWorker<Image, Void> {
+            private final ProgressHandle progressHandle;
+            private final String progressText;
 
-        private final ThumbnailViewNode node;
-
-        private final Content content;
-        private final ProgressHandle progressHandle;
-        private volatile boolean started = false;
-        private final String progressText;
-        private final int thumbSize;
-
-        ThumbnailLoadTask(ThumbnailViewNode node, Content content, int thumbSize) {
-            this.node = node;
-            this.content = content;
-            progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
-            progressHandle = ProgressHandle.createHandle(progressText);
-            this.thumbSize = thumbSize;
-        }
-
-        @Override
-        protected Image doInBackground() throws Exception {
-            synchronized (progressHandle) {
+            ThumbnailLoadTask() {
+                super(() -> ImageUtils.getThumbnail(content, thumbSize));
+                progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
+                progressHandle = ProgressHandle.createHandle(progressText);
                 progressHandle.start();
-                started = true;
             }
-            return ImageUtils.getThumbnail(content, thumbSize);
-        }
 
-        private void cancel() {
-            SwingUtilities.invokeLater(() -> progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX));
-        }
+            void cancel(Boolean mayInterrupt) {
+                progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX);
+                super.cancel(mayInterrupt);
+            }
 
-        @Override
-        protected void done() {
-            super.done();
-            synchronized (progressHandle) {
-                if (started) {
+            @Override
+            public boolean isCancelled() {
+                return super.isCancelled() || Thread.interrupted(); //To change body of generated methods, choose Tools | Templates.
+            }
+
+            @Override
+            protected void done() {
+                SwingUtilities.invokeLater(() -> {
                     progressHandle.finish();
-                }
-            }
+                    if (waitSpinnerTimer != null) {
+                        waitSpinnerTimer.stop();
+                        waitSpinnerTimer = null;
+                    }
 
-            node.completionCallback(this);
+                    try {
+                        if (isCancelled() == false) {
+                            thumbCache = new SoftReference<>(get());
+                            fireIconChange();
+                        }
+                    } catch (CancellationException ex) {
+                        //Task was cancelled, do nothing
+                    } catch (InterruptedException | ExecutionException ex) {
+                        if (false == (ex.getCause() instanceof CancellationException)) {
+                            logger.log(Level.SEVERE, "Error getting thumbnail icon for " + content.getName(), ex); //NON-NLS
+                        }
+                    }
+                });
+            }
         }
     }
 
