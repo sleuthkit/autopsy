@@ -225,7 +225,7 @@ public class EamAddNewOrganizationDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(lbPocPhone, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.lbPocPhone.text")); // NOI18N
 
-        tfPocName.setToolTipText(org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "CorrelationEngineAddNewOrganizationDialog.tfName.tooltip")); // NOI18N
+        tfPocName.setToolTipText(org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EnterpriseArtifactManagerAddNewOrganizationDialog.tfName.tooltip")); // NOI18N
 
         lbWarningMsg.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
