@@ -46,7 +46,6 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
     private boolean dbConfigured;
     private boolean initiallyEnabled;
-    private boolean requireReboot;
     private boolean comboboxSelectDatabaseTypeActionListenerActive;
 
     /**
@@ -303,7 +302,6 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         if (dbConfigChanged) {
             if (initiallyEnabled || dbConfigured) {
-                requireReboot = true;
                 enableButtonSubComponents(false);
             }
             dbConfigured = true;
@@ -345,7 +343,6 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         cbEnableEnterpriseArtifactManager.setSelected(initiallyEnabled); // NON-NLS
         String selectedPlatformString = ModuleSettings.getConfigSetting("EnterpriseArtifactManager", "db.selectedPlatform"); // NON-NLS
         dbConfigured = selectedPlatformString != null;
-        requireReboot = false;
 
         if (dbConfigured) {
             comboboxSelectDatabaseTypeActionListenerActive = false; // don't fire action listener while configuring combobox content
@@ -393,26 +390,14 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         return true;
     }
 
-    @Messages({"EnterpriseArtifactManagerGlobalSettingsPanel.restartRequiredTitle.text=Application restart required",
-        "EnterpriseArtifactManagerGlobalSettingsPanel.restartRequiredLabel.text=Autopsy must be restarted for new configuration to take effect."})
     @Override
     public void saveSettings() { // Click OK on Global Settings Panel
         ModuleSettings.setConfigSetting("EnterpriseArtifactManager", "db.enabled", Boolean.toString(cbEnableEnterpriseArtifactManager.isSelected())); // NON-NLS
         if (cbEnableEnterpriseArtifactManager.isSelected()) {
             EamDbPlatformEnum.saveSelectedPlatform();
-
-            if (requireReboot) {
-                SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(null,
-                            Bundle.EnterpriseArtifactManagerGlobalSettingsPanel_restartRequiredLabel_text(),
-                            Bundle.EnterpriseArtifactManagerGlobalSettingsPanel_restartRequiredTitle_text(),
-                            JOptionPane.WARNING_MESSAGE);
-                });
-            } else {
-                EamDb dbManager = EamDb.getInstance();
-                dbManager.updateSettings();
-                enableButtonSubComponents(true);
-            }
+            EamDb dbManager = EamDb.getInstance();
+            dbManager.updateSettings();
+            enableButtonSubComponents(true);
         }
     }
 
