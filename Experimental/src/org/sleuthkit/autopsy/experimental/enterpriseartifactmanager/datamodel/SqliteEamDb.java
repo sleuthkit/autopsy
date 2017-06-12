@@ -131,11 +131,11 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
-     * Verify the CDB directory exists. If it doesn't, then create it.
+     * Verify the EAM db directory exists. If it doesn't, then create it.
      *
      * @throws EamDbException
      */
-    private void verifyCDBDirectory() throws EamDbException {
+    private void verifyDBDirectory() throws EamDbException {
         File dbDir = new File(dbSettings.getDbDirectory());
         if (!dbDir.exists()) {
             LOGGER.log(Level.INFO, "sqlite directory does not exist, creating it at {0}.", dbSettings.getDbDirectory()); // NON-NLS
@@ -339,7 +339,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             }
 
             if (connectionPool == null) {
-                verifyCDBDirectory();
+                verifyDBDirectory();
                 setupConnectionPool();
                 confirmDatabaseSchema();
             }

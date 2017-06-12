@@ -91,7 +91,7 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
         bnTestDatabase.setEnabled(false);
     }
 
-    @Messages({"EnterpriseArtifactManagerSQLiteSettingsDialog.fileNameExtFilter.text=CDB Database File"})
+    @Messages({"EnterpriseArtifactManagerSQLiteSettingsDialog.fileNameExtFilter.text=SQLite Database File"})
     private void customizeFileChooser() {
         fcDatabasePath.setDragEnabled(false);
         fcDatabasePath.setFileSelectionMode(JFileChooser.FILES_ONLY);
