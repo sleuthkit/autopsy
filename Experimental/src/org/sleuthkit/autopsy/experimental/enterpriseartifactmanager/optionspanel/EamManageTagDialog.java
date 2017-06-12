@@ -109,7 +109,6 @@ final class EamManageTagDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(EamManageTagDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
-        okButton.setLabel(org.openide.util.NbBundle.getMessage(EamManageTagDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
