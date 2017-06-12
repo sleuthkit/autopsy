@@ -103,7 +103,7 @@
                           <Component id="tbOops" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="pnDatabaseConnectionSettings" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="194" max="32767" attributes="0"/>
+                          <EmptySpace pref="33" max="32767" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="bnImportDatabase" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="bnManageTags" alignment="3" min="-2" pref="25" max="-2" attributes="0"/>
