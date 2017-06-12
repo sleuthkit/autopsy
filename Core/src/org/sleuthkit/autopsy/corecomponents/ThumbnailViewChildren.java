@@ -43,6 +43,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import org.apache.commons.lang3.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
+import org.netbeans.api.progress.ProgressHandleFactory;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.FilterNode;
@@ -74,7 +75,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     private static final String CANCELLING_POSTIX = Bundle.ThumbnailViewChildren_progress_cancelling();
     static final int IMAGES_PER_PAGE = 200;
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(4,
+    private final ExecutorService executor = Executors.newFixedThreadPool(3,
             new ThreadFactoryBuilder().setNameFormat("Thumbnail-Loader-%d").build());
     private final List<ThumbnailViewNode.ThumbnailLoadTask> tasks = new ArrayList<>();
 
@@ -215,7 +216,7 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
 
     private synchronized ThumbnailViewNode.ThumbnailLoadTask loadThumbnail(ThumbnailViewNode node) {
         if (executor.isShutdown() == false) {
-            ThumbnailViewNode.ThumbnailLoadTask task = node.createLoadTask();
+            ThumbnailViewNode.ThumbnailLoadTask task = node.new ThumbnailLoadTask();
             tasks.add(task);
             executor.submit(task);
             return task;
@@ -275,7 +276,6 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             if (thumbnail != null) {
                 return thumbnail;
             } else {
-
                 if (thumbTask == null) {
                     thumbTask = loadThumbnail(ThumbnailViewNode.this);
 
@@ -294,36 +294,38 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             thumbTask = null;
         }
 
-        ThumbnailViewNode.ThumbnailLoadTask createLoadTask() {
-            return new ThumbnailLoadTask();
-        }
-
         private class ThumbnailLoadTask extends FutureTask<Image> {
 
             private final ProgressHandle progressHandle;
             private final String progressText;
+            private boolean cancelled = false;
 
             ThumbnailLoadTask() {
                 super(() -> ImageUtils.getThumbnail(content, thumbSize));
                 progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
-                progressHandle = ProgressHandle.createHandle(progressText);
+
+                progressHandle = ProgressHandleFactory.createSystemHandle(progressText);
+                progressHandle.setInitialDelay(500);
                 progressHandle.start();
             }
 
-            void cancel(Boolean mayInterrupt) {
-                progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX);
+            synchronized void cancel(Boolean mayInterrupt) {
+                cancelled = true;
+//                    progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX);
+                progressHandle.suspend(progressText + " " + CANCELLING_POSTIX);
                 super.cancel(mayInterrupt);
             }
 
             @Override
-            public boolean isCancelled() {
-                return super.isCancelled() || Thread.interrupted(); //To change body of generated methods, choose Tools | Templates.
+            synchronized public boolean isCancelled() {
+                return cancelled || super.isCancelled(); //To change body of generated methods, choose Tools | Templates.
             }
 
             @Override
-            protected void done() {
+            synchronized protected void done() {
+                progressHandle.finish();
                 SwingUtilities.invokeLater(() -> {
-                    progressHandle.finish();
+
                     if (waitSpinnerTimer != null) {
                         waitSpinnerTimer.stop();
                         waitSpinnerTimer = null;
