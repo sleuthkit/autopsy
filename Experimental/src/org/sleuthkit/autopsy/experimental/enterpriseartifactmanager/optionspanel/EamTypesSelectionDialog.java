@@ -50,8 +50,8 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
      * Displays a dialog that allows a user to select which Type(s) should be
      * used for Correlation during ingest.
      */
-    @Messages({"EnterpriseArtifactManagerTypesSelectionDialog.title=Correlation Types Selections",
-        "EnterpriseArtifactManagerTypesSelectionDialog.instructions.text=Select one or more Type's to use for Correlation during Ingest."})
+    @Messages({"EnterpriseArtifactManagerTypesSelectionDialog.title=Manage Correlation Types",
+        "EnterpriseArtifactManagerTypesSelectionDialog.instructions.text=Select one or more Types to use for Correlation during Ingest."})
     EamTypesSelectionDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.EnterpriseArtifactManagerTypesSelectionDialog_title(),
@@ -64,7 +64,6 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
     }
 
     private void customizeComponents() {
-        enableOkButton(false);
         lbInstructions.setText(Bundle.EnterpriseArtifactManagerTypesSelectionDialog_instructions_text());
         lbWarningMsg.setText("");
 
@@ -106,7 +105,7 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
         setVisible(true);
     }
 
-    @Messages({"EnterpriseArtifactManagerTypesSelectionDialog.noneSelected=Must enable at least 1 Type."})
+    @Messages({"EnterpriseArtifactManagerTypesSelectionDialog.noneSelected=There are no correlation types enabled."})
     private boolean valid() {
         lbWarningMsg.setText("");
 
@@ -115,14 +114,8 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
 
         if (0 == countEnabled) {
             lbWarningMsg.setText(Bundle.EnterpriseArtifactManagerTypesSelectionDialog_noneSelected());
-            return enableOkButton(false);
         }
-        return enableOkButton(true);
-    }
-
-    private boolean enableOkButton(boolean enable) {
-        okButton.setEnabled(enable);
-        return enable;
+        return true;
     }
 
     /**
