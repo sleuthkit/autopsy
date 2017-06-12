@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -58,11 +57,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 
 /**
- * Complementary class to ThumbnailViewNode. Children node factory. Wraps around
- * original data result children nodes of the passed in parent node, and creates
- * filter nodes for the supported children nodes, adding the thumbnail. If
- * original nodes are lazy loaded, this will support lazy loading. We add a page
- * node hierarchy to divide children nodes into "pages".
+ * Wraps around original data result children nodes of the passed in parent
+ * node, and creates filter nodes for the supported children nodes, adding the
+ * thumbnail. If original nodes are lazy loaded, this will support lazy loading.
+ * We add a page node hierarchy to divide children nodes into "pages".
  *
  * Filter-node like class, but adds additional hierarchy (pages) as parents of
  * the filtered nodes.
@@ -125,14 +123,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
     }
 
     /**
-     * Get a comparator for the child nodes loadeded from the persisted sort
+     * Get a comparator for the child nodes loaded from the persisted sort
      * criteria. The comparator is a composite one that applies all the sort
      * criteria at once.
      *
-     * @return A Coparator used to sort the child nodes.
+     * @return A Comparator used to sort the child nodes.
      */
     private synchronized Comparator<Node> getComparator() {
-        Comparator<Node> comp = (node1, node2) -> 0;
+        Comparator<Node> comp = (node1, node2) -> 0; //eveything is equal.
 
         if (!(parent instanceof TableFilterNode)) {
             return comp;
@@ -143,11 +141,17 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             return sortCriteria.stream()
                     .map(this::getCriterionComparator)
                     .collect(Collectors.reducing(Comparator::thenComparing))
-                    .orElse(comp);
-
+                    .orElse(comp); // default to unordered if nothing is persisted
         }
     }
 
+    /**
+     * Make a comparator from the given criterion
+     *
+     * @param criterion The criterion to make a comparator for.
+     *
+     * @return The comparator for the given criterion.
+     */
     private Comparator<Node> getCriterionComparator(SortCriterion criterion) {
         @SuppressWarnings("unchecked")
         Comparator<Node> c = Comparator.comparing(node -> getPropertyValue(node, criterion.getProperty()),
@@ -155,6 +159,14 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
         return criterion.getSortOrder() == SortOrder.ASCENDING ? c : c.reversed();
     }
 
+    /**
+     * Get the value of the given property from the given node.
+     *
+     * @param node The node to get the value from.
+     * @param prop The property to get the value of.
+     *
+     * @return The value of the property in the node.
+     */
     @SuppressWarnings("rawtypes")
     private Comparable getPropertyValue(Node node, Node.Property<?> prop) {
         for (Node.PropertySet ps : node.getPropertySets()) {
@@ -267,31 +279,32 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                 return ImageUtils.getDefaultThumbnail();
             }
 
-            Image thumbnail = null;
-
             if (thumbCache != null) {
-                thumbnail = thumbCache.get();
+                Image thumbnail = thumbCache.get();
+                if (thumbnail != null) {
+                    return thumbnail;
+                }
             }
 
-            if (thumbnail != null) {
-                return thumbnail;
-            } else {
-                if (thumbTask == null) {
-                    thumbTask = loadThumbnail(ThumbnailViewNode.this);
+            if (thumbTask == null) {
+                thumbTask = loadThumbnail(ThumbnailViewNode.this);
 
-                }
-                if (waitSpinnerTimer == null) {
-                    waitSpinnerTimer = new Timer(1, actionEvent -> fireIconChange());
-                    waitSpinnerTimer.start();
-                }
-                return waitingIcon;
             }
+            if (waitSpinnerTimer == null) {
+                waitSpinnerTimer = new Timer(1, actionEvent -> fireIconChange());
+                waitSpinnerTimer.start();
+            }
+            return waitingIcon;
         }
 
         synchronized void setThumbSize(int iconSize) {
             this.thumbSize = iconSize;
             thumbCache = null;
-            thumbTask = null;
+            if (thumbTask != null) {
+                thumbTask.cancel(true);
+                thumbTask = null;
+            }
+
         }
 
         private class ThumbnailLoadTask extends FutureTask<Image> {
@@ -309,11 +322,11 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
                 progressHandle.start();
             }
 
-            synchronized void cancel(Boolean mayInterrupt) {
+            @Override
+            synchronized public boolean cancel(boolean mayInterrupt) {
                 cancelled = true;
-//                    progressHandle.setDisplayName(progressText + " " + CANCELLING_POSTIX);
                 progressHandle.suspend(progressText + " " + CANCELLING_POSTIX);
-                super.cancel(mayInterrupt);
+                return super.cancel(mayInterrupt);
             }
 
             @Override
