@@ -153,8 +153,9 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         createOrganizationsTable.append("poc_phone character varying(20) NOT NULL");
         createOrganizationsTable.append(")");
 
-        // TODO: The organizations will only have a small number of rows, so
-        // determine if an index is worthwhile.
+        // NOTE: The organizations will only have a small number of rows, so
+        // an index is probably not worthwhile.
+
         StringBuilder createCasesTable = new StringBuilder();
         createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
         createCasesTable.append("id SERIAL PRIMARY KEY,");
@@ -170,7 +171,7 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         createCasesTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
         createCasesTable.append(")");
 
-        // TODO: when there are few cases in the cases table, these indices may not be worthwhile
+        // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
         String casesIdx1 = "CREATE INDEX IF NOT EXISTS cases_org_id ON cases (org_id)";
         String casesIdx2 = "CREATE INDEX IF NOT EXISTS cases_case_uid ON cases (case_uid)";
 
@@ -251,8 +252,8 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
-        Connection conn = null;
 
+        Connection conn = null;
         try {
             conn = connectionPool.getConnection();
             Statement stmt = conn.createStatement();

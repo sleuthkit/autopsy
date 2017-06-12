@@ -122,7 +122,6 @@ class IngestModule implements FileIngestModule {
         }
 
         try {
-            // TODO: add the actual device once it is implemented in Autopsy.
             EamArtifactInstance cefi = new EamArtifactInstance(
                     eamCase,
                     eamDataSource,
