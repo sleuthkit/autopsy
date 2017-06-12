@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Controller for the main settings panel
  */
 @OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Enterprise_Artifact_Manager_Options",
-        iconBase = "org/sleuthkit/enterpriseartifactmanager/optionspanel/options-icon.png",
+        iconBase = "org/sleuthkit/autopsy/experimental/images/options-icon.png",
         position = 14,
         keywords = "#OptionsCategory_Keywords_Enterprise_Artifact_Manager_Options",
         keywordsCategory = "EnterpriseArtifactManager")

@@ -34,7 +34,7 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
     private static final String VERSION_NUMBER = "0.8.0";
 
     static String getModuleName() {
-        return java.util.ResourceBundle.getBundle("org/sleuthkit/enterpriseartifactmanager/Bundle")
+        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/Bundle")
                 .getString("OpenIDE-Module-Name");
     }
 

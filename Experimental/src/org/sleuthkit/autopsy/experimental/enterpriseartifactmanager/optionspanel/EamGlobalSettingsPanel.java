@@ -96,14 +96,14 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         tbOops = new javax.swing.JTextField();
         bnManageTags = new javax.swing.JButton();
         bnManageTypes = new javax.swing.JButton();
-        cbEnableCorrelationEngine = new javax.swing.JCheckBox();
+        cbEnableEnterpriseArtifactManager = new javax.swing.JCheckBox();
 
         setName(""); // NOI18N
 
         jScrollPane.setBorder(null);
 
-        bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/import16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "CorrelationEngineGlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
+        bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/import16.png"))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
         bnImportDatabase.setActionCommand(org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.bnImportDatabase.actionCommand")); // NOI18N
         bnImportDatabase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -111,7 +111,7 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             }
         });
 
-        pnDatabaseConnectionSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "CorrelationEngineGlobalSettingsPanel.lbDatabaseSettings.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnDatabaseConnectionSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.lbDatabaseSettings.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
         pnDatabaseConnectionSettings.setName(""); // NOI18N
 
         comboboxSelectDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "test 1", "test 2" }));
@@ -210,11 +210,13 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addGap(34, 34, 34))
         );
 
-        cbEnableCorrelationEngine.setFont(cbEnableCorrelationEngine.getFont().deriveFont(cbEnableCorrelationEngine.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(cbEnableCorrelationEngine, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.cbEnableCorrelationEngine.text")); // NOI18N
-        cbEnableCorrelationEngine.addItemListener(new java.awt.event.ItemListener() {
+        bnImportDatabase.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
+
+        cbEnableEnterpriseArtifactManager.setFont(cbEnableEnterpriseArtifactManager.getFont().deriveFont(cbEnableEnterpriseArtifactManager.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
+        org.openide.awt.Mnemonics.setLocalizedText(cbEnableEnterpriseArtifactManager, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.cbEnableEnterpriseArtifactManager.text")); // NOI18N
+        cbEnableEnterpriseArtifactManager.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cbEnableCorrelationEngineItemStateChanged(evt);
+                cbEnableEnterpriseArtifactManagerItemStateChanged(evt);
             }
         });
 
@@ -226,14 +228,14 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addContainerGap()
                 .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnOverallPanelLayout.createSequentialGroup()
-                        .addComponent(cbEnableCorrelationEngine, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cbEnableEnterpriseArtifactManager, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(pnSettings, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
         pnOverallPanelLayout.setVerticalGroup(
             pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnOverallPanelLayout.createSequentialGroup()
-                .addComponent(cbEnableCorrelationEngine)
+                .addComponent(cbEnableEnterpriseArtifactManager)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -570,7 +572,7 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     private javax.swing.JButton bnImportDatabase;
     private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
-    private javax.swing.JCheckBox cbEnableCorrelationEngine;
+    private javax.swing.JCheckBox cbEnableEnterpriseArtifactManager;
     private javax.swing.JComboBox<String> comboboxSelectDatabaseType;
     private javax.swing.JScrollPane jScrollPane;
     private javax.swing.JLabel lbDatabasePlatform;

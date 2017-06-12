@@ -56,7 +56,7 @@
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="lbDatabasePath" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="databasePathTextField" pref="374" max="32767" attributes="0"/>
+                              <Component id="databasePathTextField" max="32767" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" pref="23" max="-2" attributes="0"/>
@@ -262,14 +262,14 @@
     <Component class="javax.swing.JTextField" name="tfDatasetName">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="CorrelationEngineImportDatabaseDialog.tfDatasetName.tooltip" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetName.tooltip" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="tfDatasetVersion">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="CorrelationEngineImportDatabaseDialog.tfDatasetVersion.tooltip.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetVersion.tooltip.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

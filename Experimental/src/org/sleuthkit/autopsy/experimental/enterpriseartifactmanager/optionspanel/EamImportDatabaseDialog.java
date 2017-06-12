@@ -113,12 +113,12 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
     }
 
     private void populateCombobox() {
-        comboboxSoureamOrganization.removeAllItems();
+        comboboxSourceOrganization.removeAllItems();
         try {
             EamDb dbManager = EamDb.getInstance();
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
-                comboboxSoureamOrganization.addItem(org.getName());
+                comboboxSourceOrganization.addItem(org.getName());
                 selectedOrg = orgs.get(0);
             });
         } catch (EamDbException ex) {
@@ -308,9 +308,9 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        tfDatasetName.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "CorrelationEngineImportDatabaseDialog.tfDatasetName.tooltip")); // NOI18N
+        tfDatasetName.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetName.tooltip")); // NOI18N
 
-        tfDatasetVersion.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "CorrelationEngineImportDatabaseDialog.tfDatasetVersion.tooltip.text")); // NOI18N
+        tfDatasetVersion.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetVersion.tooltip.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.bnNewOrganization.text")); // NOI18N
         bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
@@ -350,7 +350,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(lbDatabasePath)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(databasePathTextField, javax.swing.GroupLayout.DEFAULT_SIZE, 374, Short.MAX_VALUE))
+                                .addComponent(databasePathTextField))
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addGap(23, 23, 23)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -534,7 +534,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_bnNewOrganizationActionPerformed
     
     @SuppressWarnings({"unchecked"})
-    private void comboboxSoureamOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboboxSoureamOrganizationActionPerformed
+    private void comboboxSourceOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboboxSourceOrganizationActionPerformed
         JComboBox<String> cb = (JComboBox<String>)evt.getSource();
         String orgName = (String)cb.getSelectedItem();
         if (null == orgName) return;
@@ -545,7 +545,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                 return;
             }
         }
-    }//GEN-LAST:event_comboboxSoureamOrganizationActionPerformed
+    }//GEN-LAST:event_comboboxSourceOrganizationActionPerformed
 
     @NbBundle.Messages({"EnterpriseArtifactManagerImportDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
     private class ImportHashDatabaseWorker extends SwingWorker<Object, Void> {

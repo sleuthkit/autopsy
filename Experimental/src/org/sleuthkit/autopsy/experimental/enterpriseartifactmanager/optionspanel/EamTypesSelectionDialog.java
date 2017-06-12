@@ -144,14 +144,14 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "CorrelationEngineManageTagDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "CorrelationEngineManageTagDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EamManageTagDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -183,11 +183,11 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(tbCorrelatableTypes);
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbInstructions, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "CorrelationEngineManageTagDialog.lbInstructions.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbInstructions, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbInstructions.text")); // NOI18N
 
         lbWarningMsg.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "CorrelationEngineManageTagDialog.lbWarningMsg.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbWarningMsg.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

@@ -50,7 +50,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
-                              <Component id="cbEnableCorrelationEngine" min="-2" pref="215" max="-2" attributes="0"/>
+                              <Component id="cbEnableEnterpriseArtifactManager" min="-2" pref="215" max="-2" attributes="0"/>
                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                           </Group>
                           <Component id="pnSettings" alignment="1" max="32767" attributes="0"/>
@@ -61,7 +61,7 @@
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
-                      <Component id="cbEnableCorrelationEngine" min="-2" max="-2" attributes="0"/>
+                      <Component id="cbEnableEnterpriseArtifactManager" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="pnSettings" max="32767" attributes="0"/>
                   </Group>
@@ -118,15 +118,20 @@
                 <Component class="javax.swing.JButton" name="bnImportDatabase">
                   <Properties>
                     <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-                      <Image iconType="3" name="/org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/import16.png"/>
+                      <Image iconType="3" name="/org/sleuthkit/autopsy/experimental/images/import16.png"/>
                     </Property>
                     <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                      <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="CorrelationEngineGlobalSettingsPanel.bnImportDatabase.label" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                      <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                     <Property name="actionCommand" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
                       <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamGlobalSettingsPanel.bnImportDatabase.actionCommand" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                     </Property>
                   </Properties>
+                  <AccessibilityProperties>
+                    <Property name="AccessibleContext.accessibleName" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+                      <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                    </Property>
+                  </AccessibilityProperties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="bnImportDatabaseActionPerformed"/>
                   </Events>
@@ -135,8 +140,8 @@
                   <Properties>
                     <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                       <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-                        <TitledBorder title="&lt;CorrelationEngineGlobalSettingsPanel.lbDatabaseSettings.text&gt;">
-                          <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="CorrelationEngineGlobalSettingsPanel.lbDatabaseSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                        <TitledBorder title="Database Settings">
+                          <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerGlobalSettingsPanel.lbDatabaseSettings.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                           <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
                         </TitledBorder>
                       </Border>
@@ -254,19 +259,19 @@
                 </Component>
               </SubComponents>
             </Container>
-            <Component class="javax.swing.JCheckBox" name="cbEnableCorrelationEngine">
+            <Component class="javax.swing.JCheckBox" name="cbEnableEnterpriseArtifactManager">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.modules.form.editors2.FontEditor">
                   <FontInfo relative="true">
-                    <Font bold="false" component="cbEnableCorrelationEngine" property="font" relativeSize="false" size="11"/>
+                    <Font bold="false" component="cbEnableEnterpriseArtifactManager" property="font" relativeSize="false" size="11"/>
                   </FontInfo>
                 </Property>
                 <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamGlobalSettingsPanel.cbEnableCorrelationEngine.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+                  <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamGlobalSettingsPanel.cbEnableEnterpriseArtifactManager.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
               <Events>
-                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cbEnableCorrelationEngineItemStateChanged"/>
+                <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cbEnableEnterpriseArtifactManagerItemStateChanged"/>
               </Events>
             </Component>
           </SubComponents>
