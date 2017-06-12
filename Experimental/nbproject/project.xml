@@ -7,6 +7,15 @@
             <suite-component/>
             <module-dependencies>
                 <dependency>
+                    <code-name-base>org.netbeans.api.progress</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <release-version>1</release-version>
+                        <specification-version>1.47.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
                     <code-name-base>org.netbeans.modules.options.api</code-name-base>
                     <build-prerequisite/>
                     <compile-dependency/>
@@ -53,6 +62,14 @@
                     <compile-dependency/>
                     <run-dependency>
                         <specification-version>7.47.1</specification-version>
+                    </run-dependency>
+                </dependency>
+                <dependency>
+                    <code-name-base>org.openide.nodes</code-name-base>
+                    <build-prerequisite/>
+                    <compile-dependency/>
+                    <run-dependency>
+                        <specification-version>7.45.1</specification-version>
                     </run-dependency>
                 </dependency>
                 <dependency>
@@ -120,10 +137,6 @@
                 <package>org.sleuthkit.autopsy.experimental.configuration</package>
             </public-packages>
             <class-path-extension>
-                <runtime-relative-path>ext/postgresql-9.4-1201-jdbc41.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-9.4-1201-jdbc41.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/mchange-commons-java-0.2.9.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/mchange-commons-java-0.2.9.jar</binary-origin>
             </class-path-extension>
@@ -142,6 +155,26 @@
             <class-path-extension>
                 <runtime-relative-path>ext/c3p0-0.9.5.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/c3p0-0.9.5.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-dbcp2-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-logging-1.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/commons-pool2-2.4.2.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/postgresql-42.0.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/postgresql-42.0.0.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/sqlite-jdbc-3.16.1.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/sqlite-jdbc-3.16.1.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>

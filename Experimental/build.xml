@@ -6,8 +6,22 @@
     <description>Builds, tests, and runs the project org.sleuthkit.autopsy.experimental.</description>
     <import file="nbproject/build-impl.xml"/>
     <import file="../BootstrapIvy.xml"/>
-   
-    <target name="get-deps" depends="init-ivy">
+
+    <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
+    <property name="modules.dir" value="${basedir}/release/modules/" />
+    <property name="ext.dir" value="${modules.dir}/ext" />
+ 
+    <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
+        <copy file="${thirdparty.dir}/commons/commons-dbcp2-2.1.1.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/commons/commons-dbcp2-2.1.1-javadoc.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/commons/commons-logging-1.2.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/commons/commons-pool2-2.4.2.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/commons/commons-pool2-2.4.2-javadoc.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/postgresql-jdbc/postgresql-42.0.0.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/sqlite-jdbc/sqlite-jdbc-3.16.1.jar" todir="${ext.dir}" />
+    </target>
+
+    <target name="get-deps" depends="init-ivy,get-thirdparty-dependencies">
         <ivy:settings file="ivysettings.xml" />
         <ivy:resolve/>
         <ivy:retrieve conf="experimental"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
