@@ -47,7 +47,7 @@
                                   <Component id="knownBadRadioButton" min="-2" max="-2" attributes="0"/>
                               </Group>
                           </Group>
-                          <Component id="lbDatasetAttribution" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbDatabaseAttribution" alignment="0" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                   </Group>
@@ -62,9 +62,9 @@
                               <EmptySpace min="-2" pref="23" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" attributes="0">
-                                      <Component id="lbDatasetVersion" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lbDatabaseVersion" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="tfDatasetVersion" min="-2" pref="154" max="-2" attributes="0"/>
+                                      <Component id="tfDatabaseVersion" min="-2" pref="154" max="-2" attributes="0"/>
                                       <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                                   <Group type="102" attributes="0">
@@ -73,11 +73,11 @@
                                       <Component id="bnNewOrganization" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="0" attributes="0">
-                                      <Component id="lbDatasetName" min="-2" max="-2" attributes="0"/>
+                                      <Component id="lbDatabaseName" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="comboboxSourceOrganization" alignment="1" max="32767" attributes="0"/>
-                                          <Component id="tfDatasetName" max="32767" attributes="0"/>
+                                          <Component id="tfDatabaseName" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -107,7 +107,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="knownBadRadioButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="lbDatasetAttribution" min="-2" max="-2" attributes="0"/>
+              <Component id="lbDatabaseAttribution" min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="bnNewOrganization" min="-2" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
@@ -119,13 +119,13 @@
               <Component id="comboboxSourceOrganization" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="tfDatasetName" max="32767" attributes="0"/>
-                  <Component id="lbDatasetName" min="-2" pref="20" max="-2" attributes="0"/>
+                  <Component id="tfDatabaseName" max="32767" attributes="0"/>
+                  <Component id="lbDatabaseName" min="-2" pref="20" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="lbDatasetVersion" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
-                  <Component id="tfDatasetVersion" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="lbDatabaseVersion" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                  <Component id="tfDatabaseVersion" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="separate" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
@@ -213,10 +213,10 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="lbDatasetAttribution">
+    <Component class="javax.swing.JLabel" name="lbDatabaseAttribution">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamImportDatabaseDialog.lbDatasetAttribution.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamImportDatabaseDialog.lbDatabaseAttribution.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -227,17 +227,17 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="lbDatasetName">
+    <Component class="javax.swing.JLabel" name="lbDatabaseName">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamImportDatabaseDialog.lbDatasetName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamImportDatabaseDialog.lbDatabaseName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JLabel" name="lbDatasetVersion">
+    <Component class="javax.swing.JLabel" name="lbDatabaseVersion">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamImportDatabaseDialog.lbDatasetVersion.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamImportDatabaseDialog.lbDatabaseVersion.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
@@ -259,17 +259,17 @@
         <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
       </AuxValues>
     </Component>
-    <Component class="javax.swing.JTextField" name="tfDatasetName">
+    <Component class="javax.swing.JTextField" name="tfDatabaseName">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetName.tooltip" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerImportDatabaseDialog.tfDatabaseName.tooltip" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JTextField" name="tfDatasetVersion">
+    <Component class="javax.swing.JTextField" name="tfDatabaseVersion">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetVersion.tooltip.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerImportDatabaseDialog.tfDatabaseVersion.tooltip.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>

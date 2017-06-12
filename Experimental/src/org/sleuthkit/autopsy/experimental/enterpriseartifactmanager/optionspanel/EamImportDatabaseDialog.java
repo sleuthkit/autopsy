@@ -107,8 +107,8 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
      * Register for notifications when the text boxes get updated.
      */
     private void setTextBoxListeners() {
-        textBoxes.add(tfDatasetName);
-        textBoxes.add(tfDatasetVersion);
+        textBoxes.add(tfDatabaseName);
+        textBoxes.add(tfDatabaseVersion);
         addDocumentListeners(textBoxes, textBoxChangedListener);
     }
 
@@ -145,8 +145,8 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
      * @return True or false.
      */
     private boolean textFieldsArePopulated() {
-        return !tfDatasetName.getText().trim().isEmpty()
-                && !tfDatasetVersion.getText().trim().isEmpty()
+        return !tfDatabaseName.getText().trim().isEmpty()
+                && !tfDatabaseVersion.getText().trim().isEmpty()
                 && !databasePathTextField.getText().trim().isEmpty();
     }
 
@@ -247,13 +247,13 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         knownBadRadioButton = new javax.swing.JRadioButton();
         lbDatabaseType = new javax.swing.JLabel();
         lbDatabasePath = new javax.swing.JLabel();
-        lbDatasetAttribution = new javax.swing.JLabel();
+        lbDatabaseAttribution = new javax.swing.JLabel();
         lbSourceOrganization = new javax.swing.JLabel();
-        lbDatasetName = new javax.swing.JLabel();
-        lbDatasetVersion = new javax.swing.JLabel();
+        lbDatabaseName = new javax.swing.JLabel();
+        lbDatabaseVersion = new javax.swing.JLabel();
         comboboxSourceOrganization = new javax.swing.JComboBox<>();
-        tfDatasetName = new javax.swing.JTextField();
-        tfDatasetVersion = new javax.swing.JTextField();
+        tfDatabaseName = new javax.swing.JTextField();
+        tfDatabaseVersion = new javax.swing.JTextField();
         bnNewOrganization = new javax.swing.JButton();
         lbWarningMsg = new javax.swing.JLabel();
 
@@ -293,13 +293,13 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePath, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatabasePath.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatasetAttribution, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatasetAttribution.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseAttribution, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatabaseAttribution.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbSourceOrganization, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbSourceOrganization.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatasetName, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatasetName.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseName, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatabaseName.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatasetVersion, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatasetVersion.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseVersion, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatabaseVersion.text")); // NOI18N
 
         comboboxSourceOrganization.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         comboboxSourceOrganization.addActionListener(new java.awt.event.ActionListener() {
@@ -308,9 +308,9 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        tfDatasetName.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetName.tooltip")); // NOI18N
+        tfDatabaseName.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatabaseName.tooltip")); // NOI18N
 
-        tfDatasetVersion.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetVersion.tooltip.text")); // NOI18N
+        tfDatabaseVersion.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatabaseVersion.tooltip.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.bnNewOrganization.text")); // NOI18N
         bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
@@ -343,7 +343,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(knownRadioButton)
                                     .addComponent(knownBadRadioButton)))
-                            .addComponent(lbDatasetAttribution))
+                            .addComponent(lbDatabaseAttribution))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -355,20 +355,20 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                                 .addGap(23, 23, 23)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(lbDatasetVersion)
+                                        .addComponent(lbDatabaseVersion)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(tfDatasetVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(tfDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(0, 0, Short.MAX_VALUE))
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(lbSourceOrganization)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(bnNewOrganization))
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(lbDatasetName)
+                                        .addComponent(lbDatabaseName)
                                         .addGap(12, 12, 12)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(tfDatasetName))))))
+                                            .addComponent(tfDatabaseName))))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(openButton)))
                 .addContainerGap())
@@ -391,7 +391,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lbDatasetAttribution)
+                .addComponent(lbDatabaseAttribution)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(bnNewOrganization)
                     .addGroup(layout.createSequentialGroup()
@@ -401,12 +401,12 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                 .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(tfDatasetName)
-                    .addComponent(lbDatasetName, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(tfDatabaseName)
+                    .addComponent(lbDatabaseName, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbDatasetVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tfDatasetVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lbDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tfDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lbWarningMsg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -452,8 +452,8 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         EamDb dbManager = EamDb.getInstance();
         EamGlobalSet eamGlobalSet = new EamGlobalSet(
             selectedOrg.getOrgID(),
-            tfDatasetName.getText().trim(),
-            tfDatasetVersion.getText().trim(),
+            tfDatabaseName.getText().trim(),
+            tfDatabaseVersion.getText().trim(),
             LocalDate.now());
         return dbManager.newGlobalSet(eamGlobalSet);
     }
@@ -621,16 +621,16 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JTextField databasePathTextField;
     private javax.swing.JRadioButton knownBadRadioButton;
     private javax.swing.JRadioButton knownRadioButton;
+    private javax.swing.JLabel lbDatabaseAttribution;
+    private javax.swing.JLabel lbDatabaseName;
     private javax.swing.JLabel lbDatabasePath;
     private javax.swing.JLabel lbDatabaseType;
-    private javax.swing.JLabel lbDatasetAttribution;
-    private javax.swing.JLabel lbDatasetName;
-    private javax.swing.JLabel lbDatasetVersion;
+    private javax.swing.JLabel lbDatabaseVersion;
     private javax.swing.JLabel lbSourceOrganization;
     private javax.swing.JLabel lbWarningMsg;
     private javax.swing.JButton okButton;
     private javax.swing.JButton openButton;
-    private javax.swing.JTextField tfDatasetName;
-    private javax.swing.JTextField tfDatasetVersion;
+    private javax.swing.JTextField tfDatabaseName;
+    private javax.swing.JTextField tfDatabaseVersion;
     // End of variables declaration//GEN-END:variables
 }
