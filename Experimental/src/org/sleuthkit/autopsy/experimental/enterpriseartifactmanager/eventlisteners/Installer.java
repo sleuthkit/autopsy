@@ -37,9 +37,6 @@ public class Installer extends ModuleInstall {
 
     @Override
     public void restored() {
-        // TODO: Setup the default config settings here
-        // something like EnterpriseArtifactManagerSettings.setDefaults();
-
         Case.addPropertyChangeListener(pcl);
         ieListener.installListeners();
 

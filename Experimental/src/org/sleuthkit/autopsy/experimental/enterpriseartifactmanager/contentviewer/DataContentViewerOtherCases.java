@@ -445,7 +445,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     }
 
     /**
-     * Query the CDB for artifact instances from other cases correlated to the
+     * Query the db for artifact instances from other cases correlated to the
      * given enterprise artifact manager artifact.
      *
      * @param eamArtifact The artifact to correlate against

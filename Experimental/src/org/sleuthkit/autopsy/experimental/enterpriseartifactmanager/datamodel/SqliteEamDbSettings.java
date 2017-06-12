@@ -40,7 +40,7 @@ public final class SqliteEamDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteEamDbSettings.class.getName());
     private final String DEFAULT_DBNAME = "enterpriseartifactmanagerdb.db"; // NON-NLS
-    private final String DEFAULT_DBDIRECTORY = System.getProperty("user.home") + File.separator + "Autopsy" + File.separator + "cdb"; // NON-NLS
+    private final String DEFAULT_DBDIRECTORY = System.getProperty("user.home") + File.separator + "Autopsy" + File.separator + "eamdb"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_BAD_TAGS = "Evidence"; // NON-NLS
     private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS

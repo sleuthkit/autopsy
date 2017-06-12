@@ -95,7 +95,7 @@ class IngestModule implements FileIngestModule {
 
         EamArtifact eamArtifact = new EamArtifact(filesType, md5);
 
-        // If unknown to both the hash module and as a globally known artifact in the CDB, correlate to other cases
+        // If unknown to both the hash module and as a globally known artifact in the EAM DB, correlate to other cases
         if (af.getKnown() == TskData.FileKnown.UNKNOWN) {
             // query db for artifact instances having this MD5 and knownStatus = "Bad".
             try {
@@ -122,7 +122,6 @@ class IngestModule implements FileIngestModule {
         }
 
         try {
-            // TODO: add the actual device once it is implemented in Autopsy.
             EamArtifactInstance cefi = new EamArtifactInstance(
                     eamCase,
                     eamDataSource,
@@ -194,7 +193,7 @@ class IngestModule implements FileIngestModule {
         // and image exist in the DB before we associate artifacts with it.
         if (refCounter.incrementAndGet(jobId)
                 == 1) {
-            // ensure we have this data source in the CDB
+            // ensure we have this data source in the EAM DB
             try {
                 if (null == dbManager.getDataSourceDetails(eamDataSource.getDeviceID())) {
                     dbManager.newDataSource(eamDataSource);
@@ -204,7 +203,7 @@ class IngestModule implements FileIngestModule {
                 throw new IngestModuleException("Error creating new data source in startUp.", ex); // NON-NLS
             }
 
-            // ensure we have this case defined in the CDB
+            // ensure we have this case defined in the EAM DB
             EamCase existingCase;
             Case curCase = Case.getCurrentCase();
             EamCase curCeCase = new EamCase(

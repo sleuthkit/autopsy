@@ -89,9 +89,7 @@ public final class EamEditCaseInfoAction extends CallableSystemAction implements
     public void performAction() {
 
         if (popUpWindow == null) {
-            String curCaseDisplayName = Case.getCurrentCase().getDisplayName();
-            // TODO: replace with caseUUID once it is implemented
-            String curCaseUUID = curCaseDisplayName;
+            String curCaseUUID = Case.getCurrentCase().getName();
 
             // create the popUp window for it
             String title = Bundle.EnterpriseArtifactManagerCaseEditDetails_window_title();

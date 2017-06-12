@@ -131,11 +131,11 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }
 
     /**
-     * Verify the CDB directory exists. If it doesn't, then create it.
+     * Verify the EAM db directory exists. If it doesn't, then create it.
      *
      * @throws EamDbException
      */
-    private void verifyCDBDirectory() throws EamDbException {
+    private void verifyDBDirectory() throws EamDbException {
         File dbDir = new File(dbSettings.getDbDirectory());
         if (!dbDir.exists()) {
             LOGGER.log(Level.INFO, "sqlite directory does not exist, creating it at {0}.", dbSettings.getDbDirectory()); // NON-NLS
@@ -177,8 +177,9 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         createOrganizationsTable.append("poc_phone character varying(20) NOT NULL");
         createOrganizationsTable.append(")");
 
-        // TODO: The organizations will only have a small number of rows, so
-        // determine if an index is worthwhile.
+        // NOTE: The organizations will only have a small number of rows, so
+        // an index is probably not worthwhile.
+
         StringBuilder createCasesTable = new StringBuilder();
         createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
         createCasesTable.append("id integer primary key autoincrement NOT NULL,");
@@ -195,7 +196,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE(case_uid)");
         createCasesTable.append(")");
 
-        // TODO: when there are few cases in the cases table, these indices may not be worthwhile
+        // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
         String casesIdx1 = "CREATE INDEX IF NOT EXISTS cases_org_id ON cases (org_id)";
         String casesIdx2 = "CREATE INDEX IF NOT EXISTS cases_case_uid ON cases (case_uid)";
 
@@ -276,6 +277,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
+
         Connection conn = null;
         try {
             conn = connectionPool.getConnection();
@@ -339,7 +341,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             }
 
             if (connectionPool == null) {
-                verifyCDBDirectory();
+                verifyDBDirectory();
                 setupConnectionPool();
                 confirmDatabaseSchema();
             }
