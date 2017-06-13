@@ -87,7 +87,7 @@ public class Installer extends ModuleInstall {
                 }
             }
             
-            if(argsProcessor != null && !ArgumentsProcessor.isAutoIngestService()) {
+            if(argsProcessor == null || !ArgumentsProcessor.isAutoIngestService()) {
                 // Not running as a service.
                 // Get the OpenFromArguments object.
                 Collection<? extends OptionProcessor> optionProcessorsList = Lookup.getDefault().lookupAll(OptionProcessor.class);
