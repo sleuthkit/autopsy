@@ -914,7 +914,10 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     AutoIngestManager.this.pendingJobs = newPendingJobsList;
                     AutoIngestManager.this.completedJobs = newCompletedJobsList;
 
-                } catch (IOException ex) {
+                } catch (Exception ex) {
+                    /* NOTE: Need to catch all exceptions here. Otherwise uncaught exceptions will
+                    propagate up to the calling thread and may stop it from running.                    
+                     */
                     SYS_LOGGER.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
                 }
             }
