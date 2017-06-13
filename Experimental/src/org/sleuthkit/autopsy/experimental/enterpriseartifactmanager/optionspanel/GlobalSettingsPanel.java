@@ -209,8 +209,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGap(34, 34, 34))
         );
 
-        bnImportDatabase.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
-
         cbEnableEnterpriseArtifactManager.setFont(cbEnableEnterpriseArtifactManager.getFont().deriveFont(cbEnableEnterpriseArtifactManager.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         org.openide.awt.Mnemonics.setLocalizedText(cbEnableEnterpriseArtifactManager, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbEnableEnterpriseArtifactManager.text")); // NOI18N
         cbEnableEnterpriseArtifactManager.addItemListener(new java.awt.event.ItemListener() {
