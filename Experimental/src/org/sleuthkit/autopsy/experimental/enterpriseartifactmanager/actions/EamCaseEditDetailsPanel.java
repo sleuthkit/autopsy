@@ -157,7 +157,7 @@ public class EamCaseEditDetailsPanel extends JPanel {
             }
         });
 
-        pnCaseMetadata.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "CorrelationEngineCaseEditDetailsPanel.pnCaseMetadata.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnCaseMetadata.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.pnCaseMetadata.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbCaseNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCaseNameLabel.text")); // NOI18N
 
@@ -215,7 +215,7 @@ public class EamCaseEditDetailsPanel extends JPanel {
                 .addGap(37, 37, 37))
         );
 
-        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "CorrelationEngineCaseEditDetailsPanel.pnOrganization.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.pnOrganization.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbOrganizationNameLabel.text")); // NOI18N
 
@@ -303,7 +303,7 @@ public class EamCaseEditDetailsPanel extends JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        pnExaminer.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "CorrelationEngineCaseEditDetailsPanel.pnExaminer.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnExaminer.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.pnExaminer.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbExaminerNameLabel.text")); // NOI18N
 

@@ -78,8 +78,8 @@
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="&lt;CorrelationEngineCaseEditDetailsPanel.pnCaseMetadata.title&gt;">
-              <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/actions/Bundle.properties" key="CorrelationEngineCaseEditDetailsPanel.pnCaseMetadata.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            <TitledBorder title="Case Metadata">
+              <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/actions/Bundle.properties" key="EamCaseEditDetailsPanel.pnCaseMetadata.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
               <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
             </TitledBorder>
           </Border>
@@ -198,8 +198,8 @@
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="&lt;CorrelationEngineCaseEditDetailsPanel.pnOrganization.title&gt;">
-              <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/actions/Bundle.properties" key="CorrelationEngineCaseEditDetailsPanel.pnOrganization.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            <TitledBorder title="Organization Details">
+              <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/actions/Bundle.properties" key="EamCaseEditDetailsPanel.pnOrganization.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
               <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
             </TitledBorder>
           </Border>
@@ -369,8 +369,8 @@
       <Properties>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.TitledBorderInfo">
-            <TitledBorder title="&lt;CorrelationEngineCaseEditDetailsPanel.pnExaminer.title&gt;">
-              <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/actions/Bundle.properties" key="CorrelationEngineCaseEditDetailsPanel.pnExaminer.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+            <TitledBorder title="Examiner Details">
+              <ResourceString PropertyName="titleX" bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/actions/Bundle.properties" key="EamCaseEditDetailsPanel.pnExaminer.title" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
               <Font PropertyName="font" name="Tahoma" size="12" style="0"/>
             </TitledBorder>
           </Border>

@@ -50,8 +50,7 @@ final class ManageArtifactTypesDialog extends javax.swing.JDialog {
      * Displays a dialog that allows a user to select which Type(s) should be
      * used for Correlation during ingest.
      */
-    @Messages({"ManageArtifactTypesDialog.title=Manage Artifact Types",
-        "ManageArtifactTypesDialog.instructions.text=Select one or more artifact types to store in the database and use for correlation during Ingest."})
+    @Messages({"ManageArtifactTypesDialog.title=Manage Artifact Types"})
     ManageArtifactTypesDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ManageArtifactTypesDialog_title(),
@@ -64,7 +63,6 @@ final class ManageArtifactTypesDialog extends javax.swing.JDialog {
     }
 
     private void customizeComponents() {
-        lbInstructions.setText(Bundle.ManageArtifactTypesDialog_instructions_text());
         lbWarningMsg.setText("");
 
         loadData();
@@ -132,31 +130,33 @@ final class ManageArtifactTypesDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tbCorrelatableTypes = new javax.swing.JTable();
-        lbInstructions = new javax.swing.JLabel();
         lbWarningMsg = new javax.swing.JLabel();
+        taInstructions = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "ManageArtifactTypesDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EamManageTagDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "ManageArtifactTypesDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
+        jScrollPane1.setMinimumSize(new java.awt.Dimension(150, 23));
+
         tbCorrelatableTypes.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Correlation Type", "Enable"
+                "Artifact Type", "Enable"
             }
         ) {
             Class[] types = new Class [] {
@@ -174,31 +174,43 @@ final class ManageArtifactTypesDialog extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
+        tbCorrelatableTypes.setMaximumSize(new java.awt.Dimension(400, 0));
+        tbCorrelatableTypes.setMinimumSize(new java.awt.Dimension(150, 0));
         jScrollPane1.setViewportView(tbCorrelatableTypes);
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbInstructions, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbInstructions.text")); // NOI18N
 
         lbWarningMsg.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbWarningMsg.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "ManageArtifactTypesDialog.lbWarningMsg.text")); // NOI18N
+
+        taInstructions.setEditable(false);
+        taInstructions.setBackground(new java.awt.Color(240, 240, 240));
+        taInstructions.setColumns(20);
+        taInstructions.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        taInstructions.setLineWrap(true);
+        taInstructions.setRows(5);
+        taInstructions.setText(org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "ManageArtifactTypesDialog.taInstructionsMsg.text")); // NOI18N
+        taInstructions.setWrapStyleWord(true);
+        taInstructions.setAutoscrolls(false);
+        taInstructions.setBorder(null);
+        taInstructions.setFocusable(false);
+        taInstructions.setRequestFocusEnabled(false);
+        taInstructions.setVerifyInputWhenFocusTarget(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbWarningMsg, javax.swing.GroupLayout.PREFERRED_SIZE, 158, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(taInstructions)
+                    .addComponent(lbWarningMsg, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
-                    .addComponent(lbInstructions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 316, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -207,17 +219,17 @@ final class ManageArtifactTypesDialog extends javax.swing.JDialog {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lbInstructions, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20)
+                .addComponent(taInstructions, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lbWarningMsg, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbWarningMsg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(okButton)
-                        .addComponent(cancelButton)))
-                .addContainerGap())
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(okButton)
+                    .addComponent(cancelButton))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -250,9 +262,9 @@ final class ManageArtifactTypesDialog extends javax.swing.JDialog {
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JLabel lbInstructions;
     private javax.swing.JLabel lbWarningMsg;
     private javax.swing.JButton okButton;
+    private javax.swing.JTextArea taInstructions;
     private javax.swing.JTable tbCorrelatableTypes;
     // End of variables declaration//GEN-END:variables
 }
