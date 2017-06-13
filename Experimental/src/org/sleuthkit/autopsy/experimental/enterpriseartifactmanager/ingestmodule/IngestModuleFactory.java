@@ -23,7 +23,7 @@ import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
-import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.optionspanel.EamGlobalSettingsPanel;
+import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.optionspanel.GlobalSettingsPanel;
 
 /**
  * Factory for enterprise artifact manager ingest modules
@@ -70,7 +70,7 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public IngestModuleGlobalSettingsPanel getGlobalSettingsPanel() {
-        EamGlobalSettingsPanel globalOptionsPanel = new EamGlobalSettingsPanel();
+        GlobalSettingsPanel globalOptionsPanel = new GlobalSettingsPanel();
         globalOptionsPanel.load();
         return globalOptionsPanel;
     }

@@ -38,21 +38,21 @@ import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.Ea
 /**
  * Dialog to add a new organization to the enterprise artifact manager database
  */
-public class EamAddNewOrganizationDialog extends javax.swing.JDialog {
+public class AddNewOrganizationDialog extends javax.swing.JDialog {
 
-    private static final Logger LOGGER = Logger.getLogger(EamAddNewOrganizationDialog.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AddNewOrganizationDialog.class.getName());
 
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
     private boolean hasChanged;
 
     /**
-     * Creates new form EnterpriseArtifactManagerAddNewOrganizationDialog
+     * Creates new form AddNewOrganizationDialog
      */
-    @Messages({"EnterpriseArtifactManagerAddNewOrganizationDialog.addNewOrg.msg=Add New Organization"})
-    public EamAddNewOrganizationDialog() {
+    @Messages({"AddNewOrganizationDialog.addNewOrg.msg=Add New Organization"})
+    public AddNewOrganizationDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                Bundle.EnterpriseArtifactManagerAddNewOrganizationDialog_addNewOrg_msg(),
+                Bundle.AddNewOrganizationDialog_addNewOrg_msg(),
                 true); // NON-NLS
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
@@ -111,7 +111,7 @@ public class EamAddNewOrganizationDialog extends javax.swing.JDialog {
      *
      * @return True or false.
      */
-    @Messages({"EnterpriseArtifactManagerAddNewOrganizationDialog.validation.incompleteFields=Organization Name is required."})
+    @Messages({"AddNewOrganizationDialog.validation.incompleteFields=Organization Name is required."})
     private boolean checkFields() {
         boolean result = true;
 
@@ -120,7 +120,7 @@ public class EamAddNewOrganizationDialog extends javax.swing.JDialog {
         if (!isPopulated) {
             // We don't even have everything filled out
             result = false;
-            lbWarningMsg.setText(Bundle.EnterpriseArtifactManagerAddNewOrganizationDialog_validation_incompleteFields());
+            lbWarningMsg.setText(Bundle.AddNewOrganizationDialog_validation_incompleteFields());
         }
         return result;
     }
@@ -201,31 +201,31 @@ public class EamAddNewOrganizationDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnOK, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.bnOK.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnOK, org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.bnOK.text")); // NOI18N
         bnOK.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnOKActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnCancel, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.bnCancel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnCancel, org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.bnCancel.text")); // NOI18N
         bnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnCancelActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationName, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.lbOrganizationName.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationName, org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.lbOrganizationName.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPocHeading, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.lbPocHeading.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPocHeading, org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.lbPocHeading.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPocName, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.lbPocName.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPocName, org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.lbPocName.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPocEmail, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.lbPocEmail.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPocEmail, org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.lbPocEmail.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPocPhone, org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EamAddNewOrganizationDialog.lbPocPhone.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPocPhone, org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.lbPocPhone.text")); // NOI18N
 
-        tfPocName.setToolTipText(org.openide.util.NbBundle.getMessage(EamAddNewOrganizationDialog.class, "EnterpriseArtifactManagerAddNewOrganizationDialog.tfName.tooltip")); // NOI18N
+        tfPocName.setToolTipText(org.openide.util.NbBundle.getMessage(AddNewOrganizationDialog.class, "AddNewOrganizationDialog.tfName.tooltip")); // NOI18N
 
         lbWarningMsg.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
@@ -302,7 +302,7 @@ public class EamAddNewOrganizationDialog extends javax.swing.JDialog {
         dispose();
     }//GEN-LAST:event_bnCancelActionPerformed
 
-    @Messages({"EnterpriseArtifactManagerAddNewOrganizationDialog.bnOk.addFailed.text=Failed to add new organization."})
+    @Messages({"AddNewOrganizationDialog.bnOk.addFailed.text=Failed to add new organization."})
     private void bnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOKActionPerformed
         EamOrganization newOrg = new EamOrganization(
                 tfOrganizationName.getText(),
@@ -315,7 +315,7 @@ public class EamAddNewOrganizationDialog extends javax.swing.JDialog {
             hasChanged = true;
             dispose();
         } catch (EamDbException ex) {
-            lbWarningMsg.setText(Bundle.EnterpriseArtifactManagerAddNewOrganizationDialog_bnOk_addFailed_text());
+            lbWarningMsg.setText(Bundle.AddNewOrganizationDialog_bnOk_addFailed_text());
             LOGGER.log(Level.SEVERE, "Failed adding new organization.", ex);
         }
     }//GEN-LAST:event_bnOKActionPerformed

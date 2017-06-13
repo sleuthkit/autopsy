@@ -34,7 +34,7 @@ import javax.swing.event.DocumentListener;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.EamCase;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.EamDbException;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.EamOrganization;
-import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.optionspanel.EamAddNewOrganizationDialog;
+import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.optionspanel.AddNewOrganizationDialog;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.EamDb;
 
 /**
@@ -419,7 +419,7 @@ public class EamCaseEditDetailsPanel extends JPanel {
     }//GEN-LAST:event_bnApplyActionPerformed
 
     private void bnNewOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnNewOrganizationActionPerformed
-        EamAddNewOrganizationDialog dialogO = new EamAddNewOrganizationDialog();
+        AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog();
         // update the combobox options
         if (dialogO.isChanged()) {
             loadData();

@@ -37,10 +37,10 @@ import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.Ea
 /**
  * Main settings panel for the enterprise artifact manager
  */
-public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
+public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(EamGlobalSettingsPanel.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(GlobalSettingsPanel.class.getName());
 
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
@@ -51,7 +51,7 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     /**
      * Creates new form EnterpriseArtifactManagerOptionsPanel
      */
-    public EamGlobalSettingsPanel() {
+    public GlobalSettingsPanel() {
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
 
         initComponents();
@@ -59,9 +59,9 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         addIngestJobEventsListener();
     }
 
-    @Messages({"EnterpriseArtifactManagerGlobalSettingsPanel.title=Global Enterprise Artifact Manager Settings"})
+    @Messages({"GlobalSettingsPanel.title=Global Enterprise Artifact Manager Settings"})
     private void customizeComponents() {
-        setName(Bundle.EnterpriseArtifactManagerGlobalSettingsPanel_title());
+        setName(Bundle.GlobalSettingsPanel_title());
         comboboxSelectDatabaseTypeActionListenerActive = false; // don't fire action listener while loading combobox content
         comboboxSelectDatabaseType.removeAllItems();
         for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
@@ -102,15 +102,15 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         jScrollPane.setBorder(null);
 
         bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/import16.png"))); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
-        bnImportDatabase.setActionCommand(org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.bnImportDatabase.actionCommand")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
+        bnImportDatabase.setActionCommand(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.actionCommand")); // NOI18N
         bnImportDatabase.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnImportDatabaseActionPerformed(evt);
             }
         });
 
-        pnDatabaseConnectionSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.lbDatabaseSettings.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnDatabaseConnectionSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDatabaseSettings.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
         pnDatabaseConnectionSettings.setName(""); // NOI18N
 
         comboboxSelectDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "test 1", "test 2" }));
@@ -120,9 +120,9 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePlatform, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.lbDatabasePlatform.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePlatform, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDatabasePlatform.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnConfigureDatabaseSettings, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.bnConfigureDatabaseSettings.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnConfigureDatabaseSettings, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnConfigureDatabaseSettings.text")); // NOI18N
         bnConfigureDatabaseSettings.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnConfigureDatabaseSettingsActionPerformed(evt);
@@ -155,19 +155,19 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         tbOops.setEditable(false);
         tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
-        tbOops.setText(org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.tbOops.text")); // NOI18N
+        tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnManageTags, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.bnManageTags.text")); // NOI18N
-        bnManageTags.setToolTipText(org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.bnManageTags.toolTipText")); // NOI18N
-        bnManageTags.setActionCommand(org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.bnManageTags.actionCommand")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnManageTags, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.text")); // NOI18N
+        bnManageTags.setToolTipText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.toolTipText")); // NOI18N
+        bnManageTags.setActionCommand(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.actionCommand")); // NOI18N
         bnManageTags.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnManageTagsActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnManageTypes, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.bnManageTypes.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnManageTypes, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTypes.text")); // NOI18N
         bnManageTypes.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnManageTypesActionPerformed(evt);
@@ -209,10 +209,10 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 .addGap(34, 34, 34))
         );
 
-        bnImportDatabase.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
+        bnImportDatabase.getAccessibleContext().setAccessibleName(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "EnterpriseArtifactManagerGlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
 
         cbEnableEnterpriseArtifactManager.setFont(cbEnableEnterpriseArtifactManager.getFont().deriveFont(cbEnableEnterpriseArtifactManager.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(cbEnableEnterpriseArtifactManager, org.openide.util.NbBundle.getMessage(EamGlobalSettingsPanel.class, "EamGlobalSettingsPanel.cbEnableEnterpriseArtifactManager.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cbEnableEnterpriseArtifactManager, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbEnableEnterpriseArtifactManager.text")); // NOI18N
         cbEnableEnterpriseArtifactManager.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 cbEnableEnterpriseArtifactManagerItemStateChanged(evt);
@@ -267,7 +267,7 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }//GEN-LAST:event_cbEnableEnterpriseArtifactManagerItemStateChanged
 
     private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
-        EamImportDatabaseDialog dialog = new EamImportDatabaseDialog();
+        ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnImportDatabaseActionPerformed
 
@@ -276,8 +276,8 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      *
      * @param evt Button event
      */
-    @Messages({"EnterpriseArtifactManagerGlobalSettingsPanel.configureButton.errorLabel=You must select a valid platform in the drop down box.",
-        "EnterpriseArtifactManagerGlobalSettingsPanel.configureButton.errorTitle=Invalid platform selection."})
+    @Messages({"GlobalSettingsPanel.configureButton.errorLabel=You must select a valid platform in the drop down box.",
+        "GlobalSettingsPanel.configureButton.errorTitle=Invalid platform selection."})
     private void bnConfigureDatabaseSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnConfigureDatabaseSettingsActionPerformed
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         Boolean dbConfigChanged = false;
@@ -294,8 +294,8 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
                 break;
 
             default:
-                JOptionPane.showMessageDialog(null, Bundle.EnterpriseArtifactManagerGlobalSettingsPanel_configureButton_errorLabel(),
-                        Bundle.EnterpriseArtifactManagerGlobalSettingsPanel_configureButton_errorTitle(),
+                JOptionPane.showMessageDialog(null, Bundle.GlobalSettingsPanel_configureButton_errorLabel(),
+                        Bundle.GlobalSettingsPanel_configureButton_errorTitle(),
                         JOptionPane.ERROR_MESSAGE);
                 break;
         }
@@ -324,12 +324,12 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
     }//GEN-LAST:event_comboboxSelectDatabaseTypeActionPerformed
 
     private void bnManageTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTagsActionPerformed
-        EamManageTagDialog dialog = new EamManageTagDialog();
+        ManageTagsDialog dialog = new ManageTagsDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTagsActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
-        EamTypesSelectionDialog dialogT = new EamTypesSelectionDialog();
+        ManageArtifactTypesDialog dialogT = new ManageArtifactTypesDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTypesActionPerformed
 
@@ -380,10 +380,10 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
      *
      * @return true or false
      */
-    @Messages({"EnterpriseArtifactManagerGlobalSettingsPanel.validate.mustConfigureDb.text=You must configure the database."})
+    @Messages({"GlobalSettingsPanel.validate.mustConfigureDb.text=You must configure the database."})
     private boolean validateDatabaseSettings() {
         if (!dbConfigured) {
-            tbOops.setText(Bundle.EnterpriseArtifactManagerGlobalSettingsPanel_validate_mustConfigureDb_text());
+            tbOops.setText(Bundle.GlobalSettingsPanel_validate_mustConfigureDb_text());
             return false;
         }
 
@@ -428,7 +428,7 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
         }
     };
 
-    @Messages({"EnterpriseArtifactManagerGlobalSettingsPanel.validationErrMsg.ingestRunning=Cannot change settings while ingest is running."})
+    @Messages({"GlobalSettingsPanel.validationErrMsg.ingestRunning=Cannot change settings while ingest is running."})
     private void ingestStateUpdated() {
         if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(() -> {
@@ -440,7 +440,7 @@ public final class EamGlobalSettingsPanel extends IngestModuleGlobalSettingsPane
 
         if (IngestManager.getInstance().isIngestRunning()) {
             cbEnableEnterpriseArtifactManager.setEnabled(false);
-            tbOops.setText(Bundle.EnterpriseArtifactManagerGlobalSettingsPanel_validationErrMsg_ingestRunning());
+            tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
             enableAllSubComponents(false);
         } else {
             cbEnableEnterpriseArtifactManager.setEnabled(true);

@@ -104,7 +104,7 @@
     <Component class="javax.swing.JButton" name="bnOK">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamAddNewOrganizationDialog.bnOK.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.bnOK.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -114,7 +114,7 @@
     <Component class="javax.swing.JButton" name="bnCancel">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamAddNewOrganizationDialog.bnCancel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.bnCancel.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
       <Events>
@@ -124,42 +124,42 @@
     <Component class="javax.swing.JLabel" name="lbOrganizationName">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamAddNewOrganizationDialog.lbOrganizationName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.lbOrganizationName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lbPocHeading">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamAddNewOrganizationDialog.lbPocHeading.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.lbPocHeading.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lbPocName">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamAddNewOrganizationDialog.lbPocName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.lbPocName.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lbPocEmail">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamAddNewOrganizationDialog.lbPocEmail.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.lbPocEmail.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="lbPocPhone">
       <Properties>
         <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EamAddNewOrganizationDialog.lbPocPhone.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.lbPocPhone.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
     <Component class="javax.swing.JTextField" name="tfPocName">
       <Properties>
         <Property name="toolTipText" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="EnterpriseArtifactManagerAddNewOrganizationDialog.tfName.tooltip" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
+          <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactmanager/optionspanel/Bundle.properties" key="AddNewOrganizationDialog.tfName.tooltip" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
     </Component>
