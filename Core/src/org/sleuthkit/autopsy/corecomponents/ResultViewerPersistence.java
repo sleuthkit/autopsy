@@ -172,7 +172,7 @@ final class ResultViewerPersistence {
     }
 
     /**
-     * Encapsulate the property sort order and sort rank into onde data bag.
+     * Encapsulate the property, sort order, and sort rank into one data bag.
      */
     static class SortCriterion {
 
