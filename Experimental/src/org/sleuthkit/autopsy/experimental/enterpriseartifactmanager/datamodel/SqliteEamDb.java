@@ -171,10 +171,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         StringBuilder createOrganizationsTable = new StringBuilder();
         createOrganizationsTable.append("CREATE TABLE IF NOT EXISTS organizations (");
         createOrganizationsTable.append("id integer primary key autoincrement NOT NULL,");
-        createOrganizationsTable.append("org_name character varying(50) NOT NULL,");
-        createOrganizationsTable.append("poc_name character varying(50) NOT NULL,");
-        createOrganizationsTable.append("poc_email character varying(50) NOT NULL,");
-        createOrganizationsTable.append("poc_phone character varying(20) NOT NULL");
+        createOrganizationsTable.append("org_name text NOT NULL,");
+        createOrganizationsTable.append("poc_name text NOT NULL,");
+        createOrganizationsTable.append("poc_email text NOT NULL,");
+        createOrganizationsTable.append("poc_phone text NOT NULL");
         createOrganizationsTable.append(")");
 
         // NOTE: The organizations will only have a small number of rows, so
@@ -183,15 +183,15 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         StringBuilder createCasesTable = new StringBuilder();
         createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
         createCasesTable.append("id integer primary key autoincrement NOT NULL,");
-        createCasesTable.append("case_uid character varying(50) NOT NULL,");
+        createCasesTable.append("case_uid text NOT NULL,");
         createCasesTable.append("org_id integer,");
-        createCasesTable.append("case_name character varying(50) NOT NULL,");
-        createCasesTable.append("creation_date character varying(30) NOT NULL,");
-        createCasesTable.append("case_number character varying(20) NOT NULL,");
-        createCasesTable.append("examiner_name character varying(50) NOT NULL,");
-        createCasesTable.append("examiner_email character varying(50) NOT NULL,");
-        createCasesTable.append("examiner_phone character varying(20) NOT NULL,");
-        createCasesTable.append("notes character varying(400) NOT NULL,");
+        createCasesTable.append("case_name text NOT NULL,");
+        createCasesTable.append("creation_date text NOT NULL,");
+        createCasesTable.append("case_number text NOT NULL,");
+        createCasesTable.append("examiner_name text NOT NULL,");
+        createCasesTable.append("examiner_email text NOT NULL,");
+        createCasesTable.append("examiner_phone text NOT NULL,");
+        createCasesTable.append("notes text NOT NULL,");
         createCasesTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null,");
         createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE(case_uid)");
         createCasesTable.append(")");
@@ -203,8 +203,8 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         StringBuilder createDataSourcesTable = new StringBuilder();
         createDataSourcesTable.append("CREATE TABLE IF NOT EXISTS data_sources (");
         createDataSourcesTable.append("id integer primary key autoincrement NOT NULL,");
-        createDataSourcesTable.append("device_id character varying(50) NOT NULL,");
-        createDataSourcesTable.append("name character varying(50) NOT NULL,");
+        createDataSourcesTable.append("device_id text NOT NULL,");
+        createDataSourcesTable.append("name text NOT NULL,");
         createDataSourcesTable.append("CONSTRAINT device_id_unique UNIQUE(device_id)");
         createDataSourcesTable.append(")");
 
@@ -214,9 +214,9 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         createGlobalReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS global_reference_sets (");
         createGlobalReferenceSetsTable.append("id integer primary key autoincrement NOT NULL,");
         createGlobalReferenceSetsTable.append("org_id integer,");
-        createGlobalReferenceSetsTable.append("set_name character varying(100) NOT NULL,");
-        createGlobalReferenceSetsTable.append("version character varying(20) NOT NULL,");
-        createGlobalReferenceSetsTable.append("import_date character varying(30) NOT NULL,");
+        createGlobalReferenceSetsTable.append("set_name text NOT NULL,");
+        createGlobalReferenceSetsTable.append("version text NOT NULL,");
+        createGlobalReferenceSetsTable.append("import_date text NOT NULL,");
         createGlobalReferenceSetsTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
         createGlobalReferenceSetsTable.append(")");
 
@@ -226,9 +226,9 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         createGlobalFilesTable.append("CREATE TABLE IF NOT EXISTS global_files (");
         createGlobalFilesTable.append("id integer primary key autoincrement NOT NULL,");
         createGlobalFilesTable.append("global_reference_set_id integer,");
-        createGlobalFilesTable.append("value character varying(100) NOT NULL,");
-        createGlobalFilesTable.append("known_status character varying(10) NOT NULL,");
-        createGlobalFilesTable.append("comment character varying(400) NOT NULL,");
+        createGlobalFilesTable.append("value text NOT NULL,");
+        createGlobalFilesTable.append("known_status text NOT NULL,");
+        createGlobalFilesTable.append("comment text NOT NULL,");
         createGlobalFilesTable.append("CONSTRAINT global_files_multi_unique UNIQUE(global_reference_set_id, value)");
         createGlobalFilesTable.append("foreign key (global_reference_set_id) references global_reference_sets(id) on update set null on delete set null");
         createGlobalFilesTable.append(")");
@@ -239,7 +239,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         StringBuilder createArtifactTypesTable = new StringBuilder();
         createArtifactTypesTable.append("CREATE TABLE IF NOT EXISTS artifact_types (");
         createArtifactTypesTable.append("id integer primary key autoincrement NOT NULL,");
-        createArtifactTypesTable.append("name character varying(20) NOT NULL,");
+        createArtifactTypesTable.append("name text NOT NULL,");
         createArtifactTypesTable.append("supported integer NOT NULL,");
         createArtifactTypesTable.append("enabled integer NOT NULL,");
         createArtifactTypesTable.append("CONSTRAINT artifact_type_name_unique UNIQUE (name)");
@@ -253,10 +253,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         createArtifactInstancesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
         createArtifactInstancesTableTemplate.append("case_id integer,");
         createArtifactInstancesTableTemplate.append("data_source_id integer,");
-        createArtifactInstancesTableTemplate.append("value character varying(100) NOT NULL,");
-        createArtifactInstancesTableTemplate.append("file_path character varying(256) NOT NULL,");
-        createArtifactInstancesTableTemplate.append("known_status character varying(10) NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment character varying(400) NOT NULL,");
+        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
         createArtifactInstancesTableTemplate.append("CONSTRAINT %s_instances_multi_unique UNIQUE(case_id, data_source_id, value, file_path),");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) on update set null on delete set null,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) on update set null on delete set null");
@@ -271,8 +271,8 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
         createDbInfoTable.append("id integer primary key NOT NULL,");
-        createDbInfoTable.append("name character varying(50) NOT NULL,");
-        createDbInfoTable.append("value character varying(50) NOT NULL");
+        createDbInfoTable.append("name text NOT NULL,");
+        createDbInfoTable.append("value text NOT NULL");
         createDbInfoTable.append(")");
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
