@@ -79,7 +79,7 @@ public class SharedConfiguration {
     private static final String HASHDB_CONFIG_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME_LEGACY = "hashsets.xml"; //NON-NLS
     public static final String FILE_EXPORTER_SETTINGS_FILE = "fileexporter.settings"; //NON-NLS
-    private static final String ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE = "EnterpriseArtifactManager.properties"; //NON-NLS
+    private static final String ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE = "EnterpriseArtifactsManager.properties"; //NON-NLS
     private static final String SHARED_CONFIG_VERSIONS = "SharedConfigVersions.txt"; //NON-NLS
 
     // Folders
