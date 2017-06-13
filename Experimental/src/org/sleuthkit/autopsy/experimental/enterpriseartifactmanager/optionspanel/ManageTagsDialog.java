@@ -39,9 +39,9 @@ import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.Ea
  * add it to the set of hash databases used to classify files as unknown, known,
  * or known bad.
  */
-final class EamManageTagDialog extends javax.swing.JDialog {
+final class ManageTagsDialog extends javax.swing.JDialog {
 
-    private static final Logger LOGGER = Logger.getLogger(EamManageTagDialog.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ManageTagsDialog.class.getName());
 
 
     /**
@@ -49,10 +49,10 @@ final class EamManageTagDialog extends javax.swing.JDialog {
      * and add it to the set of hash databases used to classify files as
      * unknown, known, or known bad.
      */
-    @Messages({"EnterpriseArtifactManagerManageTagDialog.title=Manage Correlation Tags"})
-    EamManageTagDialog() {
+    @Messages({"ManageTagDialog.title=Manage Tags"})
+    ManageTagsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                Bundle.EnterpriseArtifactManagerManageTagDialog_title(),
+                Bundle.ManageTagDialog_title(),
                 true); // NON-NLS
         initComponents();
         customizeComponents();
@@ -108,15 +108,14 @@ final class EamManageTagDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(EamManageTagDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
-        okButton.setLabel(org.openide.util.NbBundle.getMessage(EamManageTagDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ManageTagsDialog.class, "ManageTagsDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(EamManageTagDialog.class, "EamManageTagDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ManageTagsDialog.class, "ManageTagsDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -128,7 +127,7 @@ final class EamManageTagDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Tag", "Correlatable"
+                "Tag", "Implies Known Bad"
             }
         ) {
             Class[] types = new Class [] {

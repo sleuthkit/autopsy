@@ -59,8 +59,8 @@ import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.Ea
  * add it to the set of hash databases used to classify files as unknown, known,
  * or known bad.
  */
-final class EamImportDatabaseDialog extends javax.swing.JDialog {
-    private static final Logger LOGGER = Logger.getLogger(EamImportDatabaseDialog.class.getName());
+final class ImportHashDatabaseDialog extends javax.swing.JDialog {
+    private static final Logger LOGGER = Logger.getLogger(ImportHashDatabaseDialog.class.getName());
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final static String LAST_FILE_PATH_KEY = "EnterpriseArtifactManagerImport_Path"; // NON-NLS
@@ -75,9 +75,9 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
      * and add it to the set of hash databases used to classify files as
      * unknown, known, or known bad.
      */
-    EamImportDatabaseDialog() {
+    ImportHashDatabaseDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.importHashDbMsg"),
+                NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.importHashDbMsg"),
                 true); // NON-NLS
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
@@ -92,7 +92,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[]{"idx"}; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "EnterpriseArtifactManagerImportDatabaseDialog.fileNameExtFilter.text"), EXTENSION); // NON-NLS
+                NbBundle.getMessage(this.getClass(), "ImportHashDatabaseDialog.fileNameExtFilter.text"), EXTENSION); // NON-NLS
         fileChooser.setFileFilter(filter);
         fileChooser.setMultiSelectionEnabled(false);
     }
@@ -107,8 +107,8 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
      * Register for notifications when the text boxes get updated.
      */
     private void setTextBoxListeners() {
-        textBoxes.add(tfDatasetName);
-        textBoxes.add(tfDatasetVersion);
+        textBoxes.add(tfDatabaseName);
+        textBoxes.add(tfDatabaseVersion);
         addDocumentListeners(textBoxes, textBoxChangedListener);
     }
 
@@ -145,8 +145,8 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
      * @return True or false.
      */
     private boolean textFieldsArePopulated() {
-        return !tfDatasetName.getText().trim().isEmpty()
-                && !tfDatasetVersion.getText().trim().isEmpty()
+        return !tfDatabaseName.getText().trim().isEmpty()
+                && !tfDatabaseVersion.getText().trim().isEmpty()
                 && !databasePathTextField.getText().trim().isEmpty();
     }
 
@@ -155,7 +155,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
      *
      * @return True or false.
      */
-    @Messages({"EnterpriseArtifactManagerImportDatabaseDialog.validation.incompleteFields=Fill in all values"})
+    @Messages({"ImportHashDatabaseDialog.validation.incompleteFields=Fill in all values"})
     private boolean checkFields() {
         boolean result = true;
 
@@ -164,7 +164,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         if (!allPopulated) {
             // We don't even have everything filled out
             result = false;
-            lbWarningMsg.setText(Bundle.EnterpriseArtifactManagerImportDatabaseDialog_validation_incompleteFields());
+            lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_validation_incompleteFields());
         }
         return result;
     }
@@ -174,12 +174,12 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
      *
      * @return true if it's okay, false otherwise.
      */
-    @Messages({"EnterpriseArtifactManagerImportDatabaseDialog.validation.notEnabled=Database not initialized. Restart Autopsy."})
+    @Messages({"ImportHashDatabaseDialog.validation.notEnabled=Database not initialized. Restart Autopsy."})
     public boolean valid() {
         lbWarningMsg.setText("");
         EamDb dbManager = EamDb.getInstance();        
         if (!dbManager.isEnabled()) {
-            lbWarningMsg.setText(Bundle.EnterpriseArtifactManagerImportDatabaseDialog_validation_notEnabled());
+            lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_validation_notEnabled());
             return false;
         }
 
@@ -247,35 +247,35 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         knownBadRadioButton = new javax.swing.JRadioButton();
         lbDatabaseType = new javax.swing.JLabel();
         lbDatabasePath = new javax.swing.JLabel();
-        lbDatasetAttribution = new javax.swing.JLabel();
+        lbDatabaseAttribution = new javax.swing.JLabel();
         lbSourceOrganization = new javax.swing.JLabel();
-        lbDatasetName = new javax.swing.JLabel();
-        lbDatasetVersion = new javax.swing.JLabel();
+        lbDatabaseName = new javax.swing.JLabel();
+        lbDatabaseVersion = new javax.swing.JLabel();
         comboboxSourceOrganization = new javax.swing.JComboBox<>();
-        tfDatasetName = new javax.swing.JTextField();
-        tfDatasetVersion = new javax.swing.JTextField();
+        tfDatabaseName = new javax.swing.JTextField();
+        tfDatabaseVersion = new javax.swing.JTextField();
         bnNewOrganization = new javax.swing.JButton();
         lbWarningMsg = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        databasePathTextField.setText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.databasePathTextField.text")); // NOI18N
+        databasePathTextField.setText(org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.databasePathTextField.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(openButton, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.openButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(openButton, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.openButton.text")); // NOI18N
         openButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openButtonActionPerformed(evt);
@@ -283,23 +283,23 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         });
 
         buttonGroup1.add(knownRadioButton);
-        org.openide.awt.Mnemonics.setLocalizedText(knownRadioButton, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.knownRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(knownRadioButton, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.knownRadioButton.text")); // NOI18N
 
         buttonGroup1.add(knownBadRadioButton);
         knownBadRadioButton.setSelected(true);
-        org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.knownBadRadioButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(knownBadRadioButton, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.knownBadRadioButton.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseType, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatabaseType.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseType, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabaseType.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePath, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatabasePath.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePath, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabasePath.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatasetAttribution, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatasetAttribution.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseAttribution, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabaseAttribution.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbSourceOrganization, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbSourceOrganization.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbSourceOrganization, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbSourceOrganization.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatasetName, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatasetName.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseName, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabaseName.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatasetVersion, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.lbDatasetVersion.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseVersion, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabaseVersion.text")); // NOI18N
 
         comboboxSourceOrganization.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         comboboxSourceOrganization.addActionListener(new java.awt.event.ActionListener() {
@@ -308,11 +308,11 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        tfDatasetName.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetName.tooltip")); // NOI18N
+        tfDatabaseName.setToolTipText(org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.tfDatabaseName.tooltip")); // NOI18N
 
-        tfDatasetVersion.setToolTipText(org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EnterpriseArtifactManagerImportDatabaseDialog.tfDatasetVersion.tooltip.text")); // NOI18N
+        tfDatabaseVersion.setToolTipText(org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.tfDatabaseVersion.tooltip.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(EamImportDatabaseDialog.class, "EamImportDatabaseDialog.bnNewOrganization.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.bnNewOrganization.text")); // NOI18N
         bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnNewOrganizationActionPerformed(evt);
@@ -343,7 +343,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(knownRadioButton)
                                     .addComponent(knownBadRadioButton)))
-                            .addComponent(lbDatasetAttribution))
+                            .addComponent(lbDatabaseAttribution))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
@@ -355,20 +355,20 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                                 .addGap(23, 23, 23)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(lbDatasetVersion)
+                                        .addComponent(lbDatabaseVersion)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(tfDatasetVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(tfDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGap(0, 0, Short.MAX_VALUE))
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(lbSourceOrganization)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                         .addComponent(bnNewOrganization))
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(lbDatasetName)
+                                        .addComponent(lbDatabaseName)
                                         .addGap(12, 12, 12)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(tfDatasetName))))))
+                                            .addComponent(tfDatabaseName))))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(openButton)))
                 .addContainerGap())
@@ -391,7 +391,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(knownBadRadioButton)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lbDatasetAttribution)
+                .addComponent(lbDatabaseAttribution)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(bnNewOrganization)
                     .addGroup(layout.createSequentialGroup()
@@ -401,12 +401,12 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                 .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(tfDatasetName)
-                    .addComponent(lbDatasetName, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(tfDatabaseName)
+                    .addComponent(lbDatabaseName, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbDatasetVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tfDatasetVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lbDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tfDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lbWarningMsg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -429,10 +429,10 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
                 }
                 ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getParent());
             } catch (IOException ex) {
-                Logger.getLogger(EamImportDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); // NON-NLS
+                Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); // NON-NLS
                 JOptionPane.showMessageDialog(this,
                         NbBundle.getMessage(this.getClass(),
-                                "EnterpriseArtifactManagerImportDatabaseDialog.failedToGetDbPathMsg")); // NON-NLS
+                                "ImportHashDatabaseDialog.failedToGetDbPathMsg")); // NON-NLS
             }
         }
         valid();
@@ -452,14 +452,14 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         EamDb dbManager = EamDb.getInstance();
         EamGlobalSet eamGlobalSet = new EamGlobalSet(
             selectedOrg.getOrgID(),
-            tfDatasetName.getText().trim(),
-            tfDatasetVersion.getText().trim(),
+            tfDatabaseName.getText().trim(),
+            tfDatabaseVersion.getText().trim(),
             LocalDate.now());
         return dbManager.newGlobalSet(eamGlobalSet);
     }
     
-    @Messages({"EnterpriseArtifactManagerImportDatabaseDialog.createGlobalSet.failedMsg.text=Failed to store attribution details.",
-        "EnterpriseArtifactManagerImportDatabaseDialog.createGlobalSet.failedTitle.text=Import hashdb error."})
+    @Messages({"ImportHashDatabaseDialog.createGlobalSet.failedMsg.text=Failed to store attribution details.",
+        "ImportHashDatabaseDialog.createGlobalSet.failedTitle.text=Import hashdb error."})
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
@@ -469,9 +469,9 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         if (selectedFilePath.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "EnterpriseArtifactManagerImportDatabaseDialog.mustSelectHashDbFilePathMsg"),
+                            "ImportHashDatabaseDialog.mustSelectHashDbFilePathMsg"),
                     NbBundle.getMessage(this.getClass(),
-                            "EnterpriseArtifactManagerImportDatabaseDialog.importHashDbErr"),
+                            "ImportHashDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE); // NON-NLS
             return;
         }
@@ -479,9 +479,9 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         if (!file.exists()) {
             JOptionPane.showMessageDialog(this,
                     NbBundle.getMessage(this.getClass(),
-                            "EnterpriseArtifactManagerImportDatabaseDialog.hashDbDoesNotExistMsg"),
+                            "ImportHashDatabaseDialog.hashDbDoesNotExistMsg"),
                     NbBundle.getMessage(this.getClass(),
-                            "EnterpriseArtifactManagerImportDatabaseDialog.importHashDbErr"),
+                            "ImportHashDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE); // NON-NLS
             return;
         }
@@ -492,8 +492,8 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
             globalSetID = createGlobalSet();
         } catch (EamDbException ex) {
             JOptionPane.showMessageDialog(this,
-                    Bundle.EnterpriseArtifactManagerImportDatabaseDialog_createGlobalSet_failedMsg_text(),
-                    Bundle.EnterpriseArtifactManagerImportDatabaseDialog_createGlobalSet_failedTitle_text(),
+                    Bundle.ImportHashDatabaseDialog_createGlobalSet_failedMsg_text(),
+                    Bundle.ImportHashDatabaseDialog_createGlobalSet_failedTitle_text(),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -507,16 +507,16 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         }
 
         String errorMessage = NbBundle.getMessage(this.getClass(),
-                "EnterpriseArtifactManagerImportDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
+                "ImportHashDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
                 selectedFilePath); // NON-NLS
         try {
             new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID).execute();
         } catch (Throwable ex) {
-            Logger.getLogger(EamImportDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
+            Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
                     NbBundle.getMessage(this.getClass(),
-                            "EnterpriseArtifactManagerImportDatabaseDialog.importHashDbErr"),
+                            "ImportHashDatabaseDialog.importHashDbErr"),
                     JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -526,7 +526,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
     
     @SuppressWarnings({"unchecked"})
     private void bnNewOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnNewOrganizationActionPerformed
-        EamAddNewOrganizationDialog dialogO = new EamAddNewOrganizationDialog();
+        AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog();
         // update the combobox options
         if (dialogO.isChanged()) {
             populateCombobox();
@@ -547,7 +547,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
         }
     }//GEN-LAST:event_comboboxSourceOrganizationActionPerformed
 
-    @NbBundle.Messages({"EnterpriseArtifactManagerImportDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
+    @NbBundle.Messages({"ImportHashDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
     private class ImportHashDatabaseWorker extends SwingWorker<Object, Void> {
 
         private final EamDb dbManager;
@@ -568,7 +568,7 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
 
         @Override
         protected Object doInBackground() throws Exception {
-            ProgressHandle progress = ProgressHandle.createHandle(Bundle.EnterpriseArtifactManagerImportDatabaseDialog_ImportHashDatabaseWorker_displayName());
+            ProgressHandle progress = ProgressHandle.createHandle(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_displayName());
             importHashDatabase(progress);
             return null;
         }
@@ -621,16 +621,16 @@ final class EamImportDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JTextField databasePathTextField;
     private javax.swing.JRadioButton knownBadRadioButton;
     private javax.swing.JRadioButton knownRadioButton;
+    private javax.swing.JLabel lbDatabaseAttribution;
+    private javax.swing.JLabel lbDatabaseName;
     private javax.swing.JLabel lbDatabasePath;
     private javax.swing.JLabel lbDatabaseType;
-    private javax.swing.JLabel lbDatasetAttribution;
-    private javax.swing.JLabel lbDatasetName;
-    private javax.swing.JLabel lbDatasetVersion;
+    private javax.swing.JLabel lbDatabaseVersion;
     private javax.swing.JLabel lbSourceOrganization;
     private javax.swing.JLabel lbWarningMsg;
     private javax.swing.JButton okButton;
     private javax.swing.JButton openButton;
-    private javax.swing.JTextField tfDatasetName;
-    private javax.swing.JTextField tfDatasetVersion;
+    private javax.swing.JTextField tfDatabaseName;
+    private javax.swing.JTextField tfDatabaseVersion;
     // End of variables declaration//GEN-END:variables
 }

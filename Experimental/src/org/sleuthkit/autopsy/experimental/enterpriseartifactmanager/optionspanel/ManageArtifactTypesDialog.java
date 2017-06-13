@@ -40,9 +40,9 @@ import org.sleuthkit.autopsy.experimental.enterpriseartifactmanager.datamodel.Ea
  * Dialog to handle management of correlation types handled by the enterprise
  * artifact manager
  */
-final class EamTypesSelectionDialog extends javax.swing.JDialog {
+final class ManageArtifactTypesDialog extends javax.swing.JDialog {
 
-    private static final Logger LOGGER = Logger.getLogger(EamManageTagDialog.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ManageArtifactTypesDialog.class.getName());
 
     private final List<EamArtifact.Type> eamArtifactTypes;
 
@@ -50,11 +50,11 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
      * Displays a dialog that allows a user to select which Type(s) should be
      * used for Correlation during ingest.
      */
-    @Messages({"EnterpriseArtifactManagerTypesSelectionDialog.title=Correlation Types Selections",
-        "EnterpriseArtifactManagerTypesSelectionDialog.instructions.text=Select one or more Type's to use for Correlation during Ingest."})
-    EamTypesSelectionDialog() {
+    @Messages({"ManageArtifactTypesDialog.title=Manage Artifact Types",
+        "ManageArtifactTypesDialog.instructions.text=Select one or more artifact types to store in the database and use for correlation during Ingest."})
+    ManageArtifactTypesDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                Bundle.EnterpriseArtifactManagerTypesSelectionDialog_title(),
+                Bundle.ManageArtifactTypesDialog_title(),
                 true); // NON-NLS
         this.eamArtifactTypes = new ArrayList<>();
         initComponents();
@@ -64,8 +64,7 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
     }
 
     private void customizeComponents() {
-        enableOkButton(false);
-        lbInstructions.setText(Bundle.EnterpriseArtifactManagerTypesSelectionDialog_instructions_text());
+        lbInstructions.setText(Bundle.ManageArtifactTypesDialog_instructions_text());
         lbWarningMsg.setText("");
 
         loadData();
@@ -106,7 +105,7 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
         setVisible(true);
     }
 
-    @Messages({"EnterpriseArtifactManagerTypesSelectionDialog.noneSelected=Must enable at least 1 Type."})
+    @Messages({"ManageArtifactTypesDialog.noneSelected=There are no artifact types enabled."})
     private boolean valid() {
         lbWarningMsg.setText("");
 
@@ -114,15 +113,9 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
         countEnabled = eamArtifactTypes.stream().filter((aType) -> (aType.isEnabled())).map((_item) -> 1).reduce(countEnabled, Integer::sum);
 
         if (0 == countEnabled) {
-            lbWarningMsg.setText(Bundle.EnterpriseArtifactManagerTypesSelectionDialog_noneSelected());
-            return enableOkButton(false);
+            lbWarningMsg.setText(Bundle.ManageArtifactTypesDialog_noneSelected());
         }
-        return enableOkButton(true);
-    }
-
-    private boolean enableOkButton(boolean enable) {
-        okButton.setEnabled(enable);
-        return enable;
+        return true;
     }
 
     /**
@@ -144,14 +137,14 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EamManageTagDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EamManageTagDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EamManageTagDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -183,11 +176,11 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
         });
         jScrollPane1.setViewportView(tbCorrelatableTypes);
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbInstructions, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbInstructions.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbInstructions, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbInstructions.text")); // NOI18N
 
         lbWarningMsg.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(EamTypesSelectionDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbWarningMsg.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(ManageArtifactTypesDialog.class, "EnterpriseArtifactManagerManageTagDialog.lbWarningMsg.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -234,7 +227,7 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
-    @Messages({"EnterpriseArtifactManagerTypesSelectionDialog.okbutton.failure=Error saving updated selections."})
+    @Messages({"ManageArtifactTypesDialog.okbutton.failure=Error saving updated selections."})
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
 
         if (0 == eamArtifactTypes.size()) {
@@ -246,8 +239,8 @@ final class EamTypesSelectionDialog extends javax.swing.JDialog {
                     dbManager.updateCorrelationArtifactType(aType);
                     dispose();
                 } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to updated Enterprise Artifact Manager Artifact Types with selections from Dialog.", ex); // NON-NLS
-                    lbWarningMsg.setText(Bundle.EnterpriseArtifactManagerTypesSelectionDialog_okbutton_failure());
+                    LOGGER.log(Level.SEVERE, "Failed to updated Enterprise Artifact Manager artifact types with selections from dialog.", ex); // NON-NLS
+                    lbWarningMsg.setText(Bundle.ManageArtifactTypesDialog_okbutton_failure());
                 }
             });
         }

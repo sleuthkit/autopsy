@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         keywordsCategory = "EnterpriseArtifactManager")
 public final class EamOptionsPanelController extends OptionsPanelController {
 
-    private EamGlobalSettingsPanel panel;
+    private GlobalSettingsPanel panel;
     private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private boolean changed;
     private static final Logger LOGGER = Logger.getLogger(EamOptionsPanelController.class.getName());
@@ -99,9 +99,9 @@ public final class EamOptionsPanelController extends OptionsPanelController {
          */
     }
 
-    private EamGlobalSettingsPanel getPanel() {
+    private GlobalSettingsPanel getPanel() {
         if (panel == null) {
-            panel = new EamGlobalSettingsPanel();
+            panel = new GlobalSettingsPanel();
             panel.addPropertyChangeListener((PropertyChangeEvent evt) -> {
                 if (evt.getPropertyName().equals(OptionsPanelController.PROP_CHANGED)) {
                     changed();
