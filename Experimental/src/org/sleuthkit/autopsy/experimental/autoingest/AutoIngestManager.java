@@ -889,7 +889,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     /**
      * A FileVisitor that searches the input directories for manifest files. The
      * search results are used to refresh the pending jobs queue and the
-     * completed jobs list. Crashed job recovery is perfomed as needed.
+     * completed jobs list. Crashed job recovery is performed as needed.
      */
     private final class InputDirScanner implements FileVisitor<Path> {
 
@@ -916,8 +916,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                 } catch (Exception ex) {
                     /* NOTE: Need to catch all exceptions here. Otherwise uncaught exceptions will
-                    propagate up to the calling thread and may stop it from running.                    
-                     */
+                    propagate up to the calling thread and may stop it from running.*/
                     SYS_LOGGER.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
                 }
             }
