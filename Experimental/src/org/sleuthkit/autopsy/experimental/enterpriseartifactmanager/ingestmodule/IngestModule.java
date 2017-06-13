@@ -27,6 +27,9 @@ import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
+import org.sleuthkit.autopsy.core.RuntimeProperties;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -57,6 +60,7 @@ class IngestModule implements FileIngestModule {
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
     private final IngestServices services = IngestServices.getInstance();
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
+    private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
     private long jobId;
     private EamCase eamCase;
     private EamDataSource eamDataSource;
@@ -65,6 +69,17 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile af) {
+        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactManager", "db.enabled")) == false
+                || EamDb.getInstance().isEnabled() == false) {
+            /*
+             * Not signaling an error for now. This is a workaround for the way
+             * all newly didscovered ingest modules are automatically anabled.
+             *
+             * TODO (JIRA-2731): Add isEnabled API for ingest modules.
+             */
+            return ProcessResult.OK;
+        }
+
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
         if ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
@@ -76,11 +91,6 @@ class IngestModule implements FileIngestModule {
         }
 
         EamDb dbManager = EamDb.getInstance();
-
-        if (!dbManager.isEnabled()) {
-            LOGGER.log(Level.SEVERE, "Enterprise artifact manager not enabled."); // NON-NLS
-            return ProcessResult.ERROR;
-        }
 
         // only continue if we are correlating filesType
         if (!filesType.isEnabled()) {
@@ -161,10 +171,28 @@ class IngestModule implements FileIngestModule {
 
     // see ArtifactManagerTimeTester for details
     @Messages({
-        "enterpriseartifactmanager.ingestmodule.isNotEnabled=Enterprise artifact manager database settings were not properly initialized, cannot run enteprise artifact manager ingest."
+        "EnterpriseArtifactManager.notfyBubble.title=Enterprise Artifact Manager Not Initialized",
+        "EnterpriseArtifactManager.errorMessage.isNotEnabled=Enterprise artifact manager settings are not initialized, cannot run enteprise artifact manager ingest module."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactManager", "db.enabled")) == false
+                || EamDb.getInstance().isEnabled() == false) {
+            /*
+             * Not throwing the customary exception for now. This is a
+             * workaround for the way all newly didscovered ingest modules are
+             * automatically anabled.
+             *
+             * TODO (JIRA-2731): Add isEnabled API for ingest modules.
+             */
+            if (RuntimeProperties.runningWithGUI()) {
+                if (1L == warningMsgRefCounter.incrementAndGet(jobId)) {
+                    MessageNotifyUtil.Notify.warn(Bundle.EnterpriseArtifactManager_notfyBubble_title(), Bundle.EnterpriseArtifactManager_errorMessage_isNotEnabled());
+                }
+            }
+            return;
+        }
+
         jobId = context.getJobId();
         eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
 
@@ -177,10 +205,6 @@ class IngestModule implements FileIngestModule {
         eamDataSource = new EamDataSource(deviceId, context.getDataSource().getName());
 
         EamDb dbManager = EamDb.getInstance();
-        if (!dbManager.isEnabled()) {
-            throw new IngestModuleException(Bundle.enterpriseartifactmanager_ingestmodule_isNotEnabled());
-        }
-
         try {
             filesType = dbManager.getCorrelationArtifactTypeByName("FILES");
         } catch (EamDbException ex) {
