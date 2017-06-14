@@ -21,8 +21,8 @@ AutoIngestService.exe
 ------------------------------
 * Can be used as a way of manually starting, stopping, and configuring the
   service.
+* Needed to supply a password for the service to run.
 * Part of Procrun.
-* Nice to have, but not required for service to operate.
 
 install.cmd
 ------------------------------
@@ -50,27 +50,31 @@ After building the JAR, Launch4j can be used to wrap it as an EXE file.
 Setup Instructions
 ==============================
 
-1) Copy the service files (including the service controller) to the directory
-   where 'autopsy64.exe' resides.
+1)  Copy the service files (including the service controller) to the directory
+    where 'autopsy64.exe' resides.
 
-2) Run Autopsy under your administrator account.
+2)  Run Autopsy under your administrator account.
 
-3) Configure the Multi User and Auto Ingest settings in the Options panel.
+3)  Configure the Multi User and Auto Ingest settings in the Options panel.
 
-4) Save the settings as a shared configuration.
+4)  Save the settings as a shared configuration.
 
-5) Close Autopsy.
+5)  Close Autopsy.
 
-6) Open a command prompt window under your administrator account.
+6)  Open a command prompt window under your administrator account.
 
-7) Navigate to the directory where 'autopsy64.exe' resides.
+7)  Navigate to the directory where 'autopsy64.exe' resides.
 
-8) Type 'install <path>', where '<path>' is the the path to the shared
-   configuration directory. Then press Enter.
+8)  Type 'install <path>', where '<path>' is the the path to the shared
+    configuration directory. Then press Enter.
 
-9) Now the service is ready. You can start it by either restarting Windows
-   (doing a shutdown will NOT work), starting it from 'AutoIngestService.exe',
-   or starting it from the Task Manager.
+9)  When the Properties dialog appears, go to the Log On tab and replace the
+    password with the correct password for the supplied administrator account.
+
+10) Now the service is ready. You can start it by either restarting Windows
+    (doing a shutdown will NOT work), starting it from the General tab of the
+    Properties dialog, starting it from the Task Manager, or from the Services
+	application of the Windows Administrative Tools suite.
 
 
 ==============================

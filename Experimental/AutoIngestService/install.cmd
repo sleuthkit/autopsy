@@ -13,7 +13,8 @@ REM Service configuration
 set SERVICE_NAME=AutoIngestService
 set PR_DISPLAYNAME=Auto Ingest Service
 set PR_DESCRIPTION=Auto Ingest Service
-set PR_SERVICEUSER=NT AUTHORITY\NetworkService
+set PR_SERVICEUSER=%USERDOMAIN%\%USERNAME%
+set PR_SERVICEPASSWORD=
 set PR_INSTALL=%INSTALL_PATH%prunsrv.exe
 
 REM Service log configuration
@@ -67,6 +68,7 @@ REM Install service
 --DisplayName="%SERVICE_NAME%" ^
 --Description="%PR_DISPLAYNAME%" ^
 --ServiceUser="%PR_SERVICEUSER%" ^
+--ServicePassword="%PR_SERVICEPASSWORD%" ^
 --Install="%PR_INSTALL%" ^
 --LogPrefix="%PR_LOGPREFIX%" ^
 --LogPath="%PR_LOGPATH%" ^
@@ -84,9 +86,11 @@ REM Install service
 --StopParams="%PR_STOPPARAMS%"
 
 
-REM Copy Autopsy configuration to NetworkService profile
-rd /S/Q %SystemRoot%\ServiceProfiles\NetworkService\AppData\Roaming\.autopsy
-xcopy %USERPROFILE%\AppData\Roaming\.autopsy %SystemRoot%\ServiceProfiles\NetworkService\AppData\Roaming\.autopsy\ /S/H/K/C/Q
+echo Use the Log On tab in the Properties dialog to enter the correct credentials.
+echo.
+
+REM Open properties dialog
+start AutoIngestService
 
 
 :end
