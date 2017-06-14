@@ -152,6 +152,17 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
+        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactManager", "db.enabled")) == false
+                || EamDb.getInstance().isEnabled() == false) {
+            /*
+             * Not signaling an error for now. This is a workaround for the way
+             * all newly didscovered ingest modules are automatically anabled.
+             *
+             * TODO (JIRA-2731): Add isEnabled API for ingest modules.
+             */
+            return;
+        }
+        
         EamDb dbManager = EamDb.getInstance();
         try {
             dbManager.bulkInsertArtifacts();
