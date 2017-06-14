@@ -53,8 +53,8 @@ import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.E
  * Ingest module for inserting entries into the enterprise artifacts manager
  * database on ingest of a data source
  */
-@Messages({"enterpriseartifactsmanager.prevcases.text=Previous Cases",
-    "enterpriseartifactsmanager.ingestmodule.name=Enterprise Artifacts Manager"})
+@Messages({"EnterpriseArtifactsManager.prevcases.text=Previous Cases",
+    "EnterpriseArtifactsManager.ingestmodule.name=Enterprise Artifacts Manager"})
 class IngestModule implements FileIngestModule {
 
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
@@ -298,10 +298,10 @@ class IngestModule implements FileIngestModule {
 
     private void postCorrelatedHashHitToBlackboard(AbstractFile abstractFile) {
         try {
-            String MODULE_NAME = Bundle.enterpriseartifactsmanager_ingestmodule_name();
+            String MODULE_NAME = Bundle.EnterpriseArtifactsManager_ingestmodule_name();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.enterpriseartifactsmanager_prevcases_text());
+                    Bundle.EnterpriseArtifactsManager_prevcases_text());
             tifArtifact.addAttribute(att);
 
             try {
