@@ -74,7 +74,7 @@ Setup Instructions
 10) Now the service is ready. You can start it by either restarting Windows
     (doing a shutdown will NOT work), starting it from the General tab of the
     Properties dialog, starting it from the Task Manager, or from the Services
-	application of the Windows Administrative Tools suite.
+    application of the Windows Administrative Tools suite.
 
 
 ==============================
