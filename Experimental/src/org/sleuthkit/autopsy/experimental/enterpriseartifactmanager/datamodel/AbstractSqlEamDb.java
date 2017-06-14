@@ -1005,7 +1005,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     sql.append(tableName);
                     sql.append(" (case_id, data_source_id, value, file_path, known_status, comment) ");
                     sql.append("VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), ");
-                    sql.append("(SELECT id FROM data_sources WHERE name=? LIMIT 1), ?, ?, ?, ?)");
+                    sql.append("(SELECT id FROM data_sources WHERE device_id=? LIMIT 1), ?, ?, ?, ?)");
 
                     bulkPs = conn.prepareStatement(sql.toString());
 
@@ -1015,7 +1015,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                         for (EamArtifactInstance eamInstance : eamInstances) {
                             bulkPs.setString(1, eamInstance.getEamCase().getCaseUUID());
-                            bulkPs.setString(2, eamInstance.getEamDataSource().getName());
+                            bulkPs.setString(2, eamInstance.getEamDataSource().getDeviceID());
                             bulkPs.setString(3, eamArtifact.getArtifactValue());
                             bulkPs.setString(4, eamInstance.getFilePath());
                             bulkPs.setString(5, eamInstance.getKnownStatus().name());
