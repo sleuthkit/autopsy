@@ -1,8 +1,20 @@
+==============================================================================
+Auto Ingest Service Controller 0.9.0
+Copyright(c) 2017, Basis Technology Corp.
+==============================================================================
+
+The service controller acts as a remote control for a select auto ingest
+manager running as a Windows service. It is that mode of operation for which
+the service controller provides functionality that would otherwise reside with
+the auto ingest dashboard.
+
+
 ==============================
 Service Files
 ==============================
 
-Here's what is included...
+Here are the files that support the service mode of operation for the auto
+ingest manager:
 
 
 AutoIngestService.exe
@@ -60,6 +72,7 @@ Setup Instructions
    (doing a shutdown will NOT work), starting it from 'AutoIngestService.exe',
    or starting it from the Task Manager.
 
+
 ==============================
 Using the Service Controller
 ==============================
@@ -91,6 +104,9 @@ Pause ingestion.
 
 * RESUME
 Resume ingestion.
+
+* SCAN
+Scan for new images.
 
 * GETJOBS
 Retrieve a list of jobs in the Pending, Running, and Completed queues.
