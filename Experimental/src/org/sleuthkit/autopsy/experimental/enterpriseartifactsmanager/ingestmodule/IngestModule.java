@@ -271,7 +271,7 @@ class IngestModule implements FileIngestModule {
             String MODULE_NAME = Bundle.EnterpriseArtifactsManager_ingestmodule_name();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.enterpriseartifactsmanager_prevcases_text());
+                    Bundle.EnterpriseArtifactsManager_prevcases_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
                     "Previous Case: " + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);
