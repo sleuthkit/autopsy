@@ -98,6 +98,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         });
         resultsTable.setCellSelectionEnabled(true);
         resultsTable.getTableHeader().setReorderingAllowed(false);
+        resultsTable.setColumnHidingAllowed(false);
         resultsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         updateColumnSizes();
     }
