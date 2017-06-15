@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         iconBase = "org/sleuthkit/autopsy/images/User-Group-icon-green32.png",
         position = 3,
         keywords = "#OptionsCategory_Keywords_Multi_User_Options",
-        keywordsCategory = "Multi-user")
+        keywordsCategory = "Multi-User")
 public final class MultiUserSettingsPanelController extends OptionsPanelController {
 
     private MultiUserSettingsPanel panel;

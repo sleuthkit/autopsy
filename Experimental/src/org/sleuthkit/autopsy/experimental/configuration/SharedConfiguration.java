@@ -79,6 +79,7 @@ public class SharedConfiguration {
     private static final String HASHDB_CONFIG_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME_LEGACY = "hashsets.xml"; //NON-NLS
     public static final String FILE_EXPORTER_SETTINGS_FILE = "fileexporter.settings"; //NON-NLS
+    private static final String ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE = "EnterpriseArtifactManager.properties"; //NON-NLS
     private static final String SHARED_CONFIG_VERSIONS = "SharedConfigVersions.txt"; //NON-NLS
 
     // Folders
@@ -205,6 +206,7 @@ public class SharedConfiguration {
             uploadMultiUserAndGeneralSettings(remoteFolder);
             uploadHashDbSettings(remoteFolder);
             uploadFileExporterSettings(remoteFolder);
+            uploadEnterpriseArtifactsManagerSettings(remoteFolder);
 
             try {
                 Files.deleteIfExists(uploadInProgress.toPath());
@@ -269,6 +271,7 @@ public class SharedConfiguration {
             downloadFileExtMismatchSettings(remoteFolder);
             downloadAndroidTriageSettings(remoteFolder);
             downloadFileExporterSettings(remoteFolder);
+            downloadEnterpriseArtifactsManagerSettings(remoteFolder);
 
             // Download general settings, then restore the current
             // values for the unshared fields
@@ -772,6 +775,30 @@ public class SharedConfiguration {
         publishTask("Downloading File Exporter configuration");
         File fileExporterFolder = new File(moduleDirPath, FILE_EXPORTER_FOLDER);
         copyToLocalFolder(FILE_EXPORTER_SETTINGS_FILE, fileExporterFolder.getAbsolutePath(), remoteFolder, true);
+    }
+
+    /**
+     * Upload Enterprise Artifacts Manager settings.
+     *
+     * @param remoteFolder Shared settings folder
+     *
+     * @throws SharedConfigurationException
+     */
+    private void uploadEnterpriseArtifactsManagerSettings(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Uploading Enterprise Artifacts Manager configuration");
+        copyToRemoteFolder(ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
+    }
+
+    /**
+     * Download Enterprise Artifacts Manager settings.
+     *
+     * @param remoteFolder Shared settings folder
+     *
+     * @throws SharedConfigurationException
+     */
+    private void downloadEnterpriseArtifactsManagerSettings(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Downloading Enterprise Artifacts Manager configuration");
+        copyToLocalFolder(ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
     }
 
     /**

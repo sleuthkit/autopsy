@@ -119,7 +119,9 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
         sb.append("</td></tr>"); //NON-NLS
     }
 
-    @Messages({"Metadata.tableRowTitle.mimeType=MIME Type"})
+    @Messages({
+        "Metadata.tableRowTitle.mimeType=MIME Type",
+        "Metadata.nodeText.truncated=(results truncated)"})
     @Override
     public void setNode(Node node) {
         AbstractFile file = node.getLookup().lookup(AbstractFile.class);
