@@ -152,7 +152,7 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactManager", "db.enabled")) == false
+        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")) == false
                 || EamDb.getInstance().isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
