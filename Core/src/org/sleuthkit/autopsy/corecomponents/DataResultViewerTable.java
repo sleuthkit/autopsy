@@ -248,7 +248,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Create Column Headers based on the Content represented by the Nodes in
-     * the table.  Load persisted column order, sorting and visibility.
+     * the table. Load persisted column order, sorting and visibility.
      */
     private void setupTable() {
         /*
@@ -269,9 +269,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          * allow the first property column to be moved.
          */
         List<Node.Property<?>> props = loadColumnOrder();
-        if (props.isEmpty() == false) {
-            Node.Property<?> prop = props.remove(0);
-            ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(prop.getDisplayName());
+        boolean propsExist = props.isEmpty() == false;
+        Node.Property<?> firstProp = null;
+        if (propsExist) {
+            firstProp = props.remove(0);
         }
 
         /*
@@ -282,6 +283,10 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         outline.setAutoResizeMode((props.isEmpty()) ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
 
         assignColumns(props); // assign columns to match the properties
+        if (firstProp != null) {
+            ((DefaultOutlineModel) outline.getOutlineModel()).setNodesColumnLabel(firstProp.getDisplayName());
+        }
+
         setColumnWidths();
 
         //Load column sorting information from preferences file and apply it to columns.
