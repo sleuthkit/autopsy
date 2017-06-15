@@ -87,7 +87,7 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
         lbTestDatabaseWarning.setText("");
         hasChanged = false;
         tfDatabasePath.getDocument().addDocumentListener(textBoxChangedListener);
-        bnSave.setEnabled(false);
+        bnOk.setEnabled(false);
         bnTestDatabase.setEnabled(false);
     }
 
@@ -135,11 +135,11 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
     private boolean valid() {
         boolean result = false;
         if (tfDatabasePath.getText().trim().isEmpty()) {
-            bnSave.setEnabled(false);
+            bnOk.setEnabled(false);
             bnTestDatabase.setEnabled(false);
         } else {
             storeDbNameAndDirectory();
-            bnSave.setEnabled(true);
+            bnOk.setEnabled(true);
             bnTestDatabase.setEnabled(true);
             result = true;
         }
@@ -182,7 +182,7 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
         bnTestDatabase = new javax.swing.JButton();
         lbTestDatabase = new javax.swing.JLabel();
         bnCancel = new javax.swing.JButton();
-        bnSave = new javax.swing.JButton();
+        bnOk = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -218,10 +218,10 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnSave, org.openide.util.NbBundle.getMessage(EamSqliteSettingsDialog.class, "EamSqliteSettingsDialog.bnSave.text")); // NOI18N
-        bnSave.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(bnOk, org.openide.util.NbBundle.getMessage(EamSqliteSettingsDialog.class, "EamSqliteSettingsDialog.bnOk.text")); // NOI18N
+        bnOk.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnSaveActionPerformed(evt);
+                bnOkActionPerformed(evt);
             }
         });
 
@@ -247,7 +247,7 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(lbTestDatabase, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(bnSave)
+                        .addComponent(bnOk)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(bnCancel)
                         .addContainerGap())))
@@ -267,7 +267,7 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
                         .addGap(19, 19, 19)
                         .addGroup(pnContentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(bnCancel)
-                            .addComponent(bnSave)))
+                            .addComponent(bnOk)))
                     .addGroup(pnContentLayout.createSequentialGroup()
                         .addGap(18, 18, 18)
                         .addGroup(pnContentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -311,11 +311,15 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
 
     @Messages({"EnterpriseArtifactsManagerSQLiteSettingsDialog.chooserPath.failedToGetDbPathMsg=Selected database path is invalid. Try again."})
     private void bnDatabasePathFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDatabasePathFileOpenActionPerformed
+        fcDatabasePath.setCurrentDirectory(new File(dbSettings.getDbDirectory()));
+        fcDatabasePath.setSelectedFile(new File(dbSettings.getFileNameWithPath()));
         if (fcDatabasePath.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fcDatabasePath.getSelectedFile();
             try {
                 tfDatabasePath.setText(databaseFile.getCanonicalPath());
                 valid();
+                // TODO: create the db/schema if it doesn't exist.
+                // TODO: set variable noting that we created a new db, so it can be removed if Cancel button is clicked.
 
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to get path of selected database file", ex); // NON-NLS
@@ -339,20 +343,21 @@ public class EamSqliteSettingsDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_bnTestDatabaseActionPerformed
 
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
+        // TODO: if a new db was created, then delete it. update settings to disable this platform
         dispose();
     }//GEN-LAST:event_bnCancelActionPerformed
 
-    private void bnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnSaveActionPerformed
+    private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
         hasChanged = true;
         dbSettings.setEnabled(true);
         dbSettings.saveSettings();
         dispose();
-    }//GEN-LAST:event_bnSaveActionPerformed
+    }//GEN-LAST:event_bnOkActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancel;
     private javax.swing.JButton bnDatabasePathFileOpen;
-    private javax.swing.JButton bnSave;
+    private javax.swing.JButton bnOk;
     private javax.swing.JButton bnTestDatabase;
     private javax.swing.JFileChooser fcDatabasePath;
     private javax.swing.JScrollPane jScrollPane;
