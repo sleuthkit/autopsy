@@ -45,7 +45,8 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return "";
+        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/experimental/enterpriseartifactsmanager/Bundle")
+                .getString("OpenIDE-Module-Long-Description");
     }
 
     @Override
