@@ -268,7 +268,7 @@ class IngestModule implements FileIngestModule {
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
 
         try {
-            String MODULE_NAME = Bundle.enterpriseartifactsmanager_ingestmodule_name();
+            String MODULE_NAME = Bundle.EnterpriseArtifactsManager_ingestmodule_name();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.enterpriseartifactsmanager_prevcases_text());
