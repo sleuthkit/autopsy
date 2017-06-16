@@ -52,7 +52,7 @@ import org.netbeans.swing.etable.ETable;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
- * Content represented by a Node. Each BlackboardArtifact is rendered as an HTML
+ * Content represented by a Node. Each BlackboardArtifact is rendered displayed in a JTable
  * representation of its BlackboardAttributes.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 3)
@@ -548,10 +548,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         totalPageLabel.setText(Integer.toString(viewUpdate.numberOfPages));
         currentPageLabel.setText(Integer.toString(currentPage));
         artifactLabel.setText(viewUpdate.tableContents.getArtifactDisplayName());
-        // @@@ This can take a long time. Perhaps a faster HTML renderer can be found.
-        // Note that the rendering appears to be done on a background thread, since the
-        // wait cursor reset below happens before the new text hits the JTextPane. On the
-        // other hand, the UI is unresponsive...
         DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
         tModel.setDataVector(viewUpdate.tableContents.getRows(), COLUMN_HEADERS);
         updateColumnSizes();
@@ -740,8 +736,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             List<ResultsTableArtifact> artifactContents = getArtifactContents();
             ResultsTableArtifact artifactContent = artifactContents.get(pageIndex - 1);
 
-            // It may take a considerable amount of time to fetch the attributes of the selected artifact and render them
-            // as HTML, so check for cancellation.
+            // It may take a considerable amount of time to fetch the attributes of the selected artifact so check for cancellation.
             if (isCancelled()) {
                 return null;
             }
