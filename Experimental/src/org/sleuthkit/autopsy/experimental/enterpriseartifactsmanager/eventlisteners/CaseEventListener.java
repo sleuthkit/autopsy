@@ -61,6 +61,10 @@ public class CaseEventListener implements PropertyChangeListener {
         EamDb dbManager = EamDb.getInstance();
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED: {
+                if (!dbManager.isEnabled()) {
+                    return;
+                }
+
                 final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
                 final ContentTag tagAdded = tagAddedEvent.getAddedTag();
                 // TODO: detect failed cast and break if so.
@@ -121,6 +125,10 @@ public class CaseEventListener implements PropertyChangeListener {
             break;
 
             case BLACKBOARD_ARTIFACT_TAG_ADDED: {
+                if (!dbManager.isEnabled()) {
+                    return;
+                }
+
                 final BlackBoardArtifactTagAddedEvent bbTagAddedEvent = (BlackBoardArtifactTagAddedEvent) evt;
                 final BlackboardArtifactTag bbTagAdded = bbTagAddedEvent.getAddedTag();
                 final AbstractFile af = (AbstractFile) bbTagAdded.getContent();
@@ -149,11 +157,12 @@ public class CaseEventListener implements PropertyChangeListener {
             break;
 
             case DATA_SOURCE_ADDED: {
-                final DataSourceAddedEvent dataSourceAddedEvent = (DataSourceAddedEvent) evt;
-                Content newDataSource = dataSourceAddedEvent.getDataSource();
                 if (!dbManager.isEnabled()) {
                     break;
                 }
+
+                final DataSourceAddedEvent dataSourceAddedEvent = (DataSourceAddedEvent) evt;
+                Content newDataSource = dataSourceAddedEvent.getDataSource();
 
                 try {
                     String deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();

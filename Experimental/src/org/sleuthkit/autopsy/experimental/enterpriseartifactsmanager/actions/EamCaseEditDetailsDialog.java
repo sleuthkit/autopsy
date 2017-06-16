@@ -19,6 +19,8 @@
 package org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.actions;
 
 import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,11 +28,16 @@ import java.util.List;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import javax.swing.JPanel;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.openide.util.Exceptions;
+import org.openide.util.NbBundle.Messages;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamCase;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamDbException;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamOrganization;
@@ -40,33 +47,44 @@ import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.E
 /**
  * Handle editing details of cases within the Enterprise Artifacts Manager
  */
-public class EamCaseEditDetailsPanel extends JPanel {
+public class EamCaseEditDetailsDialog extends JDialog {
 
-    private final static Logger LOGGER = Logger.getLogger(EamCaseEditDetailsPanel.class.getName());
-    private final EamCase eamCase;
-    private final EamDb dbManager;
+    private final static Logger LOGGER = Logger.getLogger(EamCaseEditDetailsDialog.class.getName());
+    private EamCase eamCase;
+    private EamDb dbManager;
     private Boolean contentChanged = false;
     private final Collection<JTextField> textBoxes = new ArrayList<>();
     private final Collection<JTextArea> textAreas = new ArrayList<>();
     private final TextBoxChangedListener textBoxChangedListener = new TextBoxChangedListener();
     private EamOrganization selectedOrg = null;
     private List<EamOrganization> orgs = null;
+    private boolean comboboxOrganizationActionListenerActive;
 
     /**
      * Creates new form EnterpriseArtifactsManagerCasedEditDetailsForm
      */
-    public EamCaseEditDetailsPanel(EamCase eamCase) {
-        this.eamCase = eamCase;
-        this.dbManager = EamDb.getInstance();
-        initComponents();
-        customizeComponents();
-        loadData();
+    @Messages({"EnterpriseArtifactsManagerCaseEditDetails.window.title=Edit Case Details"})
+    public EamCaseEditDetailsDialog() {
+        super((JFrame) WindowManager.getDefault().getMainWindow(),
+                Bundle.EnterpriseArtifactsManagerCaseEditDetails_window_title(),
+                true); // NON-NLS
+
+        try {
+            this.dbManager = EamDb.getInstance();
+            this.eamCase = this.dbManager.getCaseDetails(Case.getCurrentCase().getName());
+            initComponents();
+            loadData();
+            customizeComponents();
+            display();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting current case.", ex);
+        }
     }
 
     private void customizeComponents() {
-        bnApply.setEnabled(false);
         setTextBoxListeners();
         setTextAreaListeners();
+
     }
 
     private void setTextBoxListeners() {
@@ -107,6 +125,13 @@ public class EamCaseEditDetailsPanel extends JPanel {
         });
     }
 
+    private void display() {
+        pack();
+        Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
+        setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
+        setVisible(true);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -116,7 +141,7 @@ public class EamCaseEditDetailsPanel extends JPanel {
     private void initComponents() {
 
         bnClose = new javax.swing.JButton();
-        bnApply = new javax.swing.JButton();
+        bnOk = new javax.swing.JButton();
         pnCaseMetadata = new javax.swing.JPanel();
         lbCaseNameLabel = new javax.swing.JLabel();
         lbCreationDateLabel = new javax.swing.JLabel();
@@ -148,32 +173,31 @@ public class EamCaseEditDetailsPanel extends JPanel {
         jScrollPane2 = new javax.swing.JScrollPane();
         taNotesText = new javax.swing.JTextArea();
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnClose, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.bnClose.text")); // NOI18N
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnApply, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.bnApply.text")); // NOI18N
-        bnApply.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(bnClose, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.bnClose.text")); // NOI18N
+        bnClose.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnApplyActionPerformed(evt);
+                bnCloseActionPerformed(evt);
             }
         });
 
-        pnCaseMetadata.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.pnCaseMetadata.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnOk, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.bnOk.text")); // NOI18N
+        bnOk.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnOkActionPerformed(evt);
+            }
+        });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbCaseNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCaseNameLabel.text")); // NOI18N
+        pnCaseMetadata.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.pnCaseMetadata.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbCreationDateLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCreationDateLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbCaseNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbCaseNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbCaseNumberLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCaseNumberLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbCreationDateLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbCreationDateLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbCaseUUIDLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCaseUUIDLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbCaseNumberLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbCaseNumberLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbCaseUUIDText, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCaseUUIDText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbCaseNameText, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCaseNameText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbCeationDateText, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCeationDateText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbCaseNumberText, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbCaseNumberText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbCaseUUIDLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbCaseUUIDLabel.text")); // NOI18N
 
         javax.swing.GroupLayout pnCaseMetadataLayout = new javax.swing.GroupLayout(pnCaseMetadata);
         pnCaseMetadata.setLayout(pnCaseMetadataLayout);
@@ -197,9 +221,10 @@ public class EamCaseEditDetailsPanel extends JPanel {
         pnCaseMetadataLayout.setVerticalGroup(
             pnCaseMetadataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnCaseMetadataLayout.createSequentialGroup()
-                .addGroup(pnCaseMetadataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbCaseUUIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lbCaseUUIDText))
+                .addContainerGap()
+                .addGroup(pnCaseMetadataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbCaseUUIDLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbCaseUUIDText, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnCaseMetadataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lbCaseNameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -212,35 +237,28 @@ public class EamCaseEditDetailsPanel extends JPanel {
                 .addGroup(pnCaseMetadataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lbCaseNumberLabel)
                     .addComponent(lbCaseNumberText, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(37, 37, 37))
+                .addGap(26, 26, 26))
         );
 
-        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.pnOrganization.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnOrganization.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.pnOrganization.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbOrganizationNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbOrganizationNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbOrganizationNameLabel.text")); // NOI18N
 
-        comboBoxOrgName.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         comboBoxOrgName.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 comboBoxOrgNameActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactGroupLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbPointOfContactGroupLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactGroupLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbPointOfContactGroupLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbPointOfContactNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbPointOfContactNameLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactEmailLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbPointOfContactEmailLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactEmailLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbPointOfContactEmailLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactPhoneLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbPointOfContactPhoneLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactPhoneLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbPointOfContactPhoneLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactNameText, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbPointOfContactNameText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactEmailText, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbPointOfContactEmailText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbPointOfContactPhoneText, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbPointOfContactPhoneText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.bnNewOrganization.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnNewOrganization, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.bnNewOrganization.text")); // NOI18N
         bnNewOrganization.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnNewOrganizationActionPerformed(evt);
@@ -263,7 +281,7 @@ public class EamCaseEditDetailsPanel extends JPanel {
                             .addGroup(pnOrganizationLayout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(lbPointOfContactPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 88, Short.MAX_VALUE)
+                                    .addComponent(lbPointOfContactPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                         .addGap(18, 18, 18)
@@ -287,41 +305,34 @@ public class EamCaseEditDetailsPanel extends JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(lbPointOfContactGroupLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbPointOfContactNameLabel)
-                    .addComponent(lbPointOfContactNameText))
+                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbPointOfContactNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbPointOfContactNameText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbPointOfContactEmailLabel)
-                    .addComponent(lbPointOfContactEmailText))
+                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbPointOfContactEmailLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbPointOfContactEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbPointOfContactPhoneLabel)
-                    .addComponent(lbPointOfContactPhoneText))
+                .addGroup(pnOrganizationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbPointOfContactPhoneLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbPointOfContactPhoneText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bnNewOrganization)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        pnExaminer.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.pnExaminer.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnExaminer.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.pnExaminer.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbExaminerNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbExaminerNameLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbExaminerNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerNameLabel.text")); // NOI18N
 
-        tfExaminerNameText.setText(org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.tfExaminerNameText.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbExaminerEmailLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerEmailLabel.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbExaminerEmailLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbExaminerEmailLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbExaminerPhoneLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerPhoneLabel.text")); // NOI18N
 
-        tfExaminerEmailText.setText(org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.tfExaminerEmailText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbExaminerPhoneLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbExaminerPhoneLabel.text")); // NOI18N
-
-        tfExaminerPhoneText.setText(org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.tfExaminerPhoneText.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbNotesLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.lbNotesLabel.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbNotesLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbNotesLabel.text")); // NOI18N
 
         taNotesText.setColumns(20);
         taNotesText.setRows(5);
-        taNotesText.setText(org.openide.util.NbBundle.getMessage(EamCaseEditDetailsPanel.class, "EamCaseEditDetailsPanel.taNotesText.text")); // NOI18N
         jScrollPane2.setViewportView(taNotesText);
 
         javax.swing.GroupLayout pnExaminerLayout = new javax.swing.GroupLayout(pnExaminer);
@@ -337,17 +348,11 @@ public class EamCaseEditDetailsPanel extends JPanel {
                     .addComponent(lbNotesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25)
                 .addGroup(pnExaminerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnExaminerLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(tfExaminerNameText, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(pnExaminerLayout.createSequentialGroup()
-                        .addGroup(pnExaminerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 273, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(pnExaminerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(tfExaminerEmailText, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE)
-                                .addComponent(tfExaminerPhoneText)))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                    .addComponent(tfExaminerEmailText)
+                    .addComponent(tfExaminerPhoneText)
+                    .addComponent(tfExaminerNameText)
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 274, Short.MAX_VALUE))
+                .addContainerGap())
         );
         pnExaminerLayout.setVerticalGroup(
             pnExaminerLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -371,16 +376,16 @@ public class EamCaseEditDetailsPanel extends JPanel {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-        this.setLayout(layout);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(bnApply)
-                        .addGap(18, 18, 18)
+                        .addComponent(bnOk, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(bnClose))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
@@ -394,37 +399,32 @@ public class EamCaseEditDetailsPanel extends JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(23, 23, 23)
-                .addComponent(pnCaseMetadata, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(pnCaseMetadata, javax.swing.GroupLayout.PREFERRED_SIZE, 123, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnExaminer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(16, 16, 16)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(bnApply)
+                    .addComponent(bnOk)
                     .addComponent(bnClose))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
-    private void bnApplyActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnApplyActionPerformed
-        // write content to db
+    private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
         if (contentChanged) {
             updateEnterpriseArtifactsManagerCase();
             updateDb();
-            contentChanged = false;
         }
-        applyButtonEnable(false);
-
-    }//GEN-LAST:event_bnApplyActionPerformed
+        dispose();
+    }//GEN-LAST:event_bnOkActionPerformed
 
     private void bnNewOrganizationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnNewOrganizationActionPerformed
         AddNewOrganizationDialog dialogO = new AddNewOrganizationDialog();
-        // update the combobox options
+        // update the combobox options and org data fields
         if (dialogO.isChanged()) {
-            loadData();
-            contentChanged = true;
-            applyButtonEnable(true);
+            loadOrganizationData();
         }
     }//GEN-LAST:event_bnNewOrganizationActionPerformed
 
@@ -432,8 +432,17 @@ public class EamCaseEditDetailsPanel extends JPanel {
     private void comboBoxOrgNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboBoxOrgNameActionPerformed
         JComboBox<String> cb = (JComboBox<String>) evt.getSource();
         String orgName = (String) cb.getSelectedItem();
-        if (null == orgName) {
+        if (null == orgName || false == comboboxOrganizationActionListenerActive) {
             return;
+        }
+
+        if ("".equals(orgName)) {
+            selectedOrg = null;
+            lbPointOfContactNameText.setText("");
+            lbPointOfContactEmailText.setText("");
+            lbPointOfContactPhoneText.setText("");
+            contentChanged = true;
+            return;            
         }
 
         for (EamOrganization org : orgs) {
@@ -443,30 +452,20 @@ public class EamCaseEditDetailsPanel extends JPanel {
                 lbPointOfContactEmailText.setText(selectedOrg.getPocEmail());
                 lbPointOfContactPhoneText.setText(selectedOrg.getPocPhone());
                 contentChanged = true;
-                applyButtonEnable(true);
                 return;
             }
         }
     }//GEN-LAST:event_comboBoxOrgNameActionPerformed
 
-    private Boolean applyButtonEnable(Boolean enable) {
-        bnApply.setEnabled(enable);
-        return enable;
-    }
-
-    /*
-     * Add ActionListener to closeButton
-     */
-    public void addCloseButtonAction(ActionListener al) {
-        bnClose.addActionListener(al);
-    }
+    private void bnCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCloseActionPerformed
+        dispose();
+    }//GEN-LAST:event_bnCloseActionPerformed
 
     private void loadCaseMetaData() {
         lbCaseUUIDText.setText(eamCase.getCaseUUID());
         lbCaseNameText.setText(eamCase.getDisplayName());
         lbCeationDateText.setText(eamCase.getCreationDate());
         lbCaseNumberText.setText(eamCase.getCaseNumber());
-
     }
 
     private void loadExaminerData() {
@@ -477,21 +476,31 @@ public class EamCaseEditDetailsPanel extends JPanel {
     }
 
     private void loadOrganizationData() {
+        comboboxOrganizationActionListenerActive = false; // don't fire action listener while loading combobox content
         comboBoxOrgName.removeAllItems();
         try {
             orgs = dbManager.getOrganizations();
+            comboBoxOrgName.addItem(""); // for when a case has a null Org
             orgs.forEach((org) -> {
                 comboBoxOrgName.addItem(org.getName());
             });
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Failure populating combobox with organizations.", ex);
         }
+        comboboxOrganizationActionListenerActive = true;
 
-        selectedOrg = orgs.get(0);
-
-        lbPointOfContactNameText.setText(selectedOrg.getPocName());
-        lbPointOfContactEmailText.setText(selectedOrg.getPocEmail());
-        lbPointOfContactPhoneText.setText(selectedOrg.getPocPhone());
+        if (!orgs.isEmpty() && null != eamCase.getOrg()) {                
+            selectedOrg = eamCase.getOrg();
+            comboBoxOrgName.setSelectedItem(selectedOrg.getName());
+            lbPointOfContactNameText.setText(selectedOrg.getPocName());
+            lbPointOfContactEmailText.setText(selectedOrg.getPocEmail());
+            lbPointOfContactPhoneText.setText(selectedOrg.getPocPhone());
+        } else {
+            comboBoxOrgName.setSelectedItem("");
+            lbPointOfContactNameText.setText("");
+            lbPointOfContactEmailText.setText("");
+            lbPointOfContactPhoneText.setText("");
+        }
     }
 
     private void loadData() {
@@ -552,13 +561,12 @@ public class EamCaseEditDetailsPanel extends JPanel {
 
         private void setChanged() {
             contentChanged = true;
-            applyButtonEnable(true);
         }
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton bnApply;
     private javax.swing.JButton bnClose;
     private javax.swing.JButton bnNewOrganization;
+    private javax.swing.JButton bnOk;
     private javax.swing.JComboBox<String> comboBoxOrgName;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JLabel lbCaseNameLabel;
