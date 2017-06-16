@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,39 +50,6 @@ public class TagsManager implements Closeable {
     private final SleuthkitCase caseDb;
 
     /**
-     * Constructs a per case Autopsy service that manages the addition of
-     * content and artifact tags to the case database.
-     *
-     * @param caseDb The case database.
-     */
-    TagsManager(SleuthkitCase caseDb) {
-        this.caseDb = caseDb;
-    }
-
-    /**
-     * Gets a list of all tag names currently in the case database.
-     *
-     * @return A list, possibly empty, of TagName objects.
-     *
-     * @throws TskCoreException If there is an error querying the case database.
-     */
-    public List<TagName> getAllTagNames() throws TskCoreException {
-        return caseDb.getAllTagNames();
-    }
-
-    /**
-     * Gets a list of all tag names currently in use in the case database for
-     * tagging content or artifacts.
-     *
-     * @return A list, possibly empty, of TagName objects.
-     *
-     * @throws TskCoreException If there is an error querying the case database.
-     */
-    public List<TagName> getTagNamesInUse() throws TskCoreException {
-        return caseDb.getTagNamesInUse();
-    }
-
-    /**
      * Gets a map of tag display names to tag name entries in the case database.
      * It has keys for the display names of the standard tag types, the current
      * user's custom tag types, and the tags in the case database. The value for
@@ -117,6 +84,39 @@ public class TagsManager implements Closeable {
             tagNames.put(tagName.getDisplayName(), tagName);
         }
         return new HashMap<>(tagNames);
+    }
+    
+    /**
+     * Constructs a per case Autopsy service that manages the addition of
+     * content and artifact tags to the case database.
+     *
+     * @param caseDb The case database.
+     */
+    TagsManager(SleuthkitCase caseDb) {
+        this.caseDb = caseDb;
+    }
+
+    /**
+     * Gets a list of all tag names currently in the case database.
+     *
+     * @return A list, possibly empty, of TagName objects.
+     *
+     * @throws TskCoreException If there is an error querying the case database.
+     */
+    public List<TagName> getAllTagNames() throws TskCoreException {
+        return caseDb.getAllTagNames();
+    }
+
+    /**
+     * Gets a list of all tag names currently in use in the case database for
+     * tagging content or artifacts.
+     *
+     * @return A list, possibly empty, of TagName objects.
+     *
+     * @throws TskCoreException If there is an error querying the case database.
+     */
+    public List<TagName> getTagNamesInUse() throws TskCoreException {
+        return caseDb.getTagNamesInUse();
     }
 
     /**
@@ -531,8 +531,9 @@ public class TagsManager implements Closeable {
      * @throws IOException If there is a problem closing the tags manager.
      * @deprecated Tags manager clients should not close the tags manager.
      */
-    @Override
     @Deprecated
+    @Override
     public synchronized void close() throws IOException {
     }
+
 }
