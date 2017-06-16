@@ -248,7 +248,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
     /**
      * Create Column Headers based on the Content represented by the Nodes in
-     * the table.  Load persisted column order, sorting and visibility.
+     * the table. Load persisted column order, sorting and visibility.
      */
     private void setupTable() {
         /*
@@ -335,11 +335,14 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private void populateColumnMap() {
         columnMap.clear();
         TableColumnModel columnModel = outline.getColumnModel();
+        int columnCount = columnModel.getColumnCount();
         //for each property get a reference to the column object from the column model.
         for (Map.Entry<Integer, Property<?>> entry : propertiesMap.entrySet()) {
             final String propName = entry.getValue().getName();
-            final ETableColumn column = (ETableColumn) columnModel.getColumn(entry.getKey());
-            columnMap.put(propName, column);
+            if (entry.getKey() < columnCount) {
+                final ETableColumn column = (ETableColumn) columnModel.getColumn(entry.getKey());
+                columnMap.put(propName, column);
+            }
         }
     }
 
