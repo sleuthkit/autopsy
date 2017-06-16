@@ -62,7 +62,7 @@ public class TagsManager implements Closeable {
      *
      * @throws TskCoreException if there is an error querying the case database.
      */
-    public synchronized Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
+    public Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
         /**
          * Order is important here. The keys (display names) for the current
          * user's custom tag types are added to the map first, with null TagName
@@ -278,7 +278,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<ContentTag> getAllContentTags() throws TskCoreException {
+    public List<ContentTag> getAllContentTags() throws TskCoreException {
         return caseDb.getAllContentTags();
     }
 
@@ -294,7 +294,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags count from
      *                          the case database.
      */
-    public synchronized long getContentTagsCountByTagName(TagName tagName) throws TskCoreException {
+    public long getContentTagsCountByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getContentTagsCountByTagName(tagName);
     }
 
@@ -308,7 +308,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tag from the
      *                          case database.
      */
-    public synchronized ContentTag getContentTagByTagID(long tagId) throws TskCoreException {
+    public ContentTag getContentTagByTagID(long tagId) throws TskCoreException {
         return caseDb.getContentTagByID(tagId);
     }
 
@@ -323,7 +323,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<ContentTag> getContentTagsByTagName(TagName tagName) throws TskCoreException {
+    public List<ContentTag> getContentTagsByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getContentTagsByTagName(tagName);
     }
 
@@ -338,7 +338,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
+    public List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
         return caseDb.getContentTagsByContent(content);
     }
 
@@ -355,7 +355,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error adding the tag to the case
      *                          database.
      */
-    public synchronized BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName) throws TskCoreException {
+    public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName) throws TskCoreException {
         return addBlackboardArtifactTag(artifact, tagName, "");
     }
 
@@ -373,7 +373,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error adding the tag to the case
      *                          database.
      */
-    public synchronized BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
+    public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
         BlackboardArtifactTag tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(tag);
@@ -391,7 +391,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error deleting the tag from the
      *                          case database.
      */
-    public synchronized void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
+    public void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
         caseDb.deleteBlackboardArtifactTag(tag);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
@@ -408,7 +408,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<BlackboardArtifactTag> getAllBlackboardArtifactTags() throws TskCoreException {
+    public List<BlackboardArtifactTag> getAllBlackboardArtifactTags() throws TskCoreException {
         return caseDb.getAllBlackboardArtifactTags();
     }
 
@@ -424,7 +424,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags count from
      *                          the case database.
      */
-    public synchronized long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
+    public long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsCountByTagName(tagName);
     }
 
@@ -438,7 +438,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tag from the
      *                          case database.
      */
-    public synchronized BlackboardArtifactTag getBlackboardArtifactTagByTagID(long tagId) throws TskCoreException {
+    public BlackboardArtifactTag getBlackboardArtifactTagByTagID(long tagId) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagByID(tagId);
     }
 
@@ -455,7 +455,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName) throws TskCoreException {
+    public List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsByTagName(tagName);
     }
 
@@ -470,7 +470,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<BlackboardArtifactTag> getBlackboardArtifactTagsByArtifact(BlackboardArtifact artifact) throws TskCoreException {
+    public List<BlackboardArtifactTag> getBlackboardArtifactTagsByArtifact(BlackboardArtifact artifact) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsByArtifact(artifact);
     }
 
@@ -515,7 +515,7 @@ public class TagsManager implements Closeable {
      * @deprecated Not reliable for multi-user cases.
      */
     @Deprecated
-    public synchronized boolean tagNameExists(String tagDisplayName) {
+    public boolean tagNameExists(String tagDisplayName) {
         try {
             Map<String, TagName> tagNames = getDisplayNamesToTagNamesMap();
             return tagNames.containsKey(tagDisplayName) && (tagNames.get(tagDisplayName) != null);
@@ -533,7 +533,7 @@ public class TagsManager implements Closeable {
      */
     @Deprecated
     @Override
-    public synchronized void close() throws IOException {
+    public void close() throws IOException {
     }
 
 }
