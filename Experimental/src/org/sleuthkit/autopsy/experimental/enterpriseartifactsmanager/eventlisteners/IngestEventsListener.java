@@ -79,7 +79,6 @@ public class IngestEventsListener {
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case DATA_ADDED: {
                     if (!dbManager.isEnabled()) {
-                        LOGGER.log(Level.WARNING, "Error connecting to database, enteprise artifact manager artifacts not created");
                         return;
                     }
 
