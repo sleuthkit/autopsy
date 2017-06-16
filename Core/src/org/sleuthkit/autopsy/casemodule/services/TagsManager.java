@@ -85,7 +85,29 @@ public class TagsManager implements Closeable {
         }
         return new HashMap<>(tagNames);
     }
-    
+
+    /**
+     * Tests whether or not a given tag display name contains an illegal
+     * character.
+     *
+     * @param tagDisplayName Display name of a tag.
+     *
+     * @return True or false.
+     */
+    public static boolean containsIllegalCharacters(String tagDisplayName) {
+        return (tagDisplayName.contains("\\")
+                || tagDisplayName.contains(":")
+                || tagDisplayName.contains("*")
+                || tagDisplayName.contains("?")
+                || tagDisplayName.contains("\"")
+                || tagDisplayName.contains("<")
+                || tagDisplayName.contains(">")
+                || tagDisplayName.contains("|")
+                || tagDisplayName.contains(",")
+                || tagDisplayName.contains(";"));
+
+    }
+
     /**
      * Constructs a per case Autopsy service that manages the addition of
      * content and artifact tags to the case database.
@@ -472,28 +494,6 @@ public class TagsManager implements Closeable {
      */
     public List<BlackboardArtifactTag> getBlackboardArtifactTagsByArtifact(BlackboardArtifact artifact) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsByArtifact(artifact);
-    }
-
-    /**
-     * Returns true if the tag display name contains an illegal character. Used
-     * after a tag display name is retrieved from user input.
-     *
-     * @param content Display name of the tag being added.
-     *
-     * @return boolean indicating whether the name has an invalid character.
-     */
-    public static boolean containsIllegalCharacters(String content) {
-        return (content.contains("\\")
-                || content.contains(":")
-                || content.contains("*")
-                || content.contains("?")
-                || content.contains("\"")
-                || content.contains("<")
-                || content.contains(">")
-                || content.contains("|")
-                || content.contains(",")
-                || content.contains(";"));
-
     }
 
     /**
