@@ -463,7 +463,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (currentRoot instanceof TableFilterNode) {
             final TableFilterNode tfn = ((TableFilterNode) currentRoot);
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-
+            ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
                 ETableColumn etc = entry.getValue();
                 String columnName = entry.getKey();
@@ -471,16 +471,15 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //store sort rank and order
                 final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
                 final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
-
-                if (etc.isSorted()) {
+                if (etc.isSorted() && (columnModel.isColumnHidden(etc) == false)) {
                     preferences.putBoolean(columnSortOrderKey, etc.isAscending());
                     preferences.putInt(columnSortRankKey, etc.getSortRank());
                 } else {
+                    columnModel.setColumnSorted(etc, true, 0);
                     preferences.remove(columnSortOrderKey);
                     preferences.remove(columnSortRankKey);
                 }
             }
-
         }
     }
 
@@ -500,7 +499,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
 
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
             //organize property sorting information, sorted by rank
-            TreeSet<ColumnSortInfo> treeSet = new TreeSet<>(Comparator.comparing(ColumnSortInfo::getRank));
+            TreeSet<ColumnSortInfo> sortInfos = new TreeSet<>(Comparator.comparing(ColumnSortInfo::getRank));
             propertiesMap.entrySet().stream().forEach(entry -> {
                 final String propName = entry.getValue().getName();
                 //if the sort rank is undefined, it will be defaulted to 0 => unsorted.
@@ -509,11 +508,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //default to true => ascending
                 Boolean sortOrder = preferences.getBoolean(ResultViewerPersistence.getColumnSortOrderKey(tfn, propName), true);
 
-                treeSet.add(new ColumnSortInfo(entry.getKey(), sortRank, sortOrder));
+                sortInfos.add(new ColumnSortInfo(entry.getKey(), sortRank, sortOrder));
             });
 
             //apply sort information in rank order.
-            treeSet.forEach(sortInfo -> outline.setColumnSorted(sortInfo.modelIndex, sortInfo.order, sortInfo.rank));
+            sortInfos.forEach(sortInfo -> outline.setColumnSorted(sortInfo.modelIndex, sortInfo.order, sortInfo.rank));
         }
     }
 
@@ -569,7 +568,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
 
         for (Property<?> prop : props) {
-
             Integer value = preferences.getInt(ResultViewerPersistence.getColumnPositionKey(tfn, prop.getName()), -1);
             if (value >= 0 && value < offset && !propertiesMap.containsKey(value)) {
                 propertiesMap.put(value, prop);
