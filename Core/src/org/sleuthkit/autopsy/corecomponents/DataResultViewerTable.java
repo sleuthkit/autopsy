@@ -463,7 +463,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
         if (currentRoot instanceof TableFilterNode) {
             final TableFilterNode tfn = ((TableFilterNode) currentRoot);
             final Preferences preferences = NbPreferences.forModule(DataResultViewerTable.class);
-
             ETableColumnModel columnModel = (ETableColumnModel) outline.getColumnModel();
             for (Map.Entry<String, ETableColumn> entry : columnMap.entrySet()) {
                 ETableColumn etc = entry.getValue();
@@ -472,11 +471,11 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 //store sort rank and order
                 final String columnSortOrderKey = ResultViewerPersistence.getColumnSortOrderKey(tfn, columnName);
                 final String columnSortRankKey = ResultViewerPersistence.getColumnSortRankKey(tfn, columnName);
-
                 if (etc.isSorted() && (columnModel.isColumnHidden(etc) == false)) {
                     preferences.putBoolean(columnSortOrderKey, etc.isAscending());
                     preferences.putInt(columnSortRankKey, etc.getSortRank());
                 } else {
+                    columnModel.setColumnSorted(etc, true, 0);
                     preferences.remove(columnSortOrderKey);
                     preferences.remove(columnSortRankKey);
                 }
