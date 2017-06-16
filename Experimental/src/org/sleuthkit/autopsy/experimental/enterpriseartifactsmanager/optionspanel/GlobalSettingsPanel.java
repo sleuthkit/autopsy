@@ -21,8 +21,6 @@ package org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.optionspan
 import org.sleuthkit.autopsy.coreutils.Logger;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import javax.swing.JComboBox;
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle.Messages;
@@ -32,7 +30,8 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamDbPlatformEnum;
-import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamDb;
+import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.PostgresEamDbSettings;
+import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.SqliteEamDbSettings;
 
 /**
  * Main settings panel for the enterprise artifacts manager
@@ -43,10 +42,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private static final Logger LOGGER = Logger.getLogger(GlobalSettingsPanel.class.getName());
 
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
-
-    private boolean dbConfigured;
-    private boolean initiallyEnabled;
-    private boolean comboboxSelectDatabaseTypeActionListenerActive;
 
     /**
      * Creates new form EnterpriseArtifactsManagerOptionsPanel
@@ -62,12 +57,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @Messages({"GlobalSettingsPanel.title=Global Enterprise Artifacts Manager Settings"})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
-        comboboxSelectDatabaseTypeActionListenerActive = false; // don't fire action listener while loading combobox content
-        comboboxSelectDatabaseType.removeAllItems();
-        for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
-            comboboxSelectDatabaseType.addItem(p.toString());
-        }
-        comboboxSelectDatabaseTypeActionListenerActive = true;
     }
 
     private void addIngestJobEventsListener() {
@@ -84,22 +73,77 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane = new javax.swing.JScrollPane();
-        pnOverallPanel = new javax.swing.JPanel();
-        pnSettings = new javax.swing.JPanel();
+        pnDatabaseConfiguration = new javax.swing.JPanel();
+        lbDbPlatformTypeLabel = new javax.swing.JLabel();
+        lbDbNameLabel = new javax.swing.JLabel();
+        lbDbLocationLabel = new javax.swing.JLabel();
+        bnDbConfigure = new javax.swing.JButton();
+        lbDbPlatformValue = new javax.swing.JLabel();
+        lbDbNameValue = new javax.swing.JLabel();
+        lbDbLocationValue = new javax.swing.JLabel();
+        pnDatabaseContentButtons = new javax.swing.JPanel();
         bnImportDatabase = new javax.swing.JButton();
-        pnDatabaseConnectionSettings = new javax.swing.JPanel();
-        comboboxSelectDatabaseType = new javax.swing.JComboBox<>();
-        lbDatabasePlatform = new javax.swing.JLabel();
-        bnConfigureDatabaseSettings = new javax.swing.JButton();
-        tbOops = new javax.swing.JTextField();
         bnManageTags = new javax.swing.JButton();
         bnManageTypes = new javax.swing.JButton();
-        cbEnableEnterpriseArtifactsManager = new javax.swing.JCheckBox();
+        tbOops = new javax.swing.JTextField();
 
         setName(""); // NOI18N
 
-        jScrollPane.setBorder(null);
+        pnDatabaseConfiguration.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnDatabaseConfiguration.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbDbPlatformTypeLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDbPlatformTypeLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbDbNameLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDbNameLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(lbDbLocationLabel, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDbLocationLabel.text")); // NOI18N
+
+        org.openide.awt.Mnemonics.setLocalizedText(bnDbConfigure, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnDbConfigure.text")); // NOI18N
+        bnDbConfigure.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnDbConfigureActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout pnDatabaseConfigurationLayout = new javax.swing.GroupLayout(pnDatabaseConfiguration);
+        pnDatabaseConfiguration.setLayout(pnDatabaseConfigurationLayout);
+        pnDatabaseConfigurationLayout.setHorizontalGroup(
+            pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
+                        .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(lbDbPlatformTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbDbNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(bnDbConfigure))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnDatabaseConfigurationLayout.setVerticalGroup(
+            pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
+                .addGap(7, 7, 7)
+                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbDbPlatformTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbDbNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbDbNameValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbDbLocationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addComponent(bnDbConfigure)
+                .addContainerGap())
+        );
 
         bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/import16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
@@ -109,54 +153,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 bnImportDatabaseActionPerformed(evt);
             }
         });
-
-        pnDatabaseConnectionSettings.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDatabaseSettings.text"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
-        pnDatabaseConnectionSettings.setName(""); // NOI18N
-
-        comboboxSelectDatabaseType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "test 1", "test 2" }));
-        comboboxSelectDatabaseType.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                comboboxSelectDatabaseTypeActionPerformed(evt);
-            }
-        });
-
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePlatform, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbDatabasePlatform.text")); // NOI18N
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnConfigureDatabaseSettings, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnConfigureDatabaseSettings.text")); // NOI18N
-        bnConfigureDatabaseSettings.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnConfigureDatabaseSettingsActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout pnDatabaseConnectionSettingsLayout = new javax.swing.GroupLayout(pnDatabaseConnectionSettings);
-        pnDatabaseConnectionSettings.setLayout(pnDatabaseConnectionSettingsLayout);
-        pnDatabaseConnectionSettingsLayout.setHorizontalGroup(
-            pnDatabaseConnectionSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseConnectionSettingsLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(lbDatabasePlatform)
-                .addGap(18, 18, 18)
-                .addComponent(comboboxSelectDatabaseType, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(bnConfigureDatabaseSettings)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        pnDatabaseConnectionSettingsLayout.setVerticalGroup(
-            pnDatabaseConnectionSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnDatabaseConnectionSettingsLayout.createSequentialGroup()
-                .addGap(3, 3, 3)
-                .addGroup(pnDatabaseConnectionSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbDatabasePlatform, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(comboboxSelectDatabaseType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bnConfigureDatabaseSettings)))
-        );
-
-        tbOops.setEditable(false);
-        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
-        tbOops.setForeground(new java.awt.Color(255, 0, 0));
-        tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
-        tbOops.setBorder(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(bnManageTags, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.text")); // NOI18N
         bnManageTags.setToolTipText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.toolTipText")); // NOI18N
@@ -174,152 +170,75 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
-        javax.swing.GroupLayout pnSettingsLayout = new javax.swing.GroupLayout(pnSettings);
-        pnSettings.setLayout(pnSettingsLayout);
-        pnSettingsLayout.setHorizontalGroup(
-            pnSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnSettingsLayout.createSequentialGroup()
+        javax.swing.GroupLayout pnDatabaseContentButtonsLayout = new javax.swing.GroupLayout(pnDatabaseContentButtons);
+        pnDatabaseContentButtons.setLayout(pnDatabaseContentButtonsLayout);
+        pnDatabaseContentButtonsLayout.setHorizontalGroup(
+            pnDatabaseContentButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseContentButtonsLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(tbOops)
-                    .addGroup(pnSettingsLayout.createSequentialGroup()
-                        .addGroup(pnSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(pnDatabaseConnectionSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGroup(pnSettingsLayout.createSequentialGroup()
-                                .addComponent(bnImportDatabase)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(bnManageTags)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(bnManageTypes)))
-                        .addGap(0, 188, Short.MAX_VALUE)))
-                .addContainerGap())
-        );
-        pnSettingsLayout.setVerticalGroup(
-            pnSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnSettingsLayout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(bnImportDatabase)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnDatabaseConnectionSettings, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 33, Short.MAX_VALUE)
-                .addGroup(pnSettingsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(bnManageTags)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(bnManageTypes)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnDatabaseContentButtonsLayout.setVerticalGroup(
+            pnDatabaseContentButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseContentButtonsLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(pnDatabaseContentButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bnImportDatabase)
                     .addComponent(bnManageTags, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(bnManageTypes, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(34, 34, 34))
         );
 
-        cbEnableEnterpriseArtifactsManager.setFont(cbEnableEnterpriseArtifactsManager.getFont().deriveFont(cbEnableEnterpriseArtifactsManager.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        org.openide.awt.Mnemonics.setLocalizedText(cbEnableEnterpriseArtifactsManager, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbEnableEnterpriseArtifactsManager.text")); // NOI18N
-        cbEnableEnterpriseArtifactsManager.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                cbEnableEnterpriseArtifactsManagerItemStateChanged(evt);
-            }
-        });
-
-        javax.swing.GroupLayout pnOverallPanelLayout = new javax.swing.GroupLayout(pnOverallPanel);
-        pnOverallPanel.setLayout(pnOverallPanelLayout);
-        pnOverallPanelLayout.setHorizontalGroup(
-            pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(pnOverallPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnOverallPanelLayout.createSequentialGroup()
-                        .addComponent(cbEnableEnterpriseArtifactsManager, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(pnSettings, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-        );
-        pnOverallPanelLayout.setVerticalGroup(
-            pnOverallPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnOverallPanelLayout.createSequentialGroup()
-                .addComponent(cbEnableEnterpriseArtifactsManager)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnSettings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-
-        jScrollPane.setViewportView(pnOverallPanel);
+        tbOops.setEditable(false);
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        tbOops.setForeground(new java.awt.Color(255, 0, 0));
+        tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
+        tbOops.setBorder(null);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(20, 20, 20)
+                        .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(15, 15, 15)
+                    .addComponent(tbOops, javax.swing.GroupLayout.DEFAULT_SIZE, 805, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane)
-                .addGap(2, 2, 2))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 178, Short.MAX_VALUE)
+                .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(22, 22, 22))
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createSequentialGroup()
+                    .addGap(287, 287, 287)
+                    .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(89, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void cbEnableEnterpriseArtifactsManagerItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbEnableEnterpriseArtifactsManagerItemStateChanged
-        tbOops.setText("");
-        if (!cbEnableEnterpriseArtifactsManager.isSelected()) {
-            enableAllSubComponents(false);
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        } else {
-            enableDatabaseSubComponents(true);
-            validateDatabaseSettings();
-        }
-    }//GEN-LAST:event_cbEnableEnterpriseArtifactsManagerItemStateChanged
 
     private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
         ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnImportDatabaseActionPerformed
-
-    /**
-     * When the "Configure" button is clicked, open the proper dialog.
-     *
-     * @param evt Button event
-     */
-    @Messages({"GlobalSettingsPanel.configureButton.errorLabel=You must select a valid platform in the drop down box.",
-        "GlobalSettingsPanel.configureButton.errorTitle=Invalid platform selection."})
-    private void bnConfigureDatabaseSettingsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnConfigureDatabaseSettingsActionPerformed
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        Boolean dbConfigChanged = false;
-
-        switch (selectedPlatform) {
-            case SQLITE:
-                EamSqliteSettingsDialog dialogS = new EamSqliteSettingsDialog();
-                dbConfigChanged = dialogS.isChanged();
-                break;
-
-            case POSTGRESQL:
-                EamPostgresSettingsDialog dialogP = new EamPostgresSettingsDialog();
-                dbConfigChanged = dialogP.isChanged();
-                break;
-
-            default:
-                JOptionPane.showMessageDialog(null, Bundle.GlobalSettingsPanel_configureButton_errorLabel(),
-                        Bundle.GlobalSettingsPanel_configureButton_errorTitle(),
-                        JOptionPane.ERROR_MESSAGE);
-                break;
-        }
-
-        if (dbConfigChanged) {
-            if (initiallyEnabled || dbConfigured) {
-                enableButtonSubComponents(false);
-            }
-            dbConfigured = true;
-            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
-        }
-    }//GEN-LAST:event_bnConfigureDatabaseSettingsActionPerformed
-
-    /**
-     * When there is a change to the combobox, update the selectedPlatform.
-     *
-     * @param evt
-     */
-    @SuppressWarnings({"unchecked cast", "unchecked"})
-    private void comboboxSelectDatabaseTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_comboboxSelectDatabaseTypeActionPerformed
-        if (comboboxSelectDatabaseTypeActionListenerActive) {
-            JComboBox<String> cb = (JComboBox<String>) evt.getSource();
-            String platformName = (String) cb.getSelectedItem();
-            EamDbPlatformEnum.setSelectedPlatform(platformName);
-        }
-    }//GEN-LAST:event_comboboxSelectDatabaseTypeActionPerformed
 
     private void bnManageTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTagsActionPerformed
         ManageTagsDialog dialog = new ManageTagsDialog();
@@ -327,76 +246,63 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_bnManageTagsActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
-        ManageArtifactTypesDialog dialogT = new ManageArtifactTypesDialog();
+        ManageArtifactTypesDialog dialog = new ManageArtifactTypesDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTypesActionPerformed
+
+    private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
+        EamDbSettingsDialog dialog = new EamDbSettingsDialog();
+        firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+    }//GEN-LAST:event_bnDbConfigureActionPerformed
 
     @Override
     public void load() {
         tbOops.setText("");
 
         enableAllSubComponents(false);
-
-        initiallyEnabled = Boolean.valueOf(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")); // NON-NLS
-        cbEnableEnterpriseArtifactsManager.setSelected(initiallyEnabled); // NON-NLS
-        String selectedPlatformString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.selectedPlatform"); // NON-NLS
-        dbConfigured = selectedPlatformString != null;
-
-        if (dbConfigured) {
-            comboboxSelectDatabaseTypeActionListenerActive = false; // don't fire action listener while configuring combobox content
-            comboboxSelectDatabaseType.setSelectedIndex(EamDbPlatformEnum.getSelectedPlatform().ordinal());
-            comboboxSelectDatabaseTypeActionListenerActive = true; // don't fire action listener while loading combobox content
+        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
+                lbDbPlatformValue.setText(EamDbPlatformEnum.POSTGRESQL.toString());
+                lbDbNameValue.setText(dbSettingsPg.getDbName());
+                lbDbLocationValue.setText(dbSettingsPg.getHost());
+                break;
+            case SQLITE:
+                SqliteEamDbSettings dbSettingsSqlite = new SqliteEamDbSettings();
+                lbDbPlatformValue.setText(EamDbPlatformEnum.SQLITE.toString());
+                lbDbNameValue.setText(dbSettingsSqlite.getDbName());
+                lbDbLocationValue.setText(dbSettingsSqlite.getDbDirectory());
+                break;
+            default:
+                lbDbPlatformValue.setText("");
+                lbDbNameValue.setText("");
+                lbDbLocationValue.setText("");
+                break;
         }
-        if (this.valid() && initiallyEnabled) {
-            enableButtonSubComponents(true);
-        }
+
         this.ingestStateUpdated();
     }
 
     @Override
     public void store() { // Click OK or Apply on Options Panel
-        saveSettings();
     }
 
     /**
-     * Validates that the form is filled out correctly for our usage.
+     * Validates that the dialog/panel is filled out correctly for our usage.
      *
      * @return true if it's okay, false otherwise.
      */
-    boolean valid() {
+    public boolean valid() {
         tbOops.setText("");
+        Boolean enabled = Boolean.valueOf(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")); // NON-NLS
 
-        if (cbEnableEnterpriseArtifactsManager.isSelected()) {
-            return validateDatabaseSettings();
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Validate the Database Settings panel
-     *
-     * @return true or false
-     */
-    @Messages({"GlobalSettingsPanel.validate.mustConfigureDb.text=You must configure the database."})
-    private boolean validateDatabaseSettings() {
-        if (!dbConfigured) {
-            tbOops.setText(Bundle.GlobalSettingsPanel_validate_mustConfigureDb_text());
-            return false;
-        }
-
-        return true;
+        return enabled && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
 
     @Override
     public void saveSettings() { // Click OK on Global Settings Panel
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.enabled", Boolean.toString(cbEnableEnterpriseArtifactsManager.isSelected())); // NON-NLS
-        if (cbEnableEnterpriseArtifactsManager.isSelected()) {
-            EamDbPlatformEnum.saveSelectedPlatform();
-            EamDb dbManager = EamDb.getInstance();
-            dbManager.updateSettings();
-            enableButtonSubComponents(true);
-        }
     }
 
     @Override
@@ -426,7 +332,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         }
     };
 
-    @Messages({"GlobalSettingsPanel.validationErrMsg.ingestRunning=Cannot change settings while ingest is running."})
+    @Messages({"GlobalSettingsPanel.validationErrMsg.ingestRunning=Cannot change settings while ingest is running.",
+        "GlobalSettingsPanel.validationerrMsg.mustConfigure=You must configure the database."})
     private void ingestStateUpdated() {
         if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(() -> {
@@ -437,13 +344,16 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         }
 
         if (IngestManager.getInstance().isIngestRunning()) {
-            cbEnableEnterpriseArtifactsManager.setEnabled(false);
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
             enableAllSubComponents(false);
         } else {
-            cbEnableEnterpriseArtifactsManager.setEnabled(true);
             tbOops.setText("");
-            enableAllSubComponents(cbEnableEnterpriseArtifactsManager.isSelected());
+            if (valid()) {
+                enableAllSubComponents(true);
+            } else {
+                enableDatabaseConfigureButton(true);
+                tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
+            }
         }
     }
 
@@ -456,22 +366,20 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableAllSubComponents(Boolean enable) {
-        enableDatabaseSubComponents(enable);
+        enableDatabaseConfigureButton(enable);
         enableButtonSubComponents(enable);
         return true;
     }
 
     /**
-     * Wrapper around each of the enableXYZ methods that configure the database
-     * to enable/disable them all at the same time.
+     * Enable the Configure button
      *
      * @param enable
      *
      * @return True
      */
-    private boolean enableDatabaseSubComponents(Boolean enable) {
-        enableDatabasePlatformComboBox(enable);
-        enableConfigureDatabasePlatformButton(enable);
+    private boolean enableDatabaseConfigureButton(Boolean enable) {
+        bnDbConfigure.setEnabled(enable);
         return true;
     }
 
@@ -484,84 +392,25 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableButtonSubComponents(Boolean enable) {
-        enableManageCorrelationTypesButton(enable);
-        enableImportGloballyKnownArtifactsButton(enable);
-        enableManageTagsButton(enable);
+        bnManageTypes.setEnabled(enable);
+        bnImportDatabase.setEnabled(enable);
+        bnManageTags.setEnabled(enable);
         return true;
     }
 
-    /**
-     * Enables the ComboBox used to select the database platform.
-     *
-     * @param enable
-     *
-     * @return True or False
-     */
-    private boolean enableDatabasePlatformComboBox(Boolean enable) {
-        comboboxSelectDatabaseType.setEnabled(enable);
-        return enable;
-    }
-
-    /**
-     * Enables the "Configure" button used to configure the database platform.
-     *
-     * @param enable
-     *
-     * @return True or False
-     */
-    private boolean enableConfigureDatabasePlatformButton(Boolean enable) {
-        bnConfigureDatabaseSettings.setEnabled(enable);
-        return enable;
-    }
-
-    /**
-     * Enables the "Import Globally Known Artifacts" button.
-     *
-     * @param enable
-     *
-     * @return True or False
-     */
-    private boolean enableImportGloballyKnownArtifactsButton(Boolean enable) {
-        bnImportDatabase.setEnabled(enable);
-        return enable;
-    }
-
-    /**
-     * Enables the "Manage Artifact Types" button.
-     *
-     * @param enable
-     *
-     * @return True or False
-     */
-    private boolean enableManageCorrelationTypesButton(Boolean enable) {
-        bnManageTypes.setEnabled(enable);
-        return enable;
-    }
-
-    /**
-     * Enables the "Manage Tags" button.
-     *
-     * @param enable
-     *
-     * @return True or False
-     */
-    private boolean enableManageTagsButton(Boolean enable) {
-        bnManageTags.setEnabled(enable);
-        return enable;
-    }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton bnConfigureDatabaseSettings;
+    private javax.swing.JButton bnDbConfigure;
     private javax.swing.JButton bnImportDatabase;
     private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
-    private javax.swing.JCheckBox cbEnableEnterpriseArtifactsManager;
-    private javax.swing.JComboBox<String> comboboxSelectDatabaseType;
-    private javax.swing.JScrollPane jScrollPane;
-    private javax.swing.JLabel lbDatabasePlatform;
-    private javax.swing.JPanel pnDatabaseConnectionSettings;
-    private javax.swing.JPanel pnOverallPanel;
-    private javax.swing.JPanel pnSettings;
+    private javax.swing.JLabel lbDbLocationLabel;
+    private javax.swing.JLabel lbDbLocationValue;
+    private javax.swing.JLabel lbDbNameLabel;
+    private javax.swing.JLabel lbDbNameValue;
+    private javax.swing.JLabel lbDbPlatformTypeLabel;
+    private javax.swing.JLabel lbDbPlatformValue;
+    private javax.swing.JPanel pnDatabaseConfiguration;
+    private javax.swing.JPanel pnDatabaseContentButtons;
     private javax.swing.JTextField tbOops;
     // End of variables declaration//GEN-END:variables
 }
