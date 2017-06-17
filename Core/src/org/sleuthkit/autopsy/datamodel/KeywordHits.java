@@ -51,6 +51,7 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskException;
+import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 
 /**
  * Keyword hits node support
@@ -59,12 +60,13 @@ public class KeywordHits implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
     private static final Logger logger = Logger.getLogger(KeywordHits.class.getName());
-    private static final String KEYWORD_HITS = NbBundle.getMessage(KeywordHits.class, "KeywordHits.kwHits.text");
+    @NbBundle.Messages("KeywordHits.kwHits.text=Keyword Hits")
+    private static final String KEYWORD_HITS = Bundle.KeywordHits_kwHits_text();
     public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel();
-    public static final String SIMPLE_LITERAL_SEARCH = NbBundle
-            .getMessage(KeywordHits.class, "KeywordHits.simpleLiteralSearch.text");
-    public static final String SIMPLE_REGEX_SEARCH = NbBundle
-            .getMessage(KeywordHits.class, "KeywordHits.singleRegexSearch.text");
+    @NbBundle.Messages("KeywordHits.simpleLiteralSearch.text=Single Literal Keyword Search")
+    public static final String SIMPLE_LITERAL_SEARCH = Bundle.KeywordHits_simpleLiteralSearch_text();
+    @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
+    public static final String SIMPLE_REGEX_SEARCH = Bundle.KeywordHits_singleRegexSearch_text();
     private final KeywordResults keywordResults;
     // String used in the instance MAP so that exact matches and substring can fit into the same
     // data structure as regexps, even though they don't use instances.
@@ -355,6 +357,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
+        @NbBundle.Messages({"KeywordHits.createSheet.name.name=Name",
+            "KeywordHits.createSheet.name.displayName=Name",
+            "KeywordHits.createSheet.name.desc=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -363,9 +368,10 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.name"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.displayName"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.name.desc"),
+            ss.put(new NodeProperty<>(
+                    KeywordHits_createSheet_name_name(),
+                    KeywordHits_createSheet_name_displayName(),
+                    KeywordHits_createSheet_name_desc(),
                     getName()));
 
             return s;
@@ -499,6 +505,12 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
+        @NbBundle.Messages({"KeywordHits.createSheet.listName.name=List Name",
+            "KeywordHits.createSheet.listName.displayName=List Name",
+            "KeywordHits.createSheet.listName.desc=no description",
+            "KeywordHits.createSheet.numChildren.name=Number of Children",
+            "KeywordHits.createSheet.numChildren.displayName=Number of Children",
+            "KeywordHits.createSheet.numChildren.desc=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -507,14 +519,16 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
+            ss.put(new NodeProperty<>(
+                    KeywordHits_createSheet_listName_name(),
+                    KeywordHits_createSheet_listName_displayName(),
+                    KeywordHits_createSheet_listName_desc(),
                     listName));
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.name"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.displayName"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.numChildren.desc"),
+            ss.put(new NodeProperty<>(
+                    KeywordHits_createSheet_numChildren_name(),
+                    KeywordHits_createSheet_numChildren_displayName(),
+                    KeywordHits_createSheet_numChildren_desc(),
                     keywordResults.getKeywords(listName).size()));
 
             return s;
@@ -631,6 +645,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
+        @NbBundle.Messages({"KeywordHits.createSheet.filesWithHits.name=Files with Hits",
+            "KeywordHits.createSheet.filesWithHits.displayName=Files with Hits",
+            "KeywordHits.createSheet.filesWithHits.desc=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -638,15 +655,16 @@ public class KeywordHits implements AutopsyVisitableItem {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
+            ss.put(new NodeProperty<>(
+                    KeywordHits_createSheet_listName_name(),
+                    KeywordHits_createSheet_listName_displayName(),
+                    KeywordHits_createSheet_listName_desc(),
                     getDisplayName()));
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
+            ss.put(new NodeProperty<>(
+                    KeywordHits_createSheet_filesWithHits_name(),
+                    KeywordHits_createSheet_filesWithHits_displayName(),
+                    KeywordHits_createSheet_filesWithHits_desc(),
                     keywordResults.getKeywordInstances(setName, keyword).size()));
 
             return s;
@@ -816,14 +834,16 @@ public class KeywordHits implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.name"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.displayName"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.listName.desc"),
+            ss.put(new NodeProperty<>(
+                    KeywordHits_createSheet_listName_name(),
+                    KeywordHits_createSheet_listName_displayName(),
+                    KeywordHits_createSheet_listName_desc(),
                     getDisplayName()));
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
+            ss.put(new NodeProperty<>(
+                    KeywordHits_createSheet_filesWithHits_name(),
+                    KeywordHits_createSheet_filesWithHits_displayName(),
+                    KeywordHits_createSheet_filesWithHits_desc(),
                     keywordResults.getKeywordInstances(setName, keyword).size()));
 
             return s;
@@ -842,6 +862,15 @@ public class KeywordHits implements AutopsyVisitableItem {
      *
      * @return Node or null on error
      */
+    @NbBundle.Messages({"KeywordHits.createNodeForKey.modTime.name=ModifiedTime",
+        "KeywordHits.createNodeForKey.modTime.displayName=Modified Time",
+        "KeywordHits.createNodeForKey.modTime.desc=Modified Time",
+        "KeywordHits.createNodeForKey.accessTime.name=AccessTime",
+        "KeywordHits.createNodeForKey.accessTime.displayName=Access Time",
+        "KeywordHits.createNodeForKey.accessTime.desc=Access Time",
+        "KeywordHits.createNodeForKey.chgTime.name=ChangeTime",
+        "KeywordHits.createNodeForKey.chgTime.displayName=Change Time",
+        "KeywordHits.createNodeForKey.chgTime.desc=Change Time"})
     private BlackboardArtifactNode createBlackboardArtifactNode(Long artifactId) {
         if (skCase == null) {
             return null;
@@ -866,25 +895,19 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
 
             n.addNodeProperty(new NodeProperty<>(
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.modTime.name"),
-                    NbBundle.getMessage(this.getClass(),
-                            "KeywordHits.createNodeForKey.modTime.displayName"),
-                    NbBundle.getMessage(this.getClass(),
-                            "KeywordHits.createNodeForKey.modTime.desc"),
+                    KeywordHits_createNodeForKey_modTime_name(),
+                    KeywordHits_createNodeForKey_modTime_displayName(),
+                    KeywordHits_createNodeForKey_modTime_desc(),
                     ContentUtils.getStringTime(file.getMtime(), file)));
             n.addNodeProperty(new NodeProperty<>(
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.accessTime.name"),
-                    NbBundle.getMessage(this.getClass(),
-                            "KeywordHits.createNodeForKey.accessTime.displayName"),
-                    NbBundle.getMessage(this.getClass(),
-                            "KeywordHits.createNodeForKey.accessTime.desc"),
+                    KeywordHits_createNodeForKey_accessTime_name(),
+                    KeywordHits_createNodeForKey_accessTime_displayName(),
+                    KeywordHits_createNodeForKey_accessTime_desc(),
                     ContentUtils.getStringTime(file.getAtime(), file)));
             n.addNodeProperty(new NodeProperty<>(
-                    NbBundle.getMessage(this.getClass(), "KeywordHits.createNodeForKey.chgTime.name"),
-                    NbBundle.getMessage(this.getClass(),
-                            "KeywordHits.createNodeForKey.chgTime.displayName"),
-                    NbBundle.getMessage(this.getClass(),
-                            "KeywordHits.createNodeForKey.chgTime.desc"),
+                    KeywordHits_createNodeForKey_chgTime_name(),
+                    KeywordHits_createNodeForKey_chgTime_displayName(),
+                    KeywordHits_createNodeForKey_chgTime_desc(),
                     ContentUtils.getStringTime(file.getCtime(), file)));
             return n;
         } catch (TskException ex) {
