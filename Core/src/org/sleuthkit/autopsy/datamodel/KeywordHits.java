@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2011-2016 Basis Technology Corp.
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -68,18 +69,18 @@ public class KeywordHits implements AutopsyVisitableItem {
     // String used in the instance MAP so that exact matches and substring can fit into the same
     // data structure as regexps, even though they don't use instances.
     private final String DEFAULT_INSTANCE_NAME = "DEFAULT_INSTANCE_NAME";
-    
+
     public KeywordHits(SleuthkitCase skCase) {
         this.skCase = skCase;
         keywordResults = new KeywordResults();
     }
-    
-    /* All of these maps and code assume the following:
-     * Regexps will have an 'instance' layer that shows the specific words that matched the regexp
-     * Exact match and substring will not have the instance layer and instead will have the specific hits 
-     * below their term.
-     */
 
+    /*
+     * All of these maps and code assume the following: Regexps will have an
+     * 'instance' layer that shows the specific words that matched the regexp
+     * Exact match and substring will not have the instance layer and instead
+     * will have the specific hits below their term.
+     */
     private final class KeywordResults extends Observable {
 
         // Map from listName/Type to Map of keywords/regexp to Map of instance terms to Set of artifact Ids
@@ -104,11 +105,12 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         /**
-         * Get keywords used in a given list.  Will be regexp patterns for regexps 
-         * and search term for non-regexps.
-         * 
+         * Get keywords used in a given list. Will be regexp patterns for
+         * regexps and search term for non-regexps.
+         *
          * @param listName Keyword list name
-         * @return 
+         *
+         * @return
          */
         List<String> getKeywords(String listName) {
             List<String> keywords;
@@ -118,15 +120,16 @@ public class KeywordHits implements AutopsyVisitableItem {
             Collections.sort(keywords);
             return keywords;
         }
-        
+
         /**
-         * Get specific keyword terms that were found for a given list 
-         * and keyword combination. For example, a specific phone number for a
-         * phone number regexp.  Will be the default instance for non-regexp searches.
-         * 
+         * Get specific keyword terms that were found for a given list and
+         * keyword combination. For example, a specific phone number for a phone
+         * number regexp. Will be the default instance for non-regexp searches.
+         *
          * @param listName Keyword list name
-         * @param keyword search term (regexp pattern or exact match term)
-         * @return 
+         * @param keyword  search term (regexp pattern or exact match term)
+         *
+         * @return
          */
         List<String> getKeywordInstances(String listName, String keyword) {
             List<String> instances;
@@ -139,10 +142,14 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         /**
          * Get artifact ids for a given list, keyword, and instance triple
-         * @param listName Keyword list name
-         * @param keyword search term (regexp pattern or exact match term)
-         * @param keywordInstance specific term that matched (or default instance name)
-         * @return 
+         *
+         * @param listName        Keyword list name
+         * @param keyword         search term (regexp pattern or exact match
+         *                        term)
+         * @param keywordInstance specific term that matched (or default
+         *                        instance name)
+         *
+         * @return
          */
         Set<Long> getArtifactIds(String listName, String keyword, String keywordInstance) {
             synchronized (topLevelMap) {
@@ -151,11 +158,13 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         /**
-         * Add a hit for a regexp to the internal data structure. 
-         * @param listMap Maps keywords/regexp to instances to artifact IDs
-         * @param regExp Regular expression that was used in search
+         * Add a hit for a regexp to the internal data structure.
+         *
+         * @param listMap         Maps keywords/regexp to instances to artifact
+         *                        IDs
+         * @param regExp          Regular expression that was used in search
          * @param keywordInstance Specific term that matched regexp
-         * @param artifactId Artifact id of file that had hit
+         * @param artifactId      Artifact id of file that had hit
          */
         void addRegExpToList(Map<String, Map<String, Set<Long>>> listMap, String regExp, String keywordInstance, Long artifactId) {
             if (listMap.containsKey(regExp) == false) {
@@ -171,12 +180,13 @@ public class KeywordHits implements AutopsyVisitableItem {
             // add this ID to the instance
             instanceMap.get(keywordInstance).add(artifactId);
         }
-        
-        
+
         /**
-         * Add a hit for a exactmatch (or substring) to the internal data structure. 
-         * @param listMap Maps keywords/regexp to instances to artifact IDs
-         * @param keyWord Term that was hit
+         * Add a hit for a exactmatch (or substring) to the internal data
+         * structure.
+         *
+         * @param listMap    Maps keywords/regexp to instances to artifact IDs
+         * @param keyWord    Term that was hit
          * @param artifactId Artifact id of file that had hit
          */
         void addNonRegExpMatchToList(Map<String, Map<String, Set<Long>>> listMap, String keyWord, Long artifactId) {
@@ -191,10 +201,13 @@ public class KeywordHits implements AutopsyVisitableItem {
             }
             instanceMap.get(DEFAULT_INSTANCE_NAME).add(artifactId);
         }
-        
+
         /**
-         * Populate data structure for the tree based on the keyword hit artifacts
-         * @param artifactIds Maps Artifact ID to map of attribute types to attribute values
+         * Populate data structure for the tree based on the keyword hit
+         * artifacts
+         *
+         * @param artifactIds Maps Artifact ID to map of attribute types to
+         *                    attribute values
          */
         void populateTreeMaps(Map<Long, Map<Long, String>> artifactIds) {
             synchronized (topLevelMap) {
@@ -223,7 +236,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
                     // new in 4.4
                     String kwType = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()));
-                    
+
                     // part of a list
                     if (listName != null) {
                         // get or create list entry
@@ -231,7 +244,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                             listsMap.put(listName, new LinkedHashMap<>());
                         }
                         Map<String, Map<String, Set<Long>>> listMap = listsMap.get(listName);
-                        
+
                         // substring, treated same as exact match
                         // Enum for "1" is defined in KeywordSearch.java
                         if ((kwType != null) && (kwType.equals("1"))) {
@@ -241,8 +254,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                             } else {
                                 addNonRegExpMatchToList(listMap, word, id);
                             }
-                        }
-                        else if (reg != null) {
+                        } else if (reg != null) {
                             addRegExpToList(listMap, reg, word, id);
                         } else {
                             addNonRegExpMatchToList(listMap, word, id);
@@ -259,11 +271,11 @@ public class KeywordHits implements AutopsyVisitableItem {
                     } // literal, single term
                     else {
                         addNonRegExpMatchToList(literalMap, word, id);
-                    }   
+                    }
                 }
                 topLevelMap.putAll(listsMap);
             }
-            
+
             setChanged();
             notifyObservers();
         }
@@ -299,9 +311,9 @@ public class KeywordHits implements AutopsyVisitableItem {
                     long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                     long typeId = resultSet.getLong("attribute_type_id"); //NON-NLS
                     if (!artifactIds.containsKey(artifactId)) {
-                        artifactIds.put(artifactId, new LinkedHashMap<Long, String>());
+                        artifactIds.put(artifactId, new LinkedHashMap<>());
                     }
-                    if (valueStr != null && !valueStr.equals("")) {
+                    if (StringUtils.isNotEmpty(valueStr)) {
                         artifactIds.get(artifactId).put(typeId, valueStr);
                     } else {
                         // Keyword Search Type is an int
@@ -366,7 +378,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     }
 
     /**
-     * Creates the list nodes 
+     * Creates the list nodes
      */
     private class ListFactory extends ChildFactory.Detachable<String> implements Observer {
 
@@ -458,8 +470,9 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    /** 
-     * Represents the keyword search lists (or default groupings if list was not given) 
+    /**
+     * Represents the keyword search lists (or default groupings if list was not
+     * given)
      */
     public class ListNode extends DisplayableItemNode implements Observer {
 
@@ -587,12 +600,12 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         private void updateDisplayName() {
             int totalDescendants = 0;
-            
+
             for (String instance : keywordResults.getKeywordInstances(setName, keyword)) {
                 Set<Long> ids = keywordResults.getArtifactIds(setName, keyword, instance);
                 totalDescendants += ids.size();
             }
-            
+
             super.setDisplayName(keyword + " (" + totalDescendants + ")");
         }
 
@@ -607,8 +620,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             // is this an exact/substring match (i.e. did we use the DEFAULT name)?
             if (instances.size() == 1 && instances.get(0).equals(DEFAULT_INSTANCE_NAME)) {
                 return true;
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -645,42 +657,50 @@ public class KeywordHits implements AutopsyVisitableItem {
             return getClass().getName();
         }
     }
-    
+
     // Allows us to pass in either longs or strings
     // as they keys for different types of nodes at the 
     // same level. Probably a better way to do this, but
     // it works.
-    class RegExpInstanceKey {
+    private class RegExpInstanceKey {
+
         private final boolean isRegExp;
         private String strKey;
         private Long longKey;
-        public RegExpInstanceKey(String key) {
+
+        RegExpInstanceKey(String key) {
             isRegExp = true;
             strKey = key;
         }
-        public RegExpInstanceKey(Long key) {
+
+        RegExpInstanceKey(Long key) {
             isRegExp = false;
             longKey = key;
         }
+
         boolean isRegExp() {
             return isRegExp;
         }
+
         Long getIdKey() {
             return longKey;
         }
+
         String getRegExpKey() {
             return strKey;
         }
     }
 
     /**
-     * Creates the nodes for a given regexp that represent the specific terms that were found
+     * Creates the nodes for a given regexp that represent the specific terms
+     * that were found
      */
     public class RegExpInstancesFactory extends ChildFactory.Detachable<RegExpInstanceKey> implements Observer {
+
         private final String keyword;
         private final String setName;
-        
-        private Map<RegExpInstanceKey, DisplayableItemNode > nodesMap = new HashMap<>();
+
+        private final Map<RegExpInstanceKey, DisplayableItemNode> nodesMap = new HashMap<>();
 
         public RegExpInstancesFactory(String setName, String keyword) {
             super();
@@ -700,15 +720,15 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<RegExpInstanceKey> list) {
-            List <String>instances = keywordResults.getKeywordInstances(setName, keyword); 
+            List<String> instances = keywordResults.getKeywordInstances(setName, keyword);
             // The keys are different depending on what we are displaying.
             // regexp get another layer to show instances.  
             // Exact/substring matches don't. 
             if ((instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME))) {
-                for (Long id : keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME) ) {
+                for (Long id : keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME)) {
                     RegExpInstanceKey key = new RegExpInstanceKey(id);
                     if (!nodesMap.containsKey(key)) {
-                        nodesMap.put(key, createNode(key));  
+                        nodesMap.put(key, createNode(key));
                     }
                     list.add(key);
                 }
@@ -720,7 +740,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     }
                     list.add(key);
                 }
-                
+
             }
             return true;
         }
@@ -731,23 +751,24 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         private DisplayableItemNode createNode(RegExpInstanceKey key) {
-			// if it isn't a regexp, then skip the 'instance' layer of the tree
+            // if it isn't a regexp, then skip the 'instance' layer of the tree
             if (key.isRegExp() == false) {
                 return createBlackboardArtifactNode(key.getIdKey());
             } else {
                 return new RegExpInstanceNode(setName, keyword, key.getRegExpKey());
             }
-            
+
         }
+
         @Override
         public void update(Observable o, Object arg) {
             refresh(true);
         }
-        
+
     }
-    
+
     /**
-     * Represents a specific term that was found from a regexp 
+     * Represents a specific term that was found from a regexp
      */
     public class RegExpInstanceNode extends DisplayableItemNode implements Observer {
 
@@ -814,12 +835,14 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
-    /** 
+    /**
      * Create a blackboard node for the given Keyword Hit artifact
+     *
      * @param artifactId
+     *
      * @return Node or null on error
      */
-    private BlackboardArtifactNode createBlackboardArtifactNode (Long artifactId) {
+    private BlackboardArtifactNode createBlackboardArtifactNode(Long artifactId) {
         if (skCase == null) {
             return null;
         }
@@ -869,7 +892,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
         return null;
     }
-    
+
     /**
      * Creates nodes for individual files that had hits
      */
@@ -878,8 +901,8 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String keyword;
         private final String setName;
         private final String instance;
-        
-        private Map<Long, BlackboardArtifactNode > nodesMap = new HashMap<>();
+
+        private final Map<Long, BlackboardArtifactNode> nodesMap = new HashMap<>();
 
         public HitsFactory(String setName, String keyword, String instance) {
             super();
@@ -900,11 +923,11 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
-            for (Long id : keywordResults.getArtifactIds(setName, keyword, instance) ) {
+            for (Long id : keywordResults.getArtifactIds(setName, keyword, instance)) {
                 if (!nodesMap.containsKey(id)) {
-                    nodesMap.put(id,  createBlackboardArtifactNode(id));
+                    nodesMap.put(id, createBlackboardArtifactNode(id));
                 }
-                list.add(id); 
+                list.add(id);
             }
             return true;
         }
