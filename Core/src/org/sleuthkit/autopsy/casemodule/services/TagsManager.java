@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,65 @@ public class TagsManager implements Closeable {
     private final SleuthkitCase caseDb;
 
     /**
+     * Gets a map of tag display names to tag name entries in the case database.
+     * It has keys for the display names of the standard tag types, the current
+     * user's custom tag types, and the tags in the case database. The value for
+     * a given key will be null if the corresponding tag type is defined, but a
+     * tag name entry has not yet added to the case database. In that case,
+     * addTagName may be called to add the tag name entry.
+     *
+     * @return A map of tag display names to possibly null TagName object
+     *         references.
+     *
+     * @throws TskCoreException if there is an error querying the case database.
+     */
+    public Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
+        /**
+         * Order is important here. The keys (display names) for the current
+         * user's custom tag types are added to the map first, with null TagName
+         * values. If tag name entries exist for those keys, loading of the tag
+         * names from the database supplies the missing values. Standard tag
+         * names are added during the initialization of the case database.
+         *
+         * Note that creating the map on demand increases the probability that
+         * the display names of newly added custom tag types and the display
+         * names of tags added to a multi-user case by other users appear in the
+         * map.
+         */
+        Map<String, TagName> tagNames = new HashMap<>();
+        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
+        for (TagNameDefiniton tagType : customTypes) {
+            tagNames.put(tagType.getDisplayName(), null);
+        }
+        for (TagName tagName : caseDb.getAllTagNames()) {
+            tagNames.put(tagName.getDisplayName(), tagName);
+        }
+        return new HashMap<>(tagNames);
+    }
+
+    /**
+     * Tests whether or not a given tag display name contains an illegal
+     * character.
+     *
+     * @param tagDisplayName Display name of a tag.
+     *
+     * @return True or false.
+     */
+    public static boolean containsIllegalCharacters(String tagDisplayName) {
+        return (tagDisplayName.contains("\\")
+                || tagDisplayName.contains(":")
+                || tagDisplayName.contains("*")
+                || tagDisplayName.contains("?")
+                || tagDisplayName.contains("\"")
+                || tagDisplayName.contains("<")
+                || tagDisplayName.contains(">")
+                || tagDisplayName.contains("|")
+                || tagDisplayName.contains(",")
+                || tagDisplayName.contains(";"));
+
+    }
+
+    /**
      * Constructs a per case Autopsy service that manages the addition of
      * content and artifact tags to the case database.
      *
@@ -80,43 +139,6 @@ public class TagsManager implements Closeable {
      */
     public List<TagName> getTagNamesInUse() throws TskCoreException {
         return caseDb.getTagNamesInUse();
-    }
-
-    /**
-     * Gets a map of tag display names to tag name entries in the case database.
-     * It has keys for the display names of the standard tag types, the current
-     * user's custom tag types, and the tags in the case database. The value for
-     * a given key will be null if the corresponding tag type is defined, but a
-     * tag name entry has not yet added to the case database. In that case,
-     * addTagName may be called to add the tag name entry.
-     *
-     * @return A map of tag display names to possibly null TagName object
-     *         references.
-     *
-     * @throws TskCoreException if there is an error querying the case database.
-     */
-    public synchronized Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
-        /**
-         * Order is important here. The keys (display names) for the current
-         * user's custom tag types are added to the map first, with null TagName
-         * values. If tag name entries exist for those keys, loading of the tag
-         * names from the database supplies the missing values. Standard tag
-         * names are added during the initialization of the case database.
-         *
-         * Note that creating the map on demand increases the probability that
-         * the display names of newly added custom tag types and the display
-         * names of tags added to a multi-user case by other users appear in the
-         * map.
-         */
-        Map<String, TagName> tagNames = new HashMap<>();
-        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-        for (TagNameDefiniton tagType : customTypes) {
-            tagNames.put(tagType.getDisplayName(), null);
-        }
-        for (TagName tagName : caseDb.getAllTagNames()) {
-            tagNames.put(tagName.getDisplayName(), tagName);
-        }
-        return new HashMap<>(tagNames);
     }
 
     /**
@@ -278,7 +300,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<ContentTag> getAllContentTags() throws TskCoreException {
+    public List<ContentTag> getAllContentTags() throws TskCoreException {
         return caseDb.getAllContentTags();
     }
 
@@ -294,7 +316,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags count from
      *                          the case database.
      */
-    public synchronized long getContentTagsCountByTagName(TagName tagName) throws TskCoreException {
+    public long getContentTagsCountByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getContentTagsCountByTagName(tagName);
     }
 
@@ -308,7 +330,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tag from the
      *                          case database.
      */
-    public synchronized ContentTag getContentTagByTagID(long tagId) throws TskCoreException {
+    public ContentTag getContentTagByTagID(long tagId) throws TskCoreException {
         return caseDb.getContentTagByID(tagId);
     }
 
@@ -323,7 +345,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<ContentTag> getContentTagsByTagName(TagName tagName) throws TskCoreException {
+    public List<ContentTag> getContentTagsByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getContentTagsByTagName(tagName);
     }
 
@@ -338,7 +360,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
+    public List<ContentTag> getContentTagsByContent(Content content) throws TskCoreException {
         return caseDb.getContentTagsByContent(content);
     }
 
@@ -355,7 +377,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error adding the tag to the case
      *                          database.
      */
-    public synchronized BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName) throws TskCoreException {
+    public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName) throws TskCoreException {
         return addBlackboardArtifactTag(artifact, tagName, "");
     }
 
@@ -373,7 +395,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error adding the tag to the case
      *                          database.
      */
-    public synchronized BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
+    public BlackboardArtifactTag addBlackboardArtifactTag(BlackboardArtifact artifact, TagName tagName, String comment) throws TskCoreException {
         BlackboardArtifactTag tag = caseDb.addBlackboardArtifactTag(artifact, tagName, comment);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagAdded(tag);
@@ -391,7 +413,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error deleting the tag from the
      *                          case database.
      */
-    public synchronized void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
+    public void deleteBlackboardArtifactTag(BlackboardArtifactTag tag) throws TskCoreException {
         caseDb.deleteBlackboardArtifactTag(tag);
         try {
             Case.getCurrentCase().notifyBlackBoardArtifactTagDeleted(tag);
@@ -408,7 +430,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<BlackboardArtifactTag> getAllBlackboardArtifactTags() throws TskCoreException {
+    public List<BlackboardArtifactTag> getAllBlackboardArtifactTags() throws TskCoreException {
         return caseDb.getAllBlackboardArtifactTags();
     }
 
@@ -424,7 +446,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags count from
      *                          the case database.
      */
-    public synchronized long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
+    public long getBlackboardArtifactTagsCountByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsCountByTagName(tagName);
     }
 
@@ -438,7 +460,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tag from the
      *                          case database.
      */
-    public synchronized BlackboardArtifactTag getBlackboardArtifactTagByTagID(long tagId) throws TskCoreException {
+    public BlackboardArtifactTag getBlackboardArtifactTagByTagID(long tagId) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagByID(tagId);
     }
 
@@ -455,7 +477,7 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName) throws TskCoreException {
+    public List<BlackboardArtifactTag> getBlackboardArtifactTagsByTagName(TagName tagName) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsByTagName(tagName);
     }
 
@@ -470,30 +492,8 @@ public class TagsManager implements Closeable {
      * @throws TskCoreException If there is an error getting the tags from the
      *                          case database.
      */
-    public synchronized List<BlackboardArtifactTag> getBlackboardArtifactTagsByArtifact(BlackboardArtifact artifact) throws TskCoreException {
+    public List<BlackboardArtifactTag> getBlackboardArtifactTagsByArtifact(BlackboardArtifact artifact) throws TskCoreException {
         return caseDb.getBlackboardArtifactTagsByArtifact(artifact);
-    }
-
-    /**
-     * Returns true if the tag display name contains an illegal character. Used
-     * after a tag display name is retrieved from user input.
-     *
-     * @param content Display name of the tag being added.
-     *
-     * @return boolean indicating whether the name has an invalid character.
-     */
-    public static boolean containsIllegalCharacters(String content) {
-        return (content.contains("\\")
-                || content.contains(":")
-                || content.contains("*")
-                || content.contains("?")
-                || content.contains("\"")
-                || content.contains("<")
-                || content.contains(">")
-                || content.contains("|")
-                || content.contains(",")
-                || content.contains(";"));
-
     }
 
     /**
@@ -515,7 +515,7 @@ public class TagsManager implements Closeable {
      * @deprecated Not reliable for multi-user cases.
      */
     @Deprecated
-    public synchronized boolean tagNameExists(String tagDisplayName) {
+    public boolean tagNameExists(String tagDisplayName) {
         try {
             Map<String, TagName> tagNames = getDisplayNamesToTagNamesMap();
             return tagNames.containsKey(tagDisplayName) && (tagNames.get(tagDisplayName) != null);
@@ -531,8 +531,9 @@ public class TagsManager implements Closeable {
      * @throws IOException If there is a problem closing the tags manager.
      * @deprecated Tags manager clients should not close the tags manager.
      */
-    @Override
     @Deprecated
-    public synchronized void close() throws IOException {
+    @Override
+    public void close() throws IOException {
     }
+
 }

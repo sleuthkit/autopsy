@@ -24,7 +24,6 @@ import java.awt.Dialog;
 import java.awt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -52,18 +51,18 @@ import org.openide.nodes.NodeReorderEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
+import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 import org.sleuthkit.autopsy.corecomponents.ResultViewerPersistence.SortCriterion;
 import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.TskCoreException;
-import static org.sleuthkit.autopsy.corecomponents.Bundle.*;
 
 /**
  * A thumbnail viewer for the results view, with paging support.
  *
  * The paging is intended to reduce memory footprint by load only up to
- * (currently) 1000 images at a time. This works whether or not the underlying
+ * (currently) 200 images at a time. This works whether or not the underlying
  * content nodes are being lazy loaded or not.
  *
  * TODO (JIRA-2658): Fix DataResultViewer extension point. When this is done,
@@ -78,9 +77,10 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     private int curPage;
     private int totalPages;
     private int curPageImages;
-    private int iconSize = ImageUtils.ICON_SIZE_MEDIUM;
+    private int thumbSize = ImageUtils.ICON_SIZE_MEDIUM;
     private final PageUpdater pageUpdater = new PageUpdater();
     private TableFilterNode tfn;
+    private ThumbnailViewChildren tvc;
 
     /**
      * Constructs a thumbnail viewer for the results view, with paging support,
@@ -295,18 +295,12 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                 break;
         }
 
-        if (iconSize != newIconSize) {
-            iconSize = newIconSize;
+        if (thumbSize != newIconSize) {
+            thumbSize = newIconSize;
             Node root = em.getRootContext();
-            for (Children c : Arrays.asList(root.getChildren())) {
-                ((ThumbnailViewChildren) c).setIconSize(iconSize);
-            }
+            ((ThumbnailViewChildren) root.getChildren()).setThumbsSize(thumbSize);
 
-            for (Node page : root.getChildren().getNodes()) {
-                for (Node node : page.getChildren().getNodes()) {
-                    ((ThumbnailViewChildren.ThumbnailViewNode) node).setIconSize(iconSize);
-                }
-            }
+           
 
             // Temporarily set the explored context to the root, instead of a child node.
             // This is a workaround hack to convince org.openide.explorer.ExplorerManager to
@@ -385,6 +379,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
     @Override
     public void setNode(Node givenNode) {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        if (tvc != null) {
+            tvc.cancelLoadingThumbnails();
+        }
         try {
             if (givenNode != null) {
                 tfn = (TableFilterNode) givenNode;
@@ -393,14 +390,15 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
                  * from the child nodes of the given node.
                  */
-                ThumbnailViewChildren childNode = new ThumbnailViewChildren(givenNode, iconSize);
-                final Node root = new AbstractNode(childNode);
+                tvc = new ThumbnailViewChildren(givenNode,thumbSize);
+                final Node root = new AbstractNode(tvc);
 
                 pageUpdater.setRoot(root);
                 root.addNodeListener(pageUpdater);
                 em.setRootContext(root);
             } else {
                 tfn = null;
+                tvc = null;
                 Node emptyNode = new AbstractNode(Children.LEAF);
                 em.setRootContext(emptyNode);
                 iconView.setBackground(Color.BLACK);
@@ -672,4 +670,5 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
             }
         }
     }
+
 }
