@@ -44,9 +44,10 @@ public class EamDbSettingsDialog extends JDialog {
     private final ImageIcon goodIcon;
     private final ImageIcon badIcon;
 
-    private PostgresEamDbSettings dbSettingsPostgres;
-    private SqliteEamDbSettings dbSettingsSqlite;
-    private Boolean hasChanged;
+    private final PostgresEamDbSettings dbSettingsPostgres;
+    private final SqliteEamDbSettings dbSettingsSqlite;
+    private DatabaseTestResult testingStatus;
+    private Boolean isCreated;
 
     /**
      * Creates new form EamDbSettingsDialog
@@ -62,8 +63,12 @@ public class EamDbSettingsDialog extends JDialog {
         goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false)); // NON-NLS
         badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false)); // NON-NLS
 
+        dbSettingsPostgres = new PostgresEamDbSettings();
+        dbSettingsSqlite = new SqliteEamDbSettings();
+        
         initComponents();
         customizeComponents();
+        valid();
         display();
     }
 
@@ -378,9 +383,6 @@ public class EamDbSettingsDialog extends JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void customizeComponents() {
-        setTextPrompts();
-        setTextBoxListeners();
-
         bnGrpDatabasePlatforms.add(rdioBnDisabled);
         bnGrpDatabasePlatforms.add(rdioBnPostgreSQL);
         bnGrpDatabasePlatforms.add(rdioBnSQLite);
@@ -389,13 +391,26 @@ public class EamDbSettingsDialog extends JDialog {
         switch (selectedPlatform) {
             case POSTGRESQL:
                 rdioBnPostgreSQL.setSelected(true);
+                testingStatus = DatabaseTestResult.UNTESTED;
+                updatePostgresFields(true);
+                updateSqliteFields(false);
                 break;
             case SQLITE:
                 rdioBnSQLite.setSelected(true);
+                testingStatus = DatabaseTestResult.UNTESTED;
+                updatePostgresFields(false);
+                updateSqliteFields(true);
                 break;
             default:
                 rdioBnDisabled.setSelected(true);
+                testingStatus = DatabaseTestResult.TESTEDOK;
+                updatePostgresFields(false);
+                updateSqliteFields(false);
+                break;
         }
+
+        setTextPrompts();
+        setTextBoxListeners();
 
     }
     
@@ -405,20 +420,18 @@ public class EamDbSettingsDialog extends JDialog {
         setVisible(true);
     }
 
+    @Messages({"EamDbSettingsDialog.chooserPath.failedToGetDbPathMsg=Selected database path is invalid. Try again."})
     private void bnDatabasePathFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDatabasePathFileOpenActionPerformed
-//        fcDatabasePath.setCurrentDirectory(new File(dbSettings.getDbDirectory()));
-//        fcDatabasePath.setSelectedFile(new File(dbSettings.getFileNameWithPath()));
+        fcDatabasePath.setCurrentDirectory(new File(dbSettingsSqlite.getDbDirectory()));
+        fcDatabasePath.setSelectedFile(new File(dbSettingsSqlite.getFileNameWithPath()));
         if (fcDatabasePath.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fcDatabasePath.getSelectedFile();
             try {
                 tfDatabasePath.setText(databaseFile.getCanonicalPath());
                 valid();
-                // TODO: create the db/schema if it doesn't exist.
-                // TODO: set variable noting that we created a new db, so it can be removed if Cancel button is clicked.
-
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to get path of selected database file", ex); // NON-NLS
-                JOptionPane.showMessageDialog(this, Bundle.EnterpriseArtifactsManagerSQLiteSettingsDialog_chooserPath_failedToGetDbPathMsg());
+                JOptionPane.showMessageDialog(this, Bundle.EamDbSettingsDialog_chooserPath_failedToGetDbPathMsg());
             }
         }
     }//GEN-LAST:event_bnDatabasePathFileOpenActionPerformed
@@ -426,23 +439,60 @@ public class EamDbSettingsDialog extends JDialog {
     private void bnTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestActionPerformed
 //        lbTestDatabase.setIcon(null);
 //        lbTestDatabase.setText("");
-//        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-//
-//        if (dbSettings.testSettings()) {
-//            lbTestDatabase.setIcon(goodIcon);
-//        } else {
-//            lbTestDatabase.setIcon(badIcon);
-//        }
+        boolean connectionOk;
+        boolean schemaOk;
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        
+        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                connectionOk = dbSettingsPostgres.testConnectionSettings();
+                break;
+            case SQLITE:
+                if (dbSettingsSqlite.dbDirectoryExists()
+                        && dbSettingsSqlite.verifyConnection()) {
+                    if (dbSettingsSqlite.verifyDatabaseSchema()) {
+                       testingStatus = DatabaseTestResult.TESTEDOK;
+                    } else {                             
+                       testingStatus = DatabaseTestResult.SCHEMA_INVALID;
+                    }
+                } else {
+                    testingStatus = DatabaseTestResult.SCHEMA_INVALID;                    
+                }
+                break;
+        }
 
-//        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        valid();
     }//GEN-LAST:event_bnTestActionPerformed
 
+    @Messages({"EamDbSettingsDialog.creation.failed=Database initialization failed."})
     private void bnCreateDbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCreateDbActionPerformed
-        // TODO add your handling code here:
+
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        boolean result = false;
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                break;
+            case SQLITE:
+                if (!dbSettingsSqlite.dbDirectoryExists()) {
+                    dbSettingsSqlite.createDbDirectory();
+                }
+                result = dbSettingsSqlite.initializeDatabaseSchema()
+                        && dbSettingsSqlite.insertDefaultDatabaseContent();
+                break;
+        }
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        if (false == result) {
+            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_creation_failed());
+        } else {
+            valid();
+        }
     }//GEN-LAST:event_bnCreateDbActionPerformed
 
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
-        hasChanged = true;
+//        hasChanged = true;
 //        dbSettings.setEnabled(true);
 //        dbSettings.saveSettings();
         dispose();
@@ -453,32 +503,62 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_bnCancelActionPerformed
 
     private void rdioBnDisabledActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdioBnDisabledActionPerformed
-        String text = taSetupGuidance.getText();
-        if (rdioBnDisabled.isSelected()) {
-            taSetupGuidance.setText((text + ",selected Disabled"));
-        } else {
-            taSetupGuidance.setText((text + ",de-selected Disabled"));
-        }
+        EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.toString());
+        testingStatus = DatabaseTestResult.TESTEDOK;
+
+        updateSqliteFields(false);
+        updatePostgresFields(false);
     }//GEN-LAST:event_rdioBnDisabledActionPerformed
 
-    private void rdioBnSQLiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdioBnSQLiteActionPerformed
-        String text = taSetupGuidance.getText();
-        if (rdioBnSQLite.isSelected()) {
-            taSetupGuidance.setText((text + ",selected SQLite"));
-        } else {
-            taSetupGuidance.setText((text + ",de-selected SQLite"));
-        }
-    }//GEN-LAST:event_rdioBnSQLiteActionPerformed
 
     private void rdioBnPostgreSQLActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdioBnPostgreSQLActionPerformed
-        String text = taSetupGuidance.getText();
-        if (rdioBnPostgreSQL.isSelected()) {
-            taSetupGuidance.setText((text + ",selected PostgreSQL"));
-        } else {
-            taSetupGuidance.setText((text + ",de-selected PostgreSQL"));
-        }
+        EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.POSTGRESQL.toString());
+        testingStatus = DatabaseTestResult.UNTESTED;
+
+        updateSqliteFields(false);
+        updatePostgresFields(true);
     }//GEN-LAST:event_rdioBnPostgreSQLActionPerformed
 
+    private void rdioBnSQLiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdioBnSQLiteActionPerformed
+        EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.toString());
+        testingStatus = DatabaseTestResult.UNTESTED;
+
+        updateSqliteFields(true);
+        updatePostgresFields(false);
+
+    }//GEN-LAST:event_rdioBnSQLiteActionPerformed
+
+    /**
+     * Update the fields for the Postgres platform depending on whether the
+     * Postgres radioButton is enabled.
+     * 
+     * @param enabled 
+     */
+    private void updatePostgresFields(boolean enabled) {
+        tbDbHostname.setText(enabled ? dbSettingsPostgres.getHost() : "");
+        tbDbHostname.setEnabled(enabled);
+        tbDbPort.setText(enabled ? Integer.toString(dbSettingsPostgres.getPort()) : "");
+        tbDbPort.setEnabled(enabled);
+        tbDbName.setText(enabled ? dbSettingsPostgres.getDbName() : "");
+        tbDbName.setEnabled(enabled);
+        tbDbUsername.setText(enabled ? dbSettingsPostgres.getUserName() : "");
+        tbDbUsername.setEnabled(enabled);
+        tbDbPassword.setText(enabled ? dbSettingsPostgres.getPassword() : "");
+        tbDbPassword.setEnabled(enabled);
+    }
+    
+    /**
+     * Update the fields for the SQLite platform depending on whether the
+     * SQLite radioButton is enabled.
+     * 
+     * @param enabled 
+     */
+    private void updateSqliteFields(boolean enabled) {
+        tfDatabasePath.setText(enabled ? dbSettingsSqlite.getFileNameWithPath() : "");
+        tfDatabasePath.setEnabled(enabled);
+        bnDatabasePathFileOpen.setEnabled(enabled);
+    }
+    
     /**
      * Add text prompts to all of the text fields.
      */
@@ -508,7 +588,7 @@ public class EamDbSettingsDialog extends JDialog {
 //        tbDbUsername.getDocument().putProperty("statusIcon", lbTestDatabase); // NON-NLS
 //        tbDbPassword.getDocument().putProperty("statusIcon", lbTestDatabase); // NON-NLS
 //    }
-//    
+//     
     /**
      * Register for notifications when the text boxes get updated.
      */
@@ -554,12 +634,29 @@ public class EamDbSettingsDialog extends JDialog {
      *
      * @return True or false.
      */
-    private boolean databaseFieldsArePopulated() {
-        return !tbDbHostname.getText().trim().isEmpty()
-                && !tbDbPort.getText().trim().isEmpty()
-                && !tbDbName.getText().trim().isEmpty()
-                && !tbDbUsername.getText().trim().isEmpty()
-                && !tbDbPassword.getText().trim().isEmpty();
+    @Messages({"EamDbSettingsDialog.validation.incompleteFields=Fill in all values for the selected database."})
+    private boolean databaseFieldsArePopulated(EamDbPlatformEnum selectedPlatform) {
+        boolean result = true;
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                result = !tbDbHostname.getText().trim().isEmpty()
+                        && !tbDbPort.getText().trim().isEmpty()
+                        && !tbDbName.getText().trim().isEmpty()
+                        && !tbDbUsername.getText().trim().isEmpty()
+                        && !tbDbPassword.getText().trim().isEmpty();
+
+                break;
+                
+            case SQLITE:
+                result = !tfDatabasePath.getText().trim().isEmpty();
+                break;
+        }
+        
+        if (!result) {
+            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_incompleteFields());
+        }
+
+        return result;
     }
 
     /**
@@ -567,18 +664,9 @@ public class EamDbSettingsDialog extends JDialog {
      *
      * @return True or false.
      */
-    @Messages({"EamDbSettingsDialog.validation.incompleteFields=Fill in all values"})
-    private boolean checkFields() {
-        boolean result = true;
-
-        boolean dbPopulated = databaseFieldsArePopulated();
-
-        if (!dbPopulated) {
-            // We don't even have everything filled out
-            result = false;
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_incompleteFields());
-        }
-        return result;
+    private boolean checkFields(EamDbPlatformEnum selectedPlatform) {
+        return databaseFieldsArePopulated(selectedPlatform)
+                && databaseSettingsAreValid(selectedPlatform);
     }
 
     /**
@@ -590,45 +678,81 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.validation.invalidPort=Invalid database port number.",
         "EamDbSettingsDialog.validation.invalidDbName=Invalid database name.",
         "EamDbSettingsDialog.validation.invalidDbUser=Invalid database username.",
-        "EamDbSettingsDialog.validation.invalidDbPassword=Invalid database password.",})
-    private boolean databaseSettingsAreValid() {
-/*
-        try {
-            dbSettings.setHost(tbDbHostname.getText().trim());
-        } catch (EamDbException ex) {
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_invalidHost());
-            return false;
+        "EamDbSettingsDialog.validation.invalidDbPassword=Invalid database password.",
+        "EamDbSettingsDialog.validation.invalidDbPath=Invalid database path."})
+    private boolean databaseSettingsAreValid(EamDbPlatformEnum selectedPlatform) {
+        boolean result = true;
+        StringBuilder guidanceText = new StringBuilder();
+
+        switch (selectedPlatform) {
+            case POSTGRESQL:
+                try {
+                    dbSettingsPostgres.setHost(tbDbHostname.getText().trim());
+                } catch (EamDbException ex) {
+                    if (!guidanceText.toString().isEmpty()) {
+                        guidanceText.append(", ");
+                    }
+                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidHost());
+                    result = false;
+                }
+
+                try {
+                    dbSettingsPostgres.setPort(Integer.valueOf(tbDbPort.getText().trim()));
+                } catch (NumberFormatException | EamDbException ex) {
+                    if (!guidanceText.toString().isEmpty()) {
+                        guidanceText.append(", ");
+                    }
+                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidPort());
+                    result = false;
+                }
+
+                try {
+                    dbSettingsPostgres.setDbName(tbDbName.getText().trim());
+                } catch (EamDbException ex) {
+                    if (!guidanceText.toString().isEmpty()) {
+                        guidanceText.append(", ");
+                    }
+                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbName());
+                    result = false;
+                }
+
+                try {
+                    dbSettingsPostgres.setUserName(tbDbUsername.getText().trim());
+                } catch (EamDbException ex) {
+                    if (!guidanceText.toString().isEmpty()) {
+                        guidanceText.append(", ");
+                    }
+                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbUser());
+                    result = false;
+                }
+
+                try {
+                    dbSettingsPostgres.setPassword(tbDbPassword.getText().trim());
+                } catch (EamDbException ex) {
+                    if (!guidanceText.toString().isEmpty()) {
+                        guidanceText.append(", ");
+                    }
+                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbPassword());
+                    result = false;
+                }
+                break;
+            case SQLITE:
+                try {
+                    File databasePath = new File(tfDatabasePath.getText());
+                    dbSettingsSqlite.setDbName(databasePath.getName());
+                    dbSettingsSqlite.setDbDirectory(databasePath.getParent());
+                } catch (EamDbException ex) {
+                    if (!guidanceText.toString().isEmpty()) {
+                        guidanceText.append(", ");
+                    }
+                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbPath());
+                    result = false;
+                }
+                break;
         }
 
-        try {
-            dbSettings.setPort(Integer.valueOf(tbDbPort.getText().trim()));
-        } catch (NumberFormatException | EamDbException ex) {
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_invalidPort());
-            return false;
-        }
-
-        try {
-            dbSettings.setDbName(tbDbName.getText().trim());
-        } catch (EamDbException ex) {
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_invalidDbName());
-            return false;
-        }
-
-        try {
-            dbSettings.setUserName(tbDbUsername.getText().trim());
-        } catch (EamDbException ex) {
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_invalidDbUser());
-            return false;
-        }
-
-        try {
-            dbSettings.setPassword(tbDbPassword.getText().trim());
-        } catch (EamDbException ex) {
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_invalidDbPassword());
-            return false;
-        }
-*/
-        return true;
+        taSetupGuidance.setText(guidanceText.toString());
+        return result;
     }
 
     /**
@@ -636,16 +760,68 @@ public class EamDbSettingsDialog extends JDialog {
      *
      * @return true if it's okay, false otherwise.
      */
-    public boolean valid() {
-//        taSetupGuidance.setText("");
-/*
-        return checkFields()
-                && enableTestDatabaseButton(databaseSettingsAreValid())
-                && enableSaveButton(databaseSettingsAreValid());
-*/
-        return true;
+    private boolean valid() {
+        taSetupGuidance.setText("");
+        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        return checkFields(selectedPlatform)
+                && enableTestButton(selectedPlatform)
+                && enableCreateButton()
+                && enableOkButton();
     }
 
+    /**
+     * Enable the "Test" button once all fields are valid.
+     * 
+     * @return true
+     */
+    @Messages({"EamDbSettingsDialog.validation.mustTest=Once you are statisfied with the database settings, click the Test button to test the database connection, settings, and schema.",
+        "EamDbSettingsDialog.validation.failedConnection=The connection to the database failed. Update the settings and try the Test again."})
+    private boolean enableTestButton(EamDbPlatformEnum selectedPlatform) {
+        if (selectedPlatform != EamDbPlatformEnum.DISABLED) {
+            bnTest.setEnabled(true);
+            if (testingStatus == DatabaseTestResult.UNTESTED) {
+                taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_mustTest());
+            } else if (testingStatus == DatabaseTestResult.CONNECTION_FAILED) {
+                taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_failedConnection());
+            }
+        } else {
+            bnTest.setEnabled(false);            
+        }
+        return true;
+    }
+    
+    /**
+     * Enable the "Create" button if the db is not created.
+     * 
+     * @return true if db is created, else false
+     */
+    @Messages({"EamDbSettingsDialog.validation.dbNotCreated=The database does not exist. Click the Create button to create and initialize the database."})
+    private boolean enableCreateButton() {
+        if (testingStatus == DatabaseTestResult.SCHEMA_INVALID) {
+            bnCreateDb.setEnabled(true);
+            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_dbNotCreated());
+        } else {
+            bnCreateDb.setEnabled(false);            
+        }
+        return true;
+    }
+    
+    /**
+     * Enable the "OK" button if the db test passed. Disabled defaults to db test passed.
+     * 
+     * @return true
+     */
+    @Messages({"EamDbSettingsDialog.validation.finished=Click OK to save your database settings and return to the Options."})
+    private boolean enableOkButton() {
+        if (testingStatus == DatabaseTestResult.TESTEDOK) {
+            bnOk.setEnabled(true);
+            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_finished());
+        } else {
+            bnOk.setEnabled(false);
+        }
+        return true;
+    }
+    
     /**
      * Used to listen for changes in text boxes. It lets the panel know things
      * have been updated and that validation needs to happen.
@@ -681,6 +857,13 @@ public class EamDbSettingsDialog extends JDialog {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             valid();
         }
+    }
+    
+    private enum DatabaseTestResult {
+        UNTESTED,
+        CONNECTION_FAILED,
+        SCHEMA_INVALID,
+        TESTEDOK;        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

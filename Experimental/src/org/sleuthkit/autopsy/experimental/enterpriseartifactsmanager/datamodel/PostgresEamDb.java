@@ -90,10 +90,10 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         } catch (SQLException ex) {
             //LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
         } finally {
-            closeConnection(conn);
+            EamDbUtil.closeConnection(conn);
         }
 
-        insertDefaultContent();
+        dbSettings.insertDefaultDatabaseContent();
     }
 
     /**
@@ -137,8 +137,7 @@ public class PostgresEamDb extends AbstractSqlEamDb {
      * implementation of connect() is synchronized, so we can safely use the
      * connectionPool object directly.
      */
-    @Override
-    protected void initializeDatabaseSchema() throws EamDbException {
+    private void initializeDatabaseSchema() throws EamDbException {
         // The "id" column is an alias for the built-in 64-bit int "rowid" column.
         // It is autoincrementing by default and must be of type "integer primary key".
         // We've omitted the autoincrement argument because we are not currently
@@ -291,7 +290,7 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error initializing db schema.", ex); // NON-NLS
         } finally {
-            closeConnection(conn);
+            EamDbUtil.closeConnection(conn);
         }
     }
 
@@ -311,7 +310,7 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
             if (connectionPool == null) {
                 setupConnectionPool();
-                confirmDatabaseSchema();
+//                confirmDatabaseSchema();
             }
         }
 

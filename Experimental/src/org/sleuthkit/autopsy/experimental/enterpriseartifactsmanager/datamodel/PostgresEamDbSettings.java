@@ -149,7 +149,12 @@ public final class PostgresEamDbSettings {
         return url.toString();
     }
 
-    public boolean testSettings() {
+    /**
+     * Using the current settings, test the connection to the database.
+     * 
+     * @return true if successfull connection, else false.
+     */
+    public boolean testConnectionSettings() {
         // Open a new ephemeral client here to test that we can connect
         ResultSet resultSet = null;
         Connection conn = null;
@@ -184,7 +189,11 @@ public final class PostgresEamDbSettings {
 
         return true;
     }
-
+    
+    public boolean insertDefaultDatabaseContent() {
+        return true;
+    }
+    
     public boolean isChanged() {
         String hostString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.host"); // NON-NLS
         String portString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.port"); // NON-NLS

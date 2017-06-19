@@ -24,7 +24,7 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  *
  */
 public enum EamDbPlatformEnum {
-    DISABLED("", true),
+    DISABLED("Disabled", true),
     SQLITE("SQLite", false),
     POSTGRESQL("PostgreSQL", false);
 

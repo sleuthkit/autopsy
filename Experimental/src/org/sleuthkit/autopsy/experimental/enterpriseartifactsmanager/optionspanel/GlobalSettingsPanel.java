@@ -276,7 +276,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 lbDbLocationValue.setText(dbSettingsSqlite.getDbDirectory());
                 break;
             default:
-                lbDbPlatformValue.setText("");
+                lbDbPlatformValue.setText(EamDbPlatformEnum.DISABLED.toString());
                 lbDbNameValue.setText("");
                 lbDbLocationValue.setText("");
                 break;

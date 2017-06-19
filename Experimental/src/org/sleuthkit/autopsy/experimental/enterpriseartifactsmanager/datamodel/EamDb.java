@@ -24,6 +24,7 @@ import java.util.List;
  * Main interface for interacting with the database
  */
 public interface EamDb {
+    public static final int SCHEMA_VERSION = 1;
 
     /**
      * Get the instance; default to SQLITE.
