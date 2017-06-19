@@ -33,6 +33,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -593,17 +594,17 @@ public class KeywordHits implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             updateDisplayName();
             keywordResults.addObserver(this);
+
         }
 
         private void updateDisplayName() {
-            int totalDescendants = 0;
+            super.setDisplayName(keyword + " (" + countTotalDescendants() + ")");
+        }
 
-            for (String instance : keywordResults.getKeywordInstances(setName, keyword)) {
-                Set<Long> ids = keywordResults.getArtifactIds(setName, keyword, instance);
-                totalDescendants += ids.size();
-            }
-
-            super.setDisplayName(keyword + " (" + totalDescendants + ")");
+        private int countTotalDescendants() {
+            return keywordResults.getKeywordInstances(setName, keyword).stream()
+                    .mapToInt(instance -> keywordResults.getArtifactIds(setName, keyword, instance).size())
+                    .sum();
         }
 
         @Override
@@ -644,7 +645,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     KeywordHits_createSheet_filesWithHits_name(),
                     KeywordHits_createSheet_filesWithHits_displayName(),
                     KeywordHits_createSheet_filesWithHits_desc(),
-                    keywordResults.getKeywordInstances(setName, keyword).size()));
+                    countTotalDescendants()));
 
             return s;
         }
