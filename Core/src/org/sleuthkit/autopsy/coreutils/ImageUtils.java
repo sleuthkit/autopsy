@@ -317,21 +317,16 @@ public class ImageUtils {
                         thumbnail = DEFAULT_THUMBNAIL;
                     }
                     if (thumbnail == null) {
+                        thumbnail = DEFAULT_THUMBNAIL;
                         final BufferedImage image = ImageIO.read(bufferedReadContentStream);
                         if (image != null) {
-                            if (Thread.interrupted()) {
-                                thumbnail = DEFAULT_THUMBNAIL;
-                            } else {
+                            if (!Thread.interrupted()) {
                                 thumbnail = ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
                             }
-                        }
-                        else {
-                            thumbnail = DEFAULT_THUMBNAIL;
                         }
                     }
                 } catch (IOException iOException) {
                     LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), iOException); //NON-NLS
-                    thumbnail = DEFAULT_THUMBNAIL;
                 }
                 try {
                     String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
