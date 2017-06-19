@@ -59,6 +59,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.opencv.core.Core;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
@@ -164,8 +165,8 @@ public class ImageUtils {
     /**
      * Thread/Executor that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver =
-            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
@@ -310,23 +311,39 @@ public class ImageUtils {
                  * Intercepting the image reading code for GIFs here allows us
                  * to rescale easily, but we lose animations.
                  */
+                BufferedImage thumbnail = null;
                 try (BufferedInputStream bufferedReadContentStream = getBufferedReadContentStream(file);) {
                     if (Thread.interrupted()) {
-                        return DEFAULT_THUMBNAIL;
+                        thumbnail = DEFAULT_THUMBNAIL;
                     }
-                    final BufferedImage image = ImageIO.read(bufferedReadContentStream);
-                    if (image != null) {
-                        if (Thread.interrupted()) {
-                            return DEFAULT_THUMBNAIL;
+                    if (thumbnail == null) {
+                        final BufferedImage image = ImageIO.read(bufferedReadContentStream);
+                        if (image != null) {
+                            if (Thread.interrupted()) {
+                                thumbnail = DEFAULT_THUMBNAIL;
+                            } else {
+                                thumbnail = ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
+                            }
                         }
-                        return ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
+                        else {
+                            thumbnail = DEFAULT_THUMBNAIL;
+                        }
                     }
                 } catch (IOException iOException) {
                     LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), iOException); //NON-NLS
+                    thumbnail = DEFAULT_THUMBNAIL;
                 }
-                return DEFAULT_THUMBNAIL;
+                try {
+                    String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
+                    File gifThumb = Paths.get(cacheDirectory, "thumbnails", content.getId() + ".png").toFile();
+                    if (!gifThumb.exists()) {  //save the thumbnail if it hasn't already been saved to the cache
+                        ImageIO.write(thumbnail, "png", gifThumb);
+                    }
+                } catch (IOException ex) {
+                    LOGGER.log(Level.WARNING, "Failed to get write thumbnail to file for " + getContentPathSafe(content), ex); //NON-NLS
+                }
+                return thumbnail;
             }
-
             Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
             if (Thread.interrupted()) {
                 return DEFAULT_THUMBNAIL;
