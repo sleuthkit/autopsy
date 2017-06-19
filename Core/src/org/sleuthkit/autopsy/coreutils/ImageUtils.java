@@ -59,7 +59,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.opencv.core.Core;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corelibs.ScalrWrapper;
@@ -319,10 +318,8 @@ public class ImageUtils {
                     if (thumbnail == null) {
                         thumbnail = DEFAULT_THUMBNAIL;
                         final BufferedImage image = ImageIO.read(bufferedReadContentStream);
-                        if (image != null) {
-                            if (!Thread.interrupted()) {
-                                thumbnail = ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
-                            }
+                        if (image != null && !Thread.interrupted()) {
+                            thumbnail = ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
                         }
                     }
                 } catch (IOException iOException) {
