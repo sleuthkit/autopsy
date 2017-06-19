@@ -8,7 +8,7 @@ package org.sleuthkit.autopsy.ingest;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Used to strip python ids on factory class names.
+ * Used to strip Python IDs on factory class names.
  */
 class FactoryClassNameNormalizer {
 
@@ -17,9 +17,11 @@ class FactoryClassNameNormalizer {
 
     static String normalize(String canonicalClassName) {
         if (isPythonModuleSettingsFile(canonicalClassName)) {
-            // compiled python modules have variable instance number as a part of their file name.
-            // This block of code gets rid of that variable instance number and helps maitains constant module name over multiple runs.
-            String moduleClassName = canonicalClassName.replaceAll("[$][\\d]", ""); //NON-NLS NON-NLS
+            // Compiled Python modules have variable instance number as a part
+            // of their file name. This block of code gets rid of that variable
+            // instance number and helps maitains constant module name over
+            // multiple runs.
+            String moduleClassName = canonicalClassName.replaceAll("[$\\d]", ""); //NON-NLS NON-NLS
             return moduleClassName;
         }
         return canonicalClassName;
