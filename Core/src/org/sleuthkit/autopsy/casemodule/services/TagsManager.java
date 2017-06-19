@@ -72,6 +72,36 @@ public class TagsManager implements Closeable {
     }
 
     /**
+     * Gets the set of display names of the currently available tag types. This
+     * includes the display names of the standard tag types, the current user's
+     * custom tag types, and the tags in the case database of the current case
+     * (if there is a current case).
+     *
+     * @return A set, possibly empty, of tag type display names.
+     *
+     * @throws TskCoreException If there is a current case and there is an error
+     *                          querying the case database for tag types.
+     */
+    public static Set<String> getTagDisplayNames() throws TskCoreException {
+        Set<String> tagDisplayNames = new HashSet<>(STANDARD_TAG_DISPLAY_NAMES);
+        Set<TagNameDefiniton> customNames = TagNameDefiniton.getTagNameDefinitions();
+        customNames.forEach((tagType) -> {
+            tagDisplayNames.add(tagType.getDisplayName());
+        });        
+        try {
+            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+            for (TagName tagName : tagsManager.getAllTagNames()) {
+                tagDisplayNames.add(tagName.getDisplayName());
+            }
+        } catch (IllegalStateException ignored) {
+            /*
+             * No current case, nothing more to add to the set.
+             */
+        } 
+        return tagDisplayNames;
+    }
+
+    /**
      * Constructs a per case Autopsy service that manages the addition of
      * content and artifact tags to the case database.
      *
@@ -140,7 +170,7 @@ public class TagsManager implements Closeable {
         }
         return new HashMap<>(tagNames);
     }
-    
+
     /**
      * Adds a tag name entry to the case database and adds a corresponding tag
      * type to the current user's custom tag types.
