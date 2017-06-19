@@ -33,6 +33,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -596,17 +597,17 @@ public class KeywordHits implements AutopsyVisitableItem {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
             updateDisplayName();
             keywordResults.addObserver(this);
+
         }
 
         private void updateDisplayName() {
-            int totalDescendants = 0;
+            super.setDisplayName(keyword + " (" + countTotalDescendants() + ")");
+        }
 
-            for (String instance : keywordResults.getKeywordInstances(setName, keyword)) {
-                Set<Long> ids = keywordResults.getArtifactIds(setName, keyword, instance);
-                totalDescendants += ids.size();
-            }
-
-            super.setDisplayName(keyword + " (" + totalDescendants + ")");
+        private int countTotalDescendants() {
+            return keywordResults.getKeywordInstances(setName, keyword).stream()
+                    .mapToInt(instance -> keywordResults.getArtifactIds(setName, keyword, instance).size())
+                    .sum();
         }
 
         @Override
@@ -618,11 +619,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         public boolean isLeafTypeNode() {
             List<String> instances = keywordResults.getKeywordInstances(setName, keyword);
             // is this an exact/substring match (i.e. did we use the DEFAULT name)?
-            if (instances.size() == 1 && instances.get(0).equals(DEFAULT_INSTANCE_NAME)) {
-                return true;
-            } else {
-                return false;
-            }
+            return instances.size() == 1 && instances.get(0).equals(DEFAULT_INSTANCE_NAME);
         }
 
         @Override
@@ -647,7 +644,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
-                    keywordResults.getKeywordInstances(setName, keyword).size()));
+                    countTotalDescendants()));
 
             return s;
         }
@@ -824,7 +821,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.name"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.displayName"),
                     NbBundle.getMessage(this.getClass(), "KeywordHits.createSheet.filesWithHits.desc"),
-                    keywordResults.getKeywordInstances(setName, keyword).size()));
+                    keywordResults.getArtifactIds(setName, keyword, instance).size()));
 
             return s;
         }
