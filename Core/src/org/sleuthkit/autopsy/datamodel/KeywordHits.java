@@ -73,7 +73,23 @@ public class KeywordHits implements AutopsyVisitableItem {
      * fit into the same data structure as regexps, even though they don't use
      * instances.
      */
-    private final String DEFAULT_INSTANCE_NAME = "DEFAULT_INSTANCE_NAME";
+    private static final String DEFAULT_INSTANCE_NAME = "DEFAULT_INSTANCE_NAME";
+
+    /*
+     * query attributes table for the ones that we need for the tree
+     */
+    private static final String KEYWORD_HIT_ATTRIBUTES_QUERY = "SELECT blackboard_attributes.value_text, "//NON-NLS
+            + "blackboard_attributes.value_int32, "//NON-NLS
+            + "blackboard_attributes.artifact_id, " //NON-NLS
+            + "blackboard_attributes.attribute_type_id "//NON-NLS
+            + "FROM blackboard_attributes, blackboard_artifacts "//NON-NLS
+            + "WHERE blackboard_attributes.artifact_id = blackboard_ar//NON-NLStifacts.artifact_id "//NON-NLS
+            + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() //NON-NLS
+            + " AND (attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()//NON-NLS
+            + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()//NON-NLS
+            + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()//NON-NLS
+            + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()//NON-NLS
+            + ")"; //NON-NLS
 
     public KeywordHits(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -222,13 +238,13 @@ public class KeywordHits implements AutopsyVisitableItem {
                     long id = art.getKey();
                     Map<Long, String> attributes = art.getValue();
 
-                    // I think we can use attributes.remove(...) here?
+                    // I think we can use attributes.remove(...) here? - why should bwe use remove?
                     String listName = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()));
                     String word = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()));
                     String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
-                    // new in 4.4
                     String kwType = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()));
 
+                    // JMTODO: I feel like we could simplyfy this IF
                     // part of a list
                     if (listName != null) {
                         // get or create list entry
@@ -269,7 +285,6 @@ public class KeywordHits implements AutopsyVisitableItem {
             notifyObservers();
         }
 
-        @SuppressWarnings("deprecation")
         public void update() {
             // maps Artifact ID to map of attribute types to attribute values
             Map<Long, Map<Long, String>> artifactIds = new LinkedHashMap<>();
@@ -278,34 +293,21 @@ public class KeywordHits implements AutopsyVisitableItem {
                 return;
             }
 
-            // query attributes table for the ones that we need for the tree
-            int setId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID();
-            int wordId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID();
-            int regexId = BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID();
-            int artId = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID();
-            String query = "SELECT blackboard_attributes.value_text,blackboard_attributes.value_int32,"
-                    + "blackboard_attributes.artifact_id," //NON-NLS
-                    + "blackboard_attributes.attribute_type_id FROM blackboard_attributes,blackboard_artifacts WHERE " //NON-NLS
-                    + "(blackboard_attributes.artifact_id=blackboard_artifacts.artifact_id AND " //NON-NLS
-                    + "blackboard_artifacts.artifact_type_id=" + artId //NON-NLS
-                    + ") AND (attribute_type_id=" + setId + " OR " //NON-NLS
-                    + "attribute_type_id=" + wordId + " OR " //NON-NLS
-                    + "attribute_type_id=" + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID() + " OR " //NON-NLS
-                    + "attribute_type_id=" + regexId + ")"; //NON-NLS
-
-            try (CaseDbQuery dbQuery = skCase.executeQuery(query)) {
+            try (CaseDbQuery dbQuery = skCase.executeQuery(KEYWORD_HIT_ATTRIBUTES_QUERY)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
-                    String valueStr = resultSet.getString("value_text"); //NON-NLS
                     long artifactId = resultSet.getLong("artifact_id"); //NON-NLS
                     long typeId = resultSet.getLong("attribute_type_id"); //NON-NLS
-                    Map<Long, String> typeMap = artifactIds.computeIfAbsent(artifactId, ai -> new LinkedHashMap<>());
+                    String valueStr = resultSet.getString("value_text"); //NON-NLS
+
+                    //get the map of attributes for this artifact
+                    Map<Long, String> attributesByTypeMap = artifactIds.computeIfAbsent(artifactId, ai -> new LinkedHashMap<>());
                     if (StringUtils.isNotEmpty(valueStr)) {
-                        typeMap.put(typeId, valueStr);
+                        attributesByTypeMap.put(typeId, valueStr);
                     } else {
                         // Keyword Search Type is an int
                         Long valueLong = resultSet.getLong("value_int32");
-                        typeMap.put(typeId, valueLong.toString());
+                        attributesByTypeMap.put(typeId, valueLong.toString());
                     }
                 }
             } catch (TskCoreException | SQLException ex) {
@@ -397,9 +399,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                             keywordResults.update();
                         }
                     } catch (IllegalStateException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
+                        // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
                         || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
@@ -413,9 +413,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                         Case.getCurrentCase();
                         keywordResults.update();
                     } catch (IllegalStateException notUsed) {
-                        /**
-                         * Case is closed, do nothing.
-                         */
+                        // Case is closed, do nothing.
                     }
                 } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
@@ -821,7 +819,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     KeywordHits_createSheet_filesWithHits_name(),
                     KeywordHits_createSheet_filesWithHits_displayName(),
                     KeywordHits_createSheet_filesWithHits_desc(),
-                    keywordResults.getKeywordInstances(setName, keyword).size()));
+                    keywordResults.getArtifactIds(setName, keyword, instance).size()));
 
             return s;
         }
