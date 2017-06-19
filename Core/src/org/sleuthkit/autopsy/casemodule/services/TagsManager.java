@@ -50,43 +50,6 @@ public class TagsManager implements Closeable {
     private final SleuthkitCase caseDb;
 
     /**
-     * Gets a map of tag display names to tag name entries in the case database.
-     * It has keys for the display names of the standard tag types, the current
-     * user's custom tag types, and the tags in the case database. The value for
-     * a given key will be null if the corresponding tag type is defined, but a
-     * tag name entry has not yet added to the case database. In that case,
-     * addTagName may be called to add the tag name entry.
-     *
-     * @return A map of tag display names to possibly null TagName object
-     *         references.
-     *
-     * @throws TskCoreException if there is an error querying the case database.
-     */
-    public Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
-        /**
-         * Order is important here. The keys (display names) for the current
-         * user's custom tag types are added to the map first, with null TagName
-         * values. If tag name entries exist for those keys, loading of the tag
-         * names from the database supplies the missing values. Standard tag
-         * names are added during the initialization of the case database.
-         *
-         * Note that creating the map on demand increases the probability that
-         * the display names of newly added custom tag types and the display
-         * names of tags added to a multi-user case by other users appear in the
-         * map.
-         */
-        Map<String, TagName> tagNames = new HashMap<>();
-        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
-        for (TagNameDefiniton tagType : customTypes) {
-            tagNames.put(tagType.getDisplayName(), null);
-        }
-        for (TagName tagName : caseDb.getAllTagNames()) {
-            tagNames.put(tagName.getDisplayName(), tagName);
-        }
-        return new HashMap<>(tagNames);
-    }
-
-    /**
      * Tests whether or not a given tag display name contains an illegal
      * character.
      *
@@ -141,6 +104,43 @@ public class TagsManager implements Closeable {
         return caseDb.getTagNamesInUse();
     }
 
+    /**
+     * Gets a map of tag display names to tag name entries in the case database.
+     * It has keys for the display names of the standard tag types, the current
+     * user's custom tag types, and the tags in the case database. The value for
+     * a given key will be null if the corresponding tag type is defined, but a
+     * tag name entry has not yet added to the case database. In that case,
+     * addTagName may be called to add the tag name entry.
+     *
+     * @return A map of tag display names to possibly null TagName object
+     *         references.
+     *
+     * @throws TskCoreException if there is an error querying the case database.
+     */
+    public Map<String, TagName> getDisplayNamesToTagNamesMap() throws TskCoreException {
+        /**
+         * Order is important here. The keys (display names) for the current
+         * user's custom tag types are added to the map first, with null TagName
+         * values. If tag name entries exist for those keys, loading of the tag
+         * names from the database supplies the missing values. Standard tag
+         * names are added during the initialization of the case database.
+         *
+         * Note that creating the map on demand increases the probability that
+         * the display names of newly added custom tag types and the display
+         * names of tags added to a multi-user case by other users appear in the
+         * map.
+         */
+        Map<String, TagName> tagNames = new HashMap<>();
+        Set<TagNameDefiniton> customTypes = TagNameDefiniton.getTagNameDefinitions();
+        for (TagNameDefiniton tagType : customTypes) {
+            tagNames.put(tagType.getDisplayName(), null);
+        }
+        for (TagName tagName : caseDb.getAllTagNames()) {
+            tagNames.put(tagName.getDisplayName(), tagName);
+        }
+        return new HashMap<>(tagNames);
+    }
+    
     /**
      * Adds a tag name entry to the case database and adds a corresponding tag
      * type to the current user's custom tag types.
