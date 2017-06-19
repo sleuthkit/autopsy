@@ -30,6 +30,7 @@ import javax.swing.table.DefaultTableModel;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamDb;
@@ -65,22 +66,21 @@ final class ManageTagsDialog extends javax.swing.JDialog {
 
         List<String> tagNames = new ArrayList<>(badTags);
         try {
-            if (Case.isCaseOpen()) {
-                tagNames.addAll(Case.getCurrentCase().getServices().getTagsManager().getAllTagNames().stream()
-                        .map(tag -> tag.getDisplayName())
-                        .filter(tagName -> !badTags.contains(tagName))
-                        .collect(Collectors.toList()));
-            }
+            tagNames.addAll(
+                    TagsManager.getTagDisplayNames()
+                    .stream()
+                    .filter(tagName -> !badTags.contains(tagName))
+                    .collect(Collectors.toList()));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Could not get list of tags in case", ex);
         }
 
         Collections.sort(tagNames);
 
-        DefaultTableModel model = (DefaultTableModel)tblTagNames.getModel();
+        DefaultTableModel model = (DefaultTableModel) tblTagNames.getModel();
         for (String tagName : tagNames) {
             boolean enabled = badTags.contains(tagName);
-            model.addRow(new Object[]{ tagName, enabled });
+            model.addRow(new Object[]{tagName, enabled});
         }
     }
 
@@ -191,10 +191,10 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     private void setBadTags() {
         List<String> badTags = new ArrayList<>();
 
-        DefaultTableModel model = (DefaultTableModel)tblTagNames.getModel();
+        DefaultTableModel model = (DefaultTableModel) tblTagNames.getModel();
         for (int i = 0; i < model.getRowCount(); ++i) {
-            String tagName = (String)model.getValueAt(i, 0);
-            boolean enabled = (boolean)model.getValueAt(i, 1);
+            String tagName = (String) model.getValueAt(i, 0);
+            boolean enabled = (boolean) model.getValueAt(i, 1);
 
             if (enabled) {
                 badTags.add(tagName);
