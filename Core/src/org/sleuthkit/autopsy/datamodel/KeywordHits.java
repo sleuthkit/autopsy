@@ -84,7 +84,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             + "blackboard_attributes.artifact_id, " //NON-NLS
             + "blackboard_attributes.attribute_type_id "//NON-NLS
             + "FROM blackboard_attributes, blackboard_artifacts "//NON-NLS
-            + "WHERE blackboard_attributes.artifact_id = blackboard_ar//NON-NLStifacts.artifact_id "//NON-NLS
+            + "WHERE blackboard_attributes.artifact_id = blackboard_artifacts.artifact_id "//NON-NLS
             + " AND blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() //NON-NLS
             + " AND (attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()//NON-NLS
             + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID()//NON-NLS
@@ -245,38 +245,36 @@ public class KeywordHits implements AutopsyVisitableItem {
                     String reg = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()));
                     String kwType = attributes.get(Long.valueOf(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()));
 
-                    // JMTODO: I feel like we could simplyfy this IF
-                    // part of a list
-                    if (listName != null) {
+                    if (listName != null) {     // part of a list
                         // get or create list entry
                         Map<String, Map<String, Set<Long>>> listMap = listsMap.computeIfAbsent(listName, ln -> new LinkedHashMap<>());
 
-                        // substring, treated same as exact match
-                        // Enum for "1" is defined in KeywordSearch.java
-                        if ((kwType != null) && (kwType.equals("1"))) {
-                            // original term should be stored in reg
-                            if (reg != null) {
-                                addNonRegExpMatchToList(listMap, reg, id);
-                            } else {
-                                addNonRegExpMatchToList(listMap, word, id);
-                            }
-                        } else if (reg != null) {
-                            addRegExpToList(listMap, reg, word, id);
-                        } else {
+                        if ("1".equals(kwType) || reg == null) {  //literal, substring or exact
+                            /*
+                             * Substring, treated same as exact match. "1" is
+                             * the ordinal value for substring as defined in
+                             * KeywordSearch.java. The original term should be
+                             * stored in reg
+                             */
+                            word = (reg != null) ? reg : word; //use original term if it there.
                             addNonRegExpMatchToList(listMap, word, id);
+                        } else {
+                            addRegExpToList(listMap, reg, word, id);
                         }
-                    } // regular expression, single term
-                    else if (reg != null) {
-                        // substring is treated same as exact 
-                        if ((kwType != null) && (kwType.equals("1"))) {
-                            // original term should be stored in reg
-                            addNonRegExpMatchToList(literalMap, reg, id);
+                    } else {//single term
+
+                        if ("1".equals(kwType) || reg == null) {  //literal, substring or exact
+                            /*
+                             * Substring, treated same as exact match. "1" is
+                             * the ordinal value for substring as defined in
+                             * KeywordSearch.java. The original term should be
+                             * stored in reg
+                             */
+                            word = (reg != null) ? reg : word; //use original term if it there.
+                            addNonRegExpMatchToList(literalMap, word, id);
                         } else {
                             addRegExpToList(regexMap, reg, word, id);
                         }
-                    } // literal, single term
-                    else {
-                        addNonRegExpMatchToList(literalMap, word, id);
                     }
                 }
                 topLevelMap.putAll(listsMap);
@@ -375,7 +373,6 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected void addNotify() {
-            keywordResults.update();
             keywordResults.addObserver(this);
         }
 
@@ -450,6 +447,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
             Case.addPropertyChangeListener(pcl);
+            keywordResults.update();
             super.addNotify();
         }
 
