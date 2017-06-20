@@ -432,13 +432,16 @@ public class KeywordHits implements AutopsyVisitableItem {
                     } catch (IllegalStateException notUsed) {
                         // Case is closed, do nothing.
                     }
-                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                    // case was closed. Remove listeners so that we don't get called with a stale case handle
-                    if (evt.getNewValue() == null) {
-                        removeNotify();
-                        skCase = null;
-                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())
+                        && evt.getNewValue() == null) {
+                    /*
+                     * Case was closed. Remove listeners so that we don't get
+                     * called with a stale case handle
+                     */
+                    removeNotify();
+                    skCase = null;
                 }
+
             }
         };
 
@@ -456,7 +459,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             Case.removePropertyChangeListener(pcl);
-            super.addNotify();
+            super.removeNotify();
         }
 
         @Override
