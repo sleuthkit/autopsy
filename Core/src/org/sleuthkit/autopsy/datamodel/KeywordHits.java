@@ -62,12 +62,12 @@ public class KeywordHits implements AutopsyVisitableItem {
     private SleuthkitCase skCase;
     private static final Logger logger = Logger.getLogger(KeywordHits.class.getName());
     @NbBundle.Messages("KeywordHits.kwHits.text=Keyword Hits")
-    private static final String KEYWORD_HITS = Bundle.KeywordHits_kwHits_text();
+    private static final String KEYWORD_HITS = KeywordHits_kwHits_text();
     public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel();
     @NbBundle.Messages("KeywordHits.simpleLiteralSearch.text=Single Literal Keyword Search")
-    public static final String SIMPLE_LITERAL_SEARCH = Bundle.KeywordHits_simpleLiteralSearch_text();
+    public static final String SIMPLE_LITERAL_SEARCH = KeywordHits_simpleLiteralSearch_text();
     @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
-    public static final String SIMPLE_REGEX_SEARCH = Bundle.KeywordHits_singleRegexSearch_text();
+    public static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
     private final KeywordResults keywordResults;
     /**
      * String used in the instance MAP so that exact matches and substring can
