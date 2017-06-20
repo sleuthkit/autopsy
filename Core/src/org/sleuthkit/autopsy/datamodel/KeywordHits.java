@@ -33,12 +33,12 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -371,10 +371,29 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
     }
 
+    private abstract class DetachableObserverChildFactory<X> extends ChildFactory.Detachable<X> implements Observer {
+
+        @Override
+        protected void addNotify() {
+            keywordResults.update();
+            keywordResults.addObserver(this);
+        }
+
+        @Override
+        protected void removeNotify() {
+            keywordResults.deleteObserver(this);
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            refresh(true);
+        }
+    }
+
     /**
      * Creates the list nodes
      */
-    private class ListFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class ListFactory extends DetachableObserverChildFactory<String> {
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
@@ -431,8 +450,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
             Case.addPropertyChangeListener(pcl);
-            keywordResults.update();
-            keywordResults.addObserver(this);
+            super.addNotify();
         }
 
         @Override
@@ -440,7 +458,7 @@ public class KeywordHits implements AutopsyVisitableItem {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             Case.removePropertyChangeListener(pcl);
-            keywordResults.deleteObserver(this);
+            super.addNotify();
         }
 
         @Override
@@ -453,22 +471,44 @@ public class KeywordHits implements AutopsyVisitableItem {
         protected Node createNodeForKey(String key) {
             return new ListNode(key);
         }
+    }
+
+    private abstract class KWHitsNodeBase extends DisplayableItemNode implements Observer {
+
+        private KWHitsNodeBase(Children children, Lookup lookup) {
+            super(children, lookup);
+        }
+
+        private KWHitsNodeBase(Children children) {
+            super(children);
+        }
+
+        @Override
+        public String getItemType() {
+            return getClass().getName();
+        }
 
         @Override
         public void update(Observable o, Object arg) {
-            refresh(true);
+            updateDisplayName();
         }
+
+        final void updateDisplayName() {
+            super.setDisplayName(getName() + " (" + countTotalDescendants() + ")");
+        }
+
+        abstract int countTotalDescendants();
     }
 
     /**
      * Represents the keyword search lists (or default groupings if list was not
      * given)
      */
-    public class ListNode extends DisplayableItemNode implements Observer {
+    class ListNode extends KWHitsNodeBase {
 
         private final String listName;
 
-        public ListNode(String listName) {
+        private ListNode(String listName) {
             super(Children.create(new TermFactory(listName), true), Lookups.singleton(listName));
             super.setName(listName);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/keyword_hits.png"); //NON-NLS
@@ -477,7 +517,8 @@ public class KeywordHits implements AutopsyVisitableItem {
             keywordResults.addObserver(this);
         }
 
-        private void updateDisplayName() {
+        @Override
+        public int countTotalDescendants() {
             int totalDescendants = 0;
             for (String word : keywordResults.getKeywords(listName)) {
                 for (String instance : keywordResults.getKeywordInstances(listName, word)) {
@@ -485,7 +526,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     totalDescendants += ids.size();
                 }
             }
-            super.setDisplayName(listName + " (" + totalDescendants + ")");
+            return totalDescendants;
         }
 
         @Override
@@ -527,38 +568,18 @@ public class KeywordHits implements AutopsyVisitableItem {
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
         }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
-        }
-
-        @Override
-        public String getItemType() {
-            return getClass().getName();
-        }
     }
 
     /**
      * Creates the nodes that represent search terms
      */
-    private class TermFactory extends ChildFactory.Detachable<String> implements Observer {
+    private class TermFactory extends DetachableObserverChildFactory<String> {
 
         private final String setName;
 
         private TermFactory(String setName) {
             super();
             this.setName = setName;
-        }
-
-        @Override
-        protected void addNotify() {
-            keywordResults.addObserver(this);
-        }
-
-        @Override
-        protected void removeNotify() {
-            keywordResults.deleteObserver(this);
         }
 
         @Override
@@ -571,22 +592,17 @@ public class KeywordHits implements AutopsyVisitableItem {
         protected Node createNodeForKey(String key) {
             return new TermNode(setName, key);
         }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
     }
 
     /**
      * Represents the search term or regexp that user searched for
      */
-    public class TermNode extends DisplayableItemNode implements Observer {
+    class TermNode extends KWHitsNodeBase {
 
         private final String setName;
         private final String keyword;
 
-        public TermNode(String setName, String keyword) {
+        private TermNode(String setName, String keyword) {
             super(Children.create(new RegExpInstancesFactory(setName, keyword), true), Lookups.singleton(keyword));
             super.setName(keyword);
             this.setName = setName;
@@ -597,19 +613,11 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         }
 
-        private void updateDisplayName() {
-            super.setDisplayName(keyword + " (" + countTotalDescendants() + ")");
-        }
-
-        private int countTotalDescendants() {
+        @Override
+        int countTotalDescendants() {
             return keywordResults.getKeywordInstances(setName, keyword).stream()
                     .mapToInt(instance -> keywordResults.getArtifactIds(setName, keyword, instance).size())
                     .sum();
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
         }
 
         @Override
@@ -650,10 +658,6 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        @Override
-        public String getItemType() {
-            return getClass().getName();
-        }
     }
 
     /**
@@ -694,27 +698,17 @@ public class KeywordHits implements AutopsyVisitableItem {
      * Creates the nodes for a given regexp that represent the specific terms
      * that were found
      */
-    public class RegExpInstancesFactory extends ChildFactory.Detachable<RegExpInstanceKey> implements Observer {
+    private class RegExpInstancesFactory extends DetachableObserverChildFactory<RegExpInstanceKey> {
 
         private final String keyword;
         private final String setName;
 
         private final Map<RegExpInstanceKey, DisplayableItemNode> nodesMap = new HashMap<>();
 
-        public RegExpInstancesFactory(String setName, String keyword) {
+        private RegExpInstancesFactory(String setName, String keyword) {
             super();
             this.setName = setName;
             this.keyword = keyword;
-        }
-
-        @Override
-        protected void addNotify() {
-            keywordResults.addObserver(this);
-        }
-
-        @Override
-        protected void removeNotify() {
-            keywordResults.deleteObserver(this);
         }
 
         @Override
@@ -755,22 +749,18 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         }
 
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
-        }
     }
 
     /**
      * Represents a specific term that was found from a regexp
      */
-    public class RegExpInstanceNode extends DisplayableItemNode implements Observer {
+    class RegExpInstanceNode extends KWHitsNodeBase {
 
         private final String setName;
         private final String keyword;
         private final String instance;
 
-        public RegExpInstanceNode(String setName, String keyword, String instance) {
+        private RegExpInstanceNode(String setName, String keyword, String instance) {
             super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(keyword));
             super.setName(instance);  //the instance represents the name of the keyword hit at this point as the keyword is the regex
             this.setName = setName;
@@ -781,14 +771,9 @@ public class KeywordHits implements AutopsyVisitableItem {
             keywordResults.addObserver(this);
         }
 
-        private void updateDisplayName() {
-            int totalDescendants = keywordResults.getArtifactIds(setName, keyword, instance).size();
-            super.setDisplayName(instance + " (" + totalDescendants + ")");
-        }
-
         @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName();
+        int countTotalDescendants() {
+            return keywordResults.getArtifactIds(setName, keyword, instance).size();
         }
 
         @Override
@@ -825,10 +810,6 @@ public class KeywordHits implements AutopsyVisitableItem {
             return s;
         }
 
-        @Override
-        public String getItemType() {
-            return getClass().getName();
-        }
     }
 
     /**
@@ -895,7 +876,7 @@ public class KeywordHits implements AutopsyVisitableItem {
     /**
      * Creates nodes for individual files that had hits
      */
-    public class HitsFactory extends ChildFactory.Detachable<Long> implements Observer {
+    private class HitsFactory extends DetachableObserverChildFactory<Long> {
 
         private final String keyword;
         private final String setName;
@@ -911,16 +892,6 @@ public class KeywordHits implements AutopsyVisitableItem {
         }
 
         @Override
-        protected void addNotify() {
-            keywordResults.addObserver(this);
-        }
-
-        @Override
-        protected void removeNotify() {
-            keywordResults.deleteObserver(this);
-        }
-
-        @Override
         protected boolean createKeys(List<Long> list) {
             for (Long id : keywordResults.getArtifactIds(setName, keyword, instance)) {
                 nodesMap.computeIfAbsent(id, i -> createBlackboardArtifactNode(i));
@@ -932,11 +903,6 @@ public class KeywordHits implements AutopsyVisitableItem {
         @Override
         protected Node createNodeForKey(Long artifactId) {
             return nodesMap.get(artifactId);
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            refresh(true);
         }
     }
 }
