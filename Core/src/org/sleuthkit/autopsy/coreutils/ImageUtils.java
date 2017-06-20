@@ -164,8 +164,8 @@ public class ImageUtils {
     /**
      * Thread/Executor that saves generated thumbnails to disk in the background
      */
-    private static final Executor imageSaver =
-            Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
+    private static final Executor imageSaver
+            = Executors.newSingleThreadExecutor(new BasicThreadFactory.Builder()
                     .namingPattern("thumbnail-saver-%d").build()); //NON-NLS
 
     public static List<String> getSupportedImageExtensions() {
@@ -305,28 +305,10 @@ public class ImageUtils {
     public static BufferedImage getThumbnail(Content content, int iconSize) {
         if (content instanceof AbstractFile) {
             AbstractFile file = (AbstractFile) content;
-            if (ImageUtils.isGIF(file)) {
-                /*
-                 * Intercepting the image reading code for GIFs here allows us
-                 * to rescale easily, but we lose animations.
-                 */
-                try (BufferedInputStream bufferedReadContentStream = getBufferedReadContentStream(file);) {
-                    if (Thread.interrupted()) {
-                        return DEFAULT_THUMBNAIL;
-                    }
-                    final BufferedImage image = ImageIO.read(bufferedReadContentStream);
-                    if (image != null) {
-                        if (Thread.interrupted()) {
-                            return DEFAULT_THUMBNAIL;
-                        }
-                        return ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
-                    }
-                } catch (IOException iOException) {
-                    LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(content), iOException); //NON-NLS
-                }
-                return DEFAULT_THUMBNAIL;
+            BufferedImage gifThumb = getGifThumbnail(file, iconSize);
+            if (gifThumb != null) {
+                return gifThumb;
             }
-
             Task<javafx.scene.image.Image> thumbnailTask = newGetThumbnailTask(file, iconSize, true);
             if (Thread.interrupted()) {
                 return DEFAULT_THUMBNAIL;
@@ -339,6 +321,52 @@ public class ImageUtils {
             }
         }
         return DEFAULT_THUMBNAIL;
+    }
+
+    /**
+     * Get a thumbnail for a file if it is a gif, generates and saves the
+     * thumbnail if it is not already cached. Returns null if file was not a
+     * gif.
+     *
+     * @param file     the image file you wish to create a thumbnail of
+     * @param iconSize the size (one side of a square) in pixels to generate
+     *
+     * @return a BufferedImage thumbnail of the gif or null if the file is not a
+     *         gif
+     */
+    private static BufferedImage getGifThumbnail(AbstractFile file, int iconSize) {
+        /*
+         * Intercepting the image reading code for GIFs here allows us to
+         * rescale easily, but we lose animations.
+         */
+        BufferedImage thumbnail = null;
+        if (ImageUtils.isGIF(file)) {
+
+            try (BufferedInputStream bufferedReadContentStream = getBufferedReadContentStream(file);) {
+                if (Thread.interrupted()) {
+                    thumbnail = DEFAULT_THUMBNAIL;
+                }
+                if (thumbnail == null) {
+                    thumbnail = DEFAULT_THUMBNAIL;
+                    final BufferedImage image = ImageIO.read(bufferedReadContentStream);
+                    if (image != null && !Thread.interrupted()) {
+                        thumbnail = ScalrWrapper.resizeHighQuality(image, iconSize, iconSize);
+                    }
+                }
+            } catch (IOException iOException) {
+                LOGGER.log(Level.WARNING, "Failed to get thumbnail for " + getContentPathSafe(file), iOException); //NON-NLS
+            }
+            try {
+                String cacheDirectory = Case.getCurrentCase().getCacheDirectory();
+                File gifThumb = Paths.get(cacheDirectory, "thumbnails", file.getId() + ".png").toFile();
+                if (!gifThumb.exists()) {  //save the thumbnail if it hasn't already been saved to the cache
+                    ImageIO.write(thumbnail, "png", gifThumb);
+                }
+            } catch (IOException ex) {
+                LOGGER.log(Level.WARNING, "Failed to get write thumbnail to file for " + getContentPathSafe(file), ex); //NON-NLS
+            }
+        }
+        return thumbnail;
     }
 
     /**
