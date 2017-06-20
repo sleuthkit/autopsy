@@ -108,6 +108,7 @@ public class EamDbSettingsDialog extends JDialog {
         bnOk = new javax.swing.JButton();
         bnTest = new javax.swing.JButton();
         bnCreateDb = new javax.swing.JButton();
+        lbTestIcon = new javax.swing.JLabel();
         pnSetupGuidance = new javax.swing.JPanel();
         taSetupGuidance = new javax.swing.JTextArea();
 
@@ -304,6 +305,8 @@ public class EamDbSettingsDialog extends JDialog {
                 .addContainerGap()
                 .addComponent(bnTest)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lbTestIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addComponent(bnCreateDb)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(bnOk)
@@ -315,12 +318,18 @@ public class EamDbSettingsDialog extends JDialog {
             pnButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnButtonsLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
-                .addGroup(pnButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(bnOk)
-                    .addComponent(bnCancel)
-                    .addComponent(bnTest)
-                    .addComponent(bnCreateDb))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(pnButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnButtonsLayout.createSequentialGroup()
+                        .addGap(4, 4, 4)
+                        .addComponent(lbTestIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(pnButtonsLayout.createSequentialGroup()
+                        .addGroup(pnButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(bnOk)
+                            .addComponent(bnCancel)
+                            .addComponent(bnTest)
+                            .addComponent(bnCreateDb))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
 
         pnSetupGuidance.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.pnSetupGuidance.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
@@ -412,7 +421,7 @@ public class EamDbSettingsDialog extends JDialog {
 
         setTextPrompts();
         setTextBoxListeners();
-
+        lbTestIcon.setIcon(null);
     }
     
     private void display() {
@@ -471,6 +480,11 @@ public class EamDbSettingsDialog extends JDialog {
         }
 
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        if (testingStatus == DatabaseTestResult.TESTEDOK) {
+            lbTestIcon.setIcon(goodIcon);            
+        } else {
+            lbTestIcon.setIcon(badIcon);
+        }
         valid();
     }//GEN-LAST:event_bnTestActionPerformed
 
@@ -753,7 +767,7 @@ public class EamDbSettingsDialog extends JDialog {
                 }
 
                 try {
-                    dbSettingsPostgres.setPassword(jpDbPassword.getPassword().toString());
+                    dbSettingsPostgres.setPassword(new String(jpDbPassword.getPassword()));
                 } catch (EamDbException ex) {
                     if (!guidanceText.toString().isEmpty()) {
                         guidanceText.append(", ");
@@ -856,30 +870,18 @@ public class EamDbSettingsDialog extends JDialog {
 
         @Override
         public void changedUpdate(DocumentEvent e) {
-            Object statusIcon = e.getDocument().getProperty("statusIcon"); // NON-NLS
-            if (statusIcon != null) {
-                ((javax.swing.JLabel) statusIcon).setIcon(null);
-            }
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             valid();
         }
 
         @Override
         public void insertUpdate(DocumentEvent e) {
-            Object statusIcon = e.getDocument().getProperty("statusIcon"); // NON-NLS
-            if (statusIcon != null) {
-                ((javax.swing.JLabel) statusIcon).setIcon(null);
-            }
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             valid();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
-            Object statusIcon = e.getDocument().getProperty("statusIcon"); // NON-NLS
-            if (statusIcon != null) {
-                ((javax.swing.JLabel) statusIcon).setIcon(null);
-            }
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             valid();
         }
@@ -905,6 +907,7 @@ public class EamDbSettingsDialog extends JDialog {
     private javax.swing.JLabel lbDatabasePath;
     private javax.swing.JLabel lbHostName;
     private javax.swing.JLabel lbPort;
+    private javax.swing.JLabel lbTestIcon;
     private javax.swing.JLabel lbUserName;
     private javax.swing.JLabel lbUserPassword;
     private javax.swing.JPanel pnButtons;

@@ -23,15 +23,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -57,7 +54,6 @@ public final class SqliteEamDbSettings {
     private static final String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
     private static final String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
 
-    private boolean enabled;
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
@@ -68,8 +64,6 @@ public final class SqliteEamDbSettings {
     }
 
     public void loadSettings() {
-        enabled = Boolean.valueOf(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")); // NON-NLS
-
         dbName = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbName"); // NON-NLS
         if (dbName == null || dbName.isEmpty()) {
             dbName = DEFAULT_DBNAME;

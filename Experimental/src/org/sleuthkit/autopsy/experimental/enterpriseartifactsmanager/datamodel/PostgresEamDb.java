@@ -136,13 +136,12 @@ public class PostgresEamDb extends AbstractSqlEamDb {
     @Override
     protected Connection connect() throws EamDbException {
         synchronized (this) {
-            if (!dbSettings.isEnabled()) {
+            if (!EamDb.isEnabled()) {
                 throw new EamDbException("Enterprise artifacts manager is not enabled"); // NON-NLS
             }
 
             if (connectionPool == null) {
                 setupConnectionPool();
-//                confirmDatabaseSchema();
             }
         }
 

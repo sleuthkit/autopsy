@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -138,9 +136,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             }
 
             if (connectionPool == null) {
-//                verifyDBDirectory();
                 setupConnectionPool();
-//                confirmDatabaseSchema();
             }
 
             try {

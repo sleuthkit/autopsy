@@ -31,6 +31,8 @@ import java.util.logging.Level;
 import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.TextConverter;
+import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Settings for the Postgres implementation of the enterprise artifacts manager
@@ -50,7 +52,6 @@ public final class PostgresEamDbSettings {
     private final String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
     private final String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
 
-    private boolean enabled;
     private String host;
     private int port;
     private String dbName;
@@ -64,8 +65,6 @@ public final class PostgresEamDbSettings {
     }
 
     public void loadSettings() {
-        enabled = Boolean.valueOf(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")); // NON-NLS
-
         host = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.host"); // NON-NLS
         if (host == null || host.isEmpty()) {
             host = DEFAULT_HOST;
@@ -112,6 +111,13 @@ public final class PostgresEamDbSettings {
         password = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password"); // NON-NLS
         if (password == null || password.isEmpty()) {
             password = DEFAULT_PASSWORD;
+        } else {
+            try {
+                password = TextConverter.convertHexTextToText(password);
+            } catch (TextConverterException ex) {
+                LOGGER.log(Level.WARNING, "Failed to convert password from hex text to text.", ex);
+                password = DEFAULT_PASSWORD;
+            }
         }
 
         String badTagsStr = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.badTags"); // NON-NLS
@@ -127,7 +133,12 @@ public final class PostgresEamDbSettings {
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.dbName", getDbName()); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.user", getUserName()); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password", getPassword()); // NON-NLS
+        try {
+            ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password", TextConverter.convertTextToHexText(getPassword())); // NON-NLS
+        } catch (TextConverterException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to convert password from text to hex text.", ex);
+        }
+
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
 
@@ -462,20 +473,6 @@ public final class PostgresEamDbSettings {
         return !host.equals(hostString) || !Integer.toString(port).equals(portString)
                 || !dbName.equals(dbNameString) || !Integer.toString(bulkThreshold).equals(bulkThresholdString)
                 || !userName.equals(userNameString) || !password.equals(userPasswordString);
-    }
-
-    /**
-     * @return the enabled
-     */
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * @param enabled the enabled to set
-     */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     /**
