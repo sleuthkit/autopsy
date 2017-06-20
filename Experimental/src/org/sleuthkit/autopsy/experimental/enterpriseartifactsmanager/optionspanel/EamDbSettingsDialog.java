@@ -48,7 +48,7 @@ public class EamDbSettingsDialog extends JDialog {
     private final PostgresEamDbSettings dbSettingsPostgres;
     private final SqliteEamDbSettings dbSettingsSqlite;
     private DatabaseTestResult testingStatus;
-    private Boolean isCreated;
+    private final EamDbPlatformEnum initialSelectedPlatform;
 
     /**
      * Creates new form EamDbSettingsDialog
@@ -66,6 +66,7 @@ public class EamDbSettingsDialog extends JDialog {
 
         dbSettingsPostgres = new PostgresEamDbSettings();
         dbSettingsSqlite = new SqliteEamDbSettings();
+        initialSelectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         
         initComponents();
         customizeComponents();
@@ -123,6 +124,11 @@ public class EamDbSettingsDialog extends JDialog {
 
         tfDatabasePath.setText(org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.tfDatabasePath.text")); // NOI18N
         tfDatabasePath.setToolTipText(org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.tfDatabasePath.toolTipText")); // NOI18N
+        tfDatabasePath.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusLost(java.awt.event.FocusEvent evt) {
+                tfDatabasePathFocusLost(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnDatabasePathFileOpen, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.bnDatabasePathFileOpen.text")); // NOI18N
         bnDatabasePathFileOpen.addActionListener(new java.awt.event.ActionListener() {
@@ -437,7 +443,11 @@ public class EamDbSettingsDialog extends JDialog {
         if (fcDatabasePath.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fcDatabasePath.getSelectedFile();
             try {
-                tfDatabasePath.setText(databaseFile.getCanonicalPath());
+                String fullPath = databaseFile.getCanonicalPath();
+                if (!fullPath.endsWith(".db")) {
+                    fullPath = fullPath + ".db"; // NON-NLS
+                }
+                tfDatabasePath.setText(fullPath);
                 valid();
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to get path of selected database file", ex); // NON-NLS
@@ -447,8 +457,6 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_bnDatabasePathFileOpenActionPerformed
 
     private void bnTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestActionPerformed
-//        lbTestDatabase.setIcon(null);
-//        lbTestDatabase.setText("");
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
@@ -492,6 +500,7 @@ public class EamDbSettingsDialog extends JDialog {
     private void bnCreateDbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCreateDbActionPerformed
 
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        lbTestIcon.setIcon(null);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         boolean result = false;
         switch (selectedPlatform) {
@@ -540,6 +549,8 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_bnOkActionPerformed
 
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
+        EamDbPlatformEnum.setSelectedPlatform(initialSelectedPlatform.name());
+
         dispose();
     }//GEN-LAST:event_bnCancelActionPerformed
 
@@ -568,6 +579,14 @@ public class EamDbSettingsDialog extends JDialog {
         updatePostgresFields(false);
 
     }//GEN-LAST:event_rdioBnSQLiteActionPerformed
+
+    private void tfDatabasePathFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_tfDatabasePathFocusLost
+        String fullPath = tfDatabasePath.getText();
+        if (!fullPath.endsWith(".db")) {
+            fullPath = fullPath + ".db"; // NON-NLS
+        }
+        tfDatabasePath.setText(fullPath);
+    }//GEN-LAST:event_tfDatabasePathFocusLost
 
     /**
      * Update the fields for the Postgres platform depending on whether the
@@ -616,19 +635,7 @@ public class EamDbSettingsDialog extends JDialog {
         textPrompts.add(new TextPrompt(Bundle.EamDbSettingsDialog_textPrompt_user(), tbDbUsername));
         configureTextPrompts(textPrompts);
     }
-    
-    /**
-     * Set each textbox with a "statusIcon" property enabling the
-     * DocumentListeners to know which icon to erase when changes are made
-     */
-//    private void setTextBoxStatusIcons() {
-//        tbDbHostname.getDocument().putProperty("statusIcon", lbTestDatabase); // NON-NLS
-//        tbDbPort.getDocument().putProperty("statusIcon", lbTestDatabase); // NON-NLS
-//        tbDbName.getDocument().putProperty("statusIcon", lbTestDatabase); // NON-NLS
-//        tbDbUsername.getDocument().putProperty("statusIcon", lbTestDatabase); // NON-NLS
-//        tbDbPassword.getDocument().putProperty("statusIcon", lbTestDatabase); // NON-NLS
-//    }
-//     
+
     /**
      * Register for notifications when the text boxes get updated.
      */

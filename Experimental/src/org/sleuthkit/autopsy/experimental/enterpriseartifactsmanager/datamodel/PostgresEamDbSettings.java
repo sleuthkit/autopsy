@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
@@ -512,10 +511,13 @@ public final class PostgresEamDbSettings {
     }
 
     /**
+     * To prevent issues where one command can honor case and another cannot,
+     * we will force the dbname to lower case.
+     * 
      * @return the dbName
      */
     public String getDbName() {
-        return dbName;
+        return dbName.toLowerCase();
     }
 
     /**

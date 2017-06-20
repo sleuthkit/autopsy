@@ -252,7 +252,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
-        firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
+        load(); // reload db settings content and update buttons
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
     @Override
@@ -268,17 +268,21 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 lbDbPlatformValue.setText(EamDbPlatformEnum.POSTGRESQL.toString());
                 lbDbNameValue.setText(dbSettingsPg.getDbName());
                 lbDbLocationValue.setText(dbSettingsPg.getHost());
+                enableAllSubComponents(true);
                 break;
             case SQLITE:
                 SqliteEamDbSettings dbSettingsSqlite = new SqliteEamDbSettings();
                 lbDbPlatformValue.setText(EamDbPlatformEnum.SQLITE.toString());
                 lbDbNameValue.setText(dbSettingsSqlite.getDbName());
                 lbDbLocationValue.setText(dbSettingsSqlite.getDbDirectory());
+                enableAllSubComponents(true);
                 break;
             default:
                 lbDbPlatformValue.setText(EamDbPlatformEnum.DISABLED.toString());
                 lbDbNameValue.setText("");
                 lbDbLocationValue.setText("");
+                enableDatabaseConfigureButton(true);
+                tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
                 break;
         }
 
@@ -295,10 +299,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return true if it's okay, false otherwise.
      */
     public boolean valid() {
-        tbOops.setText("");
-        Boolean enabled = Boolean.valueOf(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")); // NON-NLS
-
-        return enabled && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
+        return true;
     }
 
     @Override
@@ -346,14 +347,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         if (IngestManager.getInstance().isIngestRunning()) {
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
             enableAllSubComponents(false);
-        } else {
-            tbOops.setText("");
-            if (valid()) {
-                enableAllSubComponents(true);
-            } else {
-                enableDatabaseConfigureButton(true);
-                tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
-            }
         }
     }
 

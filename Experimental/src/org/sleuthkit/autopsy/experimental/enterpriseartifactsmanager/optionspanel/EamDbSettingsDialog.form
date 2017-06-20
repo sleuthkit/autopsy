@@ -164,6 +164,9 @@
                   <ResourceString bundle="org/sleuthkit/autopsy/experimental/enterpriseartifactsmanager/optionspanel/Bundle.properties" key="EamDbSettingsDialog.tfDatabasePath.toolTipText" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="tfDatabasePathFocusLost"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="bnDatabasePathFileOpen">
               <Properties>
