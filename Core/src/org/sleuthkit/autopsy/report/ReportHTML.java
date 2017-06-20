@@ -623,7 +623,7 @@ class ReportHTML implements TableReportModule {
     public void addThumbnailRows(List<Content> images) {
         List<String> currentRow = new ArrayList<>();
         int totalCount = 0;
-        int pages = 0;
+        int pages = 1;
         for (Content content : images) {
             if (currentRow.size() == THUMBNAIL_COLUMNS) {
                 addRow(currentRow);
@@ -670,7 +670,7 @@ class ReportHTML implements TableReportModule {
             StringBuilder linkToThumbnail = new StringBuilder();
             linkToThumbnail.append("<a href=\""); //NON-NLS
             linkToThumbnail.append(contentPath);
-            linkToThumbnail.append("\">");
+            linkToThumbnail.append("\" target=\"_top\">");
             linkToThumbnail.append("<img src=\"").append(thumbnailPath).append("\" title=\"").append(nameInImage).append("\"/>"); //NON-NLS
             linkToThumbnail.append("</a><br>"); //NON-NLS
             linkToThumbnail.append(file.getName()).append("<br>"); //NON-NLS
