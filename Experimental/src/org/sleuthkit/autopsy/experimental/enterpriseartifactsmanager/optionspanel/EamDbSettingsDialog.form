@@ -200,11 +200,11 @@
                       </Group>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="tbDbPassword" alignment="0" pref="439" max="32767" attributes="0"/>
-                          <Component id="tbDbUsername" alignment="0" max="32767" attributes="0"/>
+                          <Component id="tbDbUsername" alignment="0" pref="439" max="32767" attributes="0"/>
                           <Component id="tbDbName" alignment="0" max="32767" attributes="0"/>
                           <Component id="tbDbPort" alignment="0" max="32767" attributes="0"/>
                           <Component id="tbDbHostname" max="32767" attributes="0"/>
+                          <Component id="jpDbPassword" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace max="32767" attributes="0"/>
                   </Group>
@@ -236,7 +236,7 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="lbUserPassword" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
-                          <Component id="tbDbPassword" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="jpDbPassword" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace pref="19" max="32767" attributes="0"/>
                   </Group>
@@ -287,7 +287,7 @@
             </Component>
             <Component class="javax.swing.JTextField" name="tbDbUsername">
             </Component>
-            <Component class="javax.swing.JTextField" name="tbDbPassword">
+            <Component class="javax.swing.JPasswordField" name="jpDbPassword">
             </Component>
           </SubComponents>
         </Container>

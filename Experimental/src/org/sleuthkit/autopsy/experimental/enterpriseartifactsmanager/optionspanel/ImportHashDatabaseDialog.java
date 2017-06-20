@@ -178,7 +178,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     public boolean valid() {
         lbWarningMsg.setText("");
         EamDb dbManager = EamDb.getInstance();        
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_validation_notEnabled());
             return false;
         }
@@ -561,7 +561,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             this.knownStatus = knownStatus;
             this.globalSetID = globalSetID;
 
-            if (!dbManager.isEnabled()) {
+            if (!EamDb.isEnabled()) {
                 throw new EamDbException("Enterprise artifacts manager database settings were not properly initialized"); // NON-NLS
             }
         }

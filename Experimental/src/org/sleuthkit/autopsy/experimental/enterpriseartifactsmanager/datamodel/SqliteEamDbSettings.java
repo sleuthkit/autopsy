@@ -104,7 +104,6 @@ public final class SqliteEamDbSettings {
     public void saveSettings() {
         createDbDirectory();
 
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.enabled", Boolean.toString(isEnabled())); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbName", getDbName()); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbDirectory", getDbDirectory()); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
@@ -175,14 +174,14 @@ public final class SqliteEamDbSettings {
             return null;
         }
 
-        Connection conn = null;
+        Connection conn;
         try {
             String url = getConnectionURL();
             Class.forName(getDriver());
             conn = DriverManager.getConnection(url);
         } catch (ClassNotFoundException | SQLException ex) {
             LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to sqlite.", ex); // NON-NLS
-            return null;
+            conn = null;
         }
         return conn;
     }
@@ -200,11 +199,7 @@ public final class SqliteEamDbSettings {
         }
         
         boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
-        try {
-            EamDbUtil.closeConnection(conn);
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "verifyConnection failed to close resources.", ex);
-        }
+        EamDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -221,11 +216,7 @@ public final class SqliteEamDbSettings {
         }
 
         boolean result = EamDbUtil.schemaVersionIsSet(conn);
-        try {
-            EamDbUtil.closeConnection(conn);
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "verifyDatabaseSchema failed to close resources.", ex);
-        }
+        EamDbUtil.closeConnection(conn);
         return result;
     }
 
@@ -359,6 +350,9 @@ public final class SqliteEamDbSettings {
         Connection conn = null;
         try {
             conn = getEphemeralConnection();
+            if (null == conn) {
+                return false;
+            }
             Statement stmt = conn.createStatement();
             stmt.execute(PRAGMA_JOURNAL_WAL);
             stmt.execute(PRAGMA_SYNC_OFF);
@@ -403,11 +397,7 @@ public final class SqliteEamDbSettings {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
         } finally {
-            try {
-                EamDbUtil.closeConnection(conn);
-            } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "initializeDatabaseSchema failed to close resources.", ex);
-            }
+            EamDbUtil.closeConnection(conn);
         }
         return true;
     }
@@ -418,19 +408,10 @@ public final class SqliteEamDbSettings {
             return false;
         }
 
-        try {
-            EamDbUtil.insertDefaultArtifactTypes(conn);
-            EamDbUtil.insertSchemaVersion(conn);
-        } catch (EamDbException ex) {
-            return false;
-        } finally {
-            try {
-                EamDbUtil.closeConnection(conn);
-            } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "insertDefaultDatabaseContent failed to close resources.", ex);
-            }
-        }
-        return true;
+        boolean result = EamDbUtil.insertDefaultArtifactTypes(conn)
+                && EamDbUtil.insertSchemaVersion(conn);
+        EamDbUtil.closeConnection(conn);
+        return result;
     }
     
     public boolean isChanged() {
@@ -441,20 +422,6 @@ public final class SqliteEamDbSettings {
         return !dbName.equals(dbNameString)
                 || !dbDirectory.equals(dbDirectoryString)
                 || !Integer.toString(bulkThreshold).equals(bulkThresholdString);
-    }
-
-    /**
-     * @return the enabled
-     */
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * @param enabled the enabled to set
-     */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     /**

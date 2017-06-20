@@ -133,7 +133,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     @Override
     protected Connection connect() throws EamDbException {
         synchronized (this) {
-            if (!dbSettings.isEnabled()) {
+            if (!EamDb.isEnabled()) {
                 throw new EamDbException("Enterprise artifacts manager is not enabled"); // NON-NLS
             }
 
@@ -149,11 +149,6 @@ public class SqliteEamDb extends AbstractSqlEamDb {
                 throw new EamDbException("Error getting connection from connection pool.", ex); // NON-NLS
             }
         }
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return dbSettings.isEnabled();
     }
 
     @Override

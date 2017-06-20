@@ -7,18 +7,22 @@
 package org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import static org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamDb.SCHEMA_VERSION;
 
 /**
  *
  */
 public class EamDbUtil {
+    private final static Logger LOGGER = Logger.getLogger(EamDbUtil.class.getName());
+   
     /**
      * Close the prepared statement.
      *
@@ -26,12 +30,12 @@ public class EamDbUtil {
      *
      * @throws EamDbException
      */
-    public static void closePreparedStatement(PreparedStatement preparedStatement) throws EamDbException {
+    public static void closePreparedStatement(PreparedStatement preparedStatement) {
         if (null != preparedStatement) {
             try {
                 preparedStatement.close();
             } catch (SQLException ex) {
-                throw new EamDbException("Error closing PreparedStatement.", ex);
+                LOGGER.log(Level.SEVERE, "Error closing PreparedStatement.", ex);
             }
         }
     }
@@ -43,12 +47,12 @@ public class EamDbUtil {
      *
      * @throws EamDbException
      */
-    public static void closeResultSet(ResultSet resultSet) throws EamDbException {
+    public static void closeResultSet(ResultSet resultSet) {
         if (null != resultSet) {
             try {
                 resultSet.close();
             } catch (SQLException ex) {
-                throw new EamDbException("Error closing ResultSet.", ex);
+                LOGGER.log(Level.SEVERE, "Error closing ResultSet.", ex);
             }
         }
     }
@@ -60,24 +64,23 @@ public class EamDbUtil {
      *
      * @throws EamDbException
      */
-    public static void closeConnection(Connection conn) throws EamDbException {
+    public static void closeConnection(Connection conn) {
         if (null != conn) {
             try {
                 conn.close();
             } catch (SQLException ex) {
-                throw new EamDbException("Error closing Connection.", ex);
+                LOGGER.log(Level.SEVERE, "Error closing Connection.", ex);
             }
         }
     }
-
+    
     /**
      * Insert the default artifact types into the database.
      * 
-     * @param conn An open database connection.
-     * 
-     * @throws EamDbException 
+     * @param conn Open connection to use.
+     * @return true on success, else false
      */
-    public static void insertDefaultArtifactTypes(Connection conn) throws EamDbException {
+    public static boolean insertDefaultArtifactTypes(Connection conn) {
         PreparedStatement preparedStatement = null;
         List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
         String sql = "INSERT INTO artifact_types(name, supported, enabled) VALUES (?, ?, ?)";
@@ -92,10 +95,12 @@ public class EamDbUtil {
             }
             preparedStatement.executeBatch();
         } catch (SQLException ex) {
-            throw new EamDbException("Error inserting default correlation artifact types.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error inserting default correlation artifact types.", ex); // NON-NLS
+            return false;
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
         }
+        return true;
     }
  
     /**
@@ -104,9 +109,10 @@ public class EamDbUtil {
      * This should be called immediately following the database schema being
      * loaded.
      *
-     * @throws EamDbException
+     * @param conn Open connection to use.
+     * @return true on success, else false
      */
-    public static void insertSchemaVersion(Connection conn) throws EamDbException {
+    public static boolean insertSchemaVersion(Connection conn) {
         PreparedStatement preparedStatement = null;
         String sql = "INSERT INTO db_info (name, value) VALUES (?, ?)";
         try {
@@ -115,10 +121,12 @@ public class EamDbUtil {
             preparedStatement.setString(2, String.valueOf(SCHEMA_VERSION));
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new EamDbException("Error adding schema version to db_info.", ex);
+            LOGGER.log(Level.SEVERE, "Error adding schema version to db_info.", ex);
+            return false;
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
         }
+        return true;
     }
 
     /**
@@ -142,10 +150,7 @@ public class EamDbUtil {
         } catch (SQLException ex) {
             return false;
         } finally {
-            try {
-                EamDbUtil.closeResultSet(resultSet);
-            } catch (EamDbException ex) {
-            }
+            EamDbUtil.closeResultSet(resultSet);
         }
         return true;
     }
@@ -171,10 +176,7 @@ public class EamDbUtil {
         } catch (SQLException ex) {
             return false;
         } finally {
-            try {
-                EamDbUtil.closeResultSet(resultSet);
-            } catch (EamDbException ex) {
-            }
+            EamDbUtil.closeResultSet(resultSet);
         }
 
         return false;

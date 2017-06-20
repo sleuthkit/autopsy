@@ -450,7 +450,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String sql = "SELECT * FROM data_sources WHERE device_id=?";
+        String sql = "SELECT * FROM data_sources WHERE device_id=?"; // NON-NLS
 
         try {
             preparedStatement = conn.prepareStatement(sql);

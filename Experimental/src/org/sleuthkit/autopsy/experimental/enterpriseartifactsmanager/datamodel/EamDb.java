@@ -27,9 +27,9 @@ public interface EamDb {
     public static final int SCHEMA_VERSION = 1;
 
     /**
-     * Get the instance; default to SQLITE.
+     * Get the instance
      *
-     * @return The EamDb instance
+     * @return The EamDb instance or null if one is not configured.
      *
      * @throws EamDbException
      */
@@ -41,8 +41,9 @@ public interface EamDb {
                 return PostgresEamDb.getInstance();
 
             case SQLITE:
-            default:
                 return SqliteEamDb.getInstance();
+            default:
+                return null;
         }
     }
 
@@ -66,7 +67,9 @@ public interface EamDb {
      *
      * @return Is the database enabled
      */
-    boolean isEnabled();
+    static boolean isEnabled() {
+        return EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
+    }
 
     /**
      * Get the list of tags recognized as "Bad"
