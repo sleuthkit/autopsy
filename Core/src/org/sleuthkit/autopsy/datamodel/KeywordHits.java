@@ -52,23 +52,26 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskException;
 
 /**
  * Keyword hits node support
  */
 public class KeywordHits implements AutopsyVisitableItem {
 
-    private SleuthkitCase skCase;
     private static final Logger logger = Logger.getLogger(KeywordHits.class.getName());
+
     @NbBundle.Messages("KeywordHits.kwHits.text=Keyword Hits")
     private static final String KEYWORD_HITS = KeywordHits_kwHits_text();
-    public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel();
     @NbBundle.Messages("KeywordHits.simpleLiteralSearch.text=Single Literal Keyword Search")
-    public static final String SIMPLE_LITERAL_SEARCH = KeywordHits_simpleLiteralSearch_text();
+    private static final String SIMPLE_LITERAL_SEARCH = KeywordHits_simpleLiteralSearch_text();
     @NbBundle.Messages("KeywordHits.singleRegexSearch.text=Single Regular Expression Search")
-    public static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
+    private static final String SIMPLE_REGEX_SEARCH = KeywordHits_singleRegexSearch_text();
+
+    public static final String NAME = BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getLabel();
+
+    private SleuthkitCase skCase;
     private final KeywordResults keywordResults;
+
     /**
      * String used in the instance MAP so that exact matches and substring can
      * fit into the same data structure as regexps, even though they don't use
@@ -76,7 +79,7 @@ public class KeywordHits implements AutopsyVisitableItem {
      */
     private static final String DEFAULT_INSTANCE_NAME = "DEFAULT_INSTANCE_NAME";
 
-    /*
+    /**
      * query attributes table for the ones that we need for the tree
      */
     private static final String KEYWORD_HIT_ATTRIBUTES_QUERY = "SELECT blackboard_attributes.value_text, "//NON-NLS
@@ -521,6 +524,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         @Override
         public int countTotalDescendants() {
             int totalDescendants = 0;
+
             for (String word : keywordResults.getKeywords(listName)) {
                 for (String instance : keywordResults.getKeywordInstances(listName, word)) {
                     Set<Long> ids = keywordResults.getArtifactIds(listName, word, instance);
@@ -747,9 +751,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 // if it isn't a regexp, then skip the 'instance' layer of the tree
                 return createBlackboardArtifactNode(key.getIdKey());
             }
-
         }
-
     }
 
     /**
@@ -841,13 +843,15 @@ public class KeywordHits implements AutopsyVisitableItem {
             try {
                 file = skCase.getAbstractFileById(art.getObjectID());
             } catch (TskCoreException ex) {
-                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren"); //NON-NLS
+                logger.log(Level.SEVERE, "TskCoreException while constructing BlackboardArtifact Node from KeywordHitsKeywordChildren", ex); //NON-NLS
                 return n;
             }
 
-            // It is possible to get a keyword hit on artifacts generated
-            // for the underlying image in which case MAC times are not
-            // available/applicable/useful.
+            /*
+             * It is possible to get a keyword hit on artifacts generated for
+             * the underlying image in which case MAC times are not
+             * available/applicable/useful.
+             */
             if (file == null) {
                 return n;
             }
@@ -868,7 +872,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                     KeywordHits_createNodeForKey_chgTime_desc(),
                     ContentUtils.getStringTime(file.getCtime(), file)));
             return n;
-        } catch (TskException ex) {
+        } catch (TskCoreException ex) {
             logger.log(Level.WARNING, "TSK Exception occurred", ex); //NON-NLS
         }
         return null;
@@ -885,7 +889,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         private final Map<Long, BlackboardArtifactNode> nodesMap = new HashMap<>();
 
-        public HitsFactory(String setName, String keyword, String instance) {
+        private HitsFactory(String setName, String keyword, String instance) {
             super();
             this.setName = setName;
             this.keyword = keyword;
