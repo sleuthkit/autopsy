@@ -344,7 +344,6 @@ public class EamDbSettingsDialog extends JDialog {
         taSetupGuidance.setBackground(new java.awt.Color(240, 240, 240));
         taSetupGuidance.setColumns(20);
         taSetupGuidance.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
-        taSetupGuidance.setForeground(new java.awt.Color(255, 102, 102));
         taSetupGuidance.setLineWrap(true);
         taSetupGuidance.setRows(3);
         taSetupGuidance.setTabSize(4);
@@ -435,7 +434,15 @@ public class EamDbSettingsDialog extends JDialog {
         setLocation((screenDimension.width - getSize().width) / 2, (screenDimension.height - getSize().height) / 2);
         setVisible(true);
     }
-
+    private void setGuidanceMessage(String message, boolean isError) {
+        taSetupGuidance.setText(message);
+        if (isError) {
+            taSetupGuidance.setForeground(new Color(255, 102, 102)); // light red color
+        } else {
+            taSetupGuidance.setForeground(new Color(0, 0, 0)); // black color            
+        }
+    }
+    
     @Messages({"EamDbSettingsDialog.chooserPath.failedToGetDbPathMsg=Selected database path is invalid. Try again."})
     private void bnDatabasePathFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDatabasePathFileOpenActionPerformed
         fcDatabasePath.setCurrentDirectory(new File(dbSettingsSqlite.getDbDirectory()));
@@ -451,7 +458,7 @@ public class EamDbSettingsDialog extends JDialog {
                 valid();
             } catch (IOException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to get path of selected database file", ex); // NON-NLS
-                JOptionPane.showMessageDialog(this, Bundle.EamDbSettingsDialog_chooserPath_failedToGetDbPathMsg());
+                setGuidanceMessage(Bundle.EamDbSettingsDialog_chooserPath_failedToGetDbPathMsg(), true);
             }
         }
     }//GEN-LAST:event_bnDatabasePathFileOpenActionPerformed
@@ -522,7 +529,7 @@ public class EamDbSettingsDialog extends JDialog {
         }
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         if (false == result) {
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_creation_failed());
+            setGuidanceMessage(Bundle.EamDbSettingsDialog_creation_failed(), true);
         } else {
             testingStatus = DatabaseTestResult.TESTEDOK;
             valid();
@@ -700,7 +707,7 @@ public class EamDbSettingsDialog extends JDialog {
         }
         
         if (!result) {
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_incompleteFields());
+            setGuidanceMessage(Bundle.EamDbSettingsDialog_validation_incompleteFields(), true);
         }
 
         return result;
@@ -798,7 +805,8 @@ public class EamDbSettingsDialog extends JDialog {
                 break;
         }
 
-        taSetupGuidance.setText(guidanceText.toString());
+        setGuidanceMessage(guidanceText.toString(), true);
+        bnTest.setEnabled(result);
         return result;
     }
 
@@ -827,9 +835,9 @@ public class EamDbSettingsDialog extends JDialog {
         if (selectedPlatform != EamDbPlatformEnum.DISABLED) {
             bnTest.setEnabled(true);
             if (testingStatus == DatabaseTestResult.UNTESTED) {
-                taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_mustTest());
+                setGuidanceMessage(Bundle.EamDbSettingsDialog_validation_mustTest(), false);
             } else if (testingStatus == DatabaseTestResult.CONNECTION_FAILED) {
-                taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_failedConnection());
+                setGuidanceMessage(Bundle.EamDbSettingsDialog_validation_failedConnection(), true);
             }
         } else {
             bnTest.setEnabled(false);            
@@ -846,7 +854,7 @@ public class EamDbSettingsDialog extends JDialog {
     private boolean enableCreateButton() {
         if (testingStatus == DatabaseTestResult.SCHEMA_INVALID) {
             bnCreateDb.setEnabled(true);
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_dbNotCreated());
+            setGuidanceMessage(Bundle.EamDbSettingsDialog_validation_dbNotCreated(), false);
         } else {
             bnCreateDb.setEnabled(false);            
         }
@@ -862,7 +870,7 @@ public class EamDbSettingsDialog extends JDialog {
     private boolean enableOkButton() {
         if (testingStatus == DatabaseTestResult.TESTEDOK) {
             bnOk.setEnabled(true);
-            taSetupGuidance.setText(Bundle.EamDbSettingsDialog_validation_finished());
+            setGuidanceMessage(Bundle.EamDbSettingsDialog_validation_finished(), false);
         } else {
             bnOk.setEnabled(false);
         }

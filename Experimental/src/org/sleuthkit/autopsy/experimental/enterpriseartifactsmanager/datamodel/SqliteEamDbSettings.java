@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
@@ -53,7 +54,7 @@ public final class SqliteEamDbSettings {
     private static final String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
     private static final String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
     private static final String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
-
+    private final String DB_NAMES_REGEX = "[a-zA-Z]\\w*(\\.db)?";
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
@@ -431,11 +432,13 @@ public final class SqliteEamDbSettings {
      * @param dbName the dbName to set
      */
     public void setDbName(String dbName) throws EamDbException {
-        if (dbName != null && !dbName.isEmpty()) {
-            this.dbName = dbName;
-        } else {
+        if (dbName == null || dbName.isEmpty()) {
             throw new EamDbException("Error invalid file name for database. Cannot be null or empty."); // NON-NLS
+        } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
+            throw new EamDbException("Error invalid name for database connection. Name can only contain letters, numbers, and '_', must start with a letter."); // NON-NLS
         }
+
+        this.dbName = dbName;
     }
 
     /**

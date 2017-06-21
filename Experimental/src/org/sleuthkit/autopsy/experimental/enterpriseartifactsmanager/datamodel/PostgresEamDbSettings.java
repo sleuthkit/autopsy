@@ -27,7 +27,9 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.TextConverter;
@@ -50,7 +52,8 @@ public final class PostgresEamDbSettings {
     private final String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
     private final String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
     private final String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
-
+    private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
+    private final String DB_USER_NAMES_REGEX = "[a-zA-Z]\\w*";
     private String host;
     private int port;
     private String dbName;
@@ -159,10 +162,6 @@ public final class PostgresEamDbSettings {
         } else {
             url.append(getDbName());
         }
-        url.append("?user="); // NON-NLS
-        url.append(getUserName());
-        url.append("&password="); // NON-NLS
-        url.append(getPassword());
 
         return url.toString();
     }
@@ -176,8 +175,12 @@ public final class PostgresEamDbSettings {
         Connection conn;
         try {
             String url = getConnectionURL(usePostgresDb);
+            Properties props = new Properties();
+            props.setProperty("user", getUserName());
+            props.setProperty("password", getPassword());
+
             Class.forName(getDriver());
-            conn = DriverManager.getConnection(url);
+            conn = DriverManager.getConnection(url, props);
         } catch (ClassNotFoundException | SQLException ex) {
             // TODO: Determine why a connection failure (ConnectionException) re-throws
             // the SQLException and does not print this log message?
@@ -524,12 +527,13 @@ public final class PostgresEamDbSettings {
      * @param dbName the dbName to set
      */
     public void setDbName(String dbName) throws EamDbException {
-        if (dbName != null && !dbName.isEmpty()) {
-            this.dbName = dbName;
-        } else {
+        if (dbName == null || dbName.isEmpty()) {
             throw new EamDbException("Error invalid name for database connection. Cannot be null or empty."); // NON-NLS
-
+        } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
+            throw new EamDbException("Error invalid name for database connection. Name can only contain letters, numbers, and '_', and must start with a letter."); // NON-NLS
         }
+
+        this.dbName = dbName.toLowerCase();
     }
 
     /**
@@ -561,11 +565,12 @@ public final class PostgresEamDbSettings {
      * @param userName the userName to set
      */
     public void setUserName(String userName) throws EamDbException {
-        if (userName != null && !userName.isEmpty()) {
-            this.userName = userName;
-        } else {
+        if (userName == null || userName.isEmpty()) {
             throw new EamDbException("Error invalid user name for database connection. Cannot be null or empty."); // NON-NLS
+        } else if (!Pattern.matches(DB_USER_NAMES_REGEX, userName)) {
+            throw new EamDbException("Error invalid user name for database connection. Name can only contain letters, numbers, and '_', and must start with a letter."); // NON-NLS
         }
+        this.userName = userName;
     }
 
     /**
@@ -579,11 +584,10 @@ public final class PostgresEamDbSettings {
      * @param password the password to set
      */
     public void setPassword(String password) throws EamDbException {
-        if (password != null && !password.isEmpty()) {
-            this.password = password;
-        } else {
+        if (password == null || password.isEmpty()) {
             throw new EamDbException("Error invalid user password for database connection. Cannot be null or empty."); // NON-NLS
         }
+        this.password = password;
     }
 
     /**

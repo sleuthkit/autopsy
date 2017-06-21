@@ -113,12 +113,10 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         connectionURL.append(dbSettings.getPort());
         connectionURL.append("/");
         connectionURL.append(dbSettings.getDbName());
-        connectionURL.append("?user=");
-        connectionURL.append(dbSettings.getUserName());
-        connectionURL.append("&password=");
-        connectionURL.append(dbSettings.getPassword());
-
+        
         connectionPool.setUrl(connectionURL.toString());
+        connectionPool.setUsername(dbSettings.getUserName());
+        connectionPool.setPassword(dbSettings.getPassword());
 
         // tweak pool configuration
         connectionPool.setInitialSize(5); // start with 5 connections
