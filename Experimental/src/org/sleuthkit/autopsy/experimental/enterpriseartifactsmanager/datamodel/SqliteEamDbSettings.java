@@ -433,9 +433,9 @@ public final class SqliteEamDbSettings {
      */
     public void setDbName(String dbName) throws EamDbException {
         if (dbName == null || dbName.isEmpty()) {
-            throw new EamDbException("Error invalid file name for database. Cannot be null or empty."); // NON-NLS
+            throw new EamDbException("Invalid database file name. Cannot be null or empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Error invalid name for database connection. Name can only contain letters, numbers, and '_', must start with a letter."); // NON-NLS
+            throw new EamDbException("Invalid database file name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName;
@@ -455,7 +455,7 @@ public final class SqliteEamDbSettings {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Error invalid bulk threshold for database connection."); // NON-NLS
+            throw new EamDbException("Invalid bulk threshold for database connection."); // NON-NLS
         }
     }
 

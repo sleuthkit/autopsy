@@ -44,7 +44,7 @@ public final class PostgresEamDbSettings {
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDbSettings.class.getName());
     private final String DEFAULT_HOST = "localhost"; // NON-NLS
     private final int DEFAULT_PORT = 5432;
-    private final String DEFAULT_DBNAME = "EnterpriseArtifacts"; // NON-NLS
+    private final String DEFAULT_DBNAME = "enterpriseartifacts"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_USERNAME = "";
     private final String DEFAULT_PASSWORD = "";
@@ -491,7 +491,7 @@ public final class PostgresEamDbSettings {
         if (null != host && !host.isEmpty()) {
             this.host = host;
         } else {
-            throw new EamDbException("Error invalid host for database connection. Cannot be null or empty."); // NON-NLS
+            throw new EamDbException("Invalid host name. Cannot be empty."); // NON-NLS
         }
     }
 
@@ -509,7 +509,7 @@ public final class PostgresEamDbSettings {
         if (port > 0 && port < 65535) {
             this.port = port;
         } else {
-            throw new EamDbException("Error invalid port for database connection."); // NON-NLS
+            throw new EamDbException("Invalid port. Must be a number greater than 0."); // NON-NLS
         }
     }
 
@@ -528,9 +528,9 @@ public final class PostgresEamDbSettings {
      */
     public void setDbName(String dbName) throws EamDbException {
         if (dbName == null || dbName.isEmpty()) {
-            throw new EamDbException("Error invalid name for database connection. Cannot be null or empty."); // NON-NLS
+            throw new EamDbException("Invalid database name. Cannot be empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Error invalid name for database connection. Name can only contain letters, numbers, and '_', and must start with a letter."); // NON-NLS
+            throw new EamDbException("Invalid database name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName.toLowerCase();
@@ -550,7 +550,7 @@ public final class PostgresEamDbSettings {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Error invalid bulk threshold for database connection."); // NON-NLS
+            throw new EamDbException("Invalid bulk threshold for database connection."); // NON-NLS
         }
     }
 
@@ -566,9 +566,9 @@ public final class PostgresEamDbSettings {
      */
     public void setUserName(String userName) throws EamDbException {
         if (userName == null || userName.isEmpty()) {
-            throw new EamDbException("Error invalid user name for database connection. Cannot be null or empty."); // NON-NLS
+            throw new EamDbException("Invalid user name. Cannot be empty."); // NON-NLS
         } else if (!Pattern.matches(DB_USER_NAMES_REGEX, userName)) {
-            throw new EamDbException("Error invalid user name for database connection. Name can only contain letters, numbers, and '_', and must start with a letter."); // NON-NLS
+            throw new EamDbException("Invalid user name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
         }
         this.userName = userName;
     }
@@ -585,7 +585,7 @@ public final class PostgresEamDbSettings {
      */
     public void setPassword(String password) throws EamDbException {
         if (password == null || password.isEmpty()) {
-            throw new EamDbException("Error invalid user password for database connection. Cannot be null or empty."); // NON-NLS
+            throw new EamDbException("Invalid user password. Cannot be empty."); // NON-NLS
         }
         this.password = password;
     }

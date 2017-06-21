@@ -48,7 +48,7 @@ public class EamDbSettingsDialog extends JDialog {
     private final PostgresEamDbSettings dbSettingsPostgres;
     private final SqliteEamDbSettings dbSettingsSqlite;
     private DatabaseTestResult testingStatus;
-    private final EamDbPlatformEnum initialSelectedPlatform;
+    private EamDbPlatformEnum selectedPlatform;
 
     /**
      * Creates new form EamDbSettingsDialog
@@ -66,7 +66,7 @@ public class EamDbSettingsDialog extends JDialog {
 
         dbSettingsPostgres = new PostgresEamDbSettings();
         dbSettingsSqlite = new SqliteEamDbSettings();
-        initialSelectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         
         initComponents();
         customizeComponents();
@@ -110,7 +110,9 @@ public class EamDbSettingsDialog extends JDialog {
         bnTest = new javax.swing.JButton();
         bnCreateDb = new javax.swing.JButton();
         lbTestIcon = new javax.swing.JLabel();
+        lbCreateIcon = new javax.swing.JLabel();
         pnSetupGuidance = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
         taSetupGuidance = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -314,6 +316,8 @@ public class EamDbSettingsDialog extends JDialog {
                 .addComponent(lbTestIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(bnCreateDb)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(lbCreateIcon, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(bnOk)
                 .addGap(11, 11, 11)
@@ -325,9 +329,8 @@ public class EamDbSettingsDialog extends JDialog {
             .addGroup(pnButtonsLayout.createSequentialGroup()
                 .addGap(0, 0, 0)
                 .addGroup(pnButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnButtonsLayout.createSequentialGroup()
-                        .addGap(4, 4, 4)
-                        .addComponent(lbTestIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lbCreateIcon, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lbTestIcon, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(pnButtonsLayout.createSequentialGroup()
                         .addGroup(pnButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(bnOk)
@@ -339,6 +342,8 @@ public class EamDbSettingsDialog extends JDialog {
         );
 
         pnSetupGuidance.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamDbSettingsDialog.class, "EamDbSettingsDialog.pnSetupGuidance.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+
+        jScrollPane1.setBorder(null);
 
         taSetupGuidance.setEditable(false);
         taSetupGuidance.setBackground(new java.awt.Color(240, 240, 240));
@@ -352,6 +357,7 @@ public class EamDbSettingsDialog extends JDialog {
         taSetupGuidance.setBorder(null);
         taSetupGuidance.setRequestFocusEnabled(false);
         taSetupGuidance.setVerifyInputWhenFocusTarget(false);
+        jScrollPane1.setViewportView(taSetupGuidance);
 
         javax.swing.GroupLayout pnSetupGuidanceLayout = new javax.swing.GroupLayout(pnSetupGuidance);
         pnSetupGuidance.setLayout(pnSetupGuidanceLayout);
@@ -359,14 +365,14 @@ public class EamDbSettingsDialog extends JDialog {
             pnSetupGuidanceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnSetupGuidanceLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(taSetupGuidance)
+                .addComponent(jScrollPane1)
                 .addContainerGap())
         );
         pnSetupGuidanceLayout.setVerticalGroup(
             pnSetupGuidanceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnSetupGuidanceLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(taSetupGuidance, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(pnSetupGuidanceLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -402,7 +408,6 @@ public class EamDbSettingsDialog extends JDialog {
         bnGrpDatabasePlatforms.add(rdioBnPostgreSQL);
         bnGrpDatabasePlatforms.add(rdioBnSQLite);
         
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         switch (selectedPlatform) {
             case POSTGRESQL:
                 rdioBnPostgreSQL.setSelected(true);
@@ -443,6 +448,11 @@ public class EamDbSettingsDialog extends JDialog {
         }
     }
     
+    private void clearIcons() {
+        lbTestIcon.setIcon(null);
+        lbCreateIcon.setIcon(null);
+    }
+    
     @Messages({"EamDbSettingsDialog.chooserPath.failedToGetDbPathMsg=Selected database path is invalid. Try again."})
     private void bnDatabasePathFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDatabasePathFileOpenActionPerformed
         fcDatabasePath.setCurrentDirectory(new File(dbSettingsSqlite.getDbDirectory()));
@@ -466,7 +476,6 @@ public class EamDbSettingsDialog extends JDialog {
     private void bnTestActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnTestActionPerformed
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
         switch (selectedPlatform) {
             case POSTGRESQL:
                 if (dbSettingsPostgres.verifyConnection()) {
@@ -507,8 +516,7 @@ public class EamDbSettingsDialog extends JDialog {
     private void bnCreateDbActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCreateDbActionPerformed
 
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        lbTestIcon.setIcon(null);
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        clearIcons();
         boolean result = false;
         switch (selectedPlatform) {
             case POSTGRESQL:
@@ -530,14 +538,16 @@ public class EamDbSettingsDialog extends JDialog {
         setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         if (false == result) {
             setGuidanceMessage(Bundle.EamDbSettingsDialog_creation_failed(), true);
+            lbCreateIcon.setIcon(badIcon);
         } else {
             testingStatus = DatabaseTestResult.TESTEDOK;
+            lbCreateIcon.setIcon(goodIcon);
             valid();
         }
     }//GEN-LAST:event_bnCreateDbActionPerformed
 
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        EamDbPlatformEnum.setSelectedPlatform(selectedPlatform.name());
         EamDbPlatformEnum.saveSelectedPlatform();
         switch (selectedPlatform) {
             case POSTGRESQL:
@@ -556,13 +566,11 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_bnOkActionPerformed
 
     private void bnCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelActionPerformed
-        EamDbPlatformEnum.setSelectedPlatform(initialSelectedPlatform.name());
-
         dispose();
     }//GEN-LAST:event_bnCancelActionPerformed
 
     private void rdioBnDisabledActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdioBnDisabledActionPerformed
-        EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.DISABLED.toString());
+        selectedPlatform = EamDbPlatformEnum.DISABLED;
         testingStatus = DatabaseTestResult.TESTEDOK;
 
         updateSqliteFields(false);
@@ -571,7 +579,7 @@ public class EamDbSettingsDialog extends JDialog {
 
 
     private void rdioBnPostgreSQLActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdioBnPostgreSQLActionPerformed
-        EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.POSTGRESQL.toString());
+        selectedPlatform = EamDbPlatformEnum.POSTGRESQL;
         testingStatus = DatabaseTestResult.UNTESTED;
 
         updateSqliteFields(false);
@@ -579,7 +587,7 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_rdioBnPostgreSQLActionPerformed
 
     private void rdioBnSQLiteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdioBnSQLiteActionPerformed
-        EamDbPlatformEnum.setSelectedPlatform(EamDbPlatformEnum.SQLITE.toString());
+        selectedPlatform = EamDbPlatformEnum.SQLITE;
         testingStatus = DatabaseTestResult.UNTESTED;
 
         updateSqliteFields(true);
@@ -689,7 +697,7 @@ public class EamDbSettingsDialog extends JDialog {
      * @return True or false.
      */
     @Messages({"EamDbSettingsDialog.validation.incompleteFields=Fill in all values for the selected database."})
-    private boolean databaseFieldsArePopulated(EamDbPlatformEnum selectedPlatform) {
+    private boolean databaseFieldsArePopulated() {
         boolean result = true;
         switch (selectedPlatform) {
             case POSTGRESQL:
@@ -718,9 +726,9 @@ public class EamDbSettingsDialog extends JDialog {
      *
      * @return True or false.
      */
-    private boolean checkFields(EamDbPlatformEnum selectedPlatform) {
-        return databaseFieldsArePopulated(selectedPlatform)
-                && databaseSettingsAreValid(selectedPlatform);
+    private boolean checkFields() {
+        return databaseFieldsArePopulated()
+                && databaseSettingsAreValid();
     }
 
     /**
@@ -728,13 +736,7 @@ public class EamDbSettingsDialog extends JDialog {
      *
      * @return True or false.
      */
-    @Messages({"EamDbSettingsDialog.validation.invalidHost=Invalid database hostname.",
-        "EamDbSettingsDialog.validation.invalidPort=Invalid database port number.",
-        "EamDbSettingsDialog.validation.invalidDbName=Invalid database name.",
-        "EamDbSettingsDialog.validation.invalidDbUser=Invalid database username.",
-        "EamDbSettingsDialog.validation.invalidDbPassword=Invalid database password.",
-        "EamDbSettingsDialog.validation.invalidDbPath=Invalid database path."})
-    private boolean databaseSettingsAreValid(EamDbPlatformEnum selectedPlatform) {
+    private boolean databaseSettingsAreValid() {
         boolean result = true;
         StringBuilder guidanceText = new StringBuilder();
 
@@ -743,50 +745,35 @@ public class EamDbSettingsDialog extends JDialog {
                 try {
                     dbSettingsPostgres.setHost(tbDbHostname.getText().trim());
                 } catch (EamDbException ex) {
-                    if (!guidanceText.toString().isEmpty()) {
-                        guidanceText.append(", ");
-                    }
-                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidHost());
+                    guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setPort(Integer.valueOf(tbDbPort.getText().trim()));
                 } catch (NumberFormatException | EamDbException ex) {
-                    if (!guidanceText.toString().isEmpty()) {
-                        guidanceText.append(", ");
-                    }
-                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidPort());
+                    guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setDbName(tbDbName.getText().trim());
                 } catch (EamDbException ex) {
-                    if (!guidanceText.toString().isEmpty()) {
-                        guidanceText.append(", ");
-                    }
-                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbName());
+                    guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setUserName(tbDbUsername.getText().trim());
                 } catch (EamDbException ex) {
-                    if (!guidanceText.toString().isEmpty()) {
-                        guidanceText.append(", ");
-                    }
-                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbUser());
+                    guidanceText.append(ex.getMessage());
                     result = false;
                 }
 
                 try {
                     dbSettingsPostgres.setPassword(new String(jpDbPassword.getPassword()));
                 } catch (EamDbException ex) {
-                    if (!guidanceText.toString().isEmpty()) {
-                        guidanceText.append(", ");
-                    }
-                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbPassword());
+                    guidanceText.append(ex.getMessage());
                     result = false;
                 }
                 break;
@@ -796,17 +783,13 @@ public class EamDbSettingsDialog extends JDialog {
                     dbSettingsSqlite.setDbName(databasePath.getName());
                     dbSettingsSqlite.setDbDirectory(databasePath.getParent());
                 } catch (EamDbException ex) {
-                    if (!guidanceText.toString().isEmpty()) {
-                        guidanceText.append(", ");
-                    }
-                    guidanceText.append(Bundle.EamDbSettingsDialog_validation_invalidDbPath());
+                    guidanceText.append(ex.getMessage());
                     result = false;
                 }
                 break;
         }
 
         setGuidanceMessage(guidanceText.toString(), true);
-        bnTest.setEnabled(result);
         return result;
     }
 
@@ -817,9 +800,7 @@ public class EamDbSettingsDialog extends JDialog {
      */
     private boolean valid() {
         taSetupGuidance.setText("");
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        return checkFields(selectedPlatform)
-                && enableTestButton(selectedPlatform)
+        return enableTestButton(checkFields())
                 && enableCreateButton()
                 && enableOkButton();
     }
@@ -831,8 +812,8 @@ public class EamDbSettingsDialog extends JDialog {
      */
     @Messages({"EamDbSettingsDialog.validation.mustTest=Once you are statisfied with the database settings, click the Test button to test the database connection, settings, and schema.",
         "EamDbSettingsDialog.validation.failedConnection=The connection to the database failed. Update the settings and try the Test again."})
-    private boolean enableTestButton(EamDbPlatformEnum selectedPlatform) {
-        if (selectedPlatform != EamDbPlatformEnum.DISABLED) {
+    private boolean enableTestButton(boolean isValidInput) {
+        if (selectedPlatform != EamDbPlatformEnum.DISABLED && isValidInput) {
             bnTest.setEnabled(true);
             if (testingStatus == DatabaseTestResult.UNTESTED) {
                 setGuidanceMessage(Bundle.EamDbSettingsDialog_validation_mustTest(), false);
@@ -866,7 +847,7 @@ public class EamDbSettingsDialog extends JDialog {
      * 
      * @return true
      */
-    @Messages({"EamDbSettingsDialog.validation.finished=Click OK to save your database settings and return to the Options."})
+    @Messages({"EamDbSettingsDialog.validation.finished=Click OK to save your database settings and return to the Options. Or select a differnt database type."})
     private boolean enableOkButton() {
         if (testingStatus == DatabaseTestResult.TESTEDOK) {
             bnOk.setEnabled(true);
@@ -886,18 +867,24 @@ public class EamDbSettingsDialog extends JDialog {
         @Override
         public void changedUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            clearIcons();
+            testingStatus = DatabaseTestResult.UNTESTED;
             valid();
         }
 
         @Override
         public void insertUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            clearIcons();
+            testingStatus = DatabaseTestResult.UNTESTED;
             valid();
         }
 
         @Override
         public void removeUpdate(DocumentEvent e) {
             firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+            clearIcons();
+            testingStatus = DatabaseTestResult.UNTESTED;
             valid();
         }
     }
@@ -917,7 +904,9 @@ public class EamDbSettingsDialog extends JDialog {
     private javax.swing.JButton bnOk;
     private javax.swing.JButton bnTest;
     private javax.swing.JFileChooser fcDatabasePath;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPasswordField jpDbPassword;
+    private javax.swing.JLabel lbCreateIcon;
     private javax.swing.JLabel lbDatabaseName;
     private javax.swing.JLabel lbDatabasePath;
     private javax.swing.JLabel lbHostName;
