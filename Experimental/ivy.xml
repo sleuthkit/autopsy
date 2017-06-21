@@ -1,9 +1,10 @@
 <ivy-module version="2.0">
-    <info organisation="org.sleuthkit.autopsy" module="corelibs"/>
+    <info organisation="org.sleuthkit.autopsy" module="experimental"/>
     <configurations >
         <!-- module dependencies -->
         <conf name="experimental"/>
         
+        <conf name="eam"/>
     </configurations>
     <dependencies>
         <dependency conf="experimental->default" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="4.3.1"/>
@@ -12,5 +13,13 @@
         <dependency conf="experimental->default" org="com.mchange" name="c3p0" rev="0.9.5"/>
         <dependency conf="experimental->default" org="com.fasterxml.jackson.core" name="jackson-core" rev="2.7.0"/>
         <dependency conf="experimental->default" org="org.swinglabs.swingx" name="swingx-all" rev="1.6.4"/>
+        
+        <!-- for enterprise artifacts manager -->
+        <dependency conf="eam->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
+        <dependency conf="eam->default" org="commons-logging" name="commons-logging" rev="1.2"/>
+        <dependency conf="eam->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>
+        <dependency conf="eam->default" org="org.postgresql" name="postgresql" rev="42.1.1"/>
+        <dependency conf="eam->default" org="org.xerial" name="sqlite-jdbc" rev="3.16.1"/>
+
     </dependencies>
 </ivy-module>
