@@ -18,14 +18,16 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.beans.Observable;
@@ -55,6 +57,7 @@ import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -92,11 +95,6 @@ public final class ImageGalleryController implements Executor {
     private Runnable showTree;
     private Toolbar toolbar;
 
-    @Override
-    public void execute(Runnable command) {
-        execDelegate.execute(command);
-    }
-
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
 
     private final Region infoOverLayBackground = new Region() {
@@ -107,13 +105,6 @@ public final class ImageGalleryController implements Executor {
     };
 
     private static ImageGalleryController instance;
-
-    public static synchronized ImageGalleryController getDefault() {
-        if (instance == null) {
-            instance = new ImageGalleryController();
-        }
-        return instance;
-    }
 
     private final History<GroupViewState> historyManager = new History<>();
     private final UndoRedoManager undoManager = new UndoRedoManager();
@@ -134,8 +125,6 @@ public final class ImageGalleryController implements Executor {
 
     private final FileIDSelectionModel selectionModel = new FileIDSelectionModel(this);
 
-    private DBWorkerThread dbWorkerThread;
-
     private DrawableDB db;
 
     private final GroupManager groupManager = new GroupManager(this);
@@ -149,6 +138,22 @@ public final class ImageGalleryController implements Executor {
 
     private Node infoOverlay;
     private SleuthkitCase sleuthKitCase;
+
+    private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
+
+    private ListeningExecutorService dbExecutor;
+
+    @Override
+    public void execute(Runnable command) {
+        execDelegate.execute(command);
+    }
+
+    public static synchronized ImageGalleryController getDefault() {
+        if (instance == null) {
+            instance = new ImageGalleryController();
+        }
+        return instance;
+    }
 
     public ReadOnlyBooleanProperty getMetaDataCollapsed() {
         return metaDataCollapsed.getReadOnlyProperty();
@@ -363,23 +368,15 @@ public final class ImageGalleryController implements Executor {
         }
     }
 
-    synchronized private DBWorkerThread restartWorker() {
-        if (dbWorkerThread == null) {
-            dbWorkerThread = new DBWorkerThread(this);
-            dbWorkerThread.start();
-        } else {
-            // Keep using the same worker thread if one exists
-        }
-        return dbWorkerThread;
-    }
-
     /**
      * configure the controller for a specific case.
      *
      * @param theNewCase the case to configure the controller for
      */
     public synchronized void setCase(Case theNewCase) {
-        if (Objects.nonNull(theNewCase)) {
+        if (null == theNewCase) {
+            reset();
+        } else {
             this.sleuthKitCase = theNewCase.getSleuthkitCase();
             this.db = DrawableDB.getDrawableDB(ImageGalleryModule.getModuleOutputDir(theNewCase), this);
 
@@ -388,7 +385,6 @@ public final class ImageGalleryController implements Executor {
 
             // if we add this line icons are made as files are analyzed rather than on demand.
             // db.addUpdatedFileListener(IconCache.getDefault());
-            restartWorker();
             historyManager.clear();
             groupManager.setDB(db);
             hashSetManager.setDb(db);
@@ -396,9 +392,8 @@ public final class ImageGalleryController implements Executor {
             tagsManager.setAutopsyTagsManager(theNewCase.getServices().getTagsManager());
             tagsManager.registerListener(groupManager);
             tagsManager.registerListener(categoryManager);
-
-        } else {
-            reset();
+            shutDownDBExecutor();
+            dbExecutor = getNewDBExecutor();
         }
     }
 
@@ -415,9 +410,7 @@ public final class ImageGalleryController implements Executor {
         tagsManager.clearFollowUpTagName();
         tagsManager.unregisterListener(groupManager);
         tagsManager.unregisterListener(categoryManager);
-        dbWorkerThread.cancel();
-        dbWorkerThread = null;
-        dbWorkerThread = restartWorker();
+        shutDownDBExecutor();
 
         if (toolbar != null) {
             toolbar.reset();
@@ -429,16 +422,42 @@ public final class ImageGalleryController implements Executor {
         db = null;
     }
 
+    private void shutDownDBExecutor() {
+        if (dbExecutor != null) {
+            dbExecutor.shutdownNow();
+            try {
+                dbExecutor.awaitTermination(30, TimeUnit.SECONDS);
+            } catch (InterruptedException ex) {
+                Exceptions.printStackTrace(ex);
+            }
+        }
+    }
+
+    private static ListeningExecutorService getNewDBExecutor() {
+        return MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(
+                new ThreadFactoryBuilder().setNameFormat("DB-Worker-Thread-%d").build()));
+    }
+
     /**
      * add InnerTask to the queue that the worker thread gets its work from
      *
-     * @param innerTask
+     * @param bgTask
      */
-    public synchronized void queueDBWorkerTask(BackgroundTask innerTask) {
-        if (dbWorkerThread == null) {
-            dbWorkerThread = restartWorker();
+    public synchronized void queueDBWorkerTask(BackgroundTask bgTask) {
+        if (dbExecutor == null || dbExecutor.isShutdown()) {
+            dbExecutor = getNewDBExecutor();
         }
-        dbWorkerThread.addTask(innerTask);
+        incrementQueueSize();
+        dbExecutor.submit(bgTask).addListener(this::decrementQueueSize, MoreExecutors.directExecutor());
+
+    }
+
+    private void incrementQueueSize() {
+        Platform.runLater(() -> queueSizeProperty.set(queueSizeProperty.get() + 1));
+    }
+
+    private void decrementQueueSize() {
+        Platform.runLater(() -> queueSizeProperty.set(queueSizeProperty.get() - 1));
     }
 
     @Nullable
@@ -503,76 +522,6 @@ public final class ImageGalleryController implements Executor {
 
     public ReadOnlyIntegerProperty getDBTasksQueueSizeProperty() {
         return queueSizeProperty.getReadOnlyProperty();
-    }
-    private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
-
-    // @@@ review this class for synchronization issues (i.e. reset and cancel being called, add, etc.)
-    static private class DBWorkerThread extends Thread implements Cancellable {
-
-        private final ImageGalleryController controller;
-
-        DBWorkerThread(ImageGalleryController controller) {
-            super("DB-Worker-Thread");
-            setDaemon(false);
-            this.controller = controller;
-        }
-
-        // true if the process was requested to stop.  Currently no way to reset it
-        private volatile boolean cancelled = false;
-
-        // list of tasks to run
-        private final BlockingQueue<BackgroundTask> workQueue = new LinkedBlockingQueue<>();
-
-        /**
-         * Cancel all of the queued up tasks and the currently scheduled task.
-         * Note that after you cancel, you cannot submit new jobs to this
-         * thread.
-         */
-        @Override
-        public boolean cancel() {
-            cancelled = true;
-            for (BackgroundTask it : workQueue) {
-                it.cancel();
-            }
-            workQueue.clear();
-            int size = workQueue.size();
-            Platform.runLater(() -> controller.queueSizeProperty.set(size));
-            return true;
-        }
-
-        /**
-         * Add a task for the worker thread to perform
-         *
-         * @param it
-         */
-        public void addTask(BackgroundTask it) {
-            workQueue.add(it);
-            int size = workQueue.size();
-            Platform.runLater(() -> controller.queueSizeProperty.set(size));
-        }
-
-        @Override
-        public void run() {
-
-            // nearly infinite loop waiting for tasks
-            while (true) {
-                if (cancelled || isInterrupted()) {
-                    return;
-                }
-                try {
-                    BackgroundTask it = workQueue.take();
-
-                    if (it.isCancelled() == false) {
-                        it.run();
-                    }
-                    int size = workQueue.size();
-                    Platform.runLater(() -> controller.queueSizeProperty.set(size));
-
-                } catch (InterruptedException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to run DB worker thread", ex); //NON-NLS
-                }
-            }
-        }
     }
 
     public synchronized SleuthkitCase getSleuthKitCase() {
@@ -643,7 +592,7 @@ public final class ImageGalleryController implements Executor {
     /**
      * Abstract base class for tasks associated with a file in the database
      */
-    static public abstract class FileTask extends BackgroundTask {
+    static abstract class FileTask extends BackgroundTask {
 
         private final AbstractFile file;
         private final DrawableDB taskDB;
@@ -713,7 +662,6 @@ public final class ImageGalleryController implements Executor {
                     Logger.getLogger(RemoveFileTask.class.getName()).log(Level.SEVERE, "Case was closed out from underneath RemoveFile task"); //NON-NLS
                 }
             }
-
         }
     }
 
@@ -775,7 +723,7 @@ public final class ImageGalleryController implements Executor {
                 DrawableDB.DrawableTransaction tr = taskDB.beginTransaction();
                 int workDone = 0;
                 for (final AbstractFile f : files) {
-                    if (isCancelled()) {
+                    if (isCancelled() || Thread.interrupted()) {
                         LOGGER.log(Level.WARNING, "Task cancelled: not all contents may be transfered to drawable database."); //NON-NLS
                         progressHandle.finish();
                         break;
