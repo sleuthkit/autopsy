@@ -119,8 +119,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 comboboxSourceOrganization.addItem(org.getName());
-                selectedOrg = orgs.get(0);
             });
+            if (!orgs.isEmpty()) {
+                selectedOrg = orgs.get(0);
+            }
+            valid();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Failure populating combobox with organizations.", ex);
         }
@@ -183,7 +186,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             return false;
         }
 
-        return enableOkButton(checkFields());
+        return enableOkButton(checkFields() && null != selectedOrg);
     }
 
     /**
@@ -545,6 +548,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                 return;
             }
         }
+        valid();
     }//GEN-LAST:event_comboboxSourceOrganizationActionPerformed
 
     @NbBundle.Messages({"ImportHashDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
