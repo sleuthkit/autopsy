@@ -50,6 +50,91 @@ public class TagsManager implements Closeable {
     private final SleuthkitCase caseDb;
 
     /**
+     * Tests whether or not a given tag display name contains an illegal
+     * character.
+     *
+     * @param tagDisplayName Display name of a tag.
+     *
+     * @return True or false.
+     */
+    public static boolean containsIllegalCharacters(String tagDisplayName) {
+        return (tagDisplayName.contains("\\")
+                || tagDisplayName.contains(":")
+                || tagDisplayName.contains("*")
+                || tagDisplayName.contains("?")
+                || tagDisplayName.contains("\"")
+                || tagDisplayName.contains("<")
+                || tagDisplayName.contains(">")
+                || tagDisplayName.contains("|")
+                || tagDisplayName.contains(",")
+                || tagDisplayName.contains(";"));
+
+    }
+
+    /**
+     * Gets the set of display names of the currently available tag types. This
+     * includes the display names of the standard tag types, the current user's
+     * custom tag types, and the tags in the case database of the current case
+     * (if there is a current case).
+     *
+     * @return A set, possibly empty, of tag type display names.
+     *
+     * @throws TskCoreException If there is a current case and there is an error
+     *                          querying the case database for tag types.
+     */
+    public static Set<String> getTagDisplayNames() throws TskCoreException {
+        Set<String> tagDisplayNames = new HashSet<>(STANDARD_TAG_DISPLAY_NAMES);
+        Set<TagNameDefiniton> customNames = TagNameDefiniton.getTagNameDefinitions();
+        customNames.forEach((tagType) -> {
+            tagDisplayNames.add(tagType.getDisplayName());
+        });        
+        try {
+            TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();
+            for (TagName tagName : tagsManager.getAllTagNames()) {
+                tagDisplayNames.add(tagName.getDisplayName());
+            }
+        } catch (IllegalStateException ignored) {
+            /*
+             * No current case, nothing more to add to the set.
+             */
+        } 
+        return tagDisplayNames;
+    }
+
+    /**
+     * Constructs a per case Autopsy service that manages the addition of
+     * content and artifact tags to the case database.
+     *
+     * @param caseDb The case database.
+     */
+    TagsManager(SleuthkitCase caseDb) {
+        this.caseDb = caseDb;
+    }
+
+    /**
+     * Gets a list of all tag names currently in the case database.
+     *
+     * @return A list, possibly empty, of TagName objects.
+     *
+     * @throws TskCoreException If there is an error querying the case database.
+     */
+    public List<TagName> getAllTagNames() throws TskCoreException {
+        return caseDb.getAllTagNames();
+    }
+
+    /**
+     * Gets a list of all tag names currently in use in the case database for
+     * tagging content or artifacts.
+     *
+     * @return A list, possibly empty, of TagName objects.
+     *
+     * @throws TskCoreException If there is an error querying the case database.
+     */
+    public List<TagName> getTagNamesInUse() throws TskCoreException {
+        return caseDb.getTagNamesInUse();
+    }
+
+    /**
      * Gets a map of tag display names to tag name entries in the case database.
      * It has keys for the display names of the standard tag types, the current
      * user's custom tag types, and the tags in the case database. The value for
@@ -84,61 +169,6 @@ public class TagsManager implements Closeable {
             tagNames.put(tagName.getDisplayName(), tagName);
         }
         return new HashMap<>(tagNames);
-    }
-
-    /**
-     * Tests whether or not a given tag display name contains an illegal
-     * character.
-     *
-     * @param tagDisplayName Display name of a tag.
-     *
-     * @return True or false.
-     */
-    public static boolean containsIllegalCharacters(String tagDisplayName) {
-        return (tagDisplayName.contains("\\")
-                || tagDisplayName.contains(":")
-                || tagDisplayName.contains("*")
-                || tagDisplayName.contains("?")
-                || tagDisplayName.contains("\"")
-                || tagDisplayName.contains("<")
-                || tagDisplayName.contains(">")
-                || tagDisplayName.contains("|")
-                || tagDisplayName.contains(",")
-                || tagDisplayName.contains(";"));
-
-    }
-
-    /**
-     * Constructs a per case Autopsy service that manages the addition of
-     * content and artifact tags to the case database.
-     *
-     * @param caseDb The case database.
-     */
-    TagsManager(SleuthkitCase caseDb) {
-        this.caseDb = caseDb;
-    }
-
-    /**
-     * Gets a list of all tag names currently in the case database.
-     *
-     * @return A list, possibly empty, of TagName objects.
-     *
-     * @throws TskCoreException If there is an error querying the case database.
-     */
-    public List<TagName> getAllTagNames() throws TskCoreException {
-        return caseDb.getAllTagNames();
-    }
-
-    /**
-     * Gets a list of all tag names currently in use in the case database for
-     * tagging content or artifacts.
-     *
-     * @return A list, possibly empty, of TagName objects.
-     *
-     * @throws TskCoreException If there is an error querying the case database.
-     */
-    public List<TagName> getTagNamesInUse() throws TskCoreException {
-        return caseDb.getTagNamesInUse();
     }
 
     /**
