@@ -829,14 +829,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
             sql.append("+ (SELECT count(*) FROM ");
             sql.append(table_name);
-            sql.append(" WHERE case_id=(SELECT id FROM cases WHERE case_uid=?))");// and data_source_id=(SELECT id FROM data_sources WHERE name=?))");
+            sql.append(" WHERE case_id=(SELECT id FROM cases WHERE case_uid=?) and data_source_id=(SELECT id FROM data_sources WHERE device_id=?))");
         }
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
 
             for (int i = 0; i < artifactTypes.size(); ++i) {
-                preparedStatement.setString(i + 1, eamInstance.getEamCase().getCaseUUID());
+                preparedStatement.setString(2 * i + 1, eamInstance.getEamCase().getCaseUUID());
+                preparedStatement.setString(2 * i + 2, eamInstance.getEamDataSource().getDeviceID());
             }
 
             resultSet = preparedStatement.executeQuery();
