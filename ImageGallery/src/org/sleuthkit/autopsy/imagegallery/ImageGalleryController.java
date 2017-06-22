@@ -91,11 +91,8 @@ import org.sleuthkit.datamodel.TskData;
  */
 public final class ImageGalleryController implements Executor {
 
-    private final Executor execDelegate = Executors.newSingleThreadExecutor();
-    private Runnable showTree;
-    private Toolbar toolbar;
-
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
+    private static ImageGalleryController instance;
 
     private final Region infoOverLayBackground = new Region() {
         {
@@ -104,44 +101,41 @@ public final class ImageGalleryController implements Executor {
         }
     };
 
-    private static ImageGalleryController instance;
-
-    private final History<GroupViewState> historyManager = new History<>();
-    private final UndoRedoManager undoManager = new UndoRedoManager();
-
     /**
      * true if Image Gallery should listen to ingest events, false if it should
      * not listen to speed up ingest
      */
     private final SimpleBooleanProperty listeningEnabled = new SimpleBooleanProperty(false);
 
-    private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
-
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private final ReadOnlyBooleanWrapper stale = new ReadOnlyBooleanWrapper(false);
 
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
     private final ReadOnlyDoubleWrapper thumbnailSize = new ReadOnlyDoubleWrapper(100);
+    private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
 
     private final FileIDSelectionModel selectionModel = new FileIDSelectionModel(this);
 
-    private DrawableDB db;
-
+    private final History<GroupViewState> historyManager = new History<>();
+    private final UndoRedoManager undoManager = new UndoRedoManager();
     private final GroupManager groupManager = new GroupManager(this);
     private final HashSetManager hashSetManager = new HashSetManager();
     private final CategoryManager categoryManager = new CategoryManager(this);
     private final DrawableTagsManager tagsManager = new DrawableTagsManager(null);
 
+    private Runnable showTree;
+    private Toolbar toolbar;
     private StackPane fullUIStackPane;
-
     private StackPane centralStackPane;
-
     private Node infoOverlay;
-    private SleuthkitCase sleuthKitCase;
 
-    private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
+    private final Executor execDelegate = Executors.newSingleThreadExecutor();
 
     private ListeningExecutorService dbExecutor;
+
+    private SleuthkitCase sleuthKitCase;
+    private DrawableDB db;
 
     @Override
     public void execute(Runnable command) {
