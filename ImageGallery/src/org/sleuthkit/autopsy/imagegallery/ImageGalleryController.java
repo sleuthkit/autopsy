@@ -57,7 +57,6 @@ import javax.annotation.Nullable;
 import javax.swing.SwingUtilities;
 import org.netbeans.api.progress.ProgressHandle;
 import org.openide.util.Cancellable;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
@@ -308,7 +307,7 @@ public final class ImageGalleryController implements Executor {
     synchronized private void checkForGroups() {
         if (groupManager.getAnalyzedGroups().isEmpty()) {
             if (IngestManager.getInstance().isIngestRunning()) {
-                if (listeningEnabled.get() == false) {
+                if (listeningEnabled.not().get()) {
                     replaceNotification(fullUIStackPane,
                             new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg1()));
                 } else {
@@ -322,7 +321,7 @@ public final class ImageGalleryController implements Executor {
                         new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
                                 new ProgressIndicator()));
             } else if (db != null && db.countAllFiles() <= 0) { // there are no files in db
-                if (listeningEnabled.get() == false) {
+                if (listeningEnabled.not().get()) {
                     replaceNotification(fullUIStackPane,
                             new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg4()));
                 } else {
@@ -416,13 +415,13 @@ public final class ImageGalleryController implements Executor {
         db = null;
     }
 
-    private void shutDownDBExecutor() {
+    synchronized private void shutDownDBExecutor() {
         if (dbExecutor != null) {
             dbExecutor.shutdownNow();
             try {
                 dbExecutor.awaitTermination(30, TimeUnit.SECONDS);
             } catch (InterruptedException ex) {
-                Exceptions.printStackTrace(ex);
+                LOGGER.log(Level.WARNING, "Image Gallery failed to shutdown DB Task Executor in a timely fashion.", ex);
             }
         }
     }
@@ -934,12 +933,12 @@ public final class ImageGalleryController implements Executor {
             switch (Case.Events.valueOf(evt.getPropertyName())) {
                 case CURRENT_CASE:
                     Case newCase = (Case) evt.getNewValue();
-                    if (newCase != null) { // case has been opened
-                        setCase(newCase);    //connect db, groupmanager, start worker thread
-                    } else { // case is closing
+                    if (newCase == null) { // case is closing
                         //close window, reset everything
                         SwingUtilities.invokeLater(ImageGalleryTopComponent::closeTopComponent);
                         reset();
+                    } else { // a new case has been opened
+                        setCase(newCase);    //connect db, groupmanager, start worker thread
                     }
                     break;
                 case DATA_SOURCE_ADDED:
