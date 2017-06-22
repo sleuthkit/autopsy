@@ -504,8 +504,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     @Override
     public boolean isSupported(Node node) {
-        EamDb dbManager = EamDb.getInstance();
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             return false;
         }
 
@@ -516,8 +515,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     @Override
     @Messages({"DataContentViewerOtherCases.table.nodbconnection=Cannot connect to enterprise artifacts manager database."})
     public void setNode(Node node) {
-        EamDb dbManager = EamDb.getInstance();
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             return;
         }
 

@@ -20,15 +20,20 @@ package org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.coreutils.TextConverter;
+import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
  * Settings for the Postgres implementation of the enterprise artifacts manager
@@ -39,7 +44,7 @@ public final class PostgresEamDbSettings {
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDbSettings.class.getName());
     private final String DEFAULT_HOST = "localhost"; // NON-NLS
     private final int DEFAULT_PORT = 5432;
-    private final String DEFAULT_DBNAME = "enterpriseartifactmanagerdb"; // NON-NLS
+    private final String DEFAULT_DBNAME = "enterpriseartifacts"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_USERNAME = "";
     private final String DEFAULT_PASSWORD = "";
@@ -47,8 +52,8 @@ public final class PostgresEamDbSettings {
     private final String VALIDATION_QUERY = "SELECT version()"; // NON-NLS
     private final String JDBC_BASE_URI = "jdbc:postgresql://"; // NON-NLS
     private final String JDBC_DRIVER = "org.postgresql.Driver"; // NON-NLS
-
-    private boolean enabled;
+    private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*"; // only lower case
+    private final String DB_USER_NAMES_REGEX = "[a-zA-Z]\\w*";
     private String host;
     private int port;
     private String dbName;
@@ -62,8 +67,6 @@ public final class PostgresEamDbSettings {
     }
 
     public void loadSettings() {
-        enabled = Boolean.valueOf(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")); // NON-NLS
-
         host = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.host"); // NON-NLS
         if (host == null || host.isEmpty()) {
             host = DEFAULT_HOST;
@@ -110,6 +113,13 @@ public final class PostgresEamDbSettings {
         password = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password"); // NON-NLS
         if (password == null || password.isEmpty()) {
             password = DEFAULT_PASSWORD;
+        } else {
+            try {
+                password = TextConverter.convertHexTextToText(password);
+            } catch (TextConverterException ex) {
+                LOGGER.log(Level.WARNING, "Failed to convert password from hex text to text.", ex);
+                password = DEFAULT_PASSWORD;
+            }
         }
 
         String badTagsStr = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.badTags"); // NON-NLS
@@ -120,69 +130,338 @@ public final class PostgresEamDbSettings {
     }
 
     public void saveSettings() {
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.enabled", Boolean.toString(isEnabled())); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.host", getHost()); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.port", Integer.toString(port)); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.dbName", getDbName()); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.user", getUserName()); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password", getPassword()); // NON-NLS
+        try {
+            ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password", TextConverter.convertTextToHexText(getPassword())); // NON-NLS
+        } catch (TextConverterException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to convert password from text to hex text.", ex);
+        }
+
         ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
 
     /**
      * Get the full connection URL as a String
      *
+     * @param usePostgresDb Connect to the 'postgres' database when testing
+     * connectivity and creating the main database.
+     * 
      * @return
      */
-    public String getConnectionURL() {
+    public String getConnectionURL(boolean usePostgresDb) {
         StringBuilder url = new StringBuilder();
         url.append(getJDBCBaseURI());
         url.append(getHost());
         url.append("/"); // NON-NLS
-        url.append(getDbName());
-        url.append("?user="); // NON-NLS
-        url.append(getUserName());
-        url.append("&password="); // NON-NLS
-        url.append(getPassword());
+        if (usePostgresDb) {
+            url.append("postgres"); // NON-NLS
+        } else {
+            url.append(getDbName());
+        }
 
         return url.toString();
     }
 
-    public boolean testSettings() {
-        // Open a new ephemeral client here to test that we can connect
-        ResultSet resultSet = null;
-        Connection conn = null;
+    /**
+     * Use the current settings to get an ephemeral client connection for testing.
+     * 
+     * @return Connection or null.
+     */
+    private Connection getEphemeralConnection(boolean usePostgresDb) {
+        Connection conn;
         try {
-            String url = getConnectionURL();
+            String url = getConnectionURL(usePostgresDb);
+            Properties props = new Properties();
+            props.setProperty("user", getUserName());
+            props.setProperty("password", getPassword());
+
             Class.forName(getDriver());
-            conn = DriverManager.getConnection(url);
-            Statement tester = conn.createStatement();
-            resultSet = tester.executeQuery(getValidationQuery());
-            if (resultSet.next()) {
-                LOGGER.log(Level.INFO, "Testing connection to postgresql success."); // NON-NLS
-            }
+            conn = DriverManager.getConnection(url, props);
         } catch (ClassNotFoundException | SQLException ex) {
-            LOGGER.log(Level.INFO, "Testing connection to postgresql failed.", ex); // NON-NLS
+            // TODO: Determine why a connection failure (ConnectionException) re-throws
+            // the SQLException and does not print this log message?
+            LOGGER.log(Level.SEVERE, "Failed to acquire ephemeral connection to postgresql."); // NON-NLS
+            conn = null;
+        }
+        return conn;
+    }
+
+    /**
+     * Use the current settings and the validation query 
+     * to test the connection to the database.
+     * 
+     * @return true if successfull connection, else false.
+     */
+    public boolean verifyConnection() {
+        Connection conn = getEphemeralConnection(true);
+        if (null == conn) {
             return false;
-        } finally {
-            if (null != resultSet) {
-                try {
-                    resultSet.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing ResultSet.", ex); // NON-NLS
-                }
-            }
-            if (null != conn) {
-                try {
-                    conn.close();
-                } catch (SQLException ex) {
-                    LOGGER.log(Level.SEVERE, "Error closing test connection.", ex); // NON-NLS
-                }
-            }
+        }
+        
+        boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
+        EamDbUtil.closeConnection(conn);
+        return result;
+    }
+
+    /**
+     * Check to see if the database exists.
+     * 
+     * @return true if exists, else false
+     */
+    public boolean verifyDatabaseExists() {
+        Connection conn = getEphemeralConnection(true);
+        if (null == conn) {
+            return false;
         }
 
+        String sql = "SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower(?) LIMIT 1"; // NON-NLS
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, getDbName());
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                return true;
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to execute database existance query.", ex); // NON-NLS
+            return false;
+        } finally {
+            EamDbUtil.closePreparedStatement(ps);
+            EamDbUtil.closeResultSet(rs);
+            EamDbUtil.closeConnection(conn);
+        }
+        return false;
+    }
+    
+    /**
+     * Use the current settings and the schema version query 
+     * to test the database schema.
+     * 
+     * @return true if successfull connection, else false.
+     */
+    public boolean verifyDatabaseSchema() {
+        Connection conn = getEphemeralConnection(false);
+        if (null == conn) {
+            return false;
+        }
+
+        boolean result = EamDbUtil.schemaVersionIsSet(conn);
+
+        EamDbUtil.closeConnection(conn);
+        return result;
+    }
+
+    public boolean createDatabase() {
+        Connection conn = getEphemeralConnection(true);
+        if (null == conn) {
+            return false;
+        }
+
+        String sql = "CREATE DATABASE %s OWNER %s"; // NON-NLS
+        try {
+            Statement stmt;
+            stmt = conn.createStatement();
+            stmt.execute(String.format(sql, getDbName(), getUserName()));
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to execute create database statement.", ex); // NON-NLS
+            return false;
+        } finally {
+            EamDbUtil.closeConnection(conn);
+        }
         return true;
+        
+    }
+    /**
+     * Initialize the database schema.
+     *
+     * Requires valid connectionPool.
+     *
+     * This method is called from within connect(), so we cannot call connect()
+     * to get a connection. This method is called after setupConnectionPool(),
+     * so it is safe to assume that a valid connectionPool exists. The
+     * implementation of connect() is synchronized, so we can safely use the
+     * connectionPool object directly.
+     */
+    public boolean initializeDatabaseSchema() {
+        // The "id" column is an alias for the built-in 64-bit int "rowid" column.
+        // It is autoincrementing by default and must be of type "integer primary key".
+        // We've omitted the autoincrement argument because we are not currently
+        // using the id value to search for specific rows, so we do not care
+        // if a rowid is re-used after an existing rows was previously deleted.
+        StringBuilder createOrganizationsTable = new StringBuilder();
+        createOrganizationsTable.append("CREATE TABLE IF NOT EXISTS organizations (");
+        createOrganizationsTable.append("id SERIAL PRIMARY KEY,");
+        createOrganizationsTable.append("org_name text NOT NULL,");
+        createOrganizationsTable.append("poc_name text NOT NULL,");
+        createOrganizationsTable.append("poc_email text NOT NULL,");
+        createOrganizationsTable.append("poc_phone text NOT NULL");
+        createOrganizationsTable.append(")");
+
+        // NOTE: The organizations will only have a small number of rows, so
+        // an index is probably not worthwhile.
+
+        StringBuilder createCasesTable = new StringBuilder();
+        createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
+        createCasesTable.append("id SERIAL PRIMARY KEY,");
+        createCasesTable.append("case_uid text NOT NULL,");
+        createCasesTable.append("org_id integer,");
+        createCasesTable.append("case_name text NOT NULL,");
+        createCasesTable.append("creation_date text NOT NULL,");
+        createCasesTable.append("case_number text NOT NULL,");
+        createCasesTable.append("examiner_name text NOT NULL,");
+        createCasesTable.append("examiner_email text NOT NULL,");
+        createCasesTable.append("examiner_phone text NOT NULL,");
+        createCasesTable.append("notes text NOT NULL,");
+        createCasesTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
+        createCasesTable.append(")");
+
+        // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
+        String casesIdx1 = "CREATE INDEX IF NOT EXISTS cases_org_id ON cases (org_id)";
+        String casesIdx2 = "CREATE INDEX IF NOT EXISTS cases_case_uid ON cases (case_uid)";
+
+        StringBuilder createDataSourcesTable = new StringBuilder();
+        createDataSourcesTable.append("CREATE TABLE IF NOT EXISTS data_sources (");
+        createDataSourcesTable.append("id SERIAL PRIMARY KEY,");
+        createDataSourcesTable.append("device_id text NOT NULL,");
+        createDataSourcesTable.append("name text NOT NULL,");
+        createDataSourcesTable.append("CONSTRAINT device_id_unique UNIQUE (device_id)");
+        createDataSourcesTable.append(")");
+
+        String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
+
+        StringBuilder createGlobalReferenceSetsTable = new StringBuilder();
+        createGlobalReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS global_reference_sets (");
+        createGlobalReferenceSetsTable.append("id SERIAL PRIMARY KEY,");
+        createGlobalReferenceSetsTable.append("org_id integer,");
+        createGlobalReferenceSetsTable.append("set_name text NOT NULL,");
+        createGlobalReferenceSetsTable.append("version text NOT NULL,");
+        createGlobalReferenceSetsTable.append("import_date text NOT NULL,");
+        createGlobalReferenceSetsTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
+        createGlobalReferenceSetsTable.append(")");
+
+        String globalReferenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS global_reference_sets_org_id ON global_reference_sets (org_id)";
+
+        StringBuilder createGlobalFilesTable = new StringBuilder();
+        createGlobalFilesTable.append("CREATE TABLE IF NOT EXISTS global_files (");
+        createGlobalFilesTable.append("id SERIAL PRIMARY KEY,");
+        createGlobalFilesTable.append("global_reference_set_id integer,");
+        createGlobalFilesTable.append("value text NOT NULL,");
+        createGlobalFilesTable.append("known_status text NOT NULL,");
+        createGlobalFilesTable.append("comment text NOT NULL,");
+        createGlobalFilesTable.append("CONSTRAINT global_files_multi_unique UNIQUE (global_reference_set_id,value),");
+        createGlobalFilesTable.append("foreign key (global_reference_set_id) references global_reference_sets(id) on update set null on delete set null");
+        createGlobalFilesTable.append(")");
+
+        String globalFilesIdx1 = "CREATE INDEX IF NOT EXISTS global_files_value ON global_files (value)";
+        String globalFilesIdx2 = "CREATE INDEX IF NOT EXISTS global_files_value_known_status ON global_files (value, known_status)";
+
+        StringBuilder createArtifactTypesTable = new StringBuilder();
+        createArtifactTypesTable.append("CREATE TABLE IF NOT EXISTS artifact_types (");
+        createArtifactTypesTable.append("id SERIAL PRIMARY KEY,");
+        createArtifactTypesTable.append("name text NOT NULL,");
+        createArtifactTypesTable.append("supported integer NOT NULL,");
+        createArtifactTypesTable.append("enabled integer NOT NULL,");
+        createArtifactTypesTable.append("CONSTRAINT artifact_type_name_unique UNIQUE (name)");
+        createArtifactTypesTable.append(")");
+
+        // NOTE: there are API methods that query by one of: name, supported, or enabled.
+        // Only name is currently implemented, but, there will only be a small number
+        // of artifact_types, so there is no benefit to having any indices.
+        StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
+        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s_instances (");
+        createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
+        createArtifactInstancesTableTemplate.append("case_id integer,");
+        createArtifactInstancesTableTemplate.append("data_source_id integer,");
+        createArtifactInstancesTableTemplate.append("value text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_instances_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
+        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) on update set null on delete set null,");
+        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) on update set null on delete set null");
+        createArtifactInstancesTableTemplate.append(")");
+
+        // TODO: do we need any more indices?
+        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_instances_case_id ON %s_instances (case_id)";
+        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_instances_data_source_id ON %s_instances (data_source_id)";
+        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_instances_value ON %s_instances (value)";
+        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_instances_value_known_status ON %s_instances (value, known_status)";
+
+        StringBuilder createDbInfoTable = new StringBuilder();
+        createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
+        createDbInfoTable.append("id SERIAL PRIMARY KEY NOT NULL,");
+        createDbInfoTable.append("name text NOT NULL,");
+        createDbInfoTable.append("value text NOT NULL");
+        createDbInfoTable.append(")");
+
+        // NOTE: the db_info table currenly only has 1 row, so having an index
+        // provides no benefit.
+
+        Connection conn = null;
+        try {
+            conn = getEphemeralConnection(false);
+            if (null == conn) {
+                return false;
+            }
+            Statement stmt = conn.createStatement();
+
+            stmt.execute(createOrganizationsTable.toString());
+
+            stmt.execute(createCasesTable.toString());
+            stmt.execute(casesIdx1);
+            stmt.execute(casesIdx2);
+
+            stmt.execute(createDataSourcesTable.toString());
+            stmt.execute(dataSourceIdx1);
+
+            stmt.execute(createGlobalReferenceSetsTable.toString());
+            stmt.execute(globalReferenceSetsIdx1);
+
+            stmt.execute(createGlobalFilesTable.toString());
+            stmt.execute(globalFilesIdx1);
+            stmt.execute(globalFilesIdx2);
+
+            stmt.execute(createArtifactTypesTable.toString());
+
+            stmt.execute(createDbInfoTable.toString());
+
+            // Create a separate table for each artifact type
+            List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
+            String type_name;
+            for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
+                type_name = type.getName();
+                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), type_name, type_name));
+                stmt.execute(String.format(instancesIdx1, type_name, type_name));
+                stmt.execute(String.format(instancesIdx2, type_name, type_name));
+                stmt.execute(String.format(instancesIdx3, type_name, type_name));
+                stmt.execute(String.format(instancesIdx4, type_name, type_name));
+            }
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
+            return false;
+        } finally {
+            EamDbUtil.closeConnection(conn);
+        }
+        return true;
+    }
+
+    public boolean insertDefaultDatabaseContent() {
+        Connection conn = getEphemeralConnection(false);
+        if (null == conn) {
+            return false;
+        }
+
+        boolean result = EamDbUtil.insertDefaultArtifactTypes(conn)
+                && EamDbUtil.insertSchemaVersion(conn);
+        EamDbUtil.closeConnection(conn);
+
+        return result;
     }
 
     public boolean isChanged() {
@@ -199,20 +478,6 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * @return the enabled
-     */
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * @param enabled the enabled to set
-     */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    /**
      * @return the host
      */
     public String getHost() {
@@ -226,7 +491,7 @@ public final class PostgresEamDbSettings {
         if (null != host && !host.isEmpty()) {
             this.host = host;
         } else {
-            throw new EamDbException("Error invalid host for database connection. Cannot be null or empty."); // NON-NLS
+            throw new EamDbException("Invalid host name. Cannot be empty."); // NON-NLS
         }
     }
 
@@ -244,27 +509,31 @@ public final class PostgresEamDbSettings {
         if (port > 0 && port < 65535) {
             this.port = port;
         } else {
-            throw new EamDbException("Error invalid port for database connection."); // NON-NLS
+            throw new EamDbException("Invalid port. Must be a number greater than 0."); // NON-NLS
         }
     }
 
     /**
+     * To prevent issues where one command can honor case and another cannot,
+     * we will force the dbname to lower case.
+     * 
      * @return the dbName
      */
     public String getDbName() {
-        return dbName;
+        return dbName.toLowerCase();
     }
 
     /**
      * @param dbName the dbName to set
      */
     public void setDbName(String dbName) throws EamDbException {
-        if (dbName != null && !dbName.isEmpty()) {
-            this.dbName = dbName;
-        } else {
-            throw new EamDbException("Error invalid name for database connection. Cannot be null or empty."); // NON-NLS
-
+        if (dbName == null || dbName.isEmpty()) {
+            throw new EamDbException("Invalid database name. Cannot be empty."); // NON-NLS
+        } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
+            throw new EamDbException("Invalid database name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
         }
+
+        this.dbName = dbName.toLowerCase();
     }
 
     /**
@@ -281,7 +550,7 @@ public final class PostgresEamDbSettings {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Error invalid bulk threshold for database connection."); // NON-NLS
+            throw new EamDbException("Invalid bulk threshold for database connection."); // NON-NLS
         }
     }
 
@@ -296,11 +565,12 @@ public final class PostgresEamDbSettings {
      * @param userName the userName to set
      */
     public void setUserName(String userName) throws EamDbException {
-        if (userName != null && !userName.isEmpty()) {
-            this.userName = userName;
-        } else {
-            throw new EamDbException("Error invalid user name for database connection. Cannot be null or empty."); // NON-NLS
+        if (userName == null || userName.isEmpty()) {
+            throw new EamDbException("Invalid user name. Cannot be empty."); // NON-NLS
+        } else if (!Pattern.matches(DB_USER_NAMES_REGEX, userName)) {
+            throw new EamDbException("Invalid user name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
         }
+        this.userName = userName;
     }
 
     /**
@@ -314,11 +584,10 @@ public final class PostgresEamDbSettings {
      * @param password the password to set
      */
     public void setPassword(String password) throws EamDbException {
-        if (password != null && !password.isEmpty()) {
-            this.password = password;
-        } else {
-            throw new EamDbException("Error invalid user password for database connection. Cannot be null or empty."); // NON-NLS
+        if (password == null || password.isEmpty()) {
+            throw new EamDbException("Invalid user password. Cannot be empty."); // NON-NLS
         }
+        this.password = password;
     }
 
     /**

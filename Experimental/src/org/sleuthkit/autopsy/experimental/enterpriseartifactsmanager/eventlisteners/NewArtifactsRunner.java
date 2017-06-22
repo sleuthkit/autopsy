@@ -45,7 +45,7 @@ public class NewArtifactsRunner implements Runnable {
 
     @Override
     public void run() {
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             LOGGER.log(Level.WARNING, "Enterprise artifacts manager database not configured"); // NON-NLS
             return;
         }

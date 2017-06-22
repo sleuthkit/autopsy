@@ -61,7 +61,7 @@ public class CaseEventListener implements PropertyChangeListener {
         EamDb dbManager = EamDb.getInstance();
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED: {
-                if (!dbManager.isEnabled()) {
+                if (!EamDb.isEnabled()) {
                     return;
                 }
 
@@ -125,7 +125,7 @@ public class CaseEventListener implements PropertyChangeListener {
             break;
 
             case BLACKBOARD_ARTIFACT_TAG_ADDED: {
-                if (!dbManager.isEnabled()) {
+                if (!EamDb.isEnabled()) {
                     return;
                 }
 
@@ -157,7 +157,7 @@ public class CaseEventListener implements PropertyChangeListener {
             break;
 
             case DATA_SOURCE_ADDED: {
-                if (!dbManager.isEnabled()) {
+                if (!EamDb.isEnabled()) {
                     break;
                 }
 
@@ -214,7 +214,7 @@ public class CaseEventListener implements PropertyChangeListener {
                             "",
                             "");
 
-                    if (!dbManager.isEnabled()) {
+                    if (!EamDb.isEnabled()) {
                         break;
                     }
 

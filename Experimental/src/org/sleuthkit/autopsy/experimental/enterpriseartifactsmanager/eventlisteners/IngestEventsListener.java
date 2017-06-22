@@ -78,7 +78,7 @@ public class IngestEventsListener {
             EamDb dbManager = EamDb.getInstance();
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case DATA_ADDED: {
-                    if (!dbManager.isEnabled()) {
+                    if (!EamDb.isEnabled()) {
                         return;
                     }
 
