@@ -133,13 +133,19 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
 
         switch (colId) {
             case CASE_NAME:
-                value = eamArtifactInstance.getEamCase().getDisplayName();
+                if (null != eamArtifactInstance.getEamCase()) {
+                    value = eamArtifactInstance.getEamCase().getDisplayName();
+                }
                 break;
             case DEVICE:
-                value = eamArtifactInstance.getEamDataSource().getDeviceID();
+                if (null != eamArtifactInstance.getEamDataSource()) {
+                    value = eamArtifactInstance.getEamDataSource().getDeviceID();
+                }
                 break;
             case DATA_SOURCE:
-                value = eamArtifactInstance.getEamDataSource().getName();
+                if (null != eamArtifactInstance.getEamDataSource()) {
+                    value = eamArtifactInstance.getEamDataSource().getName();
+                }
                 break;
             case FILE_PATH:
                 value = eamArtifactInstance.getFilePath();
