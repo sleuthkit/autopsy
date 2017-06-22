@@ -524,7 +524,7 @@ public class EamCaseEditDetailsDialog extends JDialog {
     private void updateDb() {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             LOGGER.log(Level.SEVERE, "Enteprise artifacts manager database not enabled"); // NON-NLS
             return;
         }
