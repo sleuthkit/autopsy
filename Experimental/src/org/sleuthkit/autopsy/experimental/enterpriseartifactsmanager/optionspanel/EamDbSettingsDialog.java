@@ -849,7 +849,7 @@ public class EamDbSettingsDialog extends JDialog {
      */
     @Messages({"EamDbSettingsDialog.validation.finished=Click OK to save your database settings and return to the Options. Or select a differnt database type."})
     private boolean enableOkButton() {
-        if (testingStatus == DatabaseTestResult.TESTEDOK) {
+        if (testingStatus == DatabaseTestResult.TESTEDOK || selectedPlatform == EamDbPlatformEnum.DISABLED) {
             bnOk.setEnabled(true);
             setGuidanceMessage(Bundle.EamDbSettingsDialog_validation_finished(), false);
         } else {
