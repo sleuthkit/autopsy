@@ -47,6 +47,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
+import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
@@ -72,9 +73,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @TopComponent.Description(
         preferredID = "TimeLineTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE", 
+        //iconBase="SET/PATH/TO/ICON/HERE", //use this to put icon in window title area,
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
+@RetainLocation("timeline")
 public final class TimeLineTopComponent extends TopComponent implements ExplorerManager.Provider {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineTopComponent.class.getName());
@@ -195,6 +197,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
      * @param controller The TimeLineController for this topcomponent.
      */
     public TimeLineTopComponent(TimeLineController controller) {
+        putClientProperty(PROP_UNDOCKING_DISABLED, true);
         initComponents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
@@ -377,13 +380,9 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     @Override
     public void componentOpened() {
+        super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-        Mode mode = WindowManager.getDefault().findMode("timeline"); // NON-NLS
-        if (mode != null) {
-            mode.dockInto(this);
-        }
 
-//        putClientProperty(PROP_UNDOCKING_DISABLED, true);
     }
 
     @Override
