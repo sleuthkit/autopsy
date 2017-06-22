@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.Blackboard;
 import org.sleuthkit.autopsy.core.RuntimeProperties;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestJobContext;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -69,8 +68,7 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public ProcessResult process(AbstractFile af) {
-        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")) == false
-                || EamDb.isEnabled() == false) {
+        if (EamDb.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
              * all newly didscovered ingest modules are automatically anabled.
@@ -152,8 +150,7 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")) == false
-                || EamDb.isEnabled() == false) {
+        if (EamDb.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
              * all newly didscovered ingest modules are automatically anabled.
@@ -187,8 +184,7 @@ class IngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")) == false
-                || EamDb.isEnabled() == false) {
+        if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
              * workaround for the way all newly didscovered ingest modules are
