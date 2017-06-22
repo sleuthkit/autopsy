@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.beans.PropertyVetoException;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -48,7 +48,6 @@ import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
-import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
@@ -291,7 +290,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
-        return Collections.emptyList();
+        return modes.stream().filter(mode -> mode.getName().equals("timeline"))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -378,7 +378,12 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     @Override
     public void componentOpened() {
         WindowManager.getDefault().setTopComponentFloating(this, true);
-        putClientProperty(PROP_UNDOCKING_DISABLED, true);
+        Mode mode = WindowManager.getDefault().findMode("timeline"); // NON-NLS
+        if (mode != null) {
+            mode.dockInto(this);
+        }
+
+//        putClientProperty(PROP_UNDOCKING_DISABLED, true);
     }
 
     @Override
