@@ -483,7 +483,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         Collection<EamArtifactInstance> eamArtifactInstances = new ArrayList<>();
         try {
             EamDb dbManager = EamDb.getInstance();
-            if (dbManager.getCorrelationArtifactTypeByName("FILES") == eamArtifact.getArtifactType()) {
+            if (dbManager.getCorrelationArtifactTypeByName("FILES").equals(eamArtifact.getArtifactType())) {
                 try {
                     Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getGlobalFileInstancesByHash(eamArtifact.getArtifactValue());
                     for (EamGlobalFileInstance eamGlobalFileInstance : eamGlobalFileInstances) {
