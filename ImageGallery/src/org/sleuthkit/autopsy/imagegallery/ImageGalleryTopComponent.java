@@ -18,9 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -37,7 +37,6 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
-import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
@@ -63,7 +62,7 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
         preferredID = "ImageGalleryTopComponent",
         //iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png" use this to put icon in window title area,
         persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "timeline", openAtStartup = false)
+@TopComponent.Registration(mode = "ImageGallery", openAtStartup = false)
 @Messages({
     "CTL_ImageGalleryAction=Image/Video Gallery",
     "CTL_ImageGalleryTopComponent=Image/Video Gallery",
@@ -87,11 +86,7 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
-            WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("timeline"); // NON-NLS
-            if (mode != null) {
-                mode.dockInto(tc);
-            }
+
             tc.open();
             tc.requestActive();
         }
@@ -204,13 +199,20 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
-        return Collections.emptyList();
+        return modes.stream().filter(mode -> mode.getName().equals("ImageGallery"))
+                .collect(Collectors.toList());
     }
 
     @Override
     public void componentOpened() {
+
         WindowManager.getDefault().setTopComponentFloating(this, true);
-        putClientProperty(PROP_UNDOCKING_DISABLED, true);
+        Mode mode = WindowManager.getDefault().findMode("ImageGallery"); // NON-NLS
+        if (mode != null) {
+            mode.dockInto(this);
+        }
+
+//        putClientProperty(PROP_UNDOCKING_DISABLED, true);
     }
 
     @Override

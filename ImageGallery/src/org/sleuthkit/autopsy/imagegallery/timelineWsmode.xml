@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?><mode version="2.4">
+    <name unique="timeline"/>
+  <kind type="editor"/>
+  <state type="separated"/>
+  <bounds x="439" y="226" width="641" height="421"/>
+  <frame state="0"/>
+    
+    <empty-behavior permanent="false"/>
+</mode>
