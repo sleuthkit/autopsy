@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Level;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -35,6 +37,7 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
+import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.imagegallery.gui.StatusBar;
@@ -200,8 +203,14 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void componentOpened() {
+    public List<Mode> availableModes(List<Mode> modes) {
+        return Collections.emptyList();
+    }
 
+    @Override
+    public void componentOpened() {
+        WindowManager.getDefault().setTopComponentFloating(this, true);
+        putClientProperty(PROP_UNDOCKING_DISABLED, true);
     }
 
     @Override
