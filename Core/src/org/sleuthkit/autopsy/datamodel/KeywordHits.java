@@ -774,7 +774,7 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String instance;
 
         public RegExpInstanceNode(String setName, String keyword, String instance) {
-            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(keyword));
+            super(Children.create(new HitsFactory(setName, keyword, instance), true), Lookups.singleton(instance));
             super.setName(instance);  //the instance represents the name of the keyword hit at this point as the keyword is the regex
             this.setName = setName;
             this.keyword = keyword;
