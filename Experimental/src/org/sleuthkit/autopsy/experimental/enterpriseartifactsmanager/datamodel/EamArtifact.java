@@ -36,6 +36,19 @@ public class EamArtifact implements Serializable {
     private Type artifactType;
     private final List<EamArtifactInstance> artifactInstances;
 
+    /**
+     * Load the default correlation artifact types
+     */
+    public static List<EamArtifact.Type> getDefaultArtifactTypes() {
+        List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = new ArrayList<>();
+        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("FILES", true, true)); // NON-NLS
+        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("DOMAIN", true, false)); // NON-NLS
+        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("EMAIL", true, false)); // NON-NLS
+        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("PHONE", true, false)); // NON-NLS
+        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("USBID", true, false)); // NON-NLS
+        return DEFAULT_ARTIFACT_TYPES;
+    }
+
     public EamArtifact(Type artifactType, String artifactValue) {
         this.ID = "";
         this.artifactType = artifactType;

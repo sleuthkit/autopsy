@@ -24,7 +24,8 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  *
  */
 public enum EamDbPlatformEnum {
-    SQLITE("SQLite", true),
+    DISABLED("Disabled", true),
+    SQLITE("SQLite", false),
     POSTGRESQL("PostgreSQL", false);
 
     private final String platformName;
@@ -44,6 +45,8 @@ public enum EamDbPlatformEnum {
 
         if (null != selectedPlatformString) {
             selected = this.toString().equalsIgnoreCase(selectedPlatformString);
+        } else if (this == DISABLED) {
+            selected = true;
         }
     }
 
@@ -56,13 +59,13 @@ public enum EamDbPlatformEnum {
         this.selected = selected;
     }
 
-    private Boolean isSelected() {
+    public Boolean isSelected() {
         return selected;
     }
 
     public static EamDbPlatformEnum fromString(String pName) {
         if (null == pName) {
-            return SQLITE;
+            return DISABLED;
         }
 
         for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
@@ -70,14 +73,14 @@ public enum EamDbPlatformEnum {
                 return p;
             }
         }
-        return SQLITE;
+        return DISABLED;
     }
 
     /**
      * Save the selected platform to the config file.
      */
     public static void saveSelectedPlatform() {
-        EamDbPlatformEnum selectedPlatform = SQLITE;
+        EamDbPlatformEnum selectedPlatform = DISABLED;
         for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
             if (p.isSelected()) {
                 selectedPlatform = p;
@@ -103,7 +106,7 @@ public enum EamDbPlatformEnum {
      * Get the selected platform.
      *
      * @return The selected platform, or if not platform is selected, default to
-     *         SQLITE.
+     *         DISABLED.
      */
     public static EamDbPlatformEnum getSelectedPlatform() {
         for (EamDbPlatformEnum p : EamDbPlatformEnum.values()) {
@@ -111,6 +114,6 @@ public enum EamDbPlatformEnum {
                 return p;
             }
         }
-        return SQLITE;
+        return DISABLED;
     }
 }
