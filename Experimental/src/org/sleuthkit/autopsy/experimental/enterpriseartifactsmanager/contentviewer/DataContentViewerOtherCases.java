@@ -521,6 +521,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             return;
         }
 
+        readSettings(); // reset the table to empty.
         populateTable(node);
     }
 
