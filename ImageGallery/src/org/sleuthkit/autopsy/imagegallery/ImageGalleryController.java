@@ -25,7 +25,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -88,17 +87,10 @@ import org.sleuthkit.datamodel.TskData;
  * Connects different parts of ImageGallery together and is hub for flow of
  * control.
  */
-public final class ImageGalleryController implements Executor {
+public final class ImageGalleryController {
 
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryController.class.getName());
     private static ImageGalleryController instance;
-
-    private final Region infoOverLayBackground = new Region() {
-        {
-            setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
-            setOpacity(.4);
-        }
-    };
 
     /**
      * true if Image Gallery should listen to ingest events, false if it should
@@ -112,7 +104,7 @@ public final class ImageGalleryController implements Executor {
     private final ReadOnlyBooleanWrapper metaDataCollapsed = new ReadOnlyBooleanWrapper(false);
     private final ReadOnlyDoubleWrapper thumbnailSize = new ReadOnlyDoubleWrapper(100);
     private final ReadOnlyBooleanWrapper regroupDisabled = new ReadOnlyBooleanWrapper(false);
-    private final ReadOnlyIntegerWrapper queueSizeProperty = new ReadOnlyIntegerWrapper(0);
+    private final ReadOnlyIntegerWrapper dbTaskQueueSize = new ReadOnlyIntegerWrapper(0);
 
     private final FileIDSelectionModel selectionModel = new FileIDSelectionModel(this);
 
@@ -128,18 +120,17 @@ public final class ImageGalleryController implements Executor {
     private StackPane fullUIStackPane;
     private StackPane centralStackPane;
     private Node infoOverlay;
-
-    private final Executor execDelegate = Executors.newSingleThreadExecutor();
+    private final Region infoOverLayBackground = new Region() {
+        {
+            setBackground(new Background(new BackgroundFill(Color.GREY, CornerRadii.EMPTY, Insets.EMPTY)));
+            setOpacity(.4);
+        }
+    };
 
     private ListeningExecutorService dbExecutor;
 
     private SleuthkitCase sleuthKitCase;
     private DrawableDB db;
-
-    @Override
-    public void execute(Runnable command) {
-        execDelegate.execute(command);
-    }
 
     public static synchronized ImageGalleryController getDefault() {
         if (instance == null) {
@@ -221,7 +212,7 @@ public final class ImageGalleryController implements Executor {
             //if we just turned on listening and a case is open and that case is not up to date
             if (newValue && !oldValue && Case.isCaseOpen() && ImageGalleryModule.isDrawableDBStale(Case.getCurrentCase())) {
                 //populate the db
-                queueDBWorkerTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
+                queueDBTask(new CopyAnalyzedFiles(instance, db, sleuthKitCase));
             }
         });
 
@@ -256,7 +247,7 @@ public final class ImageGalleryController implements Executor {
         ingestManager.addIngestModuleEventListener(ingestEventHandler);
         ingestManager.addIngestJobEventListener(ingestEventHandler);
 
-        queueSizeProperty.addListener(obs -> this.updateRegroupDisabled());
+        dbTaskQueueSize.addListener(obs -> this.updateRegroupDisabled());
     }
 
     public ReadOnlyBooleanProperty getCanAdvance() {
@@ -285,7 +276,7 @@ public final class ImageGalleryController implements Executor {
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void updateRegroupDisabled() {
-        regroupDisabled.set((queueSizeProperty.get() > 0) || IngestManager.getInstance().isIngestRunning());
+        regroupDisabled.set((dbTaskQueueSize.get() > 0) || IngestManager.getInstance().isIngestRunning());
     }
 
     /**
@@ -316,7 +307,7 @@ public final class ImageGalleryController implements Executor {
                                     new ProgressIndicator()));
                 }
 
-            } else if (queueSizeProperty.get() > 0) {
+            } else if (dbTaskQueueSize.get() > 0) {
                 replaceNotification(fullUIStackPane,
                         new NoGroupsDialog(Bundle.ImageGalleryController_noGroupsDlg_msg3(),
                                 new ProgressIndicator()));
@@ -436,7 +427,7 @@ public final class ImageGalleryController implements Executor {
      *
      * @param bgTask
      */
-    public synchronized void queueDBWorkerTask(BackgroundTask bgTask) {
+    public synchronized void queueDBTask(BackgroundTask bgTask) {
         if (dbExecutor == null || dbExecutor.isShutdown()) {
             dbExecutor = getNewDBExecutor();
         }
@@ -446,11 +437,11 @@ public final class ImageGalleryController implements Executor {
     }
 
     private void incrementQueueSize() {
-        Platform.runLater(() -> queueSizeProperty.set(queueSizeProperty.get() + 1));
+        Platform.runLater(() -> dbTaskQueueSize.set(dbTaskQueueSize.get() + 1));
     }
 
     private void decrementQueueSize() {
-        Platform.runLater(() -> queueSizeProperty.set(queueSizeProperty.get() - 1));
+        Platform.runLater(() -> dbTaskQueueSize.set(dbTaskQueueSize.get() - 1));
     }
 
     @Nullable
@@ -514,7 +505,7 @@ public final class ImageGalleryController implements Executor {
     }
 
     public ReadOnlyIntegerProperty getDBTasksQueueSizeProperty() {
-        return queueSizeProperty.getReadOnlyProperty();
+        return dbTaskQueueSize.getReadOnlyProperty();
     }
 
     public synchronized SleuthkitCase getSleuthKitCase() {
@@ -895,11 +886,11 @@ public final class ImageGalleryController implements Executor {
                                 synchronized (ImageGalleryController.this) {
                                     if (ImageGalleryModule.isDrawableAndNotKnown(file)) {
                                         //this file should be included and we don't already know about it from hash sets (NSRL)
-                                        queueDBWorkerTask(new UpdateFileTask(file, db));
+                                        queueDBTask(new UpdateFileTask(file, db));
                                     } else if (FileTypeUtils.getAllSupportedExtensions().contains(file.getNameExtension())) {
                                         //doing this check results in fewer tasks queued up, and faster completion of db update
                                         //this file would have gotten scooped up in initial grab, but actually we don't need it
-                                        queueDBWorkerTask(new RemoveFileTask(file, db));
+                                        queueDBTask(new RemoveFileTask(file, db));
                                     }
                                 }
                             } catch (TskCoreException | FileTypeDetector.FileTypeDetectorInitException ex) {
@@ -945,7 +936,7 @@ public final class ImageGalleryController implements Executor {
                     //copy all file data to drawable databse
                     Content newDataSource = (Content) evt.getNewValue();
                     if (isListeningEnabled()) {
-                        queueDBWorkerTask(new PrePopulateDataSourceFiles(newDataSource, ImageGalleryController.this, getDatabase(), getSleuthKitCase()));
+                        queueDBTask(new PrePopulateDataSourceFiles(newDataSource, ImageGalleryController.this, getDatabase(), getSleuthKitCase()));
                     } else {//TODO: keep track of what we missed for later
                         setStale(true);
                     }
