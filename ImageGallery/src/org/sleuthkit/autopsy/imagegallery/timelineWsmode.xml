@@ -2,7 +2,7 @@
     <name unique="timeline"/>
   <kind type="editor"/>
   <state type="separated"/>
-  <bounds x="439" y="226" width="641" height="421"/>
+  <bounds x="439" y="226" width="800" height="600"/>
   <frame state="0"/>
     
     <empty-behavior permanent="false"/>
