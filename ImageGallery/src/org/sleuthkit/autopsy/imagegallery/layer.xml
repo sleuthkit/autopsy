@@ -4,7 +4,6 @@
     <folder name="Windows2">
         <folder name="Modes">
             <file name="ImageGallery.wsmode" url="ImageGalleryWsmode.xml"/>
-            <file name="timeline.wsmode" url="timelineWsmode.xml"/>
         </folder>
     </folder>
 </filesystem>

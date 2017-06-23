@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><mode version="2.4">
     <name unique="timeline"/>
-  <kind type="editor"/>
+  <kind type="view"/>
   <state type="separated"/>
-  <bounds x="439" y="226" width="800" height="600"/>
+  <bounds x="76" y="68" width="996" height="672"/>
   <frame state="0"/>
     
     <empty-behavior permanent="false"/>
