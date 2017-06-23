@@ -243,9 +243,11 @@ final class IngestTasksScheduler {
     synchronized boolean tasksForJobAreCompleted(DataSourceIngestJob job) {
         for (IngestTask task : tasksInProgress) {
             if (task.getIngestJob().getId() == job.getId()) {
+                logger.log(Level.INFO, "Checking {0} total tasks for incomplete tasks for job, no tasks found (jobId={1})", new Object[]{tasksInProgress.size(), job.getId()}); //NON-NLS
                 return false;
             }
         }
+        logger.log(Level.INFO, "Checking {0} total tasks for incomplete tasks for job, tasks found (jobId={1})", new Object[]{tasksInProgress.size(), job.getId()}); //NON-NLS
         return true;
     }
 
