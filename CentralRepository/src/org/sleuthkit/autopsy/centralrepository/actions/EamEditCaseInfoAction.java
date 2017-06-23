@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -31,22 +31,22 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 
 /**
- * Action to update case details in enterprise artifacts manager database
+ * Action to update case details in Central Repository database
  */
 @ActionID(
         category = "Case",
-        id = "org.sleuthkit.enterpriseartifactsmanager.actions.EnterpriseArtifactsManagerCaseEditCaseInfoAction"
+        id = "org.sleuthkit.centralrepository.actions.CentralRepositoryCaseProperties"
 )
 @ActionRegistration(
-        displayName = "#CTL_EnterpriseArtifactsManagerCaseEditCaseInfo",
+        displayName = "#CTL_CentralRepositoryCaseProperties",
         lazy = false
 )
 @ActionReference(path = "Menu/Case", position = 650, separatorAfter = 824)
-@Messages("CTL_EnterpriseArtifactsManagerCaseEditCaseInfo=Enterprise Artifacts Manager Case Details")
+@Messages("CTL_CentralRepositoryCaseProperties=Central Repository Case Properties...")
 public final class EamEditCaseInfoAction extends CallableSystemAction implements ActionListener {
 
     EamEditCaseInfoAction() {
-        putValue(Action.NAME, Bundle.CTL_EnterpriseArtifactsManagerCaseEditCaseInfo()); // put the action Name
+        putValue(Action.NAME, Bundle.CTL_CentralRepositoryCaseProperties()); // put the action Name
         this.setEnabled(true);
     }
 
@@ -68,7 +68,7 @@ public final class EamEditCaseInfoAction extends CallableSystemAction implements
 
     @Override
     public String getName() {
-        return Bundle.CTL_EnterpriseArtifactsManagerCaseEditCaseInfo();
+        return Bundle.CTL_CentralRepositoryCaseProperties();
     }
 
     @Override

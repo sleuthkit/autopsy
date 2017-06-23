@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -203,7 +203,7 @@ public interface EamDb {
      * @param aType    EamArtifact.Type to search for
      * @param filePath File path to search for
      *
-     * @return List of 0 or more EnterpriseArtifactManagerArtifactInstances
+     * @return List of 0 or more EamArtifactInstances
      *
      * @throws EamDbException
      */

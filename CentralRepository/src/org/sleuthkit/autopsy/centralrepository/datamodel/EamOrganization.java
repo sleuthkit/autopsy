@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -19,7 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 /**
- * An organization in the enterprise artifacts manager database
+ * An organization in the Central Repository database
  */
 public class EamOrganization {
 

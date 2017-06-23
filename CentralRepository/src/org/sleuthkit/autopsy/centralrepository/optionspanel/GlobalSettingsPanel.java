@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -25,7 +25,6 @@ import javax.swing.SwingUtilities;
 import org.netbeans.spi.options.OptionsPanelController;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.corecomponents.OptionsPanel;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
@@ -34,7 +33,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 
 /**
- * Main settings panel for the enterprise artifacts manager
+ * Main settings panel for the Central Repository
  */
 public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel implements OptionsPanel {
 
@@ -44,7 +43,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
     /**
-     * Creates new form EnterpriseArtifactsManagerOptionsPanel
+     * Creates new form EamOptionsPanel
      */
     public GlobalSettingsPanel() {
         ingestJobEventListener = new IngestJobEventPropertyChangeListener();
@@ -54,7 +53,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         addIngestJobEventsListener();
     }
 
-    @Messages({"GlobalSettingsPanel.title=Global Enterprise Artifacts Manager Settings"})
+    @Messages({"GlobalSettingsPanel.title=Central Repository Settings"})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
     }
@@ -145,7 +144,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addContainerGap())
         );
 
-        bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/experimental/images/import16.png"))); // NOI18N
+        bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/centralrepository/images/import16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
         bnImportDatabase.setActionCommand(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.actionCommand")); // NOI18N
         bnImportDatabase.addActionListener(new java.awt.event.ActionListener() {
@@ -235,7 +234,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_bnManageTagsActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
-        ManageArtifactTypesDialog dialog = new ManageArtifactTypesDialog();
+        ManageCorrelationTypesDialog dialog = new ManageCorrelationTypesDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTypesActionPerformed
 

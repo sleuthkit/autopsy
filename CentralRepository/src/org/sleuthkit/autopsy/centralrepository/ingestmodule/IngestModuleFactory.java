@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.ingest.IngestModuleIngestJobSettings;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
 
 /**
- * Factory for enterprise artifacts manager ingest modules
+ * Factory for Central Repository ingest modules
  */
 @ServiceProvider(service = org.sleuthkit.autopsy.ingest.IngestModuleFactory.class)
 public class IngestModuleFactory extends IngestModuleFactoryAdapter {
@@ -34,7 +34,7 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
     private static final String VERSION_NUMBER = "0.8.0";
 
     static String getModuleName() {
-        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/experimental/enterpriseartifactsmanager/Bundle")
+        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/centralrepository/Bundle")
                 .getString("OpenIDE-Module-Name");
     }
 
@@ -45,7 +45,7 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/experimental/enterpriseartifactsmanager/Bundle")
+        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/centralrepository/Bundle")
                 .getString("OpenIDE-Module-Long-Description");
     }
 

@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -33,10 +33,10 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 /**
  * Controller for the main settings panel
  */
-@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Enterprise_Artifacts_Manager_Options",
+@OptionsPanelController.TopLevelRegistration(categoryName = "#OptionsCategory_Name_Central_Repository_Options",
         iconBase = "org/sleuthkit/autopsy/centralrepository/images/options-icon.png",
         position = 14,
-        keywords = "#OptionsCategory_Keywords_Enterprise_Artifacts_Manager_Options",
+        keywords = "#OptionsCategory_Keywords_Central_Repository_Options",
         keywordsCategory = "CentralRepository")
 public final class EamOptionsPanelController extends OptionsPanelController {
 
@@ -111,8 +111,8 @@ public final class EamOptionsPanelController extends OptionsPanelController {
         return panel;
     }
 
-    @Messages({"EnterpriseArtifactsManagerOptionsController.moduleErr=Error processing value changes.",
-                "EnterpriseArtifactsManagerOptionsController.moduleErr.msg=Value change processing failed."})
+    @Messages({"EamOptionsController.moduleErr=Error processing value changes.",
+                "EamOptionsController.moduleErr.msg=Value change processing failed."})
     void changed() {
         if (!changed) {
             changed = true;
@@ -122,8 +122,8 @@ public final class EamOptionsPanelController extends OptionsPanelController {
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Error processing property change", ex); //NON-NLS
                 MessageNotifyUtil.Notify.show(
-                        Bundle.EnterpriseArtifactsManagerOptionsController_moduleErr(),
-                        Bundle.EnterpriseArtifactsManagerOptionsController_moduleErr_msg(),
+                        Bundle.EamOptionsController_moduleErr(),
+                        Bundle.EamOptionsController_moduleErr_msg(),
                         MessageNotifyUtil.MessageType.ERROR);
             }
         }
@@ -133,8 +133,8 @@ public final class EamOptionsPanelController extends OptionsPanelController {
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error processing property change validation.", e); //NON-NLS
             MessageNotifyUtil.Notify.show(
-                    Bundle.EnterpriseArtifactsManagerOptionsController_moduleErr(),
-                    Bundle.EnterpriseArtifactsManagerOptionsController_moduleErr_msg(),
+                    Bundle.EamOptionsController_moduleErr(),
+                    Bundle.EamOptionsController_moduleErr_msg(),
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }

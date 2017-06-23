@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.coreutils.TextConverter;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
- * Settings for the Postgres implementation of the enterprise artifacts manager
+ * Settings for the Postgres implementation of the Central Repository
  * database
  */
 public final class PostgresEamDbSettings {
@@ -44,7 +44,7 @@ public final class PostgresEamDbSettings {
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDbSettings.class.getName());
     private final String DEFAULT_HOST = "localhost"; // NON-NLS
     private final int DEFAULT_PORT = 5432;
-    private final String DEFAULT_DBNAME = "enterpriseartifacts"; // NON-NLS
+    private final String DEFAULT_DBNAME = "central_repository"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_USERNAME = "";
     private final String DEFAULT_PASSWORD = "";
@@ -67,13 +67,13 @@ public final class PostgresEamDbSettings {
     }
 
     public void loadSettings() {
-        host = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.host"); // NON-NLS
+        host = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
         if (host == null || host.isEmpty()) {
             host = DEFAULT_HOST;
         }
 
         try {
-            String portString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.port"); // NON-NLS
+            String portString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.port"); // NON-NLS
             if (portString == null || portString.isEmpty()) {
                 port = DEFAULT_PORT;
             } else {
@@ -86,13 +86,13 @@ public final class PostgresEamDbSettings {
             port = DEFAULT_PORT;
         }
 
-        dbName = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.dbName"); // NON-NLS
+        dbName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.dbName"); // NON-NLS
         if (dbName == null || dbName.isEmpty()) {
             dbName = DEFAULT_DBNAME;
         }
 
         try {
-            String bulkThresholdString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.bulkThreshold"); // NON-NLS
+            String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
                 this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
             } else {
@@ -105,12 +105,12 @@ public final class PostgresEamDbSettings {
             this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
         }
 
-        userName = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.user"); // NON-NLS
+        userName = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
         if (userName == null || userName.isEmpty()) {
             userName = DEFAULT_USERNAME;
         }
 
-        password = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password"); // NON-NLS
+        password = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.password"); // NON-NLS
         if (password == null || password.isEmpty()) {
             password = DEFAULT_PASSWORD;
         } else {
@@ -122,7 +122,7 @@ public final class PostgresEamDbSettings {
             }
         }
 
-        String badTagsStr = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.badTags"); // NON-NLS
+        String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
         if (badTagsStr == null || badTagsStr.isEmpty()) {
             badTagsStr = DEFAULT_BAD_TAGS;
         }
@@ -130,18 +130,18 @@ public final class PostgresEamDbSettings {
     }
 
     public void saveSettings() {
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.host", getHost()); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.port", Integer.toString(port)); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.dbName", getDbName()); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.user", getUserName()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.host", getHost()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.port", Integer.toString(port)); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.dbName", getDbName()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.user", getUserName()); // NON-NLS
         try {
-            ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password", TextConverter.convertTextToHexText(getPassword())); // NON-NLS
+            ModuleSettings.setConfigSetting("CentralRepository", "db.postgresql.password", TextConverter.convertTextToHexText(getPassword())); // NON-NLS
         } catch (TextConverterException ex) {
             LOGGER.log(Level.SEVERE, "Failed to convert password from text to hex text.", ex);
         }
 
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.badTags", String.join(",", badTags)); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
 
     /**
@@ -465,12 +465,12 @@ public final class PostgresEamDbSettings {
     }
 
     public boolean isChanged() {
-        String hostString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.host"); // NON-NLS
-        String portString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.port"); // NON-NLS
-        String dbNameString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.dbName"); // NON-NLS
-        String bulkThresholdString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.bulkThreshold"); // NON-NLS
-        String userNameString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.user"); // NON-NLS
-        String userPasswordString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.postgresql.password"); // NON-NLS
+        String hostString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.host"); // NON-NLS
+        String portString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.port"); // NON-NLS
+        String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.dbName"); // NON-NLS
+        String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.bulkThreshold"); // NON-NLS
+        String userNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.user"); // NON-NLS
+        String userPasswordString = ModuleSettings.getConfigSetting("CentralRepository", "db.postgresql.password"); // NON-NLS
 
         return !host.equals(hostString) || !Integer.toString(port).equals(portString)
                 || !dbName.equals(dbNameString) || !Integer.toString(bulkThreshold).equals(bulkThresholdString)
@@ -550,7 +550,7 @@ public final class PostgresEamDbSettings {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Invalid bulk threshold for database connection."); // NON-NLS
+            throw new EamDbException("Invalid bulk threshold."); // NON-NLS
         }
     }
 

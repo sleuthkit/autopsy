@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -34,10 +34,10 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.device=Device",
         "DataContentViewerOtherCasesTableModel.dataSource=Data Source",
         "DataContentViewerOtherCasesTableModel.path=Path",
-        "DataContentViewerOtherCasesTableModel.type=Artifact Type",
-        "DataContentViewerOtherCasesTableModel.value=Artifact Value",
-        "DataContentViewerOtherCasesTableModel.scope=Scope", // was globalStatus
-        "DataContentViewerOtherCasesTableModel.known=Known", // was knownStatus
+        "DataContentViewerOtherCasesTableModel.type=Correlation Type",
+        "DataContentViewerOtherCasesTableModel.value=Correlation Value",
+        "DataContentViewerOtherCasesTableModel.scope=Scope",
+        "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
     private enum TableColumns {
@@ -175,12 +175,12 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one local Enterprise Artifacts Manager Artifact to the table.
+     * Add one local Central Repository Artifact to the table.
      *
-     * @param eamArtifact Enterprise Artifacts Manager Artifact to add to the
+     * @param eamArtifact Central Repository Artifact to add to the
      *                   table
      */
-    public void addEnterpriseArtifactManagerArtifact(EamArtifact eamArtifact) {
+    public void addEamArtifact(EamArtifact eamArtifact) {
         eamArtifacts.add(eamArtifact);
         fireTableDataChanged();
     }

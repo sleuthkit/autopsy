@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -89,49 +89,49 @@ public class EamCase implements Serializable {
         return str.toString();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.caseUUID=Case UUID: "})
+    @Messages({"EamCase.title.caseUUID=Case UUID: "})
     public String getTitleCaseUUID() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_caseUUID();
+        return Bundle.EamCase_title_caseUUID();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.creationDate=Creation Date: "})
+    @Messages({"EamCase.title.creationDate=Creation Date: "})
     public String getTitleCreationDate() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_creationDate();
+        return Bundle.EamCase_title_creationDate();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.caseDisplayName=Case Name: "})
+    @Messages({"EamCase.title.caseDisplayName=Case Name: "})
     public String getTitleCaseDisplayName() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_caseDisplayName();
+        return Bundle.EamCase_title_caseDisplayName();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.caseNumber=Case Number: "})
+    @Messages({"EamCase.title.caseNumber=Case Number: "})
     public String getTitleCaseNumber() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_caseNumber();
+        return Bundle.EamCase_title_caseNumber();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.examinerName=Examiner Name: "})
+    @Messages({"EamCase.title.examinerName=Examiner Name: "})
     public String getTitleExaminerName() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_examinerName();
+        return Bundle.EamCase_title_examinerName();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.examinerEmail=Examiner Email: "})
+    @Messages({"EamCase.title.examinerEmail=Examiner Email: "})
     public String getTitleExaminerEmail() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_examinerEmail();
+        return Bundle.EamCase_title_examinerEmail();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.examinerPhone=Examiner Phone: "})
+    @Messages({"EamCase.title.examinerPhone=Examiner Phone: "})
     public String getTitleExaminerPhone() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_examinerPhone();
+        return Bundle.EamCase_title_examinerPhone();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.org=Organization: "})
+    @Messages({"EamCase.title.org=Organization: "})
     public String getTitleOrganization() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_org();
+        return Bundle.EamCase_title_org();
     }
 
-    @Messages({"EnterpriseArtifactsManagerCase.title.notes=Notes: "})
+    @Messages({"EamCase.title.notes=Notes: "})
     public String getTitleNotes() {
-        return Bundle.EnterpriseArtifactsManagerCase_title_notes();
+        return Bundle.EamCase_title_notes();
     }
 
     public String getCaseDetailsOptionsPaneDialog() {

@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -40,9 +40,9 @@ public class EamArtifactUtil {
     public EamArtifactUtil() {
     }
 
-    @Messages({"enterpriseartifactsmanagerartifact.emailaddresses.text=Email Addresses"})
+    @Messages({"EamArtifactUtil.emailaddresses.text=Email Addresses"})
     public static String getEmailAddressAttrString() {
-        return Bundle.enterpriseartifactsmanagerartifact_emailaddresses_text();
+        return Bundle.EamArtifactUtil_emailaddresses_text();
     }
 
     /*
@@ -104,7 +104,7 @@ public class EamArtifactUtil {
     /**
      * Convert a blackboard artifact to an EamArtifact
      *
-     * @param aType      The enterprise artifacts manager artifact type to create
+     * @param aType      The Central Repository artifact type to create
      * @param bbArtifact The blackboard artifact to convert
      *
      * @return

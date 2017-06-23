@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 
 /**
- * Dialog to add a new organization to the enterprise artifacts manager database
+ * Dialog to add a new organization to the Central Repository database
  */
 public class AddNewOrganizationDialog extends javax.swing.JDialog {
 

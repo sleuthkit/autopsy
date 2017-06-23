@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -41,7 +41,7 @@ public enum EamDbPlatformEnum {
      * Load the selectedPlatform boolean from the config file, if it is set.
      */
     private void loadSettings() {
-        String selectedPlatformString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.selectedPlatform"); // NON-NLS
+        String selectedPlatformString = ModuleSettings.getConfigSetting("CentralRepository", "db.selectedPlatform"); // NON-NLS
 
         if (null != selectedPlatformString) {
             selected = this.toString().equalsIgnoreCase(selectedPlatformString);
@@ -86,7 +86,7 @@ public enum EamDbPlatformEnum {
                 selectedPlatform = p;
             }
         }
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.selectedPlatform", selectedPlatform.name()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.selectedPlatform", selectedPlatform.name()); // NON-NLS
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -66,8 +66,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
  * View correlation results from other cases
  */
 @ServiceProvider(service = DataContentViewer.class, position = 8)
-@Messages({"DataContentViewerOtherCases.title=Other Cases",
-    "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other cases.",})
+@Messages({"DataContentViewerOtherCases.title=Other Data Sources",
+    "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other data sources.",})
 public class DataContentViewerOtherCases extends javax.swing.JPanel implements DataContentViewer {
 
     private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
@@ -197,7 +197,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     private void saveToCSV() {
         if (0 != otherCasesTable.getSelectedRowCount()) {
             Calendar now = Calendar.getInstance();
-            String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_cases.csv", now);
+            String fileName = String.format("%1$tY%1$tm%1$te%1$tI%1$tM%1$tS_other_data_sources.csv", now);
             CSVFileChooser.setCurrentDirectory(new File(Case.getCurrentCase().getExportDirectory()));
             CSVFileChooser.setSelectedFile(new File(fileName));
             CSVFileChooser.setFileFilter(new FileNameExtensionFilter("csv file", "csv"));
@@ -358,12 +358,12 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Scan a Node for blackboard artifacts / content that we can correlate on
-     * and create the corresponding enterprise artifacts manager artifacts for
+     * and create the corresponding Central Repository artifacts for
      * display
      *
      * @param node The node to view
      *
-     * @return A collection of enterprise artifacts manager artifacts to display
+     * @return A collection of Central Repository artifacts to display
      */
     private Collection<EamArtifact> getArtifactsFromCorrelatableAttributes(Node node) {
         Collection<EamArtifact> ret = new ArrayList<>();
@@ -386,7 +386,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 }
             }
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error retrieving correlation artifact types", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error retrieving correlation types", ex); // NON-NLS
         }
 
         if (abstractFile != null) {
@@ -446,7 +446,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Query the db for artifact instances from other cases correlated to the
-     * given enterprise artifacts manager artifact.
+     * given Central Repository artifact.
      *
      * @param eamArtifact The artifact to correlate against
      *
@@ -471,11 +471,11 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Get the Global File Instances matching the given eamArtifact and convert
-     * them to Enterprise Artifacts Manager Artifact Instancess.
+     * them to Central Repository Artifact Instancess.
      *
      * @param eamArtifact Artifact to use for ArtifactTypeEnum matching
      *
-     * @return List of Enterprise Artifacts Manager Artifact Instances, empty
+     * @return List of Central Repository Artifact Instances, empty
      *         list if none found
      */
     public Collection<EamArtifactInstance> getGlobalFileInstancesAsArtifactInstances(EamArtifact eamArtifact) {
@@ -512,7 +512,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     }
 
     @Override
-    @Messages({"DataContentViewerOtherCases.table.nodbconnection=Cannot connect to enterprise artifacts manager database."})
+    @Messages({"DataContentViewerOtherCases.table.nodbconnection=Cannot connect to central repository database."})
     public void setNode(Node node) {
         if (!EamDb.isEnabled()) {
             return;
@@ -546,7 +546,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                         eamArtifact.getArtifactValue()
                 );
                 newCeArtifact.addInstance(eamArtifactInstance);
-                tableModel.addEnterpriseArtifactManagerArtifact(newCeArtifact);
+                tableModel.addEamArtifact(newCeArtifact);
             });
         });
 

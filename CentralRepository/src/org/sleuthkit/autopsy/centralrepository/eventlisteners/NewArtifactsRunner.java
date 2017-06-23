@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -46,7 +46,7 @@ public class NewArtifactsRunner implements Runnable {
     @Override
     public void run() {
         if (!EamDb.isEnabled()) {
-            LOGGER.log(Level.WARNING, "Enterprise artifacts manager database not configured"); // NON-NLS
+            LOGGER.log(Level.WARNING, "Central Repository database not configured"); // NON-NLS
             return;
         }
 
@@ -55,7 +55,7 @@ public class NewArtifactsRunner implements Runnable {
                 dbManager.addArtifact(eamArtifact);
             }
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to enterprise artifacts manager database.", ex); //NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
         }
 
     }

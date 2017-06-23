@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -63,7 +63,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private static final Logger LOGGER = Logger.getLogger(ImportHashDatabaseDialog.class.getName());
 
     private final JFileChooser fileChooser = new JFileChooser();
-    private final static String LAST_FILE_PATH_KEY = "EnterpriseArtifactsManagerImport_Path"; // NON-NLS
+    private final static String LAST_FILE_PATH_KEY = "CentralRepositoryImport_Path"; // NON-NLS
     private EamOrganization selectedOrg = null;
     private List<EamOrganization> orgs = null;
     private final Collection<JTextField> textBoxes;
@@ -177,7 +177,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
      *
      * @return true if it's okay, false otherwise.
      */
-    @Messages({"ImportHashDatabaseDialog.validation.notEnabled=Database not initialized. Restart Autopsy."})
+    @Messages({"ImportHashDatabaseDialog.validation.notEnabled=Database not initialized."})
     public boolean valid() {
         lbWarningMsg.setText("");
         EamDb dbManager = EamDb.getInstance();        
@@ -566,7 +566,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             this.globalSetID = globalSetID;
 
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Enterprise artifacts manager database settings were not properly initialized"); // NON-NLS
+                throw new EamDbException("Central Repository database settings were not properly initialized"); // NON-NLS
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -26,16 +26,16 @@ import org.openide.util.NbBundle.Messages;
  * Used to store info about a specific Artifact Instance.
  *
  */
-@Messages({"EnterpriseArtifactsManagerArtifactInstances.globalStatus.local=Local",
-    "EnterpriseArtifactsManagerArtifactInstances.globalStatus.global=Global",
-    "EnterpriseArtifactsManagerArtifactInstances.knownStatus.bad=Bad",
-    "EnterpriseArtifactsManagerArtifactInstances.knownStatus.known=Known",
-    "EnterpriseArtifactsManagerArtifactInstances.knownStatus.unknown=Unknown"})
+@Messages({"EamArtifactInstances.globalStatus.local=Local",
+    "EamArtifactInstances.globalStatus.global=Global",
+    "EamArtifactInstances.knownStatus.bad=Bad",
+    "EamArtifactInstances.knownStatus.known=Known",
+    "EamArtifactInstances.knownStatus.unknown=Unknown"})
 public class EamArtifactInstance implements Serializable {
 
     public enum GlobalStatus {
-        LOCAL(Bundle.EnterpriseArtifactsManagerArtifactInstances_globalStatus_local()),
-        GLOBAL(Bundle.EnterpriseArtifactsManagerArtifactInstances_globalStatus_global());
+        LOCAL(Bundle.EamArtifactInstances_globalStatus_local()),
+        GLOBAL(Bundle.EamArtifactInstances_globalStatus_global());
 
         private final String globalStatus;
 
@@ -50,9 +50,9 @@ public class EamArtifactInstance implements Serializable {
     }
 
     public enum KnownStatus {
-        UNKNOWN(Bundle.EnterpriseArtifactsManagerArtifactInstances_knownStatus_unknown()),
-        KNOWN(Bundle.EnterpriseArtifactsManagerArtifactInstances_knownStatus_known()),
-        BAD(Bundle.EnterpriseArtifactsManagerArtifactInstances_knownStatus_bad());
+        UNKNOWN(Bundle.EamArtifactInstances_knownStatus_unknown()),
+        KNOWN(Bundle.EamArtifactInstances_knownStatus_known()),
+        BAD(Bundle.EamArtifactInstances_knownStatus_bad());
 
         private final String knownStatus;
 

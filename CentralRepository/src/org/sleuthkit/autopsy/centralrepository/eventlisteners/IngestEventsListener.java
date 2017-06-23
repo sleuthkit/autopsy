@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 
 /**
- * Listen for ingest events and update entries in the enterprise artifacts manager database accordingly
+ * Listen for ingest events and update entries in the Central Repository database accordingly
  */
 public class IngestEventsListener {
 
@@ -91,7 +91,7 @@ public class IngestEventsListener {
                     List<EamArtifact> eamArtifacts = new ArrayList<>();
                     try {
                         for (BlackboardArtifact bbArtifact : bbArtifacts) {
-                            // eamArtifact will be null OR a EamArtifact containing one EnterpriseArtifactsManagerArtifactInstance.
+                            // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
                             EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationArtifactTypes(), true);
                             if (null != eamArtifact) {
 
@@ -115,7 +115,7 @@ public class IngestEventsListener {
                             }
                         }
                     } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error getting enterprise artifacts manager artifact types.", ex);
+                        LOGGER.log(Level.SEVERE, "Error getting correlation types.", ex);
                     }
                     if (FALSE == eamArtifacts.isEmpty()) {
                         // send update to entperirse artifact manager db
@@ -147,17 +147,17 @@ public class IngestEventsListener {
         }
     }
 
-    @NbBundle.Messages({"EnterpriseArtifactsManager.prevcases.text=Previous Cases",
-        "EnterpriseArtifactsManager.ingestmodule.name=Enterprise Artifacts Manager"})
+    @NbBundle.Messages({"IngestEventsListener.prevcases.text=Previous Cases",
+        "IngestEventsListener.ingestmodule.name=Correlation Engine"})
     private void postCorrelatedBadArtifactToBlackboard(BlackboardArtifact bbArtifact, List<String> caseDisplayNames) {
 
         try {
             AbstractFile af = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
         
-            String MODULE_NAME = Bundle.EnterpriseArtifactsManager_ingestmodule_name();
+            String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
             BlackboardArtifact tifArtifact = af.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.EnterpriseArtifactsManager_prevcases_text());
+                    Bundle.IngestEventsListener_prevcases_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
                     "Previous Case: " + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);

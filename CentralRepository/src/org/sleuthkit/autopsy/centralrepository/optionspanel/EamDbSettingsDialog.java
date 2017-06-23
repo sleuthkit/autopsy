@@ -52,7 +52,7 @@ public class EamDbSettingsDialog extends JDialog {
     /**
      * Creates new form EamDbSettingsDialog
      */
-    @Messages({"EamDbSettingsDialog.title.text=Enterprise Artifacts Manager Settings"})
+    @Messages({"EamDbSettingsDialog.title.text=Central Repository Settings"})
     public EamDbSettingsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
             Bundle.EamDbSettingsDialog_title_text(),

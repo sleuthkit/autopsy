@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Listen for case events and update entries in the enterprise artifacts manager
+ * Listen for case events and update entries in the Central Repository
  * database accordingly
  */
 @Messages({"caseeventlistener.evidencetag=Evidence"})
@@ -112,7 +112,7 @@ public class CaseEventListener implements PropertyChangeListener {
                                 EamArtifactInstance.GlobalStatus.LOCAL
                         );
                         eamArtifact.addInstance(cei);
-                        // send update to enterprise artifacts manager db
+                        // send update to Central Repository db
                         Runnable r = new BadFileTagRunner(eamArtifact);
                         // TODO: send r into a thread pool instead
                         Thread t = new Thread(r);
@@ -171,7 +171,7 @@ public class CaseEventListener implements PropertyChangeListener {
                         dbManager.newDataSource(new EamDataSource(deviceId, newDataSource.getName()));
                     }
                 } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error connecting to enterprise artifacts manager database.", ex); //NON-NLS
+                    LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
                 } catch (TskCoreException | TskDataException ex) {
                     LOGGER.log(Level.SEVERE, "Error getting data source from DATA_SOURCE_ADDED event content.", ex); //NON-NLS
                 }
@@ -227,7 +227,7 @@ public class CaseEventListener implements PropertyChangeListener {
                             dbManager.newCase(curCeCase);
                         }
                     } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error connecting to enterprise artifacts manager database.", ex); //NON-NLS
+                        LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
                     }
                 }
             } // CURRENT_CASE

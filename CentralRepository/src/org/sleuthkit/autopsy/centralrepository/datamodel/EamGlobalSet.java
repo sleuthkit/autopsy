@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.time.LocalDate;
 
 /**
- * A global set in the enterprise artifacts manager database
+ * A global set in the Central Repository database
  */
 public class EamGlobalSet {
 

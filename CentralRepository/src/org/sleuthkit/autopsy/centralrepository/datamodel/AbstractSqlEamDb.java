@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -330,7 +330,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(1, caseUUID);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                eamCaseResult = getEnterpriseArtifactManagerCaseFromResultSet(resultSet);
+                eamCaseResult = getEamCaseFromResultSet(resultSet);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting case details.", ex); // NON-NLS
@@ -366,7 +366,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                eamCaseResult = getEnterpriseArtifactManagerCaseFromResultSet(resultSet);
+                eamCaseResult = getEamCaseFromResultSet(resultSet);
                 cases.add(eamCaseResult);
             }
         } catch (SQLException ex) {
@@ -457,7 +457,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(1, dataSourceDeviceId);
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
-                eamDataSourceResult = getEnterpriseArtifactManagerDataSourceFromResultSet(resultSet);
+                eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error getting case details.", ex); // NON-NLS
@@ -490,7 +490,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                eamDataSourceResult = getEnterpriseArtifactManagerDataSourceFromResultSet(resultSet);
+                eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
                 dataSources.add(eamDataSourceResult);
             }
         } catch (SQLException ex) {
@@ -584,7 +584,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(1, eamArtifact.getArtifactValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEnterpriseArtifactManagerArtifactInstanceFromResultSet(resultSet);
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
@@ -605,7 +605,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param aType    EamArtifact.Type to search for
      * @param filePath File path to search for
      *
-     * @return List of 0 or more EnterpriseArtifactManagerArtifactInstances
+     * @return List of 0 or more EamArtifactInstances
      *
      * @throws EamDbException
      */
@@ -636,7 +636,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(1, filePath);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEnterpriseArtifactManagerArtifactInstanceFromResultSet(resultSet);
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
@@ -1089,7 +1089,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setString(2, EamArtifactInstance.KnownStatus.BAD.name());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                artifactInstance = getEnterpriseArtifactManagerArtifactInstanceFromResultSet(resultSet);
+                artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
@@ -1283,7 +1283,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                orgs.add(getEnterpriseArtifactManagerOrganizationFromResultSet(resultSet));
+                orgs.add(getEamOrganizationFromResultSet(resultSet));
             }
             return orgs;
 
@@ -1318,7 +1318,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement.setInt(1, orgID);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
-            return getEnterpriseArtifactManagerOrganizationFromResultSet(resultSet);
+            return getEamOrganizationFromResultSet(resultSet);
 
         } catch (SQLException ex) {
             throw new EamDbException("Error getting organization by id.", ex); // NON-NLS
@@ -1399,7 +1399,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement1.setInt(1, globalSetID);
             resultSet = preparedStatement1.executeQuery();
             resultSet.next();
-            return getEnterpriseArtifactManagerGlobalSetFromResultSet(resultSet);
+            return getEamGlobalSetFromResultSet(resultSet);
 
         } catch (SQLException ex) {
             throw new EamDbException("Error getting global set by id.", ex); // NON-NLS
@@ -1526,7 +1526,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement1.setString(1, MD5Hash);
             resultSet = preparedStatement1.executeQuery();
             while (resultSet.next()) {
-                globalFileInstances.add(getEnterpriseArtifactManagerGlobalFileInstanceFromResultSet(resultSet));
+                globalFileInstances.add(getEamGlobalFileInstanceFromResultSet(resultSet));
             }
             return globalFileInstances;
 
@@ -1745,7 +1745,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws SQLException when an expected column name is not in the resultSet
      */
-    private EamCase getEnterpriseArtifactManagerCaseFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamCase getEamCaseFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }
@@ -1775,7 +1775,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamCase;
     }
 
-    private EamDataSource getEnterpriseArtifactManagerDataSourceFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamDataSource getEamDataSourceFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }
@@ -1815,7 +1815,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws SQLException when an expected column name is not in the resultSet
      */
-    private EamArtifactInstance getEnterpriseArtifactManagerArtifactInstanceFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamArtifactInstance getEamArtifactInstanceFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }
@@ -1831,7 +1831,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamArtifactInstance;
     }
 
-    private EamOrganization getEnterpriseArtifactManagerOrganizationFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamOrganization getEamOrganizationFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }
@@ -1847,7 +1847,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamOrganization;
     }
 
-    private EamGlobalSet getEnterpriseArtifactManagerGlobalSetFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamGlobalSet getEamGlobalSetFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }
@@ -1863,7 +1863,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamGlobalSet;
     }
 
-    private EamGlobalFileInstance getEnterpriseArtifactManagerGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamGlobalFileInstance getEamGlobalFileInstanceFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }

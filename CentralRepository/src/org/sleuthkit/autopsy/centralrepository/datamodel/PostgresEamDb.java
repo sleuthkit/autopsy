@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -26,7 +26,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Enterprise artifacts manager database implementation using Postgres as a
+ * Central Repository database implementation using Postgres as a
  * backend
  */
 public class PostgresEamDb extends AbstractSqlEamDb {
@@ -135,7 +135,7 @@ public class PostgresEamDb extends AbstractSqlEamDb {
     protected Connection connect() throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Enterprise artifacts manager is not enabled"); // NON-NLS
+                throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
             }
 
             if (connectionPool == null) {

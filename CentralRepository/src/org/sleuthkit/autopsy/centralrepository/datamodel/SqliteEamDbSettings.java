@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -35,13 +35,13 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 
 /**
- * Settings for the sqlite implementation of the enterprise artifacts manager database
+ * Settings for the sqlite implementation of the Central Repository database
  */
 public final class SqliteEamDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteEamDbSettings.class.getName());
-    private final String DEFAULT_DBNAME = "EnterpriseArtifacts.db"; // NON-NLS
-    private final String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "enterprise_artifacts_manager"; // NON-NLS
+    private final String DEFAULT_DBNAME = "CentralRepository.db"; // NON-NLS
+    private final String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_BAD_TAGS = "Evidence"; // NON-NLS
     private final String JDBC_DRIVER = "org.sqlite.JDBC"; // NON-NLS
@@ -65,18 +65,18 @@ public final class SqliteEamDbSettings {
     }
 
     public void loadSettings() {
-        dbName = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbName"); // NON-NLS
+        dbName = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
         if (dbName == null || dbName.isEmpty()) {
             dbName = DEFAULT_DBNAME;
         }
 
-        dbDirectory = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbDirectory"); // NON-NLS
+        dbDirectory = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS
         if (dbDirectory == null || dbDirectory.isEmpty()) {
             dbDirectory = DEFAULT_DBDIRECTORY;
         }
 
         try {
-            String bulkThresholdString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.sqlite.bulkThreshold"); // NON-NLS
+            String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
             if (bulkThresholdString == null || bulkThresholdString.isEmpty()) {
                 this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
             } else {
@@ -89,7 +89,7 @@ public final class SqliteEamDbSettings {
             this.bulkThreshold = DEFAULT_BULK_THRESHHOLD;
         }
 
-        String badTagsStr = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.badTags"); // NON-NLS
+        String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
         if (badTagsStr == null || badTagsStr.isEmpty()) {
             badTagsStr = DEFAULT_BAD_TAGS;
         }
@@ -99,10 +99,10 @@ public final class SqliteEamDbSettings {
     public void saveSettings() {
         createDbDirectory();
 
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbName", getDbName()); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbDirectory", getDbDirectory()); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
-        ModuleSettings.setConfigSetting("EnterpriseArtifactsManager", "db.badTags", String.join(",", badTags)); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbName", getDbName()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.dbDirectory", getDbDirectory()); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
+        ModuleSettings.setConfigSetting("CentralRepository", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
 
     /**
@@ -410,9 +410,9 @@ public final class SqliteEamDbSettings {
     }
     
     public boolean isChanged() {
-        String dbNameString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbName"); // NON-NLS
-        String dbDirectoryString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.sqlite.dbDirectory"); // NON-NLS
-        String bulkThresholdString = ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.sqlite.bulkThreshold"); // NON-NLS
+        String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
+        String dbDirectoryString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS
+        String bulkThresholdString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.bulkThreshold"); // NON-NLS
 
         return !dbName.equals(dbNameString)
                 || !dbDirectory.equals(dbDirectoryString)
@@ -455,7 +455,7 @@ public final class SqliteEamDbSettings {
         if (bulkThreshold > 0) {
             this.bulkThreshold = bulkThreshold;
         } else {
-            throw new EamDbException("Invalid bulk threshold for database connection."); // NON-NLS
+            throw new EamDbException("Invalid bulk threshold."); // NON-NLS
         }
     }
 
@@ -491,7 +491,7 @@ public final class SqliteEamDbSettings {
         if (dbDirectory != null && !dbDirectory.isEmpty()) {
             this.dbDirectory = dbDirectory;
         } else {
-            throw new EamDbException("Error invalid directory for sqlite database. Cannot be null or empty"); // NON-NLS
+            throw new EamDbException("Invalid directory for sqlite database. Cannot empty"); // NON-NLS
         }
     }
 

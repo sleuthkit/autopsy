@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -49,11 +49,11 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Ingest module for inserting entries into the enterprise artifacts manager
+ * Ingest module for inserting entries into the Central Repository
  * database on ingest of a data source
  */
-@Messages({"EnterpriseArtifactsManager.prevcases.text=Previous Cases",
-    "EnterpriseArtifactsManager.ingestmodule.name=Enterprise Artifacts Manager"})
+@Messages({"IngestModule.prevcases.text=Previous Cases",
+    "IngestModule.ingestmodule.name=Correlation Engine"})
 class IngestModule implements FileIngestModule {
 
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
@@ -179,8 +179,8 @@ class IngestModule implements FileIngestModule {
 
     // see ArtifactManagerTimeTester for details
     @Messages({
-        "EnterpriseArtifactsManager.notfyBubble.title=Enterprise Artifacts Manager Not Initialized",
-        "EnterpriseArtifactsManager.errorMessage.isNotEnabled=Enterprise artifacts manager settings are not initialized, cannot run enteprise artifact manager ingest module."
+        "IngestModule.notfyBubble.title=Central Repository Not Initialized",
+        "IngestModule.errorMessage.isNotEnabled=Central Repository settings are not initialized, cannot run Correlation Engine ingest module."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
@@ -194,7 +194,7 @@ class IngestModule implements FileIngestModule {
              */
             if (RuntimeProperties.runningWithGUI()) {
                 if (1L == warningMsgRefCounter.incrementAndGet(jobId)) {
-                    MessageNotifyUtil.Notify.warn(Bundle.EnterpriseArtifactsManager_notfyBubble_title(), Bundle.EnterpriseArtifactsManager_errorMessage_isNotEnabled());
+                    MessageNotifyUtil.Notify.warn(Bundle.IngestModule_notfyBubble_title(), Bundle.IngestModule_errorMessage_isNotEnabled());
                 }
             }
             return;
@@ -215,8 +215,8 @@ class IngestModule implements FileIngestModule {
         try {
             filesType = dbManager.getCorrelationArtifactTypeByName("FILES");
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting correlation artifact type FILES in startUp.", ex); // NON-NLS
-            throw new IngestModuleException("Error getting correlation artifact type FILES in startUp.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in startUp.", ex); // NON-NLS
+            throw new IngestModuleException("Error getting correlation type FILES in startUp.", ex); // NON-NLS
         }
 
         // TODO: once we implement a shared cache, load/init it here w/ syncronized and define reference counter
@@ -264,10 +264,10 @@ class IngestModule implements FileIngestModule {
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
 
         try {
-            String MODULE_NAME = Bundle.EnterpriseArtifactsManager_ingestmodule_name();
+            String MODULE_NAME = Bundle.IngestModule_ingestmodule_name();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.EnterpriseArtifactsManager_prevcases_text());
+                    Bundle.IngestModule_prevcases_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
                     "Previous Case: " + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);
@@ -294,10 +294,10 @@ class IngestModule implements FileIngestModule {
 
     private void postCorrelatedHashHitToBlackboard(AbstractFile abstractFile) {
         try {
-            String MODULE_NAME = Bundle.EnterpriseArtifactsManager_ingestmodule_name();
+            String MODULE_NAME = Bundle.IngestModule_ingestmodule_name();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.EnterpriseArtifactsManager_prevcases_text());
+                    Bundle.IngestModule_prevcases_text());
             tifArtifact.addAttribute(att);
 
             try {
@@ -330,7 +330,7 @@ class IngestModule implements FileIngestModule {
     @Messages({"IngestModule.postToBB.fileName=File Name",
         "IngestModule.postToBB.md5Hash=MD5 Hash",
         "IngestModule.postToBB.hashSetSource=Source of Hash",
-        "IngestModule.postToBB.eamHit=Enterprise Artifacts Manager",
+        "IngestModule.postToBB.eamHit=Central Repository",
         "# {0} - Name of file that is Known Bad",
         "IngestModule.postToBB.knownBadMsg=Known Bad: {0}"})
     public void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash) {

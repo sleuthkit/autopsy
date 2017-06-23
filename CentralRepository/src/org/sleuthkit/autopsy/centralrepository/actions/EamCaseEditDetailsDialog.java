@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.AddNewOrganizationDialog;
 
 /**
- * Handle editing details of cases within the Enterprise Artifacts Manager
+ * Handle editing details of cases within the Central Repository
  */
 public class EamCaseEditDetailsDialog extends JDialog {
 
@@ -59,12 +59,12 @@ public class EamCaseEditDetailsDialog extends JDialog {
     private boolean comboboxOrganizationActionListenerActive;
 
     /**
-     * Creates new form EnterpriseArtifactsManagerCasedEditDetailsForm
+     * Creates new EamCaseEditDetailsDialog form
      */
-    @Messages({"EnterpriseArtifactsManagerCaseEditDetails.window.title=Edit Case Details"})
+    @Messages({"EamCaseEditDetailsDialog.window.title=Central Repository Case Properties"})
     public EamCaseEditDetailsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                Bundle.EnterpriseArtifactsManagerCaseEditDetails_window_title(),
+                Bundle.EamCaseEditDetailsDialog_window_title(),
                 true); // NON-NLS
 
         try {
@@ -412,7 +412,7 @@ public class EamCaseEditDetailsDialog extends JDialog {
 
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
         if (contentChanged) {
-            updateEnterpriseArtifactsManagerCase();
+            updateEamCase();
             updateDb();
         }
         dispose();
@@ -511,7 +511,7 @@ public class EamCaseEditDetailsDialog extends JDialog {
      * Save changed value from text fields and text areas into the EamCase
      * object.
      */
-    private void updateEnterpriseArtifactsManagerCase() {
+    private void updateEamCase() {
         eamCase.setOrg(selectedOrg);
         eamCase.setExaminerName(tfExaminerNameText.getText());
         eamCase.setExaminerEmail(tfExaminerEmailText.getText());
@@ -523,14 +523,14 @@ public class EamCaseEditDetailsDialog extends JDialog {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         if (!EamDb.isEnabled()) {
-            LOGGER.log(Level.SEVERE, "Enteprise artifacts manager database not enabled"); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Central Repository database not enabled"); // NON-NLS
             return;
         }
 
         try {
             dbManager.updateCase(eamCase);
         } catch (IllegalArgumentException | EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to enterprise artifacts manager database", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database", ex); // NON-NLS
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }

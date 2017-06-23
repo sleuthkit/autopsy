@@ -1,5 +1,5 @@
 /*
- * Enterprise Artifacts Manager
+ * Central Repository
  *
  * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
@@ -28,7 +28,7 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
- * Sqlite implementation of the enterprise artifacts manager database
+ * Sqlite implementation of the Central Repository database
  */
 public class SqliteEamDb extends AbstractSqlEamDb {
 
@@ -132,7 +132,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     protected Connection connect() throws EamDbException {
         synchronized (this) {
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Enterprise artifacts manager is not enabled"); // NON-NLS
+                throw new EamDbException("Central Repository module is not enabled"); // NON-NLS
             }
 
             if (connectionPool == null) {
