@@ -40,9 +40,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
  * Dialog to handle management of artifact types handled by the Central
  *  Repository
  */
-final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
+final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
 
-    private static final Logger LOGGER = Logger.getLogger(ManageCorrelationTypesDialog.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ManageCorrelationPropertiesDialog.class.getName());
 
     private final List<EamArtifact.Type> eamArtifactTypes;
 
@@ -50,10 +50,10 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
      * Displays a dialog that allows a user to select which Type(s) should be
      * used for Correlation during ingest.
      */
-    @Messages({"ManageArtifactTypesDialog.title=Manage Correlation Types"})
-    ManageCorrelationTypesDialog() {
+    @Messages({"ManageCorrelationPropertiesDialog.title=Manage Correlation Properties"})
+    ManageCorrelationPropertiesDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                Bundle.ManageArtifactTypesDialog_title(),
+                Bundle.ManageCorrelationPropertiesDialog_title(),
                 true); // NON-NLS
         this.eamArtifactTypes = new ArrayList<>();
         initComponents();
@@ -103,7 +103,7 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
         setVisible(true);
     }
 
-    @Messages({"ManageArtifactTypesDialog.noneSelected=There are no correlation types enabled."})
+    @Messages({"ManageCorrelationPropertiesDialog.noneSelected=There are no correlation properties enabled."})
     private boolean valid() {
         lbWarningMsg.setText("");
 
@@ -111,7 +111,7 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
         countEnabled = eamArtifactTypes.stream().filter((aType) -> (aType.isEnabled())).map((_item) -> 1).reduce(countEnabled, Integer::sum);
 
         if (0 == countEnabled) {
-            lbWarningMsg.setText(Bundle.ManageArtifactTypesDialog_noneSelected());
+            lbWarningMsg.setText(Bundle.ManageCorrelationPropertiesDialog_noneSelected());
         }
         return true;
     }
@@ -135,14 +135,14 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ManageCorrelationTypesDialog.class, "ManageCorrelationTypesDialog.okButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(okButton, org.openide.util.NbBundle.getMessage(ManageCorrelationPropertiesDialog.class, "ManageCorrelationPropertiesDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ManageCorrelationTypesDialog.class, "ManageCorrelationTypesDialog.cancelButton.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(cancelButton, org.openide.util.NbBundle.getMessage(ManageCorrelationPropertiesDialog.class, "ManageCorrelationPropertiesDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
@@ -156,7 +156,7 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Correlation Type", "Enable"
+                "Correlation Properties", "Enable"
             }
         ) {
             Class[] types = new Class [] {
@@ -180,7 +180,7 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
 
         lbWarningMsg.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(ManageCorrelationTypesDialog.class, "ManageCorrelationTypesDialog.lbWarningMsg.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbWarningMsg, org.openide.util.NbBundle.getMessage(ManageCorrelationPropertiesDialog.class, "ManageCorrelationPropertiesDialog.lbWarningMsg.text")); // NOI18N
 
         taInstructions.setEditable(false);
         taInstructions.setBackground(new java.awt.Color(240, 240, 240));
@@ -188,7 +188,7 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
         taInstructions.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         taInstructions.setLineWrap(true);
         taInstructions.setRows(5);
-        taInstructions.setText(org.openide.util.NbBundle.getMessage(ManageCorrelationTypesDialog.class, "ManageArtifactTypesDialog.taInstructionsMsg.text")); // NOI18N
+        taInstructions.setText(org.openide.util.NbBundle.getMessage(ManageCorrelationPropertiesDialog.class, "ManageArtifactTypesDialog.taInstructionsMsg.text")); // NOI18N
         taInstructions.setWrapStyleWord(true);
         taInstructions.setAutoscrolls(false);
         taInstructions.setBorder(null);
@@ -239,7 +239,7 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
         dispose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
-    @Messages({"ManageArtifactTypesDialog.okbutton.failure=Error saving updated selections."})
+    @Messages({"ManageCorrelationPropertiesDialog.okbutton.failure=Error saving updated selections."})
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
 
         if (0 == eamArtifactTypes.size()) {
@@ -251,8 +251,8 @@ final class ManageCorrelationTypesDialog extends javax.swing.JDialog {
                     dbManager.updateCorrelationArtifactType(aType);
                     dispose();
                 } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Failed to update correlation types with selections from dialog.", ex); // NON-NLS
-                    lbWarningMsg.setText(Bundle.ManageArtifactTypesDialog_okbutton_failure());
+                    LOGGER.log(Level.SEVERE, "Failed to update correlation properties with selections from dialog.", ex); // NON-NLS
+                    lbWarningMsg.setText(Bundle.ManageCorrelationPropertiesDialog_okbutton_failure());
                 }
             });
         }

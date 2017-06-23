@@ -40,7 +40,7 @@ import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 public final class SqliteEamDbSettings {
 
     private final static Logger LOGGER = Logger.getLogger(SqliteEamDbSettings.class.getName());
-    private final String DEFAULT_DBNAME = "CentralRepository.db"; // NON-NLS
+    private final String DEFAULT_DBNAME = "central_repository.db"; // NON-NLS
     private final String DEFAULT_DBDIRECTORY = PlatformUtil.getUserDirectory() + File.separator + "central_repository"; // NON-NLS
     private final int DEFAULT_BULK_THRESHHOLD = 1000;
     private final String DEFAULT_BAD_TAGS = "Evidence"; // NON-NLS

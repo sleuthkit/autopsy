@@ -162,7 +162,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
-        org.openide.awt.Mnemonics.setLocalizedText(bnManageTypes, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTypes.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(bnManageTypes, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageProperties.text")); // NOI18N
         bnManageTypes.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 bnManageTypesActionPerformed(evt);
@@ -234,7 +234,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_bnManageTagsActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
-        ManageCorrelationTypesDialog dialog = new ManageCorrelationTypesDialog();
+        ManageCorrelationPropertiesDialog dialog = new ManageCorrelationPropertiesDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTypesActionPerformed
 
