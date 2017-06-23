@@ -22,6 +22,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import org.openide.filesystems.FileObject;
+import javax.imageio.ImageIO;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -268,7 +269,8 @@ class ReportHTML implements TableReportModule {
                     break;
             }
         } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
-            /* TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
+            /*
+             * TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
              * attribute, with a synthetic compound dataType name, so they are
              * not caught by the switch statement above. For now we just give
              * them all the general account icon, but we could do something else
@@ -1128,24 +1130,22 @@ class ReportHTML implements TableReportModule {
     }
 
     private String prepareThumbnail(AbstractFile file) {
-        File thumbFile = ImageUtils.getCachedThumbnailFile(file, ImageUtils.ICON_SIZE_MEDIUM);
+        BufferedImage bufferedThumb = ImageUtils.getThumbnail(file, ImageUtils.ICON_SIZE_MEDIUM);
+        File thumbFile = Paths.get(thumbsPath, file.getName() + ".png").toFile();
+        if (bufferedThumb == null) {
+            return null;
+        }
+        try {
+            ImageIO.write(bufferedThumb, "png", thumbFile);
+        } catch (IOException ex) {
+            logger.log(Level.WARNING, "Failed to write thumb file to report directory.", ex); //NON-NLS
+            return null;
+        }
         if (thumbFile.exists() == false) {
             return null;
         }
-        File to = new File(thumbsPath);
-        FileObject from = FileUtil.toFileObject(thumbFile);
-        FileObject dest = FileUtil.toFileObject(to);
-        try {
-            FileUtil.copyFile(from, dest, thumbFile.getName(), "");
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
-        } catch (NullPointerException ex) {
-            logger.log(Level.SEVERE, "NPE generated from FileUtil.copyFile, probably because FileUtil.toFileObject returned null. \n" +
-                    "The File argument for toFileObject was " + thumbFile + " with toString: " + thumbFile.toString() + "\n" +
-                    "The FileObject returned by toFileObject, passed into FileUtil.copyFile, was " + from, ex);
-        }
-
-        return THUMBS_REL_PATH + thumbFile.getName();
+        return THUMBS_REL_PATH
+                + thumbFile.getName();
     }
 
 }
