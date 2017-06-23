@@ -119,8 +119,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             orgs = dbManager.getOrganizations();
             orgs.forEach((org) -> {
                 comboboxSourceOrganization.addItem(org.getName());
-                selectedOrg = orgs.get(0);
             });
+            if (!orgs.isEmpty()) {
+                selectedOrg = orgs.get(0);
+            }
+            valid();
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Failure populating combobox with organizations.", ex);
         }
@@ -178,12 +181,12 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     public boolean valid() {
         lbWarningMsg.setText("");
         EamDb dbManager = EamDb.getInstance();        
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_validation_notEnabled());
             return false;
         }
 
-        return enableOkButton(checkFields());
+        return enableOkButton(checkFields() && null != selectedOrg);
     }
 
     /**
@@ -545,6 +548,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                 return;
             }
         }
+        valid();
     }//GEN-LAST:event_comboboxSourceOrganizationActionPerformed
 
     @NbBundle.Messages({"ImportHashDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
@@ -561,7 +565,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             this.knownStatus = knownStatus;
             this.globalSetID = globalSetID;
 
-            if (!dbManager.isEnabled()) {
+            if (!EamDb.isEnabled()) {
                 throw new EamDbException("Enterprise artifacts manager database settings were not properly initialized"); // NON-NLS
             }
         }

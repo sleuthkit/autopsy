@@ -483,7 +483,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         Collection<EamArtifactInstance> eamArtifactInstances = new ArrayList<>();
         try {
             EamDb dbManager = EamDb.getInstance();
-            if (dbManager.getCorrelationArtifactTypeByName("FILES") == eamArtifact.getArtifactType()) {
+            if (dbManager.getCorrelationArtifactTypeByName("FILES").equals(eamArtifact.getArtifactType())) {
                 try {
                     Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getGlobalFileInstancesByHash(eamArtifact.getArtifactValue());
                     for (EamGlobalFileInstance eamGlobalFileInstance : eamGlobalFileInstances) {
@@ -504,8 +504,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     @Override
     public boolean isSupported(Node node) {
-        EamDb dbManager = EamDb.getInstance();
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             return false;
         }
 
@@ -516,11 +515,11 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     @Override
     @Messages({"DataContentViewerOtherCases.table.nodbconnection=Cannot connect to enterprise artifacts manager database."})
     public void setNode(Node node) {
-        EamDb dbManager = EamDb.getInstance();
-        if (!dbManager.isEnabled()) {
+        if (!EamDb.isEnabled()) {
             return;
         }
 
+        readSettings(); // reset the table to empty.
         populateTable(node);
     }
 
@@ -615,6 +614,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
 
+        tableScrollPane.setPreferredSize(new java.awt.Dimension(452, 30));
+
         otherCasesTable.setAutoCreateRowSorter(true);
         otherCasesTable.setModel(tableModel);
         otherCasesTable.setToolTipText(org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.table.toolTip.text")); // NOI18N
@@ -648,13 +649,13 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         tableContainerPanel.setLayout(tableContainerPanelLayout);
         tableContainerPanelLayout.setHorizontalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tableScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 800, Short.MAX_VALUE)
+            .addComponent(tableScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(tableStatusPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         tableContainerPanelLayout.setVerticalGroup(
             tableContainerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(tableContainerPanelLayout.createSequentialGroup()
-                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 371, Short.MAX_VALUE)
+                .addComponent(tableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tableStatusPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
@@ -670,7 +671,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 404, Short.MAX_VALUE)
+            .addGap(0, 144, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
                     .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)

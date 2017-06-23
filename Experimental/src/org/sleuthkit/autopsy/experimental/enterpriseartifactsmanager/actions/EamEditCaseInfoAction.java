@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import org.sleuthkit.autopsy.coreutils.Logger;
 import javax.swing.Action;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
@@ -29,7 +28,7 @@ import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
+import org.sleuthkit.autopsy.experimental.enterpriseartifactsmanager.datamodel.EamDb;
 
 /**
  * Action to update case details in enterprise artifacts manager database
@@ -53,8 +52,7 @@ public final class EamEditCaseInfoAction extends CallableSystemAction implements
 
     @Override
     public boolean isEnabled() {
-        boolean enabled = Boolean.valueOf(ModuleSettings.getConfigSetting("EnterpriseArtifactsManager", "db.enabled")); // NON-NLS
-        return enabled && Case.isCaseOpen();
+        return EamDb.isEnabled() && Case.isCaseOpen();
     }
 
     @Override
