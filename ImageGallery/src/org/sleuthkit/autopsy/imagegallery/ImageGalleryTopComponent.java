@@ -63,14 +63,29 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
 @TopComponent.Registration(mode = "ImageGallery", openAtStartup = false)
 @Messages({
     "CTL_ImageGalleryAction=Image/Video Gallery",
-    "CTL_ImageGalleryTopComponent=Image/Video Gallery",
-    "HINT_ImageGalleryTopComponent=This is a Image/Video Gallery window"
+    "CTL_ImageGalleryTopComponent=Image/Video Gallery"
 })
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
-    private static boolean topComponentInitialized = false;
+    private static volatile boolean topComponentInitialized = false;
+
+    private final ExplorerManager em = new ExplorerManager();
+    private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
+
+    private final ImageGalleryController controller = ImageGalleryController.getDefault();
+
+    private SplitPane splitPane;
+    private StackPane centralStack;
+    private BorderPane borderPane = new BorderPane();
+    private StackPane fullUIStack;
+    private MetaDataPane metaDataTable;
+    private GroupPane groupPane;
+    private GroupTree groupTree;
+    private HashHitGroupList hashHitList;
+    private VBox leftPane;
+    private Scene myScene;
 
     public static void openTopComponent() {
         //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
@@ -81,11 +96,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         //            }
         //        }
         //        timeLineController.openTimeLine();
-        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        final TopComponent tc =  WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
-
-            tc.open();
+            if (tc.isOpened() == false) {
+                tc.open();
+            }
+            tc.toFront();
             tc.requestActive();
         }
     }
@@ -103,37 +120,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }
     }
 
-    private final ExplorerManager em = new ExplorerManager();
-
-    private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
-
-    private final ImageGalleryController controller = ImageGalleryController.getDefault();
-
-    private SplitPane splitPane;
-
-    private StackPane centralStack;
-
-    private BorderPane borderPane = new BorderPane();
-
-    private StackPane fullUIStack;
-
-    private MetaDataPane metaDataTable;
-
-    private GroupPane groupPane;
-
-    private GroupTree groupTree;
-    private HashHitGroupList hashHitList;
-
-    private VBox leftPane;
-
-    private Scene myScene;
-
     public ImageGalleryTopComponent() {
-        putClientProperty(PROP_UNDOCKING_DISABLED, true);
-
         setName(Bundle.CTL_ImageGalleryTopComponent());
-        setToolTipText(Bundle.HINT_ImageGalleryTopComponent());
-
         initComponents();
 
         Platform.runLater(() -> {//initialize jfx ui
@@ -198,7 +186,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
-        return modes.stream().filter(mode -> mode.getName().equals("ImageGallery"))
+        /*
+         * This looks like the right thing to do, but online discussions seems
+         * to indicate this method is effectively deprecated. A break point
+         * placed here was never hit.
+         */
+
+        return modes.stream().filter(mode -> mode.getName().equals("timeline") || mode.getName().equals("ImageGallery"))
                 .collect(Collectors.toList());
     }
 

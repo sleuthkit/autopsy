@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -197,12 +197,10 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
      * @param controller The TimeLineController for this topcomponent.
      */
     public TimeLineTopComponent(TimeLineController controller) {
-        putClientProperty(PROP_UNDOCKING_DISABLED, true);
         initComponents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
-        setToolTipText(NbBundle.getMessage(TimeLineTopComponent.class, "HINT_TimeLineTopComponent"));
-        setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
+//        setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
 
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
@@ -293,7 +291,12 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
-        return modes.stream().filter(mode -> mode.getName().equals("timeline"))
+        /*
+         * This looks like the right thing to do, but online discussions seems
+         * to indicate this method is effectively deprecated. A break point
+         * placed here was never hit.
+         */
+        return modes.stream().filter(mode -> mode.getName().equals("timeline") || mode.getName().equals("ImageGallery"))
                 .collect(Collectors.toList());
     }
 
@@ -382,7 +385,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
     public void componentOpened() {
         super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-
     }
 
     @Override
