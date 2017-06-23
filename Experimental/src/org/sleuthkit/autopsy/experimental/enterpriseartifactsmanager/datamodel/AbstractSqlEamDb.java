@@ -1204,7 +1204,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     public boolean isArtifactGlobalKnownBad(EamArtifact eamArtifact) throws EamDbException {
 
         // TEMP: Only support file types
-        if (eamArtifact.getArtifactType() != getCorrelationArtifactTypeByName("FILES")) {
+        if (!eamArtifact.getArtifactType().equals(getCorrelationArtifactTypeByName("FILES"))) {
             return false;
         }
 
