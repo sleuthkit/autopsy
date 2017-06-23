@@ -200,7 +200,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         initComponents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
-//        setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
 
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
