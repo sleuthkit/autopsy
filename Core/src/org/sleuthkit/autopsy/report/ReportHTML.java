@@ -22,6 +22,7 @@
  */
 package org.sleuthkit.autopsy.report;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -43,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import org.openide.filesystems.FileObject;
+import javax.imageio.ImageIO;
 import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -268,7 +269,8 @@ class ReportHTML implements TableReportModule {
                     break;
             }
         } else if (dataType.startsWith(ARTIFACT_TYPE.TSK_ACCOUNT.getDisplayName())) {
-            /* TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
+            /*
+             * TSK_ACCOUNT artifacts get separated by their TSK_ACCOUNT_TYPE
              * attribute, with a synthetic compound dataType name, so they are
              * not caught by the switch statement above. For now we just give
              * them all the general account icon, but we could do something else
@@ -808,23 +810,40 @@ class ReportHTML implements TableReportModule {
         Writer cssOut = null;
         try {
             cssOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path + "index.css"), "UTF-8")); //NON-NLS NON-NLS
-            String css = "body {margin: 0px; padding: 0px; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;}\n" + //NON-NLS
-                    "#content {padding: 30px;}\n" + //NON-NLS
-                    "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n" + //NON-NLS
-                    "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n" + //NON-NLS
-                    "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n" + //NON-NLS
-                    "h3 {font-size: 16px; color: #07A;}\n" + //NON-NLS
-                    "h4 {background: #07A; color: #FFF; font-size: 16px; margin: 0 0 0 25px; padding: 0; padding-left: 15px;}\n" + //NON-NLS
-                    "ul.nav {list-style-type: none; line-height: 35px; padding: 0px; margin-left: 15px;}\n" + //NON-NLS
-                    "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n" + //NON-NLS
-                    "ul li a:hover {text-decoration: underline;}\n" + //NON-NLS
-                    "p {margin: 0 0 20px 0;}\n" + //NON-NLS
-                    "table {white-space:nowrap; min-width: 700px; padding: 2; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
-                    ".keyword_list table {margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n" + //NON-NLS
-                    "table th {white-space:nowrap; display: table-cell; text-align: center; padding: 2px 4px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n" + //NON-NLS
-                    "table .left_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: left; }\n" + //NON-NLS
-                    "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n" + //NON-NLS
-                    "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n" + //NON-NLS
+            String css = "body {margin: 0px; padding: 0px; background: #FFFFFF; font: 13px/20px Arial, Helvetica, sans-serif; color: #535353;}\n"
+                    + //NON-NLS
+                    "#content {padding: 30px;}\n"
+                    + //NON-NLS
+                    "#header {width:100%; padding: 10px; line-height: 25px; background: #07A; color: #FFF; font-size: 20px;}\n"
+                    + //NON-NLS
+                    "h1 {font-size: 20px; font-weight: normal; color: #07A; padding: 0 0 7px 0; margin-top: 25px; border-bottom: 1px solid #D6D6D6;}\n"
+                    + //NON-NLS
+                    "h2 {font-size: 20px; font-weight: bolder; color: #07A;}\n"
+                    + //NON-NLS
+                    "h3 {font-size: 16px; color: #07A;}\n"
+                    + //NON-NLS
+                    "h4 {background: #07A; color: #FFF; font-size: 16px; margin: 0 0 0 25px; padding: 0; padding-left: 15px;}\n"
+                    + //NON-NLS
+                    "ul.nav {list-style-type: none; line-height: 35px; padding: 0px; margin-left: 15px;}\n"
+                    + //NON-NLS
+                    "ul li a {font-size: 14px; color: #444; text-decoration: none; padding-left: 25px;}\n"
+                    + //NON-NLS
+                    "ul li a:hover {text-decoration: underline;}\n"
+                    + //NON-NLS
+                    "p {margin: 0 0 20px 0;}\n"
+                    + //NON-NLS
+                    "table {white-space:nowrap; min-width: 700px; padding: 2; margin: 0; border-collapse: collapse; border-bottom: 2px solid #e5e5e5;}\n"
+                    + //NON-NLS
+                    ".keyword_list table {margin: 0 0 25px 25px; border-bottom: 2px solid #dedede;}\n"
+                    + //NON-NLS
+                    "table th {white-space:nowrap; display: table-cell; text-align: center; padding: 2px 4px; background: #e5e5e5; color: #777; font-size: 11px; text-shadow: #e9f9fd 0 1px 0; border-top: 1px solid #dedede; border-bottom: 2px solid #e5e5e5;}\n"
+                    + //NON-NLS
+                    "table .left_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: left; }\n"
+                    + //NON-NLS
+                    "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n"
+                    + //NON-NLS
+                    "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n"
+                    + //NON-NLS
                     "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
@@ -1128,24 +1147,23 @@ class ReportHTML implements TableReportModule {
     }
 
     private String prepareThumbnail(AbstractFile file) {
-        File thumbFile = ImageUtils.getCachedThumbnailFile(file, ImageUtils.ICON_SIZE_MEDIUM);
-        if (thumbFile.exists() == false) {
+        BufferedImage bufferedThumb = ImageUtils.getThumbnail(file, ImageUtils.ICON_SIZE_MEDIUM);
+        File thumbFile = Paths.get(thumbsPath, file.getName() + ".png").toFile();
+        if (bufferedThumb == null) {
             return null;
         }
-        File to = new File(thumbsPath);
-        FileObject from = FileUtil.toFileObject(thumbFile);
-        FileObject dest = FileUtil.toFileObject(to);
         try {
-            FileUtil.copyFile(from, dest, thumbFile.getName(), "");
+            ImageIO.write(bufferedThumb, "png", thumbFile);
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Failed to write thumb file to report directory.", ex); //NON-NLS
-        } catch (NullPointerException ex) {
-            logger.log(Level.SEVERE, "NPE generated from FileUtil.copyFile, probably because FileUtil.toFileObject returned null. \n" +
-                    "The File argument for toFileObject was " + thumbFile + " with toString: " + thumbFile.toString() + "\n" +
-                    "The FileObject returned by toFileObject, passed into FileUtil.copyFile, was " + from, ex);
+            logger.log(Level.WARNING, "Failed to write thumb file to report directory.", ex); //NON-NLS
+            return null;
         }
-
-        return THUMBS_REL_PATH + thumbFile.getName();
+        if (thumbFile.exists()
+                == false) {
+            return null;
+        }
+        return THUMBS_REL_PATH
+                + thumbFile.getName();
     }
 
 }
