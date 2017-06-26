@@ -25,6 +25,7 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
+import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -50,9 +51,23 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
     private SqliteEamDb() {
         dbSettings = new SqliteEamDbSettings();
-        updateSettings();
+        bulkArtifactsThreshold = dbSettings.getBulkThreshold();
     }
 
+    @Override
+    public void shutdownConnections() throws EamDbException {
+        try {
+            synchronized(this) {
+                if (null != connectionPool) {
+                    connectionPool.close();
+                    connectionPool = null; // force it to be re-created on next connect()
+                }
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Failed to close existing database connections.", ex); // NON-NLS
+        }
+    }
+    
     @Override
     public void updateSettings() {
         synchronized (this) {
