@@ -48,7 +48,25 @@ public interface EamDb {
     }
 
     /**
+     * Shutdown the connection pool.
+     * 
+     * This closes the connection pool including all idle database connections.
+     * It will not close active/in-use connections.
+     * Thus, it is vital that there are no in-use connections 
+     * when you call this method.
+     * 
+     * @throws EamDbException if there is a problem closing the connection pool.
+     */
+    void shutdownConnections() throws EamDbException;
+
+    /**
      * Update settings
+     * 
+     * When using updateSettings,
+     * if any database settings have changed, you should call
+     * shutdownConnections() before using any API methods.
+     * That will ensure that any old connections are closed
+     * and all new connections will be made using the new settings.
      */
     void updateSettings();
 
