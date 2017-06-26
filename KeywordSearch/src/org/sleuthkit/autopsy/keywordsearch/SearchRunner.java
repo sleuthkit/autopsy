@@ -131,7 +131,9 @@ public final class SearchRunner {
         }
 
         if (readyForFinalSearch) {
+            logger.log(Level.INFO, "Starting search index commit for final search"); //NON-NLS
             commit();
+            logger.log(Level.INFO, "Completed search index commit for final search"); //NON-NLS
             doFinalSearch(job); //this will block until it's done
         }
     }
@@ -205,14 +207,18 @@ public final class SearchRunner {
         if (!job.getKeywordListNames().isEmpty()) {
             try {
                 // In case this job still has a worker running, wait for it to finish
+                logger.log(Level.INFO, "Waiting for previous worker to finish before final search"); //NON-NLS
                 job.waitForCurrentWorker();
+                logger.log(Level.INFO, "Waiting for previous worker to finish before final search"); //NON-NLS
 
                 SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
                 job.setCurrentSearcher(finalSearcher); //save the ref
                 finalSearcher.execute(); //start thread
 
                 // block until the search is complete
+                logger.log(Level.INFO, "Waiting with get() for final search"); //NON-NLS
                 finalSearcher.get();
+                logger.log(Level.INFO, "Finished waiting with get() for final search"); //NON-NLS
 
             } catch (InterruptedException | CancellationException ex) {
                 logger.log(Level.INFO, "Final search for search job {1} interrupted or cancelled", job.getJobId()); //NON-NLS
@@ -341,7 +347,9 @@ public final class SearchRunner {
         private void waitForCurrentWorker() throws InterruptedException {
             synchronized (finalSearchLock) {
                 while (workerRunning) {
+                    logger.log(Level.INFO, "Another worker is running, starting wait"); //NON-NLS
                     finalSearchLock.wait(); //wait() releases the lock
+                    logger.log(Level.INFO, "Another worker is no longer running, finished wait"); //NON-NLS
                 }
             }
         }
