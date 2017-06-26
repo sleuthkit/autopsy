@@ -150,7 +150,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private boolean textFieldsArePopulated() {
         return !tfDatabaseName.getText().trim().isEmpty()
                 && !tfDatabaseVersion.getText().trim().isEmpty()
-                && !databasePathTextField.getText().trim().isEmpty();
+                && !tfFilePath.getText().trim().isEmpty();
     }
 
     /**
@@ -244,7 +244,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         buttonGroup1 = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        databasePathTextField = new javax.swing.JTextField();
+        tfFilePath = new javax.swing.JTextField();
         openButton = new javax.swing.JButton();
         knownRadioButton = new javax.swing.JRadioButton();
         knownBadRadioButton = new javax.swing.JRadioButton();
@@ -259,6 +259,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         tfDatabaseVersion = new javax.swing.JTextField();
         bnNewOrganization = new javax.swing.JButton();
         lbWarningMsg = new javax.swing.JLabel();
+        lbInstructions = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -276,7 +277,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             }
         });
 
-        databasePathTextField.setText(org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.databasePathTextField.text")); // NOI18N
+        tfFilePath.setText(org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.tfFilePath.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(openButton, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.openButton.text")); // NOI18N
         openButton.addActionListener(new java.awt.event.ActionListener() {
@@ -294,7 +295,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseType, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabaseType.text")); // NOI18N
 
-        org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePath, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabasePath.text")); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbDatabasePath, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbFilePath.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbDatabaseAttribution, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbDatabaseAttribution.text")); // NOI18N
 
@@ -325,6 +326,9 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         lbWarningMsg.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
         lbWarningMsg.setForeground(new java.awt.Color(255, 0, 0));
 
+        lbInstructions.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(lbInstructions, org.openide.util.NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.lbInstructions.text")); // NOI18N
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -332,28 +336,19 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lbInstructions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(lbWarningMsg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lbDatabaseType)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(19, 19, 19)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(knownRadioButton)
-                                    .addComponent(knownBadRadioButton)))
-                            .addComponent(lbDatabaseAttribution))
-                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(lbDatabasePath)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(databasePathTextField))
+                                .addComponent(tfFilePath))
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addGap(23, 23, 23)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -373,7 +368,17 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                                             .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.Alignment.TRAILING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                             .addComponent(tfDatabaseName))))))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(openButton)))
+                        .addComponent(openButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(lbDatabaseType)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(19, 19, 19)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(knownRadioButton)
+                                    .addComponent(knownBadRadioButton)))
+                            .addComponent(lbDatabaseAttribution))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -383,9 +388,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(lbInstructions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(openButton)
-                    .addComponent(databasePathTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tfFilePath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbDatabasePath))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbDatabaseType)
@@ -399,7 +406,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                     .addComponent(bnNewOrganization)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(3, 3, 3)
-                        .addComponent(lbSourceOrganization, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(lbSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -411,11 +418,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                     .addComponent(lbDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(tfDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lbWarningMsg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(okButton)
-                        .addComponent(cancelButton)))
+                        .addComponent(cancelButton))
+                    .addComponent(lbWarningMsg, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
@@ -426,7 +433,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
             try {
-                databasePathTextField.setText(databaseFile.getCanonicalPath());
+                tfFilePath.setText(databaseFile.getCanonicalPath());
                 if (databaseFile.getName().toLowerCase().contains("nsrl")) { //NON-NLS
                     knownRadioButton.setSelected(true);
                 }
@@ -466,7 +473,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
-        String selectedFilePath = databasePathTextField.getText();
+        String selectedFilePath = tfFilePath.getText();
 
         // have valid file path
         if (selectedFilePath.isEmpty()) {
@@ -622,7 +629,6 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
     private javax.swing.JComboBox<String> comboboxSourceOrganization;
-    private javax.swing.JTextField databasePathTextField;
     private javax.swing.JRadioButton knownBadRadioButton;
     private javax.swing.JRadioButton knownRadioButton;
     private javax.swing.JLabel lbDatabaseAttribution;
@@ -630,11 +636,13 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private javax.swing.JLabel lbDatabasePath;
     private javax.swing.JLabel lbDatabaseType;
     private javax.swing.JLabel lbDatabaseVersion;
+    private javax.swing.JLabel lbInstructions;
     private javax.swing.JLabel lbSourceOrganization;
     private javax.swing.JLabel lbWarningMsg;
     private javax.swing.JButton okButton;
     private javax.swing.JButton openButton;
     private javax.swing.JTextField tfDatabaseName;
     private javax.swing.JTextField tfDatabaseVersion;
+    private javax.swing.JTextField tfFilePath;
     // End of variables declaration//GEN-END:variables
 }
