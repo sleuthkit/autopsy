@@ -92,24 +92,24 @@
             </module-dependencies>
             <public-packages/>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-dbcp2-2.1.1.jar</binary-origin>
+                <runtime-relative-path>ext/sqlite-jdbc-3.16.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\sqlite-jdbc-3.16.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-logging-1.2.jar</binary-origin>
+                <runtime-relative-path>ext/commons-dbcp2-2.1.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-dbcp2-2.1.1.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/postgresql-42.1.1.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\postgresql-42.1.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-pool2-2.4.2.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/commons-pool2-2.4.2.jar</binary-origin>
+                <binary-origin>release\modules\ext\commons-pool2-2.4.2.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/postgresql-42.0.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/postgresql-42.0.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
-                <runtime-relative-path>ext/sqlite-jdbc-3.16.1.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/sqlite-jdbc-3.16.1.jar</binary-origin>
+                <runtime-relative-path>ext/commons-logging-1.2.jar</runtime-relative-path>
+                <binary-origin>release\modules\ext\commons-logging-1.2.jar</binary-origin>
             </class-path-extension>
         </data>
     </configuration>
