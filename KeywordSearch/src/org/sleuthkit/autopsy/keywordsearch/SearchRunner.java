@@ -515,7 +515,6 @@ public final class SearchRunner {
 
                     logger.log(Level.INFO, "Searcher took {0} secs to run", stopWatch.getElapsedTimeSecs()); //NON-NLS
                 } finally {
-                    logger.log(Level.INFO, "Searcher notifying"); //NON-NLS
                     // In case a thread is waiting on this worker to be done
                     job.searchNotify();
                 }
