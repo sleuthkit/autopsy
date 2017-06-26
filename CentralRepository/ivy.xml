@@ -1,0 +1,15 @@
+<ivy-module version="2.0">
+    <info organisation="org.sleuthkit.autopsy" module="centralrepository"/>
+    <configurations >
+        <!-- module dependencies -->
+        <conf name="central-repository"/>
+    </configurations>
+    <dependencies>
+        <!-- for enterprise artifacts manager -->
+        <dependency conf="central-repository->default" org="org.apache.commons" name="commons-dbcp2" rev="2.1.1"/>
+        <dependency conf="central-repository->default" org="commons-logging" name="commons-logging" rev="1.2"/>
+        <dependency conf="central-repository->default" org="org.apache.commons" name="commons-pool2" rev="2.4.2"/>
+        <dependency conf="central-repository->default" org="org.postgresql" name="postgresql" rev="42.1.1"/>
+        <dependency conf="central-repository->default" org="org.xerial" name="sqlite-jdbc" rev="3.16.1"/>
+    </dependencies>
+</ivy-module>
