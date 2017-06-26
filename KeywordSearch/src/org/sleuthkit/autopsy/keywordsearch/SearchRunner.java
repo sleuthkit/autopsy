@@ -203,22 +203,20 @@ public final class SearchRunner {
      */
     private void doFinalSearch(SearchJobInfo job) {
         // Run one last search as there are probably some new files committed
-        logger.log(Level.INFO, "Running final search for jobid {0}", job.getJobId());         //NON-NLS
+        logger.log(Level.INFO, "Starting final search for jobid {0}", job.getJobId());         //NON-NLS
         if (!job.getKeywordListNames().isEmpty()) {
             try {
                 // In case this job still has a worker running, wait for it to finish
-                logger.log(Level.INFO, "Waiting for previous worker to finish before final search"); //NON-NLS
                 job.waitForCurrentWorker();
-                logger.log(Level.INFO, "Waiting for previous worker to finish before final search"); //NON-NLS
 
                 SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
                 job.setCurrentSearcher(finalSearcher); //save the ref
                 finalSearcher.execute(); //start thread
 
                 // block until the search is complete
-                logger.log(Level.INFO, "Waiting with get() for final search"); //NON-NLS
+                logger.log(Level.INFO, "Waiting with get() for final searcher"); //NON-NLS
                 finalSearcher.get();
-                logger.log(Level.INFO, "Finished waiting with get() for final search"); //NON-NLS
+                logger.log(Level.INFO, "Finished waiting with get() for final searcher"); //NON-NLS
 
             } catch (InterruptedException | CancellationException ex) {
                 logger.log(Level.INFO, "Final search for search job {1} interrupted or cancelled", job.getJobId()); //NON-NLS
@@ -347,9 +345,9 @@ public final class SearchRunner {
         private void waitForCurrentWorker() throws InterruptedException {
             synchronized (finalSearchLock) {
                 while (workerRunning) {
-                    logger.log(Level.INFO, "Another worker is running, starting wait"); //NON-NLS
+                    logger.log(Level.INFO, "Waiting for previous worker to finish before executing final search"); //NON-NLS
                     finalSearchLock.wait(); //wait() releases the lock
-                    logger.log(Level.INFO, "Another worker is no longer running, finished wait"); //NON-NLS
+                    logger.log(Level.INFO, "Done waiting for previous worker to finish before executing final search"); //NON-NLS
                 }
             }
         }
@@ -359,6 +357,7 @@ public final class SearchRunner {
          */
         private void searchNotify() {
             synchronized (finalSearchLock) {
+                logger.log(Level.INFO, "Notifying after finishing a search"); //NON-NLS
                 workerRunning = false;
                 finalSearchLock.notify();
             }
@@ -514,8 +513,9 @@ public final class SearchRunner {
                     finalizeSearcher();
                     stopWatch.stop();
 
-                    logger.log(Level.INFO, "Searcher took to run: {0} secs.", stopWatch.getElapsedTimeSecs()); //NON-NLS
+                    logger.log(Level.INFO, "Searcher took {0} secs to run", stopWatch.getElapsedTimeSecs()); //NON-NLS
                 } finally {
+                    logger.log(Level.INFO, "Searcher notifying"); //NON-NLS
                     // In case a thread is waiting on this worker to be done
                     job.searchNotify();
                 }
@@ -528,7 +528,9 @@ public final class SearchRunner {
         protected void done() {
             // call get to see if there were any errors
             try {
+                logger.log(Level.INFO, "Searcher calling get() on itself in done()"); //NON-NLS             
                 get();
+                logger.log(Level.INFO, "Searcher finished calling get() on itself in done()"); //NON-NLS             
             } catch (InterruptedException | ExecutionException e) {
                 logger.log(Level.SEVERE, "Error performing keyword search: " + e.getMessage()); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(KeywordSearchModuleFactory.getModuleName(),
@@ -574,17 +576,18 @@ public final class SearchRunner {
         }
 
         /**
-         * This method filters out all of the hits found in earlier
-         * periodic searches and returns only the results found by the most 
-         * recent search.
+         * This method filters out all of the hits found in earlier periodic
+         * searches and returns only the results found by the most recent
+         * search.
          *
          * This method will only return hits for objects for which we haven't
          * previously seen a hit for the keyword.
-         * 
+         *
          * @param queryResult The results returned by a keyword search.
-         * @return A unique set of hits found by the most recent search for objects
-         * that have not previously had a hit. The hits will be for the lowest
-         * numbered chunk associated with the object.
+         *
+         * @return A unique set of hits found by the most recent search for
+         *         objects that have not previously had a hit. The hits will be
+         *         for the lowest numbered chunk associated with the object.
          *
          */
         private QueryResults filterResults(QueryResults queryResult) {

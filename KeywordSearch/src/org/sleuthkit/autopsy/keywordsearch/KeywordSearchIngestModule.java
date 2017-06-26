@@ -293,7 +293,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
      */
     @Override
     public void shutDown() {
-        logger.log(Level.INFO, "Instance {0}", instanceNum); //NON-NLS
+        logger.log(Level.INFO, "Keyword search ingest module instance {0} shutting down", instanceNum); //NON-NLS
 
         if ((initialized == false) || (context == null)) {
             return;
@@ -318,12 +318,14 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         //log number of files / chunks in index
         //signal a potential change in number of text_ingested files
         try {
+            logger.log(Level.INFO, "Keyword search ingest module instance {0} querying indexed files and chunks", instanceNum); //NON-NLS            
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             final int numIndexedChunks = KeywordSearch.getServer().queryNumIndexedChunks();
-            logger.log(Level.INFO, "Indexed files count: {0}", numIndexedFiles); //NON-NLS
-            logger.log(Level.INFO, "Indexed file chunks count: {0}", numIndexedChunks); //NON-NLS
+            logger.log(Level.INFO, "Keyword search ingest module instance {0} completed querying indexed files and chunks", instanceNum); //NON-NLS            
+            logger.log(Level.INFO, "Keyword search ingest module instance {0} indexed files count: {1}", new Object[]{instanceNum, numIndexedFiles}); //NON-NLS
+            logger.log(Level.INFO, "Keyword search ingest module instance {0} indexed file chunks count: {1}", new Object[]{instanceNum, numIndexedChunks}); //NON-NLS
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files/chunks: ", ex); //NON-NLS
+            logger.log(Level.SEVERE, String.format("Keyword search ingest module instance %d error executing Solr query to check number of indexed files/chunks", instanceNum), ex); //NON-NLS
         }
 
         cleanup();
