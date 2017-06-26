@@ -50,7 +50,19 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
     private PostgresEamDb() {
         dbSettings = new PostgresEamDbSettings();
-        updateSettings();
+        bulkArtifactsThreshold = dbSettings.getBulkThreshold();
+    }
+
+    @Override
+    public void shutdownConnections() throws EamDbException {
+        try {
+            synchronized(this) {
+                connectionPool.close();
+                connectionPool = null; // force it to be re-created on next connect()
+            }
+        } catch (SQLException ex) {
+            throw new EamDbException("Failed to close existing database connections.", ex); // NON-NLS
+        }
     }
 
     @Override

@@ -561,13 +561,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     @NbBundle.Messages({"ImportHashDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
     private class ImportHashDatabaseWorker extends SwingWorker<Object, Void> {
 
-        private final EamDb dbManager;
         private final File file;
         private final EamArtifactInstance.KnownStatus knownStatus;
         private final int globalSetID;
 
         public ImportHashDatabaseWorker(String filename, EamArtifactInstance.KnownStatus knownStatus, int globalSetID) throws EamDbException, UnknownHostException {
-            this.dbManager = EamDb.getInstance();
             this.file = new File(filename);
             this.knownStatus = knownStatus;
             this.globalSetID = globalSetID;
@@ -591,6 +589,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         private void importHashDatabase(ProgressHandle progress) throws EamDbException, IOException {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
+            EamDb dbManager = EamDb.getInstance();
 
             long totalLines = numberOfLinesInFile(file);
             if (totalLines <= Integer.MAX_VALUE) {

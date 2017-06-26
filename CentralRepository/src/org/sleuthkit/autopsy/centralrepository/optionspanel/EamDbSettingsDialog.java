@@ -18,7 +18,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
@@ -545,22 +547,58 @@ public class EamDbSettingsDialog extends JDialog {
         }
     }//GEN-LAST:event_bnCreateDbActionPerformed
 
+    @Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
+        "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform."})
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
+        /**
+         * We have to shutdown the previous platform's connection pool first;
+         * assuming it wasn't DISABLED. This will close any existing idle
+         * connections.
+         * 
+         * The next use of an EamDb API method will start a new connection pool
+         * using those new settings.
+         */
+        try {
+            EamDb previousDbManager = EamDb.getInstance();
+            if (null != previousDbManager) {
+                // NOTE: do not set/save the seleted platform before calling this.
+                EamDb.getInstance().shutdownConnections();
+            }
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to close database connections in previously selected platform.", ex); // NON-NLS
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(null, 
+                        Bundle.EamDbSettingsDialog_okButton_errorMsg_text(),
+                        Bundle.EamDbSettingsDialog_okButton_errorTitle_text(),
+                        JOptionPane.WARNING_MESSAGE);
+            });
+        }
+
+        // Even if we fail to close the existing connections, make sure that we
+        // save the new connection settings, so an Autopsy restart will correctly
+        // start with the new settings.
         EamDbPlatformEnum.setSelectedPlatform(selectedPlatform.name());
         EamDbPlatformEnum.saveSelectedPlatform();
+
         switch (selectedPlatform) {
             case POSTGRESQL:
+                // save the new PostgreSQL settings
                 dbSettingsPostgres.saveSettings();
+                // Load those newly saved settings into the postgres db manager instance
+                //  in case we are still using the same instance.
                 EamDb.getInstance().updateSettings();
                 break;
             case SQLITE:
+                // save the new SQLite settings
                 dbSettingsSqlite.saveSettings();
+                // Load those newly saved settings into the sqlite db manager instance
+                //  in case we are still using the same instance.
                 EamDb.getInstance().updateSettings();
                 break;
             case DISABLED:
                 break;
         }
-
+        
         dispose();
     }//GEN-LAST:event_bnOkActionPerformed
 
