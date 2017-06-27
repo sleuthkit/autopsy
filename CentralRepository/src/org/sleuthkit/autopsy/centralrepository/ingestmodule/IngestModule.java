@@ -52,8 +52,7 @@ import org.sleuthkit.datamodel.TskDataException;
  * Ingest module for inserting entries into the Central Repository
  * database on ingest of a data source
  */
-@Messages({"IngestModule.prevcases.text=Previous Cases",
-    "IngestModule.ingestmodule.name=Correlation Engine"})
+@Messages({"IngestModule.prevcases.text=Previous Cases"})
 class IngestModule implements FileIngestModule {
 
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
