@@ -161,10 +161,10 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         try {
             Index indexInfo = server.getIndexInfo();
             if (!IndexFinder.getCurrentSolrVersion().equals(indexInfo.getSolrVersion())) {
-                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSolrVersionNotSupported(indexInfo.getSolrVersion()));                                
+                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSolrVersionNotSupported(indexInfo.getSolrVersion()));
             }
             if (!IndexFinder.getCurrentSchemaVersion().equals(indexInfo.getSchemaVersion())) {
-                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));                
+                throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupException_indexSchemaNotSupported(indexInfo.getSchemaVersion()));
             }
         } catch (NoOpenCoreException ex) {
             throw new IngestModuleException(Bundle.KeywordSearchIngestModule_startupMessage_failedToGetIndexSchema(), ex);
@@ -249,7 +249,7 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
     public ProcessResult process(AbstractFile abstractFile) {
         if (initialized == false) //error initializing indexing/Solr
         {
-            logger.log(Level.WARNING, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());  //NON-NLS
+            logger.log(Level.SEVERE, "Skipping processing, module not initialized, file: {0}", abstractFile.getName());  //NON-NLS
             putIngestStatus(jobId, abstractFile.getId(), IngestStatus.SKIPPED_ERROR_INDEXING);
             return ProcessResult.OK;
         }
@@ -300,7 +300,9 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
         }
 
         if (context.fileIngestIsCancelled()) {
-            stop();
+            logger.log(Level.INFO, "Keyword search ingest module instance {0} stopping search job due to ingest cancellation", instanceNum); //NON-NLS
+            SearchRunner.getInstance().stopJob(jobId);
+            cleanup();
             return;
         }
 
@@ -309,35 +311,19 @@ public final class KeywordSearchIngestModule implements FileIngestModule {
 
         // We only need to post the summary msg from the last module per job
         if (refCounter.decrementAndGet(jobId) == 0) {
+            try {
+                final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
+                logger.log(Level.INFO, "Indexed files count: {0}", numIndexedFiles); //NON-NLS
+                final int numIndexedChunks = KeywordSearch.getServer().queryNumIndexedChunks();
+                logger.log(Level.INFO, "Indexed file chunks count: {0}", numIndexedChunks); //NON-NLS
+            } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
+                logger.log(Level.SEVERE, "Error executing Solr queries to check number of indexed files and file chunks", ex); //NON-NLS
+            }
             postIndexSummary();
             synchronized (ingestStatus) {
                 ingestStatus.remove(jobId);
             }
         }
-
-        //log number of files / chunks in index
-        //signal a potential change in number of text_ingested files
-        try {
-            logger.log(Level.INFO, "Keyword search ingest module instance {0} querying indexed files and chunks", instanceNum); //NON-NLS            
-            final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
-            final int numIndexedChunks = KeywordSearch.getServer().queryNumIndexedChunks();
-            logger.log(Level.INFO, "Keyword search ingest module instance {0} completed querying indexed files and chunks", instanceNum); //NON-NLS            
-            logger.log(Level.INFO, "Keyword search ingest module instance {0} indexed files count: {1}", new Object[]{instanceNum, numIndexedFiles}); //NON-NLS
-            logger.log(Level.INFO, "Keyword search ingest module instance {0} indexed file chunks count: {1}", new Object[]{instanceNum, numIndexedChunks}); //NON-NLS
-        } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            logger.log(Level.SEVERE, String.format("Keyword search ingest module instance %d error executing Solr query to check number of indexed files/chunks", instanceNum), ex); //NON-NLS
-        }
-
-        cleanup();
-    }
-
-    /**
-     * Handle stop event (ingest interrupted) Cleanup resources, threads, timers
-     */
-    private void stop() {
-        logger.log(Level.INFO, "stop()"); //NON-NLS
-
-        SearchRunner.getInstance().stopJob(jobId);
 
         cleanup();
     }

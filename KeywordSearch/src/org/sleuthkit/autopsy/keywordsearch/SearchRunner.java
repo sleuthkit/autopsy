@@ -131,9 +131,8 @@ public final class SearchRunner {
         }
 
         if (readyForFinalSearch) {
-            logger.log(Level.INFO, "Starting search index commit for final search"); //NON-NLS
+            logger.log(Level.INFO, "Commiting search index before final search for search job {0}", job.getJobId()); //NON-NLS
             commit();
-            logger.log(Level.INFO, "Completed search index commit for final search"); //NON-NLS
             doFinalSearch(job); //this will block until it's done
         }
     }
@@ -191,7 +190,7 @@ public final class SearchRunner {
             final int numIndexedFiles = KeywordSearch.getServer().queryNumIndexedFiles();
             KeywordSearch.fireNumIndexedFilesChange(null, numIndexedFiles);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Solr query to check number of indexed files: ", ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Solr query to check number of indexed files", ex); //NON-NLS
         }
     }
 
@@ -203,23 +202,25 @@ public final class SearchRunner {
      */
     private void doFinalSearch(SearchJobInfo job) {
         // Run one last search as there are probably some new files committed
-        logger.log(Level.INFO, "Starting final search for jobid {0}", job.getJobId());         //NON-NLS
+        logger.log(Level.INFO, "Starting final search for search job {0}", job.getJobId());         //NON-NLS
         if (!job.getKeywordListNames().isEmpty()) {
             try {
                 // In case this job still has a worker running, wait for it to finish
+                logger.log(Level.INFO, "Checking for previous search for search job {0} before executing final search", job.getJobId()); //NON-NLS
                 job.waitForCurrentWorker();
 
                 SearchRunner.Searcher finalSearcher = new SearchRunner.Searcher(job, true);
                 job.setCurrentSearcher(finalSearcher); //save the ref
+                logger.log(Level.INFO, "Kicking off final search for search job {0}", job.getJobId()); //NON-NLS
                 finalSearcher.execute(); //start thread
 
                 // block until the search is complete
-                logger.log(Level.INFO, "Waiting with get() for final searcher"); //NON-NLS
+                logger.log(Level.INFO, "Waiting for final search for search job {0}", job.getJobId()); //NON-NLS
                 finalSearcher.get();
-                logger.log(Level.INFO, "Finished waiting with get() for final searcher"); //NON-NLS
+                logger.log(Level.INFO, "Final search for search job {0} completed", job.getJobId()); //NON-NLS
 
             } catch (InterruptedException | CancellationException ex) {
-                logger.log(Level.INFO, "Final search for search job {1} interrupted or cancelled", job.getJobId()); //NON-NLS
+                logger.log(Level.INFO, "Final search for search job {0} interrupted or cancelled", job.getJobId()); //NON-NLS
             } catch (ExecutionException ex) {
                 logger.log(Level.SEVERE, String.format("Final search for search job %d failed", job.getJobId()), ex); //NON-NLS
             }
@@ -250,6 +251,7 @@ public final class SearchRunner {
                     SearchJobInfo job = j.getValue();
                     // If no lists or the worker is already running then skip it
                     if (!job.getKeywordListNames().isEmpty() && !job.isWorkerRunning()) {
+                        logger.log(Level.INFO, "Executing periodic search for search job {0}", job.getJobId());
                         Searcher searcher = new Searcher(job);
                         job.setCurrentSearcher(searcher); //save the ref
                         searcher.execute(); //start thread
@@ -345,9 +347,9 @@ public final class SearchRunner {
         private void waitForCurrentWorker() throws InterruptedException {
             synchronized (finalSearchLock) {
                 while (workerRunning) {
-                    logger.log(Level.INFO, "Waiting for previous worker to finish before executing final search"); //NON-NLS
+                    logger.log(Level.INFO, "Waiting for previous worker to finish"); //NON-NLS
                     finalSearchLock.wait(); //wait() releases the lock
-                    logger.log(Level.INFO, "Done waiting for previous worker to finish before executing final search"); //NON-NLS
+                    logger.log(Level.INFO, "Notified previous worker finished"); //NON-NLS
                 }
             }
         }
@@ -357,7 +359,7 @@ public final class SearchRunner {
          */
         private void searchNotify() {
             synchronized (finalSearchLock) {
-                logger.log(Level.INFO, "Notifying after finishing a search"); //NON-NLS
+                logger.log(Level.INFO, "Notifying after finishing search"); //NON-NLS
                 workerRunning = false;
                 finalSearchLock.notify();
             }
@@ -512,8 +514,7 @@ public final class SearchRunner {
                 try {
                     finalizeSearcher();
                     stopWatch.stop();
-
-                    logger.log(Level.INFO, "Searcher took {0} secs to run", stopWatch.getElapsedTimeSecs()); //NON-NLS
+                    logger.log(Level.INFO, "Searcher took {0} secs to run (final = {1})", new Object[]{stopWatch.getElapsedTimeSecs(), this.finalRun}); //NON-NLS
                 } finally {
                     // In case a thread is waiting on this worker to be done
                     job.searchNotify();

@@ -52,8 +52,7 @@ import org.sleuthkit.datamodel.TskDataException;
  * Ingest module for inserting entries into the Central Repository
  * database on ingest of a data source
  */
-@Messages({"IngestModule.prevcases.text=Previous Cases",
-    "IngestModule.ingestmodule.name=Correlation Engine"})
+@Messages({"IngestModule.prevcases.text=Previous Cases"})
 class IngestModule implements FileIngestModule {
 
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
@@ -264,7 +263,7 @@ class IngestModule implements FileIngestModule {
     private void postCorrelatedBadFileToBlackboard(AbstractFile abstractFile, List<String> caseDisplayNames) {
 
         try {
-            String MODULE_NAME = Bundle.IngestModule_ingestmodule_name();
+            String MODULE_NAME = IngestModuleFactory.getModuleName();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestModule_prevcases_text());
@@ -294,7 +293,7 @@ class IngestModule implements FileIngestModule {
 
     private void postCorrelatedHashHitToBlackboard(AbstractFile abstractFile) {
         try {
-            String MODULE_NAME = Bundle.IngestModule_ingestmodule_name();
+            String MODULE_NAME = IngestModuleFactory.getModuleName();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestModule_prevcases_text());
