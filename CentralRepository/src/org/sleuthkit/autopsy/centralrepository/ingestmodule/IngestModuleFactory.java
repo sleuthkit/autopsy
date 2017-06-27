@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
+import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.ingest.FileIngestModule;
 import org.sleuthkit.autopsy.ingest.IngestModuleFactoryAdapter;
@@ -29,13 +30,14 @@ import org.sleuthkit.autopsy.centralrepository.optionspanel.GlobalSettingsPanel;
  * Factory for Central Repository ingest modules
  */
 @ServiceProvider(service = org.sleuthkit.autopsy.ingest.IngestModuleFactory.class)
+@NbBundle.Messages({"IngestModuleFactory.ingestmodule.name=Correlation Engine",
+                    "IngestModuleFactory.ingestmodule.desc=Saves properties to the central repository for later correlation"})
 public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     private static final String VERSION_NUMBER = "0.8.0";
 
     static String getModuleName() {
-        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/centralrepository/Bundle")
-                .getString("OpenIDE-Module-Name");
+        return Bundle.IngestModuleFactory_ingestmodule_name();
     }
 
     @Override
@@ -45,8 +47,7 @@ public class IngestModuleFactory extends IngestModuleFactoryAdapter {
 
     @Override
     public String getModuleDescription() {
-        return java.util.ResourceBundle.getBundle("org/sleuthkit/autopsy/centralrepository/Bundle")
-                .getString("OpenIDE-Module-Long-Description");
+        return Bundle.IngestModuleFactory_ingestmodule_desc();
     }
 
     @Override
