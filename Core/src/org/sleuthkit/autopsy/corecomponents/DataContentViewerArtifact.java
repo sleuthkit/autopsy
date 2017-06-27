@@ -32,8 +32,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.View;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
@@ -78,6 +84,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         Bundle.DataContentViewerArtifact_attrsTableHeader_value(),
         Bundle.DataContentViewerArtifact_attrsTableHeader_sources()};
     private static final int[] COLUMN_WIDTHS = {100, 800, 100};
+    private static final int CELL_BOTTOM_MARGIN = 5;
 
     public DataContentViewerArtifact() {
         initResultsTable();
@@ -97,11 +104,34 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 return false;
             }
         });
-
         resultsTable.setCellSelectionEnabled(true);
         resultsTable.getTableHeader().setReorderingAllowed(false);
         resultsTable.setColumnHidingAllowed(false);
         resultsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        resultsTable.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {
+            }
+
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {
+            }
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+
+            }
+
+            @Override  
+            public void columnMarginChanged(ChangeEvent e) {
+                updateRowHeights(); //When the user changes column width we may need to resize row height
+            }
+
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {
+            }
+        });
         resultsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_NEXT_COLUMN);
 
     }
@@ -118,8 +148,23 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         }
         if (valueColIndex != -1) {
             for (int row = 0; row < resultsTable.getRowCount(); row++) {
-                int rowHeight = resultsTable.prepareRenderer(resultsTable.getCellRenderer(row, valueColIndex), row, valueColIndex).getPreferredSize().height;
-                resultsTable.setRowHeight(row, rowHeight);
+                Component comp = resultsTable.prepareRenderer(
+                        resultsTable.getCellRenderer(row, valueColIndex), row, valueColIndex);
+                final int rowHeight;
+                if (comp instanceof JTextComponent) {
+                    final JTextComponent tc = (JTextComponent) comp;
+                    final View rootView = tc.getUI().getRootView(tc);
+                    java.awt.Insets i = tc.getInsets(null);
+                    rootView.setSize(resultsTable.getColumnModel().getColumn(valueColIndex)
+                            .getPreferredWidth() - i.left - i.right,
+                            Integer.MAX_VALUE);
+                    rowHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
+                } else {
+                    rowHeight = comp.getPreferredSize().height;
+                }
+                if (rowHeight > 0) {
+                    resultsTable.setRowHeight(row, rowHeight + CELL_BOTTOM_MARGIN);
+                }
             }
         }
     }
@@ -785,24 +830,25 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     }
 
     /**
-     * TableCellRenderer for displaying multiline text which reflects the line
-     * breaks included in the text when displayed.
+     * TableCellRenderer for displaying multiline text.
      */
-    private class MultiLineTableCellRenderer extends javax.swing.JList<String> implements javax.swing.table.TableCellRenderer {
+    private class MultiLineTableCellRenderer implements javax.swing.table.TableCellRenderer {
 
         @Override
         public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            javax.swing.JTextArea jtex = new javax.swing.JTextArea();
             if (value instanceof String) {
-                String[] data = ((String) value).split("\\r?\\n|\\r");  //split on all line breaks to support multi-line viewing
-                setListData(data);
+                jtex.setText((String) value);
+                jtex.setLineWrap(true);
+                jtex.setWrapStyleWord(true);
             }
             //cell backgroud color when selected
             if (isSelected) {
-                setBackground(javax.swing.UIManager.getColor("Table.selectionBackground"));
+                jtex.setBackground(javax.swing.UIManager.getColor("Table.selectionBackground"));
             } else {
-                setBackground(javax.swing.UIManager.getColor("Table.background"));
+                jtex.setBackground(javax.swing.UIManager.getColor("Table.background"));
             }
-            return this;
+            return jtex;
         }
     }
 }
