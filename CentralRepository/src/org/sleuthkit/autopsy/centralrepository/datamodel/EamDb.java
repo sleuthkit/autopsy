@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Main interface for interacting with the database
@@ -422,14 +423,17 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    void prepareGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException;
+//    void prepareGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException;
 
     /**
      * Insert the bulk collection of Global File Instances
      *
+     * @param globalInstances a Set of EamGlobalFileInstances to insert into the db.
+     * @param contentType       the Type of the global instances
+     * 
      * @throws EamDbException
      */
-    void bulkInsertGlobalFileInstances() throws EamDbException;
+    void bulkInsertGlobalFileInstances(Set<EamGlobalFileInstance> globalInstances, EamArtifact.Type contentType) throws EamDbException;
 
     /**
      * Get all global file instances having a given MD5 hash

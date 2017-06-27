@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.util.Objects;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance.KnownStatus;
 
 /**
@@ -52,6 +53,25 @@ public class EamGlobalFileInstance {
         this(-1, globalSetID, MD5Hash, knownStatus, comment);
     }
 
+    @Override
+    public boolean equals(Object otherInstance) {
+        if (this == otherInstance) {
+            return true;
+        } else if (!(otherInstance instanceof EamGlobalFileInstance)) {
+            return false;
+        } else {
+            return (this.hashCode() == otherInstance.hashCode());
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + this.globalSetID;
+        hash = 59 * hash + Objects.hashCode(this.MD5Hash);
+        hash = 59 * hash + Objects.hashCode(this.knownStatus);
+        return hash;
+    }
     /**
      * @return the instanceID
      */
