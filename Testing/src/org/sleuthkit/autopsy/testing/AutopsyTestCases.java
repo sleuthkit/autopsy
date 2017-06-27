@@ -317,9 +317,9 @@ public class AutopsyTestCases {
         screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
         JLabelOperator.waitJLabel(previewDialog, "Complete", false, false);
+        new Timeout("pausing", 60000).sleep();
         JButtonOperator jbo2 = new JButtonOperator(previewDialogOperator, "Close");
         jbo2.pushNoBlock();
-        new Timeout("pausing", 10000).sleep();
         System.setProperty("ReportStr", datenotime);
         screenshot("Done Testing");
     }

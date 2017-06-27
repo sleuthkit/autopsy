@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tskdbdiff import TskDbDiff, TskDbDiffException
+from tskdbdiff import TskDbDiff, TskDbDiffException, PGSettings
 import codecs
 import datetime
 import logging
@@ -132,16 +132,27 @@ class TestRunner(object):
         """
 
         if isMultiUser:
+            test_config.output_parent_dir = ""
+            if test_config.shared_outdir and test_config.shared_outdir.strip().startswith("\\\\"):
+                test_config.output_parent_dir = test_config.shared_outdir.strip()
+            else:
+                Errors.print_error("Multi-user case type required to use UNC path as shared output directory.")
+                sys.exit(1)
             if test_config.output_parent_dir.endswith("single_user"):
                 test_config.output_parent_dir = test_config.output_parent_dir.replace("single_user", "multi_user")
+                test_config.gold = test_config.gold.replace("single_user", "multi_user")
             else:
-                test_config.output_parent_dir += "\\multi_user"
+                test_config.gold += "\\multi_user"
             test_config.userCaseType='multi'
         else:
+            if test_config.output_parent_dir and test_config.output_parent_dir.strip().startswith("\\\\"):
+                Errors.print_error("Single-user case type couldn't take UNC path as output directory.")
+                sys.exit(1)
             if test_config.output_parent_dir.endswith("multi_user"):
                 test_config.output_parent_dir = test_config.output_parent_dir.replace("multi_user", "single_user")
+                test_config.gold = test_config.gold.replace("multi_user", "single_user")
             else:
-                test_config.output_parent_dir += "\\single_user"
+                test_config.gold += "\\single_user"
             test_config.userCaseType='single'
 
         test_config._init_logs()
@@ -217,14 +228,16 @@ class TestRunner(object):
         time.sleep(2) # Give everything a second to process
 
         # exit if .db was not created
-        if not file_exists(test_data.get_db_path(DBType.OUTPUT)):
+        if not file_exists(test_data.get_db_path(DBType.OUTPUT)) and not test_data.isMultiUser:
             Errors.print_error("Autopsy did not run properly; No .db file was created")
             sys.exit(1)
         try:
             # Dump the database before we diff or use it for rebuild
-            TskDbDiff.dump_output_db(test_data.get_db_path(DBType.OUTPUT), test_data.get_db_dump_path(DBType.OUTPUT),
-            test_data.get_sorted_data_path(DBType.OUTPUT))
+            db_file = test_data.get_db_path(DBType.OUTPUT)
+            TskDbDiff.dump_output_db(db_file, test_data.get_db_dump_path(DBType.OUTPUT),
+            test_data.get_sorted_data_path(DBType.OUTPUT), test_data.isMultiUser, test_data.pgSettings)
         except sqlite3.OperationalError as e:
+            print(e)
             Errors.print_error("Ingest did not run properly.\nMake sure no other instances of Autopsy are open and try again.")
             sys.exit(1)
 
@@ -366,7 +379,8 @@ class TestRunner(object):
 
         # Copy files to gold
         try:
-            shutil.copy(dbinpth, dboutpth)
+            if not test_data.isMultiUser:
+                shutil.copy(dbinpth, dboutpth)
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
             shutil.copy(dbdumpinpth, dbdumpoutpth)          
@@ -436,7 +450,7 @@ class TestRunner(object):
         test_data.ant.append("-Dkeyword_path=" + test_config.keyword_path)
         test_data.ant.append("-Dnsrl_path=" + test_config.nsrl_path)
         test_data.ant.append("-Dgold_path=" + test_config.gold)
-        if re.match('^[\w]:', test_data.output_path) == None or test_data.output_path.startswith('/'):
+        if (re.match('^[\w]:', test_data.output_path) == None and not test_data.output_path.startswith("\\\\")) or test_data.output_path.startswith('/'):
             test_data.ant.append("-Dout_path=" + make_local_path(test_data.output_path))
         else:
             test_data.ant.append("-Dout_path=" + test_data.output_path)
@@ -451,7 +465,7 @@ class TestRunner(object):
         test_data.ant.append("-DsolrPort=" + str(test_config.solrPort))
         test_data.ant.append("-DmessageServiceHost=" + test_config.messageServiceHost)
         test_data.ant.append("-DmessageServicePort=" + str(test_config.messageServicePort))
-        if test_config.userCaseType == "multi":
+        if test_data.isMultiUser:
             test_data.ant.append("-DisMultiUser=true")
         # Note: test_data has autopys_version attribute, but we couldn't see it from here. It's set after run ingest.
         autopsyVersionPath = os.path.join("..", "..", "nbproject", "project.properties")
@@ -470,10 +484,11 @@ class TestRunner(object):
         Errors.print_out("Ingesting Image:\n" + test_data.image_file + "\n")
         Errors.print_out("CMD: " + " ".join(test_data.ant))
         Errors.print_out("Starting test...\n")
-        if re.match('^[\w]:', test_data.main_config.output_dir) == None or test_data.main_config.output_dir.startswith('/'):
+        if (re.match('^[\w]:', test_data.main_config.output_dir) == None and not test_data.main_config.output_dir.startswith("\\\\")) or test_data.main_config.output_dir.startswith('/'):
             antoutpth = make_local_path(test_data.main_config.output_dir, "antRunOutput.txt")
         else:
             antoutpth = test_data.main_config.output_dir + "\\antRunOutput.txt"
+        #os.chmod(antoutpth, 0o777)
         antout = open(antoutpth, "a")
         if SYS is OS.CYGWIN:
             subprocess.call(test_data.ant, stdout=subprocess.PIPE)
@@ -564,6 +579,8 @@ class TestData(object):
         self.image_file = str(image)
         self.image = get_image_name(self.image_file)
         self.image_name = self.image
+        # userCaseType
+        self.isMultiUser = True if self.main_config.userCaseType == "multi" else False
         # Directory structure and files
         self.output_path = make_path(self.main_config.output_dir, self.image_name)
         self.autopsy_data_file = make_path(self.output_path, self.image_name + "Autopsy_data.txt")
@@ -572,13 +589,16 @@ class TestData(object):
         self.test_dbdump = make_path(self.output_path, self.image_name +
         "-DBDump.txt")
         self.common_log_path = make_path(self.output_path, self.image_name + "-Exceptions.txt")
-        self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
+        if self.isMultiUser:
+            self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, socket.gethostname(), "Reports")
+            self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE, socket.gethostname(), "ModuleOutput", "KeywordSearch")
+        else:
+            self.reports_dir = make_path(self.output_path, AUTOPSY_TEST_CASE, "Reports")
+            self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE, "ModuleOutput", "KeywordSearch")
         self.gold_data_dir = make_path(self.main_config.gold, self.image_name)
         self.gold_archive = make_path(self.main_config.gold,
         self.image_name + "-archive.zip")
         self.logs_dir = make_path(self.output_path, "logs")
-        self.solr_index = make_path(self.output_path, AUTOPSY_TEST_CASE,
-        "ModuleOutput", "KeywordSearch")
         # Results and Info
         self.html_report_passed = False
         self.errors_diff_passed = False
@@ -603,6 +623,8 @@ class TestData(object):
         self.printout = []
         # autopsyPlatform
         self.autopsyPlatform = str(self.main_config.autopsyPlatform)
+        # postgreSQL db conncetion data setttings
+        self.pgSettings = PGSettings(self.main_config.dbHost, self.main_config.dbPort, self.main_config.dbUserName, self.main_config.dbPassword)
 
     def ant_to_string(self):
         string = ""
@@ -619,7 +641,12 @@ class TestData(object):
         if(db_type == DBType.GOLD):
             db_path = make_path(self.gold_data_dir, DB_FILENAME)
         elif(db_type == DBType.OUTPUT):
-            db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
+            if self.isMultiUser:
+                case_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, "AutopsyTestCase.aut")
+                parsed = parse(case_path)
+                db_path = parsed.getElementsByTagName("CaseDatabase")[0].firstChild.data
+            else:
+                db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, DB_FILENAME)
         else:
             db_path = make_path(self.main_config.output_dir, self.image_name, AUTOPSY_TEST_CASE, BACKUP_DB_FILENAME)
         return db_path
@@ -761,6 +788,7 @@ class TestConfiguration(object):
         self.messageServiceHost = ""
         self.messageServicePort = ""
         self.userCaseType = "Both"
+        self.shared_outdir = ""
 
         if not self.args.single:
             self._load_config_file(self.args.config_file)
@@ -814,6 +842,8 @@ class TestConfiguration(object):
                 self.messageServicePort = parsed_config.getElementsByTagName("messageServicePort")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("userCaseType"):
                 self.userCaseType = parsed_config.getElementsByTagName("userCaseType")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("shared_outdir"):
+                self.shared_outdir = parsed_config.getElementsByTagName("shared_outdir")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -844,7 +874,7 @@ class TestConfiguration(object):
         self.csv = make_path(self.output_dir, "CSV.txt")
         self.html_log = make_path(self.output_dir, "AutopsyTestCase.html")
         log_name = ''
-        if SYS is OS.CYGWIN and (re.match('^[\w]:', self.output_dir) != None or not self.output_dir.startswith('/')):
+        if SYS is OS.CYGWIN and ((re.match('^[\w]:', self.output_dir) != None and self.output_dir.startswith("\\\\")) or not self.output_dir.startswith('/')):
             a = ["cygpath", "-u", self.output_dir]
             cygpath_output_dir = subprocess.check_output(a).decode('utf-8')
             log_name = cygpath_output_dir.rstrip() + "/regression.log"
@@ -907,7 +937,7 @@ class TestResultsDiffer(object):
             gold_bb_dump = test_data.get_sorted_data_path(DBType.GOLD)
             gold_dump = test_data.get_db_dump_path(DBType.GOLD)
             test_data.db_diff_passed = all(TskDbDiff(output_db, gold_db, output_dir=output_dir, gold_bb_dump=gold_bb_dump,
-            gold_dump=gold_dump).run_diff())
+            gold_dump=gold_dump, isMultiUser=test_data.isMultiUser, pgSettings=test_data.pgSettings).run_diff())
 
             # Compare Exceptions
             # replace is a fucntion that replaces strings of digits with 'd'
@@ -974,7 +1004,7 @@ class TestResultsDiffer(object):
 
             # create file path for gold files inside report output folder. In case of diff, both gold and current run
             # Exception.txt files are available in the report output folder. Prefix Gold- is added to the filename.
-            gold_file_in_output_dir = output_file[:output_file.rfind("\\")] + "Gold-" + output_file[output_file.rfind("\\")+1:]
+            gold_file_in_output_dir = output_file[:output_file.rfind("\\")] + "\\Gold-" + output_file[output_file.rfind("\\")+1:]
             shutil.copy(gold_file, gold_file_in_output_dir)
 
             return False
@@ -1571,7 +1601,10 @@ def copy_logs(test_data):
     """
     try:
         # copy logs from autopsy case's Log folder
-        log_dir = os.path.join(test_data.output_path, AUTOPSY_TEST_CASE, "Log")
+        if test_data.isMultiUser:
+            log_dir = os.path.join(test_data.output_path, AUTOPSY_TEST_CASE, socket.gethostname(), "Log")
+        else:
+            log_dir = os.path.join(test_data.output_path, AUTOPSY_TEST_CASE, "Log")
         shutil.copytree(log_dir, test_data.logs_dir)
 
         # copy logs from userdir0/var/log
