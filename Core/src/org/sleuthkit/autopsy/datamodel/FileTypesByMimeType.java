@@ -71,41 +71,18 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     private final HashMap<String, List<String>> existingMimeTypes = new HashMap<>();
     private static final Logger LOGGER = Logger.getLogger(FileTypesByMimeType.class.getName());
 
+    private boolean showCounts = true;
+
     private void removeListeners() {
         deleteObservers();
         IngestManager.getInstance().removeIngestJobEventListener(pcl);
         Case.removePropertyChangeListener(pcl);
     }
-
     /*
      * The pcl is in the class because it has the easiest mechanisms to add and
      * remove itself during its life cycles.
      */
-    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-
-            /**
-             * Checking for a current case is a stop gap measure until a
-             * different way of handling the closing of cases is worked out.
-             * Currently, remote events may be received for a case that is
-             * already closed.
-             */
-            try {
-                Case.getCurrentCase();
-                populateHashMap();
-            } catch (IllegalStateException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
-            }
-        } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-            if (evt.getNewValue() == null) {
-                removeListeners();
-            }
-        }
-    };
+    private final PropertyChangeListener pcl;
 
     /**
      * Retrieve the media types by retrieving the keyset from the hashmap.
@@ -140,7 +117,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             existingMimeTypes.clear();
 
             if (skCase == null) {
-
                 return;
             }
             try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(allDistinctMimeTypesQuery.toString())) {
@@ -170,10 +146,51 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     }
 
     FileTypesByMimeType(SleuthkitCase skCase) {
+        this.pcl = (PropertyChangeEvent evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCase();
+                    shouldShowCounts();
+
+                    populateHashMap();
+                } catch (IllegalStateException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                if (evt.getNewValue() == null) {
+                    removeListeners();
+                }
+            }
+        };
         IngestManager.getInstance().addIngestJobEventListener(pcl);
         Case.addPropertyChangeListener(pcl);
         this.skCase = skCase;
         populateHashMap();
+    }
+
+    private boolean shouldShowCounts() {
+        if (showCounts) {
+            try {
+                if (skCase.countFilesWhere("1") > 200000) {
+                    showCounts = false;
+                }
+            } catch (TskCoreException tskCoreException) {
+                showCounts = false;
+                LOGGER.log(Level.SEVERE, "Error counting files.", tskCoreException);
+            }
+        }
+        return showCounts;
     }
 
     @Override
@@ -358,10 +375,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          *                 results
          */
         private void updateDisplayName(String mimeType) {
-            final long count = new MediaSubTypeNodeChildren(mimeType).calculateItems(skCase, mimeType);
+            final String count = shouldShowCounts()
+                    ? " (" + Long.toString(new MediaSubTypeNodeChildren(mimeType).calculateItems(skCase, mimeType)) + ")"
+                    : "";
             String[] mimeTypeParts = mimeType.split("/");
             //joins up all remaining parts of the mimeType into one sub-type string
-            super.setDisplayName(StringUtils.join(ArrayUtils.subarray(mimeTypeParts, 1, mimeTypeParts.length), "/") + " (" + count + ")");
+            super.setDisplayName(StringUtils.join(ArrayUtils.subarray(mimeTypeParts, 1, mimeTypeParts.length), "/") + count);
         }
 
         /**

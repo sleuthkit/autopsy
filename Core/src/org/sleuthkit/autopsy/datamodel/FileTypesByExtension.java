@@ -51,7 +51,9 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Filters database results by file extension.
  */
- public final class FileTypesByExtension implements AutopsyVisitableItem {
+public final class FileTypesByExtension implements AutopsyVisitableItem {
+
+    private static final Logger LOGGER = Logger.getLogger(FileTypesByExtension.class.getName());
 
     private final SleuthkitCase skCase;
 
@@ -72,13 +74,62 @@ import org.sleuthkit.datamodel.TskData;
      * Listens for case and ingest invest. Updates observers when events are
      * fired. FileType and FileTypes nodes are all listening to this.
      */
-    private static class FileTypesByExtObservable extends Observable {
+    static private class FileTypesByExtObservable extends Observable {
 
-        private FileTypesByExtObservable() {
+        private boolean showCounts = true;
+        private final PropertyChangeListener pcl;
+
+        private FileTypesByExtObservable(SleuthkitCase skCase) {
             super();
+            this.pcl = (PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString()) || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString()) || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        shouldShowCounts(skCase);
+                        update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeListeners();
+                    }
+                }
+            };
+
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
             Case.addPropertyChangeListener(pcl);
+
+        }
+
+        /**
+         *
+         * @param skCase1 the value of skCase1
+         * @return the boolean
+         */
+        private boolean shouldShowCounts(SleuthkitCase skCase1) {
+            if (showCounts) {
+                try {
+                    if (skCase1.countFilesWhere("1") > 200000) {
+                        showCounts = false;
+                    }
+                } catch (TskCoreException tskCoreException) {
+                    showCounts = false;
+                    LOGGER.log(Level.SEVERE, "Error counting files.", tskCoreException);
+                }
+            }
+            return showCounts;
         }
 
         private void removeListeners() {
@@ -87,31 +138,6 @@ import org.sleuthkit.datamodel.TskData;
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             Case.removePropertyChangeListener(pcl);
         }
-
-        private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-            String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString()) || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString()) || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                /**
-                 * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked out.
-                 * Currently, remote events may be received for a case that is
-                 * already closed.
-                 */
-                try {
-                    Case.getCurrentCase();
-                    update();
-                } catch (IllegalStateException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
-            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                // case was closed. Remove listeners so that we don't get called with a stale case handle
-                if (evt.getNewValue() == null) {
-                    removeListeners();
-                }
-            }
-        };
 
         private void update() {
             setChanged();
@@ -146,7 +172,7 @@ import org.sleuthkit.datamodel.TskData;
          * @param o      Observable that was created by a higher-level node that
          *               provides updates on events
          */
-        private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, Observable o) {
+        private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
             super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
             this.filter = filter;
             init();
@@ -206,7 +232,7 @@ import org.sleuthkit.datamodel.TskData;
 
             private final SleuthkitCase skCase;
             private final FileTypesByExtension.RootFilter filter;
-            private final Observable notifier;
+            private final FileTypesByExtObservable notifier;
 
             /**
              *
@@ -215,12 +241,12 @@ import org.sleuthkit.datamodel.TskData;
              * @param o      Observable that provides updates based on events
              *               being fired (or null if one needs to be created)
              */
-            private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, Observable o) {
+            private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
                 super();
                 this.skCase = skCase;
                 this.filter = filter;
                 if (o == null) {
-                    this.notifier = new FileTypesByExtObservable();
+                    this.notifier = new FileTypesByExtObservable(skCase);
                 } else {
                     this.notifier = o;
                 }
@@ -263,6 +289,7 @@ import org.sleuthkit.datamodel.TskData;
 
         FileTypesByExtension.SearchFilterInterface filter;
         SleuthkitCase skCase;
+        private final FileTypesByExtObservable notifier;
 
         /**
          *
@@ -271,10 +298,11 @@ import org.sleuthkit.datamodel.TskData;
          * @param o      Observable that sends updates when the child factories
          *               should refresh
          */
-        FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
+        FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
             super(Children.create(new FileExtensionNodeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
             this.filter = filter;
             this.skCase = skCase;
+            this.notifier = o;
             init();
             o.addObserver(new ByExtNodeObserver());
         }
@@ -295,8 +323,10 @@ import org.sleuthkit.datamodel.TskData;
         }
 
         private void updateDisplayName() {
-            final long count = FileExtensionNodeChildren.calculateItems(skCase, filter);
-            super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
+            final String count = notifier.shouldShowCounts(skCase)
+                    ? " (" + Long.toString(FileExtensionNodeChildren.calculateItems(skCase, filter)) + ")"
+                    : "";
+            super.setDisplayName(filter.getDisplayName() + count);
         }
 
         @Override
