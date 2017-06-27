@@ -114,14 +114,15 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         /**
+         * Should the nodes show counts?
          *
-         * @param skCase1 the value of skCase1
-         * @return the boolean
+         *
+         * @return True, unless the DB has more than 200k rows.
          */
-        private boolean shouldShowCounts(SleuthkitCase skCase1) {
+        private boolean shouldShowCounts(SleuthkitCase skCase) {
             if (showCounts) {
                 try {
-                    if (skCase1.countFilesWhere("1") > 200000) {
+                    if (skCase.countFilesWhere("1") > 200000) {
                         showCounts = false;
                     }
                 } catch (TskCoreException tskCoreException) {

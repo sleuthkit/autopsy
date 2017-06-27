@@ -179,6 +179,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         populateHashMap();
     }
 
+    /**
+     * Should the nodes show counts?
+     *
+     *
+     * @return True, unless the DB has more than 200k rows.
+     */
     private boolean shouldShowCounts() {
         if (showCounts) {
             try {
