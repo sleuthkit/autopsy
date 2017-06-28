@@ -43,5 +43,4 @@ public class EamDbException extends Exception {
     public EamDbException(String message, Throwable cause) {
         super(message, cause);
     }
-
 }

@@ -32,6 +32,7 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
@@ -48,10 +49,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     protected final List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES;
 
     private int bulkArtifactsCount;
-    private int bulkGlobalArtifactsCount;
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<EamArtifact>> bulkArtifacts;
-    private final Map<String, Collection<EamGlobalFileInstance>> bulkGlobalArtifacts;
     private final List<String> badTags;
 
     /**
@@ -60,18 +59,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws UnknownHostException, EamDbException
      */
     protected AbstractSqlEamDb() {
-        badTags = new ArrayList<String>();
+        badTags = new ArrayList<>();
         bulkArtifactsCount = 0;
-        bulkGlobalArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
-        bulkGlobalArtifacts = new HashMap<>();
 
         DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
 
-        for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
+        DEFAULT_ARTIFACT_TYPES.forEach((type) -> {
             bulkArtifacts.put(type.getName(), new ArrayList<>());
-            bulkGlobalArtifacts.put(type.getName(), new ArrayList<>());
-        }
+        });
     }
 
     /**
@@ -1450,69 +1446,36 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Add a new global file instance to the bulk collection
-     *
-     * @param eamGlobalFileInstance The global file instance to add
-     *
-     * @throws EamDbException
-     */
-    @Override
-    public void prepareGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException {
-        synchronized (bulkGlobalArtifacts) {
-            bulkGlobalArtifacts.get("FILES").add(eamGlobalFileInstance); // NON-NLS
-            bulkGlobalArtifactsCount++;
-
-            if (bulkGlobalArtifactsCount >= bulkArtifactsThreshold) {
-                bulkInsertGlobalFileInstances();
-            }
-        }
-    }
-
-    /**
      * Insert the bulk collection of Global File Instances
      *
      * @throws EamDbException
      */
     @Override
-    public void bulkInsertGlobalFileInstances() throws EamDbException {
-        List<EamArtifact.Type> artifactTypes = getCorrelationArtifactTypes();
-
+    public void bulkInsertGlobalFileInstances(Set<EamGlobalFileInstance> globalInstances, EamArtifact.Type contentType) throws EamDbException {
         Connection conn = connect();
-        synchronized (bulkGlobalArtifacts) {
-            if (bulkGlobalArtifactsCount == 0) {
-                return;
+
+        PreparedStatement bulkPs = null;
+        try {
+            // FUTURE: have a separate global_files table for each Type.
+            String sql = "INSERT INTO global_files(global_reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
+                    + getConflictClause();
+
+            bulkPs = conn.prepareStatement(sql);
+
+            for (EamGlobalFileInstance globalInstance : globalInstances) {
+                bulkPs.setInt(1, globalInstance.getGlobalSetID());
+                bulkPs.setString(2, globalInstance.getMD5Hash());
+                bulkPs.setString(3, globalInstance.getKnownStatus().name());
+                bulkPs.setString(4, globalInstance.getComment());
+                bulkPs.addBatch();
             }
 
-            PreparedStatement bulkPs = null;
-            try {
-                for (EamArtifact.Type type : artifactTypes) {
-                    String sql = "INSERT INTO global_files(global_reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
-                            + getConflictClause();
-
-                    bulkPs = conn.prepareStatement(sql);
-
-                    Collection<EamGlobalFileInstance> eamGlobalFileInstances = bulkGlobalArtifacts.get(type.getName());
-                    for (EamGlobalFileInstance eamGlobalFileInstance : eamGlobalFileInstances) {
-
-                        bulkPs.setInt(1, eamGlobalFileInstance.getGlobalSetID());
-                        bulkPs.setString(2, eamGlobalFileInstance.getMD5Hash());
-                        bulkPs.setString(3, eamGlobalFileInstance.getKnownStatus().name());
-                        bulkPs.setString(4, eamGlobalFileInstance.getComment());
-                        bulkPs.addBatch();
-                    }
-
-                    bulkPs.executeBatch();
-                    bulkGlobalArtifacts.get(type.getName()).clear();
-                }
-
-                // Reset state
-                bulkGlobalArtifactsCount = 0;
-            } catch (SQLException ex) {
-                throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS
-            } finally {
-                EamDbUtil.closePreparedStatement(bulkPs);
-                EamDbUtil.closeConnection(conn);
-            }
+            bulkPs.executeBatch();
+        } catch (SQLException ex) {
+            throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS
+        } finally {
+            EamDbUtil.closePreparedStatement(bulkPs);
+            EamDbUtil.closeConnection(conn);
         }
     }
 

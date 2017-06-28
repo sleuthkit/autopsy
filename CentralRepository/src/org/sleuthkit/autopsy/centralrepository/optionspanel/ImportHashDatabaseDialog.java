@@ -29,22 +29,28 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.spi.options.OptionsPanelController;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
@@ -53,6 +59,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.datamodel.TskData;
 
 /**
@@ -76,9 +83,10 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
      * and add it to the set of hash databases used to classify files as
      * unknown, known, or known bad.
      */
+    @Messages({"ImportHashDatabaseDialog.importHashDbMsg=Import Hash Database"})
     ImportHashDatabaseDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
-                NbBundle.getMessage(ImportHashDatabaseDialog.class, "ImportHashDatabaseDialog.importHashDbMsg"),
+                Bundle.ImportHashDatabaseDialog_importHashDbMsg(),
                 true); // NON-NLS
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
@@ -88,12 +96,14 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         display();
     }
 
+    @Messages({"ImportHashDatabaseDialog.fileNameExtFilter.text=Hash Database File",})
     private void initFileChooser() {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         String[] EXTENSION = new String[]{"idx"}; //NON-NLS
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
-                NbBundle.getMessage(this.getClass(), "ImportHashDatabaseDialog.fileNameExtFilter.text"), EXTENSION); // NON-NLS
+                Bundle.ImportHashDatabaseDialog_fileNameExtFilter_text(), 
+                EXTENSION); // NON-NLS
         fileChooser.setFileFilter(filter);
         fileChooser.setMultiSelectionEnabled(false);
     }
@@ -108,6 +118,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
      * Register for notifications when the text boxes get updated.
      */
     private void setTextBoxListeners() {
+        textBoxes.add(tfFilePath);
         textBoxes.add(tfDatabaseName);
         textBoxes.add(tfDatabaseVersion);
         addDocumentListeners(textBoxes, textBoxChangedListener);
@@ -339,8 +350,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lbInstructions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(lbWarningMsg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
@@ -379,7 +389,8 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                                     .addComponent(knownRadioButton)
                                     .addComponent(knownBadRadioButton)))
                             .addComponent(lbDatabaseAttribution))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(lbWarningMsg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -389,47 +400,52 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(lbInstructions, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lbInstructions, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(openButton)
                     .addComponent(tfFilePath, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lbDatabasePath))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(lbDatabaseType)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(knownRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(knownBadRadioButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(lbDatabaseAttribution)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(bnNewOrganization)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(3, 3, 3)
-                        .addComponent(lbSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(tfDatabaseName)
-                    .addComponent(lbDatabaseName, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lbDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tfDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(okButton)
-                        .addComponent(cancelButton))
-                    .addComponent(lbWarningMsg, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap())
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lbDatabaseType)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(knownRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(knownBadRadioButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lbDatabaseAttribution)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(bnNewOrganization)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(3, 3, 3)
+                                .addComponent(lbSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(comboboxSourceOrganization, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(tfDatabaseName)
+                            .addComponent(lbDatabaseName, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(lbDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(tfDatabaseVersion, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lbWarningMsg, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(44, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(okButton)
+                            .addComponent(cancelButton))
+                        .addContainerGap())))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    @Messages({"ImportHashDatabaseDialog.failedToGetDbPathMsg=Failed to get the path of the selected database.",})
     private void openButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openButtonActionPerformed
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fileChooser.getSelectedFile();
@@ -441,9 +457,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                 ModuleSettings.setConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY, databaseFile.getParent());
             } catch (IOException ex) {
                 Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.SEVERE, "Failed to get path of selected database", ex); // NON-NLS
-                JOptionPane.showMessageDialog(this,
-                        NbBundle.getMessage(this.getClass(),
-                                "ImportHashDatabaseDialog.failedToGetDbPathMsg")); // NON-NLS
+                lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_failedToGetDbPathMsg());
             }
         }
         valid();
@@ -470,7 +484,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     }
     
     @Messages({"ImportHashDatabaseDialog.createGlobalSet.failedMsg.text=Failed to store attribution details.",
-        "ImportHashDatabaseDialog.createGlobalSet.failedTitle.text=Import hashdb error."})
+        "ImportHashDatabaseDialog.mustSelectHashDbFilePathMsg=Missing hash database file path.",
+        "ImportHashDatabaseDialog.hashDbDoesNotExistMsg=The selected hash database does not exist.",
+        "# {0} - selected file path", 
+        "ImportHashDatabaseDialog.errorMessage.failedToOpenHashDbMsg=Failed to open hash database at {0}.",
+})
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         // Note that the error handlers in this method call return without disposing of the 
         // dialog to allow the user to try again, if desired.
@@ -478,34 +496,22 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
 
         // have valid file path
         if (selectedFilePath.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "ImportHashDatabaseDialog.mustSelectHashDbFilePathMsg"),
-                    NbBundle.getMessage(this.getClass(),
-                            "ImportHashDatabaseDialog.importHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE); // NON-NLS
+            lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_mustSelectHashDbFilePathMsg());
             return;
         }
         File file = new File(selectedFilePath);
         if (!file.exists()) {
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(this.getClass(),
-                            "ImportHashDatabaseDialog.hashDbDoesNotExistMsg"),
-                    NbBundle.getMessage(this.getClass(),
-                            "ImportHashDatabaseDialog.importHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE); // NON-NLS
+            lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_hashDbDoesNotExistMsg());
             return;
         }
         
         // create global set
-        int globalSetID = -1;
+        int globalSetID;
         try {
             globalSetID = createGlobalSet();
         } catch (EamDbException ex) {
-            JOptionPane.showMessageDialog(this,
-                    Bundle.ImportHashDatabaseDialog_createGlobalSet_failedMsg_text(),
-                    Bundle.ImportHashDatabaseDialog_createGlobalSet_failedTitle_text(),
-                    JOptionPane.ERROR_MESSAGE);
+            LOGGER.log(Level.SEVERE, "Failed to create global set.", ex);
+            lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_createGlobalSet_failedMsg_text());
             return;
         }
         
@@ -517,22 +523,18 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             knownStatus = TskData.FileKnown.BAD;
         }
 
-        String errorMessage = NbBundle.getMessage(this.getClass(),
-                "ImportHashDatabaseDialog.errorMessage.failedToOpenHashDbMsg",
-                selectedFilePath); // NON-NLS
+        String errorMessage = Bundle.ImportHashDatabaseDialog_errorMessage_failedToOpenHashDbMsg(selectedFilePath);
+        // Future, make UI handle more than the "FILES" type.
+        EamArtifact.Type contentType = EamArtifact.getDefaultArtifactTypes().get(0); // get "FILES" type
         try {
-            new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID).execute();
-        } catch (Throwable ex) {
-            Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.WARNING, errorMessage, ex);
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
-                    NbBundle.getMessage(this.getClass(),
-                            "ImportHashDatabaseDialog.importHashDbErr"),
-                    JOptionPane.ERROR_MESSAGE);
-            return;
+            // run in the background and close dialog
+            SwingUtilities.invokeLater(new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID, contentType)::execute);
+            dispose();
+        } catch (EamDbException | UnknownHostException ex) {
+            Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
+            lbWarningMsg.setText(ex.getMessage());
         }
 
-        dispose();
     }//GEN-LAST:event_okButtonActionPerformed
     
     @SuppressWarnings({"unchecked"})
@@ -560,37 +562,57 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_comboboxSourceOrganizationActionPerformed
 
     @NbBundle.Messages({"ImportHashDatabaseDialog.ImportHashDatabaseWorker.displayName=Importing Hash Database"})
-    private class ImportHashDatabaseWorker extends SwingWorker<Object, Void> {
+    private class ImportHashDatabaseWorker extends SwingWorker<Void, Void> {
 
         private final File file;
         private final TskData.FileKnown knownStatus;
         private final int globalSetID;
+        private final ProgressHandle progress;
+        private final EamArtifact.Type contentType;
 
-        public ImportHashDatabaseWorker(String filename, TskData.FileKnown knownStatus, int globalSetID) throws EamDbException, UnknownHostException {
+        public ImportHashDatabaseWorker(String filename, TskData.FileKnown knownStatus, int globalSetID, EamArtifact.Type contentType) throws EamDbException, UnknownHostException {
             this.file = new File(filename);
             this.knownStatus = knownStatus;
             this.globalSetID = globalSetID;
+            this.contentType = contentType;
+            this.progress = ProgressHandle.createHandle(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_displayName());
 
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Central Repository database settings were not properly initialized"); // NON-NLS
+                throw new EamDbException("Central Repository database is not enabled."); // NON-NLS
             }
         }
 
         @Override
-        protected Object doInBackground() throws Exception {
-            ProgressHandle progress = ProgressHandle.createHandle(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_displayName());
-            importHashDatabase(progress);
+        protected Void doInBackground() throws Exception {
+            importHashDatabase();
             return null;
         }
 
+        @Override
+        @Messages({"ImportHashDatabaseDialog.ImportHashDatabaseWorker.error=Failed to import hash database."})
+        protected void done() {
+            progress.finish();
+            try {
+                get();
+            } catch (InterruptedException | ExecutionException ex) {
+                Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.SEVERE, Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_error(), ex);
+                MessageNotifyUtil.Notify.show(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_error(),
+                        ex.getMessage(),
+                        MessageNotifyUtil.MessageType.ERROR);
+            }
+        }
+        
         private long numberOfLinesInFile(File f) throws IOException {
             return Files.lines(f.toPath()).count();
         }
 
-        private void importHashDatabase(ProgressHandle progress) throws EamDbException, IOException {
+        @Messages({"# {0} - value content", 
+            "ImportHashDatabaseDialog.ImportHashDatabaseWorker.duplicate=Duplicate value {0} found in import file."})
+        private void importHashDatabase() throws EamDbException, IOException {
             BufferedReader reader = new BufferedReader(new FileReader(file));
             String line;
             EamDb dbManager = EamDb.getInstance();
+            Set<EamGlobalFileInstance> globalInstances = new HashSet<>();
 
             long totalLines = numberOfLinesInFile(file);
             if (totalLines <= Integer.MAX_VALUE) {
@@ -616,11 +638,12 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                         knownStatus, 
                         "");
 
-                dbManager.prepareGlobalFileInstance(eamGlobalFileInstance);
+                if (!globalInstances.add(eamGlobalFileInstance)) {
+                    throw new EamDbException(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_duplicate(parts[0])); // NON-NLS
+                }
             }
 
-            dbManager.bulkInsertGlobalFileInstances();
-            progress.finish();
+            dbManager.bulkInsertGlobalFileInstances(globalInstances, contentType);
         }
     }
 
