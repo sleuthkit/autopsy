@@ -286,19 +286,21 @@ public final class SqliteEamDbSettings {
 
         String referenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS reference_sets_org_id ON reference_sets (org_id)";
 
+        // Each "%s" will be replaced with the relevant reference_TYPE table name.
         StringBuilder createReferenceTypesTableTemplate = new StringBuilder();
-        createReferenceTypesTableTemplate.append("CREATE TABLE IF NOT EXISTS reference_%s (");
+        createReferenceTypesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
         createReferenceTypesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
         createReferenceTypesTableTemplate.append("reference_set_id integer,");
         createReferenceTypesTableTemplate.append("value text NOT NULL,");
         createReferenceTypesTableTemplate.append("known_status text NOT NULL,");
         createReferenceTypesTableTemplate.append("comment text NOT NULL,");
-        createReferenceTypesTableTemplate.append("CONSTRAINT reference_%s_multi_unique UNIQUE(reference_set_id, value) ON CONFLICT IGNORE,");
+        createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(reference_set_id, value) ON CONFLICT IGNORE,");
         createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createReferenceTypesTableTemplate.append(")");
 
-        String referenceTypesIdx1 = "CREATE INDEX IF NOT EXISTS reference_%s_value ON reference_%s (value)";
-        String referenceTypesIdx2 = "CREATE INDEX IF NOT EXISTS reference_%s_value_known_status ON reference_%s (value, known_status)";
+        // Each "%s" will be replaced with the relevant reference_TYPE table name.
+        String referenceTypesIdx1 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+        String referenceTypesIdx2 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
 
         StringBuilder createCorrelationTypesTable = new StringBuilder();
         createCorrelationTypesTable.append("CREATE TABLE IF NOT EXISTS correlation_types (");
@@ -306,14 +308,16 @@ public final class SqliteEamDbSettings {
         createCorrelationTypesTable.append("display_name text NOT NULL,");
         createCorrelationTypesTable.append("db_table_name text NOT NULL,");
         createCorrelationTypesTable.append("supported integer NOT NULL,");
-        createCorrelationTypesTable.append("enabled integer NOT NULL");
+        createCorrelationTypesTable.append("enabled integer NOT NULL,");
+        createCorrelationTypesTable.append("CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)");
         createCorrelationTypesTable.append(")");
 
         // NOTE: there are API methods that query by one of: name, supported, or enabled.
         // Only name is currently implemented, but, there will only be a small number
         // of artifact_types, so there is no benefit to having any indices.
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
-        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s_instances (");
+        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
         createArtifactInstancesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
         createArtifactInstancesTableTemplate.append("case_id integer,");
         createArtifactInstancesTableTemplate.append("data_source_id integer,");
@@ -321,15 +325,16 @@ public final class SqliteEamDbSettings {
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_instances_multi_unique UNIQUE(case_id, data_source_id, value, file_path),");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(case_id, data_source_id, value, file_path),");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) on update set null on delete set null,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) on update set null on delete set null");
         createArtifactInstancesTableTemplate.append(")");
 
-        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_instances_case_id ON %s_instances (case_id)";
-        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_instances_data_source_id ON %s_instances (data_source_id)";
-        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_instances_value ON %s_instances (value)";
-        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_instances_value_known_status ON %s_instances (value, known_status)";
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
+        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
+        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
 
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
@@ -371,23 +376,26 @@ public final class SqliteEamDbSettings {
 
             stmt.execute(createDbInfoTable.toString());
 
-            // Create a separate table for each artifact type
+            // Create a separate instance and reference table for each artifact type
             List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
 
-            String type_name;
+            String reference_type_dbname;
+            String instance_type_dbname;
             for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
-                type_name = type.getDbTableName();
-                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), type_name, type_name));
-                stmt.execute(String.format(instancesIdx1, type_name, type_name));
-                stmt.execute(String.format(instancesIdx2, type_name, type_name));
-                stmt.execute(String.format(instancesIdx3, type_name, type_name));
-                stmt.execute(String.format(instancesIdx4, type_name, type_name));
+                reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
+                instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
+                
+                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx3, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx4, instance_type_dbname, instance_type_dbname));
 
                 // FUTURE: allow more than the FILES type
                 if (type.getId() == EamArtifact.FILES_TYPE_ID) {
-                    stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), type_name, type_name));
-                    stmt.execute(String.format(referenceTypesIdx1, type_name, type_name));
-                    stmt.execute(String.format(referenceTypesIdx2, type_name, type_name));
+                    stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
+                    stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
+                    stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));
                 }                
             }
         } catch (SQLException ex) {

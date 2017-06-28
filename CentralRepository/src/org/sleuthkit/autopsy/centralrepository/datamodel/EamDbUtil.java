@@ -183,4 +183,26 @@ public class EamDbUtil {
 
         return false;
     }
+    
+
+    /**
+     * Conver thte Type's DbTableName string to the *_instances table name.
+     * 
+     * @param type Correlation Type
+     * @return  Instance table name for this Type.
+     */
+    public static String correlationTypeToInstanceTableName(EamArtifact.Type type) {
+        return type.getDbTableName() + "_instances";
+    }
+    
+    /**
+     * Convert the Type's DbTableName string to the reference_* table name.
+     * 
+     * @param type Correlation Type
+     * @return Reference table name for this Type.
+     */
+    public static String correlationTypeToReferenceTableName(EamArtifact.Type type) {
+        return "reference_" + type.getDbTableName();
+    }
+
 }

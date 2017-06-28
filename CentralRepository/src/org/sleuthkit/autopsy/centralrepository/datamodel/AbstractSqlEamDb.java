@@ -499,26 +499,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Conver thte Type's DbTableName string to the *_instances table name.
-     * 
-     * @param type Correlation Type
-     * @return  Instance table name for this Type.
-     */
-    private String correlationTypeToInstanceTableName(EamArtifact.Type type) {
-        return type.getDbTableName() + "_instances";
-    }
-    
-    /**
-     * Convert the Type's DbTableName string to the reference_* table name.
-     * 
-     * @param type Correlation Type
-     * @return Reference table name for this Type.
-     */
-    private String correlationTypeToReferenceTableName(EamArtifact.Type type) {
-        return "reference_" + type.getDbTableName();
-    }
-
-    /**
      * Inserts new Artifact(s) into the database. Should add associated Case and
      * Data Source first.
      *
@@ -531,7 +511,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         List<EamArtifactInstance> eamInstances = eamArtifact.getInstances();
         PreparedStatement preparedStatement = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ");
         sql.append(tableName);
@@ -577,7 +557,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
         sql.append(tableName);
@@ -629,7 +609,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(aType);
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
         sql.append(tableName);
@@ -678,7 +658,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT count(*) FROM ");
         sql.append(tableName);
@@ -738,7 +718,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT count(*) FROM (SELECT DISTINCT case_id, data_source_id FROM ");
         sql.append(tableName);
@@ -782,7 +762,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append("SELECT 0 ");
 
         for (EamArtifact.Type type : artifactTypes) {
-            String table_name = correlationTypeToInstanceTableName(type);
+            String table_name = EamDbUtil.correlationTypeToInstanceTableName(type);
 
             sql.append("+ (SELECT count(*) FROM (SELECT DISTINCT case_id, data_source_id FROM ");
             sql.append(table_name);
@@ -834,7 +814,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append("SELECT 0 ");
 
         for (EamArtifact.Type type : artifactTypes) {
-            String table_name = correlationTypeToInstanceTableName(type);
+            String table_name = EamDbUtil.correlationTypeToInstanceTableName(type);
 
             sql.append("+ (SELECT count(*) FROM ");
             sql.append(table_name);
@@ -909,7 +889,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                 for (EamArtifact.Type type : artifactTypes) {
 
-                    String tableName = correlationTypeToInstanceTableName(type);
+                    String tableName = EamDbUtil.correlationTypeToInstanceTableName(type);
                     StringBuilder sql = new StringBuilder();
                     sql.append("INSERT INTO ");
                     sql.append(tableName);
@@ -1025,7 +1005,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedQuery = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
 
         StringBuilder sqlQuery = new StringBuilder();
         sqlQuery.append("SELECT id FROM ");
@@ -1090,7 +1070,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
         sql.append(tableName);
@@ -1137,7 +1117,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT count(*) FROM ");
         sql.append(tableName);
@@ -1181,7 +1161,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
+        String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT DISTINCT case_name FROM ");
         sql.append(tableName);
@@ -1232,10 +1212,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Long badInstances = 0L;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        String sql = "SELECT count(*) FROM % WHERE value=? AND known_status=?";
+        String sql = "SELECT count(*) FROM %s WHERE value=? AND known_status=?";
 
         try {
-            preparedStatement = conn.prepareStatement(String.format(sql.toString(), correlationTypeToReferenceTableName(eamArtifact.getCorrelationType())));
+            preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(eamArtifact.getCorrelationType())));
             preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
@@ -1446,7 +1426,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?)";
 
         try {
-            preparedStatement = conn.prepareStatement(String.format(sql, correlationTypeToReferenceTableName(correlationType)));
+            preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(correlationType)));
             preparedStatement.setInt(1, eamGlobalFileInstance.getGlobalSetID());
             preparedStatement.setString(2, eamGlobalFileInstance.getMD5Hash());
             preparedStatement.setString(3, eamGlobalFileInstance.getKnownStatus().name());
@@ -1475,7 +1455,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
                 + getConflictClause();
 
-            bulkPs = conn.prepareStatement(sql);
+            bulkPs = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(contentType)));
 
             for (EamGlobalFileInstance globalInstance : globalInstances) {
                 bulkPs.setInt(1, globalInstance.getGlobalSetID());
@@ -1514,7 +1494,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         String sql1 = "SELECT * FROM %s WHERE value=?";
 
         try {
-            preparedStatement1 = conn.prepareStatement(String.format(sql1, correlationTypeToReferenceTableName(aType)));
+            preparedStatement1 = conn.prepareStatement(String.format(sql1, EamDbUtil.correlationTypeToReferenceTableName(aType)));
             preparedStatement1.setString(1, aValue);
             resultSet = preparedStatement1.executeQuery();
             while (resultSet.next()) {
