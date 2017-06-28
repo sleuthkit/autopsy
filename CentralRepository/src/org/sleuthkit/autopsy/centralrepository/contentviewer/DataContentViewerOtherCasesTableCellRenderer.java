@@ -24,6 +24,7 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Renderer for cells in data content viewer table
@@ -49,19 +50,15 @@ public class DataContentViewerOtherCasesTableCellRenderer implements TableCellRe
             background = Color.BLUE;
         } else {
             String known_status = (String) table.getModel().getValueAt(row, 5);
-            switch (known_status) {
-                case "Bad":
+            if (known_status.equals(TskData.FileKnown.BAD.getName())) {
                     foreground = Color.WHITE;
                     background = Color.RED;
-                    break;
-                case "Unknown":
+            } else if (known_status.equals(TskData.FileKnown.UNKNOWN.getName())) {
                     foreground = Color.BLACK;
                     background = Color.YELLOW;
-                    break;
-                default:
+            } else {
                     foreground = Color.BLACK;
                     background = Color.WHITE;
-                    break;
             }
         }
         renderer.setForeground(foreground);

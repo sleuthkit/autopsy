@@ -60,6 +60,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -515,11 +516,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         }
         
         // insert hashes
-        EamArtifactInstance.KnownStatus knownStatus = EamArtifactInstance.KnownStatus.UNKNOWN;
+        TskData.FileKnown knownStatus = TskData.FileKnown.UNKNOWN;
         if (knownRadioButton.isSelected()) {
-            knownStatus = EamArtifactInstance.KnownStatus.KNOWN;
+            knownStatus = TskData.FileKnown.KNOWN;
         } else if (knownBadRadioButton.isSelected()) {
-            knownStatus = EamArtifactInstance.KnownStatus.BAD;
+            knownStatus = TskData.FileKnown.BAD;
         }
 
         String errorMessage = Bundle.ImportHashDatabaseDialog_errorMessage_failedToOpenHashDbMsg(selectedFilePath);
@@ -529,7 +530,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             // run in the background and close dialog
             SwingUtilities.invokeLater(new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID, contentType)::execute);
             dispose();
-        } catch (EamDbException ex) {
+        } catch (EamDbException | UnknownHostException ex) {
             Logger.getLogger(ImportHashDatabaseDialog.class.getName()).log(Level.SEVERE, errorMessage, ex);
             lbWarningMsg.setText(ex.getMessage());
         }
@@ -564,12 +565,12 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private class ImportHashDatabaseWorker extends SwingWorker<Void, Void> {
 
         private final File file;
-        private final EamArtifactInstance.KnownStatus knownStatus;
+        private final TskData.FileKnown knownStatus;
         private final int globalSetID;
         private final ProgressHandle progress;
         private final EamArtifact.Type contentType;
 
-        public ImportHashDatabaseWorker(String filename, EamArtifactInstance.KnownStatus knownStatus, int globalSetID, EamArtifact.Type contentType) throws EamDbException {
+        public ImportHashDatabaseWorker(String filename, TskData.FileKnown knownStatus, int globalSetID, EamArtifact.Type contentType) throws EamDbException, UnknownHostException {
             this.file = new File(filename);
             this.knownStatus = knownStatus;
             this.globalSetID = globalSetID;

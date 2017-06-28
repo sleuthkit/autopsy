@@ -48,8 +48,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Listen for case events and update entries in the Central Repository
- * database accordingly
+ * Listen for case events and update entries in the Central Repository database
+ * accordingly
  */
 @Messages({"caseeventlistener.evidencetag=Evidence"})
 public class CaseEventListener implements PropertyChangeListener {
@@ -75,7 +75,8 @@ public class CaseEventListener implements PropertyChangeListener {
                         || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
                         || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
                         || (af.getKnown() == TskData.FileKnown.KNOWN)
-                        || (af.isDir() == true)) {
+                        || (af.isDir() == true)
+                        || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
                     break;
                 }
 
@@ -108,7 +109,7 @@ public class CaseEventListener implements PropertyChangeListener {
                                 new EamDataSource(deviceId, dsName),
                                 af.getParentPath() + af.getName(),
                                 tagAdded.getComment(),
-                                EamArtifactInstance.KnownStatus.BAD,
+                                TskData.FileKnown.BAD,
                                 EamArtifactInstance.GlobalStatus.LOCAL
                         );
                         eamArtifact.addInstance(cei);
