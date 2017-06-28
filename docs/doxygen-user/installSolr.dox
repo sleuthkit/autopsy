@@ -1,6 +1,5 @@
 /*! \page install_solr Install and Configure Solr
-A central Solr server is needed to store keyword indexes. To install Solr, perform the following steps:
-
+A central Solr server is needed to store keyword indexes, and its embedded Zookeeper is used as a coordination service for Autopsy. To install Solr, perform the following steps:
 
 \section install_solr_prereq Prerequisites
 
