@@ -49,10 +49,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     protected final List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES;
 
     private int bulkArtifactsCount;
-    private int bulkGlobalArtifactsCount;
     protected int bulkArtifactsThreshold;
     private final Map<String, Collection<EamArtifact>> bulkArtifacts;
-    private final Map<String, Collection<EamGlobalFileInstance>> bulkGlobalArtifacts;
     private final List<String> badTags;
 
     /**
@@ -63,16 +61,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
     protected AbstractSqlEamDb() {
         badTags = new ArrayList<>();
         bulkArtifactsCount = 0;
-        bulkGlobalArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
-        bulkGlobalArtifacts = new HashMap<>();
 
         DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
 
-        for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
+        DEFAULT_ARTIFACT_TYPES.forEach((type) -> {
             bulkArtifacts.put(type.getName(), new ArrayList<>());
-            bulkGlobalArtifacts.put(type.getName(), new ArrayList<>());
-        }
+        });
     }
 
     /**
