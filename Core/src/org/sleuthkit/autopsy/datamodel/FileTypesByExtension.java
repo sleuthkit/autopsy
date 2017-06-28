@@ -122,7 +122,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         private boolean shouldShowCounts(SleuthkitCase skCase) {
             if (showCounts) {
                 try {
-                    if (skCase.countFilesWhere("1") > 200000) {
+                    if (skCase.countFilesWhere("1=1") > 200000) {
                         showCounts = false;
                     }
                 } catch (TskCoreException tskCoreException) {

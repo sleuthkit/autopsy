@@ -159,7 +159,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                  */
                 try {
                     Case.getCurrentCase();
-                    shouldShowCounts();
+                    shouldShowCounts(skCase);
 
                     populateHashMap();
                 } catch (IllegalStateException notUsed) {
@@ -185,10 +185,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      *
      * @return True, unless the DB has more than 200k rows.
      */
-    private boolean shouldShowCounts() {
+    private boolean shouldShowCounts(final SleuthkitCase skCase) {
         if (showCounts) {
             try {
-                if (skCase.countFilesWhere("1") > 200000) {
+                if (skCase.countFilesWhere("1=1") > 200000) {
                     showCounts = false;
                 }
             } catch (TskCoreException tskCoreException) {
@@ -381,7 +381,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          *                 results
          */
         private void updateDisplayName(String mimeType) {
-            final String count = shouldShowCounts()
+            final String count = shouldShowCounts(skCase)
                     ? " (" + Long.toString(new MediaSubTypeNodeChildren(mimeType).calculateItems(skCase, mimeType)) + ")"
                     : "";
             String[] mimeTypeParts = mimeType.split("/");
