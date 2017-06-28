@@ -32,7 +32,6 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -100,7 +99,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
 //        }
 //        // else, schema is current
 //    }
-
     /**
      * Setup and create a connection to the selected database implementation
      */
@@ -550,8 +548,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated with
-     * the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
      *
      * @param eamArtifact The type/value to look up (artifact with 0 instances)
      *
@@ -599,8 +597,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated with
-     * the aType and filePath
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the aType and filePath
      *
      * @param aType    EamArtifact.Type to search for
      * @param filePath File path to search for
@@ -655,7 +653,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * associated with the ArtifactType and artifactValue of the given artifact.
      *
      * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                   for
+     *                    for
      *
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
@@ -698,7 +696,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * case_id/datasource_id tuples in the database) expressed as a percentage.
      *
      * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                   for
+     *                    for
      *
      * @return Int between 0 and 100
      */
@@ -716,7 +714,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * the given artifact.
      *
      * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                   for
+     *                    for
      *
      * @return Number of unique tuples
      */
@@ -806,7 +804,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param eamInstance Instance with caseName and dataSource to search for
      *
      * @param eamInstance Instance with caseDisplayName and dataSource to search
-     *                   for
+     *                    for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource
@@ -875,6 +873,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
+     * Get the conflict clause for bulk update statements
+     *
+     * @return The conflict clause for bulk update statements
+     */
+    protected abstract String getConflictClause();
+
+    /**
      * Executes a bulk insert of the eamArtifacts added from the
      * prepareBulkArtifact() method
      */
@@ -899,7 +904,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     sql.append(tableName);
                     sql.append(" (case_id, data_source_id, value, file_path, known_status, comment) ");
                     sql.append("VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), ");
-                    sql.append("(SELECT id FROM data_sources WHERE device_id=? LIMIT 1), ?, ?, ?, ?)");
+                    sql.append("(SELECT id FROM data_sources WHERE device_id=? LIMIT 1), ?, ?, ?, ?) ");
+                    sql.append(getConflictClause());
 
                     bulkPs = conn.prepareStatement(sql.toString());
 
@@ -949,7 +955,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             String sql = "INSERT INTO cases(case_uid, org_id, case_name, creation_date, case_number, "
                     + "examiner_name, examiner_email, examiner_phone, notes) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                    + getConflictClause();
             bulkPs = conn.prepareStatement(sql);
 
             for (EamCase eamCase : cases) {
@@ -987,8 +994,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact exists,
-     * it is updated. If eamArtifact does not exist nothing happens
+     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact
+     * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      */
@@ -1055,7 +1062,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Gets list of matching eamArtifact instances that have knownStatus = "Bad".
+     * Gets list of matching eamArtifact instances that have knownStatus =
+     * "Bad".
      *
      * @param eamArtifact Artifact containing Type and Value
      *
@@ -1442,9 +1450,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
     /**
      * Add a new global file instance to the bulk collection
-     * 
+     *
      * @param eamGlobalFileInstance The global file instance to add
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public void prepareGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException {
@@ -1460,8 +1469,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
     /**
      * Insert the bulk collection of Global File Instances
-     * 
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public void bulkInsertGlobalFileInstances() throws EamDbException {
@@ -1476,7 +1485,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
             PreparedStatement bulkPs = null;
             try {
                 for (EamArtifact.Type type : artifactTypes) {
-                    String sql = "INSERT INTO global_files(global_reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?)";
+                    String sql = "INSERT INTO global_files(global_reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
+                            + getConflictClause();
 
                     bulkPs = conn.prepareStatement(sql);
 
@@ -1507,10 +1517,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
     /**
      * Get all global file instances having a given MD5 hash
-     * 
+     *
      * @param MD5Hash The hash to lookup
+     *
      * @return List of all global file instances with a given hash
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public List<EamGlobalFileInstance> getGlobalFileInstancesByHash(String MD5Hash) throws EamDbException {
@@ -1543,7 +1555,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Add a new EamArtifact.Type to the db.
      *
      * @param newType New type to add.
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public void newCorrelationArtifactType(EamArtifact.Type newType) throws EamDbException {
@@ -1575,7 +1588,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @return List of EamArtifact.Type's. If none are defined in the database,
      *         the default list will be returned.
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public List<EamArtifact.Type> getCorrelationArtifactTypes() throws EamDbException {
@@ -1609,7 +1623,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @return List of enabled EamArtifact.Type's. If none are defined in the
      *         database, the default list will be returned.
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public List<EamArtifact.Type> getEnabledCorrelationArtifactTypes() throws EamDbException {
@@ -1643,7 +1658,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @return List of supported EamArtifact.Type's. If none are defined in the
      *         database, the default list will be returned.
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public List<EamArtifact.Type> getSupportedCorrelationArtifactTypes() throws EamDbException {
@@ -1675,7 +1691,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Update a EamArtifact.Type.
      *
      * @param aType EamArtifact.Type to update.
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public void updateCorrelationArtifactType(EamArtifact.Type aType) throws EamDbException {
@@ -1707,7 +1724,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param typeName Name of Type to get
      *
      * @return EamArtifact.Type or null if it doesn't exist.
-     * @throws EamDbException 
+     *
+     * @throws EamDbException
      */
     @Override
     public EamArtifact.Type getCorrelationArtifactTypeByName(String typeName) throws EamDbException {

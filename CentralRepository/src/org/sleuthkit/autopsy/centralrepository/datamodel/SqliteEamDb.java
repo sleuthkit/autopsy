@@ -25,7 +25,6 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -160,6 +159,12 @@ public class SqliteEamDb extends AbstractSqlEamDb {
                 throw new EamDbException("Error getting connection from connection pool.", ex); // NON-NLS
             }
         }
+    }
+
+    @Override
+    protected String getConflictClause() {
+        // For sqlite, our conflict clause is part of the table schema
+        return "";
     }
 
     @Override
