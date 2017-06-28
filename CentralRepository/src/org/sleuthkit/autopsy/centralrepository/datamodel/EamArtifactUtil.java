@@ -27,6 +27,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
@@ -88,7 +89,7 @@ public class EamArtifactUtil {
                         new EamDataSource(deviceId, af.getDataSource().getName()),
                         af.getParentPath() + af.getName(),
                         "",
-                        EamArtifactInstance.KnownStatus.UNKNOWN,
+                        TskData.FileKnown.UNKNOWN,
                         EamArtifactInstance.GlobalStatus.LOCAL
                 );
                 eamArtifact.addInstance(eamInstance);

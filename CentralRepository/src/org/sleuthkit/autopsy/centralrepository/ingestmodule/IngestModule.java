@@ -135,7 +135,7 @@ class IngestModule implements FileIngestModule {
                     eamDataSource,
                     af.getParentPath() + af.getName(),
                     "",
-                    EamArtifactInstance.KnownStatus.UNKNOWN,
+                    TskData.FileKnown.UNKNOWN,
                     EamArtifactInstance.GlobalStatus.LOCAL
             );
             eamArtifact.addInstance(cefi);

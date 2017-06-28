@@ -109,7 +109,7 @@ public class CaseEventListener implements PropertyChangeListener {
                                 new EamDataSource(deviceId, dsName),
                                 af.getParentPath() + af.getName(),
                                 tagAdded.getComment(),
-                                EamArtifactInstance.KnownStatus.BAD,
+                                TskData.FileKnown.BAD,
                                 EamArtifactInstance.GlobalStatus.LOCAL
                         );
                         eamArtifact.addInstance(cei);
