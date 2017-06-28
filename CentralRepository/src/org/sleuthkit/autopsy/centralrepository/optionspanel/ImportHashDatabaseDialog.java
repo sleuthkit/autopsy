@@ -466,7 +466,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             tfDatabaseName.getText().trim(),
             tfDatabaseVersion.getText().trim(),
             LocalDate.now());
-        return dbManager.newGlobalSet(eamGlobalSet);
+        return dbManager.newReferencelSet(eamGlobalSet);
     }
     
     @Messages({"ImportHashDatabaseDialog.createGlobalSet.failedMsg.text=Failed to store attribution details.",
@@ -619,7 +619,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                 dbManager.prepareGlobalFileInstance(eamGlobalFileInstance);
             }
 
-            dbManager.bulkInsertGlobalFileInstances();
+            dbManager.bulkInsertReferenceTypeEntries();
             progress.finish();
         }
     }

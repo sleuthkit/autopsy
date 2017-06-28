@@ -91,24 +91,28 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             dropContent.executeUpdate("DELETE FROM organizations");
             dropContent.executeUpdate("DELETE FROM cases");
             dropContent.executeUpdate("DELETE FROM data_sources");
-            dropContent.executeUpdate("DELETE FROM global_reference_sets");
-            dropContent.executeUpdate("DELETE FROM global_files");
+            dropContent.executeUpdate("DELETE FROM reference_sets");
             dropContent.executeUpdate("DELETE FROM artifact_types");
             dropContent.executeUpdate("DELETE FROM db_info");
 
             String instancesTemplate = "DELETE FROM %s_instances";
-            for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                dropContent.executeUpdate(String.format(instancesTemplate, type.getTypeName().toLowerCase()));
+            String referencesTemplate = "DELETE FROM global_files";
+            for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+                dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
+                // FUTURE: support other reference types
+                if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                    dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
+                }
             }
 
             dropContent.executeUpdate("VACUUM");
-            dbSettings.insertDefaultDatabaseContent();
-
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
         } finally {
             EamDbUtil.closeConnection(conn);
         }
+
+        dbSettings.insertDefaultDatabaseContent();
     }
 
     /**

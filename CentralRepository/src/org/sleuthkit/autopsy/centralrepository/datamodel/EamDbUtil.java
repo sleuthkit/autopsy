@@ -74,27 +74,30 @@ public class EamDbUtil {
     }
     
     /**
-     * Insert the default artifact types into the database.
+     * Insert the default correlation types into the database.
      * 
      * @param conn Open connection to use.
      * @return true on success, else false
      */
-    public static boolean insertDefaultArtifactTypes(Connection conn) {
+    public static boolean insertDefaultCorrelationTypes(Connection conn) {
         PreparedStatement preparedStatement = null;
-        List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getCorrelationTypes();
-        String sql = "INSERT INTO artifact_types(name, supported, enabled) VALUES (?, ?, ?)";
+        List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getCorrelationTypes();
+        String sql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            for (EamArtifact.Type newType : DEFAULT_ARTIFACT_TYPES) {
-                preparedStatement.setString(1, newType.getTypeName());
-                preparedStatement.setInt(2, newType.isSupported() ? 1 : 0);
-                preparedStatement.setInt(3, newType.isEnabled() ? 1 : 0);
+            for (EamArtifact.Type newType : DEFAULT_CORRELATION_TYPES) {
+                preparedStatement.setInt(1, newType.getId());
+                preparedStatement.setString(2, newType.getDisplayName());
+                preparedStatement.setString(3, newType.getDbTableName());
+                preparedStatement.setInt(4, newType.isSupported() ? 1 : 0);
+                preparedStatement.setInt(5, newType.isEnabled() ? 1 : 0);
+
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
         } catch (SQLException ex) {
-            LOGGER.log(Level.SEVERE, "Error inserting default correlation artifact types.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error inserting default correlation types.", ex); // NON-NLS
             return false;
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);

@@ -45,7 +45,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
     private final static Logger LOGGER = Logger.getLogger(AbstractSqlEamDb.class.getName());
 
-    protected final List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES;
+    protected final List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES;
 
     private int bulkArtifactsCount;
     private int bulkGlobalArtifactsCount;
@@ -66,11 +66,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
         bulkArtifacts = new HashMap<>();
         bulkGlobalArtifacts = new HashMap<>();
 
-        DEFAULT_ARTIFACT_TYPES = EamArtifact.getCorrelationTypes();
+        DEFAULT_CORRELATION_TYPES = EamArtifact.getCorrelationTypes();
 
-        for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-            bulkArtifacts.put(type.getTypeName(), new ArrayList<>());
-            bulkGlobalArtifacts.put(type.getTypeName(), new ArrayList<>());
+        for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+            bulkArtifacts.put(type.getDbTableName(), new ArrayList<>());
+            bulkGlobalArtifacts.put(type.getDbTableName(), new ArrayList<>());
         }
     }
 
@@ -503,8 +503,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return dataSources;
     }
 
-    private String artifactTypeToTableName(EamArtifact.Type type) {
-        return type.getTypeName() + "_instances";
+    /**
+     * Conver thte Type's DbTableName string to the *_instances table name.
+     * 
+     * @param type Correlation Type
+     * @return  Instance table name for this Type.
+     */
+    private String correlationTypeToInstanceTableName(EamArtifact.Type type) {
+        return type.getDbTableName() + "_instances";
+    }
+    
+    /**
+     * Convert the Type's DbTableName string to the reference_* table name.
+     * 
+     * @param type Correlation Type
+     * @return Reference table name for this Type.
+     */
+    private String correlationTypeToReferenceTableName(EamArtifact.Type type) {
+        return "reference_" + type.getDbTableName();
     }
 
     /**
@@ -520,7 +536,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         List<EamArtifactInstance> eamInstances = eamArtifact.getInstances();
         PreparedStatement preparedStatement = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("INSERT INTO ");
         sql.append(tableName);
@@ -533,7 +549,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             for (EamArtifactInstance eamInstance : eamInstances) {
                 preparedStatement.setString(1, eamInstance.getEamCase().getCaseUUID());
                 preparedStatement.setString(2, eamInstance.getEamDataSource().getDeviceID());
-                preparedStatement.setString(3, eamArtifact.getArtifactValue());
+                preparedStatement.setString(3, eamArtifact.getCorrelationValue());
                 preparedStatement.setString(4, eamInstance.getFilePath());
                 preparedStatement.setString(5, eamInstance.getKnownStatus().name());
                 preparedStatement.setString(6, eamInstance.getComment());
@@ -566,7 +582,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
         sql.append(tableName);
@@ -580,7 +596,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, eamArtifact.getArtifactValue());
+            preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
@@ -618,7 +634,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(aType);
+        String tableName = correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
         sql.append(tableName);
@@ -667,7 +683,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT count(*) FROM ");
         sql.append(tableName);
@@ -675,7 +691,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, eamArtifact.getArtifactValue());
+            preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
@@ -727,7 +743,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT count(*) FROM (SELECT DISTINCT case_id, data_source_id FROM ");
         sql.append(tableName);
@@ -737,7 +753,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, eamArtifact.getArtifactValue());
+            preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             instanceCount = resultSet.getLong(1);
@@ -763,7 +779,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         Long instanceCount = 0L;
-        List<EamArtifact.Type> artifactTypes = getCorrelationArtifactTypes();
+        List<EamArtifact.Type> artifactTypes = getCorrelationTypes();
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
@@ -771,8 +787,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append("SELECT 0 ");
 
         for (EamArtifact.Type type : artifactTypes) {
-            // TODO: when/if custom types are allowed, make this more safe.
-            String table_name = type.getTypeName() + "_instances";
+            String table_name = correlationTypeToInstanceTableName(type);
 
             sql.append("+ (SELECT count(*) FROM (SELECT DISTINCT case_id, data_source_id FROM ");
             sql.append(table_name);
@@ -815,7 +830,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         Long instanceCount = 0L;
-        List<EamArtifact.Type> artifactTypes = getCorrelationArtifactTypes();
+        List<EamArtifact.Type> artifactTypes = getCorrelationTypes();
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
@@ -824,7 +839,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append("SELECT 0 ");
 
         for (EamArtifact.Type type : artifactTypes) {
-            String table_name = type.getTypeName() + "_instances";
+            String table_name = correlationTypeToInstanceTableName(type);
 
             sql.append("+ (SELECT count(*) FROM ");
             sql.append(table_name);
@@ -864,7 +879,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     public void prepareBulkArtifact(EamArtifact eamArtifact) throws EamDbException {
 
         synchronized (bulkArtifacts) {
-            bulkArtifacts.get(eamArtifact.getArtifactType().getTypeName()).add(eamArtifact);
+            bulkArtifacts.get(eamArtifact.getCorrelationType().getDbTableName()).add(eamArtifact);
             bulkArtifactsCount++;
 
             if (bulkArtifactsCount >= bulkArtifactsThreshold) {
@@ -886,7 +901,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      */
     @Override
     public void bulkInsertArtifacts() throws EamDbException {
-        List<EamArtifact.Type> artifactTypes = getCorrelationArtifactTypes();
+        List<EamArtifact.Type> artifactTypes = getCorrelationTypes();
 
         Connection conn = connect();
         PreparedStatement bulkPs = null;
@@ -899,7 +914,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                 for (EamArtifact.Type type : artifactTypes) {
 
-                    String tableName = artifactTypeToTableName(type);
+                    String tableName = correlationTypeToInstanceTableName(type);
                     StringBuilder sql = new StringBuilder();
                     sql.append("INSERT INTO ");
                     sql.append(tableName);
@@ -910,14 +925,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                     bulkPs = conn.prepareStatement(sql.toString());
 
-                    Collection<EamArtifact> eamArtifacts = bulkArtifacts.get(type.getTypeName());
+                    Collection<EamArtifact> eamArtifacts = bulkArtifacts.get(type.getDbTableName());
                     for (EamArtifact eamArtifact : eamArtifacts) {
                         List<EamArtifactInstance> eamInstances = eamArtifact.getInstances();
 
                         for (EamArtifactInstance eamInstance : eamInstances) {
                             bulkPs.setString(1, eamInstance.getEamCase().getCaseUUID());
                             bulkPs.setString(2, eamInstance.getEamDataSource().getDeviceID());
-                            bulkPs.setString(3, eamArtifact.getArtifactValue());
+                            bulkPs.setString(3, eamArtifact.getCorrelationValue());
                             bulkPs.setString(4, eamInstance.getFilePath());
                             bulkPs.setString(5, eamInstance.getKnownStatus().name());
                             bulkPs.setString(6, eamInstance.getComment());
@@ -926,7 +941,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     }
 
                     bulkPs.executeBatch();
-                    bulkArtifacts.get(type.getTypeName()).clear();
+                    bulkArtifacts.get(type.getDbTableName()).clear();
                 }
 
                 // Reset state
@@ -1015,7 +1030,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedQuery = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
 
         StringBuilder sqlQuery = new StringBuilder();
         sqlQuery.append("SELECT id FROM ");
@@ -1035,7 +1050,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedQuery = conn.prepareStatement(sqlQuery.toString());
             preparedQuery.setString(1, eamInstance.getEamCase().getCaseUUID());
             preparedQuery.setString(2, eamInstance.getEamDataSource().getDeviceID());
-            preparedQuery.setString(3, eamArtifact.getArtifactValue());
+            preparedQuery.setString(3, eamArtifact.getCorrelationValue());
             preparedQuery.setString(4, eamInstance.getFilePath());
             resultSet = preparedQuery.executeQuery();
             if (resultSet.next()) {
@@ -1080,7 +1095,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
         sql.append(tableName);
@@ -1094,7 +1109,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, eamArtifact.getArtifactValue());
+            preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1127,7 +1142,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT count(*) FROM ");
         sql.append(tableName);
@@ -1135,7 +1150,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, eamArtifact.getArtifactValue());
+            preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -1171,7 +1186,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String tableName = artifactTypeToTableName(eamArtifact.getArtifactType());
+        String tableName = correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT DISTINCT case_name FROM ");
         sql.append(tableName);
@@ -1185,7 +1200,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
-            preparedStatement.setString(1, eamArtifact.getArtifactValue());
+            preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -1203,17 +1218,17 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Is the artifact globally known as bad?
+     * Is the artifact known as bad according to the reference entries?
      *
      * @param eamArtifact Artifact containing Type and Value
      *
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactGlobalKnownBad(EamArtifact eamArtifact) throws EamDbException {
+    public boolean isArtifactlKnownBadByReference(EamArtifact eamArtifact) throws EamDbException {
 
-        // TEMP: Only support file types
-        if (!eamArtifact.getArtifactType().equals(getCorrelationArtifactTypeByName("FILES"))) {
+        // TEMP: Only support file correlation type
+        if (eamArtifact.getCorrelationType().getId() != EamArtifact.FILES_TYPE_ID) {
             return false;
         }
 
@@ -1222,17 +1237,17 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Long badInstances = 0L;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        String sql = "SELECT count(*) FROM global_files WHERE value=? AND known_status=?";
+        String sql = "SELECT count(*) FROM % WHERE value=? AND known_status=?";
 
         try {
-            preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, eamArtifact.getArtifactValue());
+            preparedStatement = conn.prepareStatement(String.format(sql.toString(), correlationTypeToReferenceTableName(eamArtifact.getCorrelationType())));
+            preparedStatement.setString(1, eamArtifact.getCorrelationValue());
             preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
         } catch (SQLException ex) {
-            throw new EamDbException("Error determining if artifact is globally known bad.", ex); // NON-NLS
+            throw new EamDbException("Error determining if artifact is known bad by reference.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1348,14 +1363,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public int newGlobalSet(EamGlobalSet eamGlobalSet) throws EamDbException {
+    public int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement1 = null;
         PreparedStatement preparedStatement2 = null;
         ResultSet resultSet = null;
-        String sql1 = "INSERT INTO global_reference_sets(org_id, set_name, version, import_date) VALUES (?, ?, ?, ?)";
-        String sql2 = "SELECT id FROM global_reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
+        String sql1 = "INSERT INTO reference_sets(org_id, set_name, version, import_date) VALUES (?, ?, ?, ?)";
+        String sql2 = "SELECT id FROM reference_sets WHERE org_id=? AND set_name=? AND version=? AND import_date=? LIMIT 1";
 
         try {
             preparedStatement1 = conn.prepareStatement(sql1);
@@ -1387,31 +1402,31 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Get a global set by ID
+     * Get a reference set by ID
      *
-     * @param globalSetID The ID to look up
+     * @param referenceSetID The ID to look up
      *
      * @return The global set associated with the ID
      *
      * @throws EamDbException
      */
     @Override
-    public EamGlobalSet getGlobalSetByID(int globalSetID) throws EamDbException {
+    public EamGlobalSet getReferenceSetByID(int referenceSetID) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement1 = null;
         ResultSet resultSet = null;
-        String sql1 = "SELECT * FROM global_reference_sets WHERE id=?";
+        String sql1 = "SELECT * FROM reference_sets WHERE id=?";
 
         try {
             preparedStatement1 = conn.prepareStatement(sql1);
-            preparedStatement1.setInt(1, globalSetID);
+            preparedStatement1.setInt(1, referenceSetID);
             resultSet = preparedStatement1.executeQuery();
             resultSet.next();
             return getEamGlobalSetFromResultSet(resultSet);
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting global set by id.", ex); // NON-NLS
+            throw new EamDbException("Error getting reference set by id.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
@@ -1420,29 +1435,30 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Add a new global file instance
+     * Add a new reference instance
      *
-     * @param eamGlobalFileInstance The global file instance to add
+     * @param eamGlobalFileInstance The reference instance to add
+     * @param correlationType Correlation Type that this Reference Instance is
      *
      * @throws EamDbException
      */
     @Override
-    public void addGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException {
+    public void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, EamArtifact.Type correlationType) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
 
-        String sql = "INSERT INTO global_files(global_reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?)";
 
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement = conn.prepareStatement(String.format(sql, correlationTypeToReferenceTableName(correlationType)));
             preparedStatement.setInt(1, eamGlobalFileInstance.getGlobalSetID());
             preparedStatement.setString(2, eamGlobalFileInstance.getMD5Hash());
             preparedStatement.setString(3, eamGlobalFileInstance.getKnownStatus().name());
             preparedStatement.setString(4, eamGlobalFileInstance.getComment());
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
-            throw new EamDbException("Error inserting new global file instance into global_files table.", ex); // NON-NLS
+            throw new EamDbException("Error inserting new reference instance into reference_ table.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
@@ -1463,19 +1479,19 @@ public abstract class AbstractSqlEamDb implements EamDb {
             bulkGlobalArtifactsCount++;
 
             if (bulkGlobalArtifactsCount >= bulkArtifactsThreshold) {
-                bulkInsertGlobalFileInstances();
+                bulkInsertReferenceTypeEntries();
             }
         }
     }
 
     /**
-     * Insert the bulk collection of Global File Instances
+     * Insert the bulk collection of Reference Type Instances
      *
      * @throws EamDbException
      */
     @Override
-    public void bulkInsertGlobalFileInstances() throws EamDbException {
-        List<EamArtifact.Type> artifactTypes = getCorrelationArtifactTypes();
+    public void bulkInsertReferenceTypeEntries() throws EamDbException {
+        List<EamArtifact.Type> artifactTypes = getCorrelationTypes();
 
         Connection conn = connect();
         synchronized (bulkGlobalArtifacts) {
@@ -1486,12 +1502,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
             PreparedStatement bulkPs = null;
             try {
                 for (EamArtifact.Type type : artifactTypes) {
-                    String sql = "INSERT INTO global_files(global_reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
+                    String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
                             + getConflictClause();
 
-                    bulkPs = conn.prepareStatement(sql);
+                    bulkPs = conn.prepareStatement(String.format(sql, correlationTypeToReferenceTableName(type)));
 
-                    Collection<EamGlobalFileInstance> eamGlobalFileInstances = bulkGlobalArtifacts.get(type.getTypeName());
+                    Collection<EamGlobalFileInstance> eamGlobalFileInstances = bulkGlobalArtifacts.get(type.getDbTableName());
                     for (EamGlobalFileInstance eamGlobalFileInstance : eamGlobalFileInstances) {
 
                         bulkPs.setInt(1, eamGlobalFileInstance.getGlobalSetID());
@@ -1502,13 +1518,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     }
 
                     bulkPs.executeBatch();
-                    bulkGlobalArtifacts.get(type.getTypeName()).clear();
+                    bulkGlobalArtifacts.get(type.getDbTableName()).clear();
                 }
 
                 // Reset state
                 bulkGlobalArtifactsCount = 0;
             } catch (SQLException ex) {
-                throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS
+                throw new EamDbException("Error inserting bulk reference instances.", ex); // NON-NLS
             } finally {
                 EamDbUtil.closePreparedStatement(bulkPs);
                 EamDbUtil.closeConnection(conn);
@@ -1517,26 +1533,27 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Get all global file instances having a given MD5 hash
+     * Get all reference entries having a given correlation type and value
      *
-     * @param MD5Hash The hash to lookup
+     * @param aType Type to use for matching
+     * @param aValue Value to use for matching
      *
-     * @return List of all global file instances with a given hash
+     * @return List of all global file instances with a type and value
      *
      * @throws EamDbException
      */
     @Override
-    public List<EamGlobalFileInstance> getGlobalFileInstancesByHash(String MD5Hash) throws EamDbException {
+    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(EamArtifact.Type aType, String aValue) throws EamDbException {
         Connection conn = connect();
 
         List<EamGlobalFileInstance> globalFileInstances = new ArrayList<>();
         PreparedStatement preparedStatement1 = null;
         ResultSet resultSet = null;
-        String sql1 = "SELECT * FROM global_files WHERE value=?";
+        String sql1 = "SELECT * FROM %s WHERE value=?";
 
         try {
-            preparedStatement1 = conn.prepareStatement(sql1);
-            preparedStatement1.setString(1, MD5Hash);
+            preparedStatement1 = conn.prepareStatement(String.format(sql1, correlationTypeToReferenceTableName(aType)));
+            preparedStatement1.setString(1, aValue);
             resultSet = preparedStatement1.executeQuery();
             while (resultSet.next()) {
                 globalFileInstances.add(getEamGlobalFileInstanceFromResultSet(resultSet));
@@ -1544,7 +1561,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             return globalFileInstances;
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting global set by id.", ex); // NON-NLS
+            throw new EamDbException("Error getting reference instances by type and value.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement1);
             EamDbUtil.closeResultSet(resultSet);
@@ -1557,30 +1574,63 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @param newType New type to add.
      *
+     * @return ID of this new Correlation Type
      * @throws EamDbException
      */
     @Override
-    public void newCorrelationArtifactType(EamArtifact.Type newType) throws EamDbException {
+    public int newCorrelationType(EamArtifact.Type newType) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-
-        String sql = "INSERT INTO artifact_types(name, supported, enabled) VALUES (?, ?, ?)";
+        PreparedStatement preparedStatementQuery = null;
+        ResultSet resultSet = null;
+        int typeId = 0;
+        String insertSql;
+        String querySql;
+        // if we have a known ID, use it, if not (is -1) let the db assign it.
+        if (-1 == newType.getId()) {
+            insertSql = "INSERT INTO correlation_types(display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?)";
+        } else {
+            insertSql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
+        }
+        querySql = "SELECT id FROM correlation_types WHERE display_name=? AND db_table_name=?";
 
         try {
-            preparedStatement = conn.prepareStatement(sql);
+            preparedStatement = conn.prepareStatement(insertSql);
 
-            preparedStatement.setString(1, newType.getTypeName());
-            preparedStatement.setInt(2, newType.isSupported() ? 1 : 0);
-            preparedStatement.setInt(3, newType.isEnabled() ? 1 : 0);
+            if (-1 == newType.getId()) {
+                preparedStatement.setString(1, newType.getDisplayName());
+                preparedStatement.setString(2, newType.getDbTableName());
+                preparedStatement.setInt(3, newType.isSupported() ? 1 : 0);
+                preparedStatement.setInt(4, newType.isEnabled() ? 1 : 0);
+            } else {
+                preparedStatement.setInt(1, newType.getId());
+                preparedStatement.setString(2, newType.getDisplayName());
+                preparedStatement.setString(3, newType.getDbTableName());
+                preparedStatement.setInt(4, newType.isSupported() ? 1 : 0);
+                preparedStatement.setInt(5, newType.isEnabled() ? 1 : 0);
+            }
 
             preparedStatement.executeUpdate();
+
+            preparedStatementQuery = conn.prepareStatement(querySql);
+            preparedStatementQuery.setString(1, newType.getDisplayName());
+            preparedStatementQuery.setString(2, newType.getDbTableName());
+
+            resultSet = preparedStatementQuery.executeQuery();
+            if (resultSet.next()) {
+                EamArtifact.Type correlationType = getCorrelationTypeFromResultSet(resultSet);
+                typeId = correlationType.getId();
+            }
         } catch (SQLException ex) {
-            throw new EamDbException("Error inserting new correlation artifact type.", ex); // NON-NLS
+            throw new EamDbException("Error inserting new correlation type.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
+            EamDbUtil.closePreparedStatement(preparedStatementQuery);
+            EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
+        return typeId;
     }
 
     /**
@@ -1593,24 +1643,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamArtifact.Type> getCorrelationArtifactTypes() throws EamDbException {
+    public List<EamArtifact.Type> getCorrelationTypes() throws EamDbException {
         Connection conn = connect();
 
         List<EamArtifact.Type> aTypes = new ArrayList<>();
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        String sql = "SELECT * FROM artifact_types";
+        String sql = "SELECT * FROM correlation_types";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                aTypes.add(getCorrelationArtifactTypeFromResultSet(resultSet));
+                aTypes.add(getCorrelationTypeFromResultSet(resultSet));
             }
             return aTypes;
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting all correlation artifact types.", ex); // NON-NLS
+            throw new EamDbException("Error getting all correlation types.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1628,24 +1678,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamArtifact.Type> getEnabledCorrelationArtifactTypes() throws EamDbException {
+    public List<EamArtifact.Type> getEnabledCorrelationTypes() throws EamDbException {
         Connection conn = connect();
 
         List<EamArtifact.Type> aTypes = new ArrayList<>();
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        String sql = "SELECT * FROM artifact_types WHERE enabled=1";
+        String sql = "SELECT * FROM correlation_types WHERE enabled=1";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                aTypes.add(getCorrelationArtifactTypeFromResultSet(resultSet));
+                aTypes.add(getCorrelationTypeFromResultSet(resultSet));
             }
             return aTypes;
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting enabled correlation artifact types.", ex); // NON-NLS
+            throw new EamDbException("Error getting enabled correlation types.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1663,24 +1713,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamArtifact.Type> getSupportedCorrelationArtifactTypes() throws EamDbException {
+    public List<EamArtifact.Type> getSupportedCorrelationTypes() throws EamDbException {
         Connection conn = connect();
 
         List<EamArtifact.Type> aTypes = new ArrayList<>();
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        String sql = "SELECT * FROM artifact_types WHERE supported=1";
+        String sql = "SELECT * FROM correlation_types WHERE supported=1";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-                aTypes.add(getCorrelationArtifactTypeFromResultSet(resultSet));
+                aTypes.add(getCorrelationTypeFromResultSet(resultSet));
             }
             return aTypes;
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting supported correlation artifact types.", ex); // NON-NLS
+            throw new EamDbException("Error getting supported correlation types.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1696,22 +1746,23 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @throws EamDbException
      */
     @Override
-    public void updateCorrelationArtifactType(EamArtifact.Type aType) throws EamDbException {
+    public void updateCorrelationType(EamArtifact.Type aType) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
-        String sql = "UPDATE artifact_types SET name=?, supported=?, enabled=? WHERE id=?";
+        String sql = "UPDATE correlation_types SET display_name=?, db_table_name=?, supported=?, enabled=? WHERE id=?";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, aType.getTypeName());
-            preparedStatement.setInt(2, aType.isSupported() ? 1 : 0);
-            preparedStatement.setInt(3, aType.isEnabled() ? 1 : 0);
-            preparedStatement.setInt(4, aType.getId());
+            preparedStatement.setString(1, aType.getDisplayName());
+            preparedStatement.setString(2, aType.getDbTableName());
+            preparedStatement.setInt(3, aType.isSupported() ? 1 : 0);
+            preparedStatement.setInt(4, aType.isEnabled() ? 1 : 0);
+            preparedStatement.setInt(5, aType.getId());
             preparedStatement.executeUpdate();
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting correlation artifact type by name.", ex); // NON-NLS
+            throw new EamDbException("Error updating correlation type.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
@@ -1720,33 +1771,33 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Get the EamArtifact.Type that has name of typeName.
+     * Get the EamArtifact.Type that has the given Type.Id.
      *
-     * @param typeName Name of Type to get
+     * @param typeId Type.Id of Correlation Type to get
      *
      * @return EamArtifact.Type or null if it doesn't exist.
      *
      * @throws EamDbException
      */
     @Override
-    public EamArtifact.Type getCorrelationArtifactTypeByName(String typeName) throws EamDbException {
+    public EamArtifact.Type getCorrelationTypeById(int typeId) throws EamDbException {
         Connection conn = connect();
 
         EamArtifact.Type aType;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
-        String sql = "SELECT * FROM artifact_types WHERE name=?";
+        String sql = "SELECT * FROM correlation_types WHERE id=?";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, typeName);
+            preparedStatement.setInt(1, typeId);
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
-            aType = getCorrelationArtifactTypeFromResultSet(resultSet);
+            aType = getCorrelationTypeFromResultSet(resultSet);
             return aType;
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting correlation artifact type by name.", ex); // NON-NLS
+            throw new EamDbException("Error getting correlation type by id.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1808,20 +1859,20 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamDataSource;
     }
 
-    private EamArtifact.Type getCorrelationArtifactTypeFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamArtifact.Type getCorrelationTypeFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }
 
         EamArtifact.Type eamArtifactType = new EamArtifact.Type(
                 resultSet.getInt("id"),
-                resultSet.getString("name"),
+                resultSet.getString("display_name"),
+                resultSet.getString("db_table_name"),
                 resultSet.getBoolean("supported"),
                 resultSet.getBoolean("enabled")
         );
 
         return eamArtifactType;
-
     }
 
     /**
@@ -1889,7 +1940,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         EamGlobalFileInstance eamGlobalFileInstance = new EamGlobalFileInstance(
                 resultSet.getInt("id"),
-                resultSet.getInt("global_reference_set_id"),
+                resultSet.getInt("reference_set_id"),
                 resultSet.getString("value"),
                 TskData.FileKnown.valueOf(resultSet.getString("known_status")),
                 resultSet.getString("comment")

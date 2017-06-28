@@ -347,13 +347,13 @@ public interface EamDb {
     List<String> getListCasesHavingArtifactInstancesKnownBad(EamArtifact eamArtifact) throws EamDbException;
 
     /**
-     * Is the artifact globally known as bad?
+     * Is the artifact known as bad according to the reference entries?
      *
      * @param eamArtifact Artifact containing Type and Value
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactGlobalKnownBad(EamArtifact eamArtifact) throws EamDbException;
+    boolean isArtifactlKnownBadByReference(EamArtifact eamArtifact) throws EamDbException;
 
     /**
      * Add a new organization
@@ -393,7 +393,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    int newGlobalSet(EamGlobalSet eamGlobalSet) throws EamDbException;
+    int newReferencelSet(EamGlobalSet eamGlobalSet) throws EamDbException;
 
     /**
      * Get a global set by ID
@@ -404,17 +404,18 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    EamGlobalSet getGlobalSetByID(int globalSetID) throws EamDbException;
+    EamGlobalSet getReferenceSetByID(int globalSetID) throws EamDbException;
 
     /**
-     * Add a new global file instance
+     * Add a new reference instance
      *
-     * @param eamGlobalFileInstance The global file instance to add
+     * @param eamGlobalFileInstance The reference instance to add
+     * @param correlationType Correlation Type that this Reference Instance is
      *
      * @throws EamDbException
      */
-    void addGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException;
-
+    void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, EamArtifact.Type correlationType) throws EamDbException ;
+    
     /**
      * Add a new global file instance to the bulk collection
      *
@@ -429,27 +430,29 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    void bulkInsertGlobalFileInstances() throws EamDbException;
+    void bulkInsertReferenceTypeEntries() throws EamDbException;
 
     /**
-     * Get all global file instances having a given MD5 hash
+     * Get all reference entries having a given correlation type and value
      *
-     * @param MD5Hash The hash to lookup
+     * @param aType Type to use for matching
+     * @param aValue Value to use for matching
      *
-     * @return List of all global file instances with a given hash
+     * @return List of all global file instances with a type and value
      *
      * @throws EamDbException
      */
-    List<EamGlobalFileInstance> getGlobalFileInstancesByHash(String MD5Hash) throws EamDbException;
+    List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(EamArtifact.Type aType, String aValue) throws EamDbException;
 
     /**
      * Add a new EamArtifact.Type to the db.
      *
      * @param newType New type to add.
      *
+     * @return Type.ID for newType
      * @throws EamDbException
      */
-    public void newCorrelationArtifactType(EamArtifact.Type newType) throws EamDbException;
+    public int newCorrelationType(EamArtifact.Type newType) throws EamDbException;
 
     /**
      * Get the list of EamArtifact.Type's that will be used to correlate
@@ -460,7 +463,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<EamArtifact.Type> getCorrelationArtifactTypes() throws EamDbException;
+    public List<EamArtifact.Type> getCorrelationTypes() throws EamDbException;
 
     /**
      * Get the list of enabled EamArtifact.Type's that will be used to correlate
@@ -471,7 +474,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<EamArtifact.Type> getEnabledCorrelationArtifactTypes() throws EamDbException;
+    public List<EamArtifact.Type> getEnabledCorrelationTypes() throws EamDbException;
 
     /**
      * Get the list of supported EamArtifact.Type's that can be used to
@@ -482,7 +485,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public List<EamArtifact.Type> getSupportedCorrelationArtifactTypes() throws EamDbException;
+    public List<EamArtifact.Type> getSupportedCorrelationTypes() throws EamDbException;
 
     /**
      * Update a EamArtifact.Type.
@@ -491,16 +494,16 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    public void updateCorrelationArtifactType(EamArtifact.Type aType) throws EamDbException;
+    public void updateCorrelationType(EamArtifact.Type aType) throws EamDbException;
 
     /**
-     * Get the EamArtifact.Type that has name of typeName.
+     * Get the EamArtifact.Type that has the given Type.Id.
      *
-     * @param typeName Name of Type to get
+     * @param typeId Type.Id of Correlation Type to get
      *
      * @return EamArtifact.Type or null if it doesn't exist.
      *
      * @throws EamDbException
      */
-    public EamArtifact.Type getCorrelationArtifactTypeByName(String typeName) throws EamDbException;
+    public EamArtifact.Type getCorrelationTypeById(int typeId) throws EamDbException;
 }

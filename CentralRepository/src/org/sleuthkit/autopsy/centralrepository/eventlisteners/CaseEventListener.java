@@ -102,7 +102,7 @@ public class CaseEventListener implements PropertyChangeListener {
 
                     EamArtifact eamArtifact;
                     try {
-                        EamArtifact.Type filesType = dbManager.getCorrelationArtifactTypeByName("FILES");
+                        EamArtifact.Type filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
                         eamArtifact = new EamArtifact(filesType, af.getMd5Hash());
                         EamArtifactInstance cei = new EamArtifactInstance(
                                 new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
@@ -119,7 +119,7 @@ public class CaseEventListener implements PropertyChangeListener {
                         Thread t = new Thread(r);
                         t.start();
                     } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error, unable to get FILES artifact type during CONTENT_TAG_ADDED event.", ex);
+                        LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type during CONTENT_TAG_ADDED event.", ex);
                     }
                 }
             } // CONTENT_TAG_ADDED
@@ -142,7 +142,7 @@ public class CaseEventListener implements PropertyChangeListener {
 
                 if (dbManager.getBadTags().contains(tagName.getDisplayName())) {
                     try {
-                        EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationArtifactTypes(), true);
+                        EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
                         if (null != eamArtifact) {
                             eamArtifact.getInstances().get(0).setComment(bbTagAdded.getComment());
                             Runnable r = new BadFileTagRunner(eamArtifact);

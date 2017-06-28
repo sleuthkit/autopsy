@@ -44,7 +44,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
 
     private static final Logger LOGGER = Logger.getLogger(ManageCorrelationPropertiesDialog.class.getName());
 
-    private final List<EamArtifact.Type> eamArtifactTypes;
+    private final List<EamArtifact.Type> correlationTypes;
 
     /**
      * Displays a dialog that allows a user to select which Type(s) should be
@@ -55,7 +55,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ManageCorrelationPropertiesDialog_title(),
                 true); // NON-NLS
-        this.eamArtifactTypes = new ArrayList<>();
+        this.correlationTypes = new ArrayList<>();
         initComponents();
         customizeComponents();
         display();
@@ -72,24 +72,24 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
         DefaultTableModel model = (DefaultTableModel) tbCorrelatableTypes.getModel();
         try {
             EamDb dbManager = EamDb.getInstance();
-            eamArtifactTypes.clear();
-            eamArtifactTypes.addAll(dbManager.getCorrelationArtifactTypes());
+            correlationTypes.clear();
+            correlationTypes.addAll(dbManager.getCorrelationTypes());
         } catch (EamDbException ex) {
             Exceptions.printStackTrace(ex);
         }
 
-        eamArtifactTypes.forEach((aType) -> {
-            model.addRow(new Object[]{aType.getTypeName(), aType.isEnabled()});
+        correlationTypes.forEach((aType) -> {
+            model.addRow(new Object[]{aType.getDisplayName(), aType.isEnabled()});
         });
         model.addTableModelListener(new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent evt) {
                 int row = evt.getFirstRow();
                 TableModel model = (TableModel) evt.getSource();
-                Object typeName = model.getValueAt(row, 0);
+                Object displayName = model.getValueAt(row, 0);
                 Boolean enabled = (Boolean) model.getValueAt(row, 1);
 
-                eamArtifactTypes.stream().filter((aType) -> (aType.getTypeName().equals(typeName))).forEachOrdered((aType) -> {
+                correlationTypes.stream().filter((aType) -> (aType.getDisplayName().equals(displayName))).forEachOrdered((aType) -> {
                     aType.setEnabled(enabled);
                 });
                 valid();
@@ -108,7 +108,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
         lbWarningMsg.setText("");
 
         int countEnabled = 0;
-        countEnabled = eamArtifactTypes.stream().filter((aType) -> (aType.isEnabled())).map((_item) -> 1).reduce(countEnabled, Integer::sum);
+        countEnabled = correlationTypes.stream().filter((aType) -> (aType.isEnabled())).map((_item) -> 1).reduce(countEnabled, Integer::sum);
 
         if (0 == countEnabled) {
             lbWarningMsg.setText(Bundle.ManageCorrelationPropertiesDialog_noneSelected());
@@ -242,13 +242,13 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
     @Messages({"ManageCorrelationPropertiesDialog.okbutton.failure=Error saving updated selections."})
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
 
-        if (0 == eamArtifactTypes.size()) {
+        if (0 == correlationTypes.size()) {
             dispose();
         } else {
             EamDb dbManager = EamDb.getInstance();
-            eamArtifactTypes.forEach((aType) -> {
+            correlationTypes.forEach((aType) -> {
                 try {
-                    dbManager.updateCorrelationArtifactType(aType);
+                    dbManager.updateCorrelationType(aType);
                     dispose();
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Failed to update correlation properties with selections from dialog.", ex); // NON-NLS

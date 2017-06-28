@@ -33,8 +33,8 @@ public class EamArtifact implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String ID;
-    private String artifactValue;
-    private Type artifactType;
+    private String correlationValue;
+    private Type correlationType;
     private final List<EamArtifactInstance> artifactInstances;
 
     // Type ID's for Default Correlation Types
@@ -54,33 +54,33 @@ public class EamArtifact implements Serializable {
         "CorrelationType.USBID.displayName=USB Devices"})
     public static List<EamArtifact.Type> getCorrelationTypes() {
         List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file_instances", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain_instances", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address_instances", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number_instances", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices_instances", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, false)); // NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
 
-    public EamArtifact(Type artifactType, String artifactValue) {
+    public EamArtifact(Type correlationType, String correlationValue) {
         this.ID = "";
-        this.artifactType = artifactType;
-        this.artifactValue = artifactValue;
+        this.correlationType = correlationType;
+        this.correlationValue = correlationValue;
         this.artifactInstances = new ArrayList<>();
     }
 
     public Boolean equals(EamArtifact otherArtifact) {
         return ((this.getID().equals(otherArtifact.getID()))
-                && (this.getArtifactType().equals(otherArtifact.getArtifactType()))
-                && (this.getArtifactValue().equals(otherArtifact.getArtifactValue()))
+                && (this.getCorrelationType().equals(otherArtifact.getCorrelationType()))
+                && (this.getCorrelationValue().equals(otherArtifact.getCorrelationValue()))
                 && (this.getInstances().equals(otherArtifact.getInstances())));
     }
 
     @Override
     public String toString() {
         String result = this.getID()
-                + this.getArtifactType().toString()
-                + this.getArtifactValue();
+                + this.getCorrelationType().toString()
+                + this.getCorrelationValue();
         result = this.getInstances().stream().map((inst) -> inst.toString()).reduce(result, String::concat);
         return result;
     }
@@ -100,31 +100,31 @@ public class EamArtifact implements Serializable {
     }
 
     /**
-     * @return the artifactValue
+     * @return the correlationValue
      */
-    public String getArtifactValue() {
-        return artifactValue;
+    public String getCorrelationValue() {
+        return correlationValue;
     }
 
     /**
-     * @param artifactValue the artifactValue to set
+     * @param correlationValue the correlationValue to set
      */
-    public void setArtifactValue(String artifactValue) {
-        this.artifactValue = artifactValue;
+    public void setCorrelationValue(String correlationValue) {
+        this.correlationValue = correlationValue;
     }
 
     /**
-     * @return the artifact Type
+     * @return the correlation Type
      */
-    public Type getArtifactType() {
-        return artifactType;
+    public Type getCorrelationType() {
+        return correlationType;
     }
 
     /**
-     * @param artifactType the artifact Type to set
+     * @param correlationType the correlation Type to set
      */
-    public void setArtifactType(Type artifactType) {
-        this.artifactType = artifactType;
+    public void setCorrelationType(Type correlationType) {
+        this.correlationType = correlationType;
     }
 
     /**
@@ -308,6 +308,18 @@ public class EamArtifact implements Serializable {
         }
 
         /**
+         * To support having different database tables for each Type,
+         * this field provides the prefix/suffix of the table name,
+         * which allows us to automatically compute the table names
+         * and indicies.
+         * 
+         * It is the prefix for the instances tables *_instances.
+         * It is the suffix for the reference tables reference_*.
+         * 
+         * When custom Types are added in the future, they are already supported
+         * by just giving the desired value for the table name for each custom
+         * Type. Possibly having all custom Types use a common table name.
+         * 
          * @return the dbTableName
          */
         public String getDbTableName() {
