@@ -33,6 +33,8 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDb.class.getName());
 
+    private final static String CONFLICT_CLAUSE = "ON CONFLICT DO NOTHING";
+
     private static PostgresEamDb instance;
 
     private static final int CONN_POOL_SIZE = 10;
@@ -160,6 +162,11 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting connection from connection pool.", ex); // NON-NLS
         }
+    }
+
+    @Override
+    protected String getConflictClause() {
+        return CONFLICT_CLAUSE;
     }
 
     @Override

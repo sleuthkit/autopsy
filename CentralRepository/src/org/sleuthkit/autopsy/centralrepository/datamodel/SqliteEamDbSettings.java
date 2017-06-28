@@ -256,8 +256,8 @@ public final class SqliteEamDbSettings {
         createCasesTable.append("examiner_email text NOT NULL,");
         createCasesTable.append("examiner_phone text NOT NULL,");
         createCasesTable.append("notes text NOT NULL,");
-        createCasesTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null,");
-        createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE(case_uid)");
+        createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE(case_uid) ON CONFLICT IGNORE,");
+        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createCasesTable.append(")");
 
         // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
@@ -281,7 +281,7 @@ public final class SqliteEamDbSettings {
         createGlobalReferenceSetsTable.append("set_name text NOT NULL,");
         createGlobalReferenceSetsTable.append("version text NOT NULL,");
         createGlobalReferenceSetsTable.append("import_date text NOT NULL,");
-        createGlobalReferenceSetsTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
+        createGlobalReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createGlobalReferenceSetsTable.append(")");
 
         String globalReferenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS global_reference_sets_org_id ON global_reference_sets (org_id)";
@@ -293,8 +293,8 @@ public final class SqliteEamDbSettings {
         createGlobalFilesTable.append("value text NOT NULL,");
         createGlobalFilesTable.append("known_status text NOT NULL,");
         createGlobalFilesTable.append("comment text NOT NULL,");
-        createGlobalFilesTable.append("CONSTRAINT global_files_multi_unique UNIQUE(global_reference_set_id, value)");
-        createGlobalFilesTable.append("foreign key (global_reference_set_id) references global_reference_sets(id) on update set null on delete set null");
+        createGlobalFilesTable.append("CONSTRAINT global_files_multi_unique UNIQUE(global_reference_set_id, value) ON CONFLICT IGNORE,");
+        createGlobalFilesTable.append("foreign key (global_reference_set_id) references global_reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createGlobalFilesTable.append(")");
 
         String globalFilesIdx1 = "CREATE INDEX IF NOT EXISTS global_files_value ON global_files (value)";
