@@ -66,11 +66,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
         bulkArtifacts = new HashMap<>();
         bulkGlobalArtifacts = new HashMap<>();
 
-        DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
+        DEFAULT_ARTIFACT_TYPES = EamArtifact.getCorrelationTypes();
 
         for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-            bulkArtifacts.put(type.getName(), new ArrayList<>());
-            bulkGlobalArtifacts.put(type.getName(), new ArrayList<>());
+            bulkArtifacts.put(type.getTypeName(), new ArrayList<>());
+            bulkGlobalArtifacts.put(type.getTypeName(), new ArrayList<>());
         }
     }
 
@@ -505,7 +505,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     private String artifactTypeToTableName(EamArtifact.Type type) {
-        return type.getName() + "_instances";
+        return type.getTypeName() + "_instances";
     }
 
     /**
@@ -773,7 +773,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         for (EamArtifact.Type type : artifactTypes) {
             // TODO: when/if custom types are allowed, make this more safe.
-            String table_name = type.getName() + "_instances";
+            String table_name = type.getTypeName() + "_instances";
 
             sql.append("+ (SELECT count(*) FROM (SELECT DISTINCT case_id, data_source_id FROM ");
             sql.append(table_name);
@@ -825,7 +825,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append("SELECT 0 ");
 
         for (EamArtifact.Type type : artifactTypes) {
-            String table_name = type.getName() + "_instances";
+            String table_name = type.getTypeName() + "_instances";
 
             sql.append("+ (SELECT count(*) FROM ");
             sql.append(table_name);
@@ -865,7 +865,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     public void prepareBulkArtifact(EamArtifact eamArtifact) throws EamDbException {
 
         synchronized (bulkArtifacts) {
-            bulkArtifacts.get(eamArtifact.getArtifactType().getName()).add(eamArtifact);
+            bulkArtifacts.get(eamArtifact.getArtifactType().getTypeName()).add(eamArtifact);
             bulkArtifactsCount++;
 
             if (bulkArtifactsCount >= bulkArtifactsThreshold) {
@@ -903,7 +903,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                     bulkPs = conn.prepareStatement(sql.toString());
 
-                    Collection<EamArtifact> eamArtifacts = bulkArtifacts.get(type.getName());
+                    Collection<EamArtifact> eamArtifacts = bulkArtifacts.get(type.getTypeName());
                     for (EamArtifact eamArtifact : eamArtifacts) {
                         List<EamArtifactInstance> eamInstances = eamArtifact.getInstances();
 
@@ -919,7 +919,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     }
 
                     bulkPs.executeBatch();
-                    bulkArtifacts.get(type.getName()).clear();
+                    bulkArtifacts.get(type.getTypeName()).clear();
                 }
 
                 // Reset state
@@ -1480,7 +1480,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                     bulkPs = conn.prepareStatement(sql);
 
-                    Collection<EamGlobalFileInstance> eamGlobalFileInstances = bulkGlobalArtifacts.get(type.getName());
+                    Collection<EamGlobalFileInstance> eamGlobalFileInstances = bulkGlobalArtifacts.get(type.getTypeName());
                     for (EamGlobalFileInstance eamGlobalFileInstance : eamGlobalFileInstances) {
 
                         bulkPs.setInt(1, eamGlobalFileInstance.getGlobalSetID());
@@ -1491,7 +1491,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     }
 
                     bulkPs.executeBatch();
-                    bulkGlobalArtifacts.get(type.getName()).clear();
+                    bulkGlobalArtifacts.get(type.getTypeName()).clear();
                 }
 
                 // Reset state
@@ -1556,7 +1556,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql);
 
-            preparedStatement.setString(1, newType.getName());
+            preparedStatement.setString(1, newType.getTypeName());
             preparedStatement.setInt(2, newType.isSupported() ? 1 : 0);
             preparedStatement.setInt(3, newType.isEnabled() ? 1 : 0);
 
@@ -1686,7 +1686,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedStatement = conn.prepareStatement(sql);
-            preparedStatement.setString(1, aType.getName());
+            preparedStatement.setString(1, aType.getTypeName());
             preparedStatement.setInt(2, aType.isSupported() ? 1 : 0);
             preparedStatement.setInt(3, aType.isEnabled() ? 1 : 0);
             preparedStatement.setInt(4, aType.getId());

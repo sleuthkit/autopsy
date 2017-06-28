@@ -99,7 +99,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
             String instancesTemplate = "DELETE FROM %s_instances";
             for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                dropContent.executeUpdate(String.format(instancesTemplate, type.getName().toLowerCase()));
+                dropContent.executeUpdate(String.format(instancesTemplate, type.getTypeName().toLowerCase()));
             }
 
             dropContent.executeUpdate("VACUUM");

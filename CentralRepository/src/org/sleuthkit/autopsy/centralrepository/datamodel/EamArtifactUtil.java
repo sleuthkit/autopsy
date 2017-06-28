@@ -114,7 +114,7 @@ public class EamArtifactUtil {
         int artifactTypeID = bbArtifact.getArtifactTypeID();
 
         try {
-            if (aType.getName().equals("EMAIL")
+            if (aType.getTypeName().equals("EMAIL")
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
 
                 BlackboardAttribute setNameAttr = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
@@ -122,7 +122,7 @@ public class EamArtifactUtil {
                         && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD)).getValueString();
                 }
-            } else if (aType.getName().equals("DOMAIN")
+            } else if (aType.getTypeName().equals("DOMAIN")
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifactTypeID
@@ -130,7 +130,7 @@ public class EamArtifactUtil {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString();
 
-            } else if (aType.getName().equals("PHONE")
+            } else if (aType.getTypeName().equals("PHONE")
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifactTypeID)) {
@@ -143,7 +143,7 @@ public class EamArtifactUtil {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
                 }
 
-            } else if (aType.getName().equals("USBID")
+            } else if (aType.getTypeName().equals("USBID")
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();

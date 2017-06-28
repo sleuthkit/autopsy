@@ -362,19 +362,19 @@ public final class PostgresEamDbSettings {
         String globalFilesIdx2 = "CREATE INDEX IF NOT EXISTS global_files_value_known_status ON global_files (value, known_status)";
 
         StringBuilder createArtifactTypesTable = new StringBuilder();
-        createArtifactTypesTable.append("CREATE TABLE IF NOT EXISTS artifact_types (");
+        createArtifactTypesTable.append("CREATE TABLE IF NOT EXISTS correlation_types (");
         createArtifactTypesTable.append("id SERIAL PRIMARY KEY,");
-        createArtifactTypesTable.append("name text NOT NULL,");
+        createArtifactTypesTable.append("display_name text NOT NULL,");
+        createArtifactTypesTable.append("db_table_name text NOT NULL,");
         createArtifactTypesTable.append("supported integer NOT NULL,");
         createArtifactTypesTable.append("enabled integer NOT NULL,");
-        createArtifactTypesTable.append("CONSTRAINT artifact_type_name_unique UNIQUE (name)");
         createArtifactTypesTable.append(")");
 
         // NOTE: there are API methods that query by one of: name, supported, or enabled.
         // Only name is currently implemented, but, there will only be a small number
         // of artifact_types, so there is no benefit to having any indices.
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
-        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s_instances (");
+        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
         createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
         createArtifactInstancesTableTemplate.append("case_id integer,");
         createArtifactInstancesTableTemplate.append("data_source_id integer,");
@@ -382,16 +382,16 @@ public final class PostgresEamDbSettings {
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_instances_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) on update set null on delete set null,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) on update set null on delete set null");
         createArtifactInstancesTableTemplate.append(")");
 
         // TODO: do we need any more indices?
-        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_instances_case_id ON %s_instances (case_id)";
-        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_instances_data_source_id ON %s_instances (data_source_id)";
-        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_instances_value ON %s_instances (value)";
-        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_instances_value_known_status ON %s_instances (value, known_status)";
+        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
+        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
+        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
 
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
@@ -432,10 +432,10 @@ public final class PostgresEamDbSettings {
             stmt.execute(createDbInfoTable.toString());
 
             // Create a separate table for each artifact type
-            List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
+            List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getCorrelationTypes();
             String type_name;
             for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                type_name = type.getName();
+                type_name = type.getDbTableName();
                 stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), type_name, type_name));
                 stmt.execute(String.format(instancesIdx1, type_name, type_name));
                 stmt.execute(String.format(instancesIdx2, type_name, type_name));

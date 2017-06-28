@@ -96,7 +96,7 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
             String instancesTemplate = "TRUNCATE TABLE %s_instances RESTART IDENTITY CASCADE";
             for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                dropContent.executeUpdate(String.format(instancesTemplate, type.getName().toLowerCase()));
+                dropContent.executeUpdate(String.format(instancesTemplate, type.getTypeName().toLowerCase()));
             }
 
         } catch (SQLException ex) {

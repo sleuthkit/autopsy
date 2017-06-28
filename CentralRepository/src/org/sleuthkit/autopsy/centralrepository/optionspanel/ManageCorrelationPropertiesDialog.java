@@ -79,7 +79,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
         }
 
         eamArtifactTypes.forEach((aType) -> {
-            model.addRow(new Object[]{aType.getName(), aType.isEnabled()});
+            model.addRow(new Object[]{aType.getTypeName(), aType.isEnabled()});
         });
         model.addTableModelListener(new TableModelListener() {
             @Override
@@ -89,7 +89,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
                 Object typeName = model.getValueAt(row, 0);
                 Boolean enabled = (Boolean) model.getValueAt(row, 1);
 
-                eamArtifactTypes.stream().filter((aType) -> (aType.getName().equals(typeName))).forEachOrdered((aType) -> {
+                eamArtifactTypes.stream().filter((aType) -> (aType.getTypeName().equals(typeName))).forEachOrdered((aType) -> {
                     aType.setEnabled(enabled);
                 });
                 valid();

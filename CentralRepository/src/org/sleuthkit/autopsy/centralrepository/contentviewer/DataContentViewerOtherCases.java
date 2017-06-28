@@ -136,7 +136,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 for (EamArtifact eamArtifact : correlatedArtifacts) {
                     percentage = dbManager.getCommonalityPercentageForTypeValue(eamArtifact);
                     msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
-                            eamArtifact.getArtifactType().getName(),
+                            eamArtifact.getArtifactType().getTypeName(),
                             eamArtifact.getArtifactValue()));
                 }
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
@@ -393,7 +393,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             String md5 = abstractFile.getMd5Hash();
             if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
                 for (EamArtifact.Type aType : artifactTypes) {
-                    if (aType.getName().equals("FILES")) {
+                    if (aType.getTypeName().equals("FILES")) {
                         ret.add(new EamArtifact(aType, md5));
                         break;
                     }

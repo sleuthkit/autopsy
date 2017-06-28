@@ -81,13 +81,13 @@ public class EamDbUtil {
      */
     public static boolean insertDefaultArtifactTypes(Connection conn) {
         PreparedStatement preparedStatement = null;
-        List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
+        List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getCorrelationTypes();
         String sql = "INSERT INTO artifact_types(name, supported, enabled) VALUES (?, ?, ?)";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
             for (EamArtifact.Type newType : DEFAULT_ARTIFACT_TYPES) {
-                preparedStatement.setString(1, newType.getName());
+                preparedStatement.setString(1, newType.getTypeName());
                 preparedStatement.setInt(2, newType.isSupported() ? 1 : 0);
                 preparedStatement.setInt(3, newType.isEnabled() ? 1 : 0);
                 preparedStatement.addBatch();
