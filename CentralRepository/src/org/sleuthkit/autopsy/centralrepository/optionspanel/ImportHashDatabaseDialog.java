@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalSet;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -509,11 +510,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         }
         
         // insert hashes
-        EamArtifactInstance.KnownStatus knownStatus = EamArtifactInstance.KnownStatus.UNKNOWN;
+        TskData.FileKnown knownStatus = TskData.FileKnown.UNKNOWN;
         if (knownRadioButton.isSelected()) {
-            knownStatus = EamArtifactInstance.KnownStatus.KNOWN;
+            knownStatus = TskData.FileKnown.KNOWN;
         } else if (knownBadRadioButton.isSelected()) {
-            knownStatus = EamArtifactInstance.KnownStatus.BAD;
+            knownStatus = TskData.FileKnown.BAD;
         }
 
         String errorMessage = NbBundle.getMessage(this.getClass(),
@@ -562,10 +563,10 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private class ImportHashDatabaseWorker extends SwingWorker<Object, Void> {
 
         private final File file;
-        private final EamArtifactInstance.KnownStatus knownStatus;
+        private final TskData.FileKnown knownStatus;
         private final int globalSetID;
 
-        public ImportHashDatabaseWorker(String filename, EamArtifactInstance.KnownStatus knownStatus, int globalSetID) throws EamDbException, UnknownHostException {
+        public ImportHashDatabaseWorker(String filename, TskData.FileKnown knownStatus, int globalSetID) throws EamDbException, UnknownHostException {
             this.file = new File(filename);
             this.knownStatus = knownStatus;
             this.globalSetID = globalSetID;

@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  *
@@ -1034,13 +1035,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 int instance_id = resultSet.getInt("id");
                 preparedUpdate = conn.prepareStatement(sqlUpdate.toString());
 
-                preparedUpdate.setString(1, EamArtifactInstance.KnownStatus.BAD.name());
+                preparedUpdate.setString(1, TskData.FileKnown.BAD.name());
                 preparedUpdate.setString(2, eamInstance.getComment());
                 preparedUpdate.setInt(3, instance_id);
 
                 preparedUpdate.executeUpdate();
             } else {
-                eamArtifact.getInstances().get(0).setKnownStatus(EamArtifactInstance.KnownStatus.BAD);
+                eamArtifact.getInstances().get(0).setKnownStatus(TskData.FileKnown.BAD);
                 addArtifact(eamArtifact);
             }
 
@@ -1086,7 +1087,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, eamArtifact.getArtifactValue());
-            preparedStatement.setString(2, EamArtifactInstance.KnownStatus.BAD.name());
+            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
@@ -1127,7 +1128,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, eamArtifact.getArtifactValue());
-            preparedStatement.setString(2, EamArtifactInstance.KnownStatus.BAD.name());
+            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
@@ -1177,7 +1178,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, eamArtifact.getArtifactValue());
-            preparedStatement.setString(2, EamArtifactInstance.KnownStatus.BAD.name());
+            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 caseNames.add(resultSet.getString("case_name"));
@@ -1218,7 +1219,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, eamArtifact.getArtifactValue());
-            preparedStatement.setString(2, EamArtifactInstance.KnownStatus.BAD.name());
+            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
@@ -1824,7 +1825,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 new EamDataSource(resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
-                EamArtifactInstance.KnownStatus.valueOf(resultSet.getString("known_status")),
+                TskData.FileKnown.valueOf(resultSet.getString("known_status")),
                 EamArtifactInstance.GlobalStatus.LOCAL
         );
 
@@ -1872,7 +1873,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("id"),
                 resultSet.getInt("global_reference_set_id"),
                 resultSet.getString("value"),
-                EamArtifactInstance.KnownStatus.valueOf(resultSet.getString("known_status")),
+                TskData.FileKnown.valueOf(resultSet.getString("known_status")),
                 resultSet.getString("comment")
         );
 
