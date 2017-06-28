@@ -52,7 +52,7 @@ public class EamArtifact implements Serializable {
         "CorrelationType.EMAIL.displayName=Email Addresses",
         "CorrelationType.PHONE.displayName=Phone Numbers",
         "CorrelationType.USBID.displayName=USB Devices"})
-    public static List<EamArtifact.Type> getCorrelationTypes() {
+    public static List<EamArtifact.Type> getDefaultCorrelationTypes() {
         List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, false)); // NON-NLS

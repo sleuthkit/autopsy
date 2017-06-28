@@ -427,7 +427,7 @@ public final class PostgresEamDbSettings {
             stmt.execute(createDbInfoTable.toString());
 
             // Create a separate table for each artifact type
-            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getCorrelationTypes();
+            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
             String type_name;
             for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
                 type_name = type.getDbTableName();
