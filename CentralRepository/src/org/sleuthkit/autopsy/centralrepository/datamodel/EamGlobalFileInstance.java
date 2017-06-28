@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance.KnownStatus;
+import org.sleuthkit.datamodel.TskData;
+
 
 /**
  * Global file hash instance
@@ -28,14 +29,14 @@ public class EamGlobalFileInstance {
     private int instanceID;
     private int globalSetID;
     private String MD5Hash;
-    private KnownStatus knownStatus;
+    private TskData.FileKnown knownStatus;
     private String comment;
 
     public EamGlobalFileInstance(
             int instanceID,
             int globalSetID,
             String MD5Hash,
-            KnownStatus knownStatus,
+            TskData.FileKnown knownStatus,
             String comment) {
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
@@ -47,7 +48,7 @@ public class EamGlobalFileInstance {
     public EamGlobalFileInstance(
             int globalSetID,
             String MD5Hash,
-            KnownStatus knownStatus,
+            TskData.FileKnown knownStatus,
             String comment) {
         this(-1, globalSetID, MD5Hash, knownStatus, comment);
     }
@@ -97,14 +98,14 @@ public class EamGlobalFileInstance {
     /**
      * @return the knownStatus
      */
-    public KnownStatus getKnownStatus() {
+    public TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 
     /**
      * @param knownStatus the knownStatus to set
      */
-    public void setKnownStatus(KnownStatus knownStatus) {
+    public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
     }
 

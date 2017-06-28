@@ -36,8 +36,7 @@ import org.sleuthkit.autopsy.coreutils.TextConverter;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
- * Settings for the Postgres implementation of the Central Repository
- * database
+ * Settings for the Postgres implementation of the Central Repository database
  */
 public final class PostgresEamDbSettings {
 
@@ -148,8 +147,8 @@ public final class PostgresEamDbSettings {
      * Get the full connection URL as a String
      *
      * @param usePostgresDb Connect to the 'postgres' database when testing
-     * connectivity and creating the main database.
-     * 
+     *                      connectivity and creating the main database.
+     *
      * @return
      */
     public String getConnectionURL(boolean usePostgresDb) {
@@ -167,8 +166,9 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * Use the current settings to get an ephemeral client connection for testing.
-     * 
+     * Use the current settings to get an ephemeral client connection for
+     * testing.
+     *
      * @return Connection or null.
      */
     private Connection getEphemeralConnection(boolean usePostgresDb) {
@@ -191,9 +191,9 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * Use the current settings and the validation query 
-     * to test the connection to the database.
-     * 
+     * Use the current settings and the validation query to test the connection
+     * to the database.
+     *
      * @return true if successfull connection, else false.
      */
     public boolean verifyConnection() {
@@ -201,7 +201,7 @@ public final class PostgresEamDbSettings {
         if (null == conn) {
             return false;
         }
-        
+
         boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
         EamDbUtil.closeConnection(conn);
         return result;
@@ -209,7 +209,7 @@ public final class PostgresEamDbSettings {
 
     /**
      * Check to see if the database exists.
-     * 
+     *
      * @return true if exists, else false
      */
     public boolean verifyDatabaseExists() {
@@ -238,11 +238,11 @@ public final class PostgresEamDbSettings {
         }
         return false;
     }
-    
+
     /**
-     * Use the current settings and the schema version query 
-     * to test the database schema.
-     * 
+     * Use the current settings and the schema version query to test the
+     * database schema.
+     *
      * @return true if successfull connection, else false.
      */
     public boolean verifyDatabaseSchema() {
@@ -275,8 +275,9 @@ public final class PostgresEamDbSettings {
             EamDbUtil.closeConnection(conn);
         }
         return true;
-        
+
     }
+
     /**
      * Initialize the database schema.
      *
@@ -305,7 +306,6 @@ public final class PostgresEamDbSettings {
 
         // NOTE: The organizations will only have a small number of rows, so
         // an index is probably not worthwhile.
-
         StringBuilder createCasesTable = new StringBuilder();
         createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
         createCasesTable.append("id SERIAL PRIMARY KEY,");
@@ -402,7 +402,6 @@ public final class PostgresEamDbSettings {
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
-
         Connection conn = null;
         try {
             conn = getEphemeralConnection(false);
@@ -514,9 +513,9 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * To prevent issues where one command can honor case and another cannot,
-     * we will force the dbname to lower case.
-     * 
+     * To prevent issues where one command can honor case and another cannot, we
+     * will force the dbname to lower case.
+     *
      * @return the dbName
      */
     public String getDbName() {
