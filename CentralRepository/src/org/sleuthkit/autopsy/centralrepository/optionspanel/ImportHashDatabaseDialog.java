@@ -480,7 +480,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             tfDatabaseName.getText().trim(),
             tfDatabaseVersion.getText().trim(),
             LocalDate.now());
-        return dbManager.newGlobalSet(eamGlobalSet);
+        return dbManager.newReferencelSet(eamGlobalSet);
     }
     
     @Messages({"ImportHashDatabaseDialog.createGlobalSet.failedMsg.text=Failed to store attribution details.",
@@ -525,7 +525,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
 
         String errorMessage = Bundle.ImportHashDatabaseDialog_errorMessage_failedToOpenHashDbMsg(selectedFilePath);
         // Future, make UI handle more than the "FILES" type.
-        EamArtifact.Type contentType = EamArtifact.getDefaultArtifactTypes().get(0); // get "FILES" type
+        EamArtifact.Type contentType = EamArtifact.getDefaultCorrelationTypes().get(0); // get "FILES" type
         try {
             // run in the background and close dialog
             SwingUtilities.invokeLater(new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID, contentType)::execute);
@@ -643,7 +643,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                 }
             }
 
-            dbManager.bulkInsertGlobalFileInstances(globalInstances, contentType);
+            dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
         }
     }
 

@@ -151,10 +151,10 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
                 value = eamArtifactInstance.getFilePath();
                 break;
             case TYPE:
-                value = eamArtifact.getArtifactType().getName();
+                value = eamArtifact.getCorrelationType().getDisplayName();
                 break;
             case VALUE:
-                value = eamArtifact.getArtifactValue();
+                value = eamArtifact.getCorrelationValue();
                 break;
             case SCOPE:
                 value = eamArtifactInstance.getGlobalStatus().toString();

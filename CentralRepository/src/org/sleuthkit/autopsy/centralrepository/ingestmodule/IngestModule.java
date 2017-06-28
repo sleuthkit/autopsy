@@ -121,7 +121,7 @@ class IngestModule implements FileIngestModule {
 
         // Make a TSK_HASHSET_HIT blackboard artifact for global known bad files
         try {
-            if (dbManager.isArtifactGlobalKnownBad(eamArtifact)) {
+            if (dbManager.isArtifactlKnownBadByReference(eamArtifact)) {
                 postCorrelatedHashHitToBlackboard(af);
             }
         } catch (EamDbException ex) {
@@ -213,7 +213,7 @@ class IngestModule implements FileIngestModule {
 
         EamDb dbManager = EamDb.getInstance();
         try {
-            filesType = dbManager.getCorrelationArtifactTypeByName("FILES");
+            filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in startUp.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in startUp.", ex); // NON-NLS

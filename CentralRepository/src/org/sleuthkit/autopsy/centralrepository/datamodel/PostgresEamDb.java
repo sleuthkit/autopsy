@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -91,18 +92,21 @@ public class PostgresEamDb extends AbstractSqlEamDb {
             dropContent.executeUpdate("TRUNCATE TABLE organizations RESTART IDENTITY CASCADE");
             dropContent.executeUpdate("TRUNCATE TABLE cases RESTART IDENTITY CASCADE");
             dropContent.executeUpdate("TRUNCATE TABLE data_sources RESTART IDENTITY CASCADE");
-            dropContent.executeUpdate("TRUNCATE TABLE global_reference_sets RESTART IDENTITY CASCADE");
-            dropContent.executeUpdate("TRUNCATE TABLE global_files RESTART IDENTITY CASCADE");
-            dropContent.executeUpdate("TRUNCATE TABLE artifact_types RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE reference_sets RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE correlation_types RESTART IDENTITY CASCADE");
             dropContent.executeUpdate("TRUNCATE TABLE db_info RESTART IDENTITY CASCADE");
 
             String instancesTemplate = "TRUNCATE TABLE %s_instances RESTART IDENTITY CASCADE";
-            for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                dropContent.executeUpdate(String.format(instancesTemplate, type.getName().toLowerCase()));
+            String referencesTemplate = "TRUNCATE TABLE reference_%s RESTART IDENTITY CASCADE";
+            for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+                dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
+                // FUTURE: support other reference types
+                if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                    dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
+                }
             }
-
         } catch (SQLException ex) {
-            //LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
+            LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
         } finally {
             EamDbUtil.closeConnection(conn);
         }
