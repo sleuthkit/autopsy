@@ -49,8 +49,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Ingest module for inserting entries into the Central Repository
- * database on ingest of a data source
+ * Ingest module for inserting entries into the Central Repository database on
+ * ingest of a data source
  */
 @Messages({"IngestModule.prevcases.text=Previous Cases"})
 class IngestModule implements FileIngestModule {
@@ -83,7 +83,8 @@ class IngestModule implements FileIngestModule {
                 || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
                 || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
                 || (af.getKnown() == TskData.FileKnown.KNOWN)
-                || (af.isDir() == true)) {
+                || (af.isDir() == true)
+                || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
             return ProcessResult.OK;
         }
 
@@ -158,7 +159,7 @@ class IngestModule implements FileIngestModule {
              */
             return;
         }
-        
+
         EamDb dbManager = EamDb.getInstance();
         try {
             dbManager.bulkInsertArtifacts();
