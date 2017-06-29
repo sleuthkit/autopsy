@@ -155,6 +155,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     @Messages({"DataContentViewerOtherCases.caseDetailsDialog.notSelected=No Row Selected",
         "DataContentViewerOtherCases.caseDetailsDialog.noDetails=No details for this case.",
+        "DataContentViewerOtherCases.caseDetailsDialog.noDetailsReference=No case details for Global reference properties.",
         "DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error"})
     private void showCaseDetails(int selectedRowViewIdx) {
         String caseDisplayName = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noCaseNameError();
@@ -164,6 +165,13 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 int selectedRowModelIdx = otherCasesTable.convertRowIndexToModel(selectedRowViewIdx);
                 EamArtifact eamArtifact = (EamArtifact) tableModel.getRow(selectedRowModelIdx);
                 EamCase eamCasePartial = eamArtifact.getInstances().get(0).getEamCase();
+                if (eamCasePartial == null) {
+                    JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
+                            Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetailsReference(),
+                            caseDisplayName,
+                            DEFAULT_OPTION, PLAIN_MESSAGE);
+                    return;
+                }
                 caseDisplayName = eamCasePartial.getDisplayName();
                 // query case details
                 EamCase eamCase = dbManager.getCaseDetails(eamCasePartial.getCaseUUID());
