@@ -325,9 +325,9 @@ public final class SqliteEamDbSettings {
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(case_id, data_source_id, value, file_path),");
-        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) on update set null on delete set null,");
-        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) on update set null on delete set null");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(case_id, data_source_id, value, file_path) ON CONFLICT IGNORE,");
+        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createArtifactInstancesTableTemplate.append(")");
 
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
