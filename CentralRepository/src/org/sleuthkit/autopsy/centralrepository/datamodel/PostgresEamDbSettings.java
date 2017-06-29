@@ -318,7 +318,7 @@ public final class PostgresEamDbSettings {
         createCasesTable.append("examiner_email text NOT NULL,");
         createCasesTable.append("examiner_phone text NOT NULL,");
         createCasesTable.append("notes text NOT NULL,");
-        createCasesTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
+        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createCasesTable.append(")");
 
         // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
@@ -342,7 +342,7 @@ public final class PostgresEamDbSettings {
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
-        createReferenceSetsTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
+        createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createReferenceSetsTable.append(")");
 
         String referenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS reference_sets_org_id ON reference_sets (org_id)";
@@ -356,7 +356,7 @@ public final class PostgresEamDbSettings {
         createReferenceTypesTableTemplate.append("known_status text NOT NULL,");
         createReferenceTypesTableTemplate.append("comment text NOT NULL,");
         createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE (reference_set_id, value),");
-        createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) on update set null on delete set null");
+        createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createReferenceTypesTableTemplate.append(")");
 
         // Each "%s" will be replaced with the relevant reference_TYPE table name.
@@ -384,8 +384,8 @@ public final class PostgresEamDbSettings {
         createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
         createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
-        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) on update set null on delete set null,");
-        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) on update set null on delete set null");
+        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createArtifactInstancesTableTemplate.append(")");
 
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
