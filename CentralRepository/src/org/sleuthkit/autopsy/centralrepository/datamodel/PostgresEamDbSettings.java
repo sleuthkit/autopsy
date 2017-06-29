@@ -313,11 +313,11 @@ public final class PostgresEamDbSettings {
         createCasesTable.append("org_id integer,");
         createCasesTable.append("case_name text NOT NULL,");
         createCasesTable.append("creation_date text NOT NULL,");
-        createCasesTable.append("case_number text NOT NULL,");
-        createCasesTable.append("examiner_name text NOT NULL,");
-        createCasesTable.append("examiner_email text NOT NULL,");
-        createCasesTable.append("examiner_phone text NOT NULL,");
-        createCasesTable.append("notes text NOT NULL,");
+        createCasesTable.append("case_number text,");
+        createCasesTable.append("examiner_name text,");
+        createCasesTable.append("examiner_email text,");
+        createCasesTable.append("examiner_phone text,");
+        createCasesTable.append("notes text,");
         createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createCasesTable.append(")");
 
@@ -338,7 +338,7 @@ public final class PostgresEamDbSettings {
         StringBuilder createReferenceSetsTable = new StringBuilder();
         createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
         createReferenceSetsTable.append("id SERIAL PRIMARY KEY,");
-        createReferenceSetsTable.append("org_id integer,");
+        createReferenceSetsTable.append("org_id integer NOT NULL,");
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
@@ -354,7 +354,7 @@ public final class PostgresEamDbSettings {
         createReferenceTypesTableTemplate.append("reference_set_id integer,");
         createReferenceTypesTableTemplate.append("value text NOT NULL,");
         createReferenceTypesTableTemplate.append("known_status text NOT NULL,");
-        createReferenceTypesTableTemplate.append("comment text NOT NULL,");
+        createReferenceTypesTableTemplate.append("comment text,");
         createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE (reference_set_id, value),");
         createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createReferenceTypesTableTemplate.append(")");
@@ -382,7 +382,7 @@ public final class PostgresEamDbSettings {
         createArtifactInstancesTableTemplate.append("value text NOT NULL,");
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("comment text,");
         createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
