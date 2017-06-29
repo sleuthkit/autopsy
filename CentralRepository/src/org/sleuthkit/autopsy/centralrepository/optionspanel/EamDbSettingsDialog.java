@@ -54,7 +54,7 @@ public class EamDbSettingsDialog extends JDialog {
     /**
      * Creates new form EamDbSettingsDialog
      */
-    @Messages({"EamDbSettingsDialog.title.text=Central Repository Settings"})
+    @Messages({"EamDbSettingsDialog.title.text=Central Repository Database Configuration"})
     public EamDbSettingsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
             Bundle.EamDbSettingsDialog_title_text(),
@@ -884,7 +884,7 @@ public class EamDbSettingsDialog extends JDialog {
      * 
      * @return true
      */
-    @Messages({"EamDbSettingsDialog.validation.finished=Click OK to save your database settings and return to the Options. Or select a differnt database type."})
+    @Messages({"EamDbSettingsDialog.validation.finished=Click OK to save your database settings and return to the Options. Or select a different database type."})
     private boolean enableOkButton() {
         if (testingStatus == DatabaseTestResult.TESTEDOK || selectedPlatform == EamDbPlatformEnum.DISABLED) {
             bnOk.setEnabled(true);
