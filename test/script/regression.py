@@ -138,7 +138,7 @@ class TestRunner(object):
             else:
                 Errors.print_error("Multi-user case type required to use UNC path as shared output directory.")
                 sys.exit(1)
-            if test_config.output_parent_dir.endswith("single_user"):
+            if test_config.output_parent_dir.endswith("single_user") or test_config.gold.endswith("single_user"):
                 test_config.output_parent_dir = test_config.output_parent_dir.replace("single_user", "multi_user")
                 test_config.gold = test_config.gold.replace("single_user", "multi_user")
             else:
@@ -148,7 +148,7 @@ class TestRunner(object):
             if test_config.output_parent_dir and test_config.output_parent_dir.strip().startswith("\\\\"):
                 Errors.print_error("Single-user case type couldn't take UNC path as output directory.")
                 sys.exit(1)
-            if test_config.output_parent_dir.endswith("multi_user"):
+            if test_config.output_parent_dir.endswith("multi_user") or test_config.gold.endswith("multi_user"):
                 test_config.output_parent_dir = test_config.output_parent_dir.replace("multi_user", "single_user")
                 test_config.gold = test_config.gold.replace("multi_user", "single_user")
             else:
