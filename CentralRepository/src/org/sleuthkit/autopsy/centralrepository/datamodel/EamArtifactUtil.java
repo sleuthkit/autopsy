@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -46,31 +47,32 @@ public class EamArtifactUtil {
         return Bundle.EamArtifactUtil_emailaddresses_text();
     }
 
-    /*
+    /**
      * Static factory method to examine a BlackboardArtifact to determine if it
      * has contents that can be used for Correlation. If so, return a
      * EamArtifact with a single EamArtifactInstance within. If not, return
      * null.
      *
-     * @param bbArtifact BlackboardArtifact to examine @return EamArtifact or
-     * null
+     * @param bbArtifact BlackboardArtifact to examine
+     * @return List of EamArtifacts
      */
-    public static EamArtifact fromBlackboardArtifact(BlackboardArtifact bbArtifact,
+    public static List<EamArtifact> fromBlackboardArtifact(BlackboardArtifact bbArtifact,
             boolean includeInstances,
             List<EamArtifact.Type> artifactTypes,
             boolean checkEnabled) {
 
-        EamArtifact eamArtifact = null;
+        List<EamArtifact> eamArtifacts = new ArrayList<>();
+
         for (EamArtifact.Type aType : artifactTypes) {
             if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                eamArtifact = getTypeFromBlackboardArtifact(aType, bbArtifact);
-            }
-            if (null != eamArtifact) {
-                break;
+                EamArtifact eamArtifact = getTypeFromBlackboardArtifact(aType, bbArtifact);
+                if (eamArtifact != null) {
+                    eamArtifacts.add(eamArtifact);
+                }
             }
         }
 
-        if (null != eamArtifact && includeInstances) {
+        if (!eamArtifacts.isEmpty() && includeInstances) {
             try {
                 AbstractFile af = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
                 if (null == af) {
@@ -92,14 +94,17 @@ public class EamArtifactUtil {
                         TskData.FileKnown.UNKNOWN,
                         EamArtifactInstance.GlobalStatus.LOCAL
                 );
-                eamArtifact.addInstance(eamInstance);
+
+                for (EamArtifact eamArtifact : eamArtifacts) {
+                    eamArtifact.addInstance(eamInstance);
+                }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
                 return null;
             }
         }
 
-        return eamArtifact;
+        return eamArtifacts;
     }
 
     /**
