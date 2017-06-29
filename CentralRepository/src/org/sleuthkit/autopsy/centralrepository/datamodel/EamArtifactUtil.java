@@ -144,6 +144,11 @@ public class EamArtifactUtil {
                 } else if (null != bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO))) {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
                 }
+
+                if (value != null) {
+                    // Remove all non-numeric symbols to semi-normalize phone numbers
+                    value = value.replaceAll("\\D", "");
+                }
             } else if (aType.getId() == EamArtifact.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
