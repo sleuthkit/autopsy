@@ -114,7 +114,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         initComponents();
 
         // only allow one item to be selected at a time
-        ((BeanTreeView) jScrollPane1).setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        getTree().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
         // remove the close button
         putClientProperty(TopComponent.PROP_CLOSING_DISABLED, Boolean.TRUE);
         setName(NbBundle.getMessage(DirectoryTreeTopComponent.class, "CTL_DirectoryTreeTopComponent"));
@@ -175,12 +175,12 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new BeanTreeView();
+        treeView = new BeanTreeView();
         backButton = new javax.swing.JButton();
         forwardButton = new javax.swing.JButton();
         showRejectedCheckBox = new javax.swing.JCheckBox();
 
-        jScrollPane1.setBorder(null);
+        treeView.setBorder(null);
 
         backButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/directorytree/btn_step_back.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(backButton, org.openide.util.NbBundle.getMessage(DirectoryTreeTopComponent.class, "DirectoryTreeTopComponent.backButton.text")); // NOI18N
@@ -220,7 +220,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
+            .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addGap(5, 5, 5)
                 .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -239,7 +239,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     .addComponent(backButton, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(showRejectedCheckBox))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 854, Short.MAX_VALUE)
+                .addComponent(treeView, javax.swing.GroupLayout.DEFAULT_SIZE, 854, Short.MAX_VALUE)
                 .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -296,8 +296,8 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton backButton;
     private javax.swing.JButton forwardButton;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JCheckBox showRejectedCheckBox;
+    private javax.swing.JScrollPane treeView;
     // End of variables declaration//GEN-END:variables
 
     /**
@@ -372,19 +372,18 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
 
             // close the top component if there's no image in this case
             if (null == currentCase || currentCase.hasData() == false) {
-                ((TreeView) this.jScrollPane1).setRootVisible(false); // hide the root
+                getTree().setRootVisible(false); // hide the root
             } else {
                 // if there's at least one image, load the image and open the top component
-                List<Object> items = new ArrayList<>();
                 final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-                items.add(new DataSources());
-                items.add(new Views(tskCase));
-                items.add(new Results(tskCase));
-                items.add(new Tags());
-                items.add(new Reports());
-                contentChildren = new RootContentChildren(items);
-
+                contentChildren = new RootContentChildren(Arrays.asList(
+                        new DataSources(),
+                        new Views(tskCase),
+                        new Results(tskCase),
+                        new Tags(),
+                        new Reports()));
                 Node root = new AbstractNode(contentChildren) {
+                    //JMTODO: What is the point of these overrides?
                     /**
                      * to override the right click action in the white blank
                      * space area on the directory tree window
@@ -412,32 +411,26 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 em.setRootContext(root);
                 em.getRootContext().setName(currentCase.getName());
                 em.getRootContext().setDisplayName(currentCase.getName());
-                ((TreeView) this.jScrollPane1).setRootVisible(false); // hide the root
+                getTree().setRootVisible(false); // hide the root
 
                 // Reset the forward and back lists because we're resetting the root context
                 resetHistory();
 
-                Children childNodes = em.getRootContext().getChildren();
+                Children rootChildren = em.getRootContext().getChildren();
                 TreeView tree = getTree();
 
-                Node results = childNodes.findChild(ResultsNode.NAME);
+                Node results = rootChildren.findChild(ResultsNode.NAME);
                 tree.expandNode(results);
+                Children resultsChildren = results.getChildren();
+                Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
 
-                Children resultsChilds = results.getChildren();
-                for (Node n : resultsChilds.getNodes()) {
-                    tree.expandNode(n);
-                }
 
-                Accounts accounts = resultsChilds.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
+                Accounts accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
                 showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
                 showRejectedCheckBox.setSelected(false);
 
-                Node views = childNodes.findChild(ViewsNode.NAME);
-                Children viewsChilds = views.getChildren();
-                for (Node n : viewsChilds.getNodes()) {
-                    tree.expandNode(n);
-                }
-
+                Node views = rootChildren.findChild(ViewsNode.NAME);
+                Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
                 tree.collapseNode(views);
 
                 // if the dataResult is not opened
@@ -445,13 +438,15 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     dataResult.open(); // open the data result top component as well when the directory tree is opened
                 }
 
+                /*JMTODO: What is this supposed to do?  */
+                
                 // select the first image node, if there is one
                 // (this has to happen after dataResult is opened, because the event
                 // of changing the selected node fires a handler that tries to make
                 // dataResult active)
-                if (childNodes.getNodesCount() > 0) {
+                if (rootChildren.getNodesCount() > 0) {
                     try {
-                        em.setSelectedNodes(new Node[]{childNodes.getNodeAt(0)});
+                        em.setSelectedNodes(new Node[]{rootChildren.getNodeAt(0)});
                     } catch (PropertyVetoException ex) {
                         LOGGER.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
                     }
@@ -605,9 +600,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     // We only need to trigger openCoreWindows() when the
                     // first data source is added.
                     if (currentCase.getDataSources().size() == 1) {
-                        SwingUtilities.invokeLater(() -> {
-                            CoreComponentControl.openCoreWindows();
-                        });
+                        SwingUtilities.invokeLater(CoreComponentControl::openCoreWindows);
                     }
                 } catch (IllegalStateException | TskCoreException notUsed) {
                     /**
@@ -749,7 +742,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * @return tree the BeanTreeView
      */
     public BeanTreeView getTree() {
-        return (BeanTreeView) this.jScrollPane1;
+        return (BeanTreeView) this.treeView;
     }
 
     /**

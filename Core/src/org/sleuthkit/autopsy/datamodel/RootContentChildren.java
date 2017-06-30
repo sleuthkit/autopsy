@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Collection;
 import java.util.Collections;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Children implementation for the root node of a ContentNode tree. Accepts a
@@ -28,7 +27,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
  */
 public class RootContentChildren extends AbstractContentChildren<Object> {
 
-    private Collection<? extends Object> contentKeys;
+    private final Collection<? extends Object> contentKeys;
 
     /**
      * @param contentKeys root Content objects for the Node tree
@@ -55,8 +54,6 @@ public class RootContentChildren extends AbstractContentChildren<Object> {
      * but we are not ready for this.
      */
     public void refreshContentKeys() {
-        for (Object key : contentKeys) {
-            refreshKey(key);
-        }
+        contentKeys.forEach(this::refreshKey);
     }
 }
