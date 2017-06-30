@@ -30,11 +30,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.prefs.PreferenceChangeEvent;
 import java.util.prefs.PreferenceChangeListener;
 import javax.swing.Action;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.tree.TreeSelectionModel;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.explorer.ExplorerManager;
@@ -360,101 +362,117 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
     public void componentOpened() {
         // change the cursor to "waiting cursor" for this operation
         this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        Case currentCase = null;
         try {
-            Case currentCase = null;
-            try {
-                currentCase = Case.getCurrentCase();
-            } catch (IllegalStateException ex) {
-                /*
-                 * No open case.
+            currentCase = Case.getCurrentCase();
+        } catch (IllegalStateException ex) {
+            // No open case.
+        }
+
+        // close the top component if there's no image in this case
+        if (null == currentCase || currentCase.hasData() == false) {
+            getTree().setRootVisible(false); // hide the root
+        } else {
+            // if there's at least one image, load the image and open the top component
+            final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
+            contentChildren = new RootContentChildren(Arrays.asList(
+                    new DataSources(),
+                    new Views(tskCase),
+                    new Results(tskCase),
+                    new Tags(),
+                    new Reports()));
+            Node root = new AbstractNode(contentChildren) {
+                //JMTODO: What is the point of these overrides?
+                /**
+                 * to override the right click action in the white blank space
+                 * area on the directory tree window
                  */
-            }
-
-            // close the top component if there's no image in this case
-            if (null == currentCase || currentCase.hasData() == false) {
-                getTree().setRootVisible(false); // hide the root
-            } else {
-                // if there's at least one image, load the image and open the top component
-                final SleuthkitCase tskCase = currentCase.getSleuthkitCase();
-                contentChildren = new RootContentChildren(Arrays.asList(
-                        new DataSources(),
-                        new Views(tskCase),
-                        new Results(tskCase),
-                        new Tags(),
-                        new Reports()));
-                Node root = new AbstractNode(contentChildren) {
-                    //JMTODO: What is the point of these overrides?
-                    /**
-                     * to override the right click action in the white blank
-                     * space area on the directory tree window
-                     */
-                    @Override
-                    public Action[] getActions(boolean popup) {
-                        return new Action[]{};
-                    }
-
-                    // Overide the AbstractNode use of DefaultHandle to return
-                    // a handle which can be serialized without a parent
-                    @Override
-                    public Node.Handle getHandle() {
-                        return new Node.Handle() {
-                            @Override
-                            public Node getNode() throws IOException {
-                                return em.getRootContext();
-                            }
-                        };
-                    }
-                };
-
-                root = new DirectoryTreeFilterNode(root, true);
-
-                em.setRootContext(root);
-                em.getRootContext().setName(currentCase.getName());
-                em.getRootContext().setDisplayName(currentCase.getName());
-                getTree().setRootVisible(false); // hide the root
-
-                // Reset the forward and back lists because we're resetting the root context
-                resetHistory();
-
-                Children rootChildren = em.getRootContext().getChildren();
-                TreeView tree = getTree();
-
-                Node results = rootChildren.findChild(ResultsNode.NAME);
-                tree.expandNode(results);
-                Children resultsChildren = results.getChildren();
-                Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
-
-
-                Accounts accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
-                showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
-                showRejectedCheckBox.setSelected(false);
-
-                Node views = rootChildren.findChild(ViewsNode.NAME);
-                Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
-                tree.collapseNode(views);
-
-                // if the dataResult is not opened
-                if (!dataResult.isOpened()) {
-                    dataResult.open(); // open the data result top component as well when the directory tree is opened
+                @Override
+                public Action[] getActions(boolean popup) {
+                    return new Action[]{};
                 }
 
-                /*JMTODO: What is this supposed to do?  */
-                
-                // select the first image node, if there is one
-                // (this has to happen after dataResult is opened, because the event
-                // of changing the selected node fires a handler that tries to make
-                // dataResult active)
-                if (rootChildren.getNodesCount() > 0) {
+                // Overide the AbstractNode use of DefaultHandle to return
+                // a handle which can be serialized without a parent
+                @Override
+                public Node.Handle getHandle() {
+                    return new Node.Handle() {
+                        @Override
+                        public Node getNode() throws IOException {
+                            return em.getRootContext();
+                        }
+                    };
+                }
+            };
+
+            root = new DirectoryTreeFilterNode(root, true);
+
+            em.setRootContext(root);
+            em.getRootContext().setName(currentCase.getName());
+            em.getRootContext().setDisplayName(currentCase.getName());
+            getTree().setRootVisible(false); // hide the root
+
+            // Reset the forward and back lists because we're resetting the root context
+            resetHistory();
+            new SwingWorker<Node[], Void>() {
+                @Override
+                protected Node[] doInBackground() throws Exception {
+                    Children rootChildren = em.getRootContext().getChildren();
+                    TreeView tree = getTree();
+
+                    Node results = rootChildren.findChild(ResultsNode.NAME);
+                    tree.expandNode(results);
+                    Children resultsChildren = results.getChildren();
+                    Arrays.stream(resultsChildren.getNodes()).forEach(tree::expandNode);
+
+                    Accounts accounts = resultsChildren.findChild(Accounts.NAME).getLookup().lookup(Accounts.class);
+                    showRejectedCheckBox.setAction(accounts.newToggleShowRejectedAction());
+                    showRejectedCheckBox.setSelected(false);
+
+                    Node views = rootChildren.findChild(ViewsNode.NAME);
+                    Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
+                    tree.collapseNode(views);
+                    /*
+                     * JMTODO: What is this supposed to do? Right now it selects
+                     * the data sources node, but the comment seems to indicate
+                     * it is supposed to select the first datasource.
+                     */
+                    // select the first image node, if there is one
+                    // (this has to happen after dataResult is opened, because the event
+                    // of changing the selected node fires a handler that tries to make
+                    // dataResult active)
+                    if (rootChildren.getNodesCount() > 0) {
+                        return new Node[]{rootChildren.getNodeAt(0)};
+                    }
+                    return new Node[]{};
+                }
+
+                @Override
+                protected void done() {
+                    super.done();
+
+                    // if the dataResult is not opened
+                    if (!dataResult.isOpened()) {
+                        dataResult.open(); // open the data result top component as well when the directory tree is opened
+                    }
+                    /*
+                     * JMTODO: What is this supposed to do?
+                     */
+                    // select the first image node, if there is one
+                    // (this has to happen after dataResult is opened, because the event
+                    // of changing the selected node fires a handler that tries to make
+                    // dataResult active)
                     try {
-                        em.setSelectedNodes(new Node[]{rootChildren.getNodeAt(0)});
+                        em.setSelectedNodes(get());
                     } catch (PropertyVetoException ex) {
                         LOGGER.log(Level.SEVERE, "Error setting default selected node.", ex); //NON-NLS
+                    } catch (InterruptedException | ExecutionException ex) {
+                        LOGGER.log(Level.SEVERE, "Error expanding tree to initial state.", ex); //NON-NLS
+                    } finally {
+                        setCursor(null);
                     }
                 }
-
-            }
-        } finally {
-            this.setCursor(null);
+            }.execute();
         }
     }
 
