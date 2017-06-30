@@ -63,6 +63,8 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
+import org.sleuthkit.autopsy.appservices.AutopsyService;
+import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
@@ -92,15 +94,13 @@ import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.events.AutopsyEventException;
 import org.sleuthkit.autopsy.events.AutopsyEventPublisher;
-import org.sleuthkit.autopsy.appservices.AutopsyService;
-import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
-import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
-import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
-import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchService;
 import org.sleuthkit.autopsy.keywordsearchservice.KeywordSearchServiceException;
+import org.sleuthkit.autopsy.progress.LoggingProgressIndicator;
+import org.sleuthkit.autopsy.progress.ModalDialogProgressIndicator;
+import org.sleuthkit.autopsy.progress.ProgressIndicator;
 import org.sleuthkit.autopsy.timeline.OpenTimelineAction;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.CaseDbConnectionInfo;
@@ -964,23 +964,12 @@ public class Case {
                 /*
                  * Enable the case-specific actions.
                  */
-                CallableSystemAction.get(AddImageAction.class
-                ).setEnabled(true);
-                CallableSystemAction
-                        .get(CaseCloseAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(CasePropertiesAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(CaseDeleteAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(OpenTimelineAction.class
-                        ).setEnabled(true);
-                CallableSystemAction
-                        .get(OpenOutputFolderAction.class
-                        ).setEnabled(false);
+                CallableSystemAction.get(AddImageAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseCloseAction.class).setEnabled(true);
+                CallableSystemAction.get(CasePropertiesAction.class).setEnabled(true);
+                CallableSystemAction.get(CaseDeleteAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenTimelineAction.class).setEnabled(true);
+                CallableSystemAction.get(OpenOutputFolderAction.class).setEnabled(false);
 
                 /*
                  * Add the case to the recent cases tracker that supplies a list
