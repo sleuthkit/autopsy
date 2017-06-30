@@ -34,7 +34,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -222,11 +224,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      */
     class ByMimeTypeNode extends DisplayableItemNode {
 
-        @NbBundle.Messages("FileTypesByMimeType.name.text=By MIME Type")
+        @NbBundle.Messages({"FileTypesByMimeType.name.text=By MIME Type"})
+
         final String NAME = Bundle.FileTypesByMimeType_name_text();
 
         ByMimeTypeNode() {
-            super(Children.create(new ByMimeTypeNodeChildren(), true));
+            super(Children.create(new ByMimeTypeNodeChildren(), true), Lookups.singleton(Bundle.FileTypesByMimeType_name_text()));
             super.setName(NAME);
             super.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
@@ -290,8 +293,12 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      */
     class MediaTypeNode extends DisplayableItemNode {
 
+        @NbBundle.Messages({"FileTypesByMimeTypeNode.createSheet.mediaType.name=Type",
+            "FileTypesByMimeTypeNode.createSheet.mediaType.displayName=Type",
+            "FileTypesByMimeTypeNode.createSheet.mediaType.desc=no description"})
+                
         MediaTypeNode(String name) {
-            super(Children.create(new MediaTypeNodeChildren(name), true));
+            super(Children.create(new MediaTypeNodeChildren(name), true), Lookups.singleton(name.substring(0, 1).toUpperCase() + name.substring(1))); //Capitalized first letter of text to be more consistant 
             setName(name);
             setDisplayName(name);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
@@ -305,6 +312,18 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+
+        @Override
+        protected Sheet createSheet() {
+            Sheet s = super.createSheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByMimeTypeNode.createSheet.mediaType.name"), NbBundle.getMessage(this.getClass(), "FileTypesByMimeTypeNode.createSheet.mediaType.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByMimeTypeNode.createSheet.mediaType.desc"), getDisplayName()));
+            return s;
         }
 
         @Override
@@ -352,9 +371,11 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * media subtype is the portion of the MIME type following the /.
      */
     class MediaSubTypeNode extends DisplayableItemNode implements Observer {
-
+        @NbBundle.Messages({"FileTypesByMimeTypeNode.createSheet.mediaSubtype.name=Subtype",
+            "FileTypesByMimeTypeNode.createSheet.mediaSubtype.displayName=Subtype",
+            "FileTypesByMimeTypeNode.createSheet.mediaSubtype.desc=no description"})
         private MediaSubTypeNode(String mimeType) {
-            super(Children.create(new MediaSubTypeNodeChildren(mimeType), true));
+            super(Children.create(new MediaSubTypeNodeChildren(mimeType), true),Lookups.singleton(mimeType));
             addObserver(this);
             init(mimeType);
         }
@@ -392,6 +413,17 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         public <T> T accept(DisplayableItemNodeVisitor<T> v) {
             return v.visit(this);
+        }
+                @Override
+        protected Sheet createSheet() {
+            Sheet s = super.createSheet();
+            Sheet.Set ss = s.get(Sheet.PROPERTIES);
+            if (ss == null) {
+                ss = Sheet.createPropertiesSet();
+                s.put(ss);
+            }
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByMimeTypeNode.createSheet.mediaSubtype.name"), NbBundle.getMessage(this.getClass(), "FileTypesByMimeTypeNode.createSheet.mediaSubtype.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByMimeTypeNode.createSheet.mediaSubtype.desc"), getDisplayName()));
+            return s;
         }
 
         @Override
