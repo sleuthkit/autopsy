@@ -43,7 +43,7 @@ public class EamArtifact implements Serializable {
     public static final int EMAIL_TYPE_ID = 2;
     public static final int PHONE_TYPE_ID = 3;
     public static final int USBID_TYPE_ID = 4;
-    
+
     /**
      * Load the default correlation types
      */
@@ -65,7 +65,8 @@ public class EamArtifact implements Serializable {
     public EamArtifact(Type correlationType, String correlationValue) {
         this.ID = "";
         this.correlationType = correlationType;
-        this.correlationValue = correlationValue;
+        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
+        this.correlationValue = correlationValue.toLowerCase();
         this.artifactInstances = new ArrayList<>();
     }
 
@@ -110,7 +111,8 @@ public class EamArtifact implements Serializable {
      * @param correlationValue the correlationValue to set
      */
     public void setCorrelationValue(String correlationValue) {
-        this.correlationValue = correlationValue;
+        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
+        this.correlationValue = correlationValue.toLowerCase();
     }
 
     /**
@@ -161,12 +163,13 @@ public class EamArtifact implements Serializable {
         private Boolean enabled;
 
         /**
-         * 
-         * @param id            Unique ID for this Correlation Type
-         * @param displayName   Name of this type displayed in the UI.
-         * @param dbTableName   Central Repository db table where data of this type is stored
-         * @param supported     Is this Type currently supported
-         * @param enabled       Is this Type currentl enabled.
+         *
+         * @param id          Unique ID for this Correlation Type
+         * @param displayName Name of this type displayed in the UI.
+         * @param dbTableName Central Repository db table where data of this
+         *                    type is stored
+         * @param supported   Is this Type currently supported
+         * @param enabled     Is this Type currentl enabled.
          */
         public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) {
             this.id = id;
@@ -178,13 +181,14 @@ public class EamArtifact implements Serializable {
 
         /**
          * Constructior for custom types where we do not know the Type ID until
-         * the row has been entered into the correlation_types table
-         * in the Central Repository.
-         * 
-         * @param displayName   Name of this type displayed in the UI.
-         * @param dbTableName   Central Repository db table where data of this type is stored
-         * @param supported     Is this Type currently supported
-         * @param enabled       Is this Type currentl enabled.
+         * the row has been entered into the correlation_types table in the
+         * Central Repository.
+         *
+         * @param displayName Name of this type displayed in the UI.
+         * @param dbTableName Central Repository db table where data of this
+         *                    type is stored
+         * @param supported   Is this Type currently supported
+         * @param enabled     Is this Type currentl enabled.
          */
         public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) {
             this(-1, displayName, dbTableName, supported, enabled);
@@ -308,18 +312,17 @@ public class EamArtifact implements Serializable {
         }
 
         /**
-         * To support having different database tables for each Type,
-         * this field provides the prefix/suffix of the table name,
-         * which allows us to automatically compute the table names
-         * and indicies.
-         * 
-         * It is the prefix for the instances tables *_instances.
-         * It is the suffix for the reference tables reference_*.
-         * 
+         * To support having different database tables for each Type, this field
+         * provides the prefix/suffix of the table name, which allows us to
+         * automatically compute the table names and indicies.
+         *
+         * It is the prefix for the instances tables *_instances. It is the
+         * suffix for the reference tables reference_*.
+         *
          * When custom Types are added in the future, they are already supported
          * by just giving the desired value for the table name for each custom
          * Type. Possibly having all custom Types use a common table name.
-         * 
+         *
          * @return the dbTableName
          */
         public String getDbTableName() {

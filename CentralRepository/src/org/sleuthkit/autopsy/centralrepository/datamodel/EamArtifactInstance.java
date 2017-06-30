@@ -124,7 +124,8 @@ public class EamArtifactInstance implements Serializable {
         this.ID = ID;
         this.eamCase = eamCase;
         this.eamDataSource = eamDataSource;
-        this.filePath = filePath;
+        // Lower case paths to normalize paths and improve correlation results, if this causes significant issues on case-sensitive file systems, remove
+        this.filePath = filePath.toLowerCase();
         this.comment = comment;
         this.knownStatus = knownStatus;
         this.globalStatus = globalStatus;
@@ -204,7 +205,8 @@ public class EamArtifactInstance implements Serializable {
      * @param filePath the filePath to set
      */
     public void setFilePath(String filePath) {
-        this.filePath = filePath;
+        // Lower case paths to normalize paths and improve correlation results, if this causes significant issues on case-sensitive file systems, remove
+        this.filePath = filePath.toLowerCase();
     }
 
     /**
