@@ -767,12 +767,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
      * Refresh the content node part of the dir tree safely in the EDT thread
      */
     public void refreshContentTreeSafe() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                refreshDataSourceTree();
-            }
-        });
+        SwingUtilities.invokeLater(this::refreshDataSourceTree);
     }
 
     /**
@@ -812,7 +807,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     ArrayList<String> selectedNodePath = new ArrayList<>(Arrays.asList(previouslySelectedNodePath));
                     while (null == selectedNode && !selectedNodePath.isEmpty()) {
                         try {
-                            selectedNode = NodeOp.findPath(em.getRootContext(), selectedNodePath.toArray(new String[0]));
+                            selectedNode = NodeOp.findPath(em.getRootContext(), selectedNodePath.toArray(new String[selectedNodePath.size()]));
                         } catch (NodeNotFoundException ex) {
                             // The selected node may have been deleted (e.g., a deleted tag), so truncate the path and try again. 
                             if (selectedNodePath.size() > 1) {
@@ -1039,7 +1034,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     }
                     treeNode = binChildren.findChild(binName);
                 } else { //default account type
-                    treeNode = accountRootChilds.findChild(accountType);;
+                    treeNode = accountRootChilds.findChild(accountType);
                 }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.WARNING, "Error retrieving attributes", ex); //NON-NLS
