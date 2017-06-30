@@ -49,7 +49,7 @@ package org.sleuthkit.autopsy.ingest;
  * implementations must be marked with the following NetBeans Service provider
  * annotation:
  *
- * <pre>@ServiceProvider(service=IngestModuleFactory.class)</pre>
+ * <pre>\@ServiceProvider(service=IngestModuleFactory.class)</pre>
  * <p>
  * IMPORTANT TIP: If an implementation of IngestModuleFactory does not need to
  * provide implementations of all of the IngestModuleFactory methods, it can

@@ -13,15 +13,11 @@
 
     <target name="resolve">
         <ivy:settings file="ivysettings.xml" />
-        <ivy:resolve file="ivy.xml" conf="experimental, eam"/>
+        <ivy:resolve file="ivy.xml" conf="experimental"/>
     </target>
  
     <target name="retrieve-experimental" depends="resolve">
         <ivy:retrieve conf="experimental"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
-    </target>
-
-    <target name="retrieve-eam" depends="resolve">
-        <ivy:retrieve conf="eam"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
 
     <target name="retrieve-all" depends="resolve">

@@ -7,13 +7,13 @@ and can be applied to either the table viewer or the thumbnail viewer.
 correctly.
 - The View Source File in Directory context menu item now works correctly.
 - Tagged image files in the HTML report are now displayed full-size. 
-- A new enterprise artifact manager feature has been added to the optional 
-Experimental plug-in (NetBeans module; this optional feature includes a database 
-(SQLite or PostgreSQL) and logic for correlating artifacts across cases; results
-are displayed using an Interesting Artifacts branch of the Interesting Items 
-tree and a content viewer. 
+- A new central repository feature has been added to the optional 
+CentralRepository plug-in (NetBeans module; this optional feature includes a 
+database (SQLite or PostgreSQL) and logic for correlating artifacts across 
+cases; results are displayed using an Interesting Artifacts branch of the 
+Interesting Items tree and an Other Data Sources content viewer. 
 - Some potential deadlocks during ingest have been eliminated.
-- Assorted small enhancements and bug fixes.
+- Assorted small enhancements and bug fixes are included.
 
 ---------------- VERSION 4.4.0  --------------
 Improvements:
