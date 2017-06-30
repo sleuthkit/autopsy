@@ -134,7 +134,7 @@ import org.sleuthkit.datamodel.TskData;
          *               something to provide a sub-node.
          */
         FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter) {
-            super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+            super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getDisplayName()));
             this.filter = filter;
             init();
         }
@@ -147,7 +147,7 @@ import org.sleuthkit.datamodel.TskData;
          *               provides updates on events
          */
         private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, Observable o) {
-            super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
+            super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getDisplayName()));
             this.filter = filter;
             init();
         }
@@ -159,7 +159,7 @@ import org.sleuthkit.datamodel.TskData;
                 super.setDisplayName(FNAME);
             } // sub-node in file tree (i.e. documents, exec, etc.)
             else {
-                super.setName(filter.getName());
+                super.setName(filter.getDisplayName());
                 super.setDisplayName(filter.getDisplayName());
             }
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
@@ -183,7 +183,7 @@ import org.sleuthkit.datamodel.TskData;
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.desc"), getName()));
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.desc"), getDisplayName()));
             return s;
         }
 
@@ -280,7 +280,7 @@ import org.sleuthkit.datamodel.TskData;
         }
 
         private void init() {
-            super.setName(filter.getName());
+            super.setName(filter.getDisplayName());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
         }
@@ -528,7 +528,7 @@ import org.sleuthkit.datamodel.TskData;
         AUT_DOC_HTML(0, "AUT_DOC_HTML", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocHtmlFilter.text"),
                 Arrays.asList(".htm", ".html")), //NON-NLS
-        AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE", //NON-NLS
+        AUT_DOC_OFFICE(1, "AUT_DOC_OFFICE",  //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.autDocOfficeFilter.text"),
                 Arrays.asList(".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx")), //NON-NLS
         AUT_DOC_PDF(2, "AUT_DOC_PDF", //NON-NLS
