@@ -298,7 +298,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             "FileTypesByMimeTypeNode.createSheet.mediaType.desc=no description"})
                 
         MediaTypeNode(String name) {
-            super(Children.create(new MediaTypeNodeChildren(name), true), Lookups.singleton(name.substring(0, 1).toUpperCase() + name.substring(1))); //Capitalized first letter of text to be more consistant 
+            super(Children.create(new MediaTypeNodeChildren(name), true), Lookups.singleton(name)); 
             setName(name);
             setDisplayName(name);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
