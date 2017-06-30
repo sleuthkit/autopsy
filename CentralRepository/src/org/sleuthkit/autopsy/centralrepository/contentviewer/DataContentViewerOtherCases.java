@@ -492,8 +492,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         if (eamArtifact.getCorrelationType().getId() != EamArtifact.FILES_TYPE_ID) {
             return Collections.emptyList();
         }
-        EamDb dbManager = EamDb.getInstance();
         try {
+            EamDb dbManager = EamDb.getInstance();
             Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getReferenceInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
             eamGlobalFileInstances.forEach((eamGlobalFileInstance) -> {
                 eamArtifactInstances.add(new EamArtifactInstance(

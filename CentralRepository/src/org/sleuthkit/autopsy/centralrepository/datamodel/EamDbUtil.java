@@ -81,10 +81,10 @@ public class EamDbUtil {
      */
     public static boolean insertDefaultCorrelationTypes(Connection conn) {
         PreparedStatement preparedStatement = null;
-        List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
         String sql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
 
         try {
+            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
             preparedStatement = conn.prepareStatement(sql);
             for (EamArtifact.Type newType : DEFAULT_CORRELATION_TYPES) {
                 preparedStatement.setInt(1, newType.getId());
@@ -96,7 +96,7 @@ public class EamDbUtil {
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
-        } catch (SQLException ex) {
+        } catch (EamDbException | SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error inserting default correlation types.", ex); // NON-NLS
             return false;
         } finally {

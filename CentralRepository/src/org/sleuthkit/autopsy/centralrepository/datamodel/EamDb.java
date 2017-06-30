@@ -34,7 +34,7 @@ public interface EamDb {
      *
      * @throws EamDbException
      */
-    static EamDb getInstance() {
+    static EamDb getInstance() throws EamDbException {
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
 
         switch (selectedPlatform) {

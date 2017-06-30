@@ -50,23 +50,6 @@ public class EamArtifactInstance implements Serializable {
         }
     }
 
-//    public enum FileKnown {
-//        UNKNOWN(Bundle.EamArtifactInstances_knownStatus_unknown()),
-//        KNOWN(Bundle.EamArtifactInstances_knownStatus_known()),
-//        BAD(Bundle.EamArtifactInstances_knownStatus_bad());
-//
-//        private final String knownStatus;
-//
-//        private FileKnown(String knownStatus) {
-//            this.knownStatus = knownStatus;
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return knownStatus;
-//        }
-//    }
-
     private static final long serialVersionUID = 1L;
 
     private String ID;
@@ -81,7 +64,7 @@ public class EamArtifactInstance implements Serializable {
             EamCase eamCase,
             EamDataSource eamDataSource
     ) {
-        this("", eamCase, eamDataSource, "", "", TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this("", eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public EamArtifactInstance(
@@ -89,7 +72,7 @@ public class EamArtifactInstance implements Serializable {
             EamDataSource eamDataSource,
             String filePath
     ) {
-        this("", eamCase, eamDataSource, filePath, "", TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this("", eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public EamArtifactInstance(
@@ -211,7 +194,7 @@ public class EamArtifactInstance implements Serializable {
      * @return the comment
      */
     public String getComment() {
-        return comment;
+        return null == comment ? "" : comment;
     }
 
     /**

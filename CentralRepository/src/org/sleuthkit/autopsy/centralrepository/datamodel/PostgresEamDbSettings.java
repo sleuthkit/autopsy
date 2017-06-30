@@ -453,6 +453,9 @@ public final class PostgresEamDbSettings {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
+            return false;
         } finally {
             EamDbUtil.closeConnection(conn);
         }
@@ -538,7 +541,7 @@ public final class PostgresEamDbSettings {
         if (dbName == null || dbName.isEmpty()) {
             throw new EamDbException("Invalid database name. Cannot be empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Invalid database name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
+            throw new EamDbException("Invalid database name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName.toLowerCase();

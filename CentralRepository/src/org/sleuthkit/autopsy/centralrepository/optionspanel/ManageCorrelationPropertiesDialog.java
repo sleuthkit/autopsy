@@ -245,7 +245,14 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
         if (0 == correlationTypes.size()) {
             dispose();
         } else {
-            EamDb dbManager = EamDb.getInstance();
+            EamDb dbManager;
+            try {
+                dbManager = EamDb.getInstance();
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
+                lbWarningMsg.setText(Bundle.ManageCorrelationPropertiesDialog_okbutton_failure());
+                return;
+            }
             correlationTypes.forEach((aType) -> {
                 try {
                     dbManager.updateCorrelationType(aType);

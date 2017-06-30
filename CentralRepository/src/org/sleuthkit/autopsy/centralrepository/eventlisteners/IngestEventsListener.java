@@ -75,7 +75,13 @@ public class IngestEventsListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            EamDb dbManager = EamDb.getInstance();
+            EamDb dbManager;
+            try {
+                dbManager = EamDb.getInstance();
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
+                return;
+            }
             switch (IngestManager.IngestModuleEvent.valueOf(evt.getPropertyName())) {
                 case DATA_ADDED: {
                     if (!EamDb.isEnabled()) {

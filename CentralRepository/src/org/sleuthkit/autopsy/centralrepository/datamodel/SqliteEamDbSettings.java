@@ -54,7 +54,7 @@ public final class SqliteEamDbSettings {
     private static final String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
     private static final String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
     private static final String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
-    private final String DB_NAMES_REGEX = "[a-zA-Z]\\w*(\\.db)?";
+    private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
@@ -398,6 +398,9 @@ public final class SqliteEamDbSettings {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
+            return false;
         } finally {
             EamDbUtil.closeConnection(conn);
         }
@@ -442,7 +445,7 @@ public final class SqliteEamDbSettings {
         if (dbName == null || dbName.isEmpty()) {
             throw new EamDbException("Invalid database file name. Cannot be null or empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Invalid database file name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
+            throw new EamDbException("Invalid database file name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName;

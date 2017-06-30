@@ -132,7 +132,7 @@ public class EamGlobalFileInstance {
      * @return the comment
      */
     public String getComment() {
-        return comment;
+        return null == comment ? "" : comment;
     }
 
     /**
