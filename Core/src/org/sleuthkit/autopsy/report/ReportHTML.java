@@ -670,6 +670,7 @@ class ReportHTML implements TableReportModule {
             }
 
             StringBuilder linkToThumbnail = new StringBuilder();
+            linkToThumbnail.append("<div id='thumbnail_link'>");
             linkToThumbnail.append("<a href=\""); //NON-NLS
             linkToThumbnail.append(contentPath);
             linkToThumbnail.append("\" target=\"_top\">");
@@ -694,7 +695,7 @@ class ReportHTML implements TableReportModule {
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Could not find get tags for file.", ex); //NON-NLS
             }
-
+            linkToThumbnail.append("</div>");
             currentRow.add(linkToThumbnail.toString());
 
             totalCount++;
@@ -844,7 +845,9 @@ class ReportHTML implements TableReportModule {
                     + //NON-NLS
                     "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n"
                     + //NON-NLS
-                    "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
+                    "table tr:nth-child(even) td {background: #f3f3f3;}\n"
+                    + //NON-NLS 
+                    "div#thumbnail_link {max-width: 200px; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;}";
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find index.css file to write to.", ex); //NON-NLS
