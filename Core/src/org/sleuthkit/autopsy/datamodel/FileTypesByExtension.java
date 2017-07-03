@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -46,7 +48,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public final class FileTypesByExtension implements AutopsyVisitableItem {
 
-    private static final Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());    
+    private final static Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());
     private final SleuthkitCase skCase;
 
     public FileTypesByExtension(SleuthkitCase skCase) {
@@ -280,9 +282,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      */
     static class FileExtensionNode extends DisplayableItemNode {
 
-        FileTypesByExtension.SearchFilterInterface filter;
-        SleuthkitCase skCase;
         private final FileTypesByExtObservable notifier;
+        private FileTypesByExtension.SearchFilterInterface filter;
+        private SleuthkitCase skCase;
+        private long childCount = -1;
 
         /**
          *
@@ -298,10 +301,11 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             this.notifier = o;
             init();
             o.addObserver(new ByExtNodeObserver());
+
         }
 
         private void init() {
-            super.setName(filter.getName());
+            setName(filter.getName());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
         }
@@ -316,10 +320,30 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         private void updateDisplayName() {
-            final String count = notifier.shouldShowCounts(skCase)
-                    ? " (" + Long.toString(FileExtensionNodeChildren.calculateItems(skCase, filter)) + ")"
-                    : "";
-            super.setDisplayName(filter.getDisplayName() + count);
+            if (notifier.shouldShowCounts(skCase)) {
+                setDisplayName(filter.getDisplayName() + ((childCount < 0) ? "(counting...)"
+                        : ("(" + childCount + ")")));
+                new SwingWorker<Long, Void>() {
+                    @Override
+                    protected Long doInBackground() throws Exception {
+                        return FileExtensionNodeChildren.calculateItems(skCase, filter);
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            childCount = get();
+                            setDisplayName(filter.getDisplayName() + " (" + childCount + ")");
+                        } catch (InterruptedException | ExecutionException ex) {
+                            setDisplayName(filter.getDisplayName());
+                            logger.log(Level.WARNING, "Failed to get count of files for filter " + filter.toString(), ex);
+                        }
+                    }
+                }.execute();
+            } else {
+                setDisplayName(filter.getDisplayName() + ((childCount < 0) ? ""
+                        : ("(" + childCount + "+)")));
+            }
         }
 
         @Override
@@ -628,5 +652,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         public String getDisplayName();
 
         public List<String> getFilter();
+
     }
 }

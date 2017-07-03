@@ -28,7 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
@@ -54,6 +56,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
+    private final static Logger logger = Logger.getLogger(FileTypesByMimeType.class.getName());
     private final SleuthkitCase skCase;
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
@@ -347,22 +350,21 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
     }
 
-    /**
-     * Node which represents the media sub type in the By MIME type tree, the
-     * media subtype is the portion of the MIME type following the /.
-     */
     class MediaSubTypeNode extends DisplayableItemNode implements Observer {
+
+        private long childCount = -1;
+        private final String mimeType;
+        private final String subType;
 
         private MediaSubTypeNode(String mimeType) {
             super(Children.create(new MediaSubTypeNodeChildren(mimeType), true));
-            addObserver(this);
-            init(mimeType);
-        }
-
-        private void init(String mimeType) {
+            this.mimeType = mimeType;
+            this.subType = StringUtils.substringAfter(mimeType, "/");
             super.setName(mimeType);
-            updateDisplayName(mimeType);
+            updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
+
+            addObserver(this);
         }
 
         /**
@@ -372,10 +374,33 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          * @param mimeType - the complete MimeType, needed for accurate query
          *                 results
          */
-        private void updateDisplayName(String mimeType) {
-            final long count = calculateItems(skCase, mimeType);
-            //only the part of the mimeType after the media type
-            super.setDisplayName(StringUtils.substringAfter(mimeType, "/") + " (" + count + ")");
+        private void updateDisplayName() {
+            if (shouldShowCounts(skCase)) {
+                setDisplayName(subType + ((childCount < 0) ? "(counting...)"
+                        : ("(" + childCount + ")")));
+                new SwingWorker<Long, Void>() {
+                    @Override
+                    protected Long doInBackground() throws Exception {
+                        return calculateItems(skCase, mimeType);
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            childCount = get();
+                            setDisplayName(subType + " (" + childCount + ")");
+                        } catch (InterruptedException | ExecutionException ex) {
+                            setDisplayName(subType);
+                            logger.log(Level.WARNING, "Failed to get count of files for mimetype " + mimeType, ex);
+                        }
+                    }
+
+                }.
+                        execute();
+            } else {
+                setDisplayName(subType + ((childCount < 0) ? ""
+                        : ("(" + childCount + "+)")));
+            }
         }
 
         /**
@@ -390,7 +415,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         @Override
-        public <T> T accept(DisplayableItemNodeVisitor<T> v) {
+        public <T> T accept(DisplayableItemNodeVisitor< T> v) {
             return v.visit(this);
         }
 
@@ -401,7 +426,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
         @Override
         public void update(Observable o, Object arg) {
-            updateDisplayName(getName());
+            updateDisplayName();
         }
     }
 
