@@ -843,7 +843,7 @@ class ReportHTML implements TableReportModule {
                     + //NON-NLS
                     "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n"
                     + //NON-NLS
-                    "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n"
+                    "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; vertical-align: text-top;}\n"
                     + //NON-NLS
                     "table tr:nth-child(even) td {background: #f3f3f3;}\n"
                     + //NON-NLS 
