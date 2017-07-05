@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
@@ -142,8 +143,8 @@ public class CaseEventListener implements PropertyChangeListener {
 
                 if (dbManager.getBadTags().contains(tagName.getDisplayName())) {
                     try {
-                        EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                        if (null != eamArtifact) {
+                        List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
+                        for (EamArtifact eamArtifact : convertedArtifacts) {
                             eamArtifact.getInstances().get(0).setComment(bbTagAdded.getComment());
                             Runnable r = new BadFileTagRunner(eamArtifact);
                             // TODO: send r into a thread pool instead

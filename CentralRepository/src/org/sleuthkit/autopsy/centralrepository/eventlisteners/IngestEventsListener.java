@@ -44,14 +44,15 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 
 /**
- * Listen for ingest events and update entries in the Central Repository database accordingly
+ * Listen for ingest events and update entries in the Central Repository
+ * database accordingly
  */
 public class IngestEventsListener {
 
     private static final Logger LOGGER = Logger.getLogger(EamArtifact.class.getName());
 
     final Collection<String> addedCeArtifactTrackerSet = new LinkedHashSet<>();
-    
+
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
 
@@ -92,9 +93,8 @@ public class IngestEventsListener {
                     try {
                         for (BlackboardArtifact bbArtifact : bbArtifacts) {
                             // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                            EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                            if (null != eamArtifact) {
-
+                            List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
+                            for (EamArtifact eamArtifact : convertedArtifacts) {
                                 try {
                                     // Only do something with this artifact if it's unique within the job
                                     if (addedCeArtifactTrackerSet.add(eamArtifact.toString())) {
@@ -105,7 +105,7 @@ public class IngestEventsListener {
                                         List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact);
                                         if (!caseDisplayNames.isEmpty()) {
                                             postCorrelatedBadArtifactToBlackboard(bbArtifact,
-                                                caseDisplayNames);
+                                                    caseDisplayNames);
                                         }
                                         eamArtifacts.add(eamArtifact);
                                     }
@@ -140,7 +140,7 @@ public class IngestEventsListener {
                     // @@@ This isnt' entirely accurate to do here.  We could have multiple
                     // ingest jobs at the same time
                     addedCeArtifactTrackerSet.clear();
-                    
+
                 } // DATA_SOURCE_ANALYSIS_COMPLETED
                 break;
             }
@@ -153,7 +153,7 @@ public class IngestEventsListener {
 
         try {
             AbstractFile af = bbArtifact.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
-        
+
             String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
             BlackboardArtifact tifArtifact = af.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
@@ -163,7 +163,7 @@ public class IngestEventsListener {
             tifArtifact.addAttribute(att);
             tifArtifact.addAttribute(att2);
             tifArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));
-        
+
             try {
                 // index the artifact for keyword search
                 Blackboard blackboard = Case.getCurrentCase().getServices().getBlackboard();

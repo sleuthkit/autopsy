@@ -358,8 +358,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Scan a Node for blackboard artifacts / content that we can correlate on
-     * and create the corresponding Central Repository artifacts for
-     * display
+     * and create the corresponding Central Repository artifacts for display
      *
      * @param node The node to view
      *
@@ -380,10 +379,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             EamDb dbManager = EamDb.getInstance();
             artifactTypes = dbManager.getCorrelationTypes();
             if (bbArtifact != null) {
-                EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, false, artifactTypes, false);
-                if (eamArtifact != null) {
-                    ret.add(eamArtifact);
-                }
+                ret.addAll(EamArtifactUtil.fromBlackboardArtifact(bbArtifact, false, artifactTypes, false));
             }
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error retrieving correlation types", ex); // NON-NLS
@@ -475,8 +471,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      *
      * @param eamArtifact Artifact to use for ArtifactTypeEnum matching
      *
-     * @return List of Central Repository Artifact Instances, empty
-     *         list if none found
+     * @return List of Central Repository Artifact Instances, empty list if none
+     *         found
      */
     public Collection<EamArtifactInstance> getReferenceInstancesAsArtifactInstances(EamArtifact eamArtifact) {
         Collection<EamArtifactInstance> eamArtifactInstances = new ArrayList<>();
