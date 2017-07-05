@@ -54,7 +54,7 @@ public final class SqliteEamDbSettings {
     private static final String PRAGMA_ENCODING_UTF8 = "PRAGMA encoding = 'UTF-8'";
     private static final String PRAGMA_PAGE_SIZE_4096 = "PRAGMA page_size = 4096";
     private static final String PRAGMA_FOREIGN_KEYS_ON = "PRAGMA foreign_keys = ON";
-    private final String DB_NAMES_REGEX = "[a-zA-Z]\\w*(\\.db)?";
+    private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*(\\.db)?";
     private String dbName;
     private String dbDirectory;
     private int bulkThreshold;
@@ -251,11 +251,11 @@ public final class SqliteEamDbSettings {
         createCasesTable.append("org_id integer,");
         createCasesTable.append("case_name text NOT NULL,");
         createCasesTable.append("creation_date text NOT NULL,");
-        createCasesTable.append("case_number text NOT NULL,");
-        createCasesTable.append("examiner_name text NOT NULL,");
-        createCasesTable.append("examiner_email text NOT NULL,");
-        createCasesTable.append("examiner_phone text NOT NULL,");
-        createCasesTable.append("notes text NOT NULL,");
+        createCasesTable.append("case_number text,");
+        createCasesTable.append("examiner_name text,");
+        createCasesTable.append("examiner_email text,");
+        createCasesTable.append("examiner_phone text,");
+        createCasesTable.append("notes text,");
         createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE(case_uid) ON CONFLICT IGNORE,");
         createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createCasesTable.append(")");
@@ -277,7 +277,7 @@ public final class SqliteEamDbSettings {
         StringBuilder createReferenceSetsTable = new StringBuilder();
         createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
         createReferenceSetsTable.append("id integer primary key autoincrement NOT NULL,");
-        createReferenceSetsTable.append("org_id integer,");
+        createReferenceSetsTable.append("org_id integer NOT NULL,");
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
@@ -293,7 +293,7 @@ public final class SqliteEamDbSettings {
         createReferenceTypesTableTemplate.append("reference_set_id integer,");
         createReferenceTypesTableTemplate.append("value text NOT NULL,");
         createReferenceTypesTableTemplate.append("known_status text NOT NULL,");
-        createReferenceTypesTableTemplate.append("comment text NOT NULL,");
+        createReferenceTypesTableTemplate.append("comment text,");
         createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(reference_set_id, value) ON CONFLICT IGNORE,");
         createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createReferenceTypesTableTemplate.append(")");
@@ -312,9 +312,6 @@ public final class SqliteEamDbSettings {
         createCorrelationTypesTable.append("CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)");
         createCorrelationTypesTable.append(")");
 
-        // NOTE: there are API methods that query by one of: name, supported, or enabled.
-        // Only name is currently implemented, but, there will only be a small number
-        // of artifact_types, so there is no benefit to having any indices.
         // Each "%s" will be replaced with the relevant TYPE_instances table name.
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
         createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
@@ -324,7 +321,7 @@ public final class SqliteEamDbSettings {
         createArtifactInstancesTableTemplate.append("value text NOT NULL,");
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
+        createArtifactInstancesTableTemplate.append("comment text,");
         createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(case_id, data_source_id, value, file_path) ON CONFLICT IGNORE,");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
@@ -401,6 +398,9 @@ public final class SqliteEamDbSettings {
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
             return false;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
+            return false;
         } finally {
             EamDbUtil.closeConnection(conn);
         }
@@ -445,7 +445,7 @@ public final class SqliteEamDbSettings {
         if (dbName == null || dbName.isEmpty()) {
             throw new EamDbException("Invalid database file name. Cannot be null or empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Invalid database file name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
+            throw new EamDbException("Invalid database file name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName;

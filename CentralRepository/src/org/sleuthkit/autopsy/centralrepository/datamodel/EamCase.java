@@ -46,7 +46,7 @@ public class EamCase implements Serializable {
     private String notes;
 
     public EamCase(String caseUUID, String displayName) {
-        this(-1, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), "", "", "", "", "");
+        this(-1, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
     }
 
     public EamCase(int ID,
@@ -136,7 +136,7 @@ public class EamCase implements Serializable {
 
     public String getCaseDetailsOptionsPaneDialog() {
         StringBuilder content = new StringBuilder();
-        content.append(getTitleCaseUUID()).append(getCaseUUID().toString()).append("\n");
+        content.append(getTitleCaseUUID()).append(getCaseUUID()).append("\n");
         content.append(getTitleCaseDisplayName()).append(getDisplayName()).append("\n");
         content.append(getTitleCreationDate()).append(getCreationDate()).append("\n");
         content.append(getTitleCaseNumber()).append(getCaseNumber()).append("\n");
@@ -222,7 +222,7 @@ public class EamCase implements Serializable {
      * @return the caseNumber
      */
     public String getCaseNumber() {
-        return caseNumber;
+        return null == caseNumber ? "" : caseNumber;
     }
 
     /**
@@ -236,7 +236,7 @@ public class EamCase implements Serializable {
      * @return the examinerName
      */
     public String getExaminerName() {
-        return examinerName;
+        return null == examinerName ? "" : examinerName;
     }
 
     /**
@@ -250,7 +250,7 @@ public class EamCase implements Serializable {
      * @return the examinerEmail
      */
     public String getExaminerEmail() {
-        return examinerEmail;
+        return null == examinerEmail ? "" : examinerEmail;
     }
 
     /**
@@ -264,7 +264,7 @@ public class EamCase implements Serializable {
      * @return the examinerPhone
      */
     public String getExaminerPhone() {
-        return examinerPhone;
+        return null == examinerPhone ? "" : examinerPhone;
     }
 
     /**
@@ -278,7 +278,7 @@ public class EamCase implements Serializable {
      * @return the notes
      */
     public String getNotes() {
-        return notes;
+        return null == notes ? "" : notes;
     }
 
     /**

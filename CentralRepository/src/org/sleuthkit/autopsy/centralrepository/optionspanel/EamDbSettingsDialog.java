@@ -548,7 +548,8 @@ public class EamDbSettingsDialog extends JDialog {
     }//GEN-LAST:event_bnCreateDbActionPerformed
 
     @Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
-        "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform."})
+        "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
+        "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to Central Repository database."})
     private void bnOkActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOkActionPerformed
         /**
          * We have to shutdown the previous platform's connection pool first;
@@ -586,19 +587,32 @@ public class EamDbSettingsDialog extends JDialog {
                 dbSettingsPostgres.saveSettings();
                 // Load those newly saved settings into the postgres db manager instance
                 //  in case we are still using the same instance.
-                EamDb.getInstance().updateSettings();
+                try {
+                    EamDb.getInstance().updateSettings();
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
+                    setGuidanceMessage(Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), true);
+                    return;
+                }
+
                 break;
             case SQLITE:
                 // save the new SQLite settings
                 dbSettingsSqlite.saveSettings();
                 // Load those newly saved settings into the sqlite db manager instance
                 //  in case we are still using the same instance.
-                EamDb.getInstance().updateSettings();
+                try {
+                    EamDb.getInstance().updateSettings();
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
+                    setGuidanceMessage(Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), true);
+                    return;
+                }
                 break;
             case DISABLED:
                 break;
         }
-        
+
         dispose();
     }//GEN-LAST:event_bnOkActionPerformed
 

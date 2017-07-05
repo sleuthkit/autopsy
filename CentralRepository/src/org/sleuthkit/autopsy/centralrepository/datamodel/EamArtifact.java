@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import org.openide.util.NbBundle.Messages;
 
 /**
@@ -46,13 +47,15 @@ public class EamArtifact implements Serializable {
 
     /**
      * Load the default correlation types
+     * 
+     * @throws EamDbException if the Type's dbTableName has invalid characters/format
      */
     @Messages({"CorrelationType.FILES.displayName=Files",
         "CorrelationType.DOMAIN.displayName=Domains",
         "CorrelationType.EMAIL.displayName=Email Addresses",
         "CorrelationType.PHONE.displayName=Phone Numbers",
         "CorrelationType.USBID.displayName=USB Devices"})
-    public static List<EamArtifact.Type> getDefaultCorrelationTypes() {
+    public static List<EamArtifact.Type> getDefaultCorrelationTypes() throws EamDbException {
         List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
         DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, false)); // NON-NLS
@@ -161,36 +164,42 @@ public class EamArtifact implements Serializable {
         private String dbTableName;
         private Boolean supported;
         private Boolean enabled;
+        private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*";
 
         /**
-         *
-         * @param id          Unique ID for this Correlation Type
-         * @param displayName Name of this type displayed in the UI.
-         * @param dbTableName Central Repository db table where data of this
-         *                    type is stored
-         * @param supported   Is this Type currently supported
-         * @param enabled     Is this Type currentl enabled.
+         * 
+         * @param id            Unique ID for this Correlation Type
+         * @param displayName   Name of this type displayed in the UI.
+         * @param dbTableName   Central Repository db table where data of this type is stored.
+         *                      Must start with a lowercase letter and only contain
+         *                      lowercase letters, numbers, and '_' characters.
+         * @param supported     Is this Type currently supported
+         * @param enabled       Is this Type currentl enabled.
          */
-        public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) {
+        public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this.id = id;
             this.displayName = displayName;
             this.dbTableName = dbTableName;
             this.supported = supported;
             this.enabled = enabled;
+            if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
+                throw new EamDbException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+            }
         }
 
         /**
          * Constructior for custom types where we do not know the Type ID until
-         * the row has been entered into the correlation_types table in the
-         * Central Repository.
-         *
-         * @param displayName Name of this type displayed in the UI.
-         * @param dbTableName Central Repository db table where data of this
-         *                    type is stored
-         * @param supported   Is this Type currently supported
-         * @param enabled     Is this Type currentl enabled.
+         * the row has been entered into the correlation_types table
+         * in the Central Repository.
+         * 
+         * @param displayName   Name of this type displayed in the UI.
+         * @param dbTableName   Central Repository db table where data of this type is stored
+         *                      Must start with a lowercase letter and only contain
+         *                      lowercase letters, numbers, and '_' characters.
+         * @param supported     Is this Type currently supported
+         * @param enabled       Is this Type currentl enabled.
          */
-        public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) {
+        public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this(-1, displayName, dbTableName, supported, enabled);
         }
 
@@ -312,13 +321,14 @@ public class EamArtifact implements Serializable {
         }
 
         /**
-         * To support having different database tables for each Type, this field
-         * provides the prefix/suffix of the table name, which allows us to
-         * automatically compute the table names and indicies.
-         *
-         * It is the prefix for the instances tables *_instances. It is the
-         * suffix for the reference tables reference_*.
-         *
+         * To support having different database tables for each Type,
+         * this field provides the prefix/suffix of the table name,
+         * which allows us to automatically compute the table names
+         * and index names.
+         * 
+         * It is the prefix for the instances tables *_instances. (i.e. file_instances)
+         * It is the suffix for the reference tables reference_*. (i.e. reference_file)
+         * 
          * When custom Types are added in the future, they are already supported
          * by just giving the desired value for the table name for each custom
          * Type. Possibly having all custom Types use a common table name.
@@ -330,9 +340,27 @@ public class EamArtifact implements Serializable {
         }
 
         /**
-         * @param dbTableName the dbTableName to set
+         * To support having different database tables for each Type,
+         * this field provides the prefix/suffix of the table name,
+         * which allows us to automatically compute the table names
+         * and index names.
+         * 
+         * It is the prefix for the instances tables *_instances. (i.e. file_instances)
+         * It is the suffix for the reference tables reference_*. (i.e. reference_file)
+         * 
+         * When custom Types are added in the future, they are already supported
+         * by just giving the desired value for the table name for each custom
+         * Type. Possibly having all custom Types use a common table name. (i.e. custom_instances)
+         * 
+         * @param dbTableName the dbTableName to set. Must start with lowercase letter
+         *                      and can only contain lowercase letters, numbers, and '_' characters.
+         * 
+         * @throws EamDbException if dbTableName contains invalid characters
          */
-        public void setDbTableName(String dbTableName) {
+        public void setDbTableName(String dbTableName) throws EamDbException {
+            if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
+                throw new EamDbException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+            }
             this.dbTableName = dbTableName;
         }
     }

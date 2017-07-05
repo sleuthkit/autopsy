@@ -88,7 +88,13 @@ class IngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        EamDb dbManager = EamDb.getInstance();
+        EamDb dbManager;
+        try {
+            dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            return ProcessResult.ERROR;
+        }
 
         // only continue if we are correlating filesType
         if (!filesType.isEnabled()) {
@@ -133,7 +139,7 @@ class IngestModule implements FileIngestModule {
                     eamCase,
                     eamDataSource,
                     af.getParentPath() + af.getName(),
-                    "",
+                    null,
                     TskData.FileKnown.UNKNOWN,
                     EamArtifactInstance.GlobalStatus.LOCAL
             );
@@ -159,7 +165,13 @@ class IngestModule implements FileIngestModule {
             return;
         }
 
-        EamDb dbManager = EamDb.getInstance();
+        EamDb dbManager;
+        try {
+            dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex);
+            return;
+        }
         try {
             dbManager.bulkInsertArtifacts();
         } catch (EamDbException ex) {
@@ -202,20 +214,29 @@ class IngestModule implements FileIngestModule {
         jobId = context.getJobId();
         eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
 
-        String deviceId = "";
+        String deviceId;
         try {
             deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(context.getDataSource().getId()).getDeviceId();
         } catch (TskCoreException | TskDataException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting data source device id in ingest module start up.", ex); // NON-NLS
+            throw new IngestModuleException("Error getting data source device id in ingest module start up.", ex); // NON-NLS
         }
 
         eamDataSource = new EamDataSource(deviceId, context.getDataSource().getName());
 
-        EamDb dbManager = EamDb.getInstance();
+        EamDb dbManager;
+        try {
+            dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); // NON-NLS
+            throw new IngestModuleException("Error connecting to Central Repository database.", ex); // NON-NLS
+        }
+
         try {
             filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in startUp.", ex); // NON-NLS
-            throw new IngestModuleException("Error getting correlation type FILES in startUp.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
+            throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
 
         // TODO: once we implement a shared cache, load/init it here w/ syncronized and define reference counter
@@ -229,8 +250,8 @@ class IngestModule implements FileIngestModule {
                     dbManager.newDataSource(eamDataSource);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating new data source in startUp.", ex); // NON-NLS
-                throw new IngestModuleException("Error creating new data source in startUp.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error creating new data source in ingest module start up.", ex); // NON-NLS
+                throw new IngestModuleException("Error creating new data source in ingest module start up.", ex); // NON-NLS
             }
 
             // ensure we have this case defined in the EAM DB
@@ -244,9 +265,9 @@ class IngestModule implements FileIngestModule {
                     curCase.getCreatedDate(),
                     curCase.getNumber(),
                     curCase.getExaminer(),
-                    "",
-                    "",
-                    "");
+                    null,
+                    null,
+                    null);
             try {
                 existingCase = dbManager.getCaseDetails(curCeCase.getCaseUUID());
                 if (existingCase == null) {
@@ -254,8 +275,8 @@ class IngestModule implements FileIngestModule {
                 }
 
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating new case in startUp.", ex); // NON-NLS
-                throw new IngestModuleException("Error creating new case in startUp.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
+                throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
             }
         }
     }

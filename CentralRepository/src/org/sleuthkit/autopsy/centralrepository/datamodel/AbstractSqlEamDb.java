@@ -33,6 +33,8 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import javafx.animation.KeyValue;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
@@ -58,7 +60,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws UnknownHostException, EamDbException
      */
-    protected AbstractSqlEamDb() {
+    protected AbstractSqlEamDb() throws EamDbException{
         badTags = new ArrayList<>();
         bulkArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
@@ -69,32 +71,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
         });
     }
 
-    /**
-     * Check to see if the database schema exists and is the current version. -
-     * If it doesn't exist, initialize it and load default content. - If it is
-     * not the current version, update it. - If it is already initialized and is
-     * the current version, do nothing.
-     *
-     * Note: this should be call after the connectionPool is initialized.
-     */
-//    protected void confirmDatabaseSchema() throws EamDbException {
-//        int schema_version;
-//        try {
-//            schema_version = Integer.parseInt(getDbInfo("SCHEMA_VERSION"));
-//        } catch (EamDbException | NumberFormatException ex) {
-//            // error likely means we have not initialized the schema
-//            schema_version = 0;
-//            LOGGER.log(Level.WARNING, "Could not find SCHEMA_VERSION in db_info table, assuming database is not initialized.", ex); // NON-NLS
-//        }
-//
-//        if (0 == schema_version) {
-////            initializeDatabaseSchema();
-//            insertDefaultContent();
-//        } else if (SCHEMA_VERSION > schema_version) {
-//            // FUTURE: upgrade schema
-//        }
-//        // else, schema is current
-//    }
     /**
      * Setup and create a connection to the selected database implementation
      */
@@ -243,11 +219,31 @@ public abstract class AbstractSqlEamDb implements EamDb {
             }
             preparedStatement.setString(3, eamCase.getDisplayName());
             preparedStatement.setString(4, eamCase.getCreationDate());
-            preparedStatement.setString(5, eamCase.getCaseNumber());
-            preparedStatement.setString(6, eamCase.getExaminerName());
-            preparedStatement.setString(7, eamCase.getExaminerEmail());
-            preparedStatement.setString(8, eamCase.getExaminerPhone());
-            preparedStatement.setString(9, eamCase.getNotes());
+            if ("".equals(eamCase.getCaseNumber())) {
+                preparedStatement.setNull(5, Types.INTEGER);
+            } else {
+                preparedStatement.setString(5, eamCase.getCaseNumber());
+            }
+            if ("".equals(eamCase.getExaminerName())) {
+                preparedStatement.setNull(6, Types.INTEGER);  
+            } else {
+                preparedStatement.setString(6, eamCase.getExaminerName());
+            }
+            if ("".equals(eamCase.getExaminerEmail())) {
+                preparedStatement.setNull(7, Types.INTEGER);
+            } else {
+                preparedStatement.setString(7, eamCase.getExaminerEmail());
+            }
+            if ("".equals(eamCase.getExaminerPhone())) {
+                preparedStatement.setNull(8, Types.INTEGER);
+            } else {
+                preparedStatement.setString(8, eamCase.getExaminerPhone());
+            }
+            if ("".equals(eamCase.getNotes())) {
+                preparedStatement.setNull(9, Types.INTEGER);
+            } else {
+                preparedStatement.setString(9, eamCase.getNotes());
+            }
 
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
@@ -282,11 +278,33 @@ public abstract class AbstractSqlEamDb implements EamDb {
             }
             preparedStatement.setString(2, eamCase.getDisplayName());
             preparedStatement.setString(3, eamCase.getCreationDate());
-            preparedStatement.setString(4, eamCase.getCaseNumber());
-            preparedStatement.setString(5, eamCase.getExaminerName());
-            preparedStatement.setString(6, eamCase.getExaminerEmail());
-            preparedStatement.setString(7, eamCase.getExaminerPhone());
-            preparedStatement.setString(8, eamCase.getNotes());
+
+            if ("".equals(eamCase.getCaseNumber())) {
+                preparedStatement.setNull(4, Types.INTEGER);
+            } else {
+                preparedStatement.setString(4, eamCase.getCaseNumber());
+            }
+            if ("".equals(eamCase.getExaminerName())) {
+                preparedStatement.setNull(5, Types.INTEGER);  
+            } else {
+                preparedStatement.setString(5, eamCase.getExaminerName());
+            }
+            if ("".equals(eamCase.getExaminerEmail())) {
+                preparedStatement.setNull(6, Types.INTEGER);
+            } else {
+                preparedStatement.setString(6, eamCase.getExaminerEmail());
+            }
+            if ("".equals(eamCase.getExaminerPhone())) {
+                preparedStatement.setNull(7, Types.INTEGER);
+            } else {
+                preparedStatement.setString(7, eamCase.getExaminerPhone());
+            }
+            if ("".equals(eamCase.getNotes())) {
+                preparedStatement.setNull(8, Types.INTEGER);
+            } else {
+                preparedStatement.setString(8, eamCase.getNotes());
+            }
+
             preparedStatement.setString(9, eamCase.getCaseUUID());
 
             preparedStatement.executeUpdate();
@@ -527,7 +545,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setString(3, eamArtifact.getCorrelationValue());
                 preparedStatement.setString(4, eamInstance.getFilePath());
                 preparedStatement.setString(5, eamInstance.getKnownStatus().name());
-                preparedStatement.setString(6, eamInstance.getComment());
+                if ("".equals(eamInstance.getComment())) {
+                    preparedStatement.setNull(6, Types.INTEGER);
+                } else {
+                    preparedStatement.setString(6, eamInstance.getComment());
+                }
 
                 preparedStatement.executeUpdate();
             }
@@ -908,7 +930,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
                             bulkPs.setString(3, eamArtifact.getCorrelationValue());
                             bulkPs.setString(4, eamInstance.getFilePath());
                             bulkPs.setString(5, eamInstance.getKnownStatus().name());
-                            bulkPs.setString(6, eamInstance.getComment());
+                            if ("".equals(eamInstance.getComment())) {
+                                bulkPs.setNull(6, Types.INTEGER);
+                            } else {
+                                bulkPs.setString(6, eamInstance.getComment());
+                            }
                             bulkPs.addBatch();
                         }
                     }
@@ -957,11 +983,33 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 }
                 bulkPs.setString(3, eamCase.getDisplayName());
                 bulkPs.setString(4, eamCase.getCreationDate());
-                bulkPs.setString(5, eamCase.getCaseNumber());
-                bulkPs.setString(6, eamCase.getExaminerName());
-                bulkPs.setString(7, eamCase.getExaminerEmail());
-                bulkPs.setString(8, eamCase.getExaminerPhone());
-                bulkPs.setString(9, eamCase.getNotes());
+
+                if ("".equals(eamCase.getCaseNumber())) {
+                    bulkPs.setNull(5, Types.INTEGER);
+                } else {
+                    bulkPs.setString(5, eamCase.getCaseNumber());
+                }
+                if ("".equals(eamCase.getExaminerName())) {
+                    bulkPs.setNull(6, Types.INTEGER);  
+                } else {
+                    bulkPs.setString(6, eamCase.getExaminerName());
+                }
+                if ("".equals(eamCase.getExaminerEmail())) {
+                    bulkPs.setNull(7, Types.INTEGER);
+                } else {
+                    bulkPs.setString(7, eamCase.getExaminerEmail());
+                }
+                if ("".equals(eamCase.getExaminerPhone())) {
+                    bulkPs.setNull(8, Types.INTEGER);
+                } else {
+                    bulkPs.setString(8, eamCase.getExaminerPhone());
+                }
+                if ("".equals(eamCase.getNotes())) {
+                    bulkPs.setNull(9, Types.INTEGER);
+                } else {
+                    bulkPs.setString(9, eamCase.getNotes());
+                }
+
                 bulkPs.addBatch();
 
                 counter++;
@@ -1031,7 +1079,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 preparedUpdate = conn.prepareStatement(sqlUpdate.toString());
 
                 preparedUpdate.setString(1, TskData.FileKnown.BAD.name());
-                preparedUpdate.setString(2, eamInstance.getComment());
+                // NOTE: if the user tags the same instance as BAD multiple times,
+                // the comment from the most recent tagging is the one that will
+                // prevail in the DB.
+                if ("".equals(eamInstance.getComment())) {
+                    preparedUpdate.setNull(2, Types.INTEGER);
+                } else {
+                    preparedUpdate.setString(2, eamInstance.getComment());
+                }
                 preparedUpdate.setInt(3, instance_id);
 
                 preparedUpdate.executeUpdate();
@@ -1805,7 +1860,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return eamDataSource;
     }
 
-    private EamArtifact.Type getCorrelationTypeFromResultSet(ResultSet resultSet) throws SQLException {
+    private EamArtifact.Type getCorrelationTypeFromResultSet(ResultSet resultSet) throws EamDbException, SQLException {
         if (null == resultSet) {
             return null;
         }

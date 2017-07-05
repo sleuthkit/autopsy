@@ -59,7 +59,13 @@ public class CaseEventListener implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        EamDb dbManager = EamDb.getInstance();
+        EamDb dbManager;
+        try {
+            dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get instance of db manager.", ex);
+            return;
+        }
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED: {
                 if (!EamDb.isEnabled()) {
@@ -94,11 +100,12 @@ public class CaseEventListener implements PropertyChangeListener {
                     if (md5 == null || md5.isEmpty()) {
                         return;
                     }
-                    String deviceId = "";
+                    String deviceId;
                     try {
                         deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
                     } catch (TskCoreException | TskDataException ex) {
                         LOGGER.log(Level.SEVERE, "Error, failed to get deviceID or data source from current case.", ex);
+                        return;
                     }
 
                     EamArtifact eamArtifact;
@@ -212,9 +219,9 @@ public class CaseEventListener implements PropertyChangeListener {
                             curCase.getCreatedDate(),
                             curCase.getNumber(),
                             curCase.getExaminer(),
-                            "",
-                            "",
-                            "");
+                            null,
+                            null,
+                            null);
 
                     if (!EamDb.isEnabled()) {
                         break;
