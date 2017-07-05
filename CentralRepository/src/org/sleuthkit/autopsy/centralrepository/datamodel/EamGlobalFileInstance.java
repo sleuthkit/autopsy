@@ -33,6 +33,14 @@ public class EamGlobalFileInstance {
     private String comment;
 
     public EamGlobalFileInstance(
+            int globalSetID,
+            String MD5Hash,
+            TskData.FileKnown knownStatus,
+            String comment) {
+        this(-1, globalSetID, MD5Hash, knownStatus, comment);
+    }
+
+    public EamGlobalFileInstance(
             int instanceID,
             int globalSetID,
             String MD5Hash,
@@ -40,17 +48,10 @@ public class EamGlobalFileInstance {
             String comment) {
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
-        this.MD5Hash = MD5Hash;
+        // Normalize hashes by lower casing
+        this.MD5Hash = MD5Hash.toLowerCase();
         this.knownStatus = knownStatus;
         this.comment = comment;
-    }
-
-    public EamGlobalFileInstance(
-            int globalSetID,
-            String MD5Hash,
-            TskData.FileKnown knownStatus,
-            String comment) {
-        this(-1, globalSetID, MD5Hash, knownStatus, comment);
     }
 
     @Override
@@ -111,7 +112,8 @@ public class EamGlobalFileInstance {
      * @param MD5Hash the MD5Hash to set
      */
     public void setMD5Hash(String MD5Hash) {
-        this.MD5Hash = MD5Hash;
+        // Normalize hashes by lower casing
+        this.MD5Hash = MD5Hash.toLowerCase();
     }
 
     /**

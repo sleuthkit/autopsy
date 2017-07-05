@@ -44,7 +44,7 @@ public class EamArtifact implements Serializable {
     public static final int EMAIL_TYPE_ID = 2;
     public static final int PHONE_TYPE_ID = 3;
     public static final int USBID_TYPE_ID = 4;
-    
+
     /**
      * Load the default correlation types
      * 
@@ -68,7 +68,8 @@ public class EamArtifact implements Serializable {
     public EamArtifact(Type correlationType, String correlationValue) {
         this.ID = "";
         this.correlationType = correlationType;
-        this.correlationValue = correlationValue;
+        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
+        this.correlationValue = correlationValue.toLowerCase();
         this.artifactInstances = new ArrayList<>();
     }
 
@@ -113,7 +114,8 @@ public class EamArtifact implements Serializable {
      * @param correlationValue the correlationValue to set
      */
     public void setCorrelationValue(String correlationValue) {
-        this.correlationValue = correlationValue;
+        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
+        this.correlationValue = correlationValue.toLowerCase();
     }
 
     /**
@@ -330,7 +332,7 @@ public class EamArtifact implements Serializable {
          * When custom Types are added in the future, they are already supported
          * by just giving the desired value for the table name for each custom
          * Type. Possibly having all custom Types use a common table name.
-         * 
+         *
          * @return the dbTableName
          */
         public String getDbTableName() {
