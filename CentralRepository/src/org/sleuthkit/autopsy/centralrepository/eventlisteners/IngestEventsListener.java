@@ -93,8 +93,8 @@ public class IngestEventsListener {
                     try {
                         for (BlackboardArtifact bbArtifact : bbArtifacts) {
                             // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                            EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                            if (null != eamArtifact) {
+                            List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
+                            for (EamArtifact eamArtifact : convertedArtifacts) {
                                 try {
                                     // Only do something with this artifact if it's unique within the job
                                     if (addedCeArtifactTrackerSet.add(eamArtifact.toString())) {

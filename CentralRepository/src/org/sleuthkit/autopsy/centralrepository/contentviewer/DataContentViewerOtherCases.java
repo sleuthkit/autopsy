@@ -379,10 +379,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             EamDb dbManager = EamDb.getInstance();
             artifactTypes = dbManager.getCorrelationTypes();
             if (bbArtifact != null) {
-                EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, false, artifactTypes, false);
-                if (eamArtifact != null) {
-                    ret.add(eamArtifact);
-                }
+                ret.addAll(EamArtifactUtil.fromBlackboardArtifact(bbArtifact, false, artifactTypes, false));
             }
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error retrieving correlation types", ex); // NON-NLS
