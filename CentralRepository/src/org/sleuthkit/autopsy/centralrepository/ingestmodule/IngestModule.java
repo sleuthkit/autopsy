@@ -101,15 +101,13 @@ class IngestModule implements FileIngestModule {
             return ProcessResult.OK;
         }
 
-        EamArtifact eamArtifact = new EamArtifact(filesType, md5);
-
         // If unknown to both the hash module and as a globally known artifact in the EAM DB, correlate to other cases
         if (af.getKnown() == TskData.FileKnown.UNKNOWN) {
             // query db for artifact instances having this MD5 and knownStatus = "Bad".
             try {
                 // if af.getKnown() is "UNKNOWN" and this artifact instance was marked bad in a previous case, 
                 // create TSK_INTERESTING_FILE artifact on BB.
-                List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact);
+                List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(filesType, md5);
                 if (!caseDisplayNames.isEmpty()) {
                     postCorrelatedBadFileToBlackboard(af, caseDisplayNames);
                 }
@@ -121,7 +119,7 @@ class IngestModule implements FileIngestModule {
 
         // Make a TSK_HASHSET_HIT blackboard artifact for global known bad files
         try {
-            if (dbManager.isArtifactlKnownBadByReference(eamArtifact)) {
+            if (dbManager.isArtifactlKnownBadByReference(filesType, md5)) {
                 postCorrelatedHashHitToBlackboard(af);
             }
         } catch (EamDbException ex) {
@@ -130,6 +128,7 @@ class IngestModule implements FileIngestModule {
         }
 
         try {
+            EamArtifact eamArtifact = new EamArtifact(filesType, md5);
             EamArtifactInstance cefi = new EamArtifactInstance(
                     eamCase,
                     eamDataSource,
@@ -167,7 +166,7 @@ class IngestModule implements FileIngestModule {
             LOGGER.log(Level.SEVERE, "Error doing bulk insert of artifacts.", ex); // NON-NLS
         }
         try {
-            Long count = dbManager.getCountArtifactInstancesByCaseDataSource(new EamArtifactInstance(eamCase, eamDataSource));
+            Long count = dbManager.getCountArtifactInstancesByCaseDataSource(eamCase.getCaseUUID(), eamDataSource.getDeviceID());
             LOGGER.log(Level.INFO, "{0} artifacts in db for case: {1} ds:{2}", new Object[]{count, eamCase.getDisplayName(), eamDataSource.getName()}); // NON-NLS
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error counting artifacts.", ex); // NON-NLS

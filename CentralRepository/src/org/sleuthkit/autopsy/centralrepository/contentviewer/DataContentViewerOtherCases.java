@@ -134,7 +134,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             try {
                 EamDb dbManager = EamDb.getInstance();
                 for (EamArtifact eamArtifact : correlatedArtifacts) {
-                    percentage = dbManager.getCommonalityPercentageForTypeValue(eamArtifact);
+                    percentage = dbManager.getCommonalityPercentageForTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                     msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
                             eamArtifact.getCorrelationType().getDisplayName(),
                             eamArtifact.getCorrelationValue()));
@@ -448,11 +448,11 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      *
      * @return A collection of correlated artifact instances from other cases
      */
-    private Collection<EamArtifactInstance> getCorrelatedInstances(EamArtifact eamArtifact, String dataSourceName, String deviceId) {
+    private Collection<EamArtifactInstance> getCorrelatedInstances(EamArtifact.Type aType, String value, String dataSourceName, String deviceId) {
         String caseUUID = Case.getCurrentCase().getName();
         try {
             EamDb dbManager = EamDb.getInstance();
-            Collection<EamArtifactInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(eamArtifact).stream()
+            Collection<EamArtifactInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(aType, value).stream()
                     .filter(artifactInstance -> !artifactInstance.getEamCase().getCaseUUID().equals(caseUUID)
                     || !artifactInstance.getEamDataSource().getName().equals(dataSourceName)
                     || !artifactInstance.getEamDataSource().getDeviceID().equals(deviceId))
@@ -530,7 +530,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         correlatedArtifacts.addAll(getArtifactsFromCorrelatableAttributes(node));
         correlatedArtifacts.forEach((eamArtifact) -> {
             // get local instances
-            Collection<EamArtifactInstance> eamArtifactInstances = getCorrelatedInstances(eamArtifact, dataSourceName, deviceId);
+            Collection<EamArtifactInstance> eamArtifactInstances = getCorrelatedInstances(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue(), dataSourceName, deviceId);
             // get global instances
             eamArtifactInstances.addAll(getReferenceInstancesAsArtifactInstances(eamArtifact));
 

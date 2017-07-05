@@ -25,6 +25,7 @@ import java.util.Set;
  * Main interface for interacting with the database
  */
 public interface EamDb {
+
     public static final int SCHEMA_VERSION = 1;
 
     /**
@@ -50,24 +51,22 @@ public interface EamDb {
 
     /**
      * Shutdown the connection pool.
-     * 
+     *
      * This closes the connection pool including all idle database connections.
-     * It will not close active/in-use connections.
-     * Thus, it is vital that there are no in-use connections 
-     * when you call this method.
-     * 
+     * It will not close active/in-use connections. Thus, it is vital that there
+     * are no in-use connections when you call this method.
+     *
      * @throws EamDbException if there is a problem closing the connection pool.
      */
     void shutdownConnections() throws EamDbException;
 
     /**
      * Update settings
-     * 
-     * When using updateSettings,
-     * if any database settings have changed, you should call
-     * shutdownConnections() before using any API methods.
-     * That will ensure that any old connections are closed
-     * and all new connections will be made using the new settings.
+     *
+     * When using updateSettings, if any database settings have changed, you
+     * should call shutdownConnections() before using any API methods. That will
+     * ensure that any old connections are closed and all new connections will
+     * be made using the new settings.
      */
     void updateSettings();
 
@@ -206,18 +205,19 @@ public interface EamDb {
     void addArtifact(EamArtifact eamArtifact) throws EamDbException;
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated with
-     * the eamArtifactType and eamArtifactValue of the given eamArtifact.
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
      *
-     * @param eamArtifact The type/value to look up (artifact with 0 instances)
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return List of artifact instances for a given type/value
      */
-    List<EamArtifactInstance> getArtifactInstancesByTypeValue(EamArtifact eamArtifact) throws EamDbException;
+    List<EamArtifactInstance> getArtifactInstancesByTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
-     * Retrieves eamArtifact instances from the database that are associated with
-     * the aType and filePath
+     * Retrieves eamArtifact instances from the database that are associated
+     * with the aType and filePath
      *
      * @param aType    EamArtifact.Type to search for
      * @param filePath File path to search for
@@ -232,13 +232,13 @@ public interface EamDb {
      * Retrieves number of artifact instances in the database that are
      * associated with the ArtifactType and artifactValue of the given artifact.
      *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                   for
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
      */
-    Long getCountArtifactInstancesByTypeValue(EamArtifact eamArtifact) throws EamDbException;
+    Long getCountArtifactInstancesByTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
      * Using the ArtifactType and ArtifactValue from the given eamArtfact,
@@ -246,24 +246,24 @@ public interface EamDb {
      * where Type/Value is found) divided by (The total number of unique
      * case_id/datasource_id tuples in the database) expressed as a percentage.
      *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                   for
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return Int between 0 and 100
      */
-    int getCommonalityPercentageForTypeValue(EamArtifact eamArtifact) throws EamDbException;
+    int getCommonalityPercentageForTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
      * Retrieves number of unique caseDisplayName / dataSource tuples in the
      * database that are associated with the artifactType and artifactValue of
      * the given artifact.
      *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                   for
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return Number of unique tuples
      */
-    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(EamArtifact eamArtifact) throws EamDbException;
+    Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
      * Retrieves number of unique caseDisplayName/dataSource tuples in the
@@ -278,15 +278,13 @@ public interface EamDb {
      * associated with the caseDisplayName and dataSource of the given
      * eamArtifact instance.
      *
-     * @param eamInstance Instance with caseName and dataSource to search for
-     *
-     * @param eamInstance Instance with caseDisplayName and dataSource to search
-     *                   for
+     * @param caseUUID     Case ID to search for
+     * @param dataSourceID Data source ID to search for
      *
      * @return Number of artifact instances having caseDisplayName and
      *         dataSource
      */
-    Long getCountArtifactInstancesByCaseDataSource(EamArtifactInstance eamInstance) throws EamDbException;
+    Long getCountArtifactInstancesByCaseDataSource(String caseUUID, String dataSourceID) throws EamDbException;
 
     /**
      * Adds an eamArtifact to an internal list to be later added to DB. Artifact
@@ -309,52 +307,57 @@ public interface EamDb {
     void bulkInsertCases(List<EamCase> cases) throws EamDbException;
 
     /**
-     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact exists,
-     * it is updated. If eamArtifact does not exist nothing happens
+     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact
+     * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      */
     void setArtifactInstanceKnownBad(EamArtifact eamArtifact) throws EamDbException;
 
     /**
-     * Gets list of matching eamArtifact instances that have knownStatus = "Bad".
+     * Gets list of matching eamArtifact instances that have knownStatus =
+     * "Bad".
      *
-     * @param eamArtifact Artifact containing Type and Value
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return List with 0 or more matching eamArtifact instances.
      */
-    List<EamArtifactInstance> getArtifactInstancesKnownBad(EamArtifact eamArtifact) throws EamDbException;
+    List<EamArtifactInstance> getArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
      * Count matching eamArtifacts instances that have knownStatus = "Bad".
      *
-     * @param eamArtifact Artifact containing Type and Value
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return Number of matching eamArtifacts
      */
-    Long getCountArtifactInstancesKnownBad(EamArtifact eamArtifact) throws EamDbException;
+    Long getCountArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
      * Gets list of distinct case display names, where each case has 1+ Artifact
      * Instance matching eamArtifact with knownStatus = "Bad".
      *
-     * @param eamArtifact Artifact containing Type and Value
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return List of cases containing this artifact with instances marked as
      *         bad
      *
      * @throws EamDbException
      */
-    List<String> getListCasesHavingArtifactInstancesKnownBad(EamArtifact eamArtifact) throws EamDbException;
+    List<String> getListCasesHavingArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
      * Is the artifact known as bad according to the reference entries?
      *
-     * @param eamArtifact Artifact containing Type and Value
+     * @param aType EamArtifact.Type to search for
+     * @param value Value to search for
      *
      * @return Global known status of the artifact
      */
-    boolean isArtifactlKnownBadByReference(EamArtifact eamArtifact) throws EamDbException;
+    boolean isArtifactlKnownBadByReference(EamArtifact.Type aType, String value) throws EamDbException;
 
     /**
      * Add a new organization
@@ -411,12 +414,13 @@ public interface EamDb {
      * Add a new reference instance
      *
      * @param eamGlobalFileInstance The reference instance to add
-     * @param correlationType Correlation Type that this Reference Instance is
+     * @param correlationType       Correlation Type that this Reference
+     *                              Instance is
      *
      * @throws EamDbException
      */
-    void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, EamArtifact.Type correlationType) throws EamDbException ;
-    
+    void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, EamArtifact.Type correlationType) throws EamDbException;
+
     /**
      * Add a new global file instance to the bulk collection
      *
@@ -425,13 +429,13 @@ public interface EamDb {
      * @throws EamDbException
      */
 //    void prepareGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException;
-
     /**
      * Insert the bulk collection of Global File Instances
      *
-     * @param globalInstances a Set of EamGlobalFileInstances to insert into the db.
-     * @param contentType       the Type of the global instances
-     * 
+     * @param globalInstances a Set of EamGlobalFileInstances to insert into the
+     *                        db.
+     * @param contentType     the Type of the global instances
+     *
      * @throws EamDbException
      */
     void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, EamArtifact.Type contentType) throws EamDbException;
@@ -439,7 +443,7 @@ public interface EamDb {
     /**
      * Get all reference entries having a given correlation type and value
      *
-     * @param aType Type to use for matching
+     * @param aType  Type to use for matching
      * @param aValue Value to use for matching
      *
      * @return List of all global file instances with a type and value
@@ -454,6 +458,7 @@ public interface EamDb {
      * @param newType New type to add.
      *
      * @return Type.ID for newType
+     *
      * @throws EamDbException
      */
     public int newCorrelationType(EamArtifact.Type newType) throws EamDbException;
