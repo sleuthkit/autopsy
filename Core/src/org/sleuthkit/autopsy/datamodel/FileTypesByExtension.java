@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -51,8 +53,9 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Filters database results by file extension.
  */
- public final class FileTypesByExtension implements AutopsyVisitableItem {
+public final class FileTypesByExtension implements AutopsyVisitableItem {
 
+    private final static Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());
     private final SleuthkitCase skCase;
 
     public FileTypesByExtension(SleuthkitCase skCase) {
@@ -90,7 +93,10 @@ import org.sleuthkit.datamodel.TskData;
 
         private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString()) || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString()) || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+            if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                    || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                 /**
                  * Checking for a current case is a stop gap measure until a
                  * different way of handling the closing of cases is worked out.
@@ -261,8 +267,9 @@ import org.sleuthkit.datamodel.TskData;
      */
     static class FileExtensionNode extends DisplayableItemNode {
 
-        FileTypesByExtension.SearchFilterInterface filter;
-        SleuthkitCase skCase;
+        private FileTypesByExtension.SearchFilterInterface filter;
+        private SleuthkitCase skCase;
+        private long childCount = -1;
 
         /**
          *
@@ -277,10 +284,11 @@ import org.sleuthkit.datamodel.TskData;
             this.skCase = skCase;
             init();
             o.addObserver(new ByExtNodeObserver());
+
         }
 
         private void init() {
-            super.setName(filter.getName());
+            setName(filter.getName());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
         }
@@ -295,8 +303,28 @@ import org.sleuthkit.datamodel.TskData;
         }
 
         private void updateDisplayName() {
-            final long count = FileExtensionNodeChildren.calculateItems(skCase, filter);
-            super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
+            if (childCount < 0) {
+                //only show this the first time, otherwise it is distracting.
+                setDisplayName(filter.getDisplayName() + " (counting...)");
+            }
+
+            new SwingWorker<Long, Void>() {
+                @Override
+                protected Long doInBackground() throws Exception {
+                    return FileExtensionNodeChildren.calculateItems(skCase, filter);
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        childCount = get();
+                        setDisplayName(filter.getDisplayName() + " (" + childCount + ")");
+                    } catch (InterruptedException | ExecutionException ex) {
+                        setDisplayName(filter.getDisplayName());
+                        logger.log(Level.WARNING, "Failed to get count of files for filter " + filter.toString(), ex);
+                    }
+                }
+            }.execute();
         }
 
         @Override
@@ -635,5 +663,6 @@ import org.sleuthkit.datamodel.TskData;
         public String getDisplayName();
 
         public List<String> getFilter();
+
     }
 }

@@ -28,7 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.AbstractNode;
@@ -62,6 +64,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
+    private final static Logger logger = Logger.getLogger(FileTypesByMimeType.class.getName());
     private final SleuthkitCase skCase;
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
@@ -338,6 +341,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      */
     class MediaSubTypeNode extends DisplayableItemNode implements Observer {
 
+        private long childCount = -1;
+
         private MediaSubTypeNode(String mimeType) {
             super(Children.create(new MediaSubTypeNodeChildren(mimeType), true));
             addObserver(this);
@@ -358,10 +363,30 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          *                 results
          */
         private void updateDisplayName(String mimeType) {
-            final long count = new MediaSubTypeNodeChildren(mimeType).calculateItems(skCase, mimeType);
-            String[] mimeTypeParts = mimeType.split("/");
-            //joins up all remaining parts of the mimeType into one sub-type string
-            super.setDisplayName(StringUtils.join(ArrayUtils.subarray(mimeTypeParts, 1, mimeTypeParts.length), "/") + " (" + count + ")");
+
+            final String subType = StringUtils.substringAfter(mimeType, "/");
+            if (childCount < 0) {
+                //only show this the first time, otherwise it is distracting.
+                setDisplayName(subType + " (counting ...)");
+            }
+            new SwingWorker<Long, Void>() {
+                @Override
+                protected Long doInBackground() throws Exception {
+                    return calculateItems(skCase, mimeType);
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        childCount = get();
+                        setDisplayName(subType + " (" + childCount + ")");
+                    } catch (InterruptedException | ExecutionException ex) {
+                        setDisplayName(subType);
+                        logger.log(Level.WARNING, "Failed to get count of files for mimetype " + mimeType, ex);
+                    }
+                }
+
+            }.execute();
         }
 
         /**
@@ -392,6 +417,48 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     }
 
     /**
+     * Get children count without actually loading all nodes
+     *
+     * @return count(*) - the number of items that will be shown in this items
+     *         Directory Listing
+     */
+    static private long calculateItems(SleuthkitCase sleuthkitCase, String mime_type) {
+        try {
+            return sleuthkitCase.countFilesWhere(createQuery(mime_type));
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
+            return 0;
+        }
+    }
+
+    /**
+     * Create the portion of the query following WHERE for a query of the
+     * database for each file which matches the complete MIME type represented
+     * by this node. Matches against the mime_type column in tsk_files.
+     *
+     * @param mimeType - the complete mimetype of the file mediatype/subtype
+     *
+     * @return query.toString - portion of SQL query which will follow a WHERE
+     *         clause.
+     */
+    static private String createQuery(String mimeType) {
+        StringBuilder query = new StringBuilder();
+        query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
+        query.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(",");  //NON-NLS
+        query.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
+        query.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
+        if (!UserPreferences.hideSlackFilesInViewsTree()) {
+            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
+        }
+        query.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
+        if (UserPreferences.hideKnownFilesInViewsTree()) {
+            query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
+        }
+        query.append(" AND mime_type = '").append(mimeType).append("'");  //NON-NLS
+        return query.toString();
+    }
+
+    /**
      * Factory for populating the contents of the Media Sub Type Node with the
      * files that match MimeType which is represented by this position in the
      * tree.
@@ -404,21 +471,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             super();
             addObserver(this);
             this.mimeType = mimeType;
-        }
-
-        /**
-         * Get children count without actually loading all nodes
-         *
-         * @return count(*) - the number of items that will be shown in this
-         *         items Directory Listing
-         */
-        private long calculateItems(SleuthkitCase sleuthkitCase, String mime_type) {
-            try {
-                return sleuthkitCase.countFilesWhere(createQuery(mime_type));
-            } catch (TskCoreException ex) {
-                LOGGER.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
-                return 0;
-            }
         }
 
         /**
@@ -440,34 +492,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 LOGGER.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
             }
             return true;
-        }
-
-        /**
-         * Create the portion of the query following WHERE for a query of the
-         * database for each file which matches the complete MIME type
-         * represented by this node. Matches against the mime_type column in
-         * tsk_files.
-         *
-         * @param mimeType - the complete mimetype of the file mediatype/subtype
-         *
-         * @return query.toString - portion of SQL query which will follow a
-         *         WHERE clause.
-         */
-        private String createQuery(String mimeType) {
-            StringBuilder query = new StringBuilder();
-            query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
-            query.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(",");  //NON-NLS
-            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
-            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
-            if (!UserPreferences.hideSlackFilesInViewsTree()) {
-                query.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
-            }
-            query.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
-            if (UserPreferences.hideKnownFilesInViewsTree()) {
-                query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
-            }
-            query.append(" AND mime_type = '").append(mimeType).append("'");  //NON-NLS
-            return query.toString();
         }
 
         @Override
