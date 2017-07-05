@@ -129,7 +129,8 @@ public class EamArtifactUtil {
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() == artifactTypeID)) {
 
-                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString();
+                // Lower-case this to normalize domains
+                value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString().toLowerCase();
 
             } else if (aType.getId() == EamArtifact.PHONE_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeID
@@ -144,6 +145,10 @@ public class EamArtifactUtil {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
                 }
 
+                if (value != null) {
+                    // Remove all non-numeric symbols to semi-normalize phone numbers
+                    value = value.replaceAll("\\D", "");
+                }
             } else if (aType.getId() == EamArtifact.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
