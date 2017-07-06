@@ -382,7 +382,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     new Tags(),
                     new Reports()));
             Node root = new AbstractNode(contentChildren) {
-                //JMTODO: What is the point of these overrides?
+                //JIRA-2807: What is the point of these overrides?
                 /**
                  * to override the right click action in the white blank space
                  * area on the directory tree window
@@ -433,7 +433,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     Arrays.stream(views.getChildren().getNodes()).forEach(tree::expandNode);
                     tree.collapseNode(views);
                     /*
-                     * JMTODO: What is this supposed to do? Right now it selects
+                     * JIRA-2806: What is this supposed to do? Right now it selects
                      * the data sources node, but the comment seems to indicate
                      * it is supposed to select the first datasource.
                      */
@@ -456,7 +456,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                         dataResult.open(); // open the data result top component as well when the directory tree is opened
                     }
                     /*
-                     * JMTODO: What is this supposed to do?
+                     * JIRA-2806: What is this supposed to do?
                      */
                     // select the first image node, if there is one
                     // (this has to happen after dataResult is opened, because the event
