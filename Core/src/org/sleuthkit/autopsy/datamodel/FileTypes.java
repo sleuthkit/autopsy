@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
+ *
  * Copyright 2011-2016 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,18 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
+import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.ContentVisitor;
+import org.sleuthkit.datamodel.DerivedFile;
+import org.sleuthkit.datamodel.Directory;
+import org.sleuthkit.datamodel.File;
+import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 /**
@@ -98,5 +107,46 @@ public final class FileTypes implements AutopsyVisitableItem {
             return getClass().getName();
         }
 
+    }
+
+    static class FileNodeCreationVisitor extends ContentVisitor.Default<AbstractNode> {
+
+        FileNodeCreationVisitor() {
+        }
+
+        @Override
+        public FileNode visit(File f) {
+            return new FileNode(f, false);
+        }
+
+        @Override
+        public DirectoryNode visit(Directory d) {
+            return new DirectoryNode(d);
+        }
+
+        @Override
+        public LayoutFileNode visit(LayoutFile lf) {
+            return new LayoutFileNode(lf);
+        }
+
+        @Override
+        public LocalFileNode visit(DerivedFile df) {
+            return new LocalFileNode(df);
+        }
+
+        @Override
+        public LocalFileNode visit(LocalFile lf) {
+            return new LocalFileNode(lf);
+        }
+
+        @Override
+        public SlackFileNode visit(SlackFile sf) {
+            return new SlackFileNode(sf, false);
+        }
+
+        @Override
+        protected AbstractNode defaultVisit(Content di) {
+            throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(), "FileTypeChildren.exception.notSupported.msg", di.toString()));
+        }
     }
 }

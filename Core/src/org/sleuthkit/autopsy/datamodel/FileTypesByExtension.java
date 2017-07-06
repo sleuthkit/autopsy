@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -38,12 +37,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -52,8 +45,6 @@ import org.sleuthkit.datamodel.TskData;
  * Filters database results by file extension.
  */
 public final class FileTypesByExtension implements AutopsyVisitableItem {
-
-    private static final Logger LOGGER = Logger.getLogger(FileTypesByExtension.class.getName());
 
     private final SleuthkitCase skCase;
 
@@ -458,37 +449,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
             @Override
             protected Node createNodeForKey(Content key) {
-                return key.accept(new ContentVisitor.Default<AbstractNode>() {
-                    @Override
-                    public FileNode visit(File f) {
-                        return new FileNode(f, false);
-                    }
-
-                    @Override
-                    public DirectoryNode visit(Directory d) {
-                        return new DirectoryNode(d);
-                    }
-
-                    @Override
-                    public LayoutFileNode visit(LayoutFile lf) {
-                        return new LayoutFileNode(lf);
-                    }
-
-                    @Override
-                    public LocalFileNode visit(DerivedFile df) {
-                        return new LocalFileNode(df);
-                    }
-
-                    @Override
-                    public LocalFileNode visit(LocalFile lf) {
-                        return new LocalFileNode(lf);
-                    }
-
-                    @Override
-                    protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(), "FileTypeChildren.exception.notSupported.msg", di.toString()));
-                    }
-                });
+                return key.accept(new FileTypes.FileNodeCreationVisitor());
             }
         }
     }
