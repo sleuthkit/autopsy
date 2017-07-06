@@ -515,10 +515,8 @@ public class FileManager implements Closeable {
             TskData.EncodingType encodingType, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         if (localFile.isDirectory()) {
             /*
-             * Add the directory as a virtual directory.
+             * Add the directory as a local directory.
              */
-            //VirtualDirectory virtualDirectory = caseDb.addVirtualDirectory(parentDirectory.getId(), localFile.getName(), trans);
-            //progressUpdater.fileAdded(virtualDirectory);
             LocalDirectory localDirectory = caseDb.addLocalDirectory(parentDirectory.getId(), localFile.getName(), trans);
             progressUpdater.fileAdded(localDirectory);
 
