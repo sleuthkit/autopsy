@@ -59,7 +59,7 @@ class TableReportGenerator {
     private final List<BlackboardArtifact.Type> artifactTypes = new ArrayList<>();
     private final HashSet<String> tagNamesFilter = new HashSet<>();
 
-    private final List<Content> images = new ArrayList<>();
+    private final Set<Content> images = new HashSet<>();
     private final ReportProgressPanel progressPanel;
     private final TableReportModule tableReport;
     private final Map<Integer, List<Column>> columnHeaderMap;

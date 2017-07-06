@@ -32,8 +32,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.View;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
@@ -52,8 +58,8 @@ import org.netbeans.swing.etable.ETable;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
- * Content represented by a Node. Each BlackboardArtifact is rendered displayed in a JTable
- * representation of its BlackboardAttributes.
+ * Content represented by a Node. Each BlackboardArtifact is rendered displayed
+ * in a JTable representation of its BlackboardAttributes.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 3)
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer {
@@ -78,6 +84,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         Bundle.DataContentViewerArtifact_attrsTableHeader_value(),
         Bundle.DataContentViewerArtifact_attrsTableHeader_sources()};
     private static final int[] COLUMN_WIDTHS = {100, 800, 100};
+    private static final int CELL_BOTTOM_MARGIN = 5;
 
     public DataContentViewerArtifact() {
         initResultsTable();
@@ -85,6 +92,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         resultsTableScrollPane.setViewportView(resultsTable);
         customizeComponents();
         resetComponents();
+        resultsTable.setDefaultRenderer(Object.class, new MultiLineTableCellRenderer());
     }
 
     private void initResultsTable() {
@@ -100,11 +108,71 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         resultsTable.getTableHeader().setReorderingAllowed(false);
         resultsTable.setColumnHidingAllowed(false);
         resultsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        updateColumnSizes();
+        resultsTable.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {
+            }
+
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {
+            }
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+
+            }
+
+            @Override  
+            public void columnMarginChanged(ChangeEvent e) {
+                updateRowHeights(); //When the user changes column width we may need to resize row height
+            }
+
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {
+            }
+        });
+        resultsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_NEXT_COLUMN);
+
     }
 
+    /**
+     * Sets the row heights to the heights of the content in their Value column.
+     */
+    private void updateRowHeights() {
+        int valueColIndex = -1;
+        for (int col = 0; col < resultsTable.getColumnCount(); col++) {
+            if (resultsTable.getColumnName(col).equals(COLUMN_HEADERS[1])) {
+                valueColIndex = col;
+            }
+        }
+        if (valueColIndex != -1) {
+            for (int row = 0; row < resultsTable.getRowCount(); row++) {
+                Component comp = resultsTable.prepareRenderer(
+                        resultsTable.getCellRenderer(row, valueColIndex), row, valueColIndex);
+                final int rowHeight;
+                if (comp instanceof JTextComponent) {
+                    final JTextComponent tc = (JTextComponent) comp;
+                    final View rootView = tc.getUI().getRootView(tc);
+                    java.awt.Insets i = tc.getInsets(null);
+                    rootView.setSize(resultsTable.getColumnModel().getColumn(valueColIndex)
+                            .getPreferredWidth() - i.left - i.right,
+                            Integer.MAX_VALUE);
+                    rowHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
+                } else {
+                    rowHeight = comp.getPreferredSize().height;
+                }
+                if (rowHeight > 0) {
+                    resultsTable.setRowHeight(row, rowHeight + CELL_BOTTOM_MARGIN);
+                }
+            }
+        }
+    }
+
+    /**
+     * Update the column widths so that the Value column has most of the space.
+     */
     private void updateColumnSizes() {
-        resultsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_NEXT_COLUMN);
         Enumeration<TableColumn> columns = resultsTable.getColumnModel().getColumns();
         while (columns.hasMoreElements()) {
             TableColumn col = columns.nextElement();
@@ -551,6 +619,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
         tModel.setDataVector(viewUpdate.tableContents.getRows(), COLUMN_HEADERS);
         updateColumnSizes();
+        updateRowHeights();
         resultsTable.clearSelection();
 
         this.setCursor(null);
@@ -568,6 +637,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
         tModel.setDataVector(waitRow, COLUMN_HEADERS);
         updateColumnSizes();
+        updateRowHeights();
         resultsTable.clearSelection();
         // The output of the previous task is no longer relevant.
         if (currentTask != null) {
@@ -756,6 +826,29 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                 //NON-NLS
                 }
             }
+        }
+    }
+
+    /**
+     * TableCellRenderer for displaying multiline text.
+     */
+    private class MultiLineTableCellRenderer implements javax.swing.table.TableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            javax.swing.JTextArea jtex = new javax.swing.JTextArea();
+            if (value instanceof String) {
+                jtex.setText((String) value);
+                jtex.setLineWrap(true);
+                jtex.setWrapStyleWord(true);
+            }
+            //cell backgroud color when selected
+            if (isSelected) {
+                jtex.setBackground(javax.swing.UIManager.getColor("Table.selectionBackground"));
+            } else {
+                jtex.setBackground(javax.swing.UIManager.getColor("Table.background"));
+            }
+            return jtex;
         }
     }
 }

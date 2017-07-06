@@ -79,7 +79,7 @@ public class SharedConfiguration {
     private static final String HASHDB_CONFIG_FILE_NAME = "hashLookup.settings"; //NON-NLS
     private static final String HASHDB_CONFIG_FILE_NAME_LEGACY = "hashsets.xml"; //NON-NLS
     public static final String FILE_EXPORTER_SETTINGS_FILE = "fileexporter.settings"; //NON-NLS
-    private static final String ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE = "EnterpriseArtifactsManager.properties"; //NON-NLS
+    private static final String CENTRAL_REPOSITORY_PROPERTIES_FILE = "CentralRepository.properties"; //NON-NLS
     private static final String SHARED_CONFIG_VERSIONS = "SharedConfigVersions.txt"; //NON-NLS
 
     // Folders
@@ -206,7 +206,7 @@ public class SharedConfiguration {
             uploadMultiUserAndGeneralSettings(remoteFolder);
             uploadHashDbSettings(remoteFolder);
             uploadFileExporterSettings(remoteFolder);
-            uploadEnterpriseArtifactsManagerSettings(remoteFolder);
+            uploadCentralRepositorySettings(remoteFolder);
 
             try {
                 Files.deleteIfExists(uploadInProgress.toPath());
@@ -271,7 +271,7 @@ public class SharedConfiguration {
             downloadFileExtMismatchSettings(remoteFolder);
             downloadAndroidTriageSettings(remoteFolder);
             downloadFileExporterSettings(remoteFolder);
-            downloadEnterpriseArtifactsManagerSettings(remoteFolder);
+            downloadCentralRepositorySettings(remoteFolder);
 
             // Download general settings, then restore the current
             // values for the unshared fields
@@ -778,27 +778,27 @@ public class SharedConfiguration {
     }
 
     /**
-     * Upload Enterprise Artifacts Manager settings.
+     * Upload Central Repository settings.
      *
      * @param remoteFolder Shared settings folder
      *
      * @throws SharedConfigurationException
      */
-    private void uploadEnterpriseArtifactsManagerSettings(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Uploading Enterprise Artifacts Manager configuration");
-        copyToRemoteFolder(ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
+    private void uploadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Uploading Central Repository configuration");
+        copyToRemoteFolder(CENTRAL_REPOSITORY_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
     }
 
     /**
-     * Download Enterprise Artifacts Manager settings.
+     * Download Central Repository settings.
      *
      * @param remoteFolder Shared settings folder
      *
      * @throws SharedConfigurationException
      */
-    private void downloadEnterpriseArtifactsManagerSettings(File remoteFolder) throws SharedConfigurationException {
-        publishTask("Downloading Enterprise Artifacts Manager configuration");
-        copyToLocalFolder(ENTERPRISE_ARTIFACTS_MANAGER_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
+    private void downloadCentralRepositorySettings(File remoteFolder) throws SharedConfigurationException {
+        publishTask("Downloading Central Repository configuration");
+        copyToLocalFolder(CENTRAL_REPOSITORY_PROPERTIES_FILE, moduleDirPath, remoteFolder, true);
     }
 
     /**

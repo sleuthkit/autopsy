@@ -20,6 +20,9 @@
     <target name="get-thirdparty-jars" description="get third-party jar dependencies"> 
         <mkdir dir="${ext.dir}"/>
         <copy file="${thirdparty.dir}/java-libpst/java-libpst-1.0-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/apache-mime4j/apache-mime4j-core-0.8.0-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/apache-mime4j/apache-mime4j-dom-0.8.0-SNAPSHOT.jar" todir="${ext.dir}" />
+        <copy file="${thirdparty.dir}/apache-mime4j/apache-mime4j-mbox-iterator-0.8.0-SNAPSHOT.jar" todir="${ext.dir}" />
     </target>
 
     <target name="get-deps" depends="init-ivy, get-thirdparty-jars">
