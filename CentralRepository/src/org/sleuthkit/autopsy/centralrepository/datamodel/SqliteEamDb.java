@@ -40,7 +40,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
     private final SqliteEamDbSettings dbSettings;
 
-    public synchronized static SqliteEamDb getInstance() {
+    /**
+     * Get the singleton instance of SqliteEamDb
+     * 
+     * @return the singleton instance of SqliteEamDb
+     * 
+     * @throws EamDbException if one or more default correlation type(s) have an invalid db table name.
+     */
+    public synchronized static SqliteEamDb getInstance() throws EamDbException {
         if (instance == null) {
             instance = new SqliteEamDb();
         }
@@ -48,7 +55,12 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         return instance;
     }
 
-    private SqliteEamDb() {
+    /**
+     * 
+     * @throws EamDbException if the AbstractSqlEamDb class has one or more default
+     *      correlation type(s) having an invalid db table name.
+     */
+    private SqliteEamDb() throws EamDbException {
         dbSettings = new SqliteEamDbSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
     }

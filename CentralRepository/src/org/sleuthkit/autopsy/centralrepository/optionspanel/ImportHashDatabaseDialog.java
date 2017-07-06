@@ -189,10 +189,9 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
      *
      * @return true if it's okay, false otherwise.
      */
-    @Messages({"ImportHashDatabaseDialog.validation.notEnabled=Database not initialized."})
+    @Messages({"ImportHashDatabaseDialog.validation.notEnabled=Central Repository is not enabled."})
     public boolean valid() {
         lbWarningMsg.setText("");
-        EamDb dbManager = EamDb.getInstance();        
         if (!EamDb.isEnabled()) {
             lbWarningMsg.setText(Bundle.ImportHashDatabaseDialog_validation_notEnabled());
             return false;
@@ -525,8 +524,8 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
 
         String errorMessage = Bundle.ImportHashDatabaseDialog_errorMessage_failedToOpenHashDbMsg(selectedFilePath);
         // Future, make UI handle more than the "FILES" type.
-        EamArtifact.Type contentType = EamArtifact.getDefaultCorrelationTypes().get(0); // get "FILES" type
         try {
+            EamArtifact.Type contentType = EamArtifact.getDefaultCorrelationTypes().get(0); // get "FILES" type
             // run in the background and close dialog
             SwingUtilities.invokeLater(new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID, contentType)::execute);
             dispose();

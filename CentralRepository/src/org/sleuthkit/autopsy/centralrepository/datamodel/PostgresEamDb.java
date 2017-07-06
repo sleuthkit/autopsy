@@ -43,7 +43,14 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
     private final PostgresEamDbSettings dbSettings;
 
-    public synchronized static PostgresEamDb getInstance() {
+    /**
+     * Get the singleton instance of PostgresEamDb
+     * 
+     * @return the singleton instance of PostgresEamDb
+     * 
+     * @throws EamDbException if one or more default correlation type(s) have an invalid db table name.
+     */
+    public synchronized static PostgresEamDb getInstance() throws EamDbException {
         if (instance == null) {
             instance = new PostgresEamDb();
         }
@@ -51,7 +58,12 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         return instance;
     }
 
-    private PostgresEamDb() {
+    /**
+     * 
+     * @throws EamDbException if the AbstractSqlEamDb class has one or more default
+     *      correlation type(s) having an invalid db table name.
+     */
+    private PostgresEamDb() throws EamDbException {
         dbSettings = new PostgresEamDbSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
     }

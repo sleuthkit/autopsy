@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
@@ -58,7 +59,13 @@ public class CaseEventListener implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        EamDb dbManager = EamDb.getInstance();
+        EamDb dbManager;
+        try {
+            dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get instance of db manager.", ex);
+            return;
+        }
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED: {
                 if (!EamDb.isEnabled()) {
@@ -93,11 +100,12 @@ public class CaseEventListener implements PropertyChangeListener {
                     if (md5 == null || md5.isEmpty()) {
                         return;
                     }
-                    String deviceId = "";
+                    String deviceId;
                     try {
                         deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
                     } catch (TskCoreException | TskDataException ex) {
                         LOGGER.log(Level.SEVERE, "Error, failed to get deviceID or data source from current case.", ex);
+                        return;
                     }
 
                     EamArtifact eamArtifact;
@@ -142,8 +150,8 @@ public class CaseEventListener implements PropertyChangeListener {
 
                 if (dbManager.getBadTags().contains(tagName.getDisplayName())) {
                     try {
-                        EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                        if (null != eamArtifact) {
+                        List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
+                        for (EamArtifact eamArtifact : convertedArtifacts) {
                             eamArtifact.getInstances().get(0).setComment(bbTagAdded.getComment());
                             Runnable r = new BadFileTagRunner(eamArtifact);
                             // TODO: send r into a thread pool instead
@@ -211,9 +219,9 @@ public class CaseEventListener implements PropertyChangeListener {
                             curCase.getCreatedDate(),
                             curCase.getNumber(),
                             curCase.getExaminer(),
-                            "",
-                            "",
-                            "");
+                            null,
+                            null,
+                            null);
 
                     if (!EamDb.isEnabled()) {
                         break;
