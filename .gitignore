@@ -76,4 +76,5 @@ hs_err_pid*.log
 /ImageGallery/release/
 /thunderbirdparser/release/
 /RecentActivity/release/
+/CentralRepository/release/
 
