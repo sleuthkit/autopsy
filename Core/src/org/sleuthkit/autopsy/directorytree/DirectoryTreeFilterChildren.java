@@ -32,6 +32,7 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.VolumeNode;
@@ -245,6 +246,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         }
 
         @Override
+        public Boolean visit(LocalDirectoryNode ldn) {
+            return visitDeep(ldn);
+        }
+
+        @Override
         public Boolean visit(FileTypesNode ft) {
             return defaultVisit(ft);
         }
@@ -290,6 +296,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         public Boolean visit(VirtualDirectoryNode vdn) {
             return true;
             //return vdn.hasContentChildren();
+        }
+
+        @Override
+        public Boolean visit(LocalDirectoryNode ldn) {
+            return true;
         }
 
         @Override

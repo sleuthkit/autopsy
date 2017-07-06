@@ -53,6 +53,7 @@ import org.sleuthkit.autopsy.datamodel.FileNode;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesNode;
 import org.sleuthkit.autopsy.datamodel.LayoutFileNode;
 import org.sleuthkit.autopsy.datamodel.LocalFileNode;
+import org.sleuthkit.autopsy.datamodel.LocalDirectoryNode;
 import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
@@ -66,6 +67,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
@@ -350,6 +352,8 @@ public class DataResultFilterNode extends FilterNode {
                 n = new DirectoryNode((Directory) c);
             } else if ((c = ban.getLookup().lookup(VirtualDirectory.class)) != null) {
                 n = new VirtualDirectoryNode((VirtualDirectory) c);
+            } else if ((c = ban.getLookup().lookup(LocalDirectory.class)) != null) {
+                n = new LocalDirectoryNode((LocalDirectory) c);
             } else if ((c = ban.getLookup().lookup(LayoutFile.class)) != null) {
                 n = new LayoutFileNode((LayoutFile) c);
             } else if ((c = ban.getLookup().lookup(LocalFile.class)) != null
