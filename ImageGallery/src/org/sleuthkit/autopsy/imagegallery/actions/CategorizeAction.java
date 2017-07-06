@@ -87,7 +87,7 @@ public class CategorizeAction extends Action {
 
     final void addCatToFiles(Set<Long> ids) {
         Logger.getAnonymousLogger().log(Level.INFO, "categorizing{0} as {1}", new Object[]{ids.toString(), cat.getDisplayName()}); //NON-NLS
-        controller.queueDBWorkerTask(new CategorizeTask(ids, cat, createUndo));
+        controller.queueDBTask(new CategorizeTask(ids, cat, createUndo));
     }
 
     /**
