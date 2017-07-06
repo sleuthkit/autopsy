@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-15 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,22 +21,23 @@ package org.sleuthkit.autopsy.imagegallery.actions;
 import java.util.Optional;
 import javafx.beans.Observable;
 import javafx.beans.binding.ObjectExpression;
-import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
+import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import org.controlsfx.control.action.Action;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.imagegallery.ImageGalleryController;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.DrawableGroup;
+import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupManager;
 import org.sleuthkit.autopsy.imagegallery.datamodel.grouping.GroupViewState;
 
 /**
- * Marks the currently fisplayed group as "seen" and advances to the next unseen
+ * Marks the currently displayed group as "seen" and advances to the next unseen
  * group
  */
 @NbBundle.Messages({"NextUnseenGroup.markGroupSeen=Mark Group Seen",
-        "NextUnseenGroup.nextUnseenGroup=Next Unseen group"})
+    "NextUnseenGroup.nextUnseenGroup=Next Unseen group"})
 public class NextUnseenGroup extends Action {
 
     private static final Image END =
@@ -47,54 +48,41 @@ public class NextUnseenGroup extends Action {
     private static final String MARK_GROUP_SEEN = Bundle.NextUnseenGroup_markGroupSeen();
     private static final String NEXT_UNSEEN_GROUP = Bundle.NextUnseenGroup_nextUnseenGroup();
 
-    private final ImageGalleryController controller;
+    private final GroupManager groupManager;
+    private final ObservableList<DrawableGroup> unSeenGroups;
+    private final ObservableList<DrawableGroup> analyzedGroups;
 
     public NextUnseenGroup(ImageGalleryController controller) {
         super(NEXT_UNSEEN_GROUP);
-        this.controller = controller;
+        groupManager = controller.getGroupManager();
+        unSeenGroups = groupManager.getUnSeenGroups();
+        analyzedGroups = groupManager.getAnalyzedGroups();
         setGraphic(new ImageView(ADVANCE));
 
         //TODO: do we need both these listeners?
-        controller.getGroupManager().getAnalyzedGroups().addListener((Observable observable) -> {
-            updateButton();
+        analyzedGroups.addListener((Observable o) -> this.updateButton());
+        unSeenGroups.addListener((Observable o) -> this.updateButton());
 
-        });
-        controller.getGroupManager().getUnSeenGroups().addListener((Observable observable) -> {
-            updateButton();
-        });
-
-        setEventHandler((ActionEvent t) -> {
+        setEventHandler(event -> {
             //fx-thread
             //if there is a group assigned to the view, mark it as seen
             Optional.ofNullable(controller.viewState())
                     .map(ObjectExpression<GroupViewState>::getValue)
                     .map(GroupViewState::getGroup)
-                    .ifPresent(group -> controller.getGroupManager().markGroupSeen(group, true));
-            controller.execute(new Task<Void>() {
+                    .ifPresent(group -> groupManager.markGroupSeen(group, true));
 
-                @Override
-                protected Void call() throws Exception {
-                    if (false == controller.getGroupManager().getUnSeenGroups().isEmpty()) {
-                        controller.advance(GroupViewState.tile(controller.getGroupManager().getUnSeenGroups().get(0)), true);
-                    }
-                    return null;
-                }
-
-                @Override
-                protected void succeeded() {
-                    super.succeeded();
-                    updateButton();
-                }
-            });
+            if (unSeenGroups.isEmpty() == false) {
+                controller.advance(GroupViewState.tile(unSeenGroups.get(0)), true);
+                updateButton();
+            }
         });
-
         updateButton();
     }
 
     @ThreadConfined(type = ThreadConfined.ThreadType.JFX)
     private void updateButton() {
-        setDisabled(controller.getGroupManager().getUnSeenGroups().isEmpty());
-        if (controller.getGroupManager().getUnSeenGroups().size() <= 1) {
+        setDisabled(unSeenGroups.isEmpty());
+        if (unSeenGroups.size() <= 1) {
             setText(MARK_GROUP_SEEN);
             setGraphic(new ImageView(END));
         } else {

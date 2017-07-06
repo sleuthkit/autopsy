@@ -55,7 +55,7 @@ import org.sleuthkit.datamodel.VolumeSystem;
  * selecting the parent in the tree view, then selecting the content in the
  * results view.
  */
-public final class ViewContextAction extends AbstractAction {
+public class ViewContextAction extends AbstractAction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger logger = Logger.getLogger(ViewContextAction.class.getName());

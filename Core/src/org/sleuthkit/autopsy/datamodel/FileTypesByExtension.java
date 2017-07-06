@@ -24,10 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.SwingWorker;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -40,12 +37,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -75,13 +66,41 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      * Listens for case and ingest invest. Updates observers when events are
      * fired. FileType and FileTypes nodes are all listening to this.
      */
-    private static class FileTypesByExtObservable extends Observable {
+    static private class FileTypesByExtObservable extends Observable {
 
-        private FileTypesByExtObservable() {
+        private final PropertyChangeListener pcl;
+
+        private FileTypesByExtObservable(SleuthkitCase skCase) {
             super();
+            this.pcl = (PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString()) || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString()) || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure until a
+                     * different way of handling the closing of cases is worked
+                     * out. Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeListeners();
+                    }
+                }
+            };
+
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
             Case.addPropertyChangeListener(pcl);
+
         }
 
         private void removeListeners() {
@@ -90,34 +109,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
             Case.removePropertyChangeListener(pcl);
         }
-
-        private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-            String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                    || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                /**
-                 * Checking for a current case is a stop gap measure until a
-                 * different way of handling the closing of cases is worked out.
-                 * Currently, remote events may be received for a case that is
-                 * already closed.
-                 */
-                try {
-                    Case.getCurrentCase();
-                    update();
-                } catch (IllegalStateException notUsed) {
-                    /**
-                     * Case is closed, do nothing.
-                     */
-                }
-            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                // case was closed. Remove listeners so that we don't get called with a stale case handle
-                if (evt.getNewValue() == null) {
-                    removeListeners();
-                }
-            }
-        };
 
         private void update() {
             setChanged();
@@ -140,9 +131,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          *               something to provide a sub-node.
          */
         FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter) {
-            super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, null), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
-            this.filter = filter;
-            init();
+            this(skCase, filter, null);
         }
 
         /**
@@ -152,7 +141,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that was created by a higher-level node that
          *               provides updates on events
          */
-        private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, Observable o) {
+        private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
             super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true), Lookups.singleton(filter == null ? FNAME : filter.getName()));
             this.filter = filter;
             init();
@@ -212,7 +201,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
             private final SleuthkitCase skCase;
             private final FileTypesByExtension.RootFilter filter;
-            private final Observable notifier;
+            private final FileTypesByExtObservable notifier;
 
             /**
              *
@@ -221,12 +210,12 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
              * @param o      Observable that provides updates based on events
              *               being fired (or null if one needs to be created)
              */
-            private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, Observable o) {
+            private FileTypesByExtNodeChildren(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
                 super();
                 this.skCase = skCase;
                 this.filter = filter;
                 if (o == null) {
-                    this.notifier = new FileTypesByExtObservable();
+                    this.notifier = new FileTypesByExtObservable(skCase);
                 } else {
                     this.notifier = o;
                 }
@@ -265,10 +254,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
      * Node for a specific file type / extension. Children of it will be the
      * files of that type.
      */
-    static class FileExtensionNode extends DisplayableItemNode {
+    static class FileExtensionNode extends FileTypes.BGCountUpdatingNode {
 
-        private FileTypesByExtension.SearchFilterInterface filter;
-        private SleuthkitCase skCase;
+        private final FileTypesByExtension.SearchFilterInterface filter;
+        private final SleuthkitCase skCase;
         private long childCount = -1;
 
         /**
@@ -278,53 +267,25 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * @param o      Observable that sends updates when the child factories
          *               should refresh
          */
-        FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, Observable o) {
-            super(Children.create(new FileExtensionNodeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
+        FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
+            super(skCase, Children.create(new FileExtensionNodeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
             this.filter = filter;
             this.skCase = skCase;
-            init();
-            o.addObserver(new ByExtNodeObserver());
-
-        }
-
-        private void init() {
             setName(filter.getName());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
+            o.addObserver(this);
+
         }
 
-        // update the display name when new events are fired
-        private class ByExtNodeObserver implements Observer {
-
-            @Override
-            public void update(Observable o, Object arg) {
-                updateDisplayName();
-            }
+        @Override
+        String getDisplayNameBase() {
+            return filter.getDisplayName();
         }
 
-        private void updateDisplayName() {
-            if (childCount < 0) {
-                //only show this the first time, otherwise it is distracting.
-                setDisplayName(filter.getDisplayName() + " (counting...)");
-            }
-
-            new SwingWorker<Long, Void>() {
-                @Override
-                protected Long doInBackground() throws Exception {
-                    return FileExtensionNodeChildren.calculateItems(skCase, filter);
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        childCount = get();
-                        setDisplayName(filter.getDisplayName() + " (" + childCount + ")");
-                    } catch (InterruptedException | ExecutionException ex) {
-                        setDisplayName(filter.getDisplayName());
-                        logger.log(Level.WARNING, "Failed to get count of files for filter " + filter.toString(), ex);
-                    }
-                }
-            }.execute();
+        @Override
+        String geQuery() {
+            return FileExtensionNodeChildren.createQuery(filter);
         }
 
         @Override
@@ -414,20 +375,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 }
             }
 
-            /**
-             * Get children count without actually loading all nodes
-             *
-             * @return
-             */
-            private static long calculateItems(SleuthkitCase sleuthkitCase, FileTypesByExtension.SearchFilterInterface filter) {
-                try {
-                    return sleuthkitCase.countFilesWhere(createQuery(filter));
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
-                    return 0;
-                }
-            }
-
             @Override
             protected boolean createKeys(List<Content> list) {
                 try {
@@ -455,37 +402,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
             @Override
             protected Node createNodeForKey(Content key) {
-                return key.accept(new ContentVisitor.Default<AbstractNode>() {
-                    @Override
-                    public FileNode visit(File f) {
-                        return new FileNode(f, false);
-                    }
-
-                    @Override
-                    public DirectoryNode visit(Directory d) {
-                        return new DirectoryNode(d);
-                    }
-
-                    @Override
-                    public LayoutFileNode visit(LayoutFile lf) {
-                        return new LayoutFileNode(lf);
-                    }
-
-                    @Override
-                    public LocalFileNode visit(DerivedFile df) {
-                        return new LocalFileNode(df);
-                    }
-
-                    @Override
-                    public LocalFileNode visit(LocalFile lf) {
-                        return new LocalFileNode(lf);
-                    }
-
-                    @Override
-                    protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(), "FileTypeChildren.exception.notSupported.msg", di.toString()));
-                    }
-                });
+                return key.accept(new FileTypes.FileNodeCreationVisitor());
             }
         }
     }

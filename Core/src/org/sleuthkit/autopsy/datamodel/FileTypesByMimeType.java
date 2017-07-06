@@ -28,12 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.SwingWorker;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openide.nodes.AbstractNode;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -44,13 +41,6 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.ContentVisitor;
-import org.sleuthkit.datamodel.DerivedFile;
-import org.sleuthkit.datamodel.Directory;
-import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.LayoutFile;
-import org.sleuthkit.datamodel.LocalFile;
-import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -79,36 +69,11 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         IngestManager.getInstance().removeIngestJobEventListener(pcl);
         Case.removePropertyChangeListener(pcl);
     }
-
     /*
      * The pcl is in the class because it has the easiest mechanisms to add and
      * remove itself during its life cycles.
      */
-    private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
-        String eventType = evt.getPropertyName();
-        if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-
-            /**
-             * Checking for a current case is a stop gap measure until a
-             * different way of handling the closing of cases is worked out.
-             * Currently, remote events may be received for a case that is
-             * already closed.
-             */
-            try {
-                Case.getCurrentCase();
-                populateHashMap();
-            } catch (IllegalStateException notUsed) {
-                /**
-                 * Case is closed, do nothing.
-                 */
-            }
-        } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-            if (evt.getNewValue() == null) {
-                removeListeners();
-            }
-        }
-    };
+    private final PropertyChangeListener pcl;
 
     /**
      * Retrieve the media types by retrieving the keyset from the hashmap.
@@ -143,7 +108,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             existingMimeTypes.clear();
 
             if (skCase == null) {
-
                 return;
             }
             try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(allDistinctMimeTypesQuery.toString())) {
@@ -173,6 +137,31 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     }
 
     FileTypesByMimeType(SleuthkitCase skCase) {
+        this.pcl = (PropertyChangeEvent evt) -> {
+            String eventType = evt.getPropertyName();
+            if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
+
+                /**
+                 * Checking for a current case is a stop gap measure until a
+                 * different way of handling the closing of cases is worked out.
+                 * Currently, remote events may be received for a case that is
+                 * already closed.
+                 */
+                try {
+                    Case.getCurrentCase();
+                    populateHashMap();
+                } catch (IllegalStateException notUsed) {
+                    /**
+                     * Case is closed, do nothing.
+                     */
+                }
+            } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                if (evt.getNewValue() == null) {
+                    removeListeners();
+                }
+            }
+        };
         IngestManager.getInstance().addIngestJobEventListener(pcl);
         Case.addPropertyChangeListener(pcl);
         this.skCase = skCase;
@@ -339,54 +328,31 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * Node which represents the media sub type in the By MIME type tree, the
      * media subtype is the portion of the MIME type following the /.
      */
-    class MediaSubTypeNode extends DisplayableItemNode implements Observer {
+    class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
 
         private long childCount = -1;
+        private final String mimeType;
+        private final String subType;
 
         private MediaSubTypeNode(String mimeType) {
-            super(Children.create(new MediaSubTypeNodeChildren(mimeType), true));
-            addObserver(this);
-            init(mimeType);
-        }
+            super(skCase, Children.create(new MediaSubTypeNodeChildren(mimeType), true));
 
-        private void init(String mimeType) {
             super.setName(mimeType);
-            updateDisplayName(mimeType);
+            this.mimeType = mimeType;
+            subType = StringUtils.substringAfter(mimeType, "/");
+            updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
+            addObserver(this);
         }
 
-        /**
-         * Updates the display name of the mediaSubTypeNode to include the count
-         * of files which it represents.
-         *
-         * @param mimeType - the complete MimeType, needed for accurate query
-         *                 results
-         */
-        private void updateDisplayName(String mimeType) {
+        @Override
+        String getDisplayNameBase() {
+            return subType;
+        }
 
-            final String subType = StringUtils.substringAfter(mimeType, "/");
-            if (childCount < 0) {
-                //only show this the first time, otherwise it is distracting.
-                setDisplayName(subType + " (counting ...)");
-            }
-            new SwingWorker<Long, Void>() {
-                @Override
-                protected Long doInBackground() throws Exception {
-                    return calculateItems(skCase, mimeType);
-                }
-
-                @Override
-                protected void done() {
-                    try {
-                        childCount = get();
-                        setDisplayName(subType + " (" + childCount + ")");
-                    } catch (InterruptedException | ExecutionException ex) {
-                        setDisplayName(subType);
-                        logger.log(Level.WARNING, "Failed to get count of files for mimetype " + mimeType, ex);
-                    }
-                }
-
-            }.execute();
+        @Override
+        String geQuery() {
+            return createQuery(mimeType);
         }
 
         /**
@@ -408,11 +374,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @Override
         public String getItemType() {
             return getClass().getName();
-        }
-
-        @Override
-        public void update(Observable o, Object arg) {
-            updateDisplayName(getName());
         }
     }
 
@@ -509,43 +470,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
          */
         @Override
         protected Node createNodeForKey(Content key) {
-            return key.accept(new ContentVisitor.Default<AbstractNode>() {
-                @Override
-                public FileNode visit(File f) {
-                    return new FileNode(f, false);
-                }
-
-                @Override
-                public DirectoryNode visit(Directory d) {
-                    return new DirectoryNode(d);
-                }
-
-                @Override
-                public LayoutFileNode visit(LayoutFile lf) {
-                    return new LayoutFileNode(lf);
-                }
-
-                @Override
-                public LocalFileNode visit(DerivedFile df) {
-                    return new LocalFileNode(df);
-                }
-
-                @Override
-                public LocalFileNode visit(LocalFile lf) {
-                    return new LocalFileNode(lf);
-                }
-
-                @Override
-                public SlackFileNode visit(SlackFile sf) {
-                    return new SlackFileNode(sf, false);
-                }
-
-                @Override
-                protected AbstractNode defaultVisit(Content di) {
-                    throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(), "FileTypeChildren.exception.notSupported.msg", di.toString()));
-                }
-            });
+            return key.accept(new FileTypes.FileNodeCreationVisitor());
         }
+
     }
 
 }

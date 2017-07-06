@@ -397,7 +397,8 @@ sub parseVariableEntry {
 # 0x0e, 0x0f, 0x10 - mod date, create date, access date(?)
 # 0x0c - size
 #--------------------------------------------------------------	  	
-	  		if ($sz == 0x00) {
+                        return %item unless (defined $sz); 
+                        if ($sz == 0x00) {
 	  			$tag = 0;
 	  			next;
 	  		}
@@ -419,7 +420,7 @@ sub parseVariableEntry {
 #	  	while($tag) {
 #	  		my $sz = unpack("V",substr($stuff,$cnt,4));
 #	  		my $id = unpack("V",substr($stuff,$cnt + 4,4));
-#	  		
+#	  		return %item unless (defined $sz); 
 #	  		if ($sz == 0x00) {
 #	  			$tag = 0;
 #	  			next;
@@ -725,6 +726,7 @@ sub parseFolderEntry {
 	my $str = "";
 	while($tag) {
 		my $s = substr($data,$ofs_shortname + $cnt,1);
+                return %item unless (defined $s); 
 		if ($s =~ m/\x00/ && ((($cnt + 1) % 2) == 0)) {
 			$tag = 0;
 		}
@@ -740,7 +742,9 @@ sub parseFolderEntry {
 	$tag = 1;
 	$cnt = 0;
 	while ($tag) {
-		if (unpack("v",substr($data,$ofs + $cnt,2)) == 0xbeef) {
+                my $s = substr($data,$ofs + $cnt,2);
+                return %item unless (defined $s); 
+		if (unpack("v",$s) == 0xbeef) {
 			$tag = 0;
 		}
 		else {
@@ -829,7 +833,9 @@ sub parseFolderEntry2 {
 	my $tag = 1;
 
 	while ($tag) {
-		if (unpack("v",substr($data,$ofs,2)) == 0xbeef) {
+                my $s = substr($data,$ofs,2);
+                return %item unless (defined $s); 
+		if (unpack("v",$s) == 0xbeef) {
 			$tag = 0;
 		}
 		else {

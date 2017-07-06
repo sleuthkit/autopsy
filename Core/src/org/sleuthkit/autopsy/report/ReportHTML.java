@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
@@ -622,7 +623,7 @@ class ReportHTML implements TableReportModule {
      *
      * @param images
      */
-    public void addThumbnailRows(List<Content> images) {
+    public void addThumbnailRows(Set<Content> images) {
         List<String> currentRow = new ArrayList<>();
         int totalCount = 0;
         int pages = 1;
