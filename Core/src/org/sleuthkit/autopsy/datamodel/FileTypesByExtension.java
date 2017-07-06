@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.TskData;
  */
 public final class FileTypesByExtension implements AutopsyVisitableItem {
 
+    private static final Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());    
     private final SleuthkitCase skCase;
 
     public FileTypesByExtension(SleuthkitCase skCase) {
@@ -118,7 +119,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                     }
                 } catch (TskCoreException tskCoreException) {
                     showCounts = false;
-                    LOGGER.log(Level.SEVERE, "Error counting files.", tskCoreException);
+                    logger.log(Level.SEVERE, "Error counting files.", tskCoreException);
                 }
             }
             return showCounts;
