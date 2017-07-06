@@ -44,7 +44,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * Node for layout dir
+ * Node for a virtual directory
  */
 public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
 
@@ -52,14 +52,14 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     //prefix for special VirtualDirectory root nodes grouping local files
     public final static String LOGICAL_FILE_SET_PREFIX = "LogicalFileSet"; //NON-NLS
 
-    public static String nameForLayoutFile(VirtualDirectory ld) {
+    public static String nameForVirtualDirectory(VirtualDirectory ld) {
         return ld.getName();
     }
 
     public VirtualDirectoryNode(VirtualDirectory ld) {
         super(ld);
 
-        this.setDisplayName(nameForLayoutFile(ld));
+        this.setDisplayName(nameForVirtualDirectory(ld));
 
         String name = ld.getName();
 

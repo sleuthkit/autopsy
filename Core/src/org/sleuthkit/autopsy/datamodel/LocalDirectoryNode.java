@@ -48,7 +48,7 @@ import org.sleuthkit.datamodel.LocalDirectory;
  */
 public class LocalDirectoryNode extends AbstractAbstractFileNode<LocalDirectory> {
 
-    private static final Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
+    private static final Logger logger = Logger.getLogger(LocalDirectoryNode.class.getName());
 
     public static String nameForLocalDir(LocalDirectory ld) {
         return ld.getName();
@@ -58,7 +58,7 @@ public class LocalDirectoryNode extends AbstractAbstractFileNode<LocalDirectory>
         super(ld);
 
         this.setDisplayName(nameForLocalDir(ld));
-        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/credit-card.png"); //NON-NLS
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
 
     }
 
