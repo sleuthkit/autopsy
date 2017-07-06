@@ -10,24 +10,21 @@
     <property name="thirdparty.dir" value="${basedir}/../thirdparty" />
     <property name="modules.dir" value="${basedir}/release/modules/" />
     <property name="ext.dir" value="${modules.dir}/ext" />
- 
-    <target name="get-thirdparty-dependencies" description="get third-party dependencies"> 
-        <copy file="${thirdparty.dir}/commons/commons-dbcp2-2.1.1.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/commons/commons-dbcp2-2.1.1-javadoc.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/commons/commons-logging-1.2.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/commons/commons-pool2-2.4.2.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/commons/commons-pool2-2.4.2-javadoc.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/postgresql-jdbc/postgresql-42.0.0.jar" todir="${ext.dir}" />
-        <copy file="${thirdparty.dir}/sqlite-jdbc/sqlite-jdbc-3.16.1.jar" todir="${ext.dir}" />
-    </target>
 
-    <target name="get-deps" depends="init-ivy,get-thirdparty-dependencies">
+    <target name="resolve">
         <ivy:settings file="ivysettings.xml" />
-        <ivy:resolve/>
+        <ivy:resolve file="ivy.xml" conf="experimental"/>
+    </target>
+ 
+    <target name="retrieve-experimental" depends="resolve">
         <ivy:retrieve conf="experimental"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
     </target>
+
+    <target name="retrieve-all" depends="resolve">
+        <ivy:retrieve conf="*"  pattern="${basedir}/release/modules/ext/[artifact]-[revision](-[classifier]).[ext]" />   
+    </target>
     
-    <target name="init" depends="get-deps, harness.init" />
+    <target name="init" depends="retrieve-all, harness.init" />
       
     <target name="clean" depends="projectized-common.clean">
         <!--Override clean to delete jars, etc downloaded with Ivy  

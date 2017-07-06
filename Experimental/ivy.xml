@@ -1,9 +1,8 @@
 <ivy-module version="2.0">
-    <info organisation="org.sleuthkit.autopsy" module="corelibs"/>
+    <info organisation="org.sleuthkit.autopsy" module="experimental"/>
     <configurations >
         <!-- module dependencies -->
         <conf name="experimental"/>
-        
     </configurations>
     <dependencies>
         <dependency conf="experimental->default" org="com.github.lgooddatepicker" name="LGoodDatePicker" rev="4.3.1"/>

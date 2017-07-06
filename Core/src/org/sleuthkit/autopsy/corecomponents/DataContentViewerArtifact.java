@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2017 Basis Technology Corp.
+ * Copyright 2011-2013 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,12 +26,20 @@ import java.awt.event.ActionListener;
 import java.awt.datatransfer.StringSelection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.JMenuItem;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.text.JTextComponent;
+import javax.swing.text.View;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.Node;
 import org.openide.util.Lookup;
@@ -50,8 +58,8 @@ import org.netbeans.swing.etable.ETable;
 
 /**
  * Instances of this class display the BlackboardArtifacts associated with the
- * Content represented by a Node. Each BlackboardArtifact is rendered as an HTML
- * representation of its BlackboardAttributes.
+ * Content represented by a Node. Each BlackboardArtifact is rendered displayed
+ * in a JTable representation of its BlackboardAttributes.
  */
 @ServiceProvider(service = DataContentViewer.class, position = 3)
 public class DataContentViewerArtifact extends javax.swing.JPanel implements DataContentViewer {
@@ -75,6 +83,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         Bundle.DataContentViewerArtifact_attrsTableHeader_type(),
         Bundle.DataContentViewerArtifact_attrsTableHeader_value(),
         Bundle.DataContentViewerArtifact_attrsTableHeader_sources()};
+    private static final int[] COLUMN_WIDTHS = {100, 800, 100};
+    private static final int CELL_BOTTOM_MARGIN = 5;
 
     public DataContentViewerArtifact() {
         initResultsTable();
@@ -82,34 +92,97 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         resultsTableScrollPane.setViewportView(resultsTable);
         customizeComponents();
         resetComponents();
+        resultsTable.setDefaultRenderer(Object.class, new MultiLineTableCellRenderer());
     }
 
     private void initResultsTable() {
         resultsTable = new ETable();
-
         resultsTable.setModel(new javax.swing.table.DefaultTableModel() {
             private static final long serialVersionUID = 1L;
 
-            @Override
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return false;
             }
-
         });
         resultsTable.setCellSelectionEnabled(true);
-        resultsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        resultsTable.setColumnHidingAllowed(false);
         resultsTable.getTableHeader().setReorderingAllowed(false);
-        resultsTable.setRowSorter(null);  //null sorter turns off sorting
-        updateColumnSizes();
+        resultsTable.setColumnHidingAllowed(false);
+        resultsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        resultsTable.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+
+            @Override
+            public void columnAdded(TableColumnModelEvent e) {
+            }
+
+            @Override
+            public void columnRemoved(TableColumnModelEvent e) {
+            }
+
+            @Override
+            public void columnMoved(TableColumnModelEvent e) {
+
+            }
+
+            @Override  
+            public void columnMarginChanged(ChangeEvent e) {
+                updateRowHeights(); //When the user changes column width we may need to resize row height
+            }
+
+            @Override
+            public void columnSelectionChanged(ListSelectionEvent e) {
+            }
+        });
+        resultsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_NEXT_COLUMN);
+
     }
 
+    /**
+     * Sets the row heights to the heights of the content in their Value column.
+     */
+    private void updateRowHeights() {
+        int valueColIndex = -1;
+        for (int col = 0; col < resultsTable.getColumnCount(); col++) {
+            if (resultsTable.getColumnName(col).equals(COLUMN_HEADERS[1])) {
+                valueColIndex = col;
+            }
+        }
+        if (valueColIndex != -1) {
+            for (int row = 0; row < resultsTable.getRowCount(); row++) {
+                Component comp = resultsTable.prepareRenderer(
+                        resultsTable.getCellRenderer(row, valueColIndex), row, valueColIndex);
+                final int rowHeight;
+                if (comp instanceof JTextComponent) {
+                    final JTextComponent tc = (JTextComponent) comp;
+                    final View rootView = tc.getUI().getRootView(tc);
+                    java.awt.Insets i = tc.getInsets(null);
+                    rootView.setSize(resultsTable.getColumnModel().getColumn(valueColIndex)
+                            .getPreferredWidth() - i.left - i.right,
+                            Integer.MAX_VALUE);
+                    rowHeight = (int) rootView.getPreferredSpan(View.Y_AXIS);
+                } else {
+                    rowHeight = comp.getPreferredSize().height;
+                }
+                if (rowHeight > 0) {
+                    resultsTable.setRowHeight(row, rowHeight + CELL_BOTTOM_MARGIN);
+                }
+            }
+        }
+    }
+
+    /**
+     * Update the column widths so that the Value column has most of the space.
+     */
     private void updateColumnSizes() {
-        resultsTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_NEXT_COLUMN);
-        if (resultsTable.getColumnModel().getColumnCount() > 0) {
-            resultsTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-            resultsTable.getColumnModel().getColumn(1).setPreferredWidth(800);
-            resultsTable.getColumnModel().getColumn(2).setPreferredWidth(100);
+        Enumeration<TableColumn> columns = resultsTable.getColumnModel().getColumns();
+        while (columns.hasMoreElements()) {
+            TableColumn col = columns.nextElement();
+            if (col.getHeaderValue().equals(COLUMN_HEADERS[0])) {
+                col.setPreferredWidth(COLUMN_WIDTHS[0]);
+            } else if (col.getHeaderValue().equals(COLUMN_HEADERS[1])) {
+                col.setPreferredWidth(COLUMN_WIDTHS[1]);
+            } else if (col.getHeaderValue().equals(COLUMN_HEADERS[2])) {
+                col.setPreferredWidth(COLUMN_WIDTHS[2]);
+            }
         }
     }
 
@@ -119,13 +192,12 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
      * regenerated by the Form Editor.
      */
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         rightClickMenu = new javax.swing.JPopupMenu();
         copyMenuItem = new javax.swing.JMenuItem();
         selectAllMenuItem = new javax.swing.JMenuItem();
-        jScrollPane1 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
         totalPageLabel = new javax.swing.JLabel();
         ofLabel = new javax.swing.JLabel();
@@ -144,9 +216,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         rightClickMenu.add(selectAllMenuItem);
 
         setPreferredSize(new java.awt.Dimension(622, 58));
-
-        jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        jScrollPane1.setPreferredSize(new java.awt.Dimension(622, 58));
 
         jPanel1.setPreferredSize(new java.awt.Dimension(620, 58));
 
@@ -197,7 +266,8 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             }
         });
 
-        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(620, 271));
+        resultsTableScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        resultsTableScrollPane.setPreferredSize(new java.awt.Dimension(620, 34));
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -218,13 +288,13 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
                 .addComponent(nextPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(366, Short.MAX_VALUE))
             .addComponent(resultsTableScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                    .addContainerGap(277, Short.MAX_VALUE)
+                    .addContainerGap(280, Short.MAX_VALUE)
                     .addComponent(artifactLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addContainerGap(85, Short.MAX_VALUE)))
+                    .addContainerGap(84, Short.MAX_VALUE)))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -239,47 +309,45 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     .addComponent(prevPageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(pageLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(resultsTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 34, Short.MAX_VALUE))
+                .addComponent(resultsTableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE)
+                .addGap(0, 0, 0))
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(jPanel1Layout.createSequentialGroup()
                     .addComponent(artifactLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGap(0, 40, Short.MAX_VALUE)))
+                    .addGap(0, 401, Short.MAX_VALUE)))
         );
-
-        jScrollPane1.setViewportView(jPanel1);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 622, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-    }// </editor-fold>                        
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {                                               
-        currentPage = currentPage - 1;
-        currentPageLabel.setText(Integer.toString(currentPage));
-        artifactLabel.setText(artifactTableContents.get(currentPage - 1).getArtifactDisplayName());
-        startNewTask(new SelectedArtifactChangedTask(currentPage));
-    }                                              
-
-    private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {                                               
+    private void nextPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextPageButtonActionPerformed
         currentPage = currentPage + 1;
         currentPageLabel.setText(Integer.toString(currentPage));
         artifactLabel.setText(artifactTableContents.get(currentPage - 1).getArtifactDisplayName());
         startNewTask(new SelectedArtifactChangedTask(currentPage));
-    }                                              
+    }//GEN-LAST:event_nextPageButtonActionPerformed
 
-    // Variables declaration - do not modify                     
+    private void prevPageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prevPageButtonActionPerformed
+        currentPage = currentPage - 1;
+        currentPageLabel.setText(Integer.toString(currentPage));
+        artifactLabel.setText(artifactTableContents.get(currentPage - 1).getArtifactDisplayName());
+        startNewTask(new SelectedArtifactChangedTask(currentPage));
+    }//GEN-LAST:event_prevPageButtonActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel artifactLabel;
     private javax.swing.JMenuItem copyMenuItem;
     private javax.swing.JLabel currentPageLabel;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton nextPageButton;
     private javax.swing.JLabel ofLabel;
     private javax.swing.JLabel pageLabel;
@@ -289,7 +357,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
     private javax.swing.JPopupMenu rightClickMenu;
     private javax.swing.JMenuItem selectAllMenuItem;
     private javax.swing.JLabel totalPageLabel;
-    // End of variables declaration                   
+    // End of variables declaration//GEN-END:variables
     private ETable resultsTable;
 
     private void customizeComponents() {
@@ -548,13 +616,10 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         totalPageLabel.setText(Integer.toString(viewUpdate.numberOfPages));
         currentPageLabel.setText(Integer.toString(currentPage));
         artifactLabel.setText(viewUpdate.tableContents.getArtifactDisplayName());
-        // @@@ This can take a long time. Perhaps a faster HTML renderer can be found.
-        // Note that the rendering appears to be done on a background thread, since the
-        // wait cursor reset below happens before the new text hits the JTextPane. On the
-        // other hand, the UI is unresponsive...
         DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
         tModel.setDataVector(viewUpdate.tableContents.getRows(), COLUMN_HEADERS);
         updateColumnSizes();
+        updateRowHeights();
         resultsTable.clearSelection();
 
         this.setCursor(null);
@@ -572,6 +637,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         DefaultTableModel tModel = ((DefaultTableModel) resultsTable.getModel());
         tModel.setDataVector(waitRow, COLUMN_HEADERS);
         updateColumnSizes();
+        updateRowHeights();
         resultsTable.clearSelection();
         // The output of the previous task is no longer relevant.
         if (currentTask != null) {
@@ -740,8 +806,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             List<ResultsTableArtifact> artifactContents = getArtifactContents();
             ResultsTableArtifact artifactContent = artifactContents.get(pageIndex - 1);
 
-            // It may take a considerable amount of time to fetch the attributes of the selected artifact and render them
-            // as HTML, so check for cancellation.
+            // It may take a considerable amount of time to fetch the attributes of the selected artifact so check for cancellation.
             if (isCancelled()) {
                 return null;
             }
@@ -761,6 +826,29 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     logger.log(Level.WARNING, "Artifact display task unexpectedly interrupted or failed", ex);                 //NON-NLS
                 }
             }
+        }
+    }
+
+    /**
+     * TableCellRenderer for displaying multiline text.
+     */
+    private class MultiLineTableCellRenderer implements javax.swing.table.TableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            javax.swing.JTextArea jtex = new javax.swing.JTextArea();
+            if (value instanceof String) {
+                jtex.setText((String) value);
+                jtex.setLineWrap(true);
+                jtex.setWrapStyleWord(true);
+            }
+            //cell backgroud color when selected
+            if (isSelected) {
+                jtex.setBackground(javax.swing.UIManager.getColor("Table.selectionBackground"));
+            } else {
+                jtex.setBackground(javax.swing.UIManager.getColor("Table.background"));
+            }
+            return jtex;
         }
     }
 }

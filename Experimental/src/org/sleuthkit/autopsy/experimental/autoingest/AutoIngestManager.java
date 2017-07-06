@@ -774,8 +774,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
     }
 
-    
-
     /**
      * Removes a set of auto ingest jobs from a collection of jobs.
      *
@@ -915,8 +913,11 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     AutoIngestManager.this.completedJobs = newCompletedJobsList;
 
                 } catch (Exception ex) {
-                    /* NOTE: Need to catch all exceptions here. Otherwise uncaught exceptions will
-                    propagate up to the calling thread and may stop it from running.*/
+                    /*
+                     * NOTE: Need to catch all exceptions here. Otherwise
+                     * uncaught exceptions will propagate up to the calling
+                     * thread and may stop it from running.
+                     */
                     SYS_LOGGER.log(Level.SEVERE, String.format("Error scanning the input directory %s", rootInputDirectory), ex);
                 }
             }
@@ -2274,6 +2275,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                              * is shutting down.
                              */
                             ingestLock.wait();
+                            SYS_LOGGER.log(Level.INFO, "Finished ingest modules analysis for {0} ", manifestPath);
                             IngestJob.ProgressSnapshot jobSnapshot = ingestJob.getSnapshot();
                             for (IngestJob.ProgressSnapshot.DataSourceProcessingSnapshot snapshot : jobSnapshot.getDataSourceSnapshots()) {
                                 if (!snapshot.isCancelled()) {
@@ -2505,9 +2507,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     String eventType = event.getPropertyName();
                     if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString()) || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
                         synchronized (ingestLock) {
-                            if (!IngestManager.getInstance().isIngestRunning()) {
-                                ingestLock.notify();
-                            }
+                            ingestLock.notify();
                         }
                     }
                 }
