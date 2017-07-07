@@ -35,7 +35,6 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -257,8 +256,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     static class FileExtensionNode extends FileTypes.BGCountUpdatingNode {
 
         private final FileTypesByExtension.SearchFilterInterface filter;
-        private final SleuthkitCase skCase;
-        private long childCount = -1;
 
         /**
          *
@@ -270,7 +267,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
             super(skCase, Children.create(new FileExtensionNodeChildren(filter, skCase, o), true), Lookups.singleton(filter.getDisplayName()));
             this.filter = filter;
-            this.skCase = skCase;
             setName(filter.getName());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
@@ -301,13 +297,19 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.filterType.name"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.filterType.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.filterType.desc"), filter.getDisplayName()));
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.filterType.name"),
+                    NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.filterType.displayName"),
+                    NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.filterType.desc"),
+                    filter.getDisplayName()));
             String extensions = "";
             for (String ext : filter.getFilter()) {
                 extensions += "'" + ext + "', ";
             }
             extensions = extensions.substring(0, extensions.lastIndexOf(','));
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.name"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.desc"), extensions));
+            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.name"),
+                    NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.displayName"),
+                    NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.desc"),
+                    extensions));
             return s;
         }
 
@@ -330,11 +332,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          * Child node factory for a specific file type - does the database
          * query.
          */
-        private static class FileExtensionNodeChildren extends ChildFactory.Detachable<Content> {
+        private static class FileExtensionNodeChildren extends ChildFactory.Detachable<Content> implements Observer {
 
             private final SleuthkitCase skCase;
             private final FileTypesByExtension.SearchFilterInterface filter;
-            private static final Logger LOGGER = Logger.getLogger(FileExtensionNodeChildren.class.getName());
             private final Observable notifier;
 
             /**
@@ -354,34 +355,28 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             @Override
             protected void addNotify() {
                 if (notifier != null) {
-                    notifier.addObserver(observer);
+                    notifier.addObserver(this);
                 }
             }
 
             @Override
             protected void removeNotify() {
                 if (notifier != null) {
-                    notifier.deleteObserver(observer);
+                    notifier.deleteObserver(this);
                 }
             }
-            private final Observer observer = new FileTypeChildFactoryObserver();
 
-            // Cause refresh of children if there are changes
-            private class FileTypeChildFactoryObserver implements Observer {
-
-                @Override
-                public void update(Observable o, Object arg) {
-                    refresh(true);
-                }
+            @Override
+            public void update(Observable o, Object arg) {
+                refresh(true);
             }
 
             @Override
             protected boolean createKeys(List<Content> list) {
                 try {
-                    List<AbstractFile> files = skCase.findAllFilesWhere(createQuery(filter));
-                    list.addAll(files);
+                    list.addAll(skCase.findAllFilesWhere(createQuery(filter)));
                 } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
                 }
                 return true;
             }
