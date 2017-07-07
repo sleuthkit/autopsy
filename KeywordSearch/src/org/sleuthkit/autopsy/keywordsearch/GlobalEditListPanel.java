@@ -101,7 +101,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
             }
         });
     }
-    
+
     /**
      * Enables and disables buttons on this panel based on the current state.
      */
@@ -125,12 +125,12 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         }
     }
 
-    @NbBundle.Messages("GlobalEditListPanel.editKeyword.title=Edit Keyword")      
+    @NbBundle.Messages("GlobalEditListPanel.editKeyword.title=Edit Keyword")
     /**
-     * Adds keywords to a  keyword list, returns true if at least one keyword was successfully added and no
-     * duplicates were found.
-     * 
-     * @return - true or false 
+     * Adds keywords to a keyword list, returns true if at least one keyword was
+     * successfully added and no duplicates were found.
+     *
+     * @return - true or false
      */
     private boolean addKeywordsAction(String existingKeywords, boolean isLiteral, boolean isWholeWord) {
         String keywordsToRedisplay = existingKeywords;
@@ -140,7 +140,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
         int dupeCount = 0;
         int badCount = 1;  // Default to 1 so we enter the loop the first time
 
-        if (!existingKeywords.isEmpty()){  //if there is an existing keyword then this action was called by the edit button
+        if (!existingKeywords.isEmpty()) {  //if there is an existing keyword then this action was called by the edit button
             dialog.setTitle(NbBundle.getMessage(GlobalEditListPanel.class, "GlobalEditListPanel.editKeyword.title"));
         }
         while (badCount > 0) {
@@ -162,7 +162,7 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
                     final Keyword keyword = new Keyword(newWord, !dialog.isKeywordRegex(), dialog.isKeywordExact(), currentKeywordList.getName(), newWord);
                     if (currentKeywordList.hasKeyword(keyword)) {
                         dupeCount++;
-                        continue; 
+                        continue;
                     }
 
                     //check if valid
@@ -231,8 +231,9 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
 
     /**
      * Remove one or more keywords from a keyword list.
-     * 
-     * @param selectedKeywords the indices of the keywords you would like to delete
+     *
+     * @param selectedKeywords the indices of the keywords you would like to
+     *                         delete
      */
     private void deleteKeywordAction(int[] selectedKeywords) {
         tableModel.deleteSelected(selectedKeywords);
@@ -411,20 +412,15 @@ class GlobalEditListPanel extends javax.swing.JPanel implements ListSelectionLis
     public void valueChanged(ListSelectionEvent e) {
         //respond to list selection changes in KeywordSearchListManagementPanel
         ListSelectionModel listSelectionModel = (ListSelectionModel) e.getSource();
+        currentKeywordList = null;
         if (!listSelectionModel.isSelectionEmpty()) {
-            int index = listSelectionModel.getMinSelectionIndex();
-
-            listSelectionModel.setSelectionInterval(index, index);
             XmlKeywordSearchList loader = XmlKeywordSearchList.getCurrent();
-
-            currentKeywordList = loader.getListsL(false).get(index);
-            tableModel.resync();
-            setButtonStates();
-        } else {
-            currentKeywordList = null;
-            tableModel.resync();
-            setButtonStates();
+            if (listSelectionModel.getMinSelectionIndex() == listSelectionModel.getMaxSelectionIndex()) {
+                currentKeywordList = loader.getListsL(false).get(listSelectionModel.getMinSelectionIndex());
+            }
         }
+        tableModel.resync();
+        setButtonStates();
     }
 
     @Override
