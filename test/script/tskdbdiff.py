@@ -255,7 +255,7 @@ class TskDbDiff(object):
                             elif attr["value_type"] == 2:
                                 attr_value_as_string = str(attr["value_int64"])                        
                             elif attr["value_type"] == 3:
-                                attr_value_as_string = str(attr["value_double"])                        
+                                attr_value_as_string = "%20.10f" % float((attr["value_double"]))                        
                             elif attr["value_type"] == 4:
                                 attr_value_as_string = "bytes"                        
                             elif attr["value_type"] == 5:
@@ -413,7 +413,6 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
     layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
     data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
-    ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
     parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
 
@@ -498,7 +497,7 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
         if (start_time <= end_time):
             fields_list[3] = "0"
             fields_list[4] = "0"
-        newLine = ('INSERT INTO "injest_jobs" VALUES(' + ','.join(fields_list) + ');')
+        newLine = ('INSERT INTO "ingest_jobs" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     else:
         return line
