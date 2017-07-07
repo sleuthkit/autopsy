@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -326,12 +326,15 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 }
                 break;
             case REVIEW:
+                jLabelInvalidImageFolder.setVisible(false);
                 if (!validateResultsPath()) {
                     isValidNodePanel = false;
                 }
                 break;
 
             case STANDALONE:
+                jLabelInvalidImageFolder.setVisible(false);
+                jLabelInvalidResultsFolder.setVisible(false);
                 break;
             default:
                 break;
