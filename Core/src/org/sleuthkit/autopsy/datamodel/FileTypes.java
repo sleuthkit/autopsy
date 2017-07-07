@@ -19,10 +19,18 @@
 package org.sleuthkit.autopsy.datamodel;
 
 import java.util.Arrays;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import javax.swing.SwingWorker;
 import org.openide.nodes.AbstractNode;
+import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
+import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -32,12 +40,14 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * File Types node support
  */
 public final class FileTypes implements AutopsyVisitableItem {
 
+    private final static Logger logger = Logger.getLogger(FileTypes.class.getName());
     private final SleuthkitCase skCase;
 
     FileTypes(SleuthkitCase skCase) {
@@ -147,6 +157,65 @@ public final class FileTypes implements AutopsyVisitableItem {
         @Override
         protected AbstractNode defaultVisit(Content di) {
             throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(), "FileTypeChildren.exception.notSupported.msg", di.toString()));
+        }
+    }
+
+    static abstract class BGCountUpdatingNode extends DisplayableItemNode implements Observer {
+
+        private long childCount = -1;
+        private final SleuthkitCase skCase;
+
+        BGCountUpdatingNode(SleuthkitCase skCase, Children children) {
+            super(children);
+            this.skCase = skCase;
+        }
+
+         BGCountUpdatingNode(SleuthkitCase skCase, Children children, Lookup lookup) {
+            super(children, lookup);
+            this.skCase = skCase;
+        }
+
+        @Override
+        public void update(Observable o, Object arg) {
+            updateDisplayName();
+        }
+
+        abstract String getDisplayNameBase();
+
+        abstract String geQuery();
+
+        /**
+         * Updates the display name of the mediaSubTypeNode to include the count
+         * of files which it represents.
+         */
+        void updateDisplayName() {
+            if (childCount < 0) {
+                //only show this the first time, otherwise it is distracting.
+                setDisplayName(getDisplayNameBase() + " (counting ...)");
+            }
+            new SwingWorker<Long, Void>() {
+                @Override
+                protected Long doInBackground() throws Exception {
+                    try {
+                        return skCase.countFilesWhere(geQuery());
+                    } catch (TskCoreException ex) {
+                        logger.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
+                        return -1L;
+                    }
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        childCount = get();
+                        setDisplayName(getDisplayNameBase() + " (" + childCount + ")");
+                    } catch (InterruptedException | ExecutionException ex) {
+                        setDisplayName(getDisplayNameBase());
+                        logger.log(Level.WARNING, "Failed to get count of files for " + getName(), ex);
+                    }
+                }
+
+            }.execute();
         }
     }
 }
