@@ -861,7 +861,7 @@ public class EamDbSettingsDialog extends JDialog {
      * 
      * @return true
      */
-    @Messages({"EamDbSettingsDialog.validation.mustTest=Once you are statisfied with the database settings, click the Test button to test the database connection, settings, and schema.",
+    @Messages({"EamDbSettingsDialog.validation.mustTest=Once you are statisfied with the database settings, click the Test button to test the database connection, settings, and schema. SQLite should only be used for single user cases.",
         "EamDbSettingsDialog.validation.failedConnection=The connection to the database failed. Update the settings and try the Test again."})
     private boolean enableTestButton(boolean isValidInput) {
         if (selectedPlatform != EamDbPlatformEnum.DISABLED && isValidInput) {
