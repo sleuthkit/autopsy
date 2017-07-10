@@ -28,9 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.SwingWorker;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
@@ -65,8 +63,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      */
     private final HashMap<String, List<String>> existingMimeTypes = new HashMap<>();
     private static final Logger LOGGER = Logger.getLogger(FileTypesByMimeType.class.getName());
-
-    private boolean showCounts = true;
+    private final FileTypes typesRoot;
 
     private void removeListeners() {
         deleteObservers();
@@ -140,7 +137,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         notifyObservers();
     }
 
-    FileTypesByMimeType(SleuthkitCase skCase) {
+    FileTypesByMimeType( FileTypes typesRoot) {
+        this.skCase = typesRoot.getSleuthkitCase();
+        this.typesRoot = typesRoot;
         this.pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -154,8 +153,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                  */
                 try {
                     Case.getCurrentCase();
-                    shouldShowCounts(skCase);
-
+                    typesRoot.shouldShowCounts();
                     populateHashMap();
                 } catch (IllegalStateException notUsed) {
                     /**
@@ -170,28 +168,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         };
         IngestManager.getInstance().addIngestJobEventListener(pcl);
         Case.addPropertyChangeListener(pcl);
-        this.skCase = skCase;
         populateHashMap();
-    }
-
-    /**
-     * Should the nodes show counts?
-     *
-     *
-     * @return True, unless the DB has more than 200k rows.
-     */
-    private boolean shouldShowCounts(final SleuthkitCase skCase) {
-        if (showCounts) {
-            try {
-                if (skCase.countFilesWhere("1=1") > 200000) {
-                    showCounts = false;
-                }
-            } catch (TskCoreException tskCoreException) {
-                showCounts = false;
-                LOGGER.log(Level.SEVERE, "Error counting files.", tskCoreException);
-            }
-        }
-        return showCounts;
     }
 
     @Override
@@ -350,14 +327,13 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
     }
 
-    class MediaSubTypeNode extends DisplayableItemNode implements Observer {
+    class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
 
-        private long childCount = -1;
         private final String mimeType;
         private final String subType;
 
         private MediaSubTypeNode(String mimeType) {
-            super(Children.create(new MediaSubTypeNodeChildren(mimeType), true));
+            super(typesRoot,Children.create(new MediaSubTypeNodeChildren(mimeType), true));
             this.mimeType = mimeType;
             this.subType = StringUtils.substringAfter(mimeType, "/");
             super.setName(mimeType);
@@ -365,42 +341,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
 
             addObserver(this);
-        }
-
-        /**
-         * Updates the display name of the mediaSubTypeNode to include the count
-         * of files which it represents.
-         *
-         * @param mimeType - the complete MimeType, needed for accurate query
-         *                 results
-         */
-        private void updateDisplayName() {
-            if (shouldShowCounts(skCase)) {
-                setDisplayName(subType + ((childCount < 0) ? "(counting...)"
-                        : ("(" + childCount + ")")));
-                new SwingWorker<Long, Void>() {
-                    @Override
-                    protected Long doInBackground() throws Exception {
-                        return calculateItems(skCase, mimeType);
-                    }
-
-                    @Override
-                    protected void done() {
-                        try {
-                            childCount = get();
-                            setDisplayName(subType + " (" + childCount + ")");
-                        } catch (InterruptedException | ExecutionException ex) {
-                            setDisplayName(subType);
-                            logger.log(Level.WARNING, "Failed to get count of files for mimetype " + mimeType, ex);
-                        }
-                    }
-
-                }.
-                        execute();
-            } else {
-                setDisplayName(subType + ((childCount < 0) ? ""
-                        : ("(" + childCount + "+)")));
-            }
         }
 
         /**
@@ -428,6 +368,17 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         public void update(Observable o, Object arg) {
             updateDisplayName();
         }
+
+        @Override
+        String getDisplayNameBase() {
+            return subType;
+        }
+
+        @Override
+        String geQuery() {
+            return createQuery(mimeType);
+        }
+
     }
 
     /**
