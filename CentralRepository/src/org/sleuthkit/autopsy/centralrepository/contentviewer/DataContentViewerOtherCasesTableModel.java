@@ -48,7 +48,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 145),
         TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 40),
         VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 145),
-        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 25),
+        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 45),
         SCOPE(Bundle.DataContentViewerOtherCasesTableModel_scope(), 20),
         COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200),
         FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 250);
@@ -151,16 +151,16 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
                 value = eamArtifactInstance.getFilePath();
                 break;
             case TYPE:
-                value = eamArtifact.getArtifactType().getName();
+                value = eamArtifact.getCorrelationType().getDisplayName();
                 break;
             case VALUE:
-                value = eamArtifact.getArtifactValue();
+                value = eamArtifact.getCorrelationValue();
                 break;
             case SCOPE:
                 value = eamArtifactInstance.getGlobalStatus().toString();
                 break;
             case KNOWN:
-                value = eamArtifactInstance.getKnownStatus().toString();
+                value = eamArtifactInstance.getKnownStatus().getName();
                 break;
             case COMMENT:
                 value = eamArtifactInstance.getComment();

@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -33,6 +34,8 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
     private final static Logger LOGGER = Logger.getLogger(PostgresEamDb.class.getName());
 
+    private final static String CONFLICT_CLAUSE = "ON CONFLICT DO NOTHING";
+
     private static PostgresEamDb instance;
 
     private static final int CONN_POOL_SIZE = 10;
@@ -40,7 +43,14 @@ public class PostgresEamDb extends AbstractSqlEamDb {
 
     private final PostgresEamDbSettings dbSettings;
 
-    public synchronized static PostgresEamDb getInstance() {
+    /**
+     * Get the singleton instance of PostgresEamDb
+     * 
+     * @return the singleton instance of PostgresEamDb
+     * 
+     * @throws EamDbException if one or more default correlation type(s) have an invalid db table name.
+     */
+    public synchronized static PostgresEamDb getInstance() throws EamDbException {
         if (instance == null) {
             instance = new PostgresEamDb();
         }
@@ -48,7 +58,12 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         return instance;
     }
 
-    private PostgresEamDb() {
+    /**
+     * 
+     * @throws EamDbException if the AbstractSqlEamDb class has one or more default
+     *      correlation type(s) having an invalid db table name.
+     */
+    private PostgresEamDb() throws EamDbException {
         dbSettings = new PostgresEamDbSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
     }
@@ -89,18 +104,21 @@ public class PostgresEamDb extends AbstractSqlEamDb {
             dropContent.executeUpdate("TRUNCATE TABLE organizations RESTART IDENTITY CASCADE");
             dropContent.executeUpdate("TRUNCATE TABLE cases RESTART IDENTITY CASCADE");
             dropContent.executeUpdate("TRUNCATE TABLE data_sources RESTART IDENTITY CASCADE");
-            dropContent.executeUpdate("TRUNCATE TABLE global_reference_sets RESTART IDENTITY CASCADE");
-            dropContent.executeUpdate("TRUNCATE TABLE global_files RESTART IDENTITY CASCADE");
-            dropContent.executeUpdate("TRUNCATE TABLE artifact_types RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE reference_sets RESTART IDENTITY CASCADE");
+            dropContent.executeUpdate("TRUNCATE TABLE correlation_types RESTART IDENTITY CASCADE");
             dropContent.executeUpdate("TRUNCATE TABLE db_info RESTART IDENTITY CASCADE");
 
             String instancesTemplate = "TRUNCATE TABLE %s_instances RESTART IDENTITY CASCADE";
-            for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                dropContent.executeUpdate(String.format(instancesTemplate, type.getName().toLowerCase()));
+            String referencesTemplate = "TRUNCATE TABLE reference_%s RESTART IDENTITY CASCADE";
+            for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+                dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
+                // FUTURE: support other reference types
+                if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                    dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
+                }
             }
-
         } catch (SQLException ex) {
-            //LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
+            LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
         } finally {
             EamDbUtil.closeConnection(conn);
         }
@@ -160,6 +178,11 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         } catch (SQLException ex) {
             throw new EamDbException("Error getting connection from connection pool.", ex); // NON-NLS
         }
+    }
+
+    @Override
+    protected String getConflictClause() {
+        return CONFLICT_CLAUSE;
     }
 
     @Override

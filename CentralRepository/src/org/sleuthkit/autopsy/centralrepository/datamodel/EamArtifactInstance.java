@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.io.Serializable;
 import org.openide.util.NbBundle.Messages;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  *
@@ -49,23 +50,6 @@ public class EamArtifactInstance implements Serializable {
         }
     }
 
-    public enum KnownStatus {
-        UNKNOWN(Bundle.EamArtifactInstances_knownStatus_unknown()),
-        KNOWN(Bundle.EamArtifactInstances_knownStatus_known()),
-        BAD(Bundle.EamArtifactInstances_knownStatus_bad());
-
-        private final String knownStatus;
-
-        private KnownStatus(String knownStatus) {
-            this.knownStatus = knownStatus;
-        }
-
-        @Override
-        public String toString() {
-            return knownStatus;
-        }
-    }
-
     private static final long serialVersionUID = 1L;
 
     private String ID;
@@ -73,14 +57,14 @@ public class EamArtifactInstance implements Serializable {
     private EamDataSource eamDataSource;
     private String filePath;
     private String comment;
-    private KnownStatus knownStatus;
+    private TskData.FileKnown knownStatus;
     private GlobalStatus globalStatus;
 
     public EamArtifactInstance(
             EamCase eamCase,
             EamDataSource eamDataSource
     ) {
-        this("", eamCase, eamDataSource, "", "", KnownStatus.UNKNOWN, GlobalStatus.LOCAL);
+        this("", eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public EamArtifactInstance(
@@ -88,7 +72,7 @@ public class EamArtifactInstance implements Serializable {
             EamDataSource eamDataSource,
             String filePath
     ) {
-        this("", eamCase, eamDataSource, filePath, "", KnownStatus.UNKNOWN, GlobalStatus.LOCAL);
+        this("", eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public EamArtifactInstance(
@@ -97,7 +81,7 @@ public class EamArtifactInstance implements Serializable {
             String filePath,
             String comment
     ) {
-        this("", eamCase, eamDataSource, filePath, comment, KnownStatus.UNKNOWN, GlobalStatus.LOCAL);
+        this("", eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public EamArtifactInstance(
@@ -105,7 +89,7 @@ public class EamArtifactInstance implements Serializable {
             EamDataSource eamDataSource,
             String filePath,
             String comment,
-            KnownStatus knownStatus,
+            TskData.FileKnown knownStatus,
             GlobalStatus globalStatus
     ) {
         this("", eamCase, eamDataSource, filePath, comment, knownStatus, globalStatus);
@@ -117,13 +101,14 @@ public class EamArtifactInstance implements Serializable {
             EamDataSource eamDataSource,
             String filePath,
             String comment,
-            KnownStatus knownStatus,
+            TskData.FileKnown knownStatus,
             GlobalStatus globalStatus
     ) {
         this.ID = ID;
         this.eamCase = eamCase;
         this.eamDataSource = eamDataSource;
-        this.filePath = filePath;
+        // Lower case paths to normalize paths and improve correlation results, if this causes significant issues on case-sensitive file systems, remove
+        this.filePath = filePath.toLowerCase();
         this.comment = comment;
         this.knownStatus = knownStatus;
         this.globalStatus = globalStatus;
@@ -203,14 +188,15 @@ public class EamArtifactInstance implements Serializable {
      * @param filePath the filePath to set
      */
     public void setFilePath(String filePath) {
-        this.filePath = filePath;
+        // Lower case paths to normalize paths and improve correlation results, if this causes significant issues on case-sensitive file systems, remove
+        this.filePath = filePath.toLowerCase();
     }
 
     /**
      * @return the comment
      */
     public String getComment() {
-        return comment;
+        return null == comment ? "" : comment;
     }
 
     /**
@@ -223,14 +209,14 @@ public class EamArtifactInstance implements Serializable {
     /**
      * @return the knownStatus
      */
-    public KnownStatus getKnownStatus() {
+    public TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 
     /**
      * @param knownStatus the knownStatus to set
      */
-    public void setKnownStatus(KnownStatus knownStatus) {
+    public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
     }
 

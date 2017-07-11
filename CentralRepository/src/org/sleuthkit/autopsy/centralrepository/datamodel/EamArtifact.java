@@ -22,6 +22,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
+import org.openide.util.NbBundle.Messages;
 
 /**
  *
@@ -32,42 +34,57 @@ public class EamArtifact implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String ID;
-    private String artifactValue;
-    private Type artifactType;
+    private String correlationValue;
+    private Type correlationType;
     private final List<EamArtifactInstance> artifactInstances;
 
+    // Type ID's for Default Correlation Types
+    public static final int FILES_TYPE_ID = 0;
+    public static final int DOMAIN_TYPE_ID = 1;
+    public static final int EMAIL_TYPE_ID = 2;
+    public static final int PHONE_TYPE_ID = 3;
+    public static final int USBID_TYPE_ID = 4;
+
     /**
-     * Load the default correlation artifact types
+     * Load the default correlation types
+     * 
+     * @throws EamDbException if the Type's dbTableName has invalid characters/format
      */
-    public static List<EamArtifact.Type> getDefaultArtifactTypes() {
-        List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = new ArrayList<>();
-        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("FILES", true, true)); // NON-NLS
-        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("DOMAIN", true, false)); // NON-NLS
-        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("EMAIL", true, false)); // NON-NLS
-        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("PHONE", true, false)); // NON-NLS
-        DEFAULT_ARTIFACT_TYPES.add(new EamArtifact.Type("USBID", true, false)); // NON-NLS
-        return DEFAULT_ARTIFACT_TYPES;
+    @Messages({"CorrelationType.FILES.displayName=Files",
+        "CorrelationType.DOMAIN.displayName=Domains",
+        "CorrelationType.EMAIL.displayName=Email Addresses",
+        "CorrelationType.PHONE.displayName=Phone Numbers",
+        "CorrelationType.USBID.displayName=USB Devices"})
+    public static List<EamArtifact.Type> getDefaultCorrelationTypes() throws EamDbException {
+        List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, false)); // NON-NLS
+        return DEFAULT_CORRELATION_TYPES;
     }
 
-    public EamArtifact(Type artifactType, String artifactValue) {
+    public EamArtifact(Type correlationType, String correlationValue) {
         this.ID = "";
-        this.artifactType = artifactType;
-        this.artifactValue = artifactValue;
+        this.correlationType = correlationType;
+        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
+        this.correlationValue = correlationValue.toLowerCase();
         this.artifactInstances = new ArrayList<>();
     }
 
     public Boolean equals(EamArtifact otherArtifact) {
         return ((this.getID().equals(otherArtifact.getID()))
-                && (this.getArtifactType().equals(otherArtifact.getArtifactType()))
-                && (this.getArtifactValue().equals(otherArtifact.getArtifactValue()))
+                && (this.getCorrelationType().equals(otherArtifact.getCorrelationType()))
+                && (this.getCorrelationValue().equals(otherArtifact.getCorrelationValue()))
                 && (this.getInstances().equals(otherArtifact.getInstances())));
     }
 
     @Override
     public String toString() {
         String result = this.getID()
-                + this.getArtifactType().toString()
-                + this.getArtifactValue();
+                + this.getCorrelationType().toString()
+                + this.getCorrelationValue();
         result = this.getInstances().stream().map((inst) -> inst.toString()).reduce(result, String::concat);
         return result;
     }
@@ -87,31 +104,32 @@ public class EamArtifact implements Serializable {
     }
 
     /**
-     * @return the artifactValue
+     * @return the correlationValue
      */
-    public String getArtifactValue() {
-        return artifactValue;
+    public String getCorrelationValue() {
+        return correlationValue;
     }
 
     /**
-     * @param artifactValue the artifactValue to set
+     * @param correlationValue the correlationValue to set
      */
-    public void setArtifactValue(String artifactValue) {
-        this.artifactValue = artifactValue;
+    public void setCorrelationValue(String correlationValue) {
+        // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
+        this.correlationValue = correlationValue.toLowerCase();
     }
 
     /**
-     * @return the artifact Type
+     * @return the correlation Type
      */
-    public Type getArtifactType() {
-        return artifactType;
+    public Type getCorrelationType() {
+        return correlationType;
     }
 
     /**
-     * @param artifactType the artifact Type to set
+     * @param correlationType the correlation Type to set
      */
-    public void setArtifactType(Type artifactType) {
-        this.artifactType = artifactType;
+    public void setCorrelationType(Type correlationType) {
+        this.correlationType = correlationType;
     }
 
     /**
@@ -142,24 +160,51 @@ public class EamArtifact implements Serializable {
     public static class Type implements Serializable {
 
         private int id;
-        private String name;
+        private String displayName;
+        private String dbTableName;
         private Boolean supported;
         private Boolean enabled;
+        private final String DB_NAMES_REGEX = "[a-z][a-z0-9_]*";
 
-        public Type(int id, String name, Boolean supported, Boolean enabled) {
+        /**
+         * 
+         * @param id            Unique ID for this Correlation Type
+         * @param displayName   Name of this type displayed in the UI.
+         * @param dbTableName   Central Repository db table where data of this type is stored.
+         *                      Must start with a lowercase letter and only contain
+         *                      lowercase letters, numbers, and '_' characters.
+         * @param supported     Is this Type currently supported
+         * @param enabled       Is this Type currentl enabled.
+         */
+        public Type(int id, String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
             this.id = id;
-            this.name = name;
+            this.displayName = displayName;
+            this.dbTableName = dbTableName;
             this.supported = supported;
             this.enabled = enabled;
-        }
-
-        public Type(String name, Boolean supported, Boolean enabled) {
-            this(-1, name, supported, enabled);
+            if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
+                throw new EamDbException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+            }
         }
 
         /**
-         * Determine if 2 Type objects are equal based on having the same
-         * Type.name.
+         * Constructior for custom types where we do not know the Type ID until
+         * the row has been entered into the correlation_types table
+         * in the Central Repository.
+         * 
+         * @param displayName   Name of this type displayed in the UI.
+         * @param dbTableName   Central Repository db table where data of this type is stored
+         *                      Must start with a lowercase letter and only contain
+         *                      lowercase letters, numbers, and '_' characters.
+         * @param supported     Is this Type currently supported
+         * @param enabled       Is this Type currentl enabled.
+         */
+        public Type(String displayName, String dbTableName, Boolean supported, Boolean enabled) throws EamDbException {
+            this(-1, displayName, dbTableName, supported, enabled);
+        }
+
+        /**
+         * Determine if 2 Type objects are equal
          *
          * @param otherType Type object for comparison.
          *
@@ -186,7 +231,6 @@ public class EamArtifact implements Serializable {
          */
         private boolean sameType(EamArtifact.Type that) {
             return this.id == that.getId()
-                    && this.name.equals(that.getName())
                     && Objects.equals(this.supported, that.isSupported())
                     && Objects.equals(this.enabled, that.isEnabled());
         }
@@ -195,7 +239,6 @@ public class EamArtifact implements Serializable {
         public int hashCode() {
             int hash = 7;
             hash = 67 * hash + Objects.hashCode(this.id);
-            hash = 67 * hash + Objects.hashCode(this.name);
             hash = 67 * hash + Objects.hashCode(this.supported);
             hash = 67 * hash + Objects.hashCode(this.enabled);
             return hash;
@@ -204,10 +247,11 @@ public class EamArtifact implements Serializable {
         @Override
         public String toString() {
             StringBuilder str = new StringBuilder();
-            str.append("(id=").append(id);
-            str.append(", name=").append(name);
-            str.append(", supported=").append(supported.toString());
-            str.append(", enabled=").append(enabled.toString());
+            str.append("(id=").append(getId());
+            str.append(", displayName=").append(getDisplayName());
+            str.append(", dbTableName=").append(getDbTableName());
+            str.append(", supported=").append(isSupported().toString());
+            str.append(", enabled=").append(isEnabled().toString());
             str.append(")");
             return str.toString();
         }
@@ -224,24 +268,6 @@ public class EamArtifact implements Serializable {
          */
         public void setId(int id) {
             this.id = id;
-        }
-
-        /**
-         * Get the name of this Artifact Type.
-         *
-         * @return the name
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * Set the name of this Artifact Type
-         *
-         * @param name the name to set
-         */
-        public void setName(String name) {
-            this.name = name;
         }
 
         /**
@@ -278,6 +304,64 @@ public class EamArtifact implements Serializable {
          */
         public void setEnabled(Boolean enabled) {
             this.enabled = enabled;
+        }
+
+        /**
+         * @return the displayName
+         */
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        /**
+         * @param displayName the displayName to set
+         */
+        public void setDisplayName(String displayName) {
+            this.displayName = displayName;
+        }
+
+        /**
+         * To support having different database tables for each Type,
+         * this field provides the prefix/suffix of the table name,
+         * which allows us to automatically compute the table names
+         * and index names.
+         * 
+         * It is the prefix for the instances tables *_instances. (i.e. file_instances)
+         * It is the suffix for the reference tables reference_*. (i.e. reference_file)
+         * 
+         * When custom Types are added in the future, they are already supported
+         * by just giving the desired value for the table name for each custom
+         * Type. Possibly having all custom Types use a common table name.
+         *
+         * @return the dbTableName
+         */
+        public String getDbTableName() {
+            return dbTableName;
+        }
+
+        /**
+         * To support having different database tables for each Type,
+         * this field provides the prefix/suffix of the table name,
+         * which allows us to automatically compute the table names
+         * and index names.
+         * 
+         * It is the prefix for the instances tables *_instances. (i.e. file_instances)
+         * It is the suffix for the reference tables reference_*. (i.e. reference_file)
+         * 
+         * When custom Types are added in the future, they are already supported
+         * by just giving the desired value for the table name for each custom
+         * Type. Possibly having all custom Types use a common table name. (i.e. custom_instances)
+         * 
+         * @param dbTableName the dbTableName to set. Must start with lowercase letter
+         *                      and can only contain lowercase letters, numbers, and '_' characters.
+         * 
+         * @throws EamDbException if dbTableName contains invalid characters
+         */
+        public void setDbTableName(String dbTableName) throws EamDbException {
+            if (!Pattern.matches(DB_NAMES_REGEX, dbTableName)) {
+                throw new EamDbException("Invalid database table name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
+            }
+            this.dbTableName = dbTableName;
         }
     }
 }

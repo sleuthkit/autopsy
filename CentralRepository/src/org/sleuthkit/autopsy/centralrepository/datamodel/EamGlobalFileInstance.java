@@ -18,7 +18,8 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance.KnownStatus;
+import java.util.Objects;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Global file hash instance
@@ -28,30 +29,50 @@ public class EamGlobalFileInstance {
     private int instanceID;
     private int globalSetID;
     private String MD5Hash;
-    private KnownStatus knownStatus;
+    private TskData.FileKnown knownStatus;
     private String comment;
+
+    public EamGlobalFileInstance(
+            int globalSetID,
+            String MD5Hash,
+            TskData.FileKnown knownStatus,
+            String comment) {
+        this(-1, globalSetID, MD5Hash, knownStatus, comment);
+    }
 
     public EamGlobalFileInstance(
             int instanceID,
             int globalSetID,
             String MD5Hash,
-            KnownStatus knownStatus,
+            TskData.FileKnown knownStatus,
             String comment) {
         this.instanceID = instanceID;
         this.globalSetID = globalSetID;
-        this.MD5Hash = MD5Hash;
+        // Normalize hashes by lower casing
+        this.MD5Hash = MD5Hash.toLowerCase();
         this.knownStatus = knownStatus;
         this.comment = comment;
     }
 
-    public EamGlobalFileInstance(
-            int globalSetID,
-            String MD5Hash,
-            KnownStatus knownStatus,
-            String comment) {
-        this(-1, globalSetID, MD5Hash, knownStatus, comment);
+    @Override
+    public boolean equals(Object otherInstance) {
+        if (this == otherInstance) {
+            return true;
+        } else if (!(otherInstance instanceof EamGlobalFileInstance)) {
+            return false;
+        } else {
+            return (this.hashCode() == otherInstance.hashCode());
+        }
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 59 * hash + this.globalSetID;
+        hash = 59 * hash + Objects.hashCode(this.MD5Hash);
+        hash = 59 * hash + this.knownStatus.hashCode();
+        return hash;
+    }
     /**
      * @return the instanceID
      */
@@ -91,20 +112,21 @@ public class EamGlobalFileInstance {
      * @param MD5Hash the MD5Hash to set
      */
     public void setMD5Hash(String MD5Hash) {
-        this.MD5Hash = MD5Hash;
+        // Normalize hashes by lower casing
+        this.MD5Hash = MD5Hash.toLowerCase();
     }
 
     /**
      * @return the knownStatus
      */
-    public KnownStatus getKnownStatus() {
+    public TskData.FileKnown getKnownStatus() {
         return knownStatus;
     }
 
     /**
      * @param knownStatus the knownStatus to set
      */
-    public void setKnownStatus(KnownStatus knownStatus) {
+    public void setKnownStatus(TskData.FileKnown knownStatus) {
         this.knownStatus = knownStatus;
     }
 
@@ -112,7 +134,7 @@ public class EamGlobalFileInstance {
      * @return the comment
      */
     public String getComment() {
-        return comment;
+        return null == comment ? "" : comment;
     }
 
     /**

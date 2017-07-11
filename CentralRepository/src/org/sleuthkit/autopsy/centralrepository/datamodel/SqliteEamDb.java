@@ -25,7 +25,6 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
-import org.openide.util.Exceptions;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -41,7 +40,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
     private final SqliteEamDbSettings dbSettings;
 
-    public synchronized static SqliteEamDb getInstance() {
+    /**
+     * Get the singleton instance of SqliteEamDb
+     * 
+     * @return the singleton instance of SqliteEamDb
+     * 
+     * @throws EamDbException if one or more default correlation type(s) have an invalid db table name.
+     */
+    public synchronized static SqliteEamDb getInstance() throws EamDbException {
         if (instance == null) {
             instance = new SqliteEamDb();
         }
@@ -49,7 +55,12 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         return instance;
     }
 
-    private SqliteEamDb() {
+    /**
+     * 
+     * @throws EamDbException if the AbstractSqlEamDb class has one or more default
+     *      correlation type(s) having an invalid db table name.
+     */
+    private SqliteEamDb() throws EamDbException {
         dbSettings = new SqliteEamDbSettings();
         bulkArtifactsThreshold = dbSettings.getBulkThreshold();
     }
@@ -92,24 +103,28 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             dropContent.executeUpdate("DELETE FROM organizations");
             dropContent.executeUpdate("DELETE FROM cases");
             dropContent.executeUpdate("DELETE FROM data_sources");
-            dropContent.executeUpdate("DELETE FROM global_reference_sets");
-            dropContent.executeUpdate("DELETE FROM global_files");
+            dropContent.executeUpdate("DELETE FROM reference_sets");
             dropContent.executeUpdate("DELETE FROM artifact_types");
             dropContent.executeUpdate("DELETE FROM db_info");
 
             String instancesTemplate = "DELETE FROM %s_instances";
-            for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                dropContent.executeUpdate(String.format(instancesTemplate, type.getName().toLowerCase()));
+            String referencesTemplate = "DELETE FROM global_files";
+            for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+                dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
+                // FUTURE: support other reference types
+                if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                    dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
+                }
             }
 
             dropContent.executeUpdate("VACUUM");
-            dbSettings.insertDefaultDatabaseContent();
-
         } catch (SQLException ex) {
             LOGGER.log(Level.WARNING, "Failed to reset database.", ex);
         } finally {
             EamDbUtil.closeConnection(conn);
         }
+
+        dbSettings.insertDefaultDatabaseContent();
     }
 
     /**
@@ -160,6 +175,12 @@ public class SqliteEamDb extends AbstractSqlEamDb {
                 throw new EamDbException("Error getting connection from connection pool.", ex); // NON-NLS
             }
         }
+    }
+
+    @Override
+    protected String getConflictClause() {
+        // For sqlite, our conflict clause is part of the table schema
+        return "";
     }
 
     @Override

@@ -94,12 +94,15 @@ public abstract class DisplayableItemNode extends AbstractNode {
     }
 
     /**
-     * Accepts a DisplayableItemNodeVisitor.
+     * Accepts a visitor DisplayableItemNodeVisitor that will perform an
+     * operation on this artifact type and return some object as the result of
+     * the operation.
      *
-     * @param <T>     The type parameter of the visitor.
-     * @param visitor The visitor.
+     * @param visitor The visitor, where the type parameter of the visitor is
+     *                the type of the object that will be returned as the result
+     *                of the visit operation.
      *
-     * @return
+     * @return An object of type T.
      */
     public abstract <T> T accept(DisplayableItemNodeVisitor<T> visitor);
 

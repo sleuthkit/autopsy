@@ -33,11 +33,9 @@ public class BadFileTagRunner implements Runnable {
     private static final long serialVersionUID = 1L;
 
     private final EamArtifact artifact;
-    private final EamDb dbManager;
 
     public BadFileTagRunner(EamArtifact artifact) {
         this.artifact = artifact;
-        this.dbManager = EamDb.getInstance();
     }
 
     @Override
@@ -48,6 +46,7 @@ public class BadFileTagRunner implements Runnable {
         }
 
         try {
+            EamDb dbManager = EamDb.getInstance();
             dbManager.setArtifactInstanceKnownBad(this.artifact);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS

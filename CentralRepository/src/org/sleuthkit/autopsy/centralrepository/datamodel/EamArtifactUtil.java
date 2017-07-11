@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.util.NbBundle.Messages;
@@ -27,6 +28,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
@@ -45,31 +47,32 @@ public class EamArtifactUtil {
         return Bundle.EamArtifactUtil_emailaddresses_text();
     }
 
-    /*
+    /**
      * Static factory method to examine a BlackboardArtifact to determine if it
      * has contents that can be used for Correlation. If so, return a
      * EamArtifact with a single EamArtifactInstance within. If not, return
      * null.
      *
-     * @param bbArtifact BlackboardArtifact to examine @return EamArtifact or
-     * null
+     * @param bbArtifact BlackboardArtifact to examine
+     * @return List of EamArtifacts
      */
-    public static EamArtifact fromBlackboardArtifact(BlackboardArtifact bbArtifact,
+    public static List<EamArtifact> fromBlackboardArtifact(BlackboardArtifact bbArtifact,
             boolean includeInstances,
             List<EamArtifact.Type> artifactTypes,
             boolean checkEnabled) {
 
-        EamArtifact eamArtifact = null;
+        List<EamArtifact> eamArtifacts = new ArrayList<>();
+
         for (EamArtifact.Type aType : artifactTypes) {
             if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                eamArtifact = getTypeFromBlackboardArtifact(aType, bbArtifact);
-            }
-            if (null != eamArtifact) {
-                break;
+                EamArtifact eamArtifact = getTypeFromBlackboardArtifact(aType, bbArtifact);
+                if (eamArtifact != null) {
+                    eamArtifacts.add(eamArtifact);
+                }
             }
         }
 
-        if (null != eamArtifact && includeInstances) {
+        if (!eamArtifacts.isEmpty() && includeInstances) {
             try {
                 AbstractFile af = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
                 if (null == af) {
@@ -88,17 +91,20 @@ public class EamArtifactUtil {
                         new EamDataSource(deviceId, af.getDataSource().getName()),
                         af.getParentPath() + af.getName(),
                         "",
-                        EamArtifactInstance.KnownStatus.UNKNOWN,
+                        TskData.FileKnown.UNKNOWN,
                         EamArtifactInstance.GlobalStatus.LOCAL
                 );
-                eamArtifact.addInstance(eamInstance);
+
+                for (EamArtifact eamArtifact : eamArtifacts) {
+                    eamArtifact.addInstance(eamInstance);
+                }
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
                 return null;
             }
         }
 
-        return eamArtifact;
+        return eamArtifacts;
     }
 
     /**
@@ -114,7 +120,7 @@ public class EamArtifactUtil {
         int artifactTypeID = bbArtifact.getArtifactTypeID();
 
         try {
-            if (aType.getName().equals("EMAIL")
+            if (aType.getId() == EamArtifact.EMAIL_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
 
                 BlackboardAttribute setNameAttr = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
@@ -122,15 +128,15 @@ public class EamArtifactUtil {
                         && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD)).getValueString();
                 }
-            } else if (aType.getName().equals("DOMAIN")
+            } else if (aType.getId() == EamArtifact.DOMAIN_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_HISTORY.getTypeID() == artifactTypeID)) {
 
+                // Lower-case this to normalize domains
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString();
-
-            } else if (aType.getName().equals("PHONE")
+            } else if (aType.getId() == EamArtifact.PHONE_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifactTypeID)) {
@@ -143,7 +149,16 @@ public class EamArtifactUtil {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER_TO)).getValueString();
                 }
 
-            } else if (aType.getName().equals("USBID")
+                // Remove all non-numeric symbols to semi-normalize phone numbers, preserving leading "+" character
+                if (value != null) {
+                    String newValue = value.replaceAll("\\D", "");
+                    if (value.startsWith("+")) {
+                        newValue = "+" + newValue;
+                    }
+
+                    value = newValue;
+                }
+            } else if (aType.getId() == EamArtifact.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();

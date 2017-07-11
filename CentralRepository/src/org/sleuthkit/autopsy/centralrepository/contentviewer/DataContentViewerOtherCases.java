@@ -117,9 +117,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     @Messages({"DataContentViewerOtherCases.correlatedArtifacts.isEmpty=There are no files or artifacts to correlate.",
         "# {0} - commonality percentage",
-        "# {1} - artifact type",
-        "# {2} - artifact value",
-        "DataContentViewerOtherCases.correlatedArtifacts.byType={0}% for Artifact Type: {1} and Artifact Value: {2}.\n",
+        "# {1} - correlation type",
+        "# {2} - correlation value",
+        "DataContentViewerOtherCases.correlatedArtifacts.byType={0}% for Correlation Type: {1} and Correlation Value: {2}.\n",
         "DataContentViewerOtherCases.correlatedArtifacts.title=Commonality Percentages",
         "DataContentViewerOtherCases.correlatedArtifacts.failed=Failed to get commonality details."})
     private void showCommonalityDetails() {
@@ -134,10 +134,10 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             try {
                 EamDb dbManager = EamDb.getInstance();
                 for (EamArtifact eamArtifact : correlatedArtifacts) {
-                    percentage = dbManager.getCommonalityPercentageForTypeValue(eamArtifact);
+                    percentage = dbManager.getCommonalityPercentageForTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
                     msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
-                            eamArtifact.getArtifactType().getName(),
-                            eamArtifact.getArtifactValue()));
+                            eamArtifact.getCorrelationType().getDisplayName(),
+                            eamArtifact.getCorrelationValue()));
                 }
                 JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                         msg.toString(),
@@ -155,6 +155,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     @Messages({"DataContentViewerOtherCases.caseDetailsDialog.notSelected=No Row Selected",
         "DataContentViewerOtherCases.caseDetailsDialog.noDetails=No details for this case.",
+        "DataContentViewerOtherCases.caseDetailsDialog.noDetailsReference=No case details for Global reference properties.",
         "DataContentViewerOtherCases.caseDetailsDialog.noCaseNameError=Error"})
     private void showCaseDetails(int selectedRowViewIdx) {
         String caseDisplayName = Bundle.DataContentViewerOtherCases_caseDetailsDialog_noCaseNameError();
@@ -164,6 +165,13 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 int selectedRowModelIdx = otherCasesTable.convertRowIndexToModel(selectedRowViewIdx);
                 EamArtifact eamArtifact = (EamArtifact) tableModel.getRow(selectedRowModelIdx);
                 EamCase eamCasePartial = eamArtifact.getInstances().get(0).getEamCase();
+                if (eamCasePartial == null) {
+                    JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
+                            Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetailsReference(),
+                            caseDisplayName,
+                            DEFAULT_OPTION, PLAIN_MESSAGE);
+                    return;
+                }
                 caseDisplayName = eamCasePartial.getDisplayName();
                 // query case details
                 EamCase eamCase = dbManager.getCaseDetails(eamCasePartial.getCaseUUID());
@@ -358,8 +366,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Scan a Node for blackboard artifacts / content that we can correlate on
-     * and create the corresponding Central Repository artifacts for
-     * display
+     * and create the corresponding Central Repository artifacts for display
      *
      * @param node The node to view
      *
@@ -378,12 +385,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         List<EamArtifact.Type> artifactTypes = null;
         try {
             EamDb dbManager = EamDb.getInstance();
-            artifactTypes = dbManager.getCorrelationArtifactTypes();
+            artifactTypes = dbManager.getCorrelationTypes();
             if (bbArtifact != null) {
-                EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, false, artifactTypes, false);
-                if (eamArtifact != null) {
-                    ret.add(eamArtifact);
-                }
+                ret.addAll(EamArtifactUtil.fromBlackboardArtifact(bbArtifact, false, artifactTypes, false));
             }
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error retrieving correlation types", ex); // NON-NLS
@@ -393,7 +397,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             String md5 = abstractFile.getMd5Hash();
             if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
                 for (EamArtifact.Type aType : artifactTypes) {
-                    if (aType.getName().equals("FILES")) {
+                    if (aType.getId() == EamArtifact.FILES_TYPE_ID) {
                         ret.add(new EamArtifact(aType, md5));
                         break;
                     }
@@ -452,11 +456,11 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      *
      * @return A collection of correlated artifact instances from other cases
      */
-    private Collection<EamArtifactInstance> getCorrelatedInstances(EamArtifact eamArtifact, String dataSourceName, String deviceId) {
+    private Collection<EamArtifactInstance> getCorrelatedInstances(EamArtifact.Type aType, String value, String dataSourceName, String deviceId) {
         String caseUUID = Case.getCurrentCase().getName();
         try {
             EamDb dbManager = EamDb.getInstance();
-            Collection<EamArtifactInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(eamArtifact).stream()
+            Collection<EamArtifactInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(aType, value).stream()
                     .filter(artifactInstance -> !artifactInstance.getEamCase().getCaseUUID().equals(caseUUID)
                     || !artifactInstance.getEamDataSource().getName().equals(dataSourceName)
                     || !artifactInstance.getEamDataSource().getDeviceID().equals(deviceId))
@@ -475,28 +479,26 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      *
      * @param eamArtifact Artifact to use for ArtifactTypeEnum matching
      *
-     * @return List of Central Repository Artifact Instances, empty
-     *         list if none found
+     * @return List of Central Repository Artifact Instances, empty list if none
+     *         found
      */
-    public Collection<EamArtifactInstance> getGlobalFileInstancesAsArtifactInstances(EamArtifact eamArtifact) {
+    public Collection<EamArtifactInstance> getReferenceInstancesAsArtifactInstances(EamArtifact eamArtifact) {
         Collection<EamArtifactInstance> eamArtifactInstances = new ArrayList<>();
+        // FUTURE: support other reference types
+        if (eamArtifact.getCorrelationType().getId() != EamArtifact.FILES_TYPE_ID) {
+            return Collections.emptyList();
+        }
         try {
             EamDb dbManager = EamDb.getInstance();
-            if (dbManager.getCorrelationArtifactTypeByName("FILES").equals(eamArtifact.getArtifactType())) {
-                try {
-                    Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getGlobalFileInstancesByHash(eamArtifact.getArtifactValue());
-                    for (EamGlobalFileInstance eamGlobalFileInstance : eamGlobalFileInstances) {
-                        eamArtifactInstances.add(new EamArtifactInstance(
-                                null, null, "", eamGlobalFileInstance.getComment(), eamGlobalFileInstance.getKnownStatus(), EamArtifactInstance.GlobalStatus.GLOBAL
-                        ));
-                    }
-                    return eamArtifactInstances;
-                } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error getting global file instances from database.", ex); // NON-NLS
-                }
-            }
+            Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getReferenceInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+            eamGlobalFileInstances.forEach((eamGlobalFileInstance) -> {
+                eamArtifactInstances.add(new EamArtifactInstance(
+                        null, null, "", eamGlobalFileInstance.getComment(), eamGlobalFileInstance.getKnownStatus(), EamArtifactInstance.GlobalStatus.GLOBAL
+                ));
+            });
+            return eamArtifactInstances;
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting correlation artifact type MD5 from database.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error getting reference instances from database.", ex); // NON-NLS
         }
         return Collections.emptyList();
     }
@@ -536,14 +538,14 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         correlatedArtifacts.addAll(getArtifactsFromCorrelatableAttributes(node));
         correlatedArtifacts.forEach((eamArtifact) -> {
             // get local instances
-            Collection<EamArtifactInstance> eamArtifactInstances = getCorrelatedInstances(eamArtifact, dataSourceName, deviceId);
+            Collection<EamArtifactInstance> eamArtifactInstances = getCorrelatedInstances(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue(), dataSourceName, deviceId);
             // get global instances
-            eamArtifactInstances.addAll(getGlobalFileInstancesAsArtifactInstances(eamArtifact));
+            eamArtifactInstances.addAll(getReferenceInstancesAsArtifactInstances(eamArtifact));
 
             eamArtifactInstances.forEach((eamArtifactInstance) -> {
                 EamArtifact newCeArtifact = new EamArtifact(
-                        eamArtifact.getArtifactType(),
-                        eamArtifact.getArtifactValue()
+                        eamArtifact.getCorrelationType(),
+                        eamArtifact.getCorrelationValue()
                 );
                 newCeArtifact.addInstance(eamArtifactInstance);
                 tableModel.addEamArtifact(newCeArtifact);

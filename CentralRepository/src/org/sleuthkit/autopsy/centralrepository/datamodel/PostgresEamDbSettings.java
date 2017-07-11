@@ -36,8 +36,7 @@ import org.sleuthkit.autopsy.coreutils.TextConverter;
 import org.sleuthkit.autopsy.coreutils.TextConverterException;
 
 /**
- * Settings for the Postgres implementation of the Central Repository
- * database
+ * Settings for the Postgres implementation of the Central Repository database
  */
 public final class PostgresEamDbSettings {
 
@@ -148,8 +147,8 @@ public final class PostgresEamDbSettings {
      * Get the full connection URL as a String
      *
      * @param usePostgresDb Connect to the 'postgres' database when testing
-     * connectivity and creating the main database.
-     * 
+     *                      connectivity and creating the main database.
+     *
      * @return
      */
     public String getConnectionURL(boolean usePostgresDb) {
@@ -167,8 +166,9 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * Use the current settings to get an ephemeral client connection for testing.
-     * 
+     * Use the current settings to get an ephemeral client connection for
+     * testing.
+     *
      * @return Connection or null.
      */
     private Connection getEphemeralConnection(boolean usePostgresDb) {
@@ -191,9 +191,9 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * Use the current settings and the validation query 
-     * to test the connection to the database.
-     * 
+     * Use the current settings and the validation query to test the connection
+     * to the database.
+     *
      * @return true if successfull connection, else false.
      */
     public boolean verifyConnection() {
@@ -201,7 +201,7 @@ public final class PostgresEamDbSettings {
         if (null == conn) {
             return false;
         }
-        
+
         boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
         EamDbUtil.closeConnection(conn);
         return result;
@@ -209,7 +209,7 @@ public final class PostgresEamDbSettings {
 
     /**
      * Check to see if the database exists.
-     * 
+     *
      * @return true if exists, else false
      */
     public boolean verifyDatabaseExists() {
@@ -238,11 +238,11 @@ public final class PostgresEamDbSettings {
         }
         return false;
     }
-    
+
     /**
-     * Use the current settings and the schema version query 
-     * to test the database schema.
-     * 
+     * Use the current settings and the schema version query to test the
+     * database schema.
+     *
      * @return true if successfull connection, else false.
      */
     public boolean verifyDatabaseSchema() {
@@ -275,8 +275,9 @@ public final class PostgresEamDbSettings {
             EamDbUtil.closeConnection(conn);
         }
         return true;
-        
+
     }
+
     /**
      * Initialize the database schema.
      *
@@ -305,7 +306,6 @@ public final class PostgresEamDbSettings {
 
         // NOTE: The organizations will only have a small number of rows, so
         // an index is probably not worthwhile.
-
         StringBuilder createCasesTable = new StringBuilder();
         createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
         createCasesTable.append("id SERIAL PRIMARY KEY,");
@@ -313,12 +313,12 @@ public final class PostgresEamDbSettings {
         createCasesTable.append("org_id integer,");
         createCasesTable.append("case_name text NOT NULL,");
         createCasesTable.append("creation_date text NOT NULL,");
-        createCasesTable.append("case_number text NOT NULL,");
-        createCasesTable.append("examiner_name text NOT NULL,");
-        createCasesTable.append("examiner_email text NOT NULL,");
-        createCasesTable.append("examiner_phone text NOT NULL,");
-        createCasesTable.append("notes text NOT NULL,");
-        createCasesTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
+        createCasesTable.append("case_number text,");
+        createCasesTable.append("examiner_name text,");
+        createCasesTable.append("examiner_email text,");
+        createCasesTable.append("examiner_phone text,");
+        createCasesTable.append("notes text,");
+        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createCasesTable.append(")");
 
         // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
@@ -335,63 +335,64 @@ public final class PostgresEamDbSettings {
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
 
-        StringBuilder createGlobalReferenceSetsTable = new StringBuilder();
-        createGlobalReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS global_reference_sets (");
-        createGlobalReferenceSetsTable.append("id SERIAL PRIMARY KEY,");
-        createGlobalReferenceSetsTable.append("org_id integer,");
-        createGlobalReferenceSetsTable.append("set_name text NOT NULL,");
-        createGlobalReferenceSetsTable.append("version text NOT NULL,");
-        createGlobalReferenceSetsTable.append("import_date text NOT NULL,");
-        createGlobalReferenceSetsTable.append("foreign key (org_id) references organizations(id) on update set null on delete set null");
-        createGlobalReferenceSetsTable.append(")");
+        StringBuilder createReferenceSetsTable = new StringBuilder();
+        createReferenceSetsTable.append("CREATE TABLE IF NOT EXISTS reference_sets (");
+        createReferenceSetsTable.append("id SERIAL PRIMARY KEY,");
+        createReferenceSetsTable.append("org_id integer NOT NULL,");
+        createReferenceSetsTable.append("set_name text NOT NULL,");
+        createReferenceSetsTable.append("version text NOT NULL,");
+        createReferenceSetsTable.append("import_date text NOT NULL,");
+        createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createReferenceSetsTable.append(")");
 
-        String globalReferenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS global_reference_sets_org_id ON global_reference_sets (org_id)";
+        String referenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS reference_sets_org_id ON reference_sets (org_id)";
 
-        StringBuilder createGlobalFilesTable = new StringBuilder();
-        createGlobalFilesTable.append("CREATE TABLE IF NOT EXISTS global_files (");
-        createGlobalFilesTable.append("id SERIAL PRIMARY KEY,");
-        createGlobalFilesTable.append("global_reference_set_id integer,");
-        createGlobalFilesTable.append("value text NOT NULL,");
-        createGlobalFilesTable.append("known_status text NOT NULL,");
-        createGlobalFilesTable.append("comment text NOT NULL,");
-        createGlobalFilesTable.append("CONSTRAINT global_files_multi_unique UNIQUE (global_reference_set_id,value),");
-        createGlobalFilesTable.append("foreign key (global_reference_set_id) references global_reference_sets(id) on update set null on delete set null");
-        createGlobalFilesTable.append(")");
+        // Each "%s" will be replaced with the relevant reference_TYPE table name.
+        StringBuilder createReferenceTypesTableTemplate = new StringBuilder();
+        createReferenceTypesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
+        createReferenceTypesTableTemplate.append("id SERIAL PRIMARY KEY,");
+        createReferenceTypesTableTemplate.append("reference_set_id integer,");
+        createReferenceTypesTableTemplate.append("value text NOT NULL,");
+        createReferenceTypesTableTemplate.append("known_status text NOT NULL,");
+        createReferenceTypesTableTemplate.append("comment text,");
+        createReferenceTypesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE (reference_set_id, value),");
+        createReferenceTypesTableTemplate.append("foreign key (reference_set_id) references reference_sets(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createReferenceTypesTableTemplate.append(")");
 
-        String globalFilesIdx1 = "CREATE INDEX IF NOT EXISTS global_files_value ON global_files (value)";
-        String globalFilesIdx2 = "CREATE INDEX IF NOT EXISTS global_files_value_known_status ON global_files (value, known_status)";
+        // Each "%s" will be replaced with the relevant reference_TYPE table name.
+        String referenceTypesIdx1 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+        String referenceTypesIdx2 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
 
-        StringBuilder createArtifactTypesTable = new StringBuilder();
-        createArtifactTypesTable.append("CREATE TABLE IF NOT EXISTS artifact_types (");
-        createArtifactTypesTable.append("id SERIAL PRIMARY KEY,");
-        createArtifactTypesTable.append("name text NOT NULL,");
-        createArtifactTypesTable.append("supported integer NOT NULL,");
-        createArtifactTypesTable.append("enabled integer NOT NULL,");
-        createArtifactTypesTable.append("CONSTRAINT artifact_type_name_unique UNIQUE (name)");
-        createArtifactTypesTable.append(")");
+        StringBuilder createCorrelationTypesTable = new StringBuilder();
+        createCorrelationTypesTable.append("CREATE TABLE IF NOT EXISTS correlation_types (");
+        createCorrelationTypesTable.append("id SERIAL PRIMARY KEY,");
+        createCorrelationTypesTable.append("display_name text NOT NULL,");
+        createCorrelationTypesTable.append("db_table_name text NOT NULL,");
+        createCorrelationTypesTable.append("supported integer NOT NULL,");
+        createCorrelationTypesTable.append("enabled integer NOT NULL,");
+        createCorrelationTypesTable.append("CONSTRAINT correlation_types_names UNIQUE (display_name, db_table_name)");
+        createCorrelationTypesTable.append(")");
 
-        // NOTE: there are API methods that query by one of: name, supported, or enabled.
-        // Only name is currently implemented, but, there will only be a small number
-        // of artifact_types, so there is no benefit to having any indices.
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
-        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s_instances (");
+        createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
         createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
         createArtifactInstancesTableTemplate.append("case_id integer,");
         createArtifactInstancesTableTemplate.append("data_source_id integer,");
         createArtifactInstancesTableTemplate.append("value text NOT NULL,");
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("comment text NOT NULL,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_instances_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
-        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) on update set null on delete set null,");
-        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) on update set null on delete set null");
+        createArtifactInstancesTableTemplate.append("comment text,");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
+        createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createArtifactInstancesTableTemplate.append(")");
 
-        // TODO: do we need any more indices?
-        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_instances_case_id ON %s_instances (case_id)";
-        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_instances_data_source_id ON %s_instances (data_source_id)";
-        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_instances_value ON %s_instances (value)";
-        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_instances_value_known_status ON %s_instances (value, known_status)";
+        // Each "%s" will be replaced with the relevant TYPE_instances table name.
+        String instancesIdx1 = "CREATE INDEX IF NOT EXISTS %s_case_id ON %s (case_id)";
+        String instancesIdx2 = "CREATE INDEX IF NOT EXISTS %s_data_source_id ON %s (data_source_id)";
+        String instancesIdx3 = "CREATE INDEX IF NOT EXISTS %s_value ON %s (value)";
+        String instancesIdx4 = "CREATE INDEX IF NOT EXISTS %s_value_known_status ON %s (value, known_status)";
 
         StringBuilder createDbInfoTable = new StringBuilder();
         createDbInfoTable.append("CREATE TABLE IF NOT EXISTS db_info (");
@@ -402,7 +403,6 @@ public final class PostgresEamDbSettings {
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
-
         Connection conn = null;
         try {
             conn = getEphemeralConnection(false);
@@ -420,30 +420,41 @@ public final class PostgresEamDbSettings {
             stmt.execute(createDataSourcesTable.toString());
             stmt.execute(dataSourceIdx1);
 
-            stmt.execute(createGlobalReferenceSetsTable.toString());
-            stmt.execute(globalReferenceSetsIdx1);
+            stmt.execute(createReferenceSetsTable.toString());
+            stmt.execute(referenceSetsIdx1);
 
-            stmt.execute(createGlobalFilesTable.toString());
-            stmt.execute(globalFilesIdx1);
-            stmt.execute(globalFilesIdx2);
-
-            stmt.execute(createArtifactTypesTable.toString());
+            stmt.execute(createCorrelationTypesTable.toString());
 
             stmt.execute(createDbInfoTable.toString());
 
-            // Create a separate table for each artifact type
-            List<EamArtifact.Type> DEFAULT_ARTIFACT_TYPES = EamArtifact.getDefaultArtifactTypes();
-            String type_name;
-            for (EamArtifact.Type type : DEFAULT_ARTIFACT_TYPES) {
-                type_name = type.getName();
-                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), type_name, type_name));
-                stmt.execute(String.format(instancesIdx1, type_name, type_name));
-                stmt.execute(String.format(instancesIdx2, type_name, type_name));
-                stmt.execute(String.format(instancesIdx3, type_name, type_name));
-                stmt.execute(String.format(instancesIdx4, type_name, type_name));
+            // Create a separate instance and reference table for each correlation type
+            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
+            
+            String reference_type_dbname;
+            String instance_type_dbname;
+            for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+                reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
+                instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
+                
+                stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx3, instance_type_dbname, instance_type_dbname));
+                stmt.execute(String.format(instancesIdx4, instance_type_dbname, instance_type_dbname));
+
+                // FUTURE: allow more than the FILES type
+                if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                    stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
+                    stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
+                    stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));
+                }                
             }
+
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
+            return false;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting default correlation types. Likely due to one or more Type's with an invalid db table name."); // NON-NLS
             return false;
         } finally {
             EamDbUtil.closeConnection(conn);
@@ -457,7 +468,7 @@ public final class PostgresEamDbSettings {
             return false;
         }
 
-        boolean result = EamDbUtil.insertDefaultArtifactTypes(conn)
+        boolean result = EamDbUtil.insertDefaultCorrelationTypes(conn)
                 && EamDbUtil.insertSchemaVersion(conn);
         EamDbUtil.closeConnection(conn);
 
@@ -514,9 +525,9 @@ public final class PostgresEamDbSettings {
     }
 
     /**
-     * To prevent issues where one command can honor case and another cannot,
-     * we will force the dbname to lower case.
-     * 
+     * To prevent issues where one command can honor case and another cannot, we
+     * will force the dbname to lower case.
+     *
      * @return the dbName
      */
     public String getDbName() {
@@ -530,7 +541,7 @@ public final class PostgresEamDbSettings {
         if (dbName == null || dbName.isEmpty()) {
             throw new EamDbException("Invalid database name. Cannot be empty."); // NON-NLS
         } else if (!Pattern.matches(DB_NAMES_REGEX, dbName)) {
-            throw new EamDbException("Invalid database name. Name must start with a letter and can only contain letters, numbers, and '_'."); // NON-NLS
+            throw new EamDbException("Invalid database name. Name must start with a lowercase letter and can only contain lowercase letters, numbers, and '_'."); // NON-NLS
         }
 
         this.dbName = dbName.toLowerCase();

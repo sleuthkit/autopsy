@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
@@ -48,8 +49,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
- * Listen for case events and update entries in the Central Repository
- * database accordingly
+ * Listen for case events and update entries in the Central Repository database
+ * accordingly
  */
 @Messages({"caseeventlistener.evidencetag=Evidence"})
 public class CaseEventListener implements PropertyChangeListener {
@@ -58,7 +59,13 @@ public class CaseEventListener implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        EamDb dbManager = EamDb.getInstance();
+        EamDb dbManager;
+        try {
+            dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to get instance of db manager.", ex);
+            return;
+        }
         switch (Case.Events.valueOf(evt.getPropertyName())) {
             case CONTENT_TAG_ADDED: {
                 if (!EamDb.isEnabled()) {
@@ -75,7 +82,8 @@ public class CaseEventListener implements PropertyChangeListener {
                         || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
                         || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
                         || (af.getKnown() == TskData.FileKnown.KNOWN)
-                        || (af.isDir() == true)) {
+                        || (af.isDir() == true)
+                        || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
                     break;
                 }
 
@@ -92,23 +100,24 @@ public class CaseEventListener implements PropertyChangeListener {
                     if (md5 == null || md5.isEmpty()) {
                         return;
                     }
-                    String deviceId = "";
+                    String deviceId;
                     try {
                         deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
                     } catch (TskCoreException | TskDataException ex) {
                         LOGGER.log(Level.SEVERE, "Error, failed to get deviceID or data source from current case.", ex);
+                        return;
                     }
 
                     EamArtifact eamArtifact;
                     try {
-                        EamArtifact.Type filesType = dbManager.getCorrelationArtifactTypeByName("FILES");
+                        EamArtifact.Type filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
                         eamArtifact = new EamArtifact(filesType, af.getMd5Hash());
                         EamArtifactInstance cei = new EamArtifactInstance(
                                 new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
                                 new EamDataSource(deviceId, dsName),
                                 af.getParentPath() + af.getName(),
                                 tagAdded.getComment(),
-                                EamArtifactInstance.KnownStatus.BAD,
+                                TskData.FileKnown.BAD,
                                 EamArtifactInstance.GlobalStatus.LOCAL
                         );
                         eamArtifact.addInstance(cei);
@@ -118,7 +127,7 @@ public class CaseEventListener implements PropertyChangeListener {
                         Thread t = new Thread(r);
                         t.start();
                     } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error, unable to get FILES artifact type during CONTENT_TAG_ADDED event.", ex);
+                        LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type during CONTENT_TAG_ADDED event.", ex);
                     }
                 }
             } // CONTENT_TAG_ADDED
@@ -141,8 +150,8 @@ public class CaseEventListener implements PropertyChangeListener {
 
                 if (dbManager.getBadTags().contains(tagName.getDisplayName())) {
                     try {
-                        EamArtifact eamArtifact = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationArtifactTypes(), true);
-                        if (null != eamArtifact) {
+                        List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
+                        for (EamArtifact eamArtifact : convertedArtifacts) {
                             eamArtifact.getInstances().get(0).setComment(bbTagAdded.getComment());
                             Runnable r = new BadFileTagRunner(eamArtifact);
                             // TODO: send r into a thread pool instead
@@ -210,9 +219,9 @@ public class CaseEventListener implements PropertyChangeListener {
                             curCase.getCreatedDate(),
                             curCase.getNumber(),
                             curCase.getExaminer(),
-                            "",
-                            "",
-                            "");
+                            null,
+                            null,
+                            null);
 
                     if (!EamDb.isEnabled()) {
                         break;

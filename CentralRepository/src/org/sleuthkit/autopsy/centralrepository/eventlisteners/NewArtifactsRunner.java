@@ -34,12 +34,10 @@ public class NewArtifactsRunner implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(NewArtifactsRunner.class.getName());
     private static final long serialVersionUID = 1L;
 
-    private final EamDb dbManager;
     private final Collection<EamArtifact> eamArtifacts;
 
     @SuppressWarnings(value = {"unchecked", "rawtypes"})
     public NewArtifactsRunner(Collection<EamArtifact> eamArtifacts) {
-        this.dbManager = EamDb.getInstance();
         this.eamArtifacts = new ArrayList(eamArtifacts);
     }
 
@@ -51,13 +49,13 @@ public class NewArtifactsRunner implements Runnable {
         }
 
         try {
+            EamDb dbManager = EamDb.getInstance();
+        
             for (EamArtifact eamArtifact : eamArtifacts) {
                 dbManager.addArtifact(eamArtifact);
             }
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
         }
-
     }
-
 }

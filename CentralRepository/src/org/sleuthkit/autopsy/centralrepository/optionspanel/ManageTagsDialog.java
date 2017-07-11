@@ -31,6 +31,7 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -58,9 +59,18 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         display();
     }
 
+    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to Central Repository.",
+        "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags."})
     private void customizeComponents() {
-        //this.okButton.setEnabled(false);
-        EamDb dbManager = EamDb.getInstance();
+        lbWarnings.setText("");
+        EamDb dbManager;
+        try {
+            dbManager = EamDb.getInstance();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.");
+            lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
+            return;
+        }
         List<String> badTags = dbManager.getBadTags();
 
         List<String> tagNames = new ArrayList<>(badTags);
@@ -72,6 +82,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                     .collect(Collectors.toList()));
         } catch (TskCoreException ex) {
             LOGGER.log(Level.WARNING, "Could not get list of tags in case", ex);
+            lbWarnings.setText(Bundle.ManageTagsDialog_init_failedGettingTags_msg());
         }
 
         Collections.sort(tagNames);
@@ -103,6 +114,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         cancelButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblTagNames = new javax.swing.JTable();
+        lbWarnings = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -150,14 +162,19 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(233, Short.MAX_VALUE)
-                .addComponent(okButton)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cancelButton)
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(0, 223, Short.MAX_VALUE)
+                        .addComponent(okButton)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cancelButton))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
+                            .addComponent(lbWarnings, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 367, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {cancelButton, okButton});
@@ -167,11 +184,13 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 335, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lbWarnings, javax.swing.GroupLayout.DEFAULT_SIZE, 16, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(okButton)
                     .addComponent(cancelButton))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -183,11 +202,12 @@ final class ManageTagsDialog extends javax.swing.JDialog {
 
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        setBadTags();
-        dispose();
+        if (setBadTags()) {
+            dispose();
+        }
     }//GEN-LAST:event_okButtonActionPerformed
 
-    private void setBadTags() {
+    private boolean setBadTags() {
         List<String> badTags = new ArrayList<>();
 
         DefaultTableModel model = (DefaultTableModel) tblTagNames.getModel();
@@ -199,15 +219,23 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 badTags.add(tagName);
             }
         }
-        EamDb dbManager = EamDb.getInstance();
-        dbManager.setBadTags(badTags);
-        dbManager.saveSettings();
+        try {
+            EamDb dbManager = EamDb.getInstance();
+            dbManager.setBadTags(badTags);
+            dbManager.saveSettings();
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database."); // NON-NLS
+            lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
+            return false;
+        }
+        return true;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lbWarnings;
     private javax.swing.JButton okButton;
     private javax.swing.JTable tblTagNames;
     // End of variables declaration//GEN-END:variables

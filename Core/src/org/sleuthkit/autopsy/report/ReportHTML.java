@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
@@ -622,7 +623,7 @@ class ReportHTML implements TableReportModule {
      *
      * @param images
      */
-    public void addThumbnailRows(List<Content> images) {
+    public void addThumbnailRows(Set<Content> images) {
         List<String> currentRow = new ArrayList<>();
         int totalCount = 0;
         int pages = 1;
@@ -670,6 +671,7 @@ class ReportHTML implements TableReportModule {
             }
 
             StringBuilder linkToThumbnail = new StringBuilder();
+            linkToThumbnail.append("<div id='thumbnail_link'>");
             linkToThumbnail.append("<a href=\""); //NON-NLS
             linkToThumbnail.append(contentPath);
             linkToThumbnail.append("\" target=\"_top\">");
@@ -694,7 +696,7 @@ class ReportHTML implements TableReportModule {
             } catch (TskCoreException ex) {
                 logger.log(Level.WARNING, "Could not find get tags for file.", ex); //NON-NLS
             }
-
+            linkToThumbnail.append("</div>");
             currentRow.add(linkToThumbnail.toString());
 
             totalCount++;
@@ -842,9 +844,11 @@ class ReportHTML implements TableReportModule {
                     + //NON-NLS
                     "table .right_align_cell{display: table-cell; padding: 2px 4px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align: right; }\n"
                     + //NON-NLS
-                    "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; }\n"
+                    "table td {white-space:nowrap; display: table-cell; padding: 2px 3px; font: 13px/20px Arial, Helvetica, sans-serif; min-width: 125px; overflow: auto; text-align:left; vertical-align: text-top;}\n"
                     + //NON-NLS
-                    "table tr:nth-child(even) td {background: #f3f3f3;}"; //NON-NLS
+                    "table tr:nth-child(even) td {background: #f3f3f3;}\n"
+                    + //NON-NLS 
+                    "div#thumbnail_link {max-width: 200px; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;}";
             cssOut.write(css);
         } catch (FileNotFoundException ex) {
             logger.log(Level.SEVERE, "Could not find index.css file to write to.", ex); //NON-NLS
