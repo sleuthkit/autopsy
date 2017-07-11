@@ -31,6 +31,8 @@ interface ContentNodeVisitor<T> {
     T visit(ImageNode in);
 
     T visit(VirtualDirectoryNode lcn);
+    
+    T visit(LocalDirectoryNode ldn);
 
     T visit(VolumeNode vn);
 
@@ -93,6 +95,11 @@ interface ContentNodeVisitor<T> {
 
         @Override
         public T visit(VirtualDirectoryNode ldn) {
+            return defaultVisit(ldn);
+        }
+
+        @Override
+        public T visit(LocalDirectoryNode ldn) {
             return defaultVisit(ldn);
         }
 

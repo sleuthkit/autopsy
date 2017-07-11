@@ -41,38 +41,24 @@ import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.datamodel.LocalDirectory;
 
 /**
- * Node for a virtual directory
+ * Node for a local directory
  */
-public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
+public class LocalDirectoryNode extends AbstractAbstractFileNode<LocalDirectory> {
 
-    private static final Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
-    //prefix for special VirtualDirectory root nodes grouping local files
-    public final static String LOGICAL_FILE_SET_PREFIX = "LogicalFileSet"; //NON-NLS
+    private static final Logger logger = Logger.getLogger(LocalDirectoryNode.class.getName());
 
-    public static String nameForVirtualDirectory(VirtualDirectory ld) {
+    public static String nameForLocalDir(LocalDirectory ld) {
         return ld.getName();
     }
 
-    public VirtualDirectoryNode(VirtualDirectory ld) {
+    public LocalDirectoryNode(LocalDirectory ld) {
         super(ld);
 
-        this.setDisplayName(nameForVirtualDirectory(ld));
-
-        String name = ld.getName();
-
-        //set icon for name, special case for some built-ins
-        if (name.equals(VirtualDirectory.NAME_UNALLOC)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png"); //NON-NLS
-        } else if (ld.isDataSource()) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
-        } else if (name.equals(VirtualDirectory.NAME_CARVED)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //TODO NON-NLS
-        } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
-        }
+        this.setDisplayName(nameForLocalDir(ld));
+        this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
 
     }
 
@@ -84,7 +70,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
      * @return
      */
     @Override
-    @NbBundle.Messages({"VirtualDirectoryNode.action.runIngestMods.text=Run Ingest Modules"})
+    @NbBundle.Messages({"LocalDirectoryNode.action.runIngestMods.text=Run Ingest Modules",
+        "LocalDirectoryNode.getActions.viewInNewWin.text=View in New Window"
+    })
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
         for (Action a : super.getActions(true)) {
@@ -92,7 +80,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
         }
 
         actions.add(new NewWindowViewAction(
-                NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.getActions.viewInNewWin.text"), this));
+                Bundle.LocalDirectoryNode_action_runIngestMods_text(), this));
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
@@ -104,19 +92,23 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     }
 
     @Override
-    @Messages({"VirtualDirectoryNode.createSheet.size.name=Size (Bytes)",
-        "VirtualDirectoryNode.createSheet.size.displayName=Size (Bytes)",
-        "VirtualDirectoryNode.createSheet.size.desc=Size of the data source in bytes.",
-        "VirtualDirectoryNode.createSheet.type.name=Type",
-        "VirtualDirectoryNode.createSheet.type.displayName=Type",
-        "VirtualDirectoryNode.createSheet.type.desc=Type of the image.",
-        "VirtualDirectoryNode.createSheet.type.text=Logical File Set",
-        "VirtualDirectoryNode.createSheet.timezone.name=Timezone",
-        "VirtualDirectoryNode.createSheet.timezone.displayName=Timezone",
-        "VirtualDirectoryNode.createSheet.timezone.desc=Timezone of the image",
-        "VirtualDirectoryNode.createSheet.deviceId.name=Device ID",
-        "VirtualDirectoryNode.createSheet.deviceId.displayName=Device ID",
-        "VirtualDirectoryNode.createSheet.deviceId.desc=Device ID of the image"})
+    @Messages({"LocalDirectoryNode.createSheet.size.name=Size (Bytes)",
+        "LocalDirectoryNode.createSheet.size.displayName=Size (Bytes)",
+        "LocalDirectoryNode.createSheet.size.desc=Size of the data source in bytes.",
+        "LocalDirectoryNode.createSheet.type.name=Type",
+        "LocalDirectoryNode.createSheet.type.displayName=Type",
+        "LocalDirectoryNode.createSheet.type.desc=Type of the image.",
+        "LocalDirectoryNode.createSheet.type.text=Logical File Set",
+        "LocalDirectoryNode.createSheet.timezone.name=Timezone",
+        "LocalDirectoryNode.createSheet.timezone.displayName=Timezone",
+        "LocalDirectoryNode.createSheet.timezone.desc=Timezone of the image",
+        "LocalDirectoryNode.createSheet.deviceId.name=Device ID",
+        "LocalDirectoryNode.createSheet.deviceId.displayName=Device ID",
+        "LocalDirectoryNode.createSheet.deviceId.desc=Device ID of the image",
+        "LocalDirectoryNode.createSheet.name.name=Name",
+        "LocalDirectoryNode.createSheet.name.displayName=Name",
+        "LocalDirectoryNode.createSheet.name.desc=no description",
+        "LocalDirectoryNode.createSheet.noDesc=no description"})
     protected Sheet createSheet() {
         Sheet s = super.createSheet();
         Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -125,36 +117,35 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             s.put(ss);
         }
 
-        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
-                NbBundle.getMessage(this.getClass(),
-                        "VirtualDirectoryNode.createSheet.name.displayName"),
-                NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
+        ss.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_name_name(),
+                Bundle.LocalDirectoryNode_createSheet_name_displayName(),
+                Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
 
         if (!this.content.isDataSource()) {
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, content);
 
-            final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
+            final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }
             addTagProperty(ss);
         } else {
-            ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_type_name(),
-                    Bundle.VirtualDirectoryNode_createSheet_type_displayName(),
-                    Bundle.VirtualDirectoryNode_createSheet_type_desc(),
-                    Bundle.VirtualDirectoryNode_createSheet_type_text()));
-            ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_size_name(),
-                    Bundle.VirtualDirectoryNode_createSheet_size_displayName(),
-                    Bundle.VirtualDirectoryNode_createSheet_size_desc(),
+            ss.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_type_name(),
+                    Bundle.LocalDirectoryNode_createSheet_type_displayName(),
+                    Bundle.LocalDirectoryNode_createSheet_type_desc(),
+                    Bundle.LocalDirectoryNode_createSheet_type_text()));
+            ss.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_size_name(),
+                    Bundle.LocalDirectoryNode_createSheet_size_displayName(),
+                    Bundle.LocalDirectoryNode_createSheet_size_desc(),
                     this.content.getSize()));
             try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT time_zone FROM data_source_info WHERE obj_id = " + this.content.getId())) {
                 ResultSet timeZoneSet = query.getResultSet();
                 if (timeZoneSet.next()) {
-                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_timezone_name(),
-                            Bundle.VirtualDirectoryNode_createSheet_timezone_displayName(),
-                            Bundle.VirtualDirectoryNode_createSheet_timezone_desc(),
+                    ss.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_timezone_name(),
+                            Bundle.LocalDirectoryNode_createSheet_timezone_displayName(),
+                            Bundle.LocalDirectoryNode_createSheet_timezone_desc(),
                             timeZoneSet.getString("time_zone")));
                 }
             } catch (SQLException | TskCoreException ex) {
@@ -163,9 +154,9 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
             try (SleuthkitCase.CaseDbQuery query = Case.getCurrentCase().getSleuthkitCase().executeQuery("SELECT device_id FROM data_source_info WHERE obj_id = " + this.content.getId());) {
                 ResultSet deviceIdSet = query.getResultSet();
                 if (deviceIdSet.next()) {
-                    ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_deviceId_name(),
-                            Bundle.VirtualDirectoryNode_createSheet_deviceId_displayName(),
-                            Bundle.VirtualDirectoryNode_createSheet_deviceId_desc(),
+                    ss.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_deviceId_name(),
+                            Bundle.LocalDirectoryNode_createSheet_deviceId_displayName(),
+                            Bundle.LocalDirectoryNode_createSheet_deviceId_desc(),
                             deviceIdSet.getString("device_id")));
                 }
             } catch (SQLException | TskCoreException ex) {
