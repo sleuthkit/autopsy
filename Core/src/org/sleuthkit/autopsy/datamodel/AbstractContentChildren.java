@@ -52,8 +52,10 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
      * Uses lazy Content.Keys
      */
     AbstractContentChildren() {
-        /*This was turned off because we were getting out of memory errors when the 
-        filter nodes were hiding nodes. Turning this off seemed to help  */
+        /*
+         * This was turned off because we were getting out of memory errors when
+         * the filter nodes were hiding nodes. Turning this off seemed to help
+         */
         super(false); //don't use lazy behavior
     }
 
@@ -144,7 +146,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(FileTypesByExtension sf) {
-            return new org.sleuthkit.autopsy.datamodel.FileTypesByExtension.FileTypesByExtNode(sf.getSleuthkitCase(), null);
+            return sf.new FileTypesByExtNode(sf.getSleuthkitCase(), null);
         }
 
         @Override
@@ -204,7 +206,7 @@ abstract class AbstractContentChildren<T> extends Keys<T> {
 
         @Override
         public AbstractNode visit(FileTypes ft) {
-            return new FileTypesNode(ft.getSleuthkitCase());
+            return ft.new FileTypesNode();
         }
 
         @Override
