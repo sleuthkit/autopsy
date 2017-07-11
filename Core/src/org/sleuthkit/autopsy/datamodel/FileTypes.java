@@ -96,7 +96,7 @@ public final class FileTypes implements AutopsyVisitableItem {
             super(new RootContentChildren(Arrays.asList(
                     new FileTypesByExtension(FileTypes.this),
                     new FileTypesByMimeType(FileTypes.this))),
-                     Lookups.singleton(NAME));
+                    Lookups.singleton(NAME));
             setName(NAME);
             setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
@@ -205,7 +205,7 @@ public final class FileTypes implements AutopsyVisitableItem {
 
         abstract String getDisplayNameBase();
 
-        abstract String getQuery();
+        abstract long calculateItems() throws Exception;
 
         /**
          * Updates the display name of the mediaSubTypeNode to include the count
@@ -219,7 +219,7 @@ public final class FileTypes implements AutopsyVisitableItem {
                 new SwingWorker<Long, Void>() {
                     @Override
                     protected Long doInBackground() throws Exception {
-                        return skCase.countFilesWhere(getQuery());
+                        return calculateItems();
                     }
 
                     @Override
@@ -232,6 +232,7 @@ public final class FileTypes implements AutopsyVisitableItem {
                             logger.log(Level.WARNING, "Failed to get count of files for " + getDisplayNameBase(), ex);
                         }
                     }
+
                 }.execute();
             } else {
                 setDisplayName(getDisplayNameBase() + ((childCount < 0) ? ""

@@ -26,10 +26,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -61,7 +61,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * which exist in the database. This hashmap will store them with the media
      * type as the key and a list of media subtypes as the value.
      */
-    private final HashMap<String, List<String>> existingMimeTypes = new HashMap<>();
+    private final HashMap<String, Map<String, Long>> existingMimeTypes = new HashMap<>();
     private static final Logger LOGGER = Logger.getLogger(FileTypesByMimeType.class.getName());
     private final FileTypes typesRoot;
 
@@ -95,35 +95,35 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * files in it, and populate the hashmap with those results.
      */
     private void populateHashMap() {
-        StringBuilder allDistinctMimeTypesQuery = new StringBuilder();
-        allDistinctMimeTypesQuery.append("SELECT DISTINCT mime_type from tsk_files where mime_type IS NOT null");  //NON-NLS
-        allDistinctMimeTypesQuery.append(" AND dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()); //NON-NLS
-        allDistinctMimeTypesQuery.append(" AND (type IN (").append(TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal()).append(","); //NON-NLS
-        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal()).append(",");
-        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal()).append(",");
-        if (!UserPreferences.hideSlackFilesInViewsTree()) {
-            allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()).append(",");
-        }
-        allDistinctMimeTypesQuery.append(TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()).append("))");
+        String query = "SELECT  mime_type,count(*) as count from tsk_files "
+                + " where mime_type IS NOT null "
+                + " AND dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()
+                + " AND (type IN ("
+                + TskData.TSK_DB_FILES_TYPE_ENUM.FS.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.CARVED.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
+                + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
+                + ((UserPreferences.hideSlackFilesInViewsTree()) ? ""
+                : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
+                + "))" + " GROUP BY mime_type";
         synchronized (existingMimeTypes) {
             existingMimeTypes.clear();
 
             if (skCase == null) {
                 return;
             }
-            try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(allDistinctMimeTypesQuery.toString())) {
+            try (SleuthkitCase.CaseDbQuery dbQuery = skCase.executeQuery(query)) {
                 ResultSet resultSet = dbQuery.getResultSet();
                 while (resultSet.next()) {
                     final String mime_type = resultSet.getString("mime_type"); //NON-NLS
                     if (!mime_type.isEmpty()) {
-                        String mimeType[] = mime_type.split("/");
                         //if the mime_type contained multiple slashes then everything after the first slash will become the subtype
-                        final String mimeMediaSubType = StringUtils.join(ArrayUtils.subarray(mimeType, 1, mimeType.length), "/");
-                        if (mimeType.length > 1 && !mimeType[0].isEmpty() && !mimeMediaSubType.isEmpty()) {
-                            if (!existingMimeTypes.containsKey(mimeType[0])) {
-                                existingMimeTypes.put(mimeType[0], new ArrayList<>());
-                            }
-                            existingMimeTypes.get(mimeType[0]).add(mimeMediaSubType);
+                        final String mediaType = StringUtils.substringBefore(mime_type, "/");
+                        final String subType = StringUtils.removeStart(mime_type, mediaType + "/");
+                        if (!mediaType.isEmpty() && !subType.isEmpty()) {
+                            final long count = resultSet.getLong("count");
+                            existingMimeTypes.computeIfAbsent(mediaType, t -> new HashMap<>())
+                                    .put(subType, count);
                         }
                     }
                 }
@@ -133,11 +133,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         setChanged();
-
         notifyObservers();
     }
 
-    FileTypesByMimeType( FileTypes typesRoot) {
+    FileTypesByMimeType(FileTypes typesRoot) {
         this.skCase = typesRoot.getSleuthkitCase();
         this.typesRoot = typesRoot;
         this.pcl = (PropertyChangeEvent evt) -> {
@@ -228,7 +227,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         boolean isEmpty() {
-            return existingMimeTypes.isEmpty();
+            synchronized (existingMimeTypes) {
+                return existingMimeTypes.isEmpty();
+            }
         }
 
     }
@@ -310,7 +311,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
         @Override
         protected boolean createKeys(List<String> mediaTypeNodes) {
-            mediaTypeNodes.addAll(existingMimeTypes.get(mediaType));
+            mediaTypeNodes.addAll(existingMimeTypes.get(mediaType).keySet());
             return true;
         }
 
@@ -333,7 +334,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         private final String subType;
 
         private MediaSubTypeNode(String mimeType) {
-            super(typesRoot,Children.create(new MediaSubTypeNodeChildren(mimeType), true));
+            super(typesRoot, Children.create(new MediaSubTypeNodeChildren(mimeType), true));
             this.mimeType = mimeType;
             this.subType = StringUtils.substringAfter(mimeType, "/");
             super.setName(mimeType);
@@ -374,25 +375,15 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             return subType;
         }
 
+        /**
+         * Get children count without actually loading all nodes
+         *
+         * @return count(*) - the number of items that will be shown in this
+         *         items Directory Listing
+         */
         @Override
-        String getQuery() {
-            return createQuery(mimeType);
-        }
-
-    }
-
-    /**
-     * Get children count without actually loading all nodes
-     *
-     * @return count(*) - the number of items that will be shown in this items
-     *         Directory Listing
-     */
-    static private long calculateItems(SleuthkitCase sleuthkitCase, String mime_type) {
-        try {
-            return sleuthkitCase.countFilesWhere(createQuery(mime_type));
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting file search view count", ex); //NON-NLS
-            return 0;
+        long calculateItems() {
+            return existingMimeTypes.get(StringUtils.substringBefore(mimeType, "/")).get(subType);
         }
     }
 
