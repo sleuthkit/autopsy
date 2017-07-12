@@ -325,7 +325,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        String geQuery() {
+        String getQuery() {
             return createQuery(filter);
         }
 

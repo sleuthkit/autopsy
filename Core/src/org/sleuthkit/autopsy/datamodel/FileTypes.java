@@ -205,7 +205,7 @@ public final class FileTypes implements AutopsyVisitableItem {
 
         abstract String getDisplayNameBase();
 
-        abstract String geQuery();
+        abstract String getQuery();
 
         /**
          * Updates the display name of the mediaSubTypeNode to include the count
@@ -219,7 +219,7 @@ public final class FileTypes implements AutopsyVisitableItem {
                 new SwingWorker<Long, Void>() {
                     @Override
                     protected Long doInBackground() throws Exception {
-                        return skCase.countFilesWhere(geQuery());
+                        return skCase.countFilesWhere(getQuery());
                     }
 
                     @Override
