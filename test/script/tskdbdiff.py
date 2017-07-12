@@ -431,8 +431,9 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
         par_obj_name = par_obj_value[par_obj_value.rfind('/')+1:]
         #check the par_id that we insert to the path name when we create uniqueName
         pathValue = re.sub(par_obj_name + '_' + str(par_obj_id), par_obj_name, fields_list[1])
-        #pathValue = re.sub(socket.gethostname(), '{host_name}', pathValue, flags=re.IGNORECASE) #postgres par_obj_name include losthost 
-        pathValue = "'" + pathValue[pathValue.find('ModuleOutput'):] #postgres par_obj_name include losthost 
+        multiOutput_idx = pathValue.find('ModuleOutput')
+        if multiOutput_idx > -1:
+            pathValue = "'" + pathValue[pathValue.find('ModuleOutput'):] #postgres par_obj_name include losthost 
 
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');')
         return newLine
