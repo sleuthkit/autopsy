@@ -375,7 +375,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         @Override
-        String geQuery() {
+        String getQuery() {
             return createQuery(mimeType);
         }
 
