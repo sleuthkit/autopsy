@@ -50,7 +50,7 @@ import org.sleuthkit.datamodel.TskData;
  * File Types view, shows all files with a mime type. Will initially be empty
  * until file type identification has been performed. Contains a Property Change
  * Listener which is checking for changes in IngestJobEvent Completed or
- * Cancelled and IngestModuleEvent Content Changed.
+ * Canceled and IngestModuleEvent Content Changed.
  */
 public final class FileTypesByMimeType extends Observable implements AutopsyVisitableItem {
 
@@ -59,9 +59,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     /**
      * The nodes of this tree will be determined dynamically by the mimetypes
      * which exist in the database. This hashmap will store them with the media
-     * type as the key and a list of media subtypes as the value.
+     * type as the key and a Map, from media subtype to count, as the value.
      */
-    private final HashMap<String, Map<String, Long>> existingMimeTypes = new HashMap<>();
+    private final HashMap<String, Map<String, Long>> existingMimeTypeCounts = new HashMap<>();
     private static final Logger LOGGER = Logger.getLogger(FileTypesByMimeType.class.getName());
     private final FileTypes typesRoot;
 
@@ -75,20 +75,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * remove itself during its life cycles.
      */
     private final PropertyChangeListener pcl;
-
-    /**
-     * Retrieve the media types by retrieving the keyset from the hashmap.
-     *
-     * @return mediaTypes - a list of strings representing all distinct media
-     *         types of files for this case
-     */
-    private List<String> getMediaTypeList() {
-        synchronized (existingMimeTypes) {
-            List<String> mediaTypes = new ArrayList<>(existingMimeTypes.keySet());
-            Collections.sort(mediaTypes);
-            return mediaTypes;
-        }
-    }
 
     /**
      * Performs the query on the database to get all distinct MIME types of
@@ -106,8 +92,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 + ((UserPreferences.hideSlackFilesInViewsTree()) ? ""
                 : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
                 + "))" + " GROUP BY mime_type";
-        synchronized (existingMimeTypes) {
-            existingMimeTypes.clear();
+        synchronized (existingMimeTypeCounts) {
+            existingMimeTypeCounts.clear();
 
             if (skCase == null) {
                 return;
@@ -122,7 +108,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                         final String subType = StringUtils.removeStart(mime_type, mediaType + "/");
                         if (!mediaType.isEmpty() && !subType.isEmpty()) {
                             final long count = resultSet.getLong("count");
-                            existingMimeTypes.computeIfAbsent(mediaType, t -> new HashMap<>())
+                            existingMimeTypeCounts.computeIfAbsent(mediaType, t -> new HashMap<>())
                                     .put(subType, count);
                         }
                     }
@@ -227,11 +213,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         boolean isEmpty() {
-            synchronized (existingMimeTypes) {
-                return existingMimeTypes.isEmpty();
+            synchronized (existingMimeTypeCounts) {
+                return existingMimeTypeCounts.isEmpty();
             }
         }
-
     }
 
     /**
@@ -247,9 +232,13 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
         @Override
         protected boolean createKeys(List<String> mediaTypeNodes) {
-            if (!existingMimeTypes.isEmpty()) {
-                mediaTypeNodes.addAll(getMediaTypeList());
+            final List<String> keylist;
+            synchronized (existingMimeTypeCounts) {
+                keylist = new ArrayList<>(existingMimeTypeCounts.keySet());
             }
+            Collections.sort(keylist);
+            mediaTypeNodes.addAll(keylist);
+
             return true;
         }
 
@@ -262,7 +251,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         public void update(Observable o, Object arg) {
             refresh(true);
         }
-
     }
 
     /**
@@ -311,7 +299,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
 
         @Override
         protected boolean createKeys(List<String> mediaTypeNodes) {
-            mediaTypeNodes.addAll(existingMimeTypes.get(mediaType).keySet());
+            mediaTypeNodes.addAll(existingMimeTypeCounts.get(mediaType).keySet());
             return true;
         }
 
@@ -376,8 +364,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         @Override
-        long calculateItems() {
-            return existingMimeTypes.get(StringUtils.substringBefore(mimeType, "/")).get(subType);
+        long calculateChildCount() {
+            return existingMimeTypeCounts.get(StringUtils.substringBefore(mimeType, "/")).get(subType);
         }
     }
 

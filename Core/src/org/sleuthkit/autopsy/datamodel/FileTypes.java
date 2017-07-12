@@ -74,12 +74,12 @@ public final class FileTypes implements AutopsyVisitableItem {
     boolean shouldShowCounts() {
         if (showCounts) {
             try {
-                if (skCase.countFilesWhere("1=1") > 200000) {
+                if (skCase.countFilesWhere("1=1") > 200000) { //NON-NLS
                     showCounts = false;
                 }
             } catch (TskCoreException tskCoreException) {
                 showCounts = false;
-                logger.log(Level.SEVERE, "Error counting files.", tskCoreException);
+                logger.log(Level.SEVERE, "Error counting files.", tskCoreException); //NON-NLS
             }
         }
         return showCounts;
@@ -99,7 +99,7 @@ public final class FileTypes implements AutopsyVisitableItem {
                     Lookups.singleton(NAME));
             setName(NAME);
             setDisplayName(NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
         }
 
         @Override
@@ -202,37 +202,44 @@ public final class FileTypes implements AutopsyVisitableItem {
 
         abstract String getDisplayNameBase();
 
-        abstract long calculateItems() throws Exception;
+        /**
+         * Calculate the number of children of this node, possibly by querying
+         * the DB.
+         *
+         * @return @throws TskCoreException if there was an error querying the
+         *         DB to calculate the number of children.
+         */
+        abstract long calculateChildCount() throws TskCoreException;
 
         /**
          * Updates the display name of the mediaSubTypeNode to include the count
          * of files which it represents.
          */
+        @NbBundle.Messages("FileTypes.bgCounting.placeholder=(counting...)")
         void updateDisplayName() {
             if (typesRoot.shouldShowCounts()) {
                 //only show "(counting...)" the first time, otherwise it is distracting.
-                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "(counting...)"
-                        : ("(" + childCount + ")")));
+                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? Bundle.FileTypes_bgCounting_placeholder()
+                        : ("(" + childCount + ")"))); //NON-NLS
                 new SwingWorker<Long, Void>() {
                     @Override
                     protected Long doInBackground() throws Exception {
-                        return calculateItems();
+                        return calculateChildCount();
                     }
 
                     @Override
                     protected void done() {
                         try {
                             childCount = get();
-                            setDisplayName(getDisplayNameBase() + " (" + childCount + ")");
+                            setDisplayName(getDisplayNameBase() + " (" + childCount + ")"); //NON-NLS
                         } catch (InterruptedException | ExecutionException ex) {
                             setDisplayName(getDisplayNameBase());
-                            logger.log(Level.WARNING, "Failed to get count of files for " + getDisplayNameBase(), ex);
+                            logger.log(Level.WARNING, "Failed to get count of files for " + getDisplayNameBase(), ex); //NON-NLS
                         }
                     }
                 }.execute();
             } else {
-                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? ""
-                        : ("(" + childCount + "+)")));
+                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "" : ("(" + childCount + "+)"))); //NON-NLS
             }
         }
     }

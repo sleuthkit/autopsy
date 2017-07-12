@@ -325,7 +325,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        long calculateItems() throws Exception {
+        long calculateChildCount() throws TskCoreException {
             return skCase.countFilesWhere(createQuery(filter));
         }
     }
