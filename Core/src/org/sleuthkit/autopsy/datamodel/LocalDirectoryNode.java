@@ -31,8 +31,6 @@ import org.sleuthkit.datamodel.LocalDirectory;
  */
 public class LocalDirectoryNode extends SpecialDirectoryNode {
 
-    private static final Logger logger = Logger.getLogger(LocalDirectoryNode.class.getName());
-
     public static String nameForLocalDir(LocalDirectory ld) {
         return ld.getName();
     }
