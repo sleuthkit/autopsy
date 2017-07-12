@@ -74,12 +74,12 @@ public final class FileTypes implements AutopsyVisitableItem {
     boolean shouldShowCounts() {
         if (showCounts) {
             try {
-                if (skCase.countFilesWhere("1=1") > 200000) {
+                if (skCase.countFilesWhere("1=1") > 200000) { //NON-NLS
                     showCounts = false;
                 }
             } catch (TskCoreException tskCoreException) {
                 showCounts = false;
-                logger.log(Level.SEVERE, "Error counting files.", tskCoreException);
+                logger.log(Level.SEVERE, "Error counting files.", tskCoreException); //NON-NLS
             }
         }
         return showCounts;
@@ -96,10 +96,10 @@ public final class FileTypes implements AutopsyVisitableItem {
             super(new RootContentChildren(Arrays.asList(
                     new FileTypesByExtension(FileTypes.this),
                     new FileTypesByMimeType(FileTypes.this))),
-                     Lookups.singleton(NAME));
+                    Lookups.singleton(NAME));
             setName(NAME);
             setDisplayName(NAME);
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
         }
 
         @Override
@@ -184,18 +184,15 @@ public final class FileTypes implements AutopsyVisitableItem {
     static abstract class BGCountUpdatingNode extends DisplayableItemNode implements Observer {
 
         private long childCount = -1;
-        private final SleuthkitCase skCase;
         private FileTypes typesRoot;
 
         BGCountUpdatingNode(FileTypes typesRoot, Children children) {
             this(typesRoot, children, null);
-
         }
 
         BGCountUpdatingNode(FileTypes typesRoot, Children children, Lookup lookup) {
             super(children, lookup);
             this.typesRoot = typesRoot;
-            this.skCase = typesRoot.getSleuthkitCase();
         }
 
         @Override
@@ -205,37 +202,44 @@ public final class FileTypes implements AutopsyVisitableItem {
 
         abstract String getDisplayNameBase();
 
-        abstract String geQuery();
+        /**
+         * Calculate the number of children of this node, possibly by querying
+         * the DB.
+         *
+         * @return @throws TskCoreException if there was an error querying the
+         *         DB to calculate the number of children.
+         */
+        abstract long calculateChildCount() throws TskCoreException;
 
         /**
          * Updates the display name of the mediaSubTypeNode to include the count
          * of files which it represents.
          */
+        @NbBundle.Messages("FileTypes.bgCounting.placeholder=(counting...)")
         void updateDisplayName() {
             if (typesRoot.shouldShowCounts()) {
                 //only show "(counting...)" the first time, otherwise it is distracting.
-                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "(counting...)"
-                        : ("(" + childCount + ")")));
+                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? Bundle.FileTypes_bgCounting_placeholder()
+                        : ("(" + childCount + ")"))); //NON-NLS
                 new SwingWorker<Long, Void>() {
                     @Override
                     protected Long doInBackground() throws Exception {
-                        return skCase.countFilesWhere(geQuery());
+                        return calculateChildCount();
                     }
 
                     @Override
                     protected void done() {
                         try {
                             childCount = get();
-                            setDisplayName(getDisplayNameBase() + " (" + childCount + ")");
+                            setDisplayName(getDisplayNameBase() + " (" + childCount + ")"); //NON-NLS
                         } catch (InterruptedException | ExecutionException ex) {
                             setDisplayName(getDisplayNameBase());
-                            logger.log(Level.WARNING, "Failed to get count of files for " + getDisplayNameBase(), ex);
+                            logger.log(Level.WARNING, "Failed to get count of files for " + getDisplayNameBase(), ex); //NON-NLS
                         }
                     }
                 }.execute();
             } else {
-                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? ""
-                        : ("(" + childCount + "+)")));
+                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "" : ("(" + childCount + "+)"))); //NON-NLS
             }
         }
     }
