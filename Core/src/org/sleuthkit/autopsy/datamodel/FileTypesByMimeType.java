@@ -375,12 +375,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             return subType;
         }
 
-        /**
-         * Get children count without actually loading all nodes
-         *
-         * @return count(*) - the number of items that will be shown in this
-         *         items Directory Listing
-         */
         @Override
         long calculateItems() {
             return existingMimeTypes.get(StringUtils.substringBefore(mimeType, "/")).get(subType);
