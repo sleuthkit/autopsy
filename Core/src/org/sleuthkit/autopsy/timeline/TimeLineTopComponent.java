@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,9 +19,9 @@
 package org.sleuthkit.autopsy.timeline;
 
 import java.beans.PropertyVetoException;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -47,8 +47,8 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
+import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
-import static org.openide.windows.TopComponent.PROP_UNDOCKING_DISABLED;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
@@ -73,9 +73,10 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 @TopComponent.Description(
         preferredID = "TimeLineTopComponent",
-        //iconBase="SET/PATH/TO/ICON/HERE", 
+        //iconBase="SET/PATH/TO/ICON/HERE", //use this to put icon in window title area,
         persistenceType = TopComponent.PERSISTENCE_NEVER)
 @TopComponent.Registration(mode = "timeline", openAtStartup = false)
+@RetainLocation("timeline")
 public final class TimeLineTopComponent extends TopComponent implements ExplorerManager.Provider {
 
     private static final Logger LOGGER = Logger.getLogger(TimeLineTopComponent.class.getName());
@@ -199,8 +200,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
         initComponents();
         associateLookup(ExplorerUtils.createLookup(em, getActionMap()));
         setName(NbBundle.getMessage(TimeLineTopComponent.class, "CTL_TimeLineTopComponent"));
-        setToolTipText(NbBundle.getMessage(TimeLineTopComponent.class, "HINT_TimeLineTopComponent"));
-        setIcon(WindowManager.getDefault().getMainWindow().getIconImage()); //use the same icon as main application
 
         getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(AddBookmarkTagAction.BOOKMARK_SHORTCUT, "addBookmarkTag"); //NON-NLS
         getActionMap().put("addBookmarkTag", new AddBookmarkTagAction()); //NON-NLS
@@ -291,7 +290,13 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     @Override
     public List<Mode> availableModes(List<Mode> modes) {
-        return Collections.emptyList();
+        /*
+         * This looks like the right thing to do, but online discussions seems
+         * to indicate this method is effectively deprecated. A break point
+         * placed here was never hit.
+         */
+        return modes.stream().filter(mode -> mode.getName().equals("timeline") || mode.getName().equals("ImageGallery"))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -377,8 +382,8 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
 
     @Override
     public void componentOpened() {
+        super.componentOpened();
         WindowManager.getDefault().setTopComponentFloating(this, true);
-        putClientProperty(PROP_UNDOCKING_DISABLED, true);
     }
 
     @Override
