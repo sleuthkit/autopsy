@@ -184,18 +184,15 @@ public final class FileTypes implements AutopsyVisitableItem {
     static abstract class BGCountUpdatingNode extends DisplayableItemNode implements Observer {
 
         private long childCount = -1;
-        private final SleuthkitCase skCase;
         private FileTypes typesRoot;
 
         BGCountUpdatingNode(FileTypes typesRoot, Children children) {
             this(typesRoot, children, null);
-
         }
 
         BGCountUpdatingNode(FileTypes typesRoot, Children children, Lookup lookup) {
             super(children, lookup);
             this.typesRoot = typesRoot;
-            this.skCase = typesRoot.getSleuthkitCase();
         }
 
         @Override
@@ -232,7 +229,6 @@ public final class FileTypes implements AutopsyVisitableItem {
                             logger.log(Level.WARNING, "Failed to get count of files for " + getDisplayNameBase(), ex);
                         }
                     }
-
                 }.execute();
             } else {
                 setDisplayName(getDisplayNameBase() + ((childCount < 0) ? ""
