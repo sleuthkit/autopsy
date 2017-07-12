@@ -174,6 +174,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
 
         validateSettings();
+        enableOptionsBasedOnMode(getModeFromRadioButtons());
     }
 
     /**
