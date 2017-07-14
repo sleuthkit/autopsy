@@ -86,16 +86,17 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_name_name(),
-                Bundle.VirtualDirectoryNode_createSheet_name_displayName(),
-                Bundle.VirtualDirectoryNode_createSheet_name_desc(),
+        ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.name"),
+                NbBundle.getMessage(this.getClass(),
+                        "VirtualDirectoryNode.createSheet.name.displayName"),
+                NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.name.desc"),
                 getName()));
 
         if (!this.content.isDataSource()) {
             Map<String, Object> map = new LinkedHashMap<>();
             fillPropertyMap(map, content);
 
-            final String NO_DESCR = Bundle.VirtualDirectoryNode_createSheet_noDesc();
+            final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
             }

@@ -56,9 +56,9 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
             s.put(ss);
         }
 
-        ss.put(new NodeProperty<>(Bundle.VirtualDirectoryNode_createSheet_name_name(),
-                Bundle.VirtualDirectoryNode_createSheet_name_displayName(),
-                Bundle.VirtualDirectoryNode_createSheet_name_desc(),
+        ss.put(new NodeProperty<>(Bundle.LocalDirectoryNode_createSheet_name_name(),
+                Bundle.LocalDirectoryNode_createSheet_name_displayName(),
+                Bundle.LocalDirectoryNode_createSheet_name_desc(),
                 getName()));
 
         // At present, a LocalDirectory will never be a datasource - the top level of a logical
@@ -66,7 +66,7 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         Map<String, Object> map = new LinkedHashMap<>();
         fillPropertyMap(map, content);
 
-        final String NO_DESCR = Bundle.VirtualDirectoryNode_createSheet_noDesc();
+        final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(), entry.getKey(), NO_DESCR, entry.getValue()));
         }
