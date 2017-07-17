@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
+import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -330,24 +331,39 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
     }
 
-    private static String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
-        StringBuilder query = new StringBuilder();
-        query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
-        if (UserPreferences.hideKnownFilesInViewsTree()) {
-            query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
+    private String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
+        if (filter.getFilter().isEmpty()) {
+            return "";
         }
-        query.append(" AND (NULL"); //NON-NLS
-        for (String s : filter.getFilter()) {
-            query.append(" OR LOWER(name) LIKE LOWER('%").append(s).append("')"); //NON-NLS
+
+        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + (UserPreferences.hideKnownFilesInViewsTree() ? " AND (known IS NULL OR known != "
+                + TskData.FileKnown.KNOWN.getFileKnownValue() + ")" : " ")
+                + " AND (NULL "; //NON-NLS
+
+        if (skCase.getDatabaseType().equals(TskData.DbType.POSTGRESQL)) {
+            // For PostgreSQL we get a more efficient query by using builtin
+            // regular expression support and or'ing all extensions. We also
+            // escape the dot at the beginning of the extension.
+            // We will end up with a query that looks something like this:
+            // OR LOWER(name) ~ '(\.zip|\.rar|\.7zip|\.cab|\.jar|\.cpio|\.ar|\.gz|\.tgz|\.bz2)$')
+            query += "OR LOWER(name) ~ '(\\";
+            query += StringUtils.join(filter.getFilter(), "|\\");
+            query += ")$'";
+        } else {
+            for (String s : filter.getFilter()) {
+                query += "OR LOWER(name) LIKE '%" + s.toLowerCase() + "'"; // NON-NLS
+            }
         }
-        query.append(')');
-        return query.toString();
+
+        query += ')';
+        return query;
     }
 
     /**
      * Child node factory for a specific file type - does the database query.
      */
-    private static class FileExtensionNodeChildren extends ChildFactory.Detachable<Content> implements Observer {
+    private class FileExtensionNodeChildren extends ChildFactory.Detachable<Content> implements Observer {
 
         private final SleuthkitCase skCase;
         private final FileTypesByExtension.SearchFilterInterface filter;
