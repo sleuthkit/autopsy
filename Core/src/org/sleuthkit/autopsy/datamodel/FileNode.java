@@ -62,10 +62,6 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         } else {
             ext = "." + ext;
         }
-        if (ImageUtils.isImageThumbnailSupported(file)
-                || FileTypeExtensions.getImageExtensions().contains(ext)) {
-            return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
-        }
         if (FileTypeExtensions.getVideoExtensions().contains(ext)) {
             return "org/sleuthkit/autopsy/images/video-file.png"; //NON-NLS
         }
@@ -89,6 +85,13 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         }
         if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
             return "org/sleuthkit/autopsy/images/archive-file.png"; //NON-NLS
+        }
+        
+        // Do the check for thumbnail support last as it may require reading
+        // file content to determine the mime type.
+        if (ImageUtils.isImageThumbnailSupported(file)
+                || FileTypeExtensions.getImageExtensions().contains(ext)) {
+            return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
         }
         return "org/sleuthkit/autopsy/images/file-icon.png"; //NON-NLS
     }
