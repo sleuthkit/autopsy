@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -343,7 +344,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     private String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
         if (filter.getFilter().isEmpty()) {
-            return "";
+            // We should never be given a search filter without extensions
+            // but if we are it is clearly a programming error so we throw 
+            // an IllegalArgumentException.
+            throw new IllegalArgumentException("Empty filter list passed to createQuery()"); // NON-NLS
         }
 
         String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
@@ -358,7 +362,8 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             // We will end up with a query that looks something like this:
             // OR LOWER(name) ~ '(\.zip|\.rar|\.7zip|\.cab|\.jar|\.cpio|\.ar|\.gz|\.tgz|\.bz2)$')
             query += "OR LOWER(name) ~ '(\\";
-            query += StringUtils.join(filter.getFilter(), "|\\");
+            query += StringUtils.join(filter.getFilter().stream()
+                    .map(String::toLowerCase).collect(Collectors.toList()), "|\\");
             query += ")$'";
         } else {
             for (String s : filter.getFilter()) {
