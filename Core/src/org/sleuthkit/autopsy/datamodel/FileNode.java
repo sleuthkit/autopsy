@@ -30,7 +30,6 @@ import org.openide.util.Utilities;
 import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
-import org.sleuthkit.autopsy.coreutils.ImageUtils;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
@@ -62,8 +61,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
         } else {
             ext = "." + ext;
         }
-        if (ImageUtils.isImageThumbnailSupported(file)
-                || FileTypeExtensions.getImageExtensions().contains(ext)) {
+        if (FileTypeExtensions.getImageExtensions().contains(ext)) {
             return "org/sleuthkit/autopsy/images/image-file.png"; //NON-NLS
         }
         if (FileTypeExtensions.getVideoExtensions().contains(ext)) {
