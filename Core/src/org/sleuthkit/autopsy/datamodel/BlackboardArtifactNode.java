@@ -53,6 +53,7 @@ import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Tag;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskException;
 
 /**
  * Node wrapping a blackboard artifact object. This is generated from several
@@ -61,7 +62,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
     private final BlackboardArtifact artifact;
-    private final Content associated;
+    private Content associated = null;
     private List<NodeProperty<? extends Object>> customProperties;
     private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
     /*
@@ -124,8 +125,20 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         super(Children.LEAF, createLookup(artifact));
 
         this.artifact = artifact;
-        //this.associated = getAssociatedContent(artifact);
-        this.associated = this.getLookup().lookup(Content.class);
+        
+        // Look for associated Content  i.e. the source file for the artifact
+        if (this.getLookup().lookupAll(Content.class).size() > 1) {
+            for (Content content : this.getLookup().lookupAll(Content.class)) {
+                if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
+                    this.associated = content;
+                    break;
+                }
+            }
+        }
+        if (null == this.associated ) {
+            this.associated = this.getLookup().lookup(Content.class);
+        }
+        
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
@@ -142,8 +155,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         super(Children.LEAF, createLookup(artifact));
 
         this.artifact = artifact;
-        //this.associated = getAssociatedContent(artifact);
-        this.associated = this.getLookup().lookup(Content.class);
+        
+        // Look for associated Content - the source file for the artifact
+        if (this.getLookup().lookupAll(Content.class).size() > 1) {
+            for (Content content : this.getLookup().lookupAll(Content.class)) {
+                if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
+                    this.associated = content;
+                    break;
+                }
+            }
+        }
+         if (null == this.associated ) {
+            this.associated = this.getLookup().lookup(Content.class);  
+        }
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS

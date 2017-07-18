@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
@@ -93,4 +94,8 @@ final class GetRootDirectoryVisitor extends GetFilesContentVisitor {
         return getAllFromChildren(slackFile);
     }
 
+    @Override
+    public Collection<AbstractFile> visit(BlackboardArtifact art) {
+        return getAllFromChildren(art);
+    }
 }
