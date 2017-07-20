@@ -24,7 +24,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -708,7 +707,6 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         private final String keyword;
         private final String setName;
-        private final Map<RegExpInstanceKey, DisplayableItemNode> nodesMap = new HashMap<>();
 
         private RegExpInstancesFactory(String setName, String keyword) {
             super();
@@ -736,10 +734,6 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(RegExpInstanceKey key) {
-            return nodesMap.computeIfAbsent(key, this::createNode);
-        }
-
-        private DisplayableItemNode createNode(RegExpInstanceKey key) {
             if (key.isRegExp()) {
                 return new RegExpInstanceNode(setName, keyword, key.getRegExpKey());
             } else {
@@ -747,6 +741,7 @@ public class KeywordHits implements AutopsyVisitableItem {
                 return createBlackboardArtifactNode(key.getIdKey());
             }
         }
+
     }
 
     /**
@@ -881,7 +876,6 @@ public class KeywordHits implements AutopsyVisitableItem {
         private final String keyword;
         private final String setName;
         private final String instance;
-        private final Map<Long, BlackboardArtifactNode> nodesMap = new HashMap<>();
 
         private HitsFactory(String setName, String keyword, String instance) {
             super();
@@ -898,7 +892,7 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected Node createNodeForKey(Long artifactId) {
-            return nodesMap.computeIfAbsent(artifactId, KeywordHits.this::createBlackboardArtifactNode);
+            return createBlackboardArtifactNode(artifactId);
         }
     }
 }
