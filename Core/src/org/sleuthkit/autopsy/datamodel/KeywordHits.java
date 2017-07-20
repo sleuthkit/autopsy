@@ -33,6 +33,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -94,6 +95,10 @@ public class KeywordHits implements AutopsyVisitableItem {
             + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()//NON-NLS
             + " OR attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID()//NON-NLS
             + ")"; //NON-NLS
+
+    static private boolean isOnlyDefaultInstance(List<String> instances) {
+        return (instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME));
+    }
 
     public KeywordHits(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -265,7 +270,6 @@ public class KeywordHits implements AutopsyVisitableItem {
                             addRegExpToList(listMap, reg, word, id);
                         }
                     } else {//single term
-
                         if ("1".equals(kwType) || reg == null) {  //literal, substring or exact
                             /*
                              * Substring, treated same as exact match. "1" is
@@ -626,9 +630,8 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         public boolean isLeafTypeNode() {
-            List<String> instances = keywordResults.getKeywordInstances(setName, keyword);
             // is this an exact/substring match (i.e. did we use the DEFAULT name)?
-            return instances.size() == 1 && instances.get(0).equals(DEFAULT_INSTANCE_NAME);
+            return isOnlyDefaultInstance(keywordResults.getKeywordInstances(setName, keyword));
         }
 
         @Override
@@ -661,7 +664,6 @@ public class KeywordHits implements AutopsyVisitableItem {
 
             return s;
         }
-
     }
 
     /**
@@ -720,26 +722,21 @@ public class KeywordHits implements AutopsyVisitableItem {
             // The keys are different depending on what we are displaying.
             // regexp get another layer to show instances.  
             // Exact/substring matches don't. 
-            if ((instances.size() == 1) && (instances.get(0).equals(DEFAULT_INSTANCE_NAME))) {
-                for (Long id : keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME)) {
-                    RegExpInstanceKey key = new RegExpInstanceKey(id);
-                    nodesMap.computeIfAbsent(key, k -> createNode(k));
-                    list.add(key);
-                }
+            if (isOnlyDefaultInstance(instances)) {
+                list.addAll(keywordResults.getArtifactIds(setName, keyword, DEFAULT_INSTANCE_NAME).stream()
+                        .map(RegExpInstanceKey::new)
+                        .collect(Collectors.toList()));
             } else {
-                for (String instance : instances) {
-                    RegExpInstanceKey key = new RegExpInstanceKey(instance);
-                    nodesMap.computeIfAbsent(key, k -> createNode(k));
-                    list.add(key);
-                }
-
+                list.addAll(instances.stream()
+                        .map(RegExpInstanceKey::new)
+                        .collect(Collectors.toList()));
             }
             return true;
         }
 
         @Override
         protected Node createNodeForKey(RegExpInstanceKey key) {
-            return nodesMap.get(key);
+            return nodesMap.computeIfAbsent(key, this::createNode);
         }
 
         private DisplayableItemNode createNode(RegExpInstanceKey key) {
@@ -895,16 +892,13 @@ public class KeywordHits implements AutopsyVisitableItem {
 
         @Override
         protected boolean createKeys(List<Long> list) {
-            for (Long id : keywordResults.getArtifactIds(setName, keyword, instance)) {
-                nodesMap.computeIfAbsent(id, i -> createBlackboardArtifactNode(i));
-                list.add(id);
-            }
+            list.addAll(keywordResults.getArtifactIds(setName, keyword, instance));
             return true;
         }
 
         @Override
         protected Node createNodeForKey(Long artifactId) {
-            return nodesMap.get(artifactId);
+            return nodesMap.computeIfAbsent(artifactId, KeywordHits.this::createBlackboardArtifactNode);
         }
     }
 }
