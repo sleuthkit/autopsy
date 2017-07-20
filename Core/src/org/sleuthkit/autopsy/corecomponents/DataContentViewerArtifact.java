@@ -457,7 +457,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             return false;
         }
 
-        Collection<? extends Content> contents = node.getLookup().lookupAll(Content.class);
         for (Content content : node.getLookup().lookupAll(Content.class)) {
             if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
                 try {
