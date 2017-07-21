@@ -107,7 +107,6 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     private void newKeywordListAction() {
         XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
         String listName = "";
-       
 
         listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                 NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, listName);
@@ -388,9 +387,15 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 //check name collisions
                 listName = list.getName();
                 if (writer.listExists(listName)) {
-                    Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
+                    String[] options;
+                    if (toImport.size() == 1) { //only give them cancel and yes buttons for single list imports
+                        options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};  
+                    } else {
+                        options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
+                    }
                     int choice = JOptionPane.showOptionDialog(this,
                             NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
                             NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
