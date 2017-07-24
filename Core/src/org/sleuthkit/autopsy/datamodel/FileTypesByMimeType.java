@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -41,6 +42,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideKnownFilesInViewsTree;
 import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTree;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -428,7 +430,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * files that match MimeType which is represented by this position in the
      * tree.
      */
-    private class MediaSubTypeNodeChildren extends ChildFactory.Detachable<Content> implements Observer {
+    private class MediaSubTypeNodeChildren extends ChildFactory.Detachable<FileTypesKey> implements Observer {
 
         private final String mimeType;
 
@@ -439,10 +441,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         @Override
-        protected boolean createKeys(List<Content> list) {
+        protected boolean createKeys(List<FileTypesKey> list) {
             try {
-                list.addAll(skCase.findAllFilesWhere(
-                        createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")); //NON-NLS
+                list.addAll(skCase.findAllFilesWhere(createBaseWhereExpr() + " AND mime_type = '" + mimeType + "'")
+                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList())); //NON-NLS
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
             }
@@ -455,7 +457,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         }
 
         @Override
-        protected Node createNodeForKey(Content key) {
+        protected Node createNodeForKey(FileTypesKey key) {
             return key.accept(new FileTypes.FileNodeCreationVisitor());
         }
     }

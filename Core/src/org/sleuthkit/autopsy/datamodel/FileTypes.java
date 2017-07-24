@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
@@ -31,6 +34,8 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -40,6 +45,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -215,7 +221,7 @@ public final class FileTypes implements AutopsyVisitableItem {
          * Updates the display name of the mediaSubTypeNode to include the count
          * of files which it represents.
          */
-        @NbBundle.Messages("FileTypes.bgCounting.placeholder=(counting...)")
+        @NbBundle.Messages("FileTypes.bgCounting.placeholder= (counting...)")
         void updateDisplayName() {
             if (typesRoot.shouldShowCounts()) {
                 //only show "(counting...)" the first time, otherwise it is distracting.
@@ -241,6 +247,184 @@ public final class FileTypes implements AutopsyVisitableItem {
             } else {
                 setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "" : ("(" + childCount + "+)"))); //NON-NLS
             }
+        }
+    }
+
+    /**
+     * Class that is used as a key by NetBeans for creating result nodes. This
+     * is a wrapper around a Content object and is being put in place as an
+     * optimization to avoid the Content.hashCode() implementation which issues
+     * a database query to get the number of children when determining whether 2
+     * Content objects represent the same thing. TODO: This is a temporary
+     * solution that can hopefully be removed once we address the issue of
+     * determining how many children a Content has.
+     */
+    static class FileTypesKey implements Content {
+
+        private final Content content;
+
+        public FileTypesKey(Content content) {
+            this.content = content;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final FileTypesKey other = (FileTypesKey) obj;
+
+            return this.content.getId() == other.content.getId();
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 101 * hash + (int)(this.content.getId() ^ (this.content.getId() >>> 32));
+            return hash;
+        }
+
+        @Override
+        public <T> T accept(SleuthkitItemVisitor<T> v) {
+            return content.accept(v);
+        }
+
+        @Override
+        public int read(byte[] buf, long offset, long len) throws TskCoreException {
+            return content.read(buf, offset, len);
+        }
+
+        @Override
+        public void close() {
+            content.close();
+        }
+
+        @Override
+        public long getSize() {
+            return content.getSize();
+        }
+
+        @Override
+        public <T> T accept(ContentVisitor<T> v) {
+            return content.accept(v);
+        }
+
+        @Override
+        public String getName() {
+            return content.getName();
+        }
+
+        @Override
+        public String getUniquePath() throws TskCoreException {
+            return content.getUniquePath();
+        }
+
+        @Override
+        public long getId() {
+            return content.getId();
+        }
+
+        @Override
+        public Content getDataSource() throws TskCoreException {
+            return content.getDataSource();
+        }
+
+        @Override
+        public List<Content> getChildren() throws TskCoreException {
+            return content.getChildren();
+        }
+
+        @Override
+        public boolean hasChildren() throws TskCoreException {
+            return content.hasChildren();
+        }
+
+        @Override
+        public int getChildrenCount() throws TskCoreException {
+            return content.getChildrenCount();
+        }
+
+        @Override
+        public Content getParent() throws TskCoreException {
+            return content.getParent();
+        }
+
+        @Override
+        public List<Long> getChildrenIds() throws TskCoreException {
+            return content.getChildrenIds();
+        }
+
+        @Override
+        public BlackboardArtifact newArtifact(int artifactTypeID) throws TskCoreException {
+            return content.newArtifact(artifactTypeID);
+        }
+
+        @Override
+        public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+            return content.newArtifact(type);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getArtifacts(String artifactTypeName) throws TskCoreException {
+            return content.getArtifacts(artifactTypeName);
+        }
+
+        @Override
+        public BlackboardArtifact getGenInfoArtifact() throws TskCoreException {
+            return content.getGenInfoArtifact();
+        }
+
+        @Override
+        public BlackboardArtifact getGenInfoArtifact(boolean create) throws TskCoreException {
+            return content.getGenInfoArtifact(create);
+        }
+
+        @Override
+        public ArrayList<BlackboardAttribute> getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE attr_type) throws TskCoreException {
+            return content.getGenInfoAttributes(attr_type);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getArtifacts(int artifactTypeID) throws TskCoreException {
+            return content.getArtifacts(artifactTypeID);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getArtifacts(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+            return content.getArtifacts(type);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getAllArtifacts() throws TskCoreException {
+            return content.getAllArtifacts();
+        }
+
+        @Override
+        public Set<String> getHashSetNames() throws TskCoreException {
+            return content.getHashSetNames();
+        }
+
+        @Override
+        public long getArtifactsCount(String artifactTypeName) throws TskCoreException {
+            return content.getArtifactsCount(artifactTypeName);
+        }
+
+        @Override
+        public long getArtifactsCount(int artifactTypeID) throws TskCoreException {
+            return content.getArtifactsCount(artifactTypeID);
+        }
+
+        @Override
+        public long getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+            return content.getArtifactsCount(type);
+        }
+
+        @Override
+        public long getAllArtifactsCount() throws TskCoreException {
+            return content.getAllArtifactsCount();
         }
     }
 }
