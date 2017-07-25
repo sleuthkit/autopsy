@@ -49,11 +49,9 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
     private final static Logger logger = Logger.getLogger(FileTypesByExtension.class.getName());
     private final SleuthkitCase skCase;
-    private final FileTypes typesRoot;
 
-    public FileTypesByExtension(FileTypes typesRoot) {
-        this.skCase = typesRoot.getSleuthkitCase();
-        this.typesRoot = typesRoot;
+    public FileTypesByExtension(SleuthkitCase tskCase) {
+        this.skCase = tskCase;
     }
 
     public SleuthkitCase getSleuthkitCase() {
@@ -89,7 +87,6 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCase();
-                        typesRoot.shouldShowCounts();
                         update();
                     } catch (IllegalStateException notUsed) {
                         /**
@@ -281,7 +278,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          *               should refresh
          */
         FileExtensionNode(FileTypesByExtension.SearchFilterInterface filter, SleuthkitCase skCase, FileTypesByExtObservable o) {
-            super(typesRoot, Children.create(new FileExtensionNodeChildren(filter, skCase, o), true),
+            super(Children.create(new FileExtensionNodeChildren(filter, skCase, o), true),
                     Lookups.singleton(filter.getDisplayName()));
             this.filter = filter;
             super.setName(filter.getDisplayName());

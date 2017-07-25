@@ -65,11 +65,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * type as the key and a Map, from media subtype to count, as the value.
      */
     private final HashMap<String, Map<String, Long>> existingMimeTypeCounts = new HashMap<>();
-    /**
-     * Root of the File Types tree. Used to provide single answer to question:
-     * Should the child counts be shown next to the nodes?
-     */
-    private final FileTypes typesRoot;
+   
 
     /**
      * The pcl is in the class because it has the easiest mechanisms to add and
@@ -142,9 +138,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         notifyObservers();
     }
 
-    FileTypesByMimeType(FileTypes typesRoot) {
-        this.skCase = typesRoot.getSleuthkitCase();
-        this.typesRoot = typesRoot;
+    FileTypesByMimeType(SleuthkitCase tskCase) {
+        this.skCase = tskCase;
         this.pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
             if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
@@ -158,7 +153,6 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                  */
                 try {
                     Case.getCurrentCase();
-                    typesRoot.shouldShowCounts();
                     populateHashMap();
                 } catch (IllegalStateException notUsed) {
                     /**
@@ -365,7 +359,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         private final String subType;
 
         private MediaSubTypeNode(String mimeType) {
-            super(typesRoot, Children.create(new MediaSubTypeNodeChildren(mimeType), true), Lookups.singleton(mimeType));
+            super( Children.create(new MediaSubTypeNodeChildren(mimeType), true), Lookups.singleton(mimeType));
             this.mimeType = mimeType;
             this.subType = StringUtils.substringAfter(mimeType, "/");
             super.setName(mimeType);
