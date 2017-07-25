@@ -537,10 +537,12 @@ public final class FilesSet implements Serializable {
                     case FILES:
                         return file.isFile();
                     case DIRECTORIES:
-                        return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR;
+                        return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR 
+                                || file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT_DIR;
                     case FILES_AND_DIRECTORIES:
                         return file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG
-                                || file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR;
+                                || file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR
+                                || file.getMetaType() == TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT_DIR;
                     case ALL:
                         return true;  //Effectively ignores the metatype condition when All is selected.
                     default:
