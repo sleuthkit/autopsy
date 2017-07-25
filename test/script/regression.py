@@ -1386,8 +1386,7 @@ class Logs(object):
                 try:
                     for line in log:
                         line = line.replace(rep_path, "test_data")
-                        line_ignoreCase = line.lower()
-                        if line.startswith("SEVERE") or line.startswith("BUILD FAILED") or "fatal error" in line_ignoreCase or "crashed" in line_ignoreCase:
+                        if line.startswith("SEVERE"):
                             common_log.write(file +": " +  line)
                 except UnicodeDecodeError as e:
                     pass
@@ -1396,7 +1395,7 @@ class Logs(object):
             antlog = 'antlog.txt'
             for ant_line in codecs.open(os.path.join(logs_path, os.pardir, antlog)):
                 ant_ignoreCase = ant_line.lower()
-                if ant_line.startswith("SEVERE") or ant_line.startswith("BUILD FAILED") or "fatal error" in ant_ignoreCase or "crashed" in ant_ignoreCase:
+                if ant_line.startswith("BUILD FAILED") or "fatal error" in ant_ignoreCase or "crashed" in ant_ignoreCase:
                     common_log.write(antlog +": " +  ant_line) 
             common_log.write("\n")
             common_log.close()
