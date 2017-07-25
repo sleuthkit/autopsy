@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.datatransfer.StringSelection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -456,12 +457,13 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             return false;
         }
 
-        Content content = node.getLookup().lookup(Content.class);
-        if (content != null) {
-            try {
-                return content.getAllArtifactsCount() > 0;
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get count of BlackboardArtifacts for content", ex); //NON-NLS
+        for (Content content : node.getLookup().lookupAll(Content.class)) {
+            if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
+                try {
+                    return content.getAllArtifactsCount() > 0;
+                } catch (TskException ex) {
+                    logger.log(Level.WARNING, "Couldn't get count of BlackboardArtifacts for content", ex); //NON-NLS
+                }
             }
         }
         return false;
@@ -693,22 +695,25 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             // blackboard artifact, if any.
             Lookup lookup = selectedNode.getLookup();
 
-            // Get the content.
-            Content content = lookup.lookup(Content.class);
-            if (content == null) {
+            // Get the content. We may get BlackboardArtifacts, ignore those here.
+            ArrayList<BlackboardArtifact> artifacts = new ArrayList<>();
+            Collection<? extends Content> contents = lookup.lookupAll(Content.class);
+            if (contents.isEmpty()) {
                 return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
             }
-
-            // Get all of the blackboard artifacts associated with the content. These are what this
-            // viewer displays.
-            ArrayList<BlackboardArtifact> artifacts;
-            try {
-                artifacts = content.getAllArtifacts();
-            } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't get artifacts", ex); //NON-NLS
-                return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
+            for (Content content : contents) {
+                if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ) {
+                    // Get all of the blackboard artifacts associated with the content. These are what this
+                    // viewer displays.
+                    try {
+                        artifacts = content.getAllArtifacts();
+                    } catch (TskException ex) {
+                        logger.log(Level.WARNING, "Couldn't get artifacts", ex); //NON-NLS
+                        return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
+                    }
+                }
             }
-
+ 
             if (isCancelled()) {
                 return null;
             }
