@@ -89,7 +89,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCase();
-                        typesRoot.shouldShowCounts();
+                        typesRoot.updateShowCounts();
                         update();
                     } catch (IllegalStateException notUsed) {
                         /**
