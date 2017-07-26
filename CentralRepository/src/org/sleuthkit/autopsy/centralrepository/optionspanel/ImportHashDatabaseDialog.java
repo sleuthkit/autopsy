@@ -637,9 +637,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                         knownStatus, 
                         "");
 
-                if (!globalInstances.add(eamGlobalFileInstance)) {
-                    throw new EamDbException(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_duplicate(parts[0])); // NON-NLS
-                }
+                globalInstances.add(eamGlobalFileInstance);
             }
 
             dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
