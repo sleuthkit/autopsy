@@ -283,7 +283,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 // Do nothing since the display name will be set to the file name.
             }
         }
-        
+
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(),
                     entry.getKey(),
@@ -477,46 +477,46 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             LOGGER.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
         }
     }
-    
+
 /**
- * Fill map with EmailMsg properties, not all attributes are filled
- *
- * @param map      map with preserved ordering, where property names/values
- *                 are put
- * @param attribute attribute to check/fill as property
- */
+     * Fill map with EmailMsg properties, not all attributes are filled
+     *
+     * @param map       map with preserved ordering, where property names/values
+     *                  are put
+     * @param attribute attribute to check/fill as property
+     */
  private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute ) {
-    
-    final int attributeTypeID = attribute.getAttributeType().getTypeID();
-     
-    // Skip certain Email msg attributes
-    if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID()
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID() 
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()  
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
+
+        final int attributeTypeID = attribute.getAttributeType().getTypeID();
+
+        // Skip certain Email msg attributes
+        if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
         || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()
             ) {
-        
-        // do nothing
+
+            // do nothing
     }
     else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
 
-        String value = attribute.getDisplayString();
-        if (value.length() > 160) {
-            value = value.substring(0, 160) + "...";
-        }
-        map.put(attribute.getAttributeType().getDisplayName(), value);
+            String value = attribute.getDisplayString();
+            if (value.length() > 160) {
+                value = value.substring(0, 160) + "...";
+            }
+            map.put(attribute.getAttributeType().getDisplayName(), value);
     }
    else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-        map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
+            map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
     }
     else {
-        map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+        }
+
     }
-     
- }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -525,24 +525,24 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     /**
      * Create a Lookup based on what is in the passed in artifact.
      *
-     * @param artifact
+     * @param artifact The artifact to make a look up for.
      *
-     * @return
+     * @return A lookup with the artifact and possibly any associated content in
+     *         it.
      */
     private static Lookup createLookup(BlackboardArtifact artifact) {
         // Add the content the artifact is associated with
-
+        final long objectID = artifact.getObjectID();
         try {
-            Content content = contentCache.get(artifact.getObjectID(), () -> artifact.getSleuthkitCase().getContentById(artifact.getObjectID()));
+            Content content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
             if (content == null) {
                 return Lookups.fixed(artifact);
             } else {
                 return Lookups.fixed(artifact, content);
             }
         } catch (ExecutionException ex) {
-            //JMTODO: Clean this up.  Either swallow it with appropriate logging/notification, or propogate it, not both.
             LOGGER.log(Level.WARNING, "Getting associated content for artifact failed", ex); //NON-NLS
-            throw new IllegalArgumentException("Could not get associated content from database", ex);
+            return Lookups.fixed(artifact);
         }
     }
 
