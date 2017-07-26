@@ -257,7 +257,7 @@ public final class FileTypes implements AutopsyVisitableItem {
      * a database query to get the number of children when determining whether 2
      * Content objects represent the same thing. TODO: This is a temporary
      * solution that can hopefully be removed once we address the issue of
-     * determining how many children a Content has.
+     * determining how many children a Content has (JIRA-2823).
      */
     static class FileTypesKey implements Content {
 
