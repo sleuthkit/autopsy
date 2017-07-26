@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,9 +20,7 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
-import java.awt.Desktop;
 import java.awt.EventQueue;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -38,7 +36,6 @@ import java.util.logging.Level;
 import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
-import java.io.File;
 import java.util.Collections;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -49,25 +46,12 @@ import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import org.netbeans.api.options.OptionsDisplayer;
-import org.openide.DialogDisplayer;
 import org.openide.LifecycleManager;
-import org.openide.NotifyDescriptor;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.CaseNewAction;
-import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.coreutils.PlatformUtil;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.CaseDeletionResult;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnapshot;
 
 /**
  * A panel for monitoring automated ingest by a cluster, and for controlling
@@ -105,7 +89,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
-    private AutoIngestManager manager;
     private ExecutorService updateExecutor;
     private boolean isPaused;
     private boolean autoIngestStarted;
@@ -184,8 +167,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private AutoIngestDashboard() {
         //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
          WindowManager.getDefault().getMainWindow().setEnabled(false);
-        
-        manager = AutoIngestManager.getInstance();
 
         pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
             private static final long serialVersionUID = 1L;
@@ -590,28 +571,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      */
     private void startUp() {
 
-        /*
-         * Starts up the auto ingest manager (AIM).
-         */
-        try {
-            manager.startUp();
-            autoIngestStarted = true;
-        } catch (AutoIngestManager.AutoIngestManagerStartupException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
-            tbStatusMessage.setText(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupError"));
-            manager = null;
-
-            JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupFailed.Message"),
-                    NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.AutoIngestStartupFailed.Title"),
-                    JOptionPane.ERROR_MESSAGE);
-            bnOptions.setEnabled(true);
-
-            /*
-             * If the AIM cannot be started, there is nothing more to do.
-             */
-            return;
-        }
+        autoIngestStarted = true;
 
         /*
          * Subscribe to services monitor events.
@@ -621,16 +581,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         });
 
         /*
-         * Register with the AIM as an observer.
-         */
-        manager.addObserver(this);
-
-        /*
          * Populate the pending, running, and completed auto ingest job tables.
          */
         updateExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(UPDATE_TASKS_THREAD_NAME).build());
         updateExecutor.submit(new UpdateAllJobsTablesTask());
-        manager.scanInputDirsNow();
 
 		//bnPause.setEnabled(true);
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text"));
@@ -659,7 +613,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.Cancel")};
         int reply = JOptionPane.OK_OPTION;
 
-        if (null != manager && IngestManager.getInstance().isIngestRunning()) {
+        if (IngestManager.getInstance().isIngestRunning()) {
             reply = JOptionPane.showOptionDialog(this,
                     NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ExitConsequences"),
                     NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.ConfirmExitHeader"),
@@ -685,22 +639,12 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             }
 
             /*
-             * Stop observing the auto ingest manager (AIM).
-             */
-            if (null != manager) {
-                manager.deleteObserver(this);
-            }
-
-            /*
              * Shut down the AIM and close.
              */
             new SwingWorker<Void, Void>() {
 
                 @Override
                 protected Void doInBackground() throws Exception {
-                    if (null != manager) {
-                        manager.shutDown();
-                    }
                     return null;
                 }
 
@@ -807,7 +751,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
              * Ask the auto ingest manager to pause when it completes the
              * currently running job, if any.
              */
-            manager.pause();
             bnRefresh.setEnabled(false);
         }
     }
@@ -835,11 +778,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          */
         pendingTable.setBackground(pendingTableBackground);
         pendingTable.setForeground(pendingTablelForeground);
-
-        /**
-         * Ask the auto ingest manager to resume processing.
-         */
-        manager.resume();
     }
 
     /**
@@ -855,7 +793,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         @Override
         public void run() {
             List<AutoIngestJob> pendingJobs = new ArrayList<>();
-            manager.getJobs(pendingJobs, null, null);
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, null, null));
         }
     }
@@ -873,7 +810,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         @Override
         public void run() {
             List<AutoIngestJob> runningJobs = new ArrayList<>();
-            manager.getJobs(null, runningJobs, null);
             EventQueue.invokeLater(new RefreshComponentsTask(null, runningJobs, null));
         }
     }
@@ -897,7 +833,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             List<AutoIngestJob> pendingJobs = new ArrayList<>();
             List<AutoIngestJob> runningJobs = new ArrayList<>();
             List<AutoIngestJob> completedJobs = new ArrayList<>();
-            manager.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
             Collections.sort(completedJobs, new AutoIngestJob.ReverseDateCompletedComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
@@ -1084,10 +1019,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * Get the current lists of jobs and update the UI.
      */
     private void refreshTables(){
-        JobsSnapshot jobsSnapshot = manager.getCurrentJobsSnapshot();
-        refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
-        refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
-        refreshTable(jobsSnapshot.getRunningJobs(), runningTableModel, null);
     }
 
     /**
@@ -1182,19 +1113,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnCancelJob, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnCancelJob.text")); // NOI18N
         bnCancelJob.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnCancelJob.toolTipText")); // NOI18N
-        bnCancelJob.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnCancelJobActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnDeleteCase, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnDeleteCase.text")); // NOI18N
         bnDeleteCase.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnDeleteCase.toolTipText")); // NOI18N
-        bnDeleteCase.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnDeleteCaseActionPerformed(evt);
-            }
-        });
 
         lbPending.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbPending, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.lbPending.text")); // NOI18N
@@ -1207,68 +1128,28 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnRefresh.text")); // NOI18N
         bnRefresh.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnRefresh.toolTipText")); // NOI18N
-        bnRefresh.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnRefreshActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnCancelModule, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnCancelModule.text")); // NOI18N
         bnCancelModule.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnCancelModule.toolTipText")); // NOI18N
-        bnCancelModule.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnCancelModuleActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnExit, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnExit.text")); // NOI18N
         bnExit.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnExit.toolTipText")); // NOI18N
-        bnExit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnExitActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnOptions, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnOptions.text")); // NOI18N
         bnOptions.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnOptions.toolTipText")); // NOI18N
         bnOptions.setEnabled(false);
-        bnOptions.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnOptionsActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnShowProgress, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnShowProgress.text")); // NOI18N
         bnShowProgress.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnShowProgress.toolTipText")); // NOI18N
-        bnShowProgress.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnShowProgressActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPause, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text")); // NOI18N
         bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.toolTipText")); // NOI18N
-        bnPause.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnPauseActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeCase, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeCase.text")); // NOI18N
         bnPrioritizeCase.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeCase.toolTipText")); // NOI18N
-        bnPrioritizeCase.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnPrioritizeCaseActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnShowCaseLog, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnShowCaseLog.text")); // NOI18N
         bnShowCaseLog.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnShowCaseLog.toolTipText")); // NOI18N
-        bnShowCaseLog.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnShowCaseLogActionPerformed(evt);
-            }
-        });
 
         tbStatusMessage.setEditable(false);
         tbStatusMessage.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
@@ -1281,11 +1162,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeJob, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.text")); // NOI18N
         bnPrioritizeJob.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.toolTipText")); // NOI18N
         bnPrioritizeJob.setActionCommand(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeJob.actionCommand")); // NOI18N
-        bnPrioritizeJob.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnPrioritizeJobActionPerformed(evt);
-            }
-        });
 
         lbServicesStatus.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(lbServicesStatus, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.lbServicesStatus.text")); // NOI18N
@@ -1296,18 +1172,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         tbServicesStatusMessage.setBorder(null);
 
         org.openide.awt.Mnemonics.setLocalizedText(bnOpenLogDir, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnOpenLogDir.text")); // NOI18N
-        bnOpenLogDir.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnOpenLogDirActionPerformed(evt);
-            }
-        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnReprocessJob, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnReprocessJob.text")); // NOI18N
-        bnReprocessJob.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnReprocessJobActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -1426,278 +1292,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnRefresh, bnShowProgress});
 
     }// </editor-fold>//GEN-END:initComponents
-
-    /**
-     * Handles a click on the refresh button. Requests an immediate scan of the
-     * input folders for new jobs and queues a refresh of all three of the jobs
-     * tables.
-     *
-     * @param evt - The button click event.
-     */
-    private void bnRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnRefreshActionPerformed
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        manager.scanInputDirsAndWait();
-        refreshTables();
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-    }//GEN-LAST:event_bnRefreshActionPerformed
-
-    /**
-     * Handles a click on the delete case button. If an entry is selected that
-     * can be deleted, pops up a confirmation dialog. Upon confirmation, asks
-     * AutoIngestManager to delete the entry and asks for an updated view.
-     *
-     * @param evt The button click event.
-     */
-    private void bnDeleteCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDeleteCaseActionPerformed
-        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
-            return;
-        }
-
-        String caseName = (String) completedTable.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal());
-        Object[] options = {
-            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.Delete"),
-            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DoNotDelete")
-        };
-        Object[] msgContent = {org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DeleteAreYouSure") + "\"" + caseName + "\"?"};
-        int reply = JOptionPane.showOptionDialog(this,
-                msgContent,
-                org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.ConfirmDeletionHeader"),
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.WARNING_MESSAGE,
-                null,
-                options,
-                options[JOptionPane.NO_OPTION]);
-        if (reply == JOptionPane.YES_OPTION) {
-            bnDeleteCase.setEnabled(false);
-            bnShowCaseLog.setEnabled(false);
-            if (completedTableModel.getRowCount() > 0 && completedTable.getSelectedRow() >= 0) {
-                Path caseDirectoryPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
-                completedTable.clearSelection();
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                CaseDeletionResult result = manager.deleteCase(caseName, caseDirectoryPath);
-                refreshTables();
-                this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-                if (CaseDeletionResult.FAILED == result) {
-                    JOptionPane.showMessageDialog(this,
-                            String.format("Could not delete case %s. It may be in in use.", caseName),
-                            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"),
-                            JOptionPane.INFORMATION_MESSAGE);
-                } else if (CaseDeletionResult.PARTIALLY_DELETED == result) {
-                    JOptionPane.showMessageDialog(this,
-                            String.format("Could not delete case %s. See system log for details.", caseName),
-                            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DeletionFailed"),
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        }
-    }//GEN-LAST:event_bnDeleteCaseActionPerformed
-
-    /**
-     * Handles a click on the cancel auto ingest job button. Cancels the
-     * selected job.
-     *
-     * @param evt The button click event.
-     */
-    private void bnCancelJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelJobActionPerformed
-        Object[] options = {
-            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.CancelJob"),
-            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DoNotCancelJob")};
-        int reply = JOptionPane.showOptionDialog(this,
-                NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.CancelJobAreYouSure"),
-                NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.ConfirmCancellationHeader"),
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.WARNING_MESSAGE,
-                null,
-                options,
-                options[1]);
-        if (reply == 0) {
-            /*
-             * Call setCursor on this to ensure it appears (if there is time to
-             * see it).
-             */
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            manager.cancelCurrentJob();
-            refreshTables();
-            this.setCursor(Cursor.getDefaultCursor());
-        }
-    }//GEN-LAST:event_bnCancelJobActionPerformed
-
-    /**
-     * Handles a click on the show auto ingest job progress button. Displays an
-     * ingest job progress panel.
-     *
-     * @param evt The button click event.
-     */
-    private void bnShowProgressActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnShowProgressActionPerformed
-        IngestProgressSnapshotDialog dialog = new IngestProgressSnapshotDialog(this.getTopLevelAncestor(), true);
-    }//GEN-LAST:event_bnShowProgressActionPerformed
-
-    /**
-     * Handles a click on the pause/resume auto ingest job button. Sends a
-     * pause/resume request to the auto ingest manager.
-     *
-     * @param evt The button click event.
-     */
-    private void bnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPauseActionPerformed
-        
-        if (!autoIngestStarted) {
-            //put up a wait cursor during the start up operation
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-
-            startUp();
-
-            this.setCursor(null);
-            //done for startup
-            return;
-        }
-        if (!isPaused) {
-            tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.pausing"));
-            pause(true);
-        } else {
-            resume();
-        }
-        isPaused = !isPaused;
-    }//GEN-LAST:event_bnPauseActionPerformed
-
-    /**
-     * Handles a click on the options button. Displays the options window.
-     *
-     * @param evt The button click event.
-     */
-    private void bnOptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOptionsActionPerformed
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        OptionsDisplayer.getDefault().open();
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-    }//GEN-LAST:event_bnOptionsActionPerformed
-
-    /**
-     * Handles a click on the cancel ingest module button. Cancels the currently
-     * running data source level ingest module for the selected job.
-     *
-     * @param evt The button click event.
-     */
-    private void bnCancelModuleActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnCancelModuleActionPerformed
-        Object[] options = {
-            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.CancelModule"),
-            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.DoNotCancelModule")};
-        int reply = JOptionPane.showOptionDialog(this,
-                NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.CancelModuleAreYouSure"),
-                NbBundle.getMessage(AutoIngestDashboard.class, "ConfirmationDialog.ConfirmCancellationHeader"),
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.WARNING_MESSAGE,
-                null,
-                options,
-                options[1]);
-        if (reply == 0) {
-            /*
-             * Call setCursor on this to ensure it appears (if there is time to
-             * see it).
-             */
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            manager.cancelCurrentDataSourceLevelIngestModule();
-            refreshTables();
-            this.setCursor(Cursor.getDefaultCursor());
-        }
-    }//GEN-LAST:event_bnCancelModuleActionPerformed
-
-    /**
-     * Handles a click on the exit button. Shuts down auto ingest.
-     *
-     * @param evt The button click event.
-     */
-    private void bnExitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnExitActionPerformed
-        shutdown();
-    }//GEN-LAST:event_bnExitActionPerformed
-
-    /**
-     * Handle a click on the prioritize case button. Requests prioritization of
-     * all of the auto ingest jobs for a case.
-     *
-     * @param evt The button click event.
-     */
-    private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            manager.prioritizeCase(caseName);
-            refreshTables();
-            pendingTable.clearSelection();
-            enablePendingTableButtons(false);
-            AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
-        }
-    }//GEN-LAST:event_bnPrioritizeCaseActionPerformed
-
-    /**
-     * Handles a click on the show log button. Displays the auto ingest job log
-     * for a case in NotePad.
-     *
-     * @param evt The button click event.
-     */
-    private void bnShowCaseLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnShowCaseLogActionPerformed
-        try {
-            int selectedRow = completedTable.getSelectedRow();
-            if (selectedRow != -1) {
-                Path caseDirectoryPath = (Path) completedTableModel.getValueAt(selectedRow, JobsTableModelColumns.CASE_DIRECTORY_PATH.ordinal());
-                if (null != caseDirectoryPath) {
-                    Path pathToLog = AutoIngestJobLogger.getLogPath(caseDirectoryPath);
-                    if (pathToLog.toFile().exists()) {
-                        Desktop.getDesktop().edit(pathToLog.toFile());
-                    } else {
-                        JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ShowLogFailed.Message"),
-                                org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ShowLogFailed.Title"), JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    MessageNotifyUtil.Message.warn("The case directory for this job has been deleted.");
-                }
-            }
-        } catch (IOException ex) {
-            SYS_LOGGER.log(Level.SEVERE, "Dashboard error attempting to display case auto ingest log", ex);
-            Object[] options = {org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "DisplayLogDialog.okay")};
-            JOptionPane.showOptionDialog(this,
-                    org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "DisplayLogDialog.cannotFindLog"),
-                    org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "DisplayLogDialog.unableToShowLogFile"),
-                    JOptionPane.DEFAULT_OPTION,
-                    JOptionPane.PLAIN_MESSAGE,
-                    null,
-                    options,
-                    options[0]);
-        }
-    }//GEN-LAST:event_bnShowCaseLogActionPerformed
-
-    private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
-        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
-            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
-            manager.prioritizeJob(manifestFilePath);
-            refreshTables();
-            pendingTable.clearSelection();
-            enablePendingTableButtons(false);
-            AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
-        }
-    }//GEN-LAST:event_bnPrioritizeJobActionPerformed
-
-    private void bnOpenLogDirActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnOpenLogDirActionPerformed
-        Path logDirPath = Paths.get(PlatformUtil.getUserDirectory().getAbsolutePath(), "var", "log");
-        File logDir = logDirPath.toFile();
-        try {
-            Desktop.getDesktop().open(logDir);
-        } catch (IOException ex) {
-            DialogDisplayer.getDefault().notify(new NotifyDescriptor.Message(
-                    String.format("Unable to open log directory %s:\n%s", logDirPath, ex.getLocalizedMessage()),
-                    NotifyDescriptor.ERROR_MESSAGE));
-        }
-    }//GEN-LAST:event_bnOpenLogDirActionPerformed
-
-    private void bnReprocessJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnReprocessJobActionPerformed
-        if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
-            return;
-        }
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        Path manifestPath = (Path) completedTableModel.getValueAt(completedTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal());
-        manager.reprocessJob(manifestPath);
-        refreshTables();
-        AutoIngestDashboard.this.setCursor(Cursor.getDefaultCursor());
-    }//GEN-LAST:event_bnReprocessJobActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancelJob;
