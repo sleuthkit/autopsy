@@ -160,7 +160,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                  */
                 try {
                     Case.getCurrentCase();
-                    typesRoot.shouldShowCounts();
+                    typesRoot.updateShowCounts(); 
                     populateHashMap();
                 } catch (IllegalStateException notUsed) {
                     /**

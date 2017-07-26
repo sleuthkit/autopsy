@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -104,11 +105,11 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
          * children nodes (which might not be preloaded at this point).
          */
         // get list of supported children sorted by persisted criteria
-        final List<Node> suppContent =
-                Stream.of(parent.getChildren().getNodes())
-                        .filter(ThumbnailViewChildren::isSupported)
-                        .sorted(getComparator())
-                        .collect(Collectors.toList());
+        final List<Node> suppContent
+                = Stream.of(parent.getChildren().getNodes())
+                .filter(ThumbnailViewChildren::isSupported)
+                .sorted(getComparator())
+                .collect(Collectors.toList());
 
         if (suppContent.isEmpty()) {
             //if there are no images, there is nothing more to do
@@ -314,7 +315,12 @@ class ThumbnailViewChildren extends Children.Keys<Integer> {
             private boolean cancelled = false;
 
             ThumbnailLoadTask() {
-                super(() -> ImageUtils.getThumbnail(content, thumbSize));
+                super(new Callable<Image>() {  //Does not work as lambda expression in dependent projects in IDE
+                    public Image call() {
+                        return ImageUtils.getThumbnail(content, thumbSize);
+                    }
+                });
+                //super(() -> ImageUtils.getThumbnail(content, thumbSize));
                 progressText = Bundle.ThumbnailViewNode_progressHandle_text(content.getName());
 
                 progressHandle = ProgressHandleFactory.createSystemHandle(progressText);
