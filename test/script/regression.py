@@ -216,10 +216,6 @@ class TestRunner(object):
         TestRunner._run_ant(test_data)
         time.sleep(2) # Give everything a second to process
 
-        # exit if .db was not created
-        if not file_exists(test_data.get_db_path(DBType.OUTPUT)):
-            Errors.print_error("Autopsy did not run properly; No .db file was created")
-            sys.exit(1)
         # exit if any build errors are found in antlog.txt
         antlog = 'antlog.txt'
         logs_path = test_data.logs_dir
@@ -228,6 +224,10 @@ class TestRunner(object):
             if ant_line.startswith("BUILD FAILED") or "fatal error" in ant_ignoreCase or "crashed" in ant_ignoreCase:
                 Errors.print_error("Autopsy test failed. Please check the build log antlog.txt for details.")
                 sys.exit(1)
+        # exit if .db was not created
+        if not file_exists(test_data.get_db_path(DBType.OUTPUT)):
+            Errors.print_error("Autopsy did not run properly; No .db file was created")
+            sys.exit(1)
         try:
             # Dump the database before we diff or use it for rebuild
             TskDbDiff.dump_output_db(test_data.get_db_path(DBType.OUTPUT), test_data.get_db_dump_path(DBType.OUTPUT),
