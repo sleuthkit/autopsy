@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -47,10 +47,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class FileTypes implements AutopsyVisitableItem {
 
-    private final static Logger logger = Logger.getLogger(FileTypes.class.getName());
+    private static final Logger logger = Logger.getLogger(FileTypes.class.getName());
+    @NbBundle.Messages("FileTypes.name.text=File Types")
+    private static final String NAME = Bundle.FileTypes_name_text();
+    /**
+     * Threshold used to limit db queries for child node counts. When the
+     * tsk_files table has more than this number of rows, we don't query for the
+     * child node counts, and since we don't have an accurate number we don't
+     * show the counts.
+     */
+    private static final int NODE_COUNT_FILE_TABLE_THRESHOLD = 1_000_000;
+    /**
+     * Used to keep track of whether we have hit
+     * NODE_COUNT_FILE_TABLE_THRESHOLD. If we have, we stop querying for the
+     * number of rows in tsk_files, since it is already too large.
+     */
+    private boolean showCounts = true;
 
     private final SleuthkitCase skCase;
-    private boolean showCounts = true;
 
     FileTypes(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -66,15 +80,16 @@ public final class FileTypes implements AutopsyVisitableItem {
     }
 
     /**
-     * Should the nodes show counts?
-     *
-     *
-     * @return True, unless the DB has more than 200k rows.
+     * Check the db to determine if the nodes should show child counts.
      */
-    boolean shouldShowCounts() {
+    void updateShowCounts() {
+        /*
+         * once we have passed the threshold, we don't need to keep checking the
+         * number of rows in tsk_files
+         */
         if (showCounts) {
             try {
-                if (skCase.countFilesWhere("1=1") > 200000) { //NON-NLS
+                if (skCase.countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) { //NON-NLS
                     showCounts = false;
                 }
             } catch (TskCoreException tskCoreException) {
@@ -82,10 +97,7 @@ public final class FileTypes implements AutopsyVisitableItem {
                 logger.log(Level.SEVERE, "Error counting files.", tskCoreException); //NON-NLS
             }
         }
-        return showCounts;
     }
-    @NbBundle.Messages("FileTypes.name.text=File Types")
-    static private final String NAME = Bundle.FileTypes_name_text();
 
     /**
      * Node which will contain By Mime Type and By Extension nodes.
@@ -97,8 +109,8 @@ public final class FileTypes implements AutopsyVisitableItem {
                     new FileTypesByExtension(FileTypes.this),
                     new FileTypesByMimeType(FileTypes.this))),
                     Lookups.singleton(NAME));
-            setName(NAME);
-            setDisplayName(NAME);
+            this.setName(NAME);
+            this.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
         }
 
@@ -215,9 +227,9 @@ public final class FileTypes implements AutopsyVisitableItem {
          * Updates the display name of the mediaSubTypeNode to include the count
          * of files which it represents.
          */
-        @NbBundle.Messages("FileTypes.bgCounting.placeholder=(counting...)")
+        @NbBundle.Messages("FileTypes.bgCounting.placeholder= (counting...)")
         void updateDisplayName() {
-            if (typesRoot.shouldShowCounts()) {
+            if (typesRoot.showCounts) {
                 //only show "(counting...)" the first time, otherwise it is distracting.
                 setDisplayName(getDisplayNameBase() + ((childCount < 0) ? Bundle.FileTypes_bgCounting_placeholder()
                         : ("(" + childCount + ")"))); //NON-NLS
@@ -239,7 +251,7 @@ public final class FileTypes implements AutopsyVisitableItem {
                     }
                 }.execute();
             } else {
-                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "" : ("(" + childCount + "+)"))); //NON-NLS
+                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "" : (" (" + childCount + "+)"))); //NON-NLS
             }
         }
     }
