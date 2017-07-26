@@ -491,18 +491,19 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         private final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         private String[][] rowData = null;
         private final String artifactDisplayName;
+        private final Content content;
 
-        ResultsTableArtifact(BlackboardArtifact artifact) {
+        ResultsTableArtifact(BlackboardArtifact artifact, Content content) {
             artifactDisplayName = artifact.getDisplayName();
+            this.content = content;
             addRows(artifact);
-
         }
 
         ResultsTableArtifact(String errorMsg) {
             artifactDisplayName = errorMsg;
             rowData = new String[1][3];
             rowData[0] = new String[]{"", errorMsg, ""};
-
+            content = null;
         }
 
         private String[][] getRows() {
@@ -512,7 +513,6 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
         private void addRows(BlackboardArtifact artifact) {
             List<String[]> rowsToAdd = new ArrayList<>();
             try {
-                Content content = artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
                 /*
                  * Add rows for each attribute.
                  */
@@ -716,7 +716,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
             // Build the new artifact contents cache.
             ArrayList<ResultsTableArtifact> artifactContents = new ArrayList<>();
             for (BlackboardArtifact artifact : artifacts) {
-                artifactContents.add(new ResultsTableArtifact(artifact));
+                artifactContents.add(new ResultsTableArtifact(artifact, content));
             }
 
             // If the node has an underlying blackboard artifact, show it. If not,
