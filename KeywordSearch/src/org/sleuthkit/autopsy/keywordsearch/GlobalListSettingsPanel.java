@@ -46,8 +46,7 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                    String toDelete = editListPanel.getCurrentKeywordList().getName();
-                    deleteAction(toDelete);
+                    deleteAction();
                     listsManagementPanel.resync();
                 }
             }
@@ -56,9 +55,8 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
         listsManagementPanel.addRenameButtonActionPerformed(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String toDelete = editListPanel.getCurrentKeywordList().getName();
                 if (copyAction()) {
-                    deleteAction(toDelete);
+                    deleteAction();
                     listsManagementPanel.resync();
                 }
             }
@@ -83,9 +81,8 @@ final class GlobalListSettingsPanel extends javax.swing.JPanel implements Option
      *
      * @param toDelete - the list to delete
      */
-    private void deleteAction(String toDelete) {
-        XmlKeywordSearchList deleter = XmlKeywordSearchList.getCurrent();
-        deleter.deleteList(toDelete);
+    private void deleteAction() {
+        listsManagementPanel.deleteSelected();
         editListPanel.setCurrentKeywordList(null);
         editListPanel.setButtonStates();
         listsManagementPanel.setButtonStates();

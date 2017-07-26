@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -174,6 +174,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         }
 
         validateSettings();
+        enableOptionsBasedOnMode(getModeFromRadioButtons());
     }
 
     /**
@@ -306,10 +307,13 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
      */
     boolean valid() {
 
-        if (!cbJoinAutoIngestCluster.isSelected()) {
+        if (!cbJoinAutoIngestCluster.isSelected()) {  //hide the invalid field warnings when in stand alone mode
+            jLabelInvalidImageFolder.setVisible(false);
+            jLabelInvalidResultsFolder.setVisible(false);
+            sharedSettingsErrorTextField.setVisible(false);
+            configButtonErrorTextField.setText("");
             return true;
         }
-
         boolean isValidNodePanel = true;
 
         switch (getModeFromRadioButtons()) {
@@ -326,6 +330,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
                 }
                 break;
             case REVIEW:
+                jLabelInvalidImageFolder.setVisible(false);
                 if (!validateResultsPath()) {
                     isValidNodePanel = false;
                 }
@@ -596,23 +601,24 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
     private void enableOptionsBasedOnMode(OptionsUiMode mode) {
         if (mode != OptionsUiMode.DOWNLOADING_CONFIGURATION) {
-            jRadioButtonAutomated.setEnabled(cbJoinAutoIngestCluster.isSelected());
-            jRadioButtonReview.setEnabled(cbJoinAutoIngestCluster.isSelected());
+            boolean nonMasterSharedConfig = !masterNodeCheckBox.isSelected() && sharedConfigCheckbox.isSelected();
+            jRadioButtonAutomated.setEnabled(cbJoinAutoIngestCluster.isSelected() && !sharedConfigCheckbox.isSelected());
+            jRadioButtonReview.setEnabled(cbJoinAutoIngestCluster.isSelected() && !sharedConfigCheckbox.isSelected());
 
-            jLabelSelectInputFolder.setEnabled(mode == OptionsUiMode.AIM);
-            inputPathTextField.setEnabled(mode == OptionsUiMode.AIM);
-            browseInputFolderButton.setEnabled(mode == OptionsUiMode.AIM);
+            jLabelSelectInputFolder.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
+            inputPathTextField.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
+            browseInputFolderButton.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
 
-            jLabelSelectOutputFolder.setEnabled(mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
-            outputPathTextField.setEnabled(mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
-            browseOutputFolderButton.setEnabled(mode == OptionsUiMode.AIM || mode == OptionsUiMode.REVIEW);
+            jLabelSelectOutputFolder.setEnabled((mode == OptionsUiMode.AIM && !nonMasterSharedConfig) || mode == OptionsUiMode.REVIEW);
+            outputPathTextField.setEnabled((mode == OptionsUiMode.AIM && !nonMasterSharedConfig) || mode == OptionsUiMode.REVIEW);
+            browseOutputFolderButton.setEnabled((mode == OptionsUiMode.AIM && !nonMasterSharedConfig) || mode == OptionsUiMode.REVIEW);
 
             jPanelSharedConfig.setEnabled(mode == OptionsUiMode.AIM);
 
-            jPanelIngestSettings.setEnabled(mode == OptionsUiMode.AIM);
-            bnEditIngestSettings.setEnabled(mode == OptionsUiMode.AIM);
-            bnAdvancedSettings.setEnabled(mode == OptionsUiMode.AIM);
-            bnLogging.setEnabled(mode == OptionsUiMode.AIM);
+            jPanelIngestSettings.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
+            bnEditIngestSettings.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
+            bnAdvancedSettings.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
+            bnLogging.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
             jPanelSharedConfig.setEnabled(mode == OptionsUiMode.AIM);
             sharedConfigCheckbox.setEnabled(mode == OptionsUiMode.AIM);
             masterNodeCheckBox.setEnabled(mode == OptionsUiMode.AIM && sharedConfigCheckbox.isSelected());
@@ -1389,12 +1395,7 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
 
     void setEnabledStateForSharedConfiguration() {
         if (jRadioButtonAutomated.isSelected() && cbJoinAutoIngestCluster.isSelected()) {
-            if (sharedConfigCheckbox.isEnabled() && sharedConfigCheckbox.isSelected()) {
-                setEnabledState(masterNodeCheckBox.isSelected());
-            } else {
-                // If we are in AIM mode and shared config is not enabled, allow this 
-                setEnabledState(true);
-            }
+            enableOptionsBasedOnMode(OptionsUiMode.AIM);
         }
     }
 
