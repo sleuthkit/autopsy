@@ -220,6 +220,14 @@ class TestRunner(object):
         if not file_exists(test_data.get_db_path(DBType.OUTPUT)):
             Errors.print_error("Autopsy did not run properly; No .db file was created")
             sys.exit(1)
+        # exit if any build errors are found in antlog.txt
+        antlog = 'antlog.txt'
+        logs_path = test_data.logs_dir
+        for ant_line in codecs.open(os.path.join(logs_path, os.pardir, antlog)):
+            ant_ignoreCase = ant_line.lower()
+            if ant_line.startswith("BUILD FAILED") or "fatal error" in ant_ignoreCase or "crashed" in ant_ignoreCase:
+                Errors.print_error("Autopsy test failed. Please check the build log antlog.txt for details.")
+                sys.exit(1)
         try:
             # Dump the database before we diff or use it for rebuild
             TskDbDiff.dump_output_db(test_data.get_db_path(DBType.OUTPUT), test_data.get_db_dump_path(DBType.OUTPUT),
@@ -1391,12 +1399,6 @@ class Logs(object):
                 except UnicodeDecodeError as e:
                     pass
                 log.close()
-            # some build errors are stored in antlog.txt not the autopsy logs
-            antlog = 'antlog.txt'
-            for ant_line in codecs.open(os.path.join(logs_path, os.pardir, antlog)):
-                ant_ignoreCase = ant_line.lower()
-                if ant_line.startswith("BUILD FAILED") or "fatal error" in ant_ignoreCase or "crashed" in ant_ignoreCase:
-                    common_log.write(antlog +": " +  ant_line) 
             common_log.write("\n")
             common_log.close()
             srtcmdlst = ["sort", test_data.common_log_path, "-o", test_data.common_log_path]
