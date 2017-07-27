@@ -23,17 +23,13 @@ import java.io.FilenameFilter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
-import org.sleuthkit.autopsy.casemodule.GeneralFilter;
 
 final class PathUtils {
 
-    private static final List<String> CASE_METADATA_FILE_EXTS = Arrays.asList(new String[]{CaseMetadata.getFileExtension()});
-    private static final GeneralFilter caseMetadataFileFilter = new GeneralFilter(CASE_METADATA_FILE_EXTS, "Autopsy Case File");
+    private final static String CASE_METADATA_EXT = CaseMetadata.getFileExtension();
 
     /**
      * Searches a given folder for the most recently modified case folder for a
@@ -84,34 +80,6 @@ final class PathUtils {
     }
 
     /**
-     * Determines whether or not there is a case metadata file in a given
-     * folder.
-     *
-     * @param folderPath Path to the folder to search.
-     *
-     * @return True or false.
-     */
-    static boolean hasCaseMetadataFile(Path folderPath) {
-        /**
-         * TODO: If need be, this can be rewritten without the FilenameFilter so
-         * that it does not necessarily visit every file in the folder.
-         */
-        File folder = folderPath.toFile();
-        if (!folder.isDirectory()) {
-            return false;
-        }
-
-        String[] caseDataFiles = folder.list((File folder1, String fileName) -> {
-            File file = new File(folder1, fileName);
-            if (file.isFile()) {
-                return caseMetadataFileFilter.accept(file);
-            }
-            return false;
-        });
-        return caseDataFiles.length != 0;
-    }
-
-    /**
      * Extracts the case name from a case folder path.
      *
      * @param caseFolderPath A case folder path.
@@ -141,6 +109,12 @@ final class PathUtils {
         return Paths.get(caseFoldersPath.toString(), folderName);
     }
 
+    /**
+     * Supress creation of instances of this class.
+     */
+    private PathUtils() {
+    }
+
     private static class CaseFolderFilter implements FilenameFilter {
 
         private final String caseName;
@@ -152,28 +126,37 @@ final class PathUtils {
         @Override
         public boolean accept(File folder, String fileName) {
             File file = new File(folder, fileName);
-            if (file.isDirectory() && fileName.length() > TimeStampUtils.getTimeStampLength()) {
-                Path filePath = Paths.get(file.getPath());
+            if (fileName.length() > TimeStampUtils.getTimeStampLength() && file.isDirectory()) {
                 if (TimeStampUtils.endsWithTimeStamp(fileName)) {
                     if (null != caseName) {
                         String fileNamePrefix = fileName.substring(0, fileName.length() - TimeStampUtils.getTimeStampLength());
                         if (fileNamePrefix.equals(caseName)) {
-                            return hasCaseMetadataFile(filePath);
+                            return hasCaseMetadataFile(file);
                         }
                     } else {
-                        return hasCaseMetadataFile(filePath);
+                        return hasCaseMetadataFile(file);
                     }
                 }
             }
             return false;
         }
 
-    }
+        /**
+         * Determines whether or not there is a case metadata file in a given
+         * folder.
+         *
+         * @param folder The file object representing the folder to search.
+         *
+         * @return True or false.
+         */
+        private static boolean hasCaseMetadataFile(File folder) {
+            for (File file : folder.listFiles()) {
+                if (file.getName().toLowerCase().endsWith(CASE_METADATA_EXT) && file.isFile()) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-    /**
-     * Supress creation of instances of this class.
-     */
-    private PathUtils() {
     }
-
 }
