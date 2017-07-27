@@ -353,29 +353,14 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             throw new IllegalArgumentException("Empty filter list passed to createQuery()"); // NON-NLS
         }
 
-        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
-                + (UserPreferences.hideKnownFilesInViewsTree() ? " AND (known IS NULL OR known != "
-                + TskData.FileKnown.KNOWN.getFileKnownValue() + ")" : " ")
-                + " AND (NULL "; //NON-NLS
-
-        if (skCase.getDatabaseType().equals(TskData.DbType.POSTGRESQL)) {
-            // For PostgreSQL we get a more efficient query by using builtin
-            // regular expression support and or'ing all extensions. We also
-            // escape the dot at the beginning of the extension.
-            // We will end up with a query that looks something like this:
-            // OR LOWER(name) ~ '(\.zip|\.rar|\.7zip|\.cab|\.jar|\.cpio|\.ar|\.gz|\.tgz|\.bz2)$')
-            query += "OR LOWER(name) ~ '(\\";
-            query += StringUtils.join(filter.getFilter().stream()
-                    .map(String::toLowerCase).collect(Collectors.toList()), "|\\");
-            query += ")$'";
-        } else {
-            for (String s : filter.getFilter()) {
-                query += "OR LOWER(name) LIKE '%" + s.toLowerCase() + "'"; // NON-NLS
-            }
-        }
-
-        query += ')';
-        return query;
+        return "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + (UserPreferences.hideKnownFilesInViewsTree()
+                ? " AND (known IS NULL OR known != " + TskData.FileKnown.KNOWN.getFileKnownValue() + ")"
+                : " ")
+                + " AND (extension IN (" + filter.getFilter().stream()
+                        .map(String::toLowerCase)
+                        .map(s -> "'"+StringUtils.substringAfter(s, ".")+"'")
+                        .collect(Collectors.joining(", ")) + "))";
     }
 
     /**
