@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,9 +18,12 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import javax.swing.SwingWorker;
@@ -31,6 +34,8 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
@@ -40,6 +45,7 @@ import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitItemVisitor;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -47,10 +53,24 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public final class FileTypes implements AutopsyVisitableItem {
 
-    private final static Logger logger = Logger.getLogger(FileTypes.class.getName());
+    private static final Logger logger = Logger.getLogger(FileTypes.class.getName());
+    @NbBundle.Messages("FileTypes.name.text=File Types")
+    private static final String NAME = Bundle.FileTypes_name_text();
+    /**
+     * Threshold used to limit db queries for child node counts. When the
+     * tsk_files table has more than this number of rows, we don't query for the
+     * child node counts, and since we don't have an accurate number we don't
+     * show the counts.
+     */
+    private static final int NODE_COUNT_FILE_TABLE_THRESHOLD = 1_000_000;
+    /**
+     * Used to keep track of whether we have hit
+     * NODE_COUNT_FILE_TABLE_THRESHOLD. If we have, we stop querying for the
+     * number of rows in tsk_files, since it is already too large.
+     */
+    private boolean showCounts = true;
 
     private final SleuthkitCase skCase;
-    private boolean showCounts = true;
 
     FileTypes(SleuthkitCase skCase) {
         this.skCase = skCase;
@@ -66,15 +86,16 @@ public final class FileTypes implements AutopsyVisitableItem {
     }
 
     /**
-     * Should the nodes show counts?
-     *
-     *
-     * @return True, unless the DB has more than 200k rows.
+     * Check the db to determine if the nodes should show child counts.
      */
-    boolean shouldShowCounts() {
+    void updateShowCounts() {
+        /*
+         * once we have passed the threshold, we don't need to keep checking the
+         * number of rows in tsk_files
+         */
         if (showCounts) {
             try {
-                if (skCase.countFilesWhere("1=1") > 200000) { //NON-NLS
+                if (skCase.countFilesWhere("1=1") > NODE_COUNT_FILE_TABLE_THRESHOLD) { //NON-NLS
                     showCounts = false;
                 }
             } catch (TskCoreException tskCoreException) {
@@ -82,10 +103,7 @@ public final class FileTypes implements AutopsyVisitableItem {
                 logger.log(Level.SEVERE, "Error counting files.", tskCoreException); //NON-NLS
             }
         }
-        return showCounts;
     }
-    @NbBundle.Messages("FileTypes.name.text=File Types")
-    static private final String NAME = Bundle.FileTypes_name_text();
 
     /**
      * Node which will contain By Mime Type and By Extension nodes.
@@ -97,8 +115,8 @@ public final class FileTypes implements AutopsyVisitableItem {
                     new FileTypesByExtension(FileTypes.this),
                     new FileTypesByMimeType(FileTypes.this))),
                     Lookups.singleton(NAME));
-            setName(NAME);
-            setDisplayName(NAME);
+            this.setName(NAME);
+            this.setDisplayName(NAME);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
         }
 
@@ -215,9 +233,9 @@ public final class FileTypes implements AutopsyVisitableItem {
          * Updates the display name of the mediaSubTypeNode to include the count
          * of files which it represents.
          */
-        @NbBundle.Messages("FileTypes.bgCounting.placeholder=(counting...)")
+        @NbBundle.Messages("FileTypes.bgCounting.placeholder= (counting...)")
         void updateDisplayName() {
-            if (typesRoot.shouldShowCounts()) {
+            if (typesRoot.showCounts) {
                 //only show "(counting...)" the first time, otherwise it is distracting.
                 setDisplayName(getDisplayNameBase() + ((childCount < 0) ? Bundle.FileTypes_bgCounting_placeholder()
                         : ("(" + childCount + ")"))); //NON-NLS
@@ -239,8 +257,186 @@ public final class FileTypes implements AutopsyVisitableItem {
                     }
                 }.execute();
             } else {
-                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "" : ("(" + childCount + "+)"))); //NON-NLS
+                setDisplayName(getDisplayNameBase() + ((childCount < 0) ? "" : (" (" + childCount + "+)"))); //NON-NLS
             }
+        }
+    }
+
+    /**
+     * Class that is used as a key by NetBeans for creating result nodes. This
+     * is a wrapper around a Content object and is being put in place as an
+     * optimization to avoid the Content.hashCode() implementation which issues
+     * a database query to get the number of children when determining whether 2
+     * Content objects represent the same thing. TODO: This is a temporary
+     * solution that can hopefully be removed once we address the issue of
+     * determining how many children a Content has (JIRA-2823).
+     */
+    static class FileTypesKey implements Content {
+
+        private final Content content;
+
+        public FileTypesKey(Content content) {
+            this.content = content;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final FileTypesKey other = (FileTypesKey) obj;
+
+            return this.content.getId() == other.content.getId();
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 101 * hash + (int)(this.content.getId() ^ (this.content.getId() >>> 32));
+            return hash;
+        }
+
+        @Override
+        public <T> T accept(SleuthkitItemVisitor<T> v) {
+            return content.accept(v);
+        }
+
+        @Override
+        public int read(byte[] buf, long offset, long len) throws TskCoreException {
+            return content.read(buf, offset, len);
+        }
+
+        @Override
+        public void close() {
+            content.close();
+        }
+
+        @Override
+        public long getSize() {
+            return content.getSize();
+        }
+
+        @Override
+        public <T> T accept(ContentVisitor<T> v) {
+            return content.accept(v);
+        }
+
+        @Override
+        public String getName() {
+            return content.getName();
+        }
+
+        @Override
+        public String getUniquePath() throws TskCoreException {
+            return content.getUniquePath();
+        }
+
+        @Override
+        public long getId() {
+            return content.getId();
+        }
+
+        @Override
+        public Content getDataSource() throws TskCoreException {
+            return content.getDataSource();
+        }
+
+        @Override
+        public List<Content> getChildren() throws TskCoreException {
+            return content.getChildren();
+        }
+
+        @Override
+        public boolean hasChildren() throws TskCoreException {
+            return content.hasChildren();
+        }
+
+        @Override
+        public int getChildrenCount() throws TskCoreException {
+            return content.getChildrenCount();
+        }
+
+        @Override
+        public Content getParent() throws TskCoreException {
+            return content.getParent();
+        }
+
+        @Override
+        public List<Long> getChildrenIds() throws TskCoreException {
+            return content.getChildrenIds();
+        }
+
+        @Override
+        public BlackboardArtifact newArtifact(int artifactTypeID) throws TskCoreException {
+            return content.newArtifact(artifactTypeID);
+        }
+
+        @Override
+        public BlackboardArtifact newArtifact(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+            return content.newArtifact(type);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getArtifacts(String artifactTypeName) throws TskCoreException {
+            return content.getArtifacts(artifactTypeName);
+        }
+
+        @Override
+        public BlackboardArtifact getGenInfoArtifact() throws TskCoreException {
+            return content.getGenInfoArtifact();
+        }
+
+        @Override
+        public BlackboardArtifact getGenInfoArtifact(boolean create) throws TskCoreException {
+            return content.getGenInfoArtifact(create);
+        }
+
+        @Override
+        public ArrayList<BlackboardAttribute> getGenInfoAttributes(BlackboardAttribute.ATTRIBUTE_TYPE attr_type) throws TskCoreException {
+            return content.getGenInfoAttributes(attr_type);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getArtifacts(int artifactTypeID) throws TskCoreException {
+            return content.getArtifacts(artifactTypeID);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getArtifacts(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+            return content.getArtifacts(type);
+        }
+
+        @Override
+        public ArrayList<BlackboardArtifact> getAllArtifacts() throws TskCoreException {
+            return content.getAllArtifacts();
+        }
+
+        @Override
+        public Set<String> getHashSetNames() throws TskCoreException {
+            return content.getHashSetNames();
+        }
+
+        @Override
+        public long getArtifactsCount(String artifactTypeName) throws TskCoreException {
+            return content.getArtifactsCount(artifactTypeName);
+        }
+
+        @Override
+        public long getArtifactsCount(int artifactTypeID) throws TskCoreException {
+            return content.getArtifactsCount(artifactTypeID);
+        }
+
+        @Override
+        public long getArtifactsCount(BlackboardArtifact.ARTIFACT_TYPE type) throws TskCoreException {
+            return content.getArtifactsCount(type);
+        }
+
+        @Override
+        public long getAllArtifactsCount() throws TskCoreException {
+            return content.getAllArtifactsCount();
         }
     }
 }

@@ -45,6 +45,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -480,6 +481,11 @@ public class FileSize implements AutopsyVisitableItem {
 
                     @Override
                     public FileNode visit(VirtualDirectory f) {
+                        return new FileNode(f, false);
+                    }
+
+                    @Override
+                    public FileNode visit(SlackFile f) {
                         return new FileNode(f, false);
                     }
 

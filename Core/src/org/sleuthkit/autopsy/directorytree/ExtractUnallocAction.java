@@ -417,7 +417,9 @@ final class ExtractUnallocAction extends AbstractAction {
             try {
                 List<LayoutFile> lflst = new ArrayList<>();
                 for (Content layout : vd.getChildren()) {
-                    lflst.add((LayoutFile) layout);
+                    if(layout instanceof LayoutFile){
+                        lflst.add((LayoutFile) layout);
+                    }
                 }
                 return lflst;
             } catch (TskCoreException tce) {

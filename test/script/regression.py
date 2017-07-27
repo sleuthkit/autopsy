@@ -227,6 +227,14 @@ class TestRunner(object):
         TestRunner._run_ant(test_data)
         time.sleep(2) # Give everything a second to process
 
+        # exit if any build errors are found in antlog.txt
+        antlog = 'antlog.txt'
+        logs_path = test_data.logs_dir
+        for ant_line in codecs.open(os.path.join(logs_path, os.pardir, antlog)):
+            ant_ignoreCase = ant_line.lower()
+            if ant_line.startswith("BUILD FAILED") or "fatal error" in ant_ignoreCase or "crashed" in ant_ignoreCase:
+                Errors.print_error("Autopsy test failed. Please check the build log antlog.txt for details.")
+                sys.exit(1)
         # exit if .db was not created
         if not file_exists(test_data.get_db_path(DBType.OUTPUT)) and not test_data.isMultiUser:
             Errors.print_error("Autopsy did not run properly; No .db file was created")
