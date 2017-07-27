@@ -325,10 +325,9 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        String geQuery() {
-            return createQuery(filter);
+        long calculateChildCount() throws TskCoreException {
+            return skCase.countFilesWhere(createQuery(filter));
         }
-
     }
 
     private static String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
