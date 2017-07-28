@@ -540,18 +540,20 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             for (EamArtifactInstance eamInstance : eamInstances) {
-                preparedStatement.setString(1, eamInstance.getEamCase().getCaseUUID());
-                preparedStatement.setString(2, eamInstance.getEamDataSource().getDeviceID());
-                preparedStatement.setString(3, eamArtifact.getCorrelationValue());
-                preparedStatement.setString(4, eamInstance.getFilePath());
-                preparedStatement.setString(5, eamInstance.getKnownStatus().name());
-                if ("".equals(eamInstance.getComment())) {
-                    preparedStatement.setNull(6, Types.INTEGER);
-                } else {
-                    preparedStatement.setString(6, eamInstance.getComment());
-                }
+                if(! eamArtifact.getCorrelationValue().isEmpty()){
+                    preparedStatement.setString(1, eamInstance.getEamCase().getCaseUUID());
+                    preparedStatement.setString(2, eamInstance.getEamDataSource().getDeviceID());
+                    preparedStatement.setString(3, eamArtifact.getCorrelationValue());
+                    preparedStatement.setString(4, eamInstance.getFilePath());
+                    preparedStatement.setString(5, eamInstance.getKnownStatus().name());
+                    if ("".equals(eamInstance.getComment())) {
+                        preparedStatement.setNull(6, Types.INTEGER);
+                    } else {
+                        preparedStatement.setString(6, eamInstance.getComment());
+                    }
 
-                preparedStatement.executeUpdate();
+                    preparedStatement.executeUpdate();
+                }
             }
         } catch (SQLException ex) {
             throw new EamDbException("Error inserting new artifact into artifacts table.", ex); // NON-NLS
@@ -924,18 +926,20 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     for (EamArtifact eamArtifact : eamArtifacts) {
                         List<EamArtifactInstance> eamInstances = eamArtifact.getInstances();
 
-                        for (EamArtifactInstance eamInstance : eamInstances) {
-                            bulkPs.setString(1, eamInstance.getEamCase().getCaseUUID());
-                            bulkPs.setString(2, eamInstance.getEamDataSource().getDeviceID());
-                            bulkPs.setString(3, eamArtifact.getCorrelationValue());
-                            bulkPs.setString(4, eamInstance.getFilePath());
-                            bulkPs.setString(5, eamInstance.getKnownStatus().name());
-                            if ("".equals(eamInstance.getComment())) {
-                                bulkPs.setNull(6, Types.INTEGER);
-                            } else {
-                                bulkPs.setString(6, eamInstance.getComment());
+                        for (EamArtifactInstance eamInstance : eamInstances) {                            
+                            if(! eamArtifact.getCorrelationValue().isEmpty()){
+                                bulkPs.setString(1, eamInstance.getEamCase().getCaseUUID());
+                                bulkPs.setString(2, eamInstance.getEamDataSource().getDeviceID());
+                                bulkPs.setString(3, eamArtifact.getCorrelationValue());
+                                bulkPs.setString(4, eamInstance.getFilePath());
+                                bulkPs.setString(5, eamInstance.getKnownStatus().name());
+                                if ("".equals(eamInstance.getComment())) {
+                                    bulkPs.setNull(6, Types.INTEGER);
+                                } else {
+                                    bulkPs.setString(6, eamInstance.getComment());
+                                }
+                                bulkPs.addBatch();
                             }
-                            bulkPs.addBatch();
                         }
                     }
 
