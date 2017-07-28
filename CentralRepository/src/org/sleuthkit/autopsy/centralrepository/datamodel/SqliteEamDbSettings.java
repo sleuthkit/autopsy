@@ -90,7 +90,7 @@ public final class SqliteEamDbSettings {
         }
 
         String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-        if (badTagsStr == null || badTagsStr.isEmpty()) {
+        if (badTagsStr == null) {
             badTagsStr = DEFAULT_BAD_TAGS;
         }
         badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
