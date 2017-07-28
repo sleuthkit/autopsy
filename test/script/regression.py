@@ -183,7 +183,7 @@ class TestRunner(object):
             Errors.print_error("No image had any gold; Regression did not run")
             exit(1)
 
-        if not testconfig.args.rebuild and not all([ test_data.overall_passed for test_data in test_data_list ]):
+        if not (test_config.args.rebuild or all([ test_data.overall_passed for test_data in test_data_list ])):
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
@@ -812,15 +812,15 @@ class TestConfiguration(object):
             #    self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
             #    if re.match('^[\w]:', self.global_csv) == None or self.global_csv.startswith('/'):
             #        self.global_csv = make_local_path(self.global_csv)
-            if parsed_config.getElementsByTagName("singleUser_gold"):
-                self.singleUser_gold = parsed_config.getElementsByTagName("singleUser_gold")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("singleUser_golddir"):
+                self.singleUser_gold = parsed_config.getElementsByTagName("singleUser_golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("timing"):
                 self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("autopsyPlatform"):
                 self.autopsyPlatform = parsed_config.getElementsByTagName("autopsyPlatform")[0].getAttribute("value").encode().decode("utf_8")
             # Multi-user settings
-            if parsed_config.getElementsByTagName("multiUser_gold"):
-                self.multiUser_gold = parsed_config.getElementsByTagName("multiUser_gold")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("multiUser_golddir"):
+                self.multiUser_gold = parsed_config.getElementsByTagName("multiUser_golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("dbHost"):
                 self.dbHost = parsed_config.getElementsByTagName("dbHost")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("dbPort"):
@@ -887,6 +887,22 @@ class TestConfiguration(object):
             log_name = self.output_dir + "\\regression.log"
         logging.basicConfig(filename=log_name, level=logging.DEBUG)
 
+        # Sanity check to see if there are obvious gold images that we are not testing
+        if not dir_exists(self.gold):
+            print(self.gold)
+            Errors.print_error("Gold folder does not exist")
+            sys.exit(1)
+        gold_count = 0
+        for file in os.listdir(self.gold):
+            if not(file == 'tmp'):
+                gold_count+=1
+
+        image_count = len(self.images)
+        if (image_count > gold_count):
+            print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
+        elif (image_count < gold_count):
+            print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
+
     def _init_build_info(self, parsed_config):
         """Initializes paths that point to information necessary to run the AutopsyIngest."""
         build_elements = parsed_config.getElementsByTagName("build")
@@ -905,21 +921,6 @@ class TestConfiguration(object):
             else:
                 msg = "File: " + value + " doesn't exist"
                 Errors.print_error(msg)
-        image_count = len(self.images)
-
-        # Sanity check to see if there are obvious gold images that we are not testing
-        if not dir_exists(self.gold):
-            Errors.print_error("Gold folder does not exist")
-            sys.exit(1)
-        gold_count = 0
-        for file in os.listdir(self.gold):
-            if not(file == 'tmp'):
-                gold_count+=1
-
-        if (image_count > gold_count):
-            print("******Alert: There are more input images than gold standards, some images will not be properly tested.\n")
-        elif (image_count < gold_count):
-            print("******Alert: There are more gold standards than input images, this will not check all gold Standards.\n")
 
 
 #-------------------------------------------------#
