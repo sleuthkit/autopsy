@@ -125,7 +125,11 @@ public final class PostgresEamDbSettings {
         if (badTagsStr == null) {
             badTagsStr = DEFAULT_BAD_TAGS;
         }
-        badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
+        if(badTagsStr.isEmpty()){
+            badTags = new ArrayList<>();
+        } else {
+            badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
+        }
     }
 
     public void saveSettings() {
