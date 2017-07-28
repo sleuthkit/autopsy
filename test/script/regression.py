@@ -132,27 +132,8 @@ class TestRunner(object):
         """
 
         if isMultiUser:
-            test_config.output_parent_dir = ""
-            if test_config.shared_outdir and test_config.shared_outdir.strip().startswith("\\\\"):
-                test_config.output_parent_dir = test_config.shared_outdir.strip()
-            else:
-                Errors.print_error("Multi-user case type required to use UNC path as shared output directory.")
-                sys.exit(1)
-            if test_config.output_parent_dir.endswith("single_user") or test_config.gold.endswith("single_user"):
-                test_config.output_parent_dir = test_config.output_parent_dir.replace("single_user", "multi_user")
-                test_config.gold = test_config.gold.replace("single_user", "multi_user")
-            else:
-                test_config.gold += "\\multi_user"
             test_config.userCaseType='multi'
         else:
-            if test_config.output_parent_dir and test_config.output_parent_dir.strip().startswith("\\\\"):
-                Errors.print_error("Single-user case type couldn't take UNC path as output directory.")
-                sys.exit(1)
-            if test_config.output_parent_dir.endswith("multi_user") or test_config.gold.endswith("multi_user"):
-                test_config.output_parent_dir = test_config.output_parent_dir.replace("multi_user", "single_user")
-                test_config.gold = test_config.gold.replace("multi_user", "single_user")
-            else:
-                test_config.gold += "\\single_user"
             test_config.userCaseType='single'
 
         test_config._init_logs()
@@ -202,7 +183,7 @@ class TestRunner(object):
             Errors.print_error("No image had any gold; Regression did not run")
             exit(1)
 
-        if not all([ test_data.overall_passed for test_data in test_data_list ]):
+        if not testconfig.args.rebuild and not all([ test_data.overall_passed for test_data in test_data_list ]):
             html = open(test_config.html_log)
             Errors.add_errors_out(html.name)
             html.close()
@@ -235,7 +216,7 @@ class TestRunner(object):
             if ant_line.startswith("BUILD FAILED") or "fatal error" in ant_ignoreCase or "crashed" in ant_ignoreCase:
                 Errors.print_error("Autopsy test failed. Please check the build log antlog.txt for details.")
                 sys.exit(1)
-        # exit if .db was not created
+        # exit if a single-user case and the local .db file was not created 
         if not file_exists(test_data.get_db_path(DBType.OUTPUT)) and not test_data.isMultiUser:
             Errors.print_error("Autopsy did not run properly; No .db file was created")
             sys.exit(1)
@@ -387,7 +368,7 @@ class TestRunner(object):
 
         # Copy files to gold
         try:
-            if not test_data.isMultiUser:
+            if not test_data.isMultiUser: # This find the local .db file and copy it for single-user case. Multi-user case doesn't have a local db file. 
                 shutil.copy(dbinpth, dboutpth)
             if file_exists(test_data.get_sorted_data_path(DBType.OUTPUT)):
                 shutil.copy(test_data.get_sorted_data_path(DBType.OUTPUT), dataoutpth)
@@ -496,7 +477,6 @@ class TestRunner(object):
             antoutpth = make_local_path(test_data.main_config.output_dir, "antRunOutput.txt")
         else:
             antoutpth = test_data.main_config.output_dir + "\\antRunOutput.txt"
-        #os.chmod(antoutpth, 0o777)
         antout = open(antoutpth, "a")
         if SYS is OS.CYGWIN:
             subprocess.call(test_data.ant, stdout=subprocess.PIPE)
@@ -631,7 +611,7 @@ class TestData(object):
         self.printout = []
         # autopsyPlatform
         self.autopsyPlatform = str(self.main_config.autopsyPlatform)
-        # postgreSQL db conncetion data setttings
+        # postgreSQL db connection data settings
         self.pgSettings = PGSettings(self.main_config.dbHost, self.main_config.dbPort, self.main_config.dbUserName, self.main_config.dbPassword)
 
     def ant_to_string(self):
@@ -763,11 +743,13 @@ class TestConfiguration(object):
         # Default output parent dir
         self.output_parent_dir = make_path("..", "output", "results")
         self.output_dir = ""
+        self.singleUser_outdir = ""
         self.input_dir = make_local_path("..","input")
-        self.gold = make_path("..", "output", "gold")
+        self.singleUser_gold = make_path("..", "output", "gold", "single_user")
+        self.gold = ""
         # Logs:
         self.csv = ""
-        self.global_csv = ""
+        self.global_csv = "" 
         self.html_log = ""
         # Ant info:
         self.known_bad_path = make_path(self.input_dir, "notablehashes.txt-md5.idx")
@@ -796,8 +778,11 @@ class TestConfiguration(object):
         self.messageServiceHost = ""
         self.messageServicePort = ""
         self.userCaseType = "Both"
-        self.shared_outdir = ""
+        self.multiUser_gold = make_path("..", "output", "gold", "multi_user")
+        self.multiUser_outdir = ""
 
+        # Test runner user case:
+        self.testUserCase = ""
         if not self.args.single:
             self._load_config_file(self.args.config_file)
         else:
@@ -817,21 +802,25 @@ class TestConfiguration(object):
             parsed_config = parse(config_file)
             logres = []
             counts = {}
+            if parsed_config.getElementsByTagName("userCaseType"):
+                self.userCaseType = parsed_config.getElementsByTagName("userCaseType")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("indir"):
                 self.input_dir = parsed_config.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
-            if parsed_config.getElementsByTagName("outdir"):
-                self.output_parent_dir = parsed_config.getElementsByTagName("outdir")[0].getAttribute("value").encode().decode("utf_8")
-            if parsed_config.getElementsByTagName("global_csv"):
-                self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
-                if re.match('^[\w]:', self.global_csv) == None or self.global_csv.startswith('/'):
-                    self.global_csv = make_local_path(self.global_csv)
-            if parsed_config.getElementsByTagName("golddir"):
-                self.gold = parsed_config.getElementsByTagName("golddir")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("singleUser_outdir"):
+                self.singleUser_outdir = parsed_config.getElementsByTagName("singleUser_outdir")[0].getAttribute("value").encode().decode("utf_8")
+            #if parsed_config.getElementsByTagName("global_csv"):
+            #    self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
+            #    if re.match('^[\w]:', self.global_csv) == None or self.global_csv.startswith('/'):
+            #        self.global_csv = make_local_path(self.global_csv)
+            if parsed_config.getElementsByTagName("singleUser_gold"):
+                self.singleUser_gold = parsed_config.getElementsByTagName("singleUser_gold")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("timing"):
                 self.timing = parsed_config.getElementsByTagName("timing")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("autopsyPlatform"):
                 self.autopsyPlatform = parsed_config.getElementsByTagName("autopsyPlatform")[0].getAttribute("value").encode().decode("utf_8")
             # Multi-user settings
+            if parsed_config.getElementsByTagName("multiUser_gold"):
+                self.multiUser_gold = parsed_config.getElementsByTagName("multiUser_gold")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("dbHost"):
                 self.dbHost = parsed_config.getElementsByTagName("dbHost")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("dbPort"):
@@ -848,10 +837,8 @@ class TestConfiguration(object):
                 self.messageServiceHost = parsed_config.getElementsByTagName("messageServiceHost")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("messageServicePort"):
                 self.messageServicePort = parsed_config.getElementsByTagName("messageServicePort")[0].getAttribute("value").encode().decode("utf_8")
-            if parsed_config.getElementsByTagName("userCaseType"):
-                self.userCaseType = parsed_config.getElementsByTagName("userCaseType")[0].getAttribute("value").encode().decode("utf_8")
-            if parsed_config.getElementsByTagName("shared_outdir"):
-                self.shared_outdir = parsed_config.getElementsByTagName("shared_outdir")[0].getAttribute("value").encode().decode("utf_8")
+            if parsed_config.getElementsByTagName("multiUser_outdir"):
+                self.multiUser_outdir = parsed_config.getElementsByTagName("multiUser_outdir")[0].getAttribute("value").encode().decode("utf_8")
             self._init_imgs(parsed_config)
             self._init_build_info(parsed_config)
 
@@ -861,7 +848,7 @@ class TestConfiguration(object):
             logging.critical(traceback.format_exc())
             print(traceback.format_exc())
 
-        if self.userCaseType.lower().startswith("multi"):
+        if self.userCaseType.lower().startswith("multi") or self.userCaseType.lower().startswith("both") :
             if not self.dbHost.strip() or not self.dbPort.strip() or not self.dbUserName.strip() or not self.dbPassword.strip():
                 Errors.print_error("Please provide database connection information via configuration file. ")
                 sys.exit(1)
@@ -871,12 +858,22 @@ class TestConfiguration(object):
             if not self.messageServiceHost.strip() or not self.messageServicePort.strip():
                 Errors.print_error("Please provide ActiveMQ host name and port number via configuration file. ")
                 sys.exit(1)
+            if not self.multiUser_outdir.strip():
+                Errors.print_error("Please provide a shared output directory for multi-user test. ")
+                sys.exit(1)
  
     def _init_logs(self):
         """Setup output folder, logs, and reporting infrastructure."""
-        user_case_type = self.userCaseType.lower()
+        if self.testUserCase is "multi":
+            self.output_parent_dir = self.multiUser_outdir
+            self.gold = self.multiUser_gold
+        else:
+            self.output_parent_dir = self.singleUser_outdir
+            self.gold = self.singleUser_gold
+
         if not dir_exists(self.output_parent_dir):
             os.makedirs(make_os_path(_platform, self.output_parent_dir))
+        self.global_csv = make_local_path(os.path.join(self.output_parent_dir, "Global_CSV.log"))
         self.output_dir = make_path(self.output_parent_dir, time.strftime("%Y.%m.%d-%H.%M.%S"))
         os.makedirs(self.output_dir)
         self.csv = make_path(self.output_dir, "CSV.txt")

@@ -58,7 +58,7 @@ class TskDbDiff(object):
         self.pgSettings = pgSettings
 
         if self.isMultiUser and not self.pgSettings:
-            print("Missing Multi-user Settings data.")
+            print("Missing PostgreSQL database connection settings data.")
             sys.exit(1)
 
         if self.gold_bb_dump is None:
@@ -406,6 +406,7 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
         table: a map from object ids to file paths.
     """
 
+    # Sqlite statement use double quotes for table name, PostgreSQL doesn't. We check both databases results for normalization.
     files_index = line.find('INSERT INTO "tsk_files"') > -1 or line.find('INSERT INTO tsk_files ') > -1
     path_index = line.find('INSERT INTO "tsk_files_path"') > -1 or line.find('INSERT INTO tsk_files_path ') > -1
     object_index = line.find('INSERT INTO "tsk_objects"') > -1 or line.find('INSERT INTO tsk_objects ') > -1
