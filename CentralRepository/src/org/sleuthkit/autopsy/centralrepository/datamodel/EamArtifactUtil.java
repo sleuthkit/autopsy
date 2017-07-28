@@ -118,9 +118,17 @@ public class EamArtifactUtil {
     public static EamArtifact getTypeFromBlackboardArtifact(EamArtifact.Type aType, BlackboardArtifact bbArtifact) {
         String value = null;
         int artifactTypeID = bbArtifact.getArtifactTypeID();
-
+        
         try {
-            if (aType.getId() == EamArtifact.EMAIL_TYPE_ID
+            if(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifactTypeID){
+                // Get the associated artifact
+                BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    return getTypeFromBlackboardArtifact(aType, associatedArtifact);
+                }
+                
+            } else if (aType.getId() == EamArtifact.EMAIL_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
 
                 BlackboardAttribute setNameAttr = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
