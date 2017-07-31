@@ -115,10 +115,13 @@ class DirectoryTreeFilterNode extends FilterNode {
         if (purgeKnownFiles || purgeSlackFiles) {
             // Purge known and/or slack files from the file count
             for (int i = 0; i < childList.size(); i++) {
-                AbstractFile childFile = (AbstractFile) childList.get(i);
-                if ((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
-                        || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
-                    numVisibleChildren--;
+                Content child = (Content) childList.get(i);
+                if (child instanceof AbstractFile) {
+                    AbstractFile childFile = (AbstractFile) child;
+                    if ((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
+                            || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                        numVisibleChildren--;
+                    }
                 }
             }
         }

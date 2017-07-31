@@ -70,7 +70,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             build();
 
     private final BlackboardArtifact artifact;
-    private final Content associated;
+    private Content associated = null;
     private List<NodeProperty<? extends Object>> customProperties;
     /*
      * Artifact types which should have the full unique path of the associated
@@ -133,8 +133,20 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         super(Children.LEAF, createLookup(artifact));
 
         this.artifact = artifact;
-        //this.associated = getAssociatedContent(artifact);
-        this.associated = this.getLookup().lookup(Content.class);
+        
+        // Look for associated Content  i.e. the source file for the artifact
+        if (this.getLookup().lookupAll(Content.class).size() > 1) {
+            for (Content content : this.getLookup().lookupAll(Content.class)) {
+                if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
+                    this.associated = content;
+                    break;
+                }
+            }
+        }
+        if (null == this.associated ) {
+            this.associated = this.getLookup().lookup(Content.class);
+        }
+        
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
@@ -151,7 +163,19 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         super(Children.LEAF, createLookup(artifact));
 
         this.artifact = artifact;
-        this.associated = this.getLookup().lookup(Content.class);
+        
+        // Look for associated Content - the source file for the artifact
+        if (this.getLookup().lookupAll(Content.class).size() > 1) {
+            for (Content content : this.getLookup().lookupAll(Content.class)) {
+                if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
+                    this.associated = content;
+                    break;
+                }
+            }
+        }
+         if (null == this.associated ) {
+            this.associated = this.getLookup().lookup(Content.class);  
+        }
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
