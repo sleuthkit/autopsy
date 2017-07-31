@@ -106,6 +106,14 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                 EXTENSION); // NON-NLS
         fileChooser.setFileFilter(filter);
         fileChooser.setMultiSelectionEnabled(false);
+        
+        if (ModuleSettings.settingExists(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY)) {
+            String lastBaseDirectory = ModuleSettings.getConfigSetting(ModuleSettings.MAIN_SETTINGS, LAST_FILE_PATH_KEY);
+            File hashDbFolder = new File(lastBaseDirectory);
+            if(hashDbFolder.exists()){
+                fileChooser.setCurrentDirectory(hashDbFolder);
+            }
+        }
     }
 
     private void customizeComponents() {
@@ -637,9 +645,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                         knownStatus, 
                         "");
 
-                if (!globalInstances.add(eamGlobalFileInstance)) {
-                    throw new EamDbException(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_duplicate(parts[0])); // NON-NLS
-                }
+                globalInstances.add(eamGlobalFileInstance);
             }
 
             dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);

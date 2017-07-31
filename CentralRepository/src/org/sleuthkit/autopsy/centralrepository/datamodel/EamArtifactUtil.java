@@ -108,19 +108,29 @@ public class EamArtifactUtil {
     }
 
     /**
-     * Convert a blackboard artifact to an EamArtifact
+     * Convert a blackboard artifact to an EamArtifact.
+     * Returns null if the converted artifact does not contain valid
+     * correlation data.
      *
      * @param aType      The Central Repository artifact type to create
      * @param bbArtifact The blackboard artifact to convert
      *
-     * @return
+     * @return the new EamArtifact, or null if one was not created
      */
     public static EamArtifact getTypeFromBlackboardArtifact(EamArtifact.Type aType, BlackboardArtifact bbArtifact) {
         String value = null;
         int artifactTypeID = bbArtifact.getArtifactTypeID();
-
+        
         try {
-            if (aType.getId() == EamArtifact.EMAIL_TYPE_ID
+            if(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifactTypeID){
+                // Get the associated artifact
+                BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
+                if (attribute != null) {
+                    BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
+                    return getTypeFromBlackboardArtifact(aType, associatedArtifact);
+                }
+                
+            } else if (aType.getId() == EamArtifact.EMAIL_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
 
                 BlackboardAttribute setNameAttr = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
@@ -157,7 +167,14 @@ public class EamArtifactUtil {
                     }
 
                     value = newValue;
-                }
+                    
+                    // If the resulting phone number is too small to be of use, return null
+                    // (these 3-5 digit numbers can be valid, but are not useful for correlation)
+                    if(value.length() <= 5){
+                        return null;
+                    }
+                }               
+                
             } else if (aType.getId() == EamArtifact.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 

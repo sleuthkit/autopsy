@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-17 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +24,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import org.apache.commons.lang.StringUtils;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
@@ -34,7 +37,9 @@ import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -87,7 +92,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                      */
                     try {
                         Case.getCurrentCase();
-                        typesRoot.shouldShowCounts();
+                        typesRoot.updateShowCounts();
                         update();
                     } catch (IllegalStateException notUsed) {
                         /**
@@ -147,8 +152,9 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
          *               provides updates on events
          */
         private FileTypesByExtNode(SleuthkitCase skCase, FileTypesByExtension.RootFilter filter, FileTypesByExtObservable o) {
+
             super(Children.create(new FileTypesByExtNodeChildren(skCase, filter, o), true),
-                    Lookups.singleton(filter == null ? FNAME : filter.getName()));
+                    Lookups.singleton(filter == null ? FNAME : filter.getDisplayName()));
             this.filter = filter;
 
             // root node of tree
@@ -157,7 +163,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 super.setDisplayName(FNAME);
             } // sub-node in file tree (i.e. documents, exec, etc.)
             else {
-                super.setName(filter.getName());
+                super.setName(filter.getDisplayName());
                 super.setDisplayName(filter.getDisplayName());
             }
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png"); //NON-NLS
@@ -181,7 +187,16 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 ss = Sheet.createPropertiesSet();
                 s.put(ss);
             }
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.desc"), getName()));
+            if (filter != null && (filter.equals(FileTypesByExtension.RootFilter.TSK_DOCUMENT_FILTER) || filter.equals(FileTypesByExtension.RootFilter.TSK_EXECUTABLE_FILTER))) {
+                String extensions = "";
+                for (String ext : filter.getFilter()) {
+                    extensions += "'" + ext + "', ";
+                }
+                extensions = extensions.substring(0, extensions.lastIndexOf(','));
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.name"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.fileExt.desc"), extensions));
+            } else {
+                ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.name"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.displayName"), NbBundle.getMessage(this.getClass(), "FileTypesByExtNode.createSheet.name.desc"), getDisplayName()));
+            }
             return s;
         }
 
@@ -272,7 +287,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
             super(typesRoot, Children.create(new FileExtensionNodeChildren(filter, skCase, o), true),
                     Lookups.singleton(filter.getDisplayName()));
             this.filter = filter;
-            setName(filter.getName());
+            super.setName(filter.getDisplayName());
             updateDisplayName();
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-filter-icon.png"); //NON-NLS
 
@@ -325,30 +340,48 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        String geQuery() {
-            return createQuery(filter);
+        long calculateChildCount() throws TskCoreException {
+            return skCase.countFilesWhere(createQuery(filter));
         }
-
     }
 
-    private static String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
-        StringBuilder query = new StringBuilder();
-        query.append("(dir_type = ").append(TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue()).append(")"); //NON-NLS
-        if (UserPreferences.hideKnownFilesInViewsTree()) {
-            query.append(" AND (known IS NULL OR known != ").append(TskData.FileKnown.KNOWN.getFileKnownValue()).append(")"); //NON-NLS
+    private String createQuery(FileTypesByExtension.SearchFilterInterface filter) {
+        if (filter.getFilter().isEmpty()) {
+            // We should never be given a search filter without extensions
+            // but if we are it is clearly a programming error so we throw 
+            // an IllegalArgumentException.
+            throw new IllegalArgumentException("Empty filter list passed to createQuery()"); // NON-NLS
         }
-        query.append(" AND (NULL"); //NON-NLS
-        for (String s : filter.getFilter()) {
-            query.append(" OR LOWER(name) LIKE LOWER('%").append(s).append("')"); //NON-NLS
+
+        String query = "(dir_type = " + TskData.TSK_FS_NAME_TYPE_ENUM.REG.getValue() + ")"
+                + (UserPreferences.hideKnownFilesInViewsTree() ? " AND (known IS NULL OR known != "
+                + TskData.FileKnown.KNOWN.getFileKnownValue() + ")" : " ")
+                + " AND (NULL "; //NON-NLS
+
+        if (skCase.getDatabaseType().equals(TskData.DbType.POSTGRESQL)) {
+            // For PostgreSQL we get a more efficient query by using builtin
+            // regular expression support and or'ing all extensions. We also
+            // escape the dot at the beginning of the extension.
+            // We will end up with a query that looks something like this:
+            // OR LOWER(name) ~ '(\.zip|\.rar|\.7zip|\.cab|\.jar|\.cpio|\.ar|\.gz|\.tgz|\.bz2)$')
+            query += "OR LOWER(name) ~ '(\\";
+            query += StringUtils.join(filter.getFilter().stream()
+                    .map(String::toLowerCase).collect(Collectors.toList()), "|\\");
+            query += ")$'";
+        } else {
+            for (String s : filter.getFilter()) {
+                query += "OR LOWER(name) LIKE '%" + s.toLowerCase() + "'"; // NON-NLS
+            }
         }
-        query.append(')');
-        return query.toString();
+
+        query += ')';
+        return query;
     }
 
     /**
      * Child node factory for a specific file type - does the database query.
      */
-    private static class FileExtensionNodeChildren extends ChildFactory.Detachable<Content> implements Observer {
+    private class FileExtensionNodeChildren extends ChildFactory.Detachable<FileTypesKey> implements Observer {
 
         private final SleuthkitCase skCase;
         private final FileTypesByExtension.SearchFilterInterface filter;
@@ -388,9 +421,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        protected boolean createKeys(List<Content> list) {
+        protected boolean createKeys(List<FileTypesKey> list) {
             try {
-                list.addAll(skCase.findAllFilesWhere(createQuery(filter)));
+                list.addAll(skCase.findAllFilesWhere(createQuery(filter))
+                        .stream().map(f -> new FileTypesKey(f)).collect(Collectors.toList()));
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "Couldn't get search results", ex); //NON-NLS
             }
@@ -398,7 +432,7 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
         }
 
         @Override
-        protected Node createNodeForKey(Content key) {
+        protected Node createNodeForKey(FileTypesKey key) {
             return key.accept(new FileTypes.FileNodeCreationVisitor());
         }
     }
@@ -420,10 +454,10 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
                 FileTypeExtensions.getArchiveExtensions()),
         TSK_DOCUMENT_FILTER(3, "TSK_DOCUMENT_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskDocumentFilter.text"),
-                Arrays.asList(".doc", ".docx", ".pdf", ".xls", ".rtf", ".txt")), //NON-NLS
+                Arrays.asList(".htm", ".html", ".doc", ".docx", ".odt", ".xls", ".xlsx", ".ppt", ".pptx", ".pdf", ".txt", ".rtf")), //NON-NLS
         TSK_EXECUTABLE_FILTER(3, "TSK_EXECUTABLE_FILTER", //NON-NLS
                 NbBundle.getMessage(FileTypesByExtension.class, "FileTypeExtensionFilters.tskExecFilter.text"),
-                Arrays.asList(".exe", ".dll", ".bat", ".cmd", ".com")); //NON-NLS
+                FileTypeExtensions.getExecutableExtensions()); //NON-NLS
 
         private final int id;
         private final String name;

@@ -220,6 +220,7 @@ public class Metadata extends javax.swing.JPanel implements DataContentViewer {
 
     @Override
     public void resetComponent() {
+        setText("");
         return;
     }
 

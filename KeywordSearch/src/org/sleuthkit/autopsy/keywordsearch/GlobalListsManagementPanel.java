@@ -102,12 +102,12 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
     }
 
     /**
-     * Opens the dialogue for creating a new keyword list and adds it to the table.
+     * Opens the dialogue for creating a new keyword list and adds it to the
+     * table.
      */
     private void newKeywordListAction() {
         XmlKeywordSearchList writer = XmlKeywordSearchList.getCurrent();
         String listName = "";
-       
 
         listName = (String) JOptionPane.showInputDialog(null, NbBundle.getMessage(this.getClass(), "KeywordSearch.newKwListTitle"),
                 NbBundle.getMessage(this.getClass(), "KeywordSearch.newKeywordListMsg"), JOptionPane.PLAIN_MESSAGE, null, null, listName);
@@ -158,15 +158,19 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         boolean isIngestRunning = IngestManager.getInstance().isIngestRunning();
         boolean isListSelected = !listsTable.getSelectionModel().isSelectionEmpty();
         boolean canEditList = isListSelected && !isIngestRunning;
+        boolean multiSelection = false; //can't rename or copy when multiple lists selected
+        if (isListSelected) {
+            multiSelection = (listsTable.getSelectionModel().getMaxSelectionIndex() != listsTable.getSelectionModel().getMinSelectionIndex());
+        }
         // items that only need ingest to not be running
         importButton.setEnabled(!isIngestRunning);
-        
-        // items that need an unlocked list w/out ingest running 
+        // items that need an unlocked list w/out ingest running
         deleteListButton.setEnabled(canEditList);
         renameListButton.setEnabled(canEditList);
-        
+        renameListButton.setEnabled(canEditList && !multiSelection);
         // items that only need a selected list
         copyListButton.setEnabled(isListSelected);
+        copyListButton.setEnabled(isListSelected && !multiSelection);
         exportButton.setEnabled(isListSelected);
     }
 
@@ -388,9 +392,15 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
                 //check name collisions
                 listName = list.getName();
                 if (writer.listExists(listName)) {
-                    Object[] options = {NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
-                        NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
+                    String[] options;
+                    if (toImport.size() == 1) { //only give them cancel and yes buttons for single list imports
+                        options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};  
+                    } else {
+                        options = new String[]{NbBundle.getMessage(this.getClass(), "KeywordSearch.yesOwMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.noSkipMsg"),
+                            NbBundle.getMessage(this.getClass(), "KeywordSearch.cancelImportMsg")};
+                    }
                     int choice = JOptionPane.showOptionDialog(this,
                             NbBundle.getMessage(this.getClass(), "KeywordSearch.overwriteListPrompt", listName),
                             NbBundle.getMessage(this.getClass(), "KeywordSearch.importOwConflict"),
@@ -435,13 +445,9 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_importButtonActionPerformed
     private void listsTableKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_listsTableKeyPressed
-        if (evt.getKeyCode() == KeyEvent.VK_DELETE) {
-            int[] selected = listsTable.getSelectedRows();
-            if (selected.length == 0) {
-                return;
-            } else if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
-                String listName = (String) listsTable.getModel().getValueAt(selected[0], 0);
-                XmlKeywordSearchList.getCurrent().deleteList(listName);
+        if (evt.getKeyCode() == KeyEvent.VK_DELETE && !IngestManager.getInstance().isIngestRunning() && !listsTable.getSelectionModel().isSelectionEmpty()) {
+            if (KeywordSearchUtil.displayConfirmDialog(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.title"), NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel1.customizeComponents.body"), KeywordSearchUtil.DIALOG_MESSAGE_TYPE.WARN)) {
+                deleteSelected();
                 firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
             } else {
                 return;
@@ -492,7 +498,11 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
             XmlKeywordSearchList reader = XmlKeywordSearchList.getCurrent();
 
             List<KeywordList> toWrite = new ArrayList<>();
-            toWrite.add(reader.getList(listName));
+
+            for (int index : listsTable.getSelectedRows()) {
+                toWrite.add(reader.getList(listsTable.getValueAt(index, 0).toString()));
+            }
+
             final XmlKeywordSearchList exporter = new XmlKeywordSearchList(fileAbs);
             boolean written = exporter.saveLists(toWrite);
             if (written) {
@@ -541,6 +551,14 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         tableModel.resync();
     }
 
+    void deleteSelected() {
+        int[] selected = listsTable.getSelectedRows();
+        if (selected.length == 0) {
+            return;
+        }
+        tableModel.deleteSelected(selected);
+    }
+
     private class KeywordListTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = 1L;
@@ -586,8 +604,8 @@ class GlobalListsManagementPanel extends javax.swing.JPanel implements OptionsPa
         //delete selected from handle, events are fired from the handle
         void deleteSelected(int[] selected) {
             List<String> toDel = new ArrayList<>();
-            for (int i = 0; i < selected.length; i++) {
-                toDel.add((String) getValueAt(0, selected[i]));
+            for (int i : selected) {
+                toDel.add(getValueAt(i, 0).toString());
             }
             for (String del : toDel) {
                 listsHandle.deleteList(del);
