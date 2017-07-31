@@ -462,7 +462,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                 try {
                     return content.getAllArtifactsCount() > 0;
                 } catch (TskException ex) {
-                    logger.log(Level.WARNING, "Couldn't get count of BlackboardArtifacts for content", ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Couldn't get count of BlackboardArtifacts for content", ex); //NON-NLS
                 }
             }
         }
@@ -708,7 +708,7 @@ public class DataContentViewerArtifact extends javax.swing.JPanel implements Dat
                     try {
                         artifacts = content.getAllArtifacts();
                     } catch (TskException ex) {
-                        logger.log(Level.WARNING, "Couldn't get artifacts", ex); //NON-NLS
+                        logger.log(Level.SEVERE, "Couldn't get artifacts", ex); //NON-NLS
                         return new ViewUpdate(getArtifactContents().size(), currentPage, ERROR_TEXT);
                     }
                 }
