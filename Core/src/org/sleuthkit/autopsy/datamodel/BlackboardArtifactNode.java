@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
@@ -26,6 +28,8 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
@@ -35,12 +39,12 @@ import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
@@ -59,10 +63,15 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
+    private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
+
+    private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
+            .expireAfterWrite(1, TimeUnit.MINUTES).
+            build();
+
     private final BlackboardArtifact artifact;
     private Content associated = null;
     private List<NodeProperty<? extends Object>> customProperties;
-    private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
     /*
      * Artifact types which should have the full unique path of the associated
      * content as a property.
@@ -107,6 +116,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 if (evt.getNewValue() == null) {
                     // case was closed. Remove listeners so that we don't get called with a stale case handle
                     removeListeners();
+                    contentCache.invalidateAll();
                 }
             }
         }
@@ -297,7 +307,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 // Do nothing since the display name will be set to the file name.
             }
         }
-        
+
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             ss.put(new NodeProperty<>(entry.getKey(),
                     entry.getKey(),
@@ -491,46 +501,46 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             LOGGER.log(Level.SEVERE, "Getting attributes failed", ex); //NON-NLS
         }
     }
-    
+
 /**
- * Fill map with EmailMsg properties, not all attributes are filled
- *
- * @param map      map with preserved ordering, where property names/values
- *                 are put
- * @param attribute attribute to check/fill as property
- */
+     * Fill map with EmailMsg properties, not all attributes are filled
+     *
+     * @param map       map with preserved ordering, where property names/values
+     *                  are put
+     * @param attribute attribute to check/fill as property
+     */
  private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute ) {
-    
-    final int attributeTypeID = attribute.getAttributeType().getTypeID();
-     
-    // Skip certain Email msg attributes
-    if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID()
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID() 
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()  
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
+
+        final int attributeTypeID = attribute.getAttributeType().getTypeID();
+
+        // Skip certain Email msg attributes
+        if (attributeTypeID == ATTRIBUTE_TYPE.TSK_DATETIME_SENT.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_HTML.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
         || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()
             ) {
-        
-        // do nothing
+
+            // do nothing
     }
     else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
 
-        String value = attribute.getDisplayString();
-        if (value.length() > 160) {
-            value = value.substring(0, 160) + "...";
-        }
-        map.put(attribute.getAttributeType().getDisplayName(), value);
+            String value = attribute.getDisplayString();
+            if (value.length() > 160) {
+                value = value.substring(0, 160) + "...";
+            }
+            map.put(attribute.getAttributeType().getDisplayName(), value);
     }
    else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
-        map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
+            map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
     }
     else {
-        map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+            map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
+        }
+
     }
-     
- }
-    
+
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
@@ -539,31 +549,25 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     /**
      * Create a Lookup based on what is in the passed in artifact.
      *
-     * @param artifact
+     * @param artifact The artifact to make a look up for.
      *
-     * @return
+     * @return A lookup with the artifact and possibly any associated content in
+     *         it.
      */
     private static Lookup createLookup(BlackboardArtifact artifact) {
-        List<Object> forLookup = new ArrayList<>();
-        forLookup.add(artifact);
-
         // Add the content the artifact is associated with
-        Content content = getAssociatedContent(artifact);
-        if (content != null) {
-            forLookup.add(content);
-        }
-
-        return Lookups.fixed(forLookup.toArray(new Object[forLookup.size()]));
-    }
-
-    private static Content getAssociatedContent(BlackboardArtifact artifact) {
+        final long objectID = artifact.getObjectID();
         try {
-            return artifact.getSleuthkitCase().getContentById(artifact.getObjectID());
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.WARNING, "Getting file failed", ex); //NON-NLS
+            Content content = contentCache.get(objectID, () -> artifact.getSleuthkitCase().getContentById(objectID));
+            if (content == null) {
+                return Lookups.fixed(artifact);
+            } else {
+                return Lookups.fixed(artifact, content);
+            }
+        } catch (ExecutionException ex) {
+            LOGGER.log(Level.WARNING, "Getting associated content for artifact failed", ex); //NON-NLS
+            return Lookups.fixed(artifact);
         }
-        throw new IllegalArgumentException(
-                NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.getAssocCont.exception.msg"));
     }
 
     @Override
