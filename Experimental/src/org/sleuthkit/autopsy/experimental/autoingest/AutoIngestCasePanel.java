@@ -105,6 +105,14 @@ public final class AutoIngestCasePanel extends JPanel {
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
+            @Override
+            public Class getColumnClass(int col) {
+                if (this.getColumnName(col).equals(CREATEDTIME_HEADER) || this.getColumnName(col).equals(COMPLETEDTIME_HEADER)) {
+                    return Date.class;
+                } else {
+                    return super.getColumnClass(col);
+                }
+            }
         };
 
         initComponents();
