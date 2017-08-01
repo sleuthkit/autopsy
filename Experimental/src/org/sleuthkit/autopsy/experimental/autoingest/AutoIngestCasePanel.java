@@ -205,10 +205,7 @@ public final class AutoIngestCasePanel extends JPanel {
      * Updates the view presented by the panel.
      */
     public void updateView() {
-        Thread thread = new Thread(() -> {
-            refreshCasesTable();
-        });
-        thread.start();
+       //The contents of the cases table are updated by the casesTableRefreshExecutor
     }
 
     /**
