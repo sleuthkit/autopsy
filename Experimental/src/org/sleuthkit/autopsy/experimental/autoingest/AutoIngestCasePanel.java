@@ -106,7 +106,7 @@ public final class AutoIngestCasePanel extends JPanel {
                 return false;
             }
             @Override
-            public Class getColumnClass(int col) {
+            public Class<?> getColumnClass(int col) {
                 if (this.getColumnName(col).equals(CREATEDTIME_HEADER) || this.getColumnName(col).equals(COMPLETEDTIME_HEADER)) {
                     return Date.class;
                 } else {
