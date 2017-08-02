@@ -143,11 +143,6 @@ class NameSearchPanel extends javax.swing.JPanel {
 
         searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
         searchTextField.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.searchTextField.text")); // NOI18N
-        searchTextField.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                searchTextFieldMouseClicked(evt);
-            }
-        });
 
         noteNameLabel.setFont(noteNameLabel.getFont().deriveFont(noteNameLabel.getFont().getStyle() & ~java.awt.Font.BOLD, 10));
         noteNameLabel.setText(org.openide.util.NbBundle.getMessage(NameSearchPanel.class, "NameSearchPanel.noteNameLabel.text")); // NOI18N
@@ -180,10 +175,6 @@ class NameSearchPanel extends javax.swing.JPanel {
                 .addGap(0, 0, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void searchTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_searchTextFieldMouseClicked
-
-        this.nameCheckBox.setSelected(true);     }//GEN-LAST:event_searchTextFieldMouseClicked
 
     private void nameCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nameCheckBoxActionPerformed
         setComponentsEnabled();
