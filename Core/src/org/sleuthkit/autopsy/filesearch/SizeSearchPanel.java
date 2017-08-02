@@ -123,11 +123,6 @@ class SizeSearchPanel extends javax.swing.JPanel {
         sizeUnitComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "Byte(s)", "KB", "MB", "GB", "TB" }));
 
         sizeTextField.setValue(0);
-        sizeTextField.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                sizeTextFieldMouseClicked(evt);
-            }
-        });
 
         sizeCompareComboBox.setModel(new javax.swing.DefaultComboBoxModel<String>(new String[] { "equal to", "greater than", "less than" }));
 
@@ -160,11 +155,6 @@ class SizeSearchPanel extends javax.swing.JPanel {
                 .addComponent(sizeCheckBox))
         );
     }// </editor-fold>//GEN-END:initComponents
-
-    private void sizeTextFieldMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_sizeTextFieldMouseClicked
-        this.sizeCheckBox.setSelected(true);
-        this.sizeTextField.selectAll(); // select all so user can change it easily
-    }//GEN-LAST:event_sizeTextFieldMouseClicked
 
     private void sizeCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sizeCheckBoxActionPerformed
         setComponentsEnabled();
