@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,7 +26,6 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeListener;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JTextField;
@@ -38,6 +37,8 @@ import javax.swing.event.DocumentListener;
  * @author pmartel
  */
 class NameSearchPanel extends javax.swing.JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Creates new form NameSearchPanel
