@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,11 +22,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import org.openide.nodes.Children;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -47,25 +47,20 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractAbstractFileNode.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
     /**
-     * @param <T> type of the AbstractFile data to encapsulate
-     * @param abstractFile file to encapsulate
+     * @param abstractFile file to wrap
      */
     AbstractAbstractFileNode(T abstractFile) {
         super(abstractFile);
-        String name = abstractFile.getName();
-        int dotIndex = name.lastIndexOf(".");
-        if (dotIndex > 0) {
-            String ext = name.substring(dotIndex).toLowerCase();
-
+        String ext = abstractFile.getNameExtension();
+        if (StringUtils.isNotBlank(ext)) {
+            ext = "." + ext;
             // If this is an archive file we will listen for ingest events
             // that will notify us when new content has been identified.
-            for (String s : FileTypeExtensions.getArchiveExtensions()) {
-                if (ext.equals(s)) {
-                    IngestManager.getInstance().addIngestModuleEventListener(pcl);
-                }
+            if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
+                IngestManager.getInstance().addIngestModuleEventListener(pcl);
             }
         }
         // Listen for case events so that we can detect when case is closed
@@ -131,140 +126,140 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     public static enum AbstractFilePropertyType {
 
         NAME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.nameColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.nameColLbl");
+            }
+        },
         LOCATION {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.locationColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.locationColLbl");
+            }
+        },
         MOD_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.modifiedTimeColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.modifiedTimeColLbl");
+            }
+        },
         CHANGED_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.changeTimeColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.changeTimeColLbl");
+            }
+        },
         ACCESS_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.accessTimeColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.accessTimeColLbl");
+            }
+        },
         CREATED_TIME {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.createdTimeColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.createdTimeColLbl");
+            }
+        },
         SIZE {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.sizeColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.sizeColLbl");
+            }
+        },
         FLAGS_DIR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.flagsDirColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.flagsDirColLbl");
+            }
+        },
         FLAGS_META {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.flagsMetaColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.flagsMetaColLbl");
+            }
+        },
         MODE {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.modeColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.modeColLbl");
+            }
+        },
         USER_ID {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.useridColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.useridColLbl");
+            }
+        },
         GROUP_ID {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.groupidColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.groupidColLbl");
+            }
+        },
         META_ADDR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.metaAddrColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.metaAddrColLbl");
+            }
+        },
         ATTR_ADDR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.attrAddrColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.attrAddrColLbl");
+            }
+        },
         TYPE_DIR {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.typeDirColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.typeDirColLbl");
+            }
+        },
         TYPE_META {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.typeMetaColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.typeMetaColLbl");
+            }
+        },
         KNOWN {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.knownColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.knownColLbl");
+            }
+        },
         HASHSETS {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.inHashsetsColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.inHashsetsColLbl");
+            }
+        },
         MD5HASH {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.md5HashColLbl");
-                    }
-                },
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.md5HashColLbl");
+            }
+        },
         ObjectID {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.objectId");
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.objectId");
 
-                    }
-                },
+            }
+        },
         MIMETYPE {
-                    @Override
-                    public String toString() {
-                        return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.mimeType");
+            @Override
+            public String toString() {
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.mimeType");
 
-                    }
-                },
+            }
+        },
     }
 
     /**
      * Fill map with AbstractFile properties
      *
-     * @param map map with preserved ordering, where property names/values are
-     * put
+     * @param map     map with preserved ordering, where property names/values
+     *                are put
      * @param content to extract properties from
      */
     public static void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
@@ -273,7 +268,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             path = content.getUniquePath();
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
         }
 
         map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
@@ -302,7 +297,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
     /**
      * Used by subclasses of AbstractAbstractFileNode to add the tags property
      * to their sheets.
-     * @param ss the modifiable Sheet.Set returned by Sheet.get(Sheet.PROPERTIES)
+     *
+     * @param ss the modifiable Sheet.Set returned by
+     *           Sheet.get(Sheet.PROPERTIES)
      */
     protected void addTagProperty(Sheet.Set ss) {
         final String NO_DESCR = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.desc");
@@ -311,10 +308,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             tags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
         } catch (TskCoreException ex) {
             tags = new ArrayList<>();
-            LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+            logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
         ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
-                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).distinct().collect(Collectors.joining(", "))));
     }
 
     static String getContentDisplayName(AbstractFile file) {
@@ -330,12 +327,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-    @SuppressWarnings("deprecation")
     private static String getHashSetHitsForFile(AbstractFile content) {
         try {
             return StringUtils.join(content.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
+            logger.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
             return "";
         }
     }
