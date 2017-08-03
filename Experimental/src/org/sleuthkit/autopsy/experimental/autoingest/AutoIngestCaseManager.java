@@ -60,11 +60,6 @@ final class AutoIngestCaseManager {
      * auto ingest.
      */
     private AutoIngestCaseManager() {
-        /*
-         * Disable the new case action because review mode is only for looking
-         * at cases created by automated ingest.
-         */
-        CallableSystemAction.get(CaseNewAction.class).setEnabled(false);
 
         /*
          * Permanently delete the "Open Recent Cases" item in the "File" menu.
