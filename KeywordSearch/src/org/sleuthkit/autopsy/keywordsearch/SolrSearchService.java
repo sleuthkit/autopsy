@@ -30,6 +30,7 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.openide.util.NbBundle;
@@ -61,6 +62,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     private static final String BAD_IP_ADDRESS_FORMAT = "ioexception occurred when talking to server"; //NON-NLS
     private static final String SERVER_REFUSED_CONNECTION = "server refused connection"; //NON-NLS
     private static final int IS_REACHABLE_TIMEOUT_MS = 1000;
+    private static final int LARGE_INDEX_SIZE_GB = 50;
+    private static final int GIANT_INDEX_SIZE_GB = 500;
     private static final Logger logger = Logger.getLogger(SolrSearchService.class.getName());
 
     /**
@@ -198,9 +201,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
      * Creates/opens the Solr core/text index for a case
      *
      * @param context The case context.
-     *
      * @throws
-     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     * org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException
      */
     @Override
     @NbBundle.Messages({
@@ -211,6 +213,8 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.checkingForLatestIndex.msg=Looking for text index with latest Solr and schema version",
         "SolrSearch.indentifyingIndex.msg=Identifying text index to use",
         "SolrSearch.openCore.msg=Opening text index",
+        "SolrSearch.openLargeCore.msg=Opening text index. This may take several minutes.",
+        "SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is really large and may take long time to load.",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (context.cancelRequested()) {
@@ -322,7 +326,17 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
 
         // open core
         try {
-            progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
+            // check text index size to gauge estimated time to open/load the index
+            long indexSizeInBytes = FileUtils.sizeOfDirectory(new File(currentVersionIndex.getIndexPath()));
+            long sizeInGb = indexSizeInBytes / 1000000000;
+            if (sizeInGb < LARGE_INDEX_SIZE_GB) {
+                progress.progress(Bundle.SolrSearch_openCore_msg(), totalNumProgressUnits - 1);
+            } else if (sizeInGb >= LARGE_INDEX_SIZE_GB && sizeInGb < GIANT_INDEX_SIZE_GB) {
+                progress.switchToIndeterminate(Bundle.SolrSearch_openLargeCore_msg());
+            } else {
+                progress.switchToIndeterminate(Bundle.SolrSearch_openGiantCore_msg());
+            }
+            
             KeywordSearch.getServer().openCoreForCase(theCase, currentVersionIndex);
         } catch (KeywordSearchModuleException ex) {
             throw new AutopsyServiceException(String.format("Failed to open or create core for %s", caseDirPath), ex);
@@ -332,11 +346,11 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
     }
 
     /**
+     * Closes the open core.
      *
      * @param context
-     *
      * @throws
-     * org.sleuthkit.autopsy.framework.AutopsyService.AutopsyServiceException
+     * org.sleuthkit.autopsy.appservices.AutopsyService.AutopsyServiceException
      */
     @Override
     public void closeCaseResources(CaseContext context) throws AutopsyServiceException {
