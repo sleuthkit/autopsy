@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2015 Basis Technology Corp.
+ * Copyright 2013-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -305,8 +306,8 @@ public class FileSize implements AutopsyVisitableItem {
             }
 
             private void updateDisplayName() {
-                final long count = FileSizeChildren.calculateItems(skCase, filter);
-                super.setDisplayName(filter.getDisplayName() + " (" + count + ")");
+                final long numVisibleChildren = FileSizeChildren.calculateItems(skCase, filter);
+                super.setDisplayName(filter.getDisplayName() + " (" + numVisibleChildren + ")");
             }
 
             @Override
@@ -408,8 +409,20 @@ public class FileSize implements AutopsyVisitableItem {
                     default:
                         throw new IllegalArgumentException("Unsupported filter type to get files by size: " + filter); //NON-NLS
                 }
-                // ignore unalloc block files
-                query = query + " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+                
+                // Ignore unallocated block files.
+                query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS.getFileType() + ")"; //NON-NLS
+                
+                // Hide known files if indicated in the user preferences.
+                if(UserPreferences.hideKnownFilesInViewsTree()) {
+                    query += " AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue() //NON-NLS
+                            + " OR known IS NULL)"; //NON-NLS
+                }
+                
+                // Hide slack files if indicated in the user preferences.
+                if(UserPreferences.hideSlackFilesInViewsTree()) {
+                    query += " AND (type != " + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.getFileType() + ")"; //NON-NLS
+                }
 
                 return query;
             }

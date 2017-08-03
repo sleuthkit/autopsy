@@ -90,8 +90,13 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                 + TskData.TSK_DB_FILES_TYPE_ENUM.DERIVED.ordinal() + ","
                 + TskData.TSK_DB_FILES_TYPE_ENUM.LOCAL.ordinal()
                 + ((UserPreferences.hideSlackFilesInViewsTree()) ? ""
-                : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
-                + "))" + " GROUP BY mime_type";
+                    : ("," + TskData.TSK_DB_FILES_TYPE_ENUM.SLACK.ordinal()))
+                + "))"
+                + ((UserPreferences.hideKnownFilesInViewsTree()) ?
+                    (" AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue()
+                        + " OR known IS NULL)")
+                    : "")
+                + " GROUP BY mime_type";
         synchronized (existingMimeTypeCounts) {
             existingMimeTypeCounts.clear();
 
