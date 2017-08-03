@@ -108,16 +108,5 @@ final class AutoIngestCaseManager {
          * Open the case.
          */
         Case.openAsCurrentCase(caseMetadataFilePath.toString());
-
-        /**
-         * Disable the add data source action in auto ingest examiner mode. This
-         * has to be done here because Case.open() calls Case.doCaseChange() and
-         * the latter method enables the action. Since Case.doCaseChange()
-         * enables the menus on EDT by calling SwingUtilities.invokeLater(), we
-         * have to do the same thing here to maintain the order of execution.
-         */
-        SwingUtilities.invokeLater(() -> {
-            CallableSystemAction.get(AddImageAction.class).setEnabled(false);
-        });
     }
 }
