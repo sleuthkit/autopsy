@@ -63,15 +63,11 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
         String name = ld.getName();
 
-        //set icon for name, special case for some built-ins
-        if (name.equals(VirtualDirectory.NAME_UNALLOC)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png"); //NON-NLS
-        } else if (ld.isDataSource()) {
+        //set icon for name, special case for logical file set
+        if (ld.isDataSource()) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
-        } else if (name.equals(VirtualDirectory.NAME_CARVED)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //TODO NON-NLS
         } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-virtual.png"); //TODO NON-NLS
         }
 
     }
