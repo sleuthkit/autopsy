@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  * 
- * Copyright 2013-2017 Basis Technology Corp.
+ * Copyright 2013-2015 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,6 @@ import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -428,14 +427,8 @@ public class DeletedContent implements AutopsyVisitableItem {
                         logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: {0}", filter); //NON-NLS
 
                 }
-                
-                if(UserPreferences.hideKnownFilesInViewsTree()) {
-                    query += " AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue() //NON-NLS
-                            + " OR known IS NULL)"; //NON-NLS
-                }
 
                 query += " LIMIT " + MAX_OBJECTS; //NON-NLS
-                
                 return query;
             }
 
