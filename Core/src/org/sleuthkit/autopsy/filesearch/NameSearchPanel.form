@@ -109,9 +109,6 @@
           <ResourceString bundle="org/sleuthkit/autopsy/filesearch/Bundle.properties" key="NameSearchPanel.searchTextField.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
         </Property>
       </Properties>
-      <Events>
-        <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="searchTextFieldMouseClicked"/>
-      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="noteNameLabel">
       <Properties>
