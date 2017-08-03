@@ -49,6 +49,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     private static final Logger LOGGER = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
+    @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
+    private static final String NO_DESCR = Bundle.AbstractAbstractFileNode_addFileProperty_desc();
+
     /**
      * @param abstractFile file to encapsulate
      */
@@ -126,8 +129,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         this.setSheet(createSheet());
     }
 
-    //JMTODO: what the below comment mean?
-    // Note: this order matters for the search result, changed it if the order of property headers on the "KeywordSearchNode"changed
     public static enum AbstractFilePropertyType {
 
         NAME {
@@ -139,8 +140,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         EXTENSION {
             @Override
             public String toString() {
-                return "Extension";
-//                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.nameColLbl");
+                return NbBundle.getMessage(this.getClass(), "AbstractAbstractFileNode.extensionColLbl");
             }
         },
         LOCATION {
@@ -283,7 +283,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             LOGGER.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
         }
 
-        map.put(AbstractFilePropertyType.NAME.toString(), AbstractAbstractFileNode.getContentDisplayName(content));
+        map.put(AbstractFilePropertyType.NAME.toString(), getContentDisplayName(content));
         map.put(AbstractFilePropertyType.EXTENSION.toString(), content.getNameExtension());
         map.put(AbstractFilePropertyType.LOCATION.toString(), path);
         map.put(AbstractFilePropertyType.MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
@@ -297,14 +297,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.USER_ID.toString(), content.getUid());
         map.put(AbstractFilePropertyType.GROUP_ID.toString(), content.getGid());
         map.put(AbstractFilePropertyType.META_ADDR.toString(), content.getMetaAddr());
-        map.put(AbstractFilePropertyType.ATTR_ADDR.toString(), Long.toString(content.getAttrType().getValue()) + "-" + content.getAttributeId());
+        map.put(AbstractFilePropertyType.ATTR_ADDR.toString(), content.getAttrType().getValue() + "-" + content.getAttributeId());
         map.put(AbstractFilePropertyType.TYPE_DIR.toString(), content.getDirType().getLabel());
         map.put(AbstractFilePropertyType.TYPE_META.toString(), content.getMetaType().toString());
         map.put(AbstractFilePropertyType.KNOWN.toString(), content.getKnown().getName());
         map.put(AbstractFilePropertyType.HASHSETS.toString(), getHashSetHitsForFile(content));
-        map.put(AbstractFilePropertyType.MD5HASH.toString(), content.getMd5Hash() == null ? "" : content.getMd5Hash());
+        map.put(AbstractFilePropertyType.MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
         map.put(AbstractFilePropertyType.ObjectID.toString(), content.getId());
-        map.put(AbstractFilePropertyType.MIMETYPE.toString(), content.getMIMEType() == null ? "" : content.getMIMEType());
+        map.put(AbstractFilePropertyType.MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
     }
 
     /**
@@ -315,7 +315,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *           Sheet.get(Sheet.PROPERTIES)
      */
     protected void addTagProperty(Sheet.Set ss) {
-        final String NO_DESCR = NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.desc");
         List<ContentTag> tags;
         try {
             tags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
