@@ -214,7 +214,7 @@ public class SolrSearchService implements KeywordSearchService, AutopsyService {
         "SolrSearch.indentifyingIndex.msg=Identifying text index to use",
         "SolrSearch.openCore.msg=Opening text index",
         "SolrSearch.openLargeCore.msg=Opening text index. This may take several minutes.",
-        "SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is really large and may take long time to load.",
+        "SolrSearch.openGiantCore.msg=Opening text index. Text index for this case is very large and may take long time to load.",
         "SolrSearch.complete.msg=Text index successfully opened"})
     public void openCaseResources(CaseContext context) throws AutopsyServiceException {
         if (context.cancelRequested()) {
