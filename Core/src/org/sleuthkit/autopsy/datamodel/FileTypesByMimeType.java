@@ -149,9 +149,10 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         this.typesRoot = typesRoot;
         this.pcl = (PropertyChangeEvent evt) -> {
             String eventType = evt.getPropertyName();
-            if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())) {
-
+            if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                    || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                    || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
                 /**
                  * Checking for a current case is a stop gap measure until a
                  * different way of handling the closing of cases is worked out.
@@ -160,7 +161,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
                  */
                 try {
                     Case.getCurrentCase();
-                    typesRoot.updateShowCounts(); 
+                    typesRoot.updateShowCounts();
                     populateHashMap();
                 } catch (IllegalStateException notUsed) {
                     /**
@@ -285,9 +286,9 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         @NbBundle.Messages({"FileTypesByMimeTypeNode.createSheet.mediaType.name=Type",
             "FileTypesByMimeTypeNode.createSheet.mediaType.displayName=Type",
             "FileTypesByMimeTypeNode.createSheet.mediaType.desc=no description"})
-                
+
         MediaTypeNode(String name) {
-            super(Children.create(new MediaTypeNodeChildren(name), true), Lookups.singleton(name)); 
+            super(Children.create(new MediaTypeNodeChildren(name), true), Lookups.singleton(name));
             setName(name);
             setDisplayName(name);
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file_types.png");
@@ -360,6 +361,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      * media subtype is the portion of the MIME type following the /.
      */
     class MediaSubTypeNode extends FileTypes.BGCountUpdatingNode {
+
         @NbBundle.Messages({"FileTypesByMimeTypeNode.createSheet.mediaSubtype.name=Subtype",
             "FileTypesByMimeTypeNode.createSheet.mediaSubtype.displayName=Subtype",
             "FileTypesByMimeTypeNode.createSheet.mediaSubtype.desc=no description"})
@@ -392,7 +394,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
         public <T> T accept(DisplayableItemNodeVisitor< T> v) {
             return v.visit(this);
         }
-                @Override
+
+        @Override
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
