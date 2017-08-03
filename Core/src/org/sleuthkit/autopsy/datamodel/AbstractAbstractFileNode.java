@@ -47,27 +47,23 @@ import org.sleuthkit.datamodel.TskCoreException;
  */
 public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends AbstractContentNode<T> {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractAbstractFileNode.class.getName());
+    private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
     @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
     private static final String NO_DESCR = Bundle.AbstractAbstractFileNode_addFileProperty_desc();
 
     /**
-     * @param abstractFile file to encapsulate
+     * @param abstractFile file to wrap
      */
     AbstractAbstractFileNode(T abstractFile) {
         super(abstractFile);
-        String name = abstractFile.getName();
-        int dotIndex = name.lastIndexOf(".");
-        if (dotIndex > 0) {
-            String ext = name.substring(dotIndex).toLowerCase();
-
+        String ext = abstractFile.getNameExtension();
+        if (StringUtils.isNotBlank(ext)) {
+            ext = "." + ext;
             // If this is an archive file we will listen for ingest events
             // that will notify us when new content has been identified.
-            for (String s : FileTypeExtensions.getArchiveExtensions()) {
-                if (ext.equals(s)) {
-                    IngestManager.getInstance().addIngestModuleEventListener(pcl);
-                }
+            if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
+                IngestManager.getInstance().addIngestModuleEventListener(pcl);
             }
         }
         // Listen for case events so that we can detect when case is closed
@@ -280,7 +276,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         try {
             path = content.getUniquePath();
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
+            logger.log(Level.SEVERE, "Except while calling Content.getUniquePath() on {0}", content); //NON-NLS
         }
 
         map.put(AbstractFilePropertyType.NAME.toString(), getContentDisplayName(content));
@@ -320,10 +316,10 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             tags = Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content);
         } catch (TskCoreException ex) {
             tags = new ArrayList<>();
-            LOGGER.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
+            logger.log(Level.SEVERE, "Failed to get tags for content " + content.getName(), ex);
         }
         ss.put(new NodeProperty<>("Tags", NbBundle.getMessage(AbstractAbstractFileNode.class, "AbstractAbstractFileNode.addFileProperty.tags.displayName"),
-                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).collect(Collectors.joining(", "))));
+                NO_DESCR, tags.stream().map(t -> t.getName().getDisplayName()).distinct().collect(Collectors.joining(", "))));
     }
 
     static String getContentDisplayName(AbstractFile file) {
@@ -339,12 +335,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     }
 
-    @SuppressWarnings("deprecation")
     private static String getHashSetHitsForFile(AbstractFile content) {
         try {
             return StringUtils.join(content.getHashSetNames(), ", ");
         } catch (TskCoreException tskCoreException) {
-            LOGGER.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
+            logger.log(Level.WARNING, "Error getting hashset hits: ", tskCoreException); //NON-NLS
             return "";
         }
     }
