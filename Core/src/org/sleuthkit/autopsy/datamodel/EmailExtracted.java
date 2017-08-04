@@ -428,7 +428,7 @@ public class EmailExtracted implements AutopsyVisitableItem {
 
         @Override
         public boolean isLeafTypeNode() {
-            return true;
+            return false;
         }
 
         @Override
