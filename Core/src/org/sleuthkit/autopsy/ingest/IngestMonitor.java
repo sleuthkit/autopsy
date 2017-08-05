@@ -36,7 +36,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 /**
  * Monitors disk space and memory and cancels ingest if disk space runs low.
  * <p>
- * Note: This should be a singleton and currrently is used as such, with the
+ * Note: This should be a singleton and currently is used as such, with the
  * only instance residing in the IngestManager class.
  */
 public final class IngestMonitor {
@@ -191,6 +191,7 @@ public final class IngestMonitor {
             }
 
             logMemoryUsage();
+            logDiskSpaceUsage();
 
             if (!enoughDiskSpace()) {
                 /*
@@ -211,6 +212,14 @@ public final class IngestMonitor {
          */
         private void logMemoryUsage() {
             MONITOR_LOGGER.log(Level.INFO, PlatformUtil.getAllMemUsageInfo());
+        }
+        
+        /**
+         * Writes current disk space usage of the drive where case dir resides to log.
+         */        
+        private void logDiskSpaceUsage() {
+            final long freeSpace = root.getFreeSpace();
+            logger.log(Level.INFO, "Available disk space on drive where case dir resides is {0} (bytes)", freeSpace);  //NON-NLS
         }
 
         /**
@@ -242,18 +251,20 @@ public final class IngestMonitor {
          * @return free space in bytes
          */
         private long getFreeSpace() throws SecurityException {
+            // always return "UNKNOWN", see note below
+            return DISK_FREE_SPACE_UNKNOWN;
+            
+            /* NOTE: use and accuracy of this code for network drives needs to be investigated and validated
             final long freeSpace = root.getFreeSpace();
             if (0 == freeSpace) {
-                /*
-                 * Check for a network drive, some network filesystems always
-                 * return zero.
-                 */
+                // Check for a network drive, some network filesystems always
+                // return zero.
                 final String monitoredPath = root.getAbsolutePath();
                 if (monitoredPath.startsWith("\\\\") || monitoredPath.startsWith("//")) {
                     return DISK_FREE_SPACE_UNKNOWN;
                 }
             }
-            return freeSpace;
+            return freeSpace;*/
         }
     }
 

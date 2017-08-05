@@ -74,6 +74,7 @@ public final class FileTypes implements AutopsyVisitableItem {
 
     FileTypes(SleuthkitCase skCase) {
         this.skCase = skCase;
+        updateShowCounts();
     }
 
     @Override
