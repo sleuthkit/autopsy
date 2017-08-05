@@ -47,6 +47,7 @@ import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskDataException;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.CarvingResult;
 import org.sleuthkit.datamodel.TskData;
 
@@ -297,7 +298,7 @@ public class FileManager implements Closeable {
      * @param atime           The accessed time of the file.
      * @param mtime           The modified time of the file.
      * @param isFile          True if a file, false if a directory.
-     * @param parentFile      The parent file from which the file was derived.
+     * @param parentObj       The parent object from which the file was derived.     
      * @param rederiveDetails The details needed to re-derive file (will be
      *                        specific to the derivation method), currently
      *                        unused.
@@ -319,7 +320,7 @@ public class FileManager implements Closeable {
             long size,
             long ctime, long crtime, long atime, long mtime,
             boolean isFile,
-            AbstractFile parentFile,
+            Content parentObj,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails,
             TskData.EncodingType encodingType) throws TskCoreException {
         if (null == caseDb) {
@@ -327,7 +328,7 @@ public class FileManager implements Closeable {
         }
         return caseDb.addDerivedFile(fileName, localPath, size,
                 ctime, crtime, atime, mtime,
-                isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
+                isFile, parentObj, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
     }
 
     /**

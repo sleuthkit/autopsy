@@ -295,11 +295,15 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      */
     private void processEmails(List<EmailMessage> emails, AbstractFile abstractFile) {
         List<AbstractFile> derivedFiles = new ArrayList<>();
+        
+       
+        
         for (EmailMessage email : emails) {
-            if (email.hasAttachment()) {
-                derivedFiles.addAll(handleAttachments(email.getAttachments(), abstractFile));
+            BlackboardArtifact msgArtifact = addArtifact(email, abstractFile);
+             
+            if ((msgArtifact != null) && (email.hasAttachment()))  {
+                derivedFiles.addAll(handleAttachments(email.getAttachments(), abstractFile, msgArtifact ));
             }
-            addArtifact(email, abstractFile);
         }
 
         if (derivedFiles.isEmpty() == false) {
@@ -320,7 +324,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      *
      * @return
      */
-    private List<AbstractFile> handleAttachments(List<EmailMessage.Attachment> attachments, AbstractFile abstractFile) {
+    private List<AbstractFile> handleAttachments(List<EmailMessage.Attachment> attachments, AbstractFile abstractFile, BlackboardArtifact messageArtifact) {
         List<AbstractFile> files = new ArrayList<>();
         for (EmailMessage.Attachment attach : attachments) {
             String filename = attach.getName();
@@ -334,7 +338,7 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
             try {
                 DerivedFile df = fileManager.addDerivedFile(filename, relPath,
-                        size, cTime, crTime, aTime, mTime, true, abstractFile, "",
+                        size, cTime, crTime, aTime, mTime, true, messageArtifact, "",
                         EmailParserModuleFactory.getModuleName(), EmailParserModuleFactory.getModuleVersion(), "", encodingType);
                 files.add(df);
             } catch (TskCoreException ex) {
@@ -356,7 +360,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
      * @param abstractFile
      */
     @Messages({"ThunderbirdMboxFileIngestModule.addArtifact.indexError.message=Failed to index email message detected artifact for keyword search."})
-    private void addArtifact(EmailMessage email, AbstractFile abstractFile) {
+    private BlackboardArtifact addArtifact(EmailMessage email, AbstractFile abstractFile) {
+        BlackboardArtifact bbart = null;
         List<BlackboardAttribute> bbattributes = new ArrayList<>();
         String to = email.getRecipients();
         String cc = email.getCc();
@@ -414,12 +419,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         if (rtf.isEmpty() == false) {
             bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF, EmailParserModuleFactory.getModuleName(), rtf));
         }
-      
-       
-        
 
         try {
-            BlackboardArtifact bbart;
+            
             bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
             bbart.addAttributes(bbattributes);
 
@@ -433,6 +435,8 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         } catch (TskCoreException ex) {
             logger.log(Level.WARNING, null, ex);
         }
+
+        return bbart;
     }
 
     void postErrorMessage(String subj, String details) {

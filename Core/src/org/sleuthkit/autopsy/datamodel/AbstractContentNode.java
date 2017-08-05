@@ -21,8 +21,8 @@ package org.sleuthkit.autopsy.datamodel;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -48,13 +48,23 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      * @param content Underlying Content instances
      */
     AbstractContentNode(T content) {
-        //TODO consider child factory for the content children
-        super(new ContentChildren(content), Lookups.singleton(content));
+        this(content, Lookups.singleton(content) );
+    }
+
+    /**
+     * Handles aspects that depend on the Content object
+     *
+     * @param content Underlying Content instances
+     * @param lookup   The Lookup object for the node.
+     */
+    AbstractContentNode(T content, Lookup lookup) {
+         //TODO consider child factory for the content children
+        super(new ContentChildren(content), lookup);
         this.content = content;
         //super.setName(ContentUtils.getSystemName(content));
         super.setName("content_" + Long.toString(content.getId())); //NON-NLS
     }
-
+    
     /**
      * Return the content data associated with this node
      *
@@ -66,8 +76,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
 
     @Override
     public void setName(String name) {
-        throw new UnsupportedOperationException(
-                NbBundle.getMessage(this.getClass(), "AbstractContentNode.exception.cannotChangeSysName.msg"));
+        super.setName(name);
     }
 
     @Override

@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyVetoException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -43,6 +44,7 @@ import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.AbstractFilePropertyType;
 import org.sleuthkit.autopsy.datamodel.AbstractFsContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
@@ -73,6 +75,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 import static org.sleuthkit.autopsy.directorytree.Bundle.*;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * A node used to wrap another node before passing it to the result viewers. The
@@ -213,6 +217,26 @@ public class DataResultFilterNode extends FilterNode {
     }
 
     /**
+     * Gets the display name for the wrapped node.
+     * 
+     * OutlineView used in the DataResult table uses getDisplayName() to populate
+     * the first column, which is Source File.
+     * 
+     * Hence this override to return the 'correct' displayName for the wrapped node.
+     *
+     * @return The display name for the node.
+     */
+    @Override
+    public String getDisplayName() {
+        final Node orig = getOriginal();
+        String name = orig.getDisplayName();
+        if ((orig instanceof BlackboardArtifactNode)) {
+            name = ((BlackboardArtifactNode) orig).getSrcName();
+        }
+        return name;
+    }
+    
+    /**
      * Adds information about which child node of this node, if any, should be
      * selected. Can be null.
      *
@@ -250,16 +274,20 @@ public class DataResultFilterNode extends FilterNode {
 
         private boolean filterKnown;
         private boolean filterSlack;
+        private boolean filterArtifacts;    // display message artifacts in the DataSource subtree
 
         /**
          * the constructor
          */
         private DataResultFilterChildren(Node arg, ExplorerManager sourceEm) {
             super(arg);
+            
+            this.filterArtifacts = false;
             switch (SelectionContext.getSelectionContext(arg)) {
                 case DATA_SOURCES:
                     filterSlack = filterSlackFromDataSources;
                     filterKnown = filterKnownFromDataSources;
+                    filterArtifacts = true;                    
                     break;
                 case VIEWS:
                     filterSlack = filterSlackFromViews;
@@ -293,6 +321,16 @@ public class DataResultFilterNode extends FilterNode {
                     return new Node[]{};
                 }
             }
+            
+            // filter out all non-message artifacts, if displaying the results from the Data Source tree
+            BlackboardArtifact art = key.getLookup().lookup(BlackboardArtifact.class);
+            if (art != null && filterArtifacts)  {
+                if ( (art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) &&             
+                    (art.getArtifactTypeID() != BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) ) {
+                   return new Node[]{};
+                }
+             }
+             
             return new Node[]{new DataResultFilterNode(key, sourceEm, filterKnown, filterSlack)};
         }
     }
@@ -463,8 +501,20 @@ public class DataResultFilterNode extends FilterNode {
 
         @Override
         public AbstractAction visit(BlackboardArtifactNode ban) {
-            return new ViewContextAction(
-                    NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInDir.text"), ban);
+            BlackboardArtifact artifact = ban.getArtifact();
+                try {
+                    if ( (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) ||             
+                         (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_MESSAGE.getTypeID()) ) {
+                        if (artifact.hasChildren()) {
+                            return openChild(ban);
+                        }
+                    }
+                }
+                catch (TskCoreException ex) {
+                    LOGGER.log(Level.SEVERE, MessageFormat.format("Error getting children from blackboard artifact{0}.", artifact.getArtifactID()), ex); //NON-NLS
+                }
+                return new ViewContextAction(
+                        NbBundle.getMessage(this.getClass(), "DataResultFilterNode.action.viewInDir.text"), ban);
         }
 
         @Override
