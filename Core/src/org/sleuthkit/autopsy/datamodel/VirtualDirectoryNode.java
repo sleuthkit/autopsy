@@ -133,7 +133,7 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
 
         if (!this.content.isDataSource()) {
             Map<String, Object> map = new LinkedHashMap<>();
-            fillPropertyMap(map, content);
+            fillPropertyMap(map);
 
             final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
             for (Map.Entry<String, Object> entry : map.entrySet()) {

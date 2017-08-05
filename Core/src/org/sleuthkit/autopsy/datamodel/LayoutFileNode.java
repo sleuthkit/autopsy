@@ -79,7 +79,7 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         }
 
         Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, content);
+        fillPropertyMap(map);
 
         ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "LayoutFileNode.createSheet.name.displayName"),
@@ -137,8 +137,9 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         return actionsList.toArray(new Action[0]);
     }
 
-    private static void fillPropertyMap(Map<String, Object> map, LayoutFile content) {
-        AbstractAbstractFileNode.fillPropertyMap(map, content);
+    @Override
+      void fillPropertyMap(Map<String, Object> map) {
+        super.fillPropertyMap(map);
         map.put(LayoutContentPropertyType.PARTS.toString(), content.getNumParts());
     }
 

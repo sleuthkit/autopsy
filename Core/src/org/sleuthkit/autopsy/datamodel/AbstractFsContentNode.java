@@ -69,14 +69,11 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
             s.put(ss);
         }
 
-        Map<String, Object> map = new LinkedHashMap<String, Object>();
-        AbstractAbstractFileNode.fillPropertyMap(map, content);
+        Map<String, Object> map = new LinkedHashMap<>();
+        fillPropertyMap(map);
 
-        AbstractFilePropertyType[] fsTypes = AbstractFilePropertyType.values();
-        final int FS_PROPS_LEN = fsTypes.length;
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "AbstractFsContentNode.noDesc.text");
-        for (int i = 0; i < FS_PROPS_LEN; ++i) {
-            final AbstractFilePropertyType propType = AbstractFilePropertyType.values()[i];
+        for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
             final String propString = propType.toString();
             ss.put(new NodeProperty<>(propString, propString, NO_DESCR, map.get(propString)));
         }

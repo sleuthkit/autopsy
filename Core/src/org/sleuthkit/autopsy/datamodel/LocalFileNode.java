@@ -71,7 +71,7 @@ public class LocalFileNode extends AbstractAbstractFileNode<AbstractFile> {
         }
 
         Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, content);
+        fillPropertyMap(map);
 
         ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.name"),
                 NbBundle.getMessage(this.getClass(), "LocalFileNode.createSheet.name.displayName"),

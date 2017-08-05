@@ -57,6 +57,7 @@ import org.sleuthkit.autopsy.datamodel.NodeSelectionInfo;
 import org.sleuthkit.autopsy.datamodel.Reports;
 import org.sleuthkit.autopsy.datamodel.SlackFileNode;
 import org.sleuthkit.autopsy.datamodel.VirtualDirectoryNode;
+import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -70,7 +71,6 @@ import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 import org.sleuthkit.datamodel.VirtualDirectory;
-import static org.sleuthkit.autopsy.directorytree.Bundle.*;
 
 /**
  * A node used to wrap another node before passing it to the result viewers. The
