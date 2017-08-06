@@ -280,7 +280,6 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
 
         map.put(AbstractFilePropertyType.NAME.toString(), getContentDisplayName(content));
-        map.put(AbstractFilePropertyType.EXTENSION.toString(), content.getNameExtension());
         map.put(AbstractFilePropertyType.LOCATION.toString(), path);
         map.put(AbstractFilePropertyType.MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));
         map.put(AbstractFilePropertyType.CHANGED_TIME.toString(), ContentUtils.getStringTime(content.getCtime(), content));
@@ -301,6 +300,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(AbstractFilePropertyType.MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
         map.put(AbstractFilePropertyType.ObjectID.toString(), content.getId());
         map.put(AbstractFilePropertyType.MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
+        map.put(AbstractFilePropertyType.EXTENSION.toString(), content.getNameExtension());
     }
 
     /**
