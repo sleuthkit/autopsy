@@ -63,7 +63,7 @@ public final class AutoIngestCasePanel extends JPanel {
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
     private static final int MILLIS_TO_WAIT_BEFORE_STARTING = 500;
-    private static final int MILLIS_TO_WAIT_BETWEEN_UPDATES = 30000;
+    private static final int MILLIS_TO_WAIT_BETWEEN_UPDATES = 300000;
     private ScheduledThreadPoolExecutor casesTableRefreshExecutor;
 
     /*
