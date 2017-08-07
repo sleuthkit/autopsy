@@ -25,14 +25,17 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
+import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
@@ -77,7 +80,7 @@ class DirectoryTreeFilterNode extends FilterNode {
         String name = orig.getDisplayName();
         if (orig instanceof AbstractContentNode) {
             AbstractFile file = getLookup().lookup(AbstractFile.class);
-            if (file != null) {
+            if ((file != null) && (false ==  (orig instanceof BlackboardArtifactNode)) ){
                 try {
                     int numVisibleChildren = getVisibleChildCount(file);
 
@@ -90,6 +93,15 @@ class DirectoryTreeFilterNode extends FilterNode {
 
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
+                }
+            }
+            else if (orig instanceof BlackboardArtifactNode) {
+                BlackboardArtifact artifact = ((BlackboardArtifactNode) orig).getArtifact();           
+                try {
+                    int numAttachments = artifact.getChildrenCount();
+                    name = name + " \u200E(\u200E" + numAttachments + ")\u200E";  //NON-NLS
+                } catch (TskCoreException ex) {
+                   logger.log(Level.SEVERE, "Error getting chidlren count for atifact: " + artifact, ex); //NON-NLS
                 }
             }
         }
@@ -115,13 +127,17 @@ class DirectoryTreeFilterNode extends FilterNode {
         if (purgeKnownFiles || purgeSlackFiles) {
             // Purge known and/or slack files from the file count
             for (int i = 0; i < childList.size(); i++) {
-                AbstractFile childFile = (AbstractFile) childList.get(i);
-                if ((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
-                        || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
-                    numVisibleChildren--;
+                Content child = childList.get(i);
+                if (child instanceof AbstractFile) {
+                    AbstractFile childFile = (AbstractFile) child;
+                    if ((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
+                            || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                        numVisibleChildren--;
+                    }
                 }
             }
         }
+        
 
         return numVisibleChildren;
     }

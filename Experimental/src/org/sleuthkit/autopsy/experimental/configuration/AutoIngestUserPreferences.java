@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -44,6 +44,7 @@ public final class AutoIngestUserPreferences {
     private static final String SLEEP_BETWEEN_CASES_TIME = "SleepBetweenCasesTime"; // NON-NLS
     private static final String SHOW_TOOLS_WARNING = "ShowToolsWarning"; // NON-NLS
     private static final String MAX_NUM_TIMES_TO_PROCESS_IMAGE = "MaxNumTimesToAttemptToProcessImage"; // NON-NLS
+    private static final int DEFAULT_MAX_TIMES_TO_PROCESS_IMAGE = 0;
     private static final String MAX_CONCURRENT_NODES_FOR_ONE_CASE = "MaxConcurrentNodesForOneCase"; // NON-NLS
     private static final String STATUS_DATABASE_LOGGING_ENABLED = "StatusDatabaseLoggingEnabled"; // NON-NLS
     private static final String LOGGING_DB_HOSTNAME_OR_IP = "LoggingHostnameOrIP"; // NON-NLS
@@ -246,13 +247,13 @@ public final class AutoIngestUserPreferences {
      * is used to avoid endless attempts to process an image folder with corrupt
      * data that causes a crash.
      *
-     * @return int maximum number of attempts, default is 2.
+     * @return int maximum number of attempts, default is 0.
      */
     public static int getMaxNumTimesToProcessImage() {
         if (ModuleSettings.settingExists(UserPreferences.SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE)) {
             return Integer.parseInt(ModuleSettings.getConfigSetting(UserPreferences.SETTINGS_PROPERTIES, MAX_NUM_TIMES_TO_PROCESS_IMAGE));
         }
-        return 2;
+        return DEFAULT_MAX_TIMES_TO_PROCESS_IMAGE;
     }
 
     /**
