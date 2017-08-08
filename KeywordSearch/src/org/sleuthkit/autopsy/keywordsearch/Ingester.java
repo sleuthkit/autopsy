@@ -35,6 +35,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitItemVisitor;
@@ -206,7 +207,6 @@ class Ingester {
             // but does this really mean we don't want to index it?
 
             //skip the file, image id unknown
-            //JMTODO: does this need to ne internationalized?
             String msg = NbBundle.getMessage(Ingester.class,
                     "Ingester.ingest.exception.unknownImgId.msg", sourceName); //JMTODO: does this need to ne internationalized?
             logger.log(Level.SEVERE, msg);
@@ -273,6 +273,11 @@ class Ingester {
             return getCommonAndMACTimeFields(d);
         }
 
+        @Override
+        public Map<String, String> visit(LocalDirectory ld){
+            return getCommonAndMACTimeFields(ld);
+        }
+        
         @Override
         public Map<String, String> visit(LayoutFile lf) {
             // layout files do not have times
