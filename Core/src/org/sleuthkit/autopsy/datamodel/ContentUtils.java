@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskException;
@@ -376,6 +377,11 @@ public final class ContentUtils {
 
         @Override
         public Void visit(VirtualDirectory dir) {
+            return visitDir(dir);
+        }
+        
+        @Override
+        public Void visit(LocalDirectory dir) {
             return visitDir(dir);
         }
 

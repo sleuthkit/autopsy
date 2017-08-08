@@ -1,0 +1,82 @@
+/*
+ * Autopsy Forensic Browser
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.sleuthkit.autopsy.datamodel;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.swing.Action;
+import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
+import org.sleuthkit.autopsy.directorytree.ExtractAction;
+import org.sleuthkit.autopsy.directorytree.FileSearchAction;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
+import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
+import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SpecialDirectory;
+
+/**
+ * Parent class for special directory types (Local and Virtual)
+ */
+public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<SpecialDirectory> {
+
+    public SpecialDirectoryNode(SpecialDirectory sd) {
+        super(sd);
+    }
+        
+    /**
+     * Right click action for this node
+     *
+     * @param popup
+     *
+     * @return
+     */
+    @Override
+    @NbBundle.Messages({"SpecialDirectoryNode.action.runIngestMods.text=Run Ingest Modules",
+        "SpecialDirectoryNode.getActions.viewInNewWin.text=View in New Window"
+    })
+    public Action[] getActions(boolean popup) {
+        List<Action> actions = new ArrayList<>();
+        for (Action a : super.getActions(true)) {
+            actions.add(a);
+        }
+
+        actions.add(new NewWindowViewAction(
+                Bundle.SpecialDirectoryNode_action_runIngestMods_text(), this));
+        actions.add(null); // creates a menu separator
+        actions.add(ExtractAction.getInstance());
+        actions.add(null); // creates a menu separator
+        actions.add(new FileSearchAction(
+                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
+        actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
+        actions.addAll(ContextMenuExtensionPoint.getActions());
+        return actions.toArray(new Action[0]);
+    }
+
+    @Override
+    public boolean isLeafTypeNode() {
+        return false;
+    }
+
+    @Override
+    public String getItemType() {
+        // use content.isDataSource if different column settings are desired
+        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
+    }
+}

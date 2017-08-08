@@ -20,91 +20,48 @@ package org.sleuthkit.autopsy.datamodel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSearchAction;
-import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
-import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
-import org.sleuthkit.datamodel.Content;
+import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.fillPropertyMap;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
-import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
- * Node for layout dir
+ * Node for a virtual directory
  */
-public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirectory> {
+public class VirtualDirectoryNode extends SpecialDirectoryNode {
 
     private static final Logger logger = Logger.getLogger(VirtualDirectoryNode.class.getName());
     //prefix for special VirtualDirectory root nodes grouping local files
     public final static String LOGICAL_FILE_SET_PREFIX = "LogicalFileSet"; //NON-NLS
 
-    public static String nameForLayoutFile(VirtualDirectory ld) {
+    public static String nameForVirtualDirectory(VirtualDirectory ld) {
         return ld.getName();
     }
 
     public VirtualDirectoryNode(VirtualDirectory ld) {
         super(ld);
 
-        this.setDisplayName(nameForLayoutFile(ld));
+        this.setDisplayName(nameForVirtualDirectory(ld));
 
         String name = ld.getName();
 
-        //set icon for name, special case for some built-ins
-        if (name.equals(VirtualDirectory.NAME_UNALLOC)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-deleted.png"); //NON-NLS
-        } else if (ld.isDataSource()) {
+        //set icon for name, special case for logical file set
+        if (ld.isDataSource()) {
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/fileset-icon-16.png"); //NON-NLS
-        } else if (name.equals(VirtualDirectory.NAME_CARVED)) {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //TODO NON-NLS
         } else {
-            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/Folder-icon.png"); //NON-NLS
+            this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/folder-icon-virtual.png"); //TODO NON-NLS
         }
-
     }
-
-    /**
-     * Right click action for this node
-     *
-     * @param popup
-     *
-     * @return
-     */
+    
     @Override
-    @NbBundle.Messages({"VirtualDirectoryNode.action.runIngestMods.text=Run Ingest Modules"})
-    public Action[] getActions(boolean popup) {
-        List<Action> actions = new ArrayList<>();
-        for (Action a : super.getActions(true)) {
-            actions.add(a);
-        }
-
-        actions.add(new NewWindowViewAction(
-                NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.getActions.viewInNewWin.text"), this));
-        actions.add(null); // creates a menu separator
-        actions.add(ExtractAction.getInstance());
-        actions.add(null); // creates a menu separator
-        actions.add(new FileSearchAction(
-                Bundle.ImageNode_getActions_openFileSearchByAttr_text()));
-        actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
-        actions.addAll(ContextMenuExtensionPoint.getActions());
-        return actions.toArray(new Action[0]);
-    }
-
-    @Override
-    @Messages({"VirtualDirectoryNode.createSheet.size.name=Size (Bytes)",
+    @NbBundle.Messages({"VirtualDirectoryNode.createSheet.size.name=Size (Bytes)",
         "VirtualDirectoryNode.createSheet.size.displayName=Size (Bytes)",
         "VirtualDirectoryNode.createSheet.size.desc=Size of the data source in bytes.",
         "VirtualDirectoryNode.createSheet.type.name=Type",
@@ -185,40 +142,5 @@ public class VirtualDirectoryNode extends AbstractAbstractFileNode<VirtualDirect
     @Override
     public <T> T accept(DisplayableItemNodeVisitor<T> v) {
         return v.visit(this);
-    }
-
-    @Override
-    public boolean isLeafTypeNode() {
-        return false;
-    }
-
-    /**
-     * Convert meta flag long to user-readable string / label
-     *
-     * @param metaFlag to convert
-     *
-     * @return string formatted meta flag representation
-     */
-    public static String metaFlagToString(short metaFlag) {
-
-        String result = "";
-
-        short allocFlag = TskData.TSK_FS_META_FLAG_ENUM.ALLOC.getValue();
-        short unallocFlag = TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.getValue();
-
-        if ((metaFlag & allocFlag) == allocFlag) {
-            result = TskData.TSK_FS_META_FLAG_ENUM.ALLOC.toString();
-        }
-        if ((metaFlag & unallocFlag) == unallocFlag) {
-            result = TskData.TSK_FS_META_FLAG_ENUM.UNALLOC.toString();
-        }
-
-        return result;
-    }
-
-    @Override
-    public String getItemType() {
-        // use content.isDataSource if different column settings are desired
-        return DisplayableItemNode.FILE_PARENT_NODE_KEY;
     }
 }

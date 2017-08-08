@@ -44,6 +44,7 @@ import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -202,6 +203,38 @@ public class DataModelActionsFactory {
         List<Action> actionsList = new ArrayList<>();
         actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), directory));
         VirtualDirectoryNode directoryNode = new VirtualDirectoryNode(directory);
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, directoryNode));
+        actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(ExtractAction.getInstance());
+        actionsList.add(null); // creates a menu separator
+        actionsList.add(AddContentTagAction.getInstance());
+        if (isArtifactSource) {
+            actionsList.add(AddBlackboardArtifactTagAction.getInstance());
+        }
+        
+        final Collection<AbstractFile> selectedFilesList =
+                new HashSet<>(Utilities.actionsGlobalContext().lookupAll(AbstractFile.class));
+        if(selectedFilesList.size() == 1) {
+            actionsList.add(DeleteFileContentTagAction.getInstance());
+        }
+        if(isArtifactSource) {
+            final Collection<BlackboardArtifact> selectedArtifactsList =
+                    new HashSet<>(Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class));
+            if(selectedArtifactsList.size() == 1) {
+                actionsList.add(DeleteFileBlackboardArtifactTagAction.getInstance());
+            }
+        }
+        
+        actionsList.addAll(ContextMenuExtensionPoint.getActions());
+        return actionsList;
+    }
+    
+    public static List<Action> getActions(LocalDirectory directory, boolean isArtifactSource) {
+        List<Action> actionsList = new ArrayList<>();
+        actionsList.add(new ViewContextAction((isArtifactSource ? VIEW_SOURCE_FILE_IN_DIR : VIEW_FILE_IN_DIR), directory));
+        LocalDirectoryNode directoryNode = new LocalDirectoryNode(directory);
         actionsList.add(null); // creates a menu separator
         actionsList.add(new NewWindowViewAction(VIEW_IN_NEW_WINDOW, directoryNode));
         actionsList.add(new ExternalViewerAction(OPEN_IN_EXTERNAL_VIEWER, directoryNode));

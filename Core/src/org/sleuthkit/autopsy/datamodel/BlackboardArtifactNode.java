@@ -25,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
 import org.openide.nodes.Children;
+import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
@@ -43,9 +45,11 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
+import static org.sleuthkit.autopsy.datamodel.DataModelActionsFactory.VIEW_IN_NEW_WINDOW;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
+import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -61,7 +65,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * Node wrapping a blackboard artifact object. This is generated from several
  * places in the tree.
  */
-public class BlackboardArtifactNode extends DisplayableItemNode {
+public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifact> {
 
     private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
 
@@ -70,8 +74,9 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
             build();
 
     private final BlackboardArtifact artifact;
-    private final Content associated;
+    private Content associated = null;
     private List<NodeProperty<? extends Object>> customProperties;
+    
     /*
      * Artifact types which should have the full unique path of the associated
      * content as a property.
@@ -130,11 +135,18 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * @param iconPath icon to use for the artifact
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact, String iconPath) {
-        super(Children.LEAF, createLookup(artifact));
+        super(artifact, createLookup(artifact));
 
         this.artifact = artifact;
-        //this.associated = getAssociatedContent(artifact);
-        this.associated = this.getLookup().lookup(Content.class);
+        
+        // Look for associated Content  i.e. the source file for the artifact
+        for (Content content : this.getLookup().lookupAll(Content.class)) {
+            if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
+                this.associated = content;
+                break;
+            }
+        }
+        
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
@@ -148,20 +160,18 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      * @param artifact artifact to encapsulate
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        super(Children.LEAF, createLookup(artifact));
-
-        this.artifact = artifact;
-        this.associated = this.getLookup().lookup(Content.class);
-        this.setName(Long.toString(artifact.getArtifactID()));
-        this.setDisplayName();
-        this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
-        Case.addPropertyChangeListener(pcl);
+        
+        this(artifact, ExtractedContent.getIconFilePath(artifact.getArtifactTypeID()));
     }
 
     private void removeListeners() {
         Case.removePropertyChangeListener(pcl);
     }
 
+    public BlackboardArtifact getArtifact() {
+        return this.artifact;
+    }
+    
     @Override
     @NbBundle.Messages({
         "BlackboardArtifactNode.getAction.errorTitle=Error getting actions",
@@ -211,10 +221,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
      */
     private void setDisplayName() {
         String displayName = ""; //NON-NLS
-        if (associated != null) {
-            displayName = associated.getName();
-        }
-
+        
         // If this is a node for a keyword hit on an artifact, we set the
         // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
@@ -238,9 +245,30 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
                 // Do nothing since the display name will be set to the file name.
             }
         }
+        
+        if (displayName.isEmpty() && artifact != null) {
+            displayName = artifact.getName();
+        }
+        
         this.setDisplayName(displayName);
+        
     }
 
+    /**
+     * Return the name of the associated source file/content 
+     * 
+     * @return source file/content name
+     */
+    public String getSrcName() {
+        
+        String srcName = "";
+        if (associated != null) {
+            srcName =  associated.getName();
+        }
+        return srcName;
+    }
+    
+    
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.artifactType.displayName=Artifact Type",
         "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
@@ -264,7 +292,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         ss.put(new NodeProperty<>(NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.name"),
                 NbBundle.getMessage(BlackboardArtifactNode.class, "BlackboardArtifactNode.createSheet.srcFile.displayName"),
                 NO_DESCR,
-                this.getDisplayName()));
+                this.getSrcName()));
         if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID()) {
             try {
                 BlackboardAttribute attribute = artifact.getAttribute(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
@@ -554,5 +582,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
     @Override
     public String getItemType() {
         return getClass().getName();
+    }
+
+    @Override
+    public <T> T accept(ContentNodeVisitor<T> v) {
+         return v.visit(this);
     }
 }

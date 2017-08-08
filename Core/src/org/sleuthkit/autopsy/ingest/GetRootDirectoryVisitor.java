@@ -21,12 +21,14 @@ package org.sleuthkit.autopsy.ingest;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
 import org.sleuthkit.datamodel.FileSystem;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
@@ -38,8 +40,16 @@ final class GetRootDirectoryVisitor extends GetFilesContentVisitor {
 
     @Override
     public Collection<AbstractFile> visit(VirtualDirectory ld) {
-        //case when we hit a layout directoryor local file container, not under a real FS
+        //case when we hit a layout directory or local file container, not under a real FS
         //or when root virt dir is scheduled
+        Collection<AbstractFile> ret = new ArrayList<>();
+        ret.add(ld);
+        return ret;
+    }
+    
+    @Override
+    public Collection<AbstractFile> visit(LocalDirectory ld) {
+        //case when we hit a local directory
         Collection<AbstractFile> ret = new ArrayList<>();
         ret.add(ld);
         return ret;
@@ -93,4 +103,8 @@ final class GetRootDirectoryVisitor extends GetFilesContentVisitor {
         return getAllFromChildren(slackFile);
     }
 
+    @Override
+    public Collection<AbstractFile> visit(BlackboardArtifact art) {
+        return getAllFromChildren(art);
+    }
 }
