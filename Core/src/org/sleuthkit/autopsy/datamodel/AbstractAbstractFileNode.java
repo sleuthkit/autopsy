@@ -51,7 +51,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     private static final Logger logger = Logger.getLogger(AbstractAbstractFileNode.class.getName());
     @NbBundle.Messages("AbstractAbstractFileNode.addFileProperty.desc=no description")
-    private static final String NO_DESCR = Bundle.AbstractAbstractFileNode_addFileProperty_desc();
+    private static final String NO_DESCR = AbstractAbstractFileNode_addFileProperty_desc();
 
     /**
      * @param abstractFile file to wrap
@@ -221,7 +221,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      */
     @NbBundle.Messages("AbstractAbstractFileNode.tagsProperty.displayName=Tags")
     protected void addTagProperty(Sheet.Set ss) {
-        List<ContentTag> tags = new ArrayList<>();;
+        List<ContentTag> tags = new ArrayList<>();
         try {
             tags.addAll(Case.getCurrentCase().getServices().getTagsManager().getContentTagsByContent(content));
         } catch (TskCoreException ex) {
