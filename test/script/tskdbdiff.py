@@ -367,25 +367,28 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
     # remove object ID
     if (files_index != -1):
         obj_id = fields_list[0]
-        path = table[int(obj_id)]
+        path = table[int(obj_id)][0]
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
     elif (path_index != -1):
         obj_id = fields_list[0]
-        objValue = table[int(obj_id)]
-        par_obj_id = objects_table[int(obj_id)]
-        par_obj_value = table[par_obj_id]
-        par_obj_name = par_obj_value[par_obj_value.rfind('/')+1:]
-        #check the par_id that we insert to the path name when we create uniqueName
-        pathValue = re.sub(par_obj_name + '_' + str(par_obj_id), par_obj_name, fields_list[1])
-                
+        objValue = table[int(obj_id)][0]
+        par_obj_id = objects_table[int(obj_id)][0]
+        if par_obj_id in table.keys():
+            par_obj_value = table[par_obj_id][0]
+            par_obj_name = par_obj_value[par_obj_value.rfind('/')+1:]
+            #check the par_id that we insert to the path name when we create uniqueName
+            pathValue = re.sub(par_obj_name + '_' + str(par_obj_id), par_obj_name, fields_list[1])
+        # type 5 in tsk_objects is artifact, type 2 in tsk_files is derived. If the obj is derived and it's parent is artifact, we will use objValue as pathValue.
+        elif objects_table[int(par_obj_id)][1] == 5 and table[int(obj_id)][1] == 2:
+            pathValue = objValue
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');') 
         return newLine
     # remove object ID
     elif (layout_index != -1):
         obj_id = fields_list[0]
-        path= table[int(obj_id)]
+        path= table[int(obj_id)][0]
         newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
@@ -404,7 +407,7 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
             return line
 
         if obj_id in table.keys():
-             path = table[obj_id]
+             path = table[obj_id][0]
         elif obj_id in vs_parts_table.keys():
              path = vs_parts_table[obj_id]
         elif obj_id in vs_info_table.keys():
@@ -413,7 +416,7 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
              path = fs_info_table[obj_id]
         
         if parent_id in table.keys():
-             parent_path = table[parent_id]
+             parent_path = table[parent_id][0]
         elif parent_id in vs_parts_table.keys():
              parent_path = vs_parts_table[parent_id]
         elif parent_id in vs_info_table.keys():
@@ -475,7 +478,7 @@ def build_id_table(artifact_cursor):
     """
     # for each row in the db, take the object id, parent path, and name, then create a tuple in the dictionary
     # with the object id as the key and the full file path (parent + name) as the value
-    mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, parent_path, name FROM tsk_files")])
+    mapping = dict([(row[0], [str(row[1]) + str(row[2]), row[3]]) for row in artifact_cursor.execute("SELECT obj_id, parent_path, name, type FROM tsk_files")])
     return mapping
 
 def build_id_vs_parts_table(artifact_cursor):
@@ -519,8 +522,8 @@ def build_id_objects_table(artifact_cursor):
         artifact_cursor: the database cursor
     """
     # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
-    # with the object id as the key and par_obj_id as the value
-    mapping = dict([(row[0], row[1]) for row in artifact_cursor.execute("SELECT obj_id, par_obj_id FROM tsk_objects")])
+    # with the object id as the key and par_obj_id, type as the value
+    mapping = dict([(row[0], [row[1], row[2]]) for row in artifact_cursor.execute("SELECT * FROM tsk_objects")])
     return mapping
 
 def main():
