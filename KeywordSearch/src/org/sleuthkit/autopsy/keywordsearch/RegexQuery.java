@@ -207,7 +207,7 @@ final class RegexQuery implements KeywordSearchQuery {
                             hitsMultiMap.put(new Keyword(hit.getHit(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), hit);
                         }
                     } catch (TskException ex) { 
-                        //
+                        LOGGER.log(Level.SEVERE, "Error creating keyword hits", ex); //NON-NLS
                     }
                 }
 
@@ -237,83 +237,93 @@ final class RegexQuery implements KeywordSearchQuery {
         final Collection<Object> content_str = solrDoc.getFieldValues(Server.Schema.CONTENT_STR.toString());
 
         final Pattern pattern = Pattern.compile(keywordString);
-        for (Object content_obj : content_str) {
-            String content = (String) content_obj;
-            Matcher hitMatcher = pattern.matcher(content);
-            int offset = 0;
+        try {
+            for (Object content_obj : content_str) {
+                String content = (String) content_obj;
+                Matcher hitMatcher = pattern.matcher(content);
+                int offset = 0;
 
-            while (hitMatcher.find(offset)) {
-                StringBuilder snippet = new StringBuilder();
+                while (hitMatcher.find(offset)) {
+                    StringBuilder snippet = new StringBuilder();
 
-                // If the location of the hit is beyond this chunk (i.e. it
-                // exists in the overlap region), we skip the hit. It will
-                // show up again as a hit in the chunk following this one.
-                if (chunkSize != null && hitMatcher.start() >= chunkSize) {
-                    break;
-                }
-
-                String hit = hitMatcher.group();
-
-                offset = hitMatcher.end();
-
-                // We attempt to reduce false positives for phone numbers and IP address hits
-                // by querying Solr for hits delimited by a set of known boundary characters.
-                // See KeywordSearchList.PHONE_NUMBER_REGEX for an example.
-                // Because of this the hits may contain an extra character at the beginning or end that
-                // needs to be chopped off, unless the user has supplied their own wildcard suffix
-                // as part of the regex.
-                if (!queryStringContainsWildcardSuffix
-                        && (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER
-                        || originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS)) {
-                    if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER) {
-                        // For phone numbers replace all non numeric characters (except "(") at the start of the hit.
-                        hit = hit.replaceAll("^[^0-9\\(]", "");
-                    } else {
-                        // Replace all non numeric characters at the start of the hit.
-                        hit = hit.replaceAll("^[^0-9]", "");
+                    // If the location of the hit is beyond this chunk (i.e. it
+                    // exists in the overlap region), we skip the hit. It will
+                    // show up again as a hit in the chunk following this one.
+                    if (chunkSize != null && hitMatcher.start() >= chunkSize) {
+                        break;
                     }
-                    // Replace all non numeric at the end of the hit.
-                    hit = hit.replaceAll("[^0-9]$", "");
-                }
 
-                if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL) {
-                    // Reduce false positives by eliminating email address hits that are either
-                    // too short or are not for valid top level domains.
-                    if (hit.length() < MIN_EMAIL_ADDR_LENGTH
-                            || !DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                        continue;
+                    String hit = hitMatcher.group();
+
+                    offset = hitMatcher.end();
+
+                    // We attempt to reduce false positives for phone numbers and IP address hits
+                    // by querying Solr for hits delimited by a set of known boundary characters.
+                    // See KeywordSearchList.PHONE_NUMBER_REGEX for an example.
+                    // Because of this the hits may contain an extra character at the beginning or end that
+                    // needs to be chopped off, unless the user has supplied their own wildcard suffix
+                    // as part of the regex.
+                    if (!queryStringContainsWildcardSuffix
+                            && (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER
+                            || originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_IP_ADDRESS)) {
+                        if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_PHONE_NUMBER) {
+                            // For phone numbers replace all non numeric characters (except "(") at the start of the hit.
+                            hit = hit.replaceAll("^[^0-9\\(]", "");
+                        } else {
+                            // Replace all non numeric characters at the start of the hit.
+                            hit = hit.replaceAll("^[^0-9]", "");
+                        }
+                        // Replace all non numeric at the end of the hit.
+                        hit = hit.replaceAll("[^0-9]$", "");
                     }
-                }
 
-                /*
-                 * If searching for credit card account numbers, do a Luhn check
-                 * on the term and discard it if it does not pass.
-                 */
-                if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
-                    Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-                    if (ccnMatcher.find()) {
-                        final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
-                        if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                    if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL) {
+                        // Reduce false positives by eliminating email address hits that are either
+                        // too short or are not for valid top level domains.
+                        if (hit.length() < MIN_EMAIL_ADDR_LENGTH
+                                || !DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
                             continue;
                         }
-                    } else {
-                        continue;
                     }
+
+                    /*
+                 * If searching for credit card account numbers, do a Luhn check
+                 * on the term and discard it if it does not pass.
+                     */
+                    if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
+                        Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
+                        if (ccnMatcher.find()) {
+                            final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
+                            if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                                continue;
+                            }
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    /**
+                     * Get the snippet from the document if keyword search is
+                     * configured to use snippets.
+                     */
+                    int maxIndex = content.length() - 1;
+                    snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
+                    snippet.appendCodePoint(171);
+                    snippet.append(hit);
+                    snippet.appendCodePoint(171);
+                    snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
+
+                    hits.add(new KeywordHit(docId, snippet.toString(), hit));
                 }
-
-                /**
-                 * Get the snippet from the document if keyword search is
-                 * configured to use snippets.
-                 */
-                int maxIndex = content.length() - 1;
-                snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
-                snippet.appendCodePoint(171);
-                snippet.append(hit);
-                snippet.appendCodePoint(171);
-                snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
-
-                hits.add(new KeywordHit(docId, snippet.toString(), hit));
             }
+        } catch (TskCoreException ex) {
+            throw ex;
+        } catch (Throwable error) {
+            /* NOTE: Matcher.find() is known to throw StackOverflowError in rare cases (see story 2700). 
+            StackOverflowError is an error, not an exception, and therefore needs to be caught 
+            as a Throwable. When this occurs we should re-throw the error as TskCoreException so that it is 
+            logged by the calling method and move on to the next Solr document. */
+            throw new TskCoreException("Failed to create keyword hits for Solr documet id " + docId + " due to " + error.getMessage());
         }
         return hits;
     }
