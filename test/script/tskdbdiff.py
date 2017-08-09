@@ -427,6 +427,8 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
 
         if path and parent_path:
              return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
+        elif  objects_table[int(par_obj_id)][1] == 5 and table[int(obj_id)][1] == 2:
+             return newLine + path + ', ' + path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
              return line 
     # remove time-based information, ie Test_6/11/14 -> Test    
