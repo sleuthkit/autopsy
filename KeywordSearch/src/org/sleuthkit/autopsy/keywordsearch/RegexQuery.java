@@ -206,7 +206,7 @@ final class RegexQuery implements KeywordSearchQuery {
                         for (KeywordHit hit : keywordHits) {
                             hitsMultiMap.put(new Keyword(hit.getHit(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), hit);
                         }
-                    } catch (TskException ex) { 
+                    } catch (TskCoreException ex) { 
                         LOGGER.log(Level.SEVERE, "Error creating keyword hits", ex); //NON-NLS
                     }
                 }
@@ -228,7 +228,7 @@ final class RegexQuery implements KeywordSearchQuery {
         return results;
     }
 
-    private List<KeywordHit> createKeywordHits(SolrDocument solrDoc) throws TskException {
+    private List<KeywordHit> createKeywordHits(SolrDocument solrDoc) throws TskCoreException {
 
         List<KeywordHit> hits = new ArrayList<>();
         final String docId = solrDoc.getFieldValue(Server.Schema.ID.toString()).toString();
