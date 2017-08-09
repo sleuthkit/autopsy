@@ -319,11 +319,11 @@ final class RegexQuery implements KeywordSearchQuery {
         } catch (TskCoreException ex) {
             throw ex;
         } catch (Throwable error) {
-            /* NOTE: Matcher.find() is known to throw StackOverflowError in rare cases (see story 2700). 
+            /* NOTE: Matcher.find() is known to throw StackOverflowError in rare cases (see JIRA-2700). 
             StackOverflowError is an error, not an exception, and therefore needs to be caught 
             as a Throwable. When this occurs we should re-throw the error as TskCoreException so that it is 
             logged by the calling method and move on to the next Solr document. */
-            throw new TskCoreException("Failed to create keyword hits for Solr documet id " + docId + " due to " + error.getMessage());
+            throw new TskCoreException("Failed to create keyword hits for Solr document id " + docId + " due to " + error.getMessage());
         }
         return hits;
     }
