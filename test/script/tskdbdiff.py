@@ -372,17 +372,24 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
         return newLine
     # remove object ID
     elif (path_index != -1):
-        obj_id = fields_list[0]
-        objValue = table[int(obj_id)][0]
-        par_obj_id = objects_table[int(obj_id)][0]
+        obj_id = int(fields_list[0])
+        if obj_id not in table:
+            raise TskDbDiffException("obj_id %s not found in tsk_files table." % obj_id)
+        objValue = table[obj_id][0]
+        par_obj_id = int(objects_table[obj_id][0])
         if par_obj_id in table.keys():
             par_obj_value = table[par_obj_id][0]
             par_obj_name = par_obj_value[par_obj_value.rfind('/')+1:]
+            print("zli0: " + "--".join(fields_list))
+            print("zli1: " + str(obj_id) + " " + par_obj_name + '_' + str(par_obj_id) + " original: " + fields_list[1])
             #check the par_id that we insert to the path name when we create uniqueName
             pathValue = re.sub(par_obj_name + '_' + str(par_obj_id), par_obj_name, fields_list[1])
+            print("zli2: " + pathValue)
         # type 5 in tsk_objects is artifact, type 2 in tsk_files is derived. If the obj is derived and it's parent is artifact, we will use objValue as pathValue.
-        elif objects_table[int(par_obj_id)][1] == 5 and table[int(obj_id)][1] == 2:
+        elif objects_table[par_obj_id][1] == 5 and table[obj_id][1] == 2:
             pathValue = objValue
+        else:
+            raise TskDbDiffException("obj_id %d not found in tsk_files table." % par_obj_id)
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');') 
         return newLine
     # remove object ID
@@ -407,30 +414,37 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
             return line
 
         if obj_id in table.keys():
-             path = table[obj_id][0]
+            path = table[obj_id][0]
+        elif objects_table[obj_id][1] == 5:
+            par_id =  objects_table[obj_id][0]
+            path = table[par_id][0]
         elif obj_id in vs_parts_table.keys():
-             path = vs_parts_table[obj_id]
+            path = vs_parts_table[obj_id]
         elif obj_id in vs_info_table.keys():
-             path = vs_info_table[obj_id]
+            path = vs_info_table[obj_id]
         elif obj_id in fs_info_table.keys():
-             path = fs_info_table[obj_id]
+            path = fs_info_table[obj_id]
         
         if parent_id in table.keys():
-             parent_path = table[parent_id][0]
+            parent_path = table[parent_id][0]
+        elif objects_table[parent_id][1] == 5:
+            par_id =  objects_table[parent_id][0]
+            path = table[par_id][0]
         elif parent_id in vs_parts_table.keys():
-             parent_path = vs_parts_table[parent_id]
+            parent_path = vs_parts_table[parent_id]
         elif parent_id in vs_info_table.keys():
-             parent_path = vs_info_table[parent_id]
+            parent_path = vs_info_table[parent_id]
         elif parent_id in fs_info_table.keys():
-             parent_path = fs_info_table[parent_id]
+            parent_path = fs_info_table[parent_id]
         
 
         if path and parent_path:
-             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
+            return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         elif  objects_table[parent_id][1] == 5 and table[obj_id][1] == 2:
-             return newLine + path + ', ' + path + ', ' + ', '.join(fields_list[2:]) + ');'
+            return newLine + path + ', ' + path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
-             return line 
+            print('objects table ' + str(obj_id) + ' ' + str(parent_id))
+            return line 
     # remove time-based information, ie Test_6/11/14 -> Test    
     elif (report_index != -1):
         fields_list[1] = "AutopsyTestCase"
