@@ -212,6 +212,7 @@ public class Installer extends ModuleInstall {
         packageInstallers.add(org.sleuthkit.autopsy.corecomponents.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.datamodel.Installer.getDefault());
         packageInstallers.add(org.sleuthkit.autopsy.ingest.Installer.getDefault());
+        packageInstallers.add(org.sleuthkit.autopsy.centralrepository.eventlisteners.Installer.getDefault());
     }
 
     /**
