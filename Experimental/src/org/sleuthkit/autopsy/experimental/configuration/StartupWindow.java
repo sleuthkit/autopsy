@@ -26,17 +26,20 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle;
+import org.openide.util.actions.CallableSystemAction;
 import org.openide.util.lookup.ServiceProvider;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestLegacyDashboard;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCasePanel;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboardOpenAction;
 
 /**
  * The default implementation of the Autopsy startup window
@@ -112,17 +115,20 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                 this.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
-                        AutoIngestDashboard.getInstance().shutdown();
+                        AutoIngestLegacyDashboard.getInstance().shutdown();
                     }
                 });
                 setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                add(AutoIngestDashboard.getInstance());
+                add(AutoIngestLegacyDashboard.getInstance());
                 break;
             case REVIEW:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + LOCAL_HOST_NAME + ")");
                 caseManagementPanel = new AutoIngestCasePanel(this);
                 setIconImage(ImageUtilities.loadImage("org/sleuthkit/autopsy/experimental/images/frame.gif", false)); //NON-NLS
                 add(caseManagementPanel);
+                SwingUtilities.invokeLater(() -> {
+                    CallableSystemAction.get(AutoIngestDashboardOpenAction.class).setEnabled(true);
+                });
                 break;
             default:                
                 welcomeWindow = new CueBannerPanel();

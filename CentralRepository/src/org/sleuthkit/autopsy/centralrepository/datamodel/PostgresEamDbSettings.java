@@ -122,10 +122,14 @@ public final class PostgresEamDbSettings {
         }
 
         String badTagsStr = ModuleSettings.getConfigSetting("CentralRepository", "db.badTags"); // NON-NLS
-        if (badTagsStr == null || badTagsStr.isEmpty()) {
+        if (badTagsStr == null) {
             badTagsStr = DEFAULT_BAD_TAGS;
         }
-        badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
+        if(badTagsStr.isEmpty()){
+            badTags = new ArrayList<>();
+        } else {
+            badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
+        }
     }
 
     public void saveSettings() {

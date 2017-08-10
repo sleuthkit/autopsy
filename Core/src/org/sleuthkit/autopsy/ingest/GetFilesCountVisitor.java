@@ -51,6 +51,7 @@ final class GetFilesCountVisitor extends ContentVisitor.Default<Long> {
         queryB.append(") )");
         queryB.append(" AND ( (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_REG.getValue()); //NON-NLS
         queryB.append(") OR (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_DIR.getValue()); //NON-NLS
+        queryB.append(") OR (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT_DIR.getValue()); //NON-NLS
         queryB.append(") OR (meta_type = ").append(TskData.TSK_FS_META_TYPE_ENUM.TSK_FS_META_TYPE_VIRT.getValue()); //NON-NLS                
         queryB.append(" AND (name != '.') AND (name != '..')"); //NON-NLS
         queryB.append(") )");
