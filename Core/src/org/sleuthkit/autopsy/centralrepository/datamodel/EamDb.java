@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.List;
 import java.util.Set;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Main interface for interacting with the database
@@ -36,8 +37,11 @@ public interface EamDb {
      * @throws EamDbException
      */
     static EamDb getInstance() throws EamDbException {
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-
+        
+        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.DISABLED;
+        if (Boolean.parseBoolean(ModuleSettings.getConfigSetting("CentralRepository", "db.useCentralRepo"))){
+            selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        }
         switch (selectedPlatform) {
             case POSTGRESQL:
                 return PostgresEamDb.getInstance();
@@ -86,7 +90,8 @@ public interface EamDb {
      * @return Is the database enabled
      */
     static boolean isEnabled() {
-        return EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
+        return  Boolean.parseBoolean(ModuleSettings.getConfigSetting("CentralRepository", "db.useCentralRepo")) 
+                && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
 
     /**

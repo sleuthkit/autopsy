@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum.DISABLED;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
-import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
@@ -54,7 +53,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
-        cbUseCentralRepo.setSelected(Boolean.parseBoolean(ModuleSettings.getConfigSetting("CentralRepository", "db.useCentralRepo"))); // NON-NLS
+
     }
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings"})
@@ -255,6 +254,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }//GEN-LAST:event_bnManageTypesActionPerformed
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
+        store();
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
         load(); // reload db settings content and update buttons
     }//GEN-LAST:event_bnDbConfigureActionPerformed
@@ -269,9 +269,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
     public void load() {
         tbOops.setText("");
-
         enableAllSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        cbUseCentralRepo.setSelected(Boolean.parseBoolean(ModuleSettings.getConfigSetting("CentralRepository", "db.useCentralRepo"))); // NON-NLS
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
