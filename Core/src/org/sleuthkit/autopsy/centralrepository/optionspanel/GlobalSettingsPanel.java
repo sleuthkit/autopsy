@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum.DISABLED;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 
@@ -85,6 +86,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         bnManageTags = new javax.swing.JButton();
         bnManageTypes = new javax.swing.JButton();
         tbOops = new javax.swing.JTextField();
+        jCheckBox1 = new javax.swing.JCheckBox();
 
         setName(""); // NOI18N
 
@@ -198,6 +200,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
+        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox1, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.jCheckBox1.text")); // NOI18N
+        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -207,19 +216,23 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(tbOops, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jCheckBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
+                .addComponent(jCheckBox1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 18, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
@@ -243,6 +256,12 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         load(); // reload db settings content and update buttons
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
+    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+        //if saved setting is disabled checkbox should be disabled already 
+        enableDatabaseConfigureButton(jCheckBox1.isSelected());
+        enableButtonSubComponents(jCheckBox1.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
+    }//GEN-LAST:event_jCheckBox1ActionPerformed
+
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
     public void load() {
@@ -250,7 +269,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         enableAllSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        
+
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
@@ -270,7 +289,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 lbDbPlatformValue.setText(EamDbPlatformEnum.DISABLED.toString());
                 lbDbNameValue.setText("");
                 lbDbLocationValue.setText("");
-                enableDatabaseConfigureButton(true);
+                enableDatabaseConfigureButton(jCheckBox1.isSelected());
                 tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
                 break;
         }
@@ -347,8 +366,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableAllSubComponents(Boolean enable) {
-        enableDatabaseConfigureButton(enable);
-        enableButtonSubComponents(enable);
+        enableDatabaseConfigureButton(jCheckBox1.isSelected() && enable);
+        enableButtonSubComponents(jCheckBox1.isSelected() && enable);
         return true;
     }
 
@@ -359,9 +378,17 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      *
      * @return True
      */
-    private boolean enableDatabaseConfigureButton(Boolean enable) {
+    private void enableDatabaseConfigureButton(Boolean enable) {
+        pnDatabaseConfiguration.setEnabled(enable);
+        pnDatabaseContentButtons.setEnabled(enable);
         bnDbConfigure.setEnabled(enable);
-        return true;
+        lbDbLocationLabel.setEnabled(enable);
+        lbDbLocationValue.setEnabled(enable);
+        lbDbNameLabel.setEnabled(enable);
+        lbDbNameValue.setEnabled(enable);
+        lbDbPlatformTypeLabel.setEnabled(enable);
+        lbDbPlatformValue.setEnabled(enable);
+        tbOops.setEnabled(enable);
     }
 
     /**
@@ -384,6 +411,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JButton bnImportDatabase;
     private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
+    private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JLabel lbDbLocationLabel;
     private javax.swing.JLabel lbDbLocationValue;
     private javax.swing.JLabel lbDbNameLabel;
