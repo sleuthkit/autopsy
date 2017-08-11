@@ -83,7 +83,6 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     public void open() {
         
         if (caseManagementPanel != null) {
-            caseManagementPanel.updateView();
             caseManagementPanel.setCursor(Cursor.getDefaultCursor());
         }
         
