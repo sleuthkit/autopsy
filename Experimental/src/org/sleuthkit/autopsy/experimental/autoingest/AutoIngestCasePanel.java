@@ -63,7 +63,7 @@ public final class AutoIngestCasePanel extends JPanel {
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 60;
     private static final int MILLIS_TO_WAIT_BEFORE_STARTING = 500;
-    private static final int MILLIS_TO_WAIT_BETWEEN_UPDATES = 30000;
+    private static final int MILLIS_TO_WAIT_BETWEEN_UPDATES = 300000;
     private ScheduledThreadPoolExecutor casesTableRefreshExecutor;
 
     /*
@@ -392,11 +392,11 @@ public final class AutoIngestCasePanel extends JPanel {
         bnRefresh = new javax.swing.JButton();
         panelFilter = new javax.swing.JPanel();
         rbAllCases = new javax.swing.JRadioButton();
-        rbMonths = new javax.swing.JRadioButton();
-        rbWeeks = new javax.swing.JRadioButton();
-        rbDays = new javax.swing.JRadioButton();
-        rbGroupLabel = new javax.swing.JLabel();
         bnShowLog = new javax.swing.JButton();
+        rbDays = new javax.swing.JRadioButton();
+        rbWeeks = new javax.swing.JRadioButton();
+        rbMonths = new javax.swing.JRadioButton();
+        rbGroupLabel = new javax.swing.JLabel();
 
         setName("Completed Cases"); // NOI18N
 
@@ -436,19 +436,27 @@ public final class AutoIngestCasePanel extends JPanel {
             }
         });
 
-        rbGroupHistoryLength.add(rbMonths);
-        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbMonths.text")); // NOI18N
-        rbMonths.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                rbMonthsItemStateChanged(evt);
-            }
-        });
+        javax.swing.GroupLayout panelFilterLayout = new javax.swing.GroupLayout(panelFilter);
+        panelFilter.setLayout(panelFilterLayout);
+        panelFilterLayout.setHorizontalGroup(
+            panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelFilterLayout.createSequentialGroup()
+                .addComponent(rbAllCases)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+        panelFilterLayout.setVerticalGroup(
+            panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelFilterLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(rbAllCases))
+        );
 
-        rbGroupHistoryLength.add(rbWeeks);
-        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbWeeks.text")); // NOI18N
-        rbWeeks.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                rbWeeksItemStateChanged(evt);
+        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.text")); // NOI18N
+        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.toolTipText")); // NOI18N
+        bnShowLog.setEnabled(false);
+        bnShowLog.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnShowLogActionPerformed(evt);
             }
         });
 
@@ -461,47 +469,24 @@ public final class AutoIngestCasePanel extends JPanel {
             }
         });
 
-        rbGroupLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
-        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbGroupLabel.text")); // NOI18N
-
-        javax.swing.GroupLayout panelFilterLayout = new javax.swing.GroupLayout(panelFilter);
-        panelFilter.setLayout(panelFilterLayout);
-        panelFilterLayout.setHorizontalGroup(
-            panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelFilterLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(rbGroupLabel)
-                    .addComponent(rbAllCases)
-                    .addComponent(rbMonths)
-                    .addComponent(rbWeeks)
-                    .addComponent(rbDays))
-                .addContainerGap(34, Short.MAX_VALUE))
-        );
-        panelFilterLayout.setVerticalGroup(
-            panelFilterLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panelFilterLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(rbGroupLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(rbDays)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(rbWeeks)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(rbMonths)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(rbAllCases)
-                .addContainerGap())
-        );
-
-        org.openide.awt.Mnemonics.setLocalizedText(bnShowLog, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.text")); // NOI18N
-        bnShowLog.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.bnShowLog.toolTipText")); // NOI18N
-        bnShowLog.setEnabled(false);
-        bnShowLog.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                bnShowLogActionPerformed(evt);
+        rbGroupHistoryLength.add(rbWeeks);
+        org.openide.awt.Mnemonics.setLocalizedText(rbWeeks, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbWeeks.text")); // NOI18N
+        rbWeeks.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                rbWeeksItemStateChanged(evt);
             }
         });
+
+        rbGroupHistoryLength.add(rbMonths);
+        org.openide.awt.Mnemonics.setLocalizedText(rbMonths, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbMonths.text")); // NOI18N
+        rbMonths.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                rbMonthsItemStateChanged(evt);
+            }
+        });
+
+        rbGroupLabel.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        org.openide.awt.Mnemonics.setLocalizedText(rbGroupLabel, org.openide.util.NbBundle.getMessage(AutoIngestCasePanel.class, "AutoIngestCasePanel.rbGroupLabel.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -511,35 +496,45 @@ public final class AutoIngestCasePanel extends JPanel {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(13, 13, 13)
+                        .addGap(4, 4, 4)
                         .addComponent(bnOpen, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(bnRefresh)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(bnShowLog)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(rbGroupLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(rbDays)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(rbWeeks)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(rbMonths)
+                        .addGap(0, 0, 0)
                         .addComponent(panelFilter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(scrollPaneTable, javax.swing.GroupLayout.DEFAULT_SIZE, 1007, Short.MAX_VALUE)
-                        .addContainerGap())))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(bnRefresh)
+                        .addGap(4, 4, 4))
+                    .addComponent(scrollPaneTable, javax.swing.GroupLayout.DEFAULT_SIZE, 1007, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(43, 43, 43)
+                .addGap(6, 6, 6)
                 .addComponent(scrollPaneTable, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(panelFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(bnOpen)
+                        .addComponent(bnShowLog))
+                    .addComponent(bnRefresh)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(bnOpen)
-                            .addComponent(bnRefresh)
-                            .addComponent(bnShowLog))
-                        .addGap(36, 36, 36))))
+                            .addComponent(rbDays)
+                            .addComponent(rbWeeks)
+                            .addComponent(rbMonths)
+                            .addComponent(rbGroupLabel))
+                        .addComponent(panelFilter, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(0, 0, 0))
         );
     }// </editor-fold>//GEN-END:initComponents
 
