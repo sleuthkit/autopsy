@@ -1,15 +1,15 @@
 /*
  * Autopsy Forensic Browser
- * 
- * Copyright 2013-2015 Basis Technology Corp.
+ *
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ import org.openide.util.lookup.Lookups;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import static org.sleuthkit.autopsy.datamodel.Bundle.*;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
@@ -57,14 +58,15 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     private SleuthkitCase skCase;
 
+    @NbBundle.Messages({"DeletedContent.fsDelFilter.text=File System",
+        "DeletedContent.allDelFilter.text=All"})
     public enum DeletedContentFilter implements AutopsyVisitableItem {
 
-        FS_DELETED_FILTER(0,
-                "FS_DELETED_FILTER", //NON-NLS
-                NbBundle.getMessage(DeletedContent.class, "DeletedContent.fsDelFilter.text")),
-        ALL_DELETED_FILTER(1,
-                "ALL_DELETED_FILTER", //NON-NLS
-                NbBundle.getMessage(DeletedContent.class, "DeletedContent.allDelFilter.text"));
+        FS_DELETED_FILTER(0, "FS_DELETED_FILTER", //NON-NLS
+                Bundle.DeletedContent_fsDelFilter_text()),
+        ALL_DELETED_FILTER(1, "ALL_DELETED_FILTER", //NON-NLS
+                Bundle.DeletedContent_allDelFilter_text());
+
         private int id;
         private String name;
         private String displayName;
@@ -109,15 +111,13 @@ public class DeletedContent implements AutopsyVisitableItem {
 
     public static class DeletedContentsNode extends DisplayableItemNode {
 
-        private static final String NAME = NbBundle.getMessage(DeletedContent.class,
-                "DeletedContent.deletedContentsNode.name");
-        private SleuthkitCase skCase;
+        @NbBundle.Messages("DeletedContent.deletedContentsNode.name=Deleted Files")
+        private static final String NAME = Bundle.DeletedContent_deletedContentsNode_name();
 
         DeletedContentsNode(SleuthkitCase skCase) {
             super(Children.create(new DeletedContentsChildren(skCase), true), Lookups.singleton(NAME));
             super.setName(NAME);
             super.setDisplayName(NAME);
-            this.skCase = skCase;
             this.setIconBaseWithExtension("org/sleuthkit/autopsy/images/file-icon-deleted.png"); //NON-NLS
         }
 
@@ -132,6 +132,9 @@ public class DeletedContent implements AutopsyVisitableItem {
         }
 
         @Override
+        @NbBundle.Messages({
+            "DeletedContent.createSheet.name.displayName=Name",
+            "DeletedContent.createSheet.name.desc=no description"})
         protected Sheet createSheet() {
             Sheet s = super.createSheet();
             Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -140,9 +143,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                 s.put(ss);
             }
 
-            ss.put(new NodeProperty<>(NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.name"),
-                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.displayName"),
-                    NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.name.desc"),
+            ss.put(new NodeProperty<>("Name", //NON-NLS
+                    Bundle.DeletedContent_createSheet_name_displayName(),
+                    Bundle.DeletedContent_createSheet_name_desc(),
                     NAME));
             return s;
         }
@@ -302,6 +305,9 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
+            @NbBundle.Messages({
+                "DeletedContent.createSheet.filterType.displayName=Type",
+                "DeletedContent.createSheet.filterType.desc=no description"})
             protected Sheet createSheet() {
                 Sheet s = super.createSheet();
                 Sheet.Set ss = s.get(Sheet.PROPERTIES);
@@ -310,10 +316,9 @@ public class DeletedContent implements AutopsyVisitableItem {
                     s.put(ss);
                 }
 
-                ss.put(new NodeProperty<>(
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.name"),
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.displayName"),
-                        NbBundle.getMessage(this.getClass(), "DeletedContent.createSheet.filterType.desc"),
+                ss.put(new NodeProperty<>("Type", //NON_NLS
+                        Bundle.DeletedContent_createSheet_filterType_displayName(),
+                        Bundle.DeletedContent_createSheet_filterType_desc(),
                         filter.getDisplayName()));
 
                 return s;
@@ -333,7 +338,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 return DisplayableItemNode.FILE_PARENT_NODE_KEY;
             }
         }
-        
+
         static class DeletedContentChildren extends ChildFactory.Detachable<AbstractFile> {
 
             private final SleuthkitCase skCase;
@@ -374,6 +379,9 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
+            @NbBundle.Messages("DeletedContent.createKeys.maxObjects.msg="
+                    + "There are more Deleted Files than can be displayed."
+                    + " Only the first {0} Deleted Files will be shown.")
             protected boolean createKeys(List<AbstractFile> list) {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
@@ -384,9 +392,8 @@ public class DeletedContent implements AutopsyVisitableItem {
                         SwingUtilities.invokeLater(new Runnable() {
                             @Override
                             public void run() {
-                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(), NbBundle.getMessage(this.getClass(),
-                                        "DeletedContent.createKeys.maxObjects.msg",
-                                        MAX_OBJECTS - 1));
+                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        DeletedContent_createKeys_maxObjects_msg(MAX_OBJECTS - 1));
                             }
                         });
                     }
@@ -429,6 +436,7 @@ public class DeletedContent implements AutopsyVisitableItem {
                 }
 
                 query += " LIMIT " + MAX_OBJECTS; //NON-NLS
+
                 return query;
             }
 
@@ -449,6 +457,9 @@ public class DeletedContent implements AutopsyVisitableItem {
             /**
              * Get children count without actually loading all nodes
              *
+             * @param sleuthkitCase
+             * @param filter
+             *
              * @return
              */
             static long calculateItems(SleuthkitCase sleuthkitCase, DeletedContent.DeletedContentFilter filter) {
@@ -461,6 +472,7 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
+            @NbBundle.Messages("DeletedContent.createNodeForKey.typeNotSupported.msg=Not supported for this type of Displayable Item: {0}")
             protected Node createNodeForKey(AbstractFile key) {
                 return key.accept(new ContentVisitor.Default<AbstractNode>() {
                     public FileNode visit(AbstractFile f) {
@@ -488,9 +500,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                     @Override
                     protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException(NbBundle.getMessage(this.getClass(),
-                                "DeletedContent.createNodeForKey.typeNotSupported.msg",
-                                di.toString()));
+                        throw new UnsupportedOperationException(Bundle.DeletedContent_createNodeForKey_typeNotSupported_msg(di.toString()));
                     }
                 });
             }
