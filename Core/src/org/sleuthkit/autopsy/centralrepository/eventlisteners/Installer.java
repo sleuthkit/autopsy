@@ -35,6 +35,20 @@ public class Installer extends ModuleInstall {
     private final PropertyChangeListener pcl = new CaseEventListener();
     private final IngestEventsListener ieListener = new IngestEventsListener();
 
+    private static Installer instance;
+
+    public synchronized static Installer getDefault() {
+        if (instance == null) {
+            instance = new Installer();
+        }
+        return instance;
+    }
+    
+    private Installer() {
+        super();
+    }
+    
+    
     @Override
     public void restored() {
         Case.addPropertyChangeListener(pcl);
