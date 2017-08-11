@@ -1,12 +1,7 @@
 /*
  * Autopsy Forensic Browser
-<<<<<<< HEAD
- * 
- * Copyright 2013-2017 Basis Technology Corp.
-=======
  *
  * Copyright 2011-2017 Basis Technology Corp.
->>>>>>> upstream/rc-2.8.3
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -447,11 +442,6 @@ public class DeletedContent implements AutopsyVisitableItem {
                 }
 
                 query += " LIMIT " + MAX_OBJECTS; //NON-NLS
-<<<<<<< HEAD
-                
-=======
-
->>>>>>> upstream/rc-2.8.3
                 return query;
             }
 
