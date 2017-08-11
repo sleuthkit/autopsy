@@ -32,6 +32,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum.DISABLED;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
+import org.sleuthkit.autopsy.core.UserPreferences;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Main settings panel for the Central Repository
@@ -52,6 +54,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
+        cbUseCentralRepo.setSelected(Boolean.parseBoolean(ModuleSettings.getConfigSetting("CentralRepository", "db.useCentralRepo"))); // NON-NLS
     }
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings"})
@@ -86,7 +89,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         bnManageTags = new javax.swing.JButton();
         bnManageTypes = new javax.swing.JButton();
         tbOops = new javax.swing.JTextField();
-        jCheckBox1 = new javax.swing.JCheckBox();
+        cbUseCentralRepo = new javax.swing.JCheckBox();
 
         setName(""); // NOI18N
 
@@ -200,10 +203,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
-        org.openide.awt.Mnemonics.setLocalizedText(jCheckBox1, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.jCheckBox1.text")); // NOI18N
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(cbUseCentralRepo, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbUseCentralRepo.text")); // NOI18N
+        cbUseCentralRepo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
+                cbUseCentralRepoActionPerformed(evt);
             }
         });
 
@@ -218,14 +221,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addComponent(tbOops, javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jCheckBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jCheckBox1)
+                .addComponent(cbUseCentralRepo)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -256,11 +259,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         load(); // reload db settings content and update buttons
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+    private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
         //if saved setting is disabled checkbox should be disabled already 
-        enableDatabaseConfigureButton(jCheckBox1.isSelected());
-        enableButtonSubComponents(jCheckBox1.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
+        enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
+        enableButtonSubComponents(cbUseCentralRepo.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
+    }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
@@ -269,7 +272,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         enableAllSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
@@ -289,7 +291,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 lbDbPlatformValue.setText(EamDbPlatformEnum.DISABLED.toString());
                 lbDbNameValue.setText("");
                 lbDbLocationValue.setText("");
-                enableDatabaseConfigureButton(jCheckBox1.isSelected());
+                enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
                 tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
                 break;
         }
@@ -299,6 +301,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void store() { // Click OK or Apply on Options Panel
+        ModuleSettings.setConfigSetting("CentralRepository", "db.useCentralRepo", Boolean.toString(cbUseCentralRepo.isSelected()));
     }
 
     /**
@@ -312,6 +315,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void saveSettings() { // Click OK on Global Settings Panel
+        store();
     }
 
     @Override
@@ -366,8 +370,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableAllSubComponents(Boolean enable) {
-        enableDatabaseConfigureButton(jCheckBox1.isSelected() && enable);
-        enableButtonSubComponents(jCheckBox1.isSelected() && enable);
+        enableDatabaseConfigureButton(cbUseCentralRepo.isSelected() && enable);
+        enableButtonSubComponents(cbUseCentralRepo.isSelected() && enable);
         return true;
     }
 
@@ -411,7 +415,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JButton bnImportDatabase;
     private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
-    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JLabel lbDbLocationLabel;
     private javax.swing.JLabel lbDbLocationValue;
     private javax.swing.JLabel lbDbNameLabel;
