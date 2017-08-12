@@ -145,7 +145,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.inHashsetsColLbl=In Hashsets",
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
         "AbstractAbstractFileNode.objectId=Object ID",
-        "AbstractAbstractFileNode.mimeType=MIME Type"})
+        "AbstractAbstractFileNode.mimeType=MIME Type",
+    "AbstractAbstractFileNode.extensionColLbl=Extension"})
    public  enum AbstractFilePropertyType {
 
         NAME(AbstractAbstractFileNode_nameColLbl()),
@@ -168,7 +169,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         HASHSETS(AbstractAbstractFileNode_inHashsetsColLbl()),
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
         ObjectID(AbstractAbstractFileNode_objectId()),
-        MIMETYPE(AbstractAbstractFileNode_mimeType());
+        MIMETYPE(AbstractAbstractFileNode_mimeType()),
+        EXTENSION (AbstractAbstractFileNode_extensionColLbl());
 
         final private String displayString;
 
@@ -210,6 +212,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         map.put(MD5HASH.toString(), StringUtils.defaultString(content.getMd5Hash()));
         map.put(ObjectID.toString(), content.getId());
         map.put(MIMETYPE.toString(), StringUtils.defaultString(content.getMIMEType()));
+        map.put(EXTENSION.toString(), content.getNameExtension());
     }
 
     /**
