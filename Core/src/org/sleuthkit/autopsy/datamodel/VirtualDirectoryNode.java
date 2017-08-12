@@ -89,7 +89,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
 
         if (!this.content.isDataSource()) {
             Map<String, Object> map = new LinkedHashMap<>();
-            fillPropertyMap(map);
+            fillPropertyMap(map, getContent());
 
             final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
             for (Map.Entry<String, Object> entry : map.entrySet()) {

@@ -134,12 +134,12 @@ public class LayoutFileNode extends AbstractAbstractFileNode<LayoutFile> {
         }
         
         actionsList.addAll(ContextMenuExtensionPoint.getActions());
-        return actionsList.toArray(new Action[0]);
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
-    @Override
+    
       void fillPropertyMap(Map<String, Object> map) {
-        super.fillPropertyMap(map);
+        AbstractAbstractFileNode.fillPropertyMap(map, getContent());
         map.put(LayoutContentPropertyType.PARTS.toString(), content.getNumParts());
     }
 

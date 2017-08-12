@@ -146,8 +146,8 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         "AbstractAbstractFileNode.md5HashColLbl=MD5 Hash",
         "AbstractAbstractFileNode.objectId=Object ID",
         "AbstractAbstractFileNode.mimeType=MIME Type",
-    "AbstractAbstractFileNode.extensionColLbl=Extension"})
-   public  enum AbstractFilePropertyType {
+        "AbstractAbstractFileNode.extensionColLbl=Extension"})
+    public enum AbstractFilePropertyType {
 
         NAME(AbstractAbstractFileNode_nameColLbl()),
         LOCATION(AbstractAbstractFileNode_locationColLbl()),
@@ -170,7 +170,7 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         MD5HASH(AbstractAbstractFileNode_md5HashColLbl()),
         ObjectID(AbstractAbstractFileNode_objectId()),
         MIMETYPE(AbstractAbstractFileNode_mimeType()),
-        EXTENSION (AbstractAbstractFileNode_extensionColLbl());
+        EXTENSION(AbstractAbstractFileNode_extensionColLbl());
 
         final private String displayString;
 
@@ -189,8 +189,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
      *
      * @param map     map with preserved ordering, where property names/values
      *                are put
+     * @param content The content to get properties for.
      */
-    void fillPropertyMap(Map<String, Object> map) {
+    static public void fillPropertyMap(Map<String, Object> map, AbstractFile content) {
         map.put(NAME.toString(), getContentDisplayName(content));
         map.put(LOCATION.toString(), getContentPath(content));
         map.put(MOD_TIME.toString(), ContentUtils.getStringTime(content.getMtime(), content));

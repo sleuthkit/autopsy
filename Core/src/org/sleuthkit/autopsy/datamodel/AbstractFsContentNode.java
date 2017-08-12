@@ -70,7 +70,7 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
         }
 
         Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map);
+        fillPropertyMap(map, getContent());
 
         final String NO_DESCR = NbBundle.getMessage(this.getClass(), "AbstractFsContentNode.noDesc.text");
         for (AbstractFilePropertyType propType : AbstractFilePropertyType.values()) {
