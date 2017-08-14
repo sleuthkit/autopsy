@@ -59,9 +59,8 @@ public class EamDbSettingsDialog extends JDialog {
      * Creates new form EamDbSettingsDialog
      */
     @Messages({"EamDbSettingsDialog.title.text=Central Repository Database Configuration",
-               "EamDbSettingsDialog.lbSingleUserSqLite=SQLite should only be used by one examiner at a time.",
-               "EamDbSettingsDialog.lbDatabaseType=Database type :",
-               "EamDbSettingsDialog.cbUseCentralRepo.text=Use a Central Repo"})
+               "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
+               "EamDbSettingsDialog.lbDatabaseType.text=Database type :"})
             
     public EamDbSettingsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),

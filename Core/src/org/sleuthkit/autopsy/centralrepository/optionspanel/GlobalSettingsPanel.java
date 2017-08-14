@@ -55,7 +55,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         addIngestJobEventsListener();
     }
 
-    @Messages({"GlobalSettingsPanel.title=Central Repository Settings"})
+    @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
+        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository"})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
     }
@@ -362,8 +363,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
             enableAllSubComponents(false);
             cbUseCentralRepo.setEnabled(false);
-        }
-        else if (!cbUseCentralRepo.isEnabled()){
+        } else if (!cbUseCentralRepo.isEnabled()) {
             cbUseCentralRepo.setEnabled(true);
             load();
         }
