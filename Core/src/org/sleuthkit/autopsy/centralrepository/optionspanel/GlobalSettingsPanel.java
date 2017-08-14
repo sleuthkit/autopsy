@@ -33,7 +33,6 @@ import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnu
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  * Main settings panel for the Central Repository
