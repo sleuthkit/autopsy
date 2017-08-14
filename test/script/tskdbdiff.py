@@ -300,11 +300,15 @@ class TskDbDiff(object):
         os.chmod (backup_db_file, 0o777)
 
         conn = sqlite3.connect(backup_db_file)
-        id_path_table = build_id_table(conn.cursor())
+        id_files_table = build_id_files_table(conn.cursor())
         id_vs_parts_table = build_id_vs_parts_table(conn.cursor())
         id_vs_info_table = build_id_vs_info_table(conn.cursor())
         id_fs_info_table = build_id_fs_info_table(conn.cursor())
         id_objects_table = build_id_objects_table(conn.cursor())
+        id_artifact_types_table = build_id_artifact_types_table(conn.cursor())
+        id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table)
+        #id_artifact_path_table = build_id_artifact_path_table(conn.cursor(), id_files_table, id_artifact_types_table)
+
         conn.text_factory = lambda x: x.decode("utf-8", "ignore")
 
         # Delete the blackboard tables
@@ -314,7 +318,7 @@ class TskDbDiff(object):
         # Write to the database dump
         with codecs.open(dump_file, "wb", "utf_8") as db_log:
             for line in conn.iterdump():
-                line = normalize_db_entry(line, id_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table)
+                line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table)
                 db_log.write('%s\n' % line)
             # Now sort the file    
             
@@ -346,12 +350,12 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
-def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table, objects_table):
+def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table):
     """ Make testing more consistent and reasonable by doctoring certain db entries.
 
     Args:
         line: a String, the line to remove the object id from.
-        table: a map from object ids to file paths.
+        files_table: a map from object ids to file paths.
     """
 
     files_index = line.find('INSERT INTO "tsk_files"')
@@ -361,33 +365,29 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
     layout_index = line.find('INSERT INTO "tsk_file_layout"')
     data_source_info_index = line.find('INSERT INTO "data_source_info"')
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"')
+
+    #make a copy of files_table to combine the data from artifacts table
+    obj_path_table = files_table.copy()
+
     parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
     
     # remove object ID
     if (files_index != -1):
         obj_id = fields_list[0]
-        path = table[int(obj_id)][0]
+        path = files_table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
     elif (path_index != -1):
         obj_id = int(fields_list[0])
-        if obj_id not in table:
-            raise TskDbDiffException("obj_id %s not found in tsk_files table." % obj_id)
-        objValue = table[obj_id][0]
+        objValue = files_table[obj_id]
         par_obj_id = int(objects_table[obj_id][0])
-        if par_obj_id in table.keys():
-            par_obj_value = table[par_obj_id][0]
+        if par_obj_id in files_table.keys():
+            par_obj_value = files_table[par_obj_id]
             par_obj_name = par_obj_value[par_obj_value.rfind('/')+1:]
-            print("zli0: " + "--".join(fields_list))
-            print("zli1: " + str(obj_id) + " " + par_obj_name + '_' + str(par_obj_id) + " original: " + fields_list[1])
             #check the par_id that we insert to the path name when we create uniqueName
             pathValue = re.sub(par_obj_name + '_' + str(par_obj_id), par_obj_name, fields_list[1])
-            print("zli2: " + pathValue)
-        # type 5 in tsk_objects is artifact, type 2 in tsk_files is derived. If the obj is derived and it's parent is artifact, we will use objValue as pathValue.
-        elif objects_table[par_obj_id][1] == 5 and table[obj_id][1] == 2:
-            pathValue = objValue
         else:
             raise TskDbDiffException("obj_id %d not found in tsk_files table." % par_obj_id)
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');') 
@@ -395,7 +395,7 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
     # remove object ID
     elif (layout_index != -1):
         obj_id = fields_list[0]
-        path= table[int(obj_id)][0]
+        path= files_table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
@@ -413,11 +413,10 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
         except Exception as e:
             return line
 
-        if obj_id in table.keys():
-            path = table[obj_id][0]
-        elif objects_table[obj_id][1] == 5:
-            par_id =  objects_table[obj_id][0]
-            path = table[par_id][0]
+        if obj_id in files_table.keys():
+            path = files_table[obj_id]
+        elif obj_id in obj_path_table:
+            path =  obj_path_table[obj_id][0]
         elif obj_id in vs_parts_table.keys():
             path = vs_parts_table[obj_id]
         elif obj_id in vs_info_table.keys():
@@ -425,11 +424,10 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
         elif obj_id in fs_info_table.keys():
             path = fs_info_table[obj_id]
         
-        if parent_id in table.keys():
-            parent_path = table[parent_id][0]
-        elif objects_table[parent_id][1] == 5:
-            par_id =  objects_table[parent_id][0]
-            path = table[par_id][0]
+        if parent_id in files_table.keys():
+            parent_path = files_table[parent_id]
+        elif parent_id in obj_path_table:
+            path =  obj_path_table[parent_id][0]
         elif parent_id in vs_parts_table.keys():
             parent_path = vs_parts_table[parent_id]
         elif parent_id in vs_info_table.keys():
@@ -440,8 +438,6 @@ def normalize_db_entry(line, table, vs_parts_table, vs_info_table, fs_info_table
 
         if path and parent_path:
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
-        elif  objects_table[parent_id][1] == 5 and table[obj_id][1] == 2:
-            return newLine + path + ', ' + path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
             print('objects table ' + str(obj_id) + ' ' + str(parent_id))
             return line 
@@ -486,60 +482,100 @@ def getAssociatedArtifactType(db_file, artifact_id):
 
     return "File path: " + info[0] + " Artifact Type: " + info[1]
 
-def build_id_table(artifact_cursor):
+def build_id_files_table(db_cursor):
     """Build the map of object ids to file paths.
 
     Args:
-        artifact_cursor: the database cursor
+        db_cursor: the database cursor
     """
     # for each row in the db, take the object id, parent path, and name, then create a tuple in the dictionary
-    # with the object id as the key and the full file path (parent + name) and type as the value
-    mapping = dict([(row[0], [str(row[1]) + str(row[2]), row[3]]) for row in artifact_cursor.execute("SELECT obj_id, parent_path, name, type FROM tsk_files")])
+    # with the object id as the key and the full file path (parent + name) as the value
+    mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in db_cursor.execute("SELECT obj_id, parent_path, name FROM tsk_files")])
     return mapping
 
-def build_id_vs_parts_table(artifact_cursor):
+def build_id_vs_parts_table(db_cursor):
     """Build the map of object ids to vs_parts.
 
     Args:
-        artifact_cursor: the database cursor
+        db_cursor: the database cursor
     """
     # for each row in the db, take the object id, addr, and start, then create a tuple in the dictionary
     # with the object id as the key and (addr + start) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, addr, start FROM tsk_vs_parts")])
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in db_cursor.execute("SELECT obj_id, addr, start FROM tsk_vs_parts")])
     return mapping
 
-def build_id_vs_info_table(artifact_cursor):
+def build_id_vs_info_table(db_cursor):
     """Build the map of object ids to vs_info.
 
     Args:
-        artifact_cursor: the database cursor
+        db_cursor: the database cursor
     """
     # for each row in the db, take the object id, vs_type, and img_offset, then create a tuple in the dictionary
     # with the object id as the key and (vs_type + img_offset) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, vs_type, img_offset FROM tsk_vs_info")])
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in db_cursor.execute("SELECT obj_id, vs_type, img_offset FROM tsk_vs_info")])
     return mapping
 
      
-def build_id_fs_info_table(artifact_cursor):
+def build_id_fs_info_table(db_cursor):
     """Build the map of object ids to fs_info.
 
     Args:
-        artifact_cursor: the database cursor
+        db_cursor: the database cursor
     """
     # for each row in the db, take the object id, img_offset, and fs_type, then create a tuple in the dictionary
     # with the object id as the key and (img_offset + fs_type) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in artifact_cursor.execute("SELECT obj_id, img_offset, fs_type FROM tsk_fs_info")])
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in db_cursor.execute("SELECT obj_id, img_offset, fs_type FROM tsk_fs_info")])
     return mapping
 
-def build_id_objects_table(artifact_cursor):
+def build_id_objects_table(db_cursor):
     """Build the map of object ids to par_id.
 
     Args:
-        artifact_cursor: the database cursor
+        db_cursor: the database cursor
     """
     # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
     # with the object id as the key and par_obj_id, type as the value
-    mapping = dict([(row[0], [row[1], row[2]]) for row in artifact_cursor.execute("SELECT * FROM tsk_objects")])
+    mapping = dict([(row[0], [row[1], row[2]]) for row in db_cursor.execute("SELECT * FROM tsk_objects")])
+    print("zli: obj size " + str(len(mapping)))
+    return mapping
+
+def build_id_artifact_types_table(db_cursor):
+    """Build the map of object ids to artifact ids.
+
+    Args:
+        db_cursor: the database cursor
+    """
+    # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
+    # with the object id as the key and artifact type as the value
+    mapping = dict([(row[0], row[1]) for row in db_cursor.execute("SELECT blackboard_artifacts.artifact_obj_id, blackboard_artifact_types.type_name FROM blackboard_artifacts INNER JOIN blackboard_artifact_types ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id ")])
+    return mapping
+
+
+def build_id_obj_path_table(files_table, objects_table, artifacts_table):
+    """Build the map of object ids to artifact ids.
+
+    Args:
+        files_table: obj_id, path
+        objects_table: obj_id, par_obj_id, type
+        artifacts_table: obj_id, artifact_type_name
+    """
+    # make a copy of files_table and updated it with new data from artifats_table
+    mapping = files_table.copy()
+    for k, v in objects_table.items():
+        if k not in mapping.keys():
+            if k not in artifacts_table.keys():
+                print("zli obj_id: " + str(k) + "|" + str(v[0]) + "|" + str(v[1]))
+            else:
+                par_obj_id = v[0]
+                path = mapping[par_obj_id] # We currently do not have an artifact has a child is artifact
+                mapping[k] = path + "/" + artifacts_table[k]
+        elif v[0] not in mapping.keys():
+            if v[0] not in artifacts_table.keys():
+                print("zli par_obj_id: " + str(k) + "|" + str(v[0]) + "|" + str(v[1]))
+            else:
+                par_obj_id = objects_table[v[0]]
+                path = mapping[par_obj_id] # We currently do not have an artifact has a child is artifact
+                mapping[k] = path + "/" + artifacts_table[v[0]]
     return mapping
 
 def main():
