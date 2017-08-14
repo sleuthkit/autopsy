@@ -30,6 +30,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum.DISABLED;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 import org.sleuthkit.autopsy.coreutils.ModuleSettings;
@@ -276,7 +277,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         tbOops.setText("");
         enableAllSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        cbUseCentralRepo.setSelected(Boolean.parseBoolean(ModuleSettings.getConfigSetting("CentralRepository", "db.useCentralRepo"))); // NON-NLS
+        cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo()); // NON-NLS
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
@@ -305,7 +306,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void store() { // Click OK or Apply on Options Panel
-        ModuleSettings.setConfigSetting("CentralRepository", "db.useCentralRepo", Boolean.toString(cbUseCentralRepo.isSelected()));
+        EamDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
     }
 
     /**

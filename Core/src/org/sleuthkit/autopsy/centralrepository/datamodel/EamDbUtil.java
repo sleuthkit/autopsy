@@ -15,13 +15,15 @@ import java.util.List;
 import java.util.logging.Level;
 import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDb.SCHEMA_VERSION;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 
 /**
  *
  */
 public class EamDbUtil {
     private final static Logger LOGGER = Logger.getLogger(EamDbUtil.class.getName());
-   
+    private static final String CENTRAL_REPO_NAME= "CentralRepository";
+    private static final String CENTRAL_REPO_USE_KEY="db.useCentralRepo";
     /**
      * Close the prepared statement.
      *
@@ -156,7 +158,25 @@ public class EamDbUtil {
         }
         return true;
     }
-
+    
+    /**
+     * If the Central Repos use has been enabled.
+     * 
+     * @return true if the Central Repo may be configured, false if it should not be able to be
+     */
+    public static boolean useCentralRepo(){
+        return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
+    }
+    
+    /**
+     *  Saves the setting for whether the Central Repo should be able to be configured.
+     * 
+     * @param centralRepoCheckBoxIsSelected - true if the central repo can be used
+     */
+    public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected){
+        ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
+    }
+    
    /**
      * Use the current settings and the validation query 
      * to test the connection to the database.
