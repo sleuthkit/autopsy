@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -186,8 +184,7 @@ final class RegexQuery implements KeywordSearchQuery {
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;
         SolrDocumentList resultList;
         boolean allResultsProcessed = false;
-
-        final ListMultimap<Keyword, KeywordHit> hitsMultiMap = ArrayListMultimap.create();
+        QueryResults results = new QueryResults(this);
 
         while (!allResultsProcessed) {
             try {
@@ -199,7 +196,13 @@ final class RegexQuery implements KeywordSearchQuery {
                     try {
                         List<KeywordHit> keywordHits = createKeywordHits(resultDoc);
                         for (KeywordHit hit : keywordHits) {
-                            hitsMultiMap.put(new Keyword(hit.getHit(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), hit);
+                            Keyword keywordInstance = new Keyword(hit.getHit(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm());
+                            List<KeywordHit> hitsForKeyword = results.getResults(keywordInstance);
+                            if (hitsForKeyword == null) {
+                                hitsForKeyword = new ArrayList<>();
+                                results.addResult(keywordInstance, hitsForKeyword);
+                            }
+                            hitsForKeyword.add(hit);
                         }
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Error creating keyword hits", ex); //NON-NLS
@@ -216,10 +219,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             }
         }
-        QueryResults results = new QueryResults(this);
-        for (Keyword k : hitsMultiMap.keySet()) {
-            results.addResult(k, hitsMultiMap.get(k));
-        }
+
         return results;
     }
 
