@@ -239,16 +239,19 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }// </editor-fold>//GEN-END:initComponents
 
     private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
+        store();
         ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnImportDatabaseActionPerformed
 
     private void bnManageTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTagsActionPerformed
+        store();
         ManageTagsDialog dialog = new ManageTagsDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTagsActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
+        store();
         ManageCorrelationPropertiesDialog dialog = new ManageCorrelationPropertiesDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTypesActionPerformed
@@ -263,6 +266,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         //if saved setting is disabled checkbox should be disabled already 
         enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
         enableButtonSubComponents(cbUseCentralRepo.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
+        this.ingestStateUpdated();
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 
     @Override
@@ -296,7 +301,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 break;
         }
 
-        this.ingestStateUpdated();
     }
 
     @Override
@@ -358,6 +362,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         if (IngestManager.getInstance().isIngestRunning()) {
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
             enableAllSubComponents(false);
+            cbUseCentralRepo.setEnabled(false);
+        }
+        else if (!cbUseCentralRepo.isEnabled()){
+            cbUseCentralRepo.setEnabled(true);
+            load();
         }
     }
 

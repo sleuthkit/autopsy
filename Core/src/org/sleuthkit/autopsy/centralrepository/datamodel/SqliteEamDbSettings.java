@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -139,7 +140,7 @@ public final class SqliteEamDbSettings {
                 File dbDir = new File(getDbDirectory());
                 Files.createDirectories(dbDir.toPath());
                 LOGGER.log(Level.INFO, "sqlite directory did not exist, created it at {0}.", getDbDirectory()); // NON-NLS
-            } catch (IOException ex) {
+            } catch (IOException | InvalidPathException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to create sqlite database directory.", ex); // NON-NLS
                 return false;
             }

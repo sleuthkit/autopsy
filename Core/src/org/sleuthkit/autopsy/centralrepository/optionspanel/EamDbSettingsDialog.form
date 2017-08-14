@@ -117,23 +117,16 @@
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="lbHostName" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbPort" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbUserName" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="jLabel2" alignment="0" min="-2" pref="82" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                      </Group>
-                      <Group type="102" attributes="0">
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="lbDatabasePath" alignment="0" min="-2" max="-2" attributes="0"/>
-                              <Component id="lbUserPassword" alignment="1" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <EmptySpace min="14" pref="14" max="-2" attributes="0"/>
+                      <Component id="lbHostName" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="lbPort" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="lbUserName" alignment="0" min="-2" max="-2" attributes="0"/>
+                      <Component id="jLabel2" alignment="0" min="-2" pref="82" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="lbDatabasePath" alignment="0" min="-2" max="-2" attributes="0"/>
+                          <Component id="lbUserPassword" alignment="1" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
+                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Component id="jComboBox1" min="-2" max="-2" attributes="0"/>
@@ -221,6 +214,7 @@
           </Properties>
           <Events>
             <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="tfDatabasePathFocusLost"/>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="tfDatabasePathActionPerformed"/>
           </Events>
         </Component>
         <Component class="javax.swing.JButton" name="bnDatabasePathFileOpen">
