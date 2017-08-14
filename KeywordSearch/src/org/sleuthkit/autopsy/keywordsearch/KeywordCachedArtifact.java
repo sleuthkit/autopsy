@@ -31,12 +31,12 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
  */
 class KeywordCachedArtifact {
 
-    private BlackboardArtifact artifact;
-    private Map<Integer, BlackboardAttribute> attributes;
+    private final BlackboardArtifact artifact;
+    private final Map<Integer, BlackboardAttribute> attributes;
 
     KeywordCachedArtifact(BlackboardArtifact artifact) {
         this.artifact = artifact;
-        attributes = new HashMap<Integer, BlackboardAttribute>();
+        attributes = new HashMap<>();
     }
 
     BlackboardArtifact getArtifact() {

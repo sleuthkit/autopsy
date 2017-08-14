@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -36,7 +35,7 @@ class KeywordHit implements Comparable<KeywordHit> {
     private final long solrObjectId;
     private final int chunkId;
     private final String snippet;
-    private final Content content;
+    private final long contentID;
     private final BlackboardArtifact artifact;
     private final String hit;
 
@@ -73,20 +72,19 @@ class KeywordHit implements Comparable<KeywordHit> {
         }
 
         /**
-         * Look up the file associated with the keyword hit. If the high order
-         * bit of the object id is set, the hit was for an artifact. In this
-         * case, look up the artifact as well.
+         * Look up the artifact associated with the keyword hit if there is onw.
+         * If the high order bit of the object id is set, the hit was for an
+         * artifact.
          */
         SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
-        long fileId;
+
         if (this.solrObjectId < 0) {
             this.artifact = caseDb.getBlackboardArtifact(this.solrObjectId);
-            fileId = artifact.getObjectID();
+            contentID = artifact.getObjectID();
         } else {
             this.artifact = null;
-            fileId = this.solrObjectId;
+            contentID = this.solrObjectId;
         }
-        this.content = caseDb.getContentById(fileId);
 
         /**
          * Store the text snippet.
@@ -119,8 +117,8 @@ class KeywordHit implements Comparable<KeywordHit> {
         return this.snippet;
     }
 
-    Content getContent() {
-        return this.content;
+    long getContentID() {
+        return this.contentID;
     }
 
     /**

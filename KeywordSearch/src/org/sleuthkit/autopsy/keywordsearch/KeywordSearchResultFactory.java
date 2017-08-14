@@ -18,13 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.TreeMultimap;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,8 +36,10 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -56,6 +55,8 @@ import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEY
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Node factory that performs the keyword search and creates children nodes for
@@ -69,16 +70,16 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
     //common properties (superset of all Node properties) to be displayed as columns
-    static final List<String> COMMON_PROPERTIES
-            = Stream.concat(
+    static final List<String> COMMON_PROPERTIES =
+            Stream.concat(
                     Stream.of(
                             TSK_KEYWORD,
                             TSK_KEYWORD_REGEXP,
                             TSK_KEYWORD_PREVIEW)
-                    .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
+                            .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
                     Arrays.stream(AbstractAbstractFileNode.AbstractFilePropertyType.values())
-                    .map(Object::toString))
-            .collect(Collectors.toList());
+                            .map(Object::toString))
+                    .collect(Collectors.toList());
 
     private final Collection<QueryRequest> queryRequests;
 
@@ -144,6 +145,11 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
         }
+        SleuthkitCase tskCase = null;
+        try {
+            tskCase = Case.getCurrentCase().getSleuthkitCase();
+        } catch (IllegalStateException ex) {
+        }
 
         int hitNumber = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
@@ -153,7 +159,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              * Get file properties.
              */
             Map<String, Object> properties = new LinkedHashMap<>();
-            Content content = hit.getContent();
+            Content content = null;
+            try {
+                content = tskCase.getContentById(hit.getContentID());
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+            }
             String contentName = content.getName();
             if (content instanceof AbstractFile) {
                 AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
@@ -244,6 +255,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * @param map     Contains content metadata, snippets, etc. (property
          *                map)
          * @param id      User incremented ID
+         * @param solrObjectId
          * @param content File that had the hit.
          * @param query   Query used in search
          * @param hits    Full set of search results (for all files! @@@)

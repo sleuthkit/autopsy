@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.sleuthkit.datamodel.Content;
+
 /**
  * Interface for kewyord search queries. 
  */
@@ -97,6 +99,6 @@ interface KeywordSearchQuery {
      */
      String getEscapedQueryString();
 
-     KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword keyword, KeywordHit hit, String snippet, String listName);
+     KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword keyword, KeywordHit hit, String snippet, String listName);
 
 }
