@@ -53,7 +53,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         initComponents();
         customizeComponents();
         addIngestJobEventsListener();
-
     }
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings"})
