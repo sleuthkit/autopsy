@@ -380,9 +380,10 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
-            @NbBundle.Messages("DeletedContent.createKeys.maxObjects.msg="
-                    + "There are more Deleted Files than can be displayed."
-                    + " Only the first {0} Deleted Files will be shown.")
+            @NbBundle.Messages({"# {0} - The deleted files threshold",
+                "DeletedContent.createKeys.maxObjects.msg="
+                + "There are more Deleted Files than can be displayed."
+                + " Only the first {0} Deleted Files will be shown."})
             protected boolean createKeys(List<AbstractFile> list) {
                 List<AbstractFile> queryList = runFsQuery();
                 if (queryList.size() == MAX_OBJECTS) {
@@ -390,13 +391,10 @@ public class DeletedContent implements AutopsyVisitableItem {
                     // only show the dialog once - not each time we refresh
                     if (maxFilesDialogShown == false) {
                         maxFilesDialogShown = true;
-                        SwingUtilities.invokeLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                                        DeletedContent_createKeys_maxObjects_msg(MAX_OBJECTS - 1));
-                            }
-                        });
+                        SwingUtilities.invokeLater(()
+                                -> JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                                        DeletedContent_createKeys_maxObjects_msg(MAX_OBJECTS - 1))
+                        );
                     }
                 }
                 list.addAll(queryList);
@@ -435,8 +433,8 @@ public class DeletedContent implements AutopsyVisitableItem {
                         logger.log(Level.SEVERE, "Unsupported filter type to get deleted content: {0}", filter); //NON-NLS
 
                 }
-                
-                if(UserPreferences.hideKnownFilesInViewsTree()) {
+
+                if (UserPreferences.hideKnownFilesInViewsTree()) {
                     query += " AND (known != " + TskData.FileKnown.KNOWN.getFileKnownValue() //NON-NLS
                             + " OR known IS NULL)"; //NON-NLS
                 }
@@ -477,7 +475,6 @@ public class DeletedContent implements AutopsyVisitableItem {
             }
 
             @Override
-            @NbBundle.Messages("DeletedContent.createNodeForKey.typeNotSupported.msg=Not supported for this type of Displayable Item: {0}")
             protected Node createNodeForKey(AbstractFile key) {
                 return key.accept(new ContentVisitor.Default<AbstractNode>() {
                     public FileNode visit(AbstractFile f) {
@@ -505,7 +502,7 @@ public class DeletedContent implements AutopsyVisitableItem {
 
                     @Override
                     protected AbstractNode defaultVisit(Content di) {
-                        throw new UnsupportedOperationException(Bundle.DeletedContent_createNodeForKey_typeNotSupported_msg(di.toString()));
+                        throw new UnsupportedOperationException("Not supported for this type of Displayable Item: " + di.toString());
                     }
                 });
             }

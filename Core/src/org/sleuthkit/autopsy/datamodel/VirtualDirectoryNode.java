@@ -27,7 +27,6 @@ import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.fillPropertyMap;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -90,7 +89,7 @@ public class VirtualDirectoryNode extends SpecialDirectoryNode {
 
         if (!this.content.isDataSource()) {
             Map<String, Object> map = new LinkedHashMap<>();
-            fillPropertyMap(map, content);
+            fillPropertyMap(map, getContent());
 
             final String NO_DESCR = NbBundle.getMessage(this.getClass(), "VirtualDirectoryNode.createSheet.noDesc");
             for (Map.Entry<String, Object> entry : map.entrySet()) {
