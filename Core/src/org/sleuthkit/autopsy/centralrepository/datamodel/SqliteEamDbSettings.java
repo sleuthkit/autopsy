@@ -94,7 +94,7 @@ public final class SqliteEamDbSettings {
         if (badTagsStr == null) {
             badTagsStr = DEFAULT_BAD_TAGS;
         }
-        if(badTagsStr.isEmpty()){
+        if (badTagsStr.isEmpty()) {
             badTags = new ArrayList<>();
         } else {
             badTags = new ArrayList<>(Arrays.asList(badTagsStr.split(",")));
@@ -112,13 +112,13 @@ public final class SqliteEamDbSettings {
 
     /**
      * Verify that the db directory path exists.
-     * 
+     *
      * @return true if exists, else false
      */
     public boolean dbDirectoryExists() {
         // Ensure dbDirectory is a valid directory
         File dbDir = new File(getDbDirectory());
-        
+
         if (!dbDir.exists()) {
             return false;
         } else if (!dbDir.isDirectory()) {
@@ -131,7 +131,7 @@ public final class SqliteEamDbSettings {
 
     /**
      * Create the db directory if it does not exist.
-     * 
+     *
      * @return true is successfully created or already exists, else false
      */
     public boolean createDbDirectory() {
@@ -163,10 +163,11 @@ public final class SqliteEamDbSettings {
     }
 
     /**
-     * Use the current settings to get an ephemeral client connection for testing.
-     * 
+     * Use the current settings to get an ephemeral client connection for
+     * testing.
+     *
      * If the directory path does not exist, it will return null.
-     * 
+     *
      * @return Connection or null.
      */
     private Connection getEphemeralConnection() {
@@ -187,9 +188,9 @@ public final class SqliteEamDbSettings {
     }
 
     /**
-     * Use the current settings and the validation query 
-     * to test the connection to the database.
-     * 
+     * Use the current settings and the validation query to test the connection
+     * to the database.
+     *
      * @return true if successfull connection, else false.
      */
     public boolean verifyConnection() {
@@ -197,16 +198,16 @@ public final class SqliteEamDbSettings {
         if (null == conn) {
             return false;
         }
-        
+
         boolean result = EamDbUtil.executeValidationQuery(conn, VALIDATION_QUERY);
         EamDbUtil.closeConnection(conn);
         return result;
     }
 
     /**
-     * Use the current settings and the schema version query 
-     * to test the database schema.
-     * 
+     * Use the current settings and the schema version query to test the
+     * database schema.
+     *
      * @return true if successfull connection, else false.
      */
     public boolean verifyDatabaseSchema() {
@@ -248,7 +249,6 @@ public final class SqliteEamDbSettings {
 
         // NOTE: The organizations will only have a small number of rows, so
         // an index is probably not worthwhile.
-
         StringBuilder createCasesTable = new StringBuilder();
         createCasesTable.append("CREATE TABLE IF NOT EXISTS cases (");
         createCasesTable.append("id integer primary key autoincrement NOT NULL,");
@@ -347,7 +347,6 @@ public final class SqliteEamDbSettings {
 
         // NOTE: the db_info table currenly only has 1 row, so having an index
         // provides no benefit.
-
         Connection conn = null;
         try {
             conn = getEphemeralConnection();
@@ -386,7 +385,7 @@ public final class SqliteEamDbSettings {
             for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
                 reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
                 instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
-                
+
                 stmt.execute(String.format(createArtifactInstancesTableTemplate.toString(), instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx1, instance_type_dbname, instance_type_dbname));
                 stmt.execute(String.format(instancesIdx2, instance_type_dbname, instance_type_dbname));
@@ -398,7 +397,7 @@ public final class SqliteEamDbSettings {
                     stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));
-                }                
+                }
             }
         } catch (SQLException ex) {
             LOGGER.log(Level.SEVERE, "Error initializing db schema.", ex); // NON-NLS
@@ -423,7 +422,7 @@ public final class SqliteEamDbSettings {
         EamDbUtil.closeConnection(conn);
         return result;
     }
-    
+
     public boolean isChanged() {
         String dbNameString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbName"); // NON-NLS
         String dbDirectoryString = ModuleSettings.getConfigSetting("CentralRepository", "db.sqlite.dbDirectory"); // NON-NLS

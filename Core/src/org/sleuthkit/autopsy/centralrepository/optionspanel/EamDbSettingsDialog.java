@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
-import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -24,7 +23,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.netbeans.spi.options.OptionsPanelController;
-import org.openide.util.ImageUtilities;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
@@ -45,6 +43,7 @@ public class EamDbSettingsDialog extends JDialog {
     private static final Logger LOGGER = Logger.getLogger(EamDbSettingsDialog.class.getName());
     private static final String CENTRAL_REPO_DB_NAME = "central_repository";
     private static final String CENTRAL_REPO_SQLITE_EXT = ".db";
+    private static final long serialVersionUID = 1L;
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
 
@@ -57,9 +56,9 @@ public class EamDbSettingsDialog extends JDialog {
      * Creates new form EamDbSettingsDialog
      */
     @Messages({"EamDbSettingsDialog.title.text=Central Repository Database Configuration",
-               "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
-               "EamDbSettingsDialog.lbDatabaseType.text=Database type :"})
-            
+        "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
+        "EamDbSettingsDialog.lbDatabaseType.text=Database type :"})
+
     public EamDbSettingsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.EamDbSettingsDialog_title_text(),

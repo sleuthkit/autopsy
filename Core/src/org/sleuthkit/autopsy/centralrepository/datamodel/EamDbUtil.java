@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.sql.Connection;
@@ -21,9 +20,11 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
  *
  */
 public class EamDbUtil {
+
     private final static Logger LOGGER = Logger.getLogger(EamDbUtil.class.getName());
-    private static final String CENTRAL_REPO_NAME= "CentralRepository";
-    private static final String CENTRAL_REPO_USE_KEY="db.useCentralRepo";
+    private static final String CENTRAL_REPO_NAME = "CentralRepository";
+    private static final String CENTRAL_REPO_USE_KEY = "db.useCentralRepo";
+
     /**
      * Close the prepared statement.
      *
@@ -74,11 +75,12 @@ public class EamDbUtil {
             }
         }
     }
-    
+
     /**
      * Insert the default correlation types into the database.
-     * 
+     *
      * @param conn Open connection to use.
+     *
      * @return true on success, else false
      */
     public static boolean insertDefaultCorrelationTypes(Connection conn) {
@@ -106,7 +108,7 @@ public class EamDbUtil {
         }
         return true;
     }
- 
+
     /**
      * Store the schema version into the db_info table.
      *
@@ -114,6 +116,7 @@ public class EamDbUtil {
      * loaded.
      *
      * @param conn Open connection to use.
+     *
      * @return true on success, else false
      */
     public static boolean insertSchemaVersion(Connection conn) {
@@ -135,14 +138,14 @@ public class EamDbUtil {
 
     /**
      * Query to see if the SCHEMA_VERSION is set in the db.
-     * 
+     *
      * @return true if set, else false.
      */
     public static boolean schemaVersionIsSet(Connection conn) {
         if (null == conn) {
             return false;
         }
-        
+
         ResultSet resultSet = null;
         try {
             Statement tester = conn.createStatement();
@@ -158,36 +161,39 @@ public class EamDbUtil {
         }
         return true;
     }
-    
+
     /**
      * If the Central Repos use has been enabled.
-     * 
-     * @return true if the Central Repo may be configured, false if it should not be able to be
+     *
+     * @return true if the Central Repo may be configured, false if it should
+     *         not be able to be
      */
-    public static boolean useCentralRepo(){
+    public static boolean useCentralRepo() {
         return Boolean.parseBoolean(ModuleSettings.getConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY));
     }
-    
+
     /**
-     *  Saves the setting for whether the Central Repo should be able to be configured.
-     * 
-     * @param centralRepoCheckBoxIsSelected - true if the central repo can be used
+     * Saves the setting for whether the Central Repo should be able to be
+     * configured.
+     *
+     * @param centralRepoCheckBoxIsSelected - true if the central repo can be
+     *                                      used
      */
-    public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected){
+    public static void setUseCentralRepo(boolean centralRepoCheckBoxIsSelected) {
         ModuleSettings.setConfigSetting(CENTRAL_REPO_NAME, CENTRAL_REPO_USE_KEY, Boolean.toString(centralRepoCheckBoxIsSelected));
     }
-    
-   /**
-     * Use the current settings and the validation query 
-     * to test the connection to the database.
-     * 
+
+    /**
+     * Use the current settings and the validation query to test the connection
+     * to the database.
+     *
      * @return true if successfull query execution, else false.
      */
     public static boolean executeValidationQuery(Connection conn, String validationQuery) {
         if (null == conn) {
             return false;
         }
-        
+
         ResultSet resultSet = null;
         try {
             Statement tester = conn.createStatement();
@@ -203,22 +209,23 @@ public class EamDbUtil {
 
         return false;
     }
-    
 
     /**
      * Conver thte Type's DbTableName string to the *_instances table name.
-     * 
+     *
      * @param type Correlation Type
-     * @return  Instance table name for this Type.
+     *
+     * @return Instance table name for this Type.
      */
     public static String correlationTypeToInstanceTableName(EamArtifact.Type type) {
         return type.getDbTableName() + "_instances";
     }
-    
+
     /**
      * Convert the Type's DbTableName string to the reference_* table name.
-     * 
+     *
      * @param type Correlation Type
+     *
      * @return Reference table name for this Type.
      */
     public static String correlationTypeToReferenceTableName(EamArtifact.Type type) {
