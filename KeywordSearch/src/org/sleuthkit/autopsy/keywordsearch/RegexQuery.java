@@ -389,11 +389,9 @@ final class RegexQuery implements KeywordSearchQuery {
      *         attributes.
      */
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard( Content content,Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
-       
-        
         if (content == null) {
             LOGGER.log(Level.WARNING, "Error adding artifact for keyword hit to blackboard"); //NON-NLS
             return null;
@@ -535,9 +533,9 @@ final class RegexQuery implements KeywordSearchQuery {
      * hit and turns them into artifact attributes. The track 1 data has the
      * same fields as the track two data, plus the account holder's name.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param matcher       A matcher for the snippet.
+     * @param attributeMap A map of artifact attribute objects, used to avoid
+     *                     creating duplicate attributes.
+     * @param matcher      A matcher for the snippet.
      */
     static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
         parseTrack2Data(attributeMap, matcher);
@@ -548,12 +546,12 @@ final class RegexQuery implements KeywordSearchQuery {
      * Creates an attribute of the the given type to the given artifact with a
      * value parsed from the snippet for a credit account number hit.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param attrType      The type of attribute to create.
-     * @param groupName     The group name of the regular expression that was
-     *                      used to parse the attribute data.
-     * @param matcher       A matcher for the snippet.
+     * @param attributeMap A map of artifact attribute objects, used to avoid
+     *                     creating duplicate attributes.
+     * @param attrType     The type of attribute to create.
+     * @param groupName    The group name of the regular expression that was
+     *                     used to parse the attribute data.
+     * @param matcher      A matcher for the snippet.
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, BlackboardAttribute.ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
