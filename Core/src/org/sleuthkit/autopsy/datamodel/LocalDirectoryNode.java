@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
-import static org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode.fillPropertyMap;
 import org.sleuthkit.datamodel.LocalDirectory;
 
 /**
@@ -64,7 +63,7 @@ public class LocalDirectoryNode extends SpecialDirectoryNode {
         // At present, a LocalDirectory will never be a datasource - the top level of a logical
         // file set is a VirtualDirectory
         Map<String, Object> map = new LinkedHashMap<>();
-        fillPropertyMap(map, content);
+        fillPropertyMap(map, getContent());
 
         final String NO_DESCR = Bundle.LocalDirectoryNode_createSheet_noDesc();
         for (Map.Entry<String, Object> entry : map.entrySet()) {
