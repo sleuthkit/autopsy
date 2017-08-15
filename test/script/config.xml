@@ -6,12 +6,25 @@ List of tags:
 image: An image to be ingested
 build: the path to the build.xml file
 indir: the path to input directory
-outdir: the path to output directory
+outdir: the path to single-user case output directory
 global_csv: path to global csv file
-golddir: the path to gold directory
+golddir: the path to single-user case gold directory
 timing: can be set to True or False. If enabled, record the timing.
+userCaseType: set this value to do single-user, multi-user or both tests
 
-NOTE: Make sure to use windows style for paths!
+List of tags for multi-user case:
+multiUser_outdir: a path to multi-user case output directory
+multiUser_golddir: a path to multi-user case gold directory
+dbHost: PostgreSQL database host name
+dbPort: PostgreSQL database port number
+dbUserName: PostgreSQL database username
+dbPassword: PostgreSQL database password
+solrHost: Solr server host name
+solrPort: Solr server port number
+messageServiceHost: ActiveMQ server hostname
+messageServicePort: ActiveMQ server port number
+
+NOTE: Make sure to use UNC path for mutliUser_outdir, use windows style for other paths! 
 
 None of these tags are mandatory, and if nothing is provided the file will be
 looked over and ignored.
