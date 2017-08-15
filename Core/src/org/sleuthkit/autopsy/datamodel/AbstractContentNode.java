@@ -23,6 +23,7 @@ import java.util.logging.Level;
 
 import org.openide.util.lookup.Lookups;
 import org.openide.util.Lookup;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -90,6 +91,26 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
      *
      * @return true if has children
      */
+    public boolean hasVisibleContentChildren() {
+        boolean hasChildren = false;
+        if (content != null) {
+            try {
+                if(0 < Case.getCurrentCase().getSleuthkitCase().getVisibleContentChildrenCount(content)){
+                    hasChildren = true;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "Error checking if the node has children, for content: " + content, ex); //NON-NLS
+            }
+        }
+        return hasChildren;
+    }
+    
+    /**
+     * Return true if the underlying content object has children Useful for lazy
+     * loading.
+     *
+     * @return true if has children
+     */
     public boolean hasContentChildren() {
         boolean hasChildren = false;
 
@@ -103,7 +124,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
 
         return hasChildren;
     }
-
+    
     /**
      * Return ids of children of the underlying content. The ids can be treated
      * as keys - useful for lazy loading.

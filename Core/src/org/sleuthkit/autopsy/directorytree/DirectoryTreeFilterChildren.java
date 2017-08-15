@@ -25,6 +25,7 @@ import org.openide.nodes.Children;
 import org.sleuthkit.autopsy.datamodel.DirectoryNode;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
@@ -120,7 +121,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                         && !((Directory) c).getName().equals(".."))) {
                     ret = false;
                     break;
-                } else if (c.hasChildren()) {
+                } else if (0 < Case.getCurrentCase().getSleuthkitCase().getVisibleContentChildrenCount(c)) {
                     //fie has children, such as derived files
                     ret = false;
                     break;
@@ -204,11 +205,11 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 if ((childContent instanceof AbstractFile) && ((AbstractFile) childContent).isDir()) {
                     return false;
                 } else {
-                    try {
-                        if (childContent.hasChildren()) {
+                    try{
+                        if(0 < Case.getCurrentCase().getSleuthkitCase().getVisibleContentChildrenCount(childContent)){
                             return false;
                         }
-                    } catch (TskCoreException e) {
+                    } catch (TskCoreException e){
                         logger.log(Level.SEVERE, "Error checking if file node is leaf.", e); //NON-NLS
                     }
                 }
@@ -244,7 +245,6 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
         @Override
         public Boolean visit(VirtualDirectoryNode vdn) {
             return visitDeep(vdn);
-            //return ! vdn.hasContentChildren();
         }
 
         @Override
@@ -286,7 +286,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         @Override
         public Boolean visit(FileNode fn) {
-            return fn.hasContentChildren();
+            return fn.hasVisibleContentChildren();
         }
 
         @Override
