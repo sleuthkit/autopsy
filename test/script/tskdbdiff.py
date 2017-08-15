@@ -307,7 +307,6 @@ class TskDbDiff(object):
         id_objects_table = build_id_objects_table(conn.cursor())
         id_artifact_types_table = build_id_artifact_types_table(conn.cursor())
         id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table)
-        #id_artifact_path_table = build_id_artifact_path_table(conn.cursor(), id_files_table, id_artifact_types_table)
 
         conn.text_factory = lambda x: x.decode("utf-8", "ignore")
 
@@ -382,14 +381,15 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     elif (path_index != -1):
         obj_id = int(fields_list[0])
         objValue = files_table[obj_id]
-        par_obj_id = int(objects_table[obj_id][0])
-        if par_obj_id in files_table.keys():
-            par_obj_value = files_table[par_obj_id]
-            par_obj_name = par_obj_value[par_obj_value.rfind('/')+1:]
-            #check the par_id that we insert to the path name when we create uniqueName
-            pathValue = re.sub(par_obj_name + '_' + str(par_obj_id), par_obj_name, fields_list[1])
+        # remove the obj_id from ModuleOutput/EmbeddedFileExtractor directory
+        idx_pre = fields_list[1].find('EmbeddedFileExtractor') + len('EmbeddedFileExtractor')
+        if idx_pre > -1:
+            idx_pos =  fields_list[1].find('\\', idx_pre + 2)
+            dir_to_replace = fields_list[1][idx_pre + 1 : idx_pos] # +1 to skip the file seperator
+            dir_to_replace = dir_to_replace[0:dir_to_replace.rfind('_')]
+            pathValue = fields_list[1][:idx_pre+1] + dir_to_replace + fields_list[1][idx_pos:]
         else:
-            raise TskDbDiffException("obj_id %d not found in tsk_files table." % par_obj_id)
+            pathValue = fields_list[1]
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');') 
         return newLine
     # remove object ID
@@ -439,7 +439,6 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         if path and parent_path:
             return newLine + path + ', ' + parent_path + ', ' + ', '.join(fields_list[2:]) + ');'
         else:
-            print('objects table ' + str(obj_id) + ' ' + str(parent_id))
             return line 
     # remove time-based information, ie Test_6/11/14 -> Test    
     elif (report_index != -1):
@@ -536,7 +535,6 @@ def build_id_objects_table(db_cursor):
     # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
     # with the object id as the key and par_obj_id, type as the value
     mapping = dict([(row[0], [row[1], row[2]]) for row in db_cursor.execute("SELECT * FROM tsk_objects")])
-    print("zli: obj size " + str(len(mapping)))
     return mapping
 
 def build_id_artifact_types_table(db_cursor):
@@ -562,19 +560,15 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table):
     # make a copy of files_table and updated it with new data from artifats_table
     mapping = files_table.copy()
     for k, v in objects_table.items():
-        if k not in mapping.keys():
-            if k not in artifacts_table.keys():
-                print("zli obj_id: " + str(k) + "|" + str(v[0]) + "|" + str(v[1]))
-            else:
+        if k not in mapping.keys(): # obj_id_with_path table doesn't have data for obj_id(k), we use it's par_obj_id's path+name/artifact_type
+            if k in artifacts_table.keys():
                 par_obj_id = v[0]
-                path = mapping[par_obj_id] # We currently do not have an artifact has a child is artifact
+                path = mapping[par_obj_id] 
                 mapping[k] = path + "/" + artifacts_table[k]
         elif v[0] not in mapping.keys():
-            if v[0] not in artifacts_table.keys():
-                print("zli par_obj_id: " + str(k) + "|" + str(v[0]) + "|" + str(v[1]))
-            else:
+            if v[0] in artifacts_table.keys():
                 par_obj_id = objects_table[v[0]]
-                path = mapping[par_obj_id] # We currently do not have an artifact has a child is artifact
+                path = mapping[par_obj_id] 
                 mapping[k] = path + "/" + artifacts_table[v[0]]
     return mapping
 
