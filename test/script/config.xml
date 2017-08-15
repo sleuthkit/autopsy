@@ -6,9 +6,9 @@ List of tags:
 image: An image to be ingested
 build: the path to the build.xml file
 indir: the path to input directory
-outdir: the path to single-user case output directory
+singleUser_outdir: the path to single-user case output directory
 global_csv: path to global csv file
-golddir: the path to single-user case gold directory
+singleUser_golddir: the path to single-user case gold directory
 timing: can be set to True or False. If enabled, record the timing.
 userCaseType: set this value to do single-user, multi-user or both tests
 
