@@ -365,9 +365,6 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     data_source_info_index = line.find('INSERT INTO "data_source_info"')
     ingest_job_index = line.find('INSERT INTO "ingest_jobs"')
 
-    #make a copy of files_table to combine the data from artifacts table
-    obj_path_table = files_table.copy()
-
     parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
     
@@ -415,8 +412,6 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
 
         if obj_id in files_table.keys():
             path = files_table[obj_id]
-        elif obj_id in obj_path_table:
-            path =  obj_path_table[obj_id][0]
         elif obj_id in vs_parts_table.keys():
             path = vs_parts_table[obj_id]
         elif obj_id in vs_info_table.keys():
@@ -426,8 +421,6 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         
         if parent_id in files_table.keys():
             parent_path = files_table[parent_id]
-        elif parent_id in obj_path_table:
-            path =  obj_path_table[parent_id][0]
         elif parent_id in vs_parts_table.keys():
             parent_path = vs_parts_table[parent_id]
         elif parent_id in vs_info_table.keys():
@@ -560,7 +553,7 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table):
     # make a copy of files_table and updated it with new data from artifats_table
     mapping = files_table.copy()
     for k, v in objects_table.items():
-        if k not in mapping.keys(): # obj_id_with_path table doesn't have data for obj_id(k), we use it's par_obj_id's path+name/artifact_type
+        if k not in mapping.keys(): # If the mapping table doesn't have data for obj_id(k), we use it's par_obj_id's path+name plus it's artifact_type name as path
             if k in artifacts_table.keys():
                 par_obj_id = v[0]
                 path = mapping[par_obj_id] 
