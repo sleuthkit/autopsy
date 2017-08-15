@@ -560,7 +560,7 @@ class TableReportGenerator {
         }
         // Query for keywords, grouped by list
         String keywordsQuery
-                = "SELECT art.artifact_id, art.obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
+                = "SELECT art.artifact_id, art.par_obj_id, att1.value_text AS keyword, att2.value_text AS preview, att3.value_text AS list, f.name AS name, f.parent_path AS parent_path "
                 + //NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att1, blackboard_attributes AS att2, blackboard_attributes AS att3, tsk_files AS f "
                 + //NON-NLS
@@ -570,7 +570,7 @@ class TableReportGenerator {
                 + //NON-NLS
                 "AND (att3.artifact_id = art.artifact_id) "
                 + //NON-NLS
-                "AND (f.obj_id = art.obj_id) "
+                "AND (f.obj_id = art.par_obj_id) "
                 + //NON-NLS
                 "AND (att1.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID() + ") "
                 + //NON-NLS
@@ -600,7 +600,7 @@ class TableReportGenerator {
                 }
                 String tagsList = makeCommaSeparatedList(uniqueTagNames);
 
-                Long objId = resultSet.getLong("obj_id"); //NON-NLS
+                Long objId = resultSet.getLong("par_obj_id"); //NON-NLS
                 String keyword = resultSet.getString("keyword"); //NON-NLS
                 String preview = resultSet.getString("preview"); //NON-NLS
                 String list = resultSet.getString("list"); //NON-NLS
@@ -712,13 +712,13 @@ class TableReportGenerator {
             orderByClause = "ORDER BY att.value_text ASC, f.parent_path ASC, f.name ASC, size ASC"; //NON-NLS
         }
         String hashsetHitsQuery
-                = "SELECT art.artifact_id, art.obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path "
+                = "SELECT art.artifact_id, art.par_obj_id, att.value_text AS setname, f.name AS name, f.size AS size, f.parent_path AS parent_path "
                 + //NON-NLS
                 "FROM blackboard_artifacts AS art, blackboard_attributes AS att, tsk_files AS f "
                 + //NON-NLS
                 "WHERE (att.artifact_id = art.artifact_id) "
                 + //NON-NLS
-                "AND (f.obj_id = art.obj_id) "
+                "AND (f.obj_id = art.par_obj_id) "
                 + //NON-NLS
                 "AND (att.attribute_type_id = " + BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID() + ") "
                 + //NON-NLS
@@ -743,7 +743,7 @@ class TableReportGenerator {
                 }
                 String tagsList = makeCommaSeparatedList(uniqueTagNames);
 
-                Long objId = resultSet.getLong("obj_id"); //NON-NLS
+                Long objId = resultSet.getLong("par_obj_id"); //NON-NLS
                 String set = resultSet.getString("setname"); //NON-NLS
                 String size = resultSet.getString("size"); //NON-NLS
                 String uniquePath = "";

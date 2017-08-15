@@ -531,7 +531,7 @@ final public class Accounts implements AutopsyVisitableItem {
             protected List<FileWithCCN> createKeys() {
                 List<FileWithCCN> list = new ArrayList<>();
                 String query
-                        = "SELECT blackboard_artifacts.obj_id," //NON-NLS
+                        = "SELECT blackboard_artifacts.par_obj_id," //NON-NLS
                         + "      solr_attribute.value_text AS solr_document_id, "; //NON-NLS
                 if(skCase.getDatabaseType().equals(DbType.POSTGRESQL)){
                     query += "      string_agg(blackboard_artifacts.artifact_id::character varying, ',') AS artifact_IDs, " //NON-NLS
@@ -549,13 +549,13 @@ final public class Accounts implements AutopsyVisitableItem {
                         + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
                         + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                         + getRejectedArtifactFilterClause()
-                        + " GROUP BY blackboard_artifacts.obj_id, solr_document_id " //NON-NLS
+                        + " GROUP BY blackboard_artifacts.par_obj_id, solr_document_id " //NON-NLS
                         + " ORDER BY hits DESC ";  //NON-NLS
                 try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                         ResultSet rs = results.getResultSet();) {
                     while (rs.next()) {
                         list.add(new FileWithCCN(
-                                rs.getLong("obj_id"), //NON-NLS
+                                rs.getLong("par_obj_id"), //NON-NLS
                                 rs.getString("solr_document_id"), //NON-NLS
                                 unGroupConcat(rs.getString("artifact_IDs"), Long::valueOf), //NON-NLS
                                 rs.getLong("hits"), //NON-NLS
@@ -609,7 +609,7 @@ final public class Accounts implements AutopsyVisitableItem {
                     + "                                AND account_type.value_text = '" + Account.Type.CREDIT_CARD.name() + "'" //NON-NLS
                     + " WHERE blackboard_artifacts.artifact_type_id = " + BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT.getTypeID() //NON-NLS
                     + getRejectedArtifactFilterClause()
-                    + " GROUP BY blackboard_artifacts.obj_id, solr_attribute.value_text ) AS foo";
+                    + " GROUP BY blackboard_artifacts.par_obj_id, solr_attribute.value_text ) AS foo";
             try (SleuthkitCase.CaseDbQuery results = skCase.executeQuery(query);
                     ResultSet rs = results.getResultSet();) {
                 while (rs.next()) {
