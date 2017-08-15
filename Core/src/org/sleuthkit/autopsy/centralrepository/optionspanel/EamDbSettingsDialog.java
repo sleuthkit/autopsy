@@ -47,8 +47,6 @@ public class EamDbSettingsDialog extends JDialog {
     private static final String CENTRAL_REPO_SQLITE_EXT = ".db";
     private final Collection<JTextField> textBoxes;
     private final TextBoxChangedListener textBoxChangedListener;
-    private final ImageIcon goodIcon;
-    private final ImageIcon badIcon;
 
     private final PostgresEamDbSettings dbSettingsPostgres;
     private final SqliteEamDbSettings dbSettingsSqlite;
@@ -69,8 +67,6 @@ public class EamDbSettingsDialog extends JDialog {
 
         textBoxes = new ArrayList<>();
         textBoxChangedListener = new TextBoxChangedListener();
-        goodIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/good.png", false)); // NON-NLS
-        badIcon = new ImageIcon(ImageUtilities.loadImage("org/sleuthkit/autopsy/images/bad.png", false)); // NON-NLS
         dbSettingsPostgres = new PostgresEamDbSettings();
         dbSettingsSqlite = new SqliteEamDbSettings();
         selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
