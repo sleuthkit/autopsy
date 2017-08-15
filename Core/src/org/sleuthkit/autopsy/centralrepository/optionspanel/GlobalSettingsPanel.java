@@ -361,7 +361,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         if (IngestManager.getInstance().isIngestRunning()) {
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
-            enableAllSubComponents(false);
             cbUseCentralRepo.setEnabled(false);
         } else if (!cbUseCentralRepo.isEnabled()) {
             cbUseCentralRepo.setEnabled(true);
@@ -391,16 +390,17 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private void enableDatabaseConfigureButton(Boolean enable) {
-        pnDatabaseConfiguration.setEnabled(enable);
-        pnDatabaseContentButtons.setEnabled(enable);
-        bnDbConfigure.setEnabled(enable);
-        lbDbLocationLabel.setEnabled(enable);
-        lbDbLocationValue.setEnabled(enable);
-        lbDbNameLabel.setEnabled(enable);
-        lbDbNameValue.setEnabled(enable);
-        lbDbPlatformTypeLabel.setEnabled(enable);
-        lbDbPlatformValue.setEnabled(enable);
-        tbOops.setEnabled(enable);
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
+        pnDatabaseConfiguration.setEnabled(enable && !ingestRunning);
+        pnDatabaseContentButtons.setEnabled(enable && !ingestRunning);
+        bnDbConfigure.setEnabled(enable && !ingestRunning);
+        lbDbLocationLabel.setEnabled(enable && !ingestRunning);
+        lbDbLocationValue.setEnabled(enable && !ingestRunning);
+        lbDbNameLabel.setEnabled(enable && !ingestRunning);
+        lbDbNameValue.setEnabled(enable && !ingestRunning);
+        lbDbPlatformTypeLabel.setEnabled(enable && !ingestRunning);
+        lbDbPlatformValue.setEnabled(enable && !ingestRunning);
+        tbOops.setEnabled(enable && !ingestRunning);
     }
 
     /**
@@ -412,9 +412,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableButtonSubComponents(Boolean enable) {
-        bnManageTypes.setEnabled(enable);
-        bnImportDatabase.setEnabled(enable);
-        bnManageTags.setEnabled(enable);
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
+        bnManageTypes.setEnabled(enable && !ingestRunning);
+        bnImportDatabase.setEnabled(enable && !ingestRunning);
+        bnManageTags.setEnabled(enable && !ingestRunning);
         return true;
     }
 
