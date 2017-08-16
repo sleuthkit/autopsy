@@ -372,24 +372,9 @@ final class RegexQuery implements KeywordSearchQuery {
         return escapedQuery;
     }
 
-    /**
-     * Converts the keyword hits for a given search term into artifacts.
-     *
-     * @param foundKeyword The keyword that was found by the regex search.
-     * @param hit          The keyword hit.
-     * @param snippet      The document snippet that contains the hit
-     * @param listName     The name of the keyword list that contained the
-     *                     keyword for which the hit was found.
-     *
-     *
-     *
-     * @return An object that wraps an artifact and a mapping by id of its
-     *         attributes.
-     */
-    // TODO: Are we actually making meaningful use of the KeywordCachedArtifact
-    // class?
+   
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         /*
@@ -499,9 +484,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         try {
             newArtifact.addAttributes(attributes);
-            KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);
-            writeResult.add(attributes);
-            return writeResult;
+            return newArtifact;
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
