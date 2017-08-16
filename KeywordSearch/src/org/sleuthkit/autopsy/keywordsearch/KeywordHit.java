@@ -18,6 +18,8 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.util.Comparator;
+import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -26,8 +28,8 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Stores the fact that file or an artifact associated with a file had a keyword
  * hit. All instances make both the document id of the Solr document where the
- * keyword was found and the file available to clients. Artifact keyword hits
- * also make the artifact available to clients.
+ * keyword was found and the object Id available to clients. Artifact keyword
+ * hits also make the artifact available to clients.
  */
 class KeywordHit implements Comparable<KeywordHit> {
 
@@ -43,14 +45,9 @@ class KeywordHit implements Comparable<KeywordHit> {
         return hit;
     }
 
-    KeywordHit(String solrDocumentId, String snippet) throws TskCoreException {
-        this(solrDocumentId, snippet, null);
-    }
-
     KeywordHit(String solrDocumentId, String snippet, String hit) throws TskCoreException {
-        /**
-         * Store the Solr document id.
-         */
+        this.snippet = StringUtils.stripToEmpty(snippet);
+        this.hit = hit;
         this.solrDocumentId = solrDocumentId;
 
         /**
@@ -71,26 +68,19 @@ class KeywordHit implements Comparable<KeywordHit> {
             this.chunkId = 0;
         }
 
-        /**
-         * Look up the artifact associated with the keyword hit if there is onw.
-         * If the high order bit of the object id is set, the hit was for an
-         * artifact.
+        /*
+         * If the high order bit of the object id is set (ie, it is negative),
+         * the hit was in an artifact, look up the artifact.
          */
-        SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
-
         if (this.solrObjectId < 0) {
+            SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
             this.artifact = caseDb.getBlackboardArtifact(this.solrObjectId);
             contentID = artifact.getObjectID();
         } else {
+            //else the object id is for content.
             this.artifact = null;
             contentID = this.solrObjectId;
         }
-
-        /**
-         * Store the text snippet.
-         */
-        this.snippet = snippet;
-        this.hit = hit;
     }
 
     String getSolrDocumentId() {
@@ -101,16 +91,12 @@ class KeywordHit implements Comparable<KeywordHit> {
         return this.solrObjectId;
     }
 
-    boolean hasChunkId() {
-        return this.chunkId != 0;
-    }
-
     int getChunkId() {
         return this.chunkId;
     }
 
     boolean hasSnippet() {
-        return !this.snippet.isEmpty();
+        return StringUtils.isNotBlank(this.snippet);
     }
 
     String getSnippet() {
@@ -149,7 +135,7 @@ class KeywordHit implements Comparable<KeywordHit> {
             return false;
         }
         final KeywordHit other = (KeywordHit) obj;
-        return (this.solrObjectId == other.solrObjectId && this.chunkId == other.chunkId);
+        return this.compareTo(other) == 0;
     }
 
     @Override
@@ -161,21 +147,8 @@ class KeywordHit implements Comparable<KeywordHit> {
 
     @Override
     public int compareTo(KeywordHit o) {
-        if (this.solrObjectId < o.solrObjectId) {
-            // Out object id is less than the other object id
-            return -1;
-        } else if (this.solrObjectId == o.solrObjectId) {
-            // Hits have same object id
-            if (this.chunkId < o.chunkId) {
-                // Our chunk id is lower than the other chunk id
-                return -1;
-            } else {
-                // Our chunk id is either greater than or equal to the other chunk id
-                return this.chunkId == o.chunkId ? 0 : 1;
-            }
-        } else {
-            // Our object id is greater than the other object id
-            return 1;
-        }
+        return Comparator.comparing(KeywordHit::getSolrObjectId)
+                .thenComparing(KeywordHit::getChunkId)
+                .compare(this, o);
     }
 }
