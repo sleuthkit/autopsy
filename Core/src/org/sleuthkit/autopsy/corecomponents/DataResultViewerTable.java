@@ -37,7 +37,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.prefs.Preferences;
-import java.util.stream.Stream;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
@@ -59,8 +58,6 @@ import org.openide.nodes.AbstractNode;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.nodes.Node.Property;
-import org.openide.nodes.NodeAdapter;
-import org.openide.nodes.NodeMemberEvent;
 import org.openide.util.NbBundle;
 import org.openide.util.NbPreferences;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
@@ -82,8 +79,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
-    @NbBundle.Messages("DataResultViewerTable.pleasewaitNodeDisplayName=Please Wait...")
-    private static final String PLEASEWAIT_NODE_DISPLAY_NAME = Bundle.DataResultViewerTable_pleasewaitNodeDisplayName();
     private static final Color TAGGED_COLOR = new Color(200, 210, 220);
     /**
      * The properties map:
@@ -102,8 +97,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
      * storeColumnVisibility().
      */
     private final Map<String, ETableColumn> columnMap = new HashMap<>();
-
-    private final PleasewaitNodeListener pleasewaitNodeListener = new PleasewaitNodeListener();
 
     private Node currentRoot;
 
@@ -218,15 +211,8 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
                 hasChildren = selectedNode.getChildren().getNodesCount() > 0;
             }
 
-            Node oldNode = this.em.getRootContext();
-            if (oldNode != null) {
-                oldNode.removeNodeListener(pleasewaitNodeListener);
-            }
-
             if (hasChildren) {
                 currentRoot = selectedNode;
-                pleasewaitNodeListener.reset();
-                currentRoot.addNodeListener(pleasewaitNodeListener);
                 em.setRootContext(currentRoot);
                 setupTable();
             } else {
@@ -761,35 +747,6 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
          */
         private void listenToVisibilityChanges(boolean b) {
             this.listenToVisibilitEvents = b;
-        }
-    }
-
-    private class PleasewaitNodeListener extends NodeAdapter {
-
-        private volatile boolean load = true;
-
-        public void reset() {
-            load = true;
-        }
-
-        @Override
-        public void childrenAdded(final NodeMemberEvent nme) {
-            Node[] delta = nme.getDelta();
-            if (load && containsReal(delta)) {
-                load = false;
-                //JMTODO: this looks suspicious
-                if (SwingUtilities.isEventDispatchThread()) {
-                    setupTable();
-                } else {
-                    SwingUtilities.invokeLater(() -> setupTable());
-                }
-            }
-        }
-
-        private boolean containsReal(Node[] delta) {
-            return Stream.of(delta)
-                    .map(Node::getDisplayName)
-                    .noneMatch(PLEASEWAIT_NODE_DISPLAY_NAME::equals);
         }
     }
 

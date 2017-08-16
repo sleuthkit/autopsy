@@ -1095,6 +1095,20 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                 preparedUpdate.executeUpdate();
             } else {
+                // In this case, the user is tagging something that isn't in the database,
+                // which means the case and/or datasource may also not be in the database.
+                // We could improve effiency by keeping a list of all datasources and cases
+                // in the database, but we don't expect the user to be tagging large numbers
+                // of items (that didn't have the CE ingest module run on them) at once.
+                
+                if(null == getCaseDetails(eamInstance.getEamCase().getCaseUUID())){
+                    newCase(eamInstance.getEamCase());
+                }
+                
+                if (null == getDataSourceDetails(eamInstance.getEamDataSource().getDeviceID())) {
+                    newDataSource(eamInstance.getEamDataSource());
+                }
+                
                 eamArtifact.getInstances().get(0).setKnownStatus(TskData.FileKnown.BAD);
                 addArtifact(eamArtifact);
             }

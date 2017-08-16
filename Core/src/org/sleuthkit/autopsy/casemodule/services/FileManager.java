@@ -36,8 +36,10 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.LayoutFile;
+import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbTransaction;
+import org.sleuthkit.datamodel.SpecialDirectory;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskFileRange;
 import org.sleuthkit.datamodel.VirtualDirectory;
@@ -45,6 +47,7 @@ import org.sleuthkit.datamodel.LocalFilesDataSource;
 import org.sleuthkit.datamodel.TskDataException;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.CarvingResult;
 import org.sleuthkit.datamodel.TskData;
 
@@ -295,7 +298,7 @@ public class FileManager implements Closeable {
      * @param atime           The accessed time of the file.
      * @param mtime           The modified time of the file.
      * @param isFile          True if a file, false if a directory.
-     * @param parentFile      The parent file from which the file was derived.
+     * @param parentObj       The parent object from which the file was derived.     
      * @param rederiveDetails The details needed to re-derive file (will be
      *                        specific to the derivation method), currently
      *                        unused.
@@ -317,7 +320,7 @@ public class FileManager implements Closeable {
             long size,
             long ctime, long crtime, long atime, long mtime,
             boolean isFile,
-            AbstractFile parentFile,
+            Content parentObj,
             String rederiveDetails, String toolName, String toolVersion, String otherDetails,
             TskData.EncodingType encodingType) throws TskCoreException {
         if (null == caseDb) {
@@ -325,7 +328,7 @@ public class FileManager implements Closeable {
         }
         return caseDb.addDerivedFile(fileName, localPath, size,
                 ctime, crtime, atime, mtime,
-                isFile, parentFile, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
+                isFile, parentObj, rederiveDetails, toolName, toolVersion, otherDetails, encodingType);
     }
 
     /**
@@ -496,12 +499,9 @@ public class FileManager implements Closeable {
      * database, recursively adding the contents of directories.
      *
      * @param trans              A case database transaction.
-     * @param parentDirectory    The root virtual direcotry of the data source.
+     * @param parentDirectory    The root virtual directory of the data source or the parent local directory.
      * @param localFile          The local/logical file or directory.
      * @param encodingType       Type of encoding used when storing the file
-     *
-     * @returns File object of file added or new virtualdirectory for the
-     * directory.
      * @param progressUpdater    Called after each file/directory is added to
      *                           the case database.
      *
@@ -510,14 +510,14 @@ public class FileManager implements Closeable {
      * @throws TskCoreException If there is a problem completing a database
      *                          operation.
      */
-    private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile,
+    private AbstractFile addLocalFile(CaseDbTransaction trans, SpecialDirectory parentDirectory, java.io.File localFile,
             TskData.EncodingType encodingType, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         if (localFile.isDirectory()) {
             /*
-             * Add the directory as a virtual directory.
+             * Add the directory as a local directory.
              */
-            VirtualDirectory virtualDirectory = caseDb.addVirtualDirectory(parentDirectory.getId(), localFile.getName(), trans);
-            progressUpdater.fileAdded(virtualDirectory);
+            LocalDirectory localDirectory = caseDb.addLocalDirectory(parentDirectory.getId(), localFile.getName(), trans);
+            progressUpdater.fileAdded(localDirectory);
 
             /*
              * Add its children, if any.
@@ -525,11 +525,11 @@ public class FileManager implements Closeable {
             final java.io.File[] childFiles = localFile.listFiles();
             if (childFiles != null && childFiles.length > 0) {
                 for (java.io.File childFile : childFiles) {
-                    addLocalFile(trans, virtualDirectory, childFile, progressUpdater);
+                    addLocalFile(trans, localDirectory, childFile, progressUpdater);
                 }
             }
 
-            return virtualDirectory;
+            return localDirectory;
         } else {
             return caseDb.addLocalFile(localFile.getName(), localFile.getAbsolutePath(), localFile.length(),
                     0, 0, 0, 0,
@@ -677,13 +677,10 @@ public class FileManager implements Closeable {
      * database, recursively adding the contents of directories.
      *
      * @param trans              A case database transaction.
-     * @param parentDirectory    The root virtual direcotry of the data source.
+     * @param parentDirectory    The root virtual directory of the data source or the parent local directory.
      * @param localFile          The local/logical file or directory.
      * @param progressUpdater notifier to receive progress notifications on
      *                           folders added, or null if not used
-     *
-     * @returns File object of file added or new virtualdirectory for the
-     * directory.
      * @param progressUpdater    Called after each file/directory is added to
      *                           the case database.
      *
@@ -695,7 +692,7 @@ public class FileManager implements Closeable {
      * @deprecated Use the version with explicit EncodingType instead
      */
     @Deprecated
-    private AbstractFile addLocalFile(CaseDbTransaction trans, VirtualDirectory parentDirectory, java.io.File localFile, FileAddProgressUpdater progressUpdater) throws TskCoreException {
+    private AbstractFile addLocalFile(CaseDbTransaction trans, SpecialDirectory parentDirectory, java.io.File localFile, FileAddProgressUpdater progressUpdater) throws TskCoreException {
         return addLocalFile(trans, parentDirectory, localFile, TskData.EncodingType.NONE, progressUpdater);
     }
 
