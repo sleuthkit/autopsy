@@ -356,37 +356,39 @@ public class EamDbSettingsDialog extends JDialog {
                 if (!dbSettingsPostgres.verifyDatabaseExists()) {
                     dbCreated = dbSettingsPostgres.createDatabase();
                 }
-                if (!dbCreated) {
+                if (dbCreated) {
+                    result = dbSettingsPostgres.initializeDatabaseSchema()
+                            && dbSettingsPostgres.insertDefaultDatabaseContent();
+                }
+                if (!result) {
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                } else {
-                    result = dbSettingsPostgres.initializeDatabaseSchema()
-                            && dbSettingsPostgres.insertDefaultDatabaseContent();
+                    LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
+                    return;
                 }
                 break;
             case SQLITE:
                 if (!dbSettingsSqlite.dbDirectoryExists()) {
                     dbCreated = dbSettingsSqlite.createDbDirectory();
                 }
-                if (!dbCreated) {
+                if (dbCreated) {
+                    result = dbSettingsSqlite.initializeDatabaseSchema()
+                            && dbSettingsSqlite.insertDefaultDatabaseContent();
+                }
+                if (!result) {
                     JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
                             Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                } else {
-                    result = dbSettingsSqlite.initializeDatabaseSchema()
-                            && dbSettingsSqlite.insertDefaultDatabaseContent();
+                    LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
+                    return;
                 }
                 break;
         }
-        if (false == result) {
-            LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
-        } else {
-            testingStatus = DatabaseTestResult.TESTEDOK;
-            valid();
-        }
+        testingStatus = DatabaseTestResult.TESTEDOK;
+        valid();
     }
 
     @Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
