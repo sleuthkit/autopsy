@@ -346,7 +346,8 @@ public class EamDbSettingsDialog extends JDialog {
     }
 
     @Messages({"EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database",
-        "EamDbSettingsDialog.okButton.createDbError.message=Unable to create Database, please ensure location was valid and try again."})
+        "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
+        "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again."})
     private void createDb() {
         boolean result = false;
         boolean dbCreated = true;
@@ -355,24 +356,32 @@ public class EamDbSettingsDialog extends JDialog {
                 if (!dbSettingsPostgres.verifyDatabaseExists()) {
                     dbCreated = dbSettingsPostgres.createDatabase();
                 }
-                result = dbSettingsPostgres.initializeDatabaseSchema()
-                        && dbSettingsPostgres.insertDefaultDatabaseContent();
-
+                if (!dbCreated) {
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message(),
+                            Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
+                            JOptionPane.WARNING_MESSAGE);
+                } else {
+                    result = dbSettingsPostgres.initializeDatabaseSchema()
+                            && dbSettingsPostgres.insertDefaultDatabaseContent();
+                }
                 break;
             case SQLITE:
                 if (!dbSettingsSqlite.dbDirectoryExists()) {
                     dbCreated = dbSettingsSqlite.createDbDirectory();
                 }
-                result = dbSettingsSqlite.initializeDatabaseSchema()
-                        && dbSettingsSqlite.insertDefaultDatabaseContent();
+                if (!dbCreated) {
+                    JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
+                            Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message(),
+                            Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
+                            JOptionPane.WARNING_MESSAGE);
+                } else {
+                    result = dbSettingsSqlite.initializeDatabaseSchema()
+                            && dbSettingsSqlite.insertDefaultDatabaseContent();
+                }
                 break;
         }
-        if (false == dbCreated) {
-            JOptionPane.showMessageDialog(WindowManager.getDefault().getMainWindow(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbError_message(),
-                    Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
-                    JOptionPane.WARNING_MESSAGE);
-        } else if (false == result) {
+        if (false == result) {
             LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
         } else {
             testingStatus = DatabaseTestResult.TESTEDOK;

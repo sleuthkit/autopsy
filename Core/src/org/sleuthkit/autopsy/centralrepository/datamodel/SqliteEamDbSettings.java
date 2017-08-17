@@ -140,7 +140,7 @@ public final class SqliteEamDbSettings {
                 File dbDir = new File(getDbDirectory());
                 Files.createDirectories(dbDir.toPath());
                 LOGGER.log(Level.INFO, "sqlite directory did not exist, created it at {0}.", getDbDirectory()); // NON-NLS
-            } catch (IOException | InvalidPathException ex) {
+            } catch (IOException | InvalidPathException | SecurityException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to create sqlite database directory.", ex); // NON-NLS
                 return false;
             }
