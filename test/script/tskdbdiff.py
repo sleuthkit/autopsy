@@ -538,7 +538,7 @@ def build_id_artifact_types_table(db_cursor):
     """
     # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
     # with the object id as the key and artifact type as the value
-    mapping = dict([(row[0], row[1]) for row in db_cursor.execute("SELECT blackboard_artifacts.artifact_obj_id, blackboard_artifact_types.type_name FROM blackboard_artifacts INNER JOIN blackboard_artifact_types ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id ")])
+    mapping = dict([(row[0], row[1]) for row in db_cursor.execute("SELECT blackboard_artifacts.obj_id, blackboard_artifact_types.type_name FROM blackboard_artifacts INNER JOIN blackboard_artifact_types ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id ")])
     return mapping
 
 
