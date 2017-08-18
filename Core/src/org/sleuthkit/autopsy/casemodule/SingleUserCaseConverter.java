@@ -682,7 +682,7 @@ public class SingleUserCaseConverter {
                 if (value > biggestPK) {
                     biggestPK = value;
                 }
-                outputStatement.executeUpdate("INSERT INTO blackboard_artifacts (artifact_id, obj_id, artifact_type_id) VALUES (" //NON-NLS
+                outputStatement.executeUpdate("INSERT INTO blackboard_artifacts (artifact_id, par_obj_id, artifact_type_id) VALUES (" //NON-NLS
                         + value + ","
                         + inputResultSet.getLong(2) + ","
                         + inputResultSet.getLong(3) + ")"); //NON-NLS

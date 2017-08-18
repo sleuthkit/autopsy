@@ -1075,7 +1075,7 @@ final class FileExportRuleSet implements Serializable, Comparable<FileExportRule
                     throw new ExportRulesException(String.format("The specified %s attribute type does not exist in case database for %s", attributeTypeName, currentCase.getCaseDirectory()), ex);
                 }
                                                 
-                String clause = String.format("files.obj_id = arts%d.obj_id AND arts%d.artifact_type_id = %d AND attrs%d.artifact_id = arts%d.artifact_id AND attrs%d.attribute_type_id = %d AND ",
+                String clause = String.format("files.obj_id = arts%d.par_obj_id AND arts%d.artifact_type_id = %d AND attrs%d.artifact_id = arts%d.artifact_id AND attrs%d.attribute_type_id = %d AND ",
                         index, index, artifactType.getTypeID(), index, index, index, attributeType.getTypeID());                
                 switch (this.attributeValueType) {
                     case INTEGER:
