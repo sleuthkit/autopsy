@@ -1231,6 +1231,8 @@ public class Server {
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
         private final HttpSolrServer solrCore;
+        
+        private final int QUERY_TIMEOUT_MILLISECONDS = 86400000; // 24 Hours = 86,400,000 Milliseconds
 
         private Core(String name, CaseType caseType, Index index) {
             this.name = name;
@@ -1240,7 +1242,8 @@ public class Server {
             this.solrCore = new HttpSolrServer(currentSolrServer.getBaseURL() + "/" + name); //NON-NLS
 
             //TODO test these settings
-            //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
+            // socket read timeout, make large enough so can index larger files
+            solrCore.setSoTimeout(QUERY_TIMEOUT_MILLISECONDS);  
             //solrCore.setConnectionTimeout(1000);
             solrCore.setDefaultMaxConnectionsPerHost(2);
             solrCore.setMaxTotalConnections(5);
