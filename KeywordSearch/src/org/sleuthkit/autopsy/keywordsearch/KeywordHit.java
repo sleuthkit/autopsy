@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.Comparator;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.datamodel.BlackboardArtifact;
@@ -26,10 +27,10 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
- * Stores the fact that file or an artifact associated with a file had a keyword
- * hit. All instances make both the document id of the Solr document where the
- * keyword was found and the object Id available to clients. Artifact keyword
- * hits also make the artifact available to clients.
+ * Represents the fact that a file or an artifact associated with a file had a
+ * keyword hit. All instances make both the document id of the Solr document
+ * where the keyword was found and the object Id of the file available to
+ * clients. Artifact keyword hits also make the artifact available to clients.
  */
 class KeywordHit implements Comparable<KeywordHit> {
 
@@ -38,7 +39,7 @@ class KeywordHit implements Comparable<KeywordHit> {
     private final int chunkId;
     private final String snippet;
     private final long contentID;
-    private final BlackboardArtifact artifact;
+    private final boolean hitOnArtifact;
     private final String hit;
 
     public String getHit() {
@@ -67,18 +68,18 @@ class KeywordHit implements Comparable<KeywordHit> {
             this.solrObjectId = Long.parseLong(solrDocumentId);
             this.chunkId = 0;
         }
+        hitOnArtifact = this.solrObjectId < 0;
 
         /*
          * If the high order bit of the object id is set (ie, it is negative),
          * the hit was in an artifact, look up the artifact.
          */
-        if (this.solrObjectId < 0) {
+        if (hitOnArtifact) {
             SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
-            this.artifact = caseDb.getBlackboardArtifact(this.solrObjectId);
+            BlackboardArtifact artifact = caseDb.getBlackboardArtifact(this.solrObjectId);
             contentID = artifact.getObjectID();
         } else {
             //else the object id is for content.
-            this.artifact = null;
             contentID = this.solrObjectId;
         }
     }
@@ -113,17 +114,20 @@ class KeywordHit implements Comparable<KeywordHit> {
      * @return
      */
     boolean isArtifactHit() {
-        return (null != this.artifact);
+        return hitOnArtifact;
     }
 
     /**
      * If this hit is in the indexed text of an artifact, get that artifact.
      *
-     * @return The artifact whose indexed text this hit is in, or null if it is
-     *         not an artifacts hit.
+     * @return The artifact whose indexed text this hit is in.
      */
-    BlackboardArtifact getArtifact() {
-        return this.artifact;
+    Optional<Long> getArtifactID() {
+        if (hitOnArtifact) {
+            return Optional.of(solrObjectId);
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

@@ -225,9 +225,11 @@ class LuceneQuery implements KeywordSearchQuery {
             }
         }
 
-        if (hit.isArtifactHit()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
-        }
+        
+        hit.getArtifactID().ifPresent(artifactID
+                -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+        );
+     
 
         try {
             bba.addAttributes(attributes); //write out to bb

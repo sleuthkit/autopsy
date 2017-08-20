@@ -140,7 +140,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             queryResults = queryRequest.performQuery();
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
+            MessageNotifyUtil.Notify.error(org.sleuthkit.autopsy.keywordsearch.Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
         }
         SleuthkitCase tskCase = null;
@@ -186,12 +186,16 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 properties.put(TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
             }
 
-            String hitName = hit.isArtifactHit()
-                    ? hit.getArtifact().getDisplayName() + " Artifact" //NON-NLS
-                    : contentName;
-
-            hitNumber++;
-            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, queryRequest, queryResults));
+            try {
+                String hitName = hit.isArtifactHit()
+                        ? tskCase.getBlackboardArtifact(hit.getArtifactID().get()).getDisplayName() + " Artifact" //NON-NLS
+                        : contentName;
+                hitNumber++;
+                tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, queryRequest, queryResults));
+            } catch (TskCoreException ex) {
+                Exceptions.printStackTrace(ex);
+                return false;
+            }
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation
