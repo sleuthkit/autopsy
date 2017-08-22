@@ -512,7 +512,7 @@ final class RegexQuery implements KeywordSearchQuery {
      * hit and turns them into artifact attributes. The track 1 data has the
      * same fields as the track two data, plus the account holder's name.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
+     * @param attributeMap A map of artifact attribute objects, used to avoid
      *                      creating duplicate attributes.
      * @param matcher       A matcher for the snippet.
      */
@@ -525,7 +525,7 @@ final class RegexQuery implements KeywordSearchQuery {
      * Creates an attribute of the the given type to the given artifact with a
      * value parsed from the snippet for a credit account number hit.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
+     * @param attributeMap A map of artifact attribute objects, used to avoid
      *                      creating duplicate attributes.
      * @param attrType      The type of attribute to create.
      * @param groupName     The group name of the regular expression that was
@@ -547,5 +547,4 @@ final class RegexQuery implements KeywordSearchQuery {
             return null;
         });
     }
-
 }

@@ -61,8 +61,6 @@ class QueryResults {
      */
     private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
 
-   
-
     QueryResults(KeywordSearchQuery query) {
         this.keywordSearchQuery = query;
     }
@@ -70,8 +68,6 @@ class QueryResults {
     void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
-
-  
 
     KeywordSearchQuery getQuery() {
         return keywordSearchQuery;
@@ -146,14 +142,14 @@ class QueryResults {
                         continue;
                     }
                 }
-                BlackboardArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard( keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
+                BlackboardArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
                 if (writeResult != null) {
                     newArtifacts.add(writeResult);
                     if (notifyInbox) {
                         try {
                             writeSingleFileInboxMessage(writeResult, hit.getContent());
                         } catch (TskCoreException ex) {
-                            logger.log(Level.WARNING, "Error posting ,message to Ingest Inbox", ex); //NON-NLS
+                            logger.log(Level.WARNING, "Error posting message to Ingest Inbox", ex); //NON-NLS
                         }
                     }
                 } else {
@@ -186,7 +182,6 @@ class QueryResults {
      *         SolrObjectID-ChunkID pairs.
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
-
         HashMap<Long, KeywordHit> hits = new HashMap<>();
 
         // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
@@ -201,10 +196,12 @@ class QueryResults {
     }
 
     /**
-     * Generate an ingest inbox message for given keyword in given file
+     * Generate and post an ingest inbox message for the given keyword in the given content.
      *
-     * @param artifact
-     * @param hitFile
+     * @param artifact The keyword hit artifact.
+     * @param hitContent The content that the hit is in.
+     *
+     * @throws TskCoreException If there is a problem generating or posting the inbox message.
      */
     private void writeSingleFileInboxMessage(BlackboardArtifact artifact, Content hitContent) throws TskCoreException {
         StringBuilder subjectSb = new StringBuilder();
@@ -216,9 +213,7 @@ class QueryResults {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
         }
         String uniqueKey = null;
-        BlackboardAttribute attr;
-
-        attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD));
+        BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD));
         if (attr != null) {
             final String keyword = attr.getValueString();
             subjectSb.append(keyword);
@@ -240,6 +235,7 @@ class QueryResults {
             detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
             detailsSb.append("</tr>"); //NON-NLS
         }
+        
         //file
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
@@ -262,7 +258,6 @@ class QueryResults {
 
         //regex
         if (!keywordSearchQuery.isLiteral()) {
-
             attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP));
             if (attr != null) {
                 detailsSb.append("<tr>"); //NON-NLS
@@ -270,12 +265,10 @@ class QueryResults {
                 detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
                 detailsSb.append("</tr>"); //NON-NLS
             }
-
         }
 
         detailsSb.append("</table>"); //NON-NLS
 
         IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, artifact));
     }
-
 }
