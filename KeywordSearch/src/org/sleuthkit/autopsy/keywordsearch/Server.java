@@ -662,11 +662,11 @@ public class Server {
                     } else {
                         try {
                             /*
-                            NOTE: It has been noticed that sometimes Solr throws an exception
-                            when trying to open a core on a network drive because it thinks that
-                            some files are missing in the index folder. Same core is observed to 
+                            NOTE: It has been noticed that in rare cases Solr throws an exception
+                            when trying to open a core that is stored on a network drive because 
+                            it thinks that some files are missing in the index folder. Same core is observed to 
                             be successfully opened just seconds later by other Autopsy instances.
-                            Therefore this re-try is being added to hopefully mitigate that (see JIRA-2941)
+                            Therefore a re-try is being added to hopefully mitigate this (see JIRA-2941)
                              */
                             logger.log(Level.WARNING, "Unable to open Solr core in " + index.getIndexPath() + ", re-trying", ex);
                             Thread.sleep(TIME_TO_SLEEP_BETWEEN_RETIES_MILLISECODS);
