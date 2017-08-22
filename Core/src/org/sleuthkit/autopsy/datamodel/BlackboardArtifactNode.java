@@ -25,9 +25,11 @@ import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -37,6 +39,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
@@ -64,6 +67,13 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
+    private static final Set<String> CASE_EVENTS_OF_INTEREST = new HashSet<>(Arrays.asList(new String[]{
+        Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(),
+        Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(),
+        Case.Events.CONTENT_TAG_ADDED.toString(),
+        Case.Events.CONTENT_TAG_DELETED.toString(),
+        Case.Events.CURRENT_CASE.toString()
+    }));
 
     private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES).
@@ -138,7 +148,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
-        Case.addPropertyChangeListener(pcl);
+        Case.addEventSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
     }
 
     /**
@@ -155,11 +165,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
-        Case.addPropertyChangeListener(pcl);
+        Case.addEventSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
     }
 
     private void removeListeners() {
-        Case.removePropertyChangeListener(pcl);
+        Case.removeEventSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
     }
 
     @Override
