@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Stores the results from running a Solr query (which could contain multiple
@@ -60,8 +61,6 @@ class QueryResults {
      */
     private final Map<Keyword, List<KeywordHit>> results = new HashMap<>();
 
-   
-
     QueryResults(KeywordSearchQuery query) {
         this.keywordSearchQuery = query;
     }
@@ -69,8 +68,6 @@ class QueryResults {
     void addResult(Keyword keyword, List<KeywordHit> hits) {
         results.put(keyword, hits);
     }
-
-  
 
     KeywordSearchQuery getQuery() {
         return keywordSearchQuery;
@@ -145,11 +142,15 @@ class QueryResults {
                         continue;
                     }
                 }
-                KeywordCachedArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
+                BlackboardArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
                 if (writeResult != null) {
-                    newArtifacts.add(writeResult.getArtifact());
+                    newArtifacts.add(writeResult);
                     if (notifyInbox) {
-                        writeSingleFileInboxMessage(writeResult, hit.getContent());
+                        try {
+                            writeSingleFileInboxMessage(writeResult, hit.getContent());
+                        } catch (TskCoreException ex) {
+                            logger.log(Level.WARNING, "Error posting message to Ingest Inbox", ex); //NON-NLS
+                        }
                     }
                 } else {
                     logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
@@ -181,7 +182,6 @@ class QueryResults {
      *         SolrObjectID-ChunkID pairs.
      */
     private Collection<KeywordHit> getOneHitPerObject(Keyword keyword) {
-
         HashMap<Long, KeywordHit> hits = new HashMap<>();
 
         // create a list of KeywordHits. KeywordHits with lowest chunkID is added the the list.
@@ -196,12 +196,14 @@ class QueryResults {
     }
 
     /**
-     * Generate an ingest inbox message for given keyword in given file
+     * Generate and post an ingest inbox message for the given keyword in the given content.
      *
-     * @param written
-     * @param hitFile
+     * @param artifact The keyword hit artifact.
+     * @param hitContent The content that the hit is in.
+     *
+     * @throws TskCoreException If there is a problem generating or posting the inbox message.
      */
-    private void writeSingleFileInboxMessage(KeywordCachedArtifact written, Content hitContent) {
+    private void writeSingleFileInboxMessage(BlackboardArtifact artifact, Content hitContent) throws TskCoreException {
         StringBuilder subjectSb = new StringBuilder();
         StringBuilder detailsSb = new StringBuilder();
 
@@ -211,30 +213,29 @@ class QueryResults {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
         }
         String uniqueKey = null;
-        BlackboardAttribute attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD.getTypeID());
+        BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD));
         if (attr != null) {
             final String keyword = attr.getValueString();
             subjectSb.append(keyword);
             uniqueKey = keyword.toLowerCase();
+            //details
+            detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
+            //hit
+            detailsSb.append("<tr>"); //NON-NLS
+            detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
+            detailsSb.append("<td>").append(EscapeUtil.escapeHtml(keyword)).append("</td>"); //NON-NLS
+            detailsSb.append("</tr>"); //NON-NLS
         }
 
-        //details
-        detailsSb.append("<table border='0' cellpadding='4' width='280'>"); //NON-NLS
-        //hit
-        detailsSb.append("<tr>"); //NON-NLS
-        detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitThLbl"));
-        detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
-        detailsSb.append("</tr>"); //NON-NLS
-
         //preview
-        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW.getTypeID());
+        attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW));
         if (attr != null) {
             detailsSb.append("<tr>"); //NON-NLS
             detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.previewThLbl"));
             detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
             detailsSb.append("</tr>"); //NON-NLS
         }
-
+        
         //file
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
@@ -247,16 +248,17 @@ class QueryResults {
         detailsSb.append("</tr>"); //NON-NLS
 
         //list
-        attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID());
+        attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
         if (attr != null) {
             detailsSb.append("<tr>"); //NON-NLS
             detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.listThLbl"));
             detailsSb.append("<td>").append(attr.getValueString()).append("</td>"); //NON-NLS
             detailsSb.append("</tr>"); //NON-NLS
         }
+
         //regex
         if (!keywordSearchQuery.isLiteral()) {
-            attr = written.getAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP.getTypeID());
+            attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP));
             if (attr != null) {
                 detailsSb.append("<tr>"); //NON-NLS
                 detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.regExThLbl"));
@@ -264,9 +266,9 @@ class QueryResults {
                 detailsSb.append("</tr>"); //NON-NLS
             }
         }
+
         detailsSb.append("</table>"); //NON-NLS
 
-        IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, written.getArtifact()));
+        IngestServices.getInstance().postMessage(IngestMessage.createDataMessage(MODULE_NAME, subjectSb.toString(), detailsSb.toString(), uniqueKey, artifact));
     }
-
 }

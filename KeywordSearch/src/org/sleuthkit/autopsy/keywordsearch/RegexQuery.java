@@ -372,24 +372,9 @@ final class RegexQuery implements KeywordSearchQuery {
         return escapedQuery;
     }
 
-    /**
-     * Converts the keyword hits for a given search term into artifacts.
-     *
-     * @param foundKeyword The keyword that was found by the regex search.
-     * @param hit          The keyword hit.
-     * @param snippet      The document snippet that contains the hit
-     * @param listName     The name of the keyword list that contained the
-     *                     keyword for which the hit was found.
-     *
-     *
-     *
-     * @return An object that wraps an artifact and a mapping by id of its
-     *         attributes.
-     */
-    // TODO: Are we actually making meaningful use of the KeywordCachedArtifact
-    // class?
+   
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         /*
@@ -499,9 +484,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         try {
             newArtifact.addAttributes(attributes);
-            KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);
-            writeResult.add(attributes);
-            return writeResult;
+            return newArtifact;
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
@@ -529,7 +512,7 @@ final class RegexQuery implements KeywordSearchQuery {
      * hit and turns them into artifact attributes. The track 1 data has the
      * same fields as the track two data, plus the account holder's name.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
+     * @param attributeMap A map of artifact attribute objects, used to avoid
      *                      creating duplicate attributes.
      * @param matcher       A matcher for the snippet.
      */
@@ -542,7 +525,7 @@ final class RegexQuery implements KeywordSearchQuery {
      * Creates an attribute of the the given type to the given artifact with a
      * value parsed from the snippet for a credit account number hit.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
+     * @param attributeMap A map of artifact attribute objects, used to avoid
      *                      creating duplicate attributes.
      * @param attrType      The type of attribute to create.
      * @param groupName     The group name of the regular expression that was
@@ -564,5 +547,4 @@ final class RegexQuery implements KeywordSearchQuery {
             return null;
         });
     }
-
 }
