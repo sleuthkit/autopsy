@@ -189,7 +189,7 @@ public class Server {
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
-    private static final int MAX_NUM_CORE_OPEN_RETRIES = 3; // number of time to re-try loading a Solr core
+    private static final int MAX_NUM_CORE_OPEN_ATTEMPTS = 3; // number of time to attempt loading a Solr core
     private static final int TIME_TO_SLEEP_BETWEEN_RETIES_MILLISECODS = 10000; // wait 10 seconds before re-trying
 
     public enum CORE_EVT_STATES {
@@ -650,14 +650,14 @@ public class Server {
             connectToServer(theCase.getCaseType());
             
             int tryNum = 0;
-            while (tryNum < MAX_NUM_CORE_OPEN_RETRIES) {
+            while (tryNum < MAX_NUM_CORE_OPEN_ATTEMPTS) {
                 tryNum++;
                 try {
                     // open Solr core
                     currentCore = openCore(theCase.getCaseType(), index);
                     break;
                 } catch (KeywordSearchModuleException ex) {
-                    if (tryNum == MAX_NUM_CORE_OPEN_RETRIES) {
+                    if (tryNum == MAX_NUM_CORE_OPEN_ATTEMPTS) {
                         throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
                     } else {
                         try {
