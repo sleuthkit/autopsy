@@ -190,7 +190,7 @@ public class Server {
     private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
     private static final int MAX_NUM_CORE_OPEN_ATTEMPTS = 3; // number of time to attempt loading a Solr core
-    private static final int TIME_TO_SLEEP_BETWEEN_RETIES_MILLISECODS = 10000; // wait 10 seconds before re-trying
+    private static final int TIME_TO_SLEEP_BETWEEN_RETRIES_MILLISECONDS = 10000; // wait 10 seconds before re-trying
 
     public enum CORE_EVT_STATES {
 
@@ -669,7 +669,7 @@ public class Server {
                             Therefore a re-try is being added to hopefully mitigate this (see JIRA-2941)
                              */
                             logger.log(Level.WARNING, "Unable to open Solr core in " + index.getIndexPath() + ", re-trying", ex);
-                            Thread.sleep(TIME_TO_SLEEP_BETWEEN_RETIES_MILLISECODS);
+                            Thread.sleep(TIME_TO_SLEEP_BETWEEN_RETRIES_MILLISECONDS);
                         } catch (InterruptedException ex2) {
                             logger.log(Level.SEVERE, "Unexpected interrupt while waiting betwen Solr core re-tries", ex2);
                         }
