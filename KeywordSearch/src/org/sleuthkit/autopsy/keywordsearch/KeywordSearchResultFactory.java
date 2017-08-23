@@ -36,7 +36,6 @@ import org.netbeans.api.progress.ProgressHandle;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -92,7 +91,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * properties are displayed as columns (since we are doing lazy child Node
      * load we need to preinitialize properties when sending parent Node)
      *
-     * @param toSet property set map for a Node
+     * @param toPopulate property set map for a Node
      */
     @Override
     protected boolean createKeys(List<KeyValueQueryContent> toPopulate) {
@@ -149,6 +148,8 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         try {
             tskCase = Case.getCurrentCase().getSleuthkitCase();
         } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
+            return false;
         }
 
         int hitNumber = 0;
@@ -160,16 +161,20 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              */
             Map<String, Object> properties = new LinkedHashMap<>();
             Content content = null;
+            String contentName = "";
             try {
                 content = tskCase.getContentById(hit.getContentID());
             } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
+                logger.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
+                return false;
             }
-            String contentName = content.getName();
-            if (content instanceof AbstractFile) {
-                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
-            } else {
-                properties.put(LOCATION.toString(), contentName);
+            if (content != null) {
+                contentName = content.getName();
+                if (content instanceof AbstractFile) {
+                    AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
+                } else {
+                    properties.put(LOCATION.toString(), contentName);
+                }
             }
 
             /**
@@ -251,14 +256,14 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * NOTE Parameters are defined based on how they are currently used in
          * practice
          *
-         * @param name    File name that has hit.
-         * @param map     Contains content metadata, snippets, etc. (property
-         *                map)
-         * @param id      User incremented ID
+         * @param name         File name that has hit.
+         * @param map          Contains content metadata, snippets, etc.
+         *                     (property map)
+         * @param id           User incremented ID
          * @param solrObjectId
-         * @param content File that had the hit.
-         * @param query   Query used in search
-         * @param hits    Full set of search results (for all files! @@@)
+         * @param content      File that had the hit.
+         * @param query        Query used in search
+         * @param hits         Full set of search results (for all files! @@@)
          */
         KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
