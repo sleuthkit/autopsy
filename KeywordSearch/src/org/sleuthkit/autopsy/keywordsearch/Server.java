@@ -189,7 +189,7 @@ public class Server {
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
-    private static final int MAX_NUM_CORE_OPEN_ATTEMPTS = 3; // number of time to attempt loading a Solr core
+    private static final int MAX_NUM_CORE_OPEN_ATTEMPTS = 3; // number of times to attempt loading a Solr core
     private static final int TIME_TO_SLEEP_BETWEEN_RETRIES_MILLISECONDS = 10000; // wait 10 seconds before re-trying
 
     public enum CORE_EVT_STATES {
