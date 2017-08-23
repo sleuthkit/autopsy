@@ -189,6 +189,8 @@ public class Server {
     private static final boolean DEBUG = false;//(Version.getBuildType() == Version.Type.DEVELOPMENT);
     private static final String SOLR = "solr";
     private static final String CORE_PROPERTIES = "core.properties";
+    private static final int MAX_NUM_CORE_OPEN_ATTEMPTS = 3; // number of times to attempt loading a Solr core
+    private static final int TIME_TO_SLEEP_BETWEEN_RETRIES_MILLISECONDS = 10000; // wait 10 seconds before re-trying
 
     public enum CORE_EVT_STATES {
 
@@ -644,7 +646,36 @@ public class Server {
     void openCoreForCase(Case theCase, Index index) throws KeywordSearchModuleException {
         currentCoreLock.writeLock().lock();
         try {
-            currentCore = openCore(theCase, index);
+            // establish connection to Solr server
+            connectToServer(theCase.getCaseType());
+            
+            int tryNum = 0;
+            while (tryNum < MAX_NUM_CORE_OPEN_ATTEMPTS) {
+                tryNum++;
+                try {
+                    // open Solr core
+                    currentCore = openCore(theCase.getCaseType(), index);
+                    break;
+                } catch (KeywordSearchModuleException ex) {
+                    if (tryNum == MAX_NUM_CORE_OPEN_ATTEMPTS) {
+                        throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
+                    } else {
+                        try {
+                            /*
+                            NOTE: It has been noticed that in rare cases Solr throws an exception
+                            when trying to open a core that is stored on a network drive because 
+                            it thinks that some files are missing in the index folder. Same core is observed to 
+                            be successfully opened just seconds later by other Autopsy instances.
+                            Therefore a re-try is being added to hopefully mitigate this (see JIRA-2941)
+                             */
+                            logger.log(Level.WARNING, "Unable to open Solr core in " + index.getIndexPath() + ", re-trying", ex);
+                            Thread.sleep(TIME_TO_SLEEP_BETWEEN_RETRIES_MILLISECONDS);
+                        } catch (InterruptedException ex2) {
+                            logger.log(Level.SEVERE, "Unexpected interrupt while waiting betwen Solr core re-tries", ex2);
+                        }
+                    }
+                }
+            }
 
             try {
                 // execute a test query. if it fails, an exception will be thrown
@@ -753,7 +784,7 @@ public class Server {
     /**
      * Creates/opens a Solr core (index) for a case.
      *
-     * @param theCase The case for which the core is to be created/opened.
+     * @param theCase Type of the current case
      * @param index   The text index that the Solr core should be using.
      *
      * @return An object representing the created/opened core.
@@ -761,21 +792,7 @@ public class Server {
      * @throws KeywordSearchModuleException If an error occurs while
      *                                      creating/opening the core.
      */
-    private Core openCore(Case theCase, Index index) throws KeywordSearchModuleException {
-
-        try {
-            if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
-                currentSolrServer = this.localSolrServer;
-            } else {
-                String host = UserPreferences.getIndexingServerHost();
-                String port = UserPreferences.getIndexingServerPort();
-                currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
-            }
-            connectToSolrServer(currentSolrServer);
-
-        } catch (SolrServerException | IOException ex) {
-            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
-        }
+    private Core openCore(CaseType caseType, Index index) throws KeywordSearchModuleException {
 
         try {
             File dataDir = new File(new File(index.getIndexPath()).getParent()); // "data dir" is the parent of the index directory
@@ -798,7 +815,7 @@ public class Server {
 
                 // In single user mode, if there is a core.properties file already,
                 // we've hit a solr bug. Compensate by deleting it.
-                if (theCase.getCaseType() == CaseType.SINGLE_USER_CASE) {
+                if (caseType == CaseType.SINGLE_USER_CASE) {
                     Path corePropertiesFile = Paths.get(solrFolder.toString(), SOLR, coreName, CORE_PROPERTIES);
                     if (corePropertiesFile.toFile().exists()) {
                         try {
@@ -822,11 +839,33 @@ public class Server {
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.noIndexDir.msg"));
             }
 
-            return new Core(coreName, theCase.getCaseType(), index);
+            return new Core(coreName, caseType, index);
 
-        } catch (SolrServerException | SolrException | IOException ex) {
+        } catch (Exception ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
+    }
+    
+    /**
+     * Connect to Solr server.
+     *
+     * @param caseType Type of the current case
+     * @throws KeywordSearchModuleException If unable to connect to Solr server
+     */
+    void connectToServer(CaseType caseType) throws KeywordSearchModuleException {
+        try {
+            if (caseType == CaseType.SINGLE_USER_CASE) {
+                currentSolrServer = this.localSolrServer;
+            } else {
+                String host = UserPreferences.getIndexingServerHost();
+                String port = UserPreferences.getIndexingServerPort();
+                currentSolrServer = new HttpSolrServer("http://" + host + ":" + port + "/solr"); //NON-NLS
+            }
+            connectToSolrServer(currentSolrServer);
+
+        } catch (SolrServerException | IOException ex) {
+            throw new KeywordSearchModuleException(NbBundle.getMessage(Server.class, "Server.connect.exception.msg", ex.getLocalizedMessage()), ex);
+        }        
     }
 
     /**
