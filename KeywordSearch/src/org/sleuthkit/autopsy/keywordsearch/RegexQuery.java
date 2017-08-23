@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -82,8 +80,6 @@ final class RegexQuery implements KeywordSearchQuery {
     private String escapedQuery;
 
     private final int MIN_EMAIL_ADDR_LENGTH = 8;
-
-    private final ListMultimap<Keyword, KeywordHit> hitsMultiMap = ArrayListMultimap.create();
 
     // Lucene regular expressions do not support the following Java predefined
     // and POSIX character classes. There are other valid Java character classes
@@ -189,6 +185,7 @@ final class RegexQuery implements KeywordSearchQuery {
         String cursorMark = CursorMarkParams.CURSOR_MARK_START;
         SolrDocumentList resultList;
         boolean allResultsProcessed = false;
+        QueryResults results = new QueryResults(this);
 
         while (!allResultsProcessed) {
             try {
@@ -200,7 +197,13 @@ final class RegexQuery implements KeywordSearchQuery {
                     try {
                         List<KeywordHit> keywordHits = createKeywordHits(resultDoc);
                         for (KeywordHit hit : keywordHits) {
-                            hitsMultiMap.put(new Keyword(hit.getHit(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), hit);
+                            Keyword keywordInstance = new Keyword(hit.getHit(), true, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm());
+                            List<KeywordHit> hitsForKeyword = results.getResults(keywordInstance);
+                            if (hitsForKeyword == null) {
+                                hitsForKeyword = new ArrayList<>();
+                                results.addResult(keywordInstance, hitsForKeyword);
+                            }
+                            hitsForKeyword.add(hit);
                         }
                     } catch (TskCoreException ex) {
                         LOGGER.log(Level.SEVERE, "Error creating keyword hits", ex); //NON-NLS
@@ -217,10 +220,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 MessageNotifyUtil.Notify.error(NbBundle.getMessage(Server.class, "Server.query.exception.msg", keywordString), ex.getCause().getMessage());
             }
         }
-        QueryResults results = new QueryResults(this);
-        for (Keyword k : hitsMultiMap.keySet()) {
-            results.addResult(k, hitsMultiMap.get(k));
-        }
+
         return results;
     }
 
@@ -373,23 +373,8 @@ final class RegexQuery implements KeywordSearchQuery {
         return escapedQuery;
     }
 
-    /**
-     * Converts the keyword hits for a given search term into artifacts.
-     *
-     * @param content
-     * @param foundKeyword The keyword that was found by the regex search.
-     * @param hit          The keyword hit.
-     * @param snippet      The document snippet that contains the hit
-     * @param listName     The name of the keyword list that contained the
-     *                     keyword for which the hit was found.
-     *
-     *
-     *
-     * @return An object that wraps an artifact and a mapping by id of its
-     *         attributes.
-     */
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         if (content == null) {
@@ -503,9 +488,7 @@ final class RegexQuery implements KeywordSearchQuery {
 
         try {
             newArtifact.addAttributes(attributes);
-            KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);
-            writeResult.add(attributes);
-            return writeResult;
+            return newArtifact;
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;
@@ -568,5 +551,4 @@ final class RegexQuery implements KeywordSearchQuery {
             return null;
         });
     }
-
 }

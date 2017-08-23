@@ -192,15 +192,13 @@ class LuceneQuery implements KeywordSearchQuery {
     }
 
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
 
         Collection<BlackboardAttribute> attributes = new ArrayList<>();
         BlackboardArtifact bba;
-        KeywordCachedArtifact writeResult;
         try {
             bba = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-            writeResult = new KeywordCachedArtifact(bba);
         } catch (TskCoreException e) {
             logger.log(Level.WARNING, "Error adding bb artifact for keyword hit", e); //NON-NLS
             return null;
@@ -233,8 +231,7 @@ class LuceneQuery implements KeywordSearchQuery {
 
         try {
             bba.addAttributes(attributes); //write out to bb
-            writeResult.add(attributes);
-            return writeResult;
+            return bba;
         } catch (TskCoreException e) {
             logger.log(Level.WARNING, "Error adding bb attributes to artifact", e); //NON-NLS
             return null;
