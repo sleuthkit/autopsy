@@ -48,7 +48,6 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.KeyValueQueryContent;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW;
@@ -164,17 +163,20 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             String contentName = "";
             try {
                 content = tskCase.getContentById(hit.getContentID());
+                if (content == null) {
+                    logger.log(Level.SEVERE, "There was a error getting content by id."); //NON-NLS
+                    return false;
+                }
             } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
                 return false;
             }
-            if (content != null) {
-                contentName = content.getName();
-                if (content instanceof AbstractFile) {
-                    AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
-                } else {
-                    properties.put(LOCATION.toString(), contentName);
-                }
+
+            contentName = content.getName();
+            if (content instanceof AbstractFile) {
+                AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
+            } else {
+                properties.put(LOCATION.toString(), contentName);
             }
 
             /**
@@ -238,6 +240,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         return new KeywordSearchFilterNode(hits, kvNode);
+
     }
 
     /**
@@ -295,13 +298,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * worker for writing results to bb, with progress bar, cancellation, and
      * central registry of workers to be stopped when case is closed
      */
-    static class BlackboardResultWriter extends SwingWorker<Object, Void> {
+    static class BlackboardResultWriter extends SwingWorker<Void, Void> {
 
         private static final List<BlackboardResultWriter> writers = new ArrayList<>();
         private ProgressHandle progress;
         private final KeywordSearchQuery query;
         private final QueryResults hits;
-        private Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
         private static final int QUERY_DISPLAY_LEN = 40;
 
         BlackboardResultWriter(QueryResults hits, String listName) {
@@ -315,13 +317,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         }
 
         @Override
-        protected Object doInBackground() throws Exception {
+        protected Void doInBackground() throws Exception {
             registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
             final String queryStr = query.getQueryString();
             final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
             try {
                 progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), () -> BlackboardResultWriter.this.cancel(true));
-                newArtifacts = hits.writeAllHitsToBlackBoard(progress, null, this, false);
+                hits.writeAllHitsToBlackBoard(progress, null, this, false);
             } finally {
                 finalizeWorker();
             }
