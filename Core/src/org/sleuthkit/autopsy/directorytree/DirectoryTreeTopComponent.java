@@ -993,7 +993,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                     return;
                 }
 
-                if (accountType.equals(Account.Type.CREDIT_CARD.name())) {
+                if (accountType.equals(Account.Type.CREDIT_CARD.getTypeName())) {
                     Node accountNode = accountRootChilds.findChild(Account.Type.CREDIT_CARD.getDisplayName());
                     if (accountNode == null) {
                         return;
