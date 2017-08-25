@@ -629,6 +629,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             }
 
             int numLines = 0;
+            LOGGER.log(Level.INFO, "Starting import: " + numLines);
             while ((line = reader.readLine()) != null) {
                 progress.progress(++numLines);
 
@@ -646,9 +647,19 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                         "");
 
                 globalInstances.add(eamGlobalFileInstance);
+                
+                if(numLines % 10000 == 0){
+                     dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+                     globalInstances.clear();
+                }
+                if(numLines % 1000000 == 0){
+                    LOGGER.log(Level.INFO, "Database entries processed: " + numLines);
+                }
             }
 
             dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+            LOGGER.log(Level.INFO, "Database entries processed: " + numLines);
+            
         }
     }
 
