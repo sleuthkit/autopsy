@@ -652,7 +652,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                      dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
                      globalInstances.clear();
                 }
-                if(numLines % 1000000 == 0){
+                if(numLines % 10000 == 0){
                     LOGGER.log(Level.INFO, "Database entries processed: " + numLines);
                 }
             }

@@ -1527,7 +1527,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         PreparedStatement bulkPs = null;
         try {
-            conn.setAutoCommit(false);
+            //conn.setAutoCommit(false);
             
             // FUTURE: have a separate global_files table for each Type.
             String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
@@ -1540,12 +1540,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 bulkPs.setString(2, globalInstance.getMD5Hash());
                 bulkPs.setString(3, globalInstance.getKnownStatus().name());
                 bulkPs.setString(4, globalInstance.getComment());
-                //bulkPs.addBatch();
-                bulkPs.executeUpdate();
+                bulkPs.addBatch();
+                //bulkPs.executeUpdate();
             }
 
-            //bulkPs.executeBatch();
-            conn.commit();
+            bulkPs.executeBatch();
+            //conn.commit();
         } catch (SQLException ex) {
             //conn.rollback();
             throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS           
