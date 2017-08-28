@@ -72,6 +72,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final static String LAST_FILE_PATH_KEY = "CentralRepositoryImport_Path"; // NON-NLS
+    private final int HASH_IMPORT_THRESHOLD = 5000;
     private EamOrganization selectedOrg = null;
     private List<EamOrganization> orgs = null;
     private final Collection<JTextField> textBoxes;
@@ -647,6 +648,11 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                         "");
 
                 globalInstances.add(eamGlobalFileInstance);
+                
+                if(numLines % HASH_IMPORT_THRESHOLD == 0){
+                    dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+                    globalInstances.clear();
+                }
             }
 
             dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
