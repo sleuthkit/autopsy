@@ -29,6 +29,8 @@ import org.sleuthkit.autopsy.events.AutopsyEvent;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestModuleGlobalSettingsPanel;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
+import static org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum.DISABLED;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.PostgresEamDbSettings;
 import org.sleuthkit.autopsy.centralrepository.datamodel.SqliteEamDbSettings;
 
@@ -53,7 +55,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         addIngestJobEventsListener();
     }
 
-    @Messages({"GlobalSettingsPanel.title=Central Repository Settings"})
+    @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
+        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository"})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
     }
@@ -85,6 +88,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         bnManageTags = new javax.swing.JButton();
         bnManageTypes = new javax.swing.JButton();
         tbOops = new javax.swing.JTextField();
+        cbUseCentralRepo = new javax.swing.JCheckBox();
 
         setName(""); // NOI18N
 
@@ -198,6 +202,13 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
 
+        org.openide.awt.Mnemonics.setLocalizedText(cbUseCentralRepo, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbUseCentralRepo.text")); // NOI18N
+        cbUseCentralRepo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbUseCentralRepoActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -207,50 +218,65 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(tbOops, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
+                .addComponent(cbUseCentralRepo)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 18, Short.MAX_VALUE))
+                .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
+        store();
         ImportHashDatabaseDialog dialog = new ImportHashDatabaseDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnImportDatabaseActionPerformed
 
     private void bnManageTagsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTagsActionPerformed
+        store();
         ManageTagsDialog dialog = new ManageTagsDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTagsActionPerformed
 
     private void bnManageTypesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnManageTypesActionPerformed
+        store();
         ManageCorrelationPropertiesDialog dialog = new ManageCorrelationPropertiesDialog();
         firePropertyChange(OptionsPanelController.PROP_VALID, null, null);
     }//GEN-LAST:event_bnManageTypesActionPerformed
 
     private void bnDbConfigureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDbConfigureActionPerformed
+        store();
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
         load(); // reload db settings content and update buttons
     }//GEN-LAST:event_bnDbConfigureActionPerformed
+
+    private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
+        //if saved setting is disabled checkbox should be disabled already 
+        enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
+        enableButtonSubComponents(cbUseCentralRepo.isSelected() && !EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
+        this.ingestStateUpdated();
+        firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+    }//GEN-LAST:event_cbUseCentralRepoActionPerformed
 
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
     public void load() {
         tbOops.setText("");
-
         enableAllSubComponents(false);
         EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
-        
+        cbUseCentralRepo.setSelected(EamDbUtil.useCentralRepo()); // NON-NLS
         switch (selectedPlatform) {
             case POSTGRESQL:
                 PostgresEamDbSettings dbSettingsPg = new PostgresEamDbSettings();
@@ -270,16 +296,16 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 lbDbPlatformValue.setText(EamDbPlatformEnum.DISABLED.toString());
                 lbDbNameValue.setText("");
                 lbDbLocationValue.setText("");
-                enableDatabaseConfigureButton(true);
+                enableDatabaseConfigureButton(cbUseCentralRepo.isSelected());
                 tbOops.setText(Bundle.GlobalSettingsPanel_validationerrMsg_mustConfigure());
                 break;
         }
 
-        this.ingestStateUpdated();
     }
 
     @Override
     public void store() { // Click OK or Apply on Options Panel
+        EamDbUtil.setUseCentralRepo(cbUseCentralRepo.isSelected());
     }
 
     /**
@@ -293,6 +319,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     @Override
     public void saveSettings() { // Click OK on Global Settings Panel
+        store();
     }
 
     @Override
@@ -334,7 +361,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
         if (IngestManager.getInstance().isIngestRunning()) {
             tbOops.setText(Bundle.GlobalSettingsPanel_validationErrMsg_ingestRunning());
-            enableAllSubComponents(false);
+            cbUseCentralRepo.setEnabled(false);
+        } else if (!cbUseCentralRepo.isEnabled()) {
+            cbUseCentralRepo.setEnabled(true);
+            load();
         }
     }
 
@@ -347,8 +377,8 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableAllSubComponents(Boolean enable) {
-        enableDatabaseConfigureButton(enable);
-        enableButtonSubComponents(enable);
+        enableDatabaseConfigureButton(cbUseCentralRepo.isSelected() && enable);
+        enableButtonSubComponents(cbUseCentralRepo.isSelected() && enable);
         return true;
     }
 
@@ -359,9 +389,18 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      *
      * @return True
      */
-    private boolean enableDatabaseConfigureButton(Boolean enable) {
-        bnDbConfigure.setEnabled(enable);
-        return true;
+    private void enableDatabaseConfigureButton(Boolean enable) {
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
+        pnDatabaseConfiguration.setEnabled(enable && !ingestRunning);
+        pnDatabaseContentButtons.setEnabled(enable && !ingestRunning);
+        bnDbConfigure.setEnabled(enable && !ingestRunning);
+        lbDbLocationLabel.setEnabled(enable && !ingestRunning);
+        lbDbLocationValue.setEnabled(enable && !ingestRunning);
+        lbDbNameLabel.setEnabled(enable && !ingestRunning);
+        lbDbNameValue.setEnabled(enable && !ingestRunning);
+        lbDbPlatformTypeLabel.setEnabled(enable && !ingestRunning);
+        lbDbPlatformValue.setEnabled(enable && !ingestRunning);
+        tbOops.setEnabled(enable && !ingestRunning);
     }
 
     /**
@@ -373,9 +412,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableButtonSubComponents(Boolean enable) {
-        bnManageTypes.setEnabled(enable);
-        bnImportDatabase.setEnabled(enable);
-        bnManageTags.setEnabled(enable);
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
+        bnManageTypes.setEnabled(enable && !ingestRunning);
+        bnImportDatabase.setEnabled(enable && !ingestRunning);
+        bnManageTags.setEnabled(enable && !ingestRunning);
         return true;
     }
 
@@ -384,6 +424,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JButton bnImportDatabase;
     private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
+    private javax.swing.JCheckBox cbUseCentralRepo;
     private javax.swing.JLabel lbDbLocationLabel;
     private javax.swing.JLabel lbDbLocationValue;
     private javax.swing.JLabel lbDbNameLabel;
