@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import static java.util.Objects.nonNull;
@@ -153,7 +154,7 @@ public class ImageUtils {
         SUPPORTED_IMAGE_MIME_TYPES.removeIf("application/octet-stream"::equals); //NON-NLS
 
         //Clear the file map when the case changes, so we don't accidentaly get images from the old case.
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), evt -> cacheFileMap.clear());
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), evt -> cacheFileMap.clear());
     }
 
     /**

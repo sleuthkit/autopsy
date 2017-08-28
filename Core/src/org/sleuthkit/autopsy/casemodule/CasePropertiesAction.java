@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
+import java.util.EnumSet;
 import javax.swing.Action;
 import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
@@ -42,7 +43,7 @@ final class CasePropertiesAction extends CallableSystemAction {
     CasePropertiesAction() {
         putValue(Action.NAME, NbBundle.getMessage(CasePropertiesAction.class, "CTL_CasePropertiesAction"));
         this.setEnabled(false);
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent evt) -> {
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             setEnabled(null != evt.getNewValue());
         });
     }

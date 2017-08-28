@@ -35,6 +35,7 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +51,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -377,7 +379,9 @@ public class Case {
      *
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
+     * @deprecated Use addEventTypeSubscriber instead.
      */
+    @Deprecated
     public static void addEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventNames, subscriber);
     }
@@ -385,9 +389,23 @@ public class Case {
     /**
      * Adds a subscriber to specific case events.
      *
-     * @param eventName  The event the subscriber is interested in.
+     * @param eventTypes The events the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
      */
+    public static void addEventTypeSubscriber(Set<Events> eventTypes, PropertyChangeListener subscriber) {
+        eventTypes.forEach((Events event) -> {
+            eventPublisher.addSubscriber(event.toString(), subscriber);
+        });
+    }
+
+    /**
+     * Adds a subscriber to specific case events.
+     *
+     * @param eventName  The event the subscriber is interested in.
+     * @param subscriber The subscriber (PropertyChangeListener) to add.
+     * @deprecated Use addEventTypeSubscriber instead.
+     */
+    @Deprecated
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventName, subscriber);
     }
@@ -410,6 +428,18 @@ public class Case {
      */
     public static void removeEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(eventNames, subscriber);
+    }
+
+    /**
+     * Removes a subscriber to specific case events.
+     *
+     * @param eventTypes The events the subscriber is no longer interested in.
+     * @param subscriber The subscriber (PropertyChangeListener) to remove.
+     */
+    public static void removeEventTypeSubscriber(Set<Events> eventTypes, PropertyChangeListener subscriber) {
+        eventTypes.forEach((Events event) -> {
+            eventPublisher.removeSubscriber(event.toString(), subscriber);
+        });
     }
 
     /**

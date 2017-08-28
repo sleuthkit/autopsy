@@ -22,10 +22,15 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import org.openide.nodes.AbstractNode;
@@ -172,68 +177,69 @@ public class DeletedContent implements AutopsyVisitableItem {
          * Listens for case and ingest invest. Updates observers when events are
          * fired. Other nodes are listening to this for changes.
          */
-        private final class DeletedContentsChildrenObservable extends Observable {
+        private static final class DeletedContentsChildrenObservable extends Observable {
+            private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(
+                Case.Events.DATA_SOURCE_ADDED,
+                Case.Events.CURRENT_CASE
+            );
 
             DeletedContentsChildrenObservable() {
                 IngestManager.getInstance().addIngestJobEventListener(pcl);
                 IngestManager.getInstance().addIngestModuleEventListener(pcl);
-                Case.addPropertyChangeListener(pcl);
+                Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 
             private void removeListeners() {
                 deleteObservers();
                 IngestManager.getInstance().removeIngestJobEventListener(pcl);
                 IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-                Case.removePropertyChangeListener(pcl);
+                Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             }
 
-            private final PropertyChangeListener pcl = new PropertyChangeListener() {
-                @Override
-                public void propertyChange(PropertyChangeEvent evt) {
-                    String eventType = evt.getPropertyName();
-                    if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+            private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
+                String eventType = evt.getPropertyName();
+                if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())) {
+                    /**
+                     * + // @@@ COULD CHECK If the new file is deleted
+                     * before notifying... Checking for a current case is a
+                     * stop gap measure	+ update(); until a different way of
+                     * handling the closing of cases is worked out.
+                     * Currently, remote events may be received for a case
+                     * that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        // new file was added
+                        // @@@ COULD CHECK If the new file is deleted before notifying...
+                        update();
+                    } catch (IllegalStateException notUsed) {
                         /**
-                         * + // @@@ COULD CHECK If the new file is deleted
-                         * before notifying... Checking for a current case is a
-                         * stop gap measure	+ update(); until a different way of
-                         * handling the closing of cases is worked out.
-                         * Currently, remote events may be received for a case
-                         * that is already closed.
+                         * Case is closed, do nothing.
                          */
-                        try {
-                            Case.getCurrentCase();
-                            // new file was added                            		
-                            // @@@ COULD CHECK If the new file is deleted before notifying...		
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
-                    } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
-                            || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
-                            || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
-                        /**
-                         * Checking for a current case is a stop gap measure
-                         * until a different way of handling the closing of
-                         * cases is worked out. Currently, remote events may be
-                         * received for a case that is already closed.
-                         */
-                        try {
-                            Case.getCurrentCase();
-                            update();
-                        } catch (IllegalStateException notUsed) {
-                            /**
-                             * Case is closed, do nothing.
-                             */
-                        }
-                    } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
-                        // case was closed. Remove listeners so that we don't get called with a stale case handle
-                        if (evt.getNewValue() == null) {
-                            removeListeners();
-                        }
-                        maxFilesDialogShown = false;
                     }
+                } else if (eventType.equals(IngestManager.IngestJobEvent.COMPLETED.toString())
+                        || eventType.equals(IngestManager.IngestJobEvent.CANCELLED.toString())
+                        || eventType.equals(Case.Events.DATA_SOURCE_ADDED.toString())) {
+                    /**
+                     * Checking for a current case is a stop gap measure
+                     * until a different way of handling the closing of
+                     * cases is worked out. Currently, remote events may be
+                     * received for a case that is already closed.
+                     */
+                    try {
+                        Case.getCurrentCase();
+                        update();
+                    } catch (IllegalStateException notUsed) {
+                        /**
+                         * Case is closed, do nothing.
+                         */
+                    }
+                } else if (eventType.equals(Case.Events.CURRENT_CASE.toString())) {
+                    // case was closed. Remove listeners so that we don't get called with a stale case handle
+                    if (evt.getNewValue() == null) {
+                        removeListeners();
+                    }
+                    maxFilesDialogShown = false;
                 }
             };
 

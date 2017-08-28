@@ -25,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,13 +68,10 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class BlackboardArtifactNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
-    private static final Set<String> CASE_EVENTS_OF_INTEREST = new HashSet<>(Arrays.asList(new String[]{
-        Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED.toString(),
-        Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED.toString(),
-        Case.Events.CONTENT_TAG_ADDED.toString(),
-        Case.Events.CONTENT_TAG_DELETED.toString(),
-        Case.Events.CURRENT_CASE.toString()
-    }));
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
+        Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
+        Case.Events.CONTENT_TAG_ADDED,
+        Case.Events.CONTENT_TAG_DELETED);
 
     private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES).
@@ -148,7 +146,7 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
-        Case.addEventSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
     }
 
     /**
@@ -165,11 +163,11 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(ExtractedContent.getIconFilePath(artifact.getArtifactTypeID())); //NON-NLS
-        Case.addEventSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
     }
 
     private void removeListeners() {
-        Case.removeEventSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
     }
 
     @Override

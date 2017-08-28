@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.Sheet;
@@ -88,13 +89,13 @@ public class DataSourcesNode extends DisplayableItemNode {
 
         @Override
         protected void addNotify() {
-            Case.addPropertyChangeListener(pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
             reloadKeys();
         }
 
         @Override
         protected void removeNotify() {
-            Case.removePropertyChangeListener(pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.DATA_SOURCE_ADDED), pcl);
             currentKeys.clear();
             setKeys(Collections.<Content>emptySet());
         }

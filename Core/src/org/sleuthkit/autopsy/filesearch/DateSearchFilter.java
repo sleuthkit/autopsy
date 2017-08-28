@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +54,9 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MM/dd/yyyy");
     private static final String SEPARATOR = "SEPARATOR"; //NON-NLS
 
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
+            Case.Events.DATA_SOURCE_ADDED, Case.Events.DATA_SOURCE_DELETED);
+
     /**
      * New DateSearchFilter with the default panel
      */
@@ -62,7 +66,7 @@ class DateSearchFilter extends AbstractFileSearchFilter<DateSearchPanel> {
 
     private DateSearchFilter(DateSearchPanel panel) {
         super(panel);
-        Case.addPropertyChangeListener(this.new CasePropertyChangeListener());
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, this.new CasePropertyChangeListener());
     }
 
     @Override

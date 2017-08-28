@@ -20,7 +20,7 @@ package org.sleuthkit.autopsy.filesearch;
 
 import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.util.EnumSet;
 import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle;
 import org.openide.util.actions.CallableSystemAction;
@@ -35,14 +35,10 @@ final class FileSearchAction extends CallableSystemAction implements FileSearchP
     FileSearchAction() {
         super();
         setEnabled(Case.isCaseOpen());
-        Case.addPropertyChangeListener(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
-                    setEnabled(evt.getNewValue() != null);
-                }
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
+            if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
+                setEnabled(evt.getNewValue() != null);
             }
-
         });
     }
 
