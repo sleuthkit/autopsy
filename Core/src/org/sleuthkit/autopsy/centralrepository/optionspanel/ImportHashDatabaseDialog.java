@@ -533,7 +533,8 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         String errorMessage = Bundle.ImportHashDatabaseDialog_errorMessage_failedToOpenHashDbMsg(selectedFilePath);
         // Future, make UI handle more than the "FILES" type.
         try {
-            EamArtifact.Type contentType = EamArtifact.getDefaultCorrelationTypes().get(0); // get "FILES" type
+            EamDb dbManager = EamDb.getInstance();
+            EamArtifact.Type contentType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID); // get "FILES" type
             // run in the background and close dialog
             SwingUtilities.invokeLater(new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID, contentType)::execute);
             dispose();
