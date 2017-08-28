@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Interface for kewyord search queries.
@@ -102,6 +103,7 @@ interface KeywordSearchQuery {
     /**
      * Converts the keyword hits for a given search term into artifacts.
      *
+     * @param content      The Content object associated with the hit.
      * @param foundKeyword The keyword that was found by the search, this may be
      *                     different than the Keyword that was searched if, for
      *                     example, it was a RegexQuery.
@@ -114,5 +116,5 @@ interface KeywordSearchQuery {
      * @return The newly created artifact or Null if there was a problem
      *         creating it.
      */
-    BlackboardArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName);
+    BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName);
 }

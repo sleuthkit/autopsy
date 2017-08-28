@@ -48,6 +48,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -372,10 +373,14 @@ final class RegexQuery implements KeywordSearchQuery {
         return escapedQuery;
     }
 
-   
     @Override
-    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         final String MODULE_NAME = KeywordSearchModuleFactory.getModuleName();
+
+        if (content == null) {
+            LOGGER.log(Level.WARNING, "Error adding artifact for keyword hit to blackboard"); //NON-NLS
+            return null;
+        }
 
         /*
          * Create either a "plain vanilla" keyword hit artifact with keyword and
@@ -389,8 +394,7 @@ final class RegexQuery implements KeywordSearchQuery {
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, getQueryString()));
             try {
-                newArtifact = hit.getContent().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
-
+                newArtifact = content.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
                 return null;
@@ -415,7 +419,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 if (hit.isArtifactHit()) {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifact().getArtifactID())); //NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContent().getId())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContentID())); //NON-NLS
                 }
                 return null;
             }
@@ -451,8 +455,8 @@ final class RegexQuery implements KeywordSearchQuery {
              * document id to support showing just the chunk that contained the
              * hit.
              */
-            if (hit.getContent() instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile) hit.getContent();
+            if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile) content;
                 if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
                         || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
                     attributes.add(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
@@ -463,7 +467,7 @@ final class RegexQuery implements KeywordSearchQuery {
              * Create an account artifact.
              */
             try {
-                newArtifact = hit.getContent().newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT);
+                newArtifact = content.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for account to blackboard", ex); //NON-NLS
                 return null;
@@ -513,8 +517,8 @@ final class RegexQuery implements KeywordSearchQuery {
      * same fields as the track two data, plus the account holder's name.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param matcher       A matcher for the snippet.
+     *                     creating duplicate attributes.
+     * @param matcher      A matcher for the snippet.
      */
     static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
         parseTrack2Data(attributeMap, matcher);
@@ -526,11 +530,11 @@ final class RegexQuery implements KeywordSearchQuery {
      * value parsed from the snippet for a credit account number hit.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param attrType      The type of attribute to create.
-     * @param groupName     The group name of the regular expression that was
-     *                      used to parse the attribute data.
-     * @param matcher       A matcher for the snippet.
+     *                     creating duplicate attributes.
+     * @param attrType     The type of attribute to create.
+     * @param groupName    The group name of the regular expression that was
+     *                     used to parse the attribute data.
+     * @param matcher      A matcher for the snippet.
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, BlackboardAttribute.ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);

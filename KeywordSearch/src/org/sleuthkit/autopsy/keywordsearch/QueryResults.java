@@ -31,6 +31,7 @@ import org.apache.commons.lang.StringUtils;
 import org.netbeans.api.progress.ProgressHandle;
 import org.netbeans.api.progress.aggregate.ProgressContributor;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
@@ -40,6 +41,7 @@ import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -96,7 +98,7 @@ class QueryResults {
      *
      * @return The artifacts that were created.
      */
-    Collection<BlackboardArtifact> writeAllHitsToBlackBoard(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<Object, Void> worker, boolean notifyInbox) {
+    Collection<BlackboardArtifact> writeAllHitsToBlackBoard(ProgressHandle progress, ProgressContributor subProgress, SwingWorker<?, ?> worker, boolean notifyInbox) {
         final Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
         if (progress != null) {
             progress.start(getKeywords().size());
@@ -142,18 +144,26 @@ class QueryResults {
                         continue;
                     }
                 }
-                BlackboardArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
+                Content content = null;
+                try {
+                    SleuthkitCase tskCase = Case.getCurrentCase().getSleuthkitCase();
+                    content = tskCase.getContentById(hit.getContentID());
+                } catch (TskCoreException | IllegalStateException tskCoreException) {
+                    logger.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", tskCoreException); //NON-NLS
+                    return null;
+                }
+                BlackboardArtifact writeResult = keywordSearchQuery.writeSingleFileHitsToBlackBoard(content, keyword, hit, snippet, keywordSearchQuery.getKeywordList().getName());
                 if (writeResult != null) {
                     newArtifacts.add(writeResult);
                     if (notifyInbox) {
                         try {
-                            writeSingleFileInboxMessage(writeResult, hit.getContent());
+                            writeSingleFileInboxMessage(writeResult, content);
                         } catch (TskCoreException ex) {
                             logger.log(Level.WARNING, "Error posting message to Ingest Inbox", ex); //NON-NLS
                         }
                     }
                 } else {
-                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{hit.getContent(), keyword.toString()}); //NON-NLS
+                    logger.log(Level.WARNING, "BB artifact for keyword hit not written, file: {0}, hit: {1}", new Object[]{content, keyword.toString()}); //NON-NLS
                 }
             }
             ++unitProgress;
@@ -196,12 +206,14 @@ class QueryResults {
     }
 
     /**
-     * Generate and post an ingest inbox message for the given keyword in the given content.
+     * Generate and post an ingest inbox message for the given keyword in the
+     * given content.
      *
-     * @param artifact The keyword hit artifact.
+     * @param artifact   The keyword hit artifact.
      * @param hitContent The content that the hit is in.
      *
-     * @throws TskCoreException If there is a problem generating or posting the inbox message.
+     * @throws TskCoreException If there is a problem generating or posting the
+     *                          inbox message.
      */
     private void writeSingleFileInboxMessage(BlackboardArtifact artifact, Content hitContent) throws TskCoreException {
         StringBuilder subjectSb = new StringBuilder();
@@ -212,6 +224,7 @@ class QueryResults {
         } else {
             subjectSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.kwHitLbl"));
         }
+
         String uniqueKey = null;
         BlackboardAttribute attr = artifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD));
         if (attr != null) {
@@ -235,7 +248,7 @@ class QueryResults {
             detailsSb.append("<td>").append(EscapeUtil.escapeHtml(attr.getValueString())).append("</td>"); //NON-NLS
             detailsSb.append("</tr>"); //NON-NLS
         }
-        
+
         //file
         detailsSb.append("<tr>"); //NON-NLS
         detailsSb.append(NbBundle.getMessage(this.getClass(), "KeywordSearchIngestModule.fileThLbl"));
