@@ -807,10 +807,6 @@ class TestConfiguration(object):
                 self.input_dir = parsed_config.getElementsByTagName("indir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("singleUser_outdir"):
                 self.singleUser_outdir = parsed_config.getElementsByTagName("singleUser_outdir")[0].getAttribute("value").encode().decode("utf_8")
-            #if parsed_config.getElementsByTagName("global_csv"): #ZLI double check this comment out block
-            #    self.global_csv = parsed_config.getElementsByTagName("global_csv")[0].getAttribute("value").encode().decode("utf_8")
-            #    if re.match('^[\w]:', self.global_csv) == None or self.global_csv.startswith('/'):
-            #        self.global_csv = make_local_path(self.global_csv)
             if parsed_config.getElementsByTagName("singleUser_golddir"):
                 self.singleUser_gold = parsed_config.getElementsByTagName("singleUser_golddir")[0].getAttribute("value").encode().decode("utf_8")
             if parsed_config.getElementsByTagName("timing"):

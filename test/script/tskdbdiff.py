@@ -425,8 +425,6 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     
     # remove object ID
     if files_index:
-        obj_id = fields_list[0]
-        path = files_table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
@@ -497,7 +495,7 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
     elif report_index:
         fields_list[1] = "AutopsyTestCase"
         fields_list[2] = "0"
-        newLine = ('INSERT INTO "reports" VALUES(' + ','.join(fields_list) + ');')
+        newLine = ('INSERT INTO "reports" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
     elif data_source_info_index:
         fields_list[1] = "{device id}"
