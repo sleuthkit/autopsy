@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,7 +35,7 @@ import org.sleuthkit.autopsy.casemodule.CueBannerPanel;
 import org.sleuthkit.autopsy.casemodule.StartupWindowInterface;
 import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestDashboard;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestControlPanel;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestCasePanel;
 
 /**
@@ -80,6 +80,7 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
     public void open() {
         
         if (caseManagementPanel != null) {
+            caseManagementPanel.updateView();
             caseManagementPanel.setCursor(Cursor.getDefaultCursor());
         }
         
@@ -112,11 +113,11 @@ public final class StartupWindow extends JDialog implements StartupWindowInterfa
                 this.addWindowListener(new WindowAdapter() {
                     @Override
                     public void windowClosing(WindowEvent e) {
-                        AutoIngestDashboard.getInstance().shutdown();
+                        AutoIngestControlPanel.getInstance().shutdown();
                     }
                 });
                 setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-                add(AutoIngestDashboard.getInstance());
+                add(AutoIngestControlPanel.getInstance());
                 break;
             case REVIEW:
                 this.setTitle(NbBundle.getMessage(StartupWindow.class, "StartupWindow.ReviewMode") + " (" + LOCAL_HOST_NAME + ")");
