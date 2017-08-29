@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2015-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,7 +38,7 @@ import org.xml.sax.SAXException;
 @ServiceProvider(service = ManifestFileParser.class)
 public final class AutopsyManifestFileParser implements ManifestFileParser {
 
-    private static final String MANIFEST_FILE_NAME_SIGNATURE = "_Manifest.xml";
+    private static final String MANIFEST_FILE_NAME_SIGNATURE = "_MANIFEST.XML";
     private static final String ROOT_ELEM_TAG_NAME = "AutopsyManifest";
     private static final String CASE_NAME_XPATH = "/AutopsyManifest/CaseName/text()";
     private static final String DEVICE_ID_XPATH = "/AutopsyManifest/DeviceId/text()";
@@ -49,7 +49,7 @@ public final class AutopsyManifestFileParser implements ManifestFileParser {
         boolean fileIsManifest = false;
         try {
             Path fileName = filePath.getFileName();
-            if (fileName.toString().endsWith(MANIFEST_FILE_NAME_SIGNATURE)) {
+            if (fileName.toString().toUpperCase().endsWith(MANIFEST_FILE_NAME_SIGNATURE)) {
                 Document doc = this.createManifestDOM(filePath);
                 Element docElement = doc.getDocumentElement();
                 fileIsManifest = docElement.getTagName().equals(ROOT_ELEM_TAG_NAME);

@@ -51,6 +51,7 @@ import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 
 /**
@@ -89,6 +90,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
+    private AutoIngestMonitor autoIngestMonitor;
     private ExecutorService updateExecutor;
     private boolean isPaused;
     private boolean autoIngestStarted;
@@ -152,7 +154,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         if (null == instance) {
             /*
              * Two stage construction is used here to avoid publishing a
-             * reference to the panel to the Observable auto ingest manager
+             * reference to the panel to the Observable auto ingest monitor
              * before object construction is complete.
              */
             instance = new AutoIngestDashboard();
@@ -165,6 +167,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestDashboard() {
+        autoIngestMonitor = AutoIngestMonitor.getInstance();
+        
         pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
             private static final long serialVersionUID = 1L;
 
@@ -562,13 +566,34 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Starts up the auto ingest manager and adds this panel as an observer,
+     * Starts up the auto ingest monitor and adds this panel as an observer,
      * subscribes to services monitor events and starts a task to populate the
      * auto ingest job tables. The Refresh and Pause buttons are enabled.
      */
     private void startUp() {
 
-        autoIngestStarted = true;
+        /*
+         * Starts up the auto ingest monitor (AIM).
+         */
+        try {
+            autoIngestMonitor.startUp();
+            autoIngestStarted = true;
+        } catch (AutoIngestMonitor.AutoIngestMonitorStartupException ex) {
+            SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
+            tbStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.AutoIngestStartupError"));
+            autoIngestMonitor = null;
+
+            JOptionPane.showMessageDialog(this,
+                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.AutoIngestStartupFailed.Message"),
+                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.AutoIngestStartupFailed.Title"),
+                    JOptionPane.ERROR_MESSAGE);
+            bnOptions.setEnabled(true);
+
+            /*
+             * If the AIM cannot be started, there is nothing more to do.
+             */
+            return;
+        }
 
         /*
          * Subscribe to services monitor events.
@@ -578,10 +603,16 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         });
 
         /*
+         * Register with the AIM as an observer.
+         */
+        autoIngestMonitor.addObserver(this);
+
+        /*
          * Populate the pending, running, and completed auto ingest job tables.
          */
         updateExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(UPDATE_TASKS_THREAD_NAME).build());
         updateExecutor.submit(new UpdateAllJobsTablesTask());
+        autoIngestMonitor.scanInputDirsNow();
 
 		//bnPause.setEnabled(true);
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text"));
@@ -593,7 +624,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Shuts down auto ingest by shutting down the auto ingest manager and doing
+     * Shuts down auto ingest by shutting down the auto ingest monitor and doing
      * an application exit.
      */
     public void shutdown() {
@@ -674,8 +705,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     @Override
     public void update(Observable o, Object arg) {
 
-        if (arg instanceof AutoIngestManager.Event) {
-            switch ((AutoIngestManager.Event) arg) {
+        if (arg instanceof AutoIngestMonitor.Event) {
+            switch ((AutoIngestMonitor.Event) arg) {
                 case INPUT_SCAN_COMPLETED:
                 case JOB_STARTED:
                 case JOB_COMPLETED:
@@ -718,15 +749,15 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Requests a pause of auto ingest processing by the auto ingest manager and
+     * Requests a pause of auto ingest processing by the auto ingest monitor and
      * handles updates to the components that implement the pause and resume
      * feature. Note that this feature is needed to get around restrictions on
      * changing ingest module selections and settings while an ingest job is
-     * running, and that the auto ingest manager will not actually pause until
+     * running, and that the auto ingest monitor will not actually pause until
      * the current auto ingest job completes.
      *
      * @param buttonClicked Is this pause request in response to a user gesture
-     *                      or a nofification from the auto ingest manager
+     *                      or a nofification from the auto ingest monitor
      *                      (AIM)?
      */
     private void pause(boolean buttonClicked) {
@@ -745,7 +776,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         if (buttonClicked) {
             /**
-             * Ask the auto ingest manager to pause when it completes the
+             * Ask the auto ingest monitor to pause when it completes the
              * currently running job, if any.
              */
             bnRefresh.setEnabled(false);
@@ -753,11 +784,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }
 
     /**
-     * Requests a resume of auto ingest processing by the auto ingest manager
+     * Requests a resume of auto ingest processing by the auto ingest monitor
      * and handles updates to the components that implement the pause and resume
      * feature. Note that this feature is needed to get around restrictions on
      * changing ingest module selections and settings while an ingest job is
-     * running, and that the auto ingest manager will not actually pause until
+     * running, and that the auto ingest monitor will not actually pause until
      * the current auto ingest job completes.
      */
     private void resume() {
@@ -779,7 +810,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
     /**
      * A runnable task that gets the pending auto ingest jobs list from the auto
-     * ingest manager and queues a components refresh task for execution in the
+     * ingest monitor and queues a components refresh task for execution in the
      * EDT.
      */
     private class UpdatePendingJobsTableTask implements Runnable {
@@ -790,13 +821,14 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         @Override
         public void run() {
             List<AutoIngestJob> pendingJobs = new ArrayList<>();
+            autoIngestMonitor.getJobs(pendingJobs, null, null);
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, null, null));
         }
     }
 
     /**
      * A runnable task that gets the running auto ingest jobs list from the auto
-     * ingest manager and queues a components refresh task for execution in the
+     * ingest monitor and queues a components refresh task for execution in the
      * EDT.
      */
     private class UpdateRunningJobsTablesTask implements Runnable {
@@ -807,13 +839,14 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         @Override
         public void run() {
             List<AutoIngestJob> runningJobs = new ArrayList<>();
+            autoIngestMonitor.getJobs(null, runningJobs, null);
             EventQueue.invokeLater(new RefreshComponentsTask(null, runningJobs, null));
         }
     }
 
     /**
      * A runnable task that gets the pending, running and completed auto ingest
-     * jobs lists from the auto ingest manager and queues a components refresh
+     * jobs lists from the auto ingest monitor and queues a components refresh
      * task for execution in the EDT. Note that this task is frequently used
      * when only the pending and updated lists definitely need to be updated.
      * This is because the cost of updating the running jobs list is both very
@@ -830,6 +863,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             List<AutoIngestJob> pendingJobs = new ArrayList<>();
             List<AutoIngestJob> runningJobs = new ArrayList<>();
             List<AutoIngestJob> completedJobs = new ArrayList<>();
+            autoIngestMonitor.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
             Collections.sort(completedJobs, new AutoIngestJob.ReverseDateCompletedComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
@@ -839,7 +873,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     /**
      * A runnable task that refreshes the components on this panel to reflect
      * the current state of one or more auto ingest job lists obtained from the
-     * auto ingest manager.
+     * auto ingest monitor.
      */
     private class RefreshComponentsTask implements Runnable {
 
@@ -1016,6 +1050,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * Get the current lists of jobs and update the UI.
      */
     private void refreshTables(){
+        JobsSnapshot jobsSnapshot = autoIngestMonitor.getCurrentJobsSnapshot();
+        refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
+        refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
+        refreshTable(jobsSnapshot.getRunningJobs(), runningTableModel, null);
     }
 
     /**
@@ -1125,6 +1163,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnRefresh, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnRefresh.text")); // NOI18N
         bnRefresh.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnRefresh.toolTipText")); // NOI18N
+        bnRefresh.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnRefreshActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnCancelModule, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnCancelModule.text")); // NOI18N
         bnCancelModule.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnCancelModule.toolTipText")); // NOI18N
@@ -1141,6 +1184,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPause, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text")); // NOI18N
         bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.toolTipText")); // NOI18N
+        bnPause.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bnPauseActionPerformed(evt);
+            }
+        });
 
         org.openide.awt.Mnemonics.setLocalizedText(bnPrioritizeCase, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeCase.text")); // NOI18N
         bnPrioritizeCase.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPrioritizeCase.toolTipText")); // NOI18N
@@ -1289,6 +1337,41 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         layout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {bnCancelJob, bnCancelModule, bnDeleteCase, bnExit, bnOpenLogDir, bnOptions, bnRefresh, bnShowProgress});
 
     }// </editor-fold>//GEN-END:initComponents
+
+    private void bnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPauseActionPerformed
+        
+        if (!autoIngestStarted) {
+            //put up a wait cursor during the start up operation
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+            startUp();
+
+            this.setCursor(null);
+            //done for startup
+            return;
+        }
+        if (!isPaused) {
+            tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.pausing"));
+            pause(true);
+        } else {
+            resume();
+        }
+        isPaused = !isPaused;
+    }//GEN-LAST:event_bnPauseActionPerformed
+
+    /**
+     * Handles a click on the refresh button. Requests an immediate scan of the
+     * input folders for new jobs and queues a refresh of all three of the jobs
+     * tables.
+     * 
+     * @param evt - The button click event.
+     */
+    private void bnRefreshActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnRefreshActionPerformed
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        autoIngestMonitor.scanInputDirsAndWait();
+        refreshTables();
+        this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+    }//GEN-LAST:event_bnRefreshActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bnCancelJob;

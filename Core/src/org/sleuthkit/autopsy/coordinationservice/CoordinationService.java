@@ -21,9 +21,12 @@ package org.sleuthkit.autopsy.coordinationservice;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.concurrent.GuardedBy;
 import javax.annotation.concurrent.ThreadSafe;
 import org.apache.curator.RetryPolicy;
@@ -38,6 +41,7 @@ import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
+import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.sleuthkit.autopsy.core.UserPreferences;
 
@@ -148,6 +152,7 @@ public final class CoordinationService {
          * Create the top-level root and category nodes.
          */
         String rootNode = rootNodeName;
+        
         if (!rootNode.startsWith("/")) {
             rootNode = "/" + rootNode;
         }
@@ -353,6 +358,18 @@ public final class CoordinationService {
                 throw new CoordinationServiceException(String.format("Failed to set data for %s", fullNodePath), ex);
             }
         }
+    }
+    
+    public List<String> getNodeList(CategoryNode category) {
+        List<String> list = null;
+        
+        try {
+            list = curator.getChildren().forPath(categoryNodeToPath.get(category.getDisplayName()));
+        } catch (Exception ex) {
+            Logger.getLogger(CoordinationService.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return list;
     }
 
     /**
