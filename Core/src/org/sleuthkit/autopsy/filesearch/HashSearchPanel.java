@@ -134,7 +134,6 @@ class HashSearchPanel extends javax.swing.JPanel {
         });
 
         searchTextField.setFont(searchTextField.getFont().deriveFont(searchTextField.getFont().getStyle() & ~java.awt.Font.BOLD, 11));
-        searchTextField.setText(org.openide.util.NbBundle.getMessage(HashSearchPanel.class, "NameSearchPanel.searchTextField.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
