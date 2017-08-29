@@ -72,6 +72,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
 
     private final JFileChooser fileChooser = new JFileChooser();
     private final static String LAST_FILE_PATH_KEY = "CentralRepositoryImport_Path"; // NON-NLS
+    private final int HASH_IMPORT_THRESHOLD = 10000;
     private EamOrganization selectedOrg = null;
     private List<EamOrganization> orgs = null;
     private final Collection<JTextField> textBoxes;
@@ -533,7 +534,8 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
         String errorMessage = Bundle.ImportHashDatabaseDialog_errorMessage_failedToOpenHashDbMsg(selectedFilePath);
         // Future, make UI handle more than the "FILES" type.
         try {
-            EamArtifact.Type contentType = EamArtifact.getDefaultCorrelationTypes().get(0); // get "FILES" type
+            EamDb dbManager = EamDb.getInstance();
+            EamArtifact.Type contentType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID); // get "FILES" type
             // run in the background and close dialog
             SwingUtilities.invokeLater(new ImportHashDatabaseWorker(selectedFilePath, knownStatus, globalSetID, contentType)::execute);
             dispose();
@@ -647,10 +649,10 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
                         "");
 
                 globalInstances.add(eamGlobalFileInstance);
-                
-                if(numLines % 10000 == 0){
-                     dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
-                     globalInstances.clear();
+
+                if(numLines % HASH_IMPORT_THRESHOLD == 0){
+                    dbManager.bulkInsertReferenceTypeEntries(globalInstances, contentType);
+                    globalInstances.clear();
                 }
             }
 
