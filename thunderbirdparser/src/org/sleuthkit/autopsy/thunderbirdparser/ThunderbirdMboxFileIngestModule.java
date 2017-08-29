@@ -21,8 +21,12 @@ package org.sleuthkit.autopsy.thunderbirdparser;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.openide.util.NbBundle;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -40,6 +44,7 @@ import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleContentEvent;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
+import org.sleuthkit.datamodel.Account;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
@@ -47,6 +52,7 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.CommunicationsManager;
 
 /**
  * File-level ingest module that detects MBOX files based on signature.
@@ -354,6 +360,24 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
     }
 
     /**
+     * Finds and returns a set of unique email addresses found in the input string
+     *
+     * @param input - input string, like the To/CC line from an email header
+     * 
+     * @param Set<String>: set of email addresses found in the input string
+     */
+    private Set<String> findEmailAddresess(String input) {
+        Pattern p = Pattern.compile("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b",
+                                    Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(input);
+        Set<String> emailAddresses = new HashSet<String>();
+        while (m.find()) {
+            emailAddresses.add( m.group());
+        }
+        return emailAddresses;
+    }
+    
+    /**
      * Add a blackboard artifact for the given email message.
      *
      * @param email
@@ -376,6 +400,45 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
         long id = email.getId();
         String localPath = email.getLocalPath();
 
+        
+           
+       
+        List<String> senderAddressList = new ArrayList<>();
+        String senderAddress;
+        senderAddressList.addAll(findEmailAddresess(from));
+        
+        Account senderAccount = null;        
+        if (senderAddressList.size() == 1) {
+            senderAddress = senderAddressList.get(0);
+            try {
+                senderAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
+            }
+            catch(TskCoreException ex) {
+                 logger.log(Level.WARNING, "Failed to create account for email address  " + from, ex); //NON-NLS
+            }
+        }
+        else {
+             logger.log(Level.WARNING, "Failed to find sender address, from  "+ from); //NON-NLS
+        }
+        
+        List<String> recipientAddresses = new ArrayList<>();
+        recipientAddresses.addAll(findEmailAddresess(to));
+        recipientAddresses.addAll(findEmailAddresess(cc));
+        recipientAddresses.addAll(findEmailAddresess(bcc));
+        
+        List<Account> recipientAccounts = new ArrayList<>();
+        recipientAddresses.forEach((addr) -> {
+            try {
+                Account recipientAccount = 
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.EMAIL, addr,
+                        EmailParserModuleFactory.getModuleName(), abstractFile);
+                recipientAccounts.add(recipientAccount);
+            }
+            catch(TskCoreException ex) {
+                logger.log(Level.WARNING, "Failed to create account for email address  " + addr, ex); //NON-NLS
+            }
+        });
+                
         if (headers.isEmpty() == false) {
              bbattributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_HEADERS, EmailParserModuleFactory.getModuleName(), headers));
         }
@@ -425,6 +488,9 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
             bbart = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG);
             bbart.addAttributes(bbattributes);
 
+            // Add account relationships
+            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(senderAccount, recipientAccounts, bbart);
+            
             try {
                 // index the artifact for keyword search
                 blackboard.indexArtifact(bbart);
