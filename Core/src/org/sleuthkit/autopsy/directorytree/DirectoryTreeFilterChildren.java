@@ -27,6 +27,7 @@ import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
+import org.sleuthkit.autopsy.datamodel.AbstractContentNode;
 import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNode;
 import org.sleuthkit.autopsy.datamodel.DisplayableItemNodeVisitor;
@@ -121,7 +122,7 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                         && !((Directory) c).getName().equals(".."))) {
                     ret = false;
                     break;
-                } else if (0 < Case.getCurrentCase().getSleuthkitCase().getVisibleContentChildrenCount(c)) {
+                } else if(AbstractContentNode.contentHasVisibleContentChildren(c)){
                     //fie has children, such as derived files
                     ret = false;
                     break;
@@ -205,12 +206,8 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
                 if ((childContent instanceof AbstractFile) && ((AbstractFile) childContent).isDir()) {
                     return false;
                 } else {
-                    try{
-                        if(0 < Case.getCurrentCase().getSleuthkitCase().getVisibleContentChildrenCount(childContent)){
-                            return false;
-                        }
-                    } catch (TskCoreException e){
-                        logger.log(Level.SEVERE, "Error checking if file node is leaf.", e); //NON-NLS
+                    if(AbstractContentNode.contentHasVisibleContentChildren(childContent)){
+                        return false;
                     }
                 }
             }
