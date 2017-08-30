@@ -404,20 +404,22 @@ public final class ContentUtils {
                 int numProcessed = 0;
                 // recurse on children
                 for (Content child : dir.getChildren()) {
-                    java.io.File childFile = getFsContentDest(child);
-                    ExtractFscContentVisitor<T, V> childVisitor
-                            = new ExtractFscContentVisitor<>(childFile, progress, worker, false);
-                    // If this is the source directory of an extract it
-                    // will have a progress and worker, and will keep track
-                    // of the progress bar's progress
-                    if (worker != null && worker.isCancelled()) {
-                        break;
+                    if (child instanceof AbstractFile){
+                        java.io.File childFile = getFsContentDest(child);
+                        ExtractFscContentVisitor<T, V> childVisitor
+                                = new ExtractFscContentVisitor<>(childFile, progress, worker, false);
+                        // If this is the source directory of an extract it
+                        // will have a progress and worker, and will keep track
+                        // of the progress bar's progress
+                        if (worker != null && worker.isCancelled()) {
+                           break;
+                        }
+                        if (progress != null && source) {
+                          progress.progress(child.getName(), numProcessed);
+                        }
+                        child.accept(childVisitor);
+                        numProcessed++;
                     }
-                    if (progress != null && source) {
-                        progress.progress(child.getName(), numProcessed);
-                    }
-                    child.accept(childVisitor);
-                    numProcessed++;
                 }
             } catch (TskException ex) {
                 logger.log(Level.SEVERE,

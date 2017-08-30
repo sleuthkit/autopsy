@@ -384,7 +384,9 @@ final class DataResultViewerThumbnail extends AbstractDataResultViewer {
         }
         try {
             if (givenNode != null) {
-                tfn = (TableFilterNode) givenNode;
+                if (givenNode instanceof TableFilterNode){
+                    tfn = (TableFilterNode) givenNode;
+                }
                 /*
                  * Wrap the given node in a ThumbnailViewChildren that will
                  * produce ThumbnailPageNodes with ThumbnailViewNode children
