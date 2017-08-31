@@ -56,8 +56,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
-        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository",
-        "GlobalSettingsPanel.lbConfigCentralRepo.text=Central Repository must be configured before it can be used."})
+        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository"})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
     }
