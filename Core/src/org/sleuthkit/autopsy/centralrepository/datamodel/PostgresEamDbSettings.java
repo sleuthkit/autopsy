@@ -484,8 +484,7 @@ public final class PostgresEamDbSettings {
         } finally {
             EamDbUtil.closeConnection(conn);
         }
-        return false; // testing temp temp
-        //return true;
+        return true;
     }
 
     public boolean insertDefaultDatabaseContent() {

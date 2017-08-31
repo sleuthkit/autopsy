@@ -410,7 +410,7 @@ public class EamDbSettingsDialog extends JDialog {
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
         "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to Central Repository database.",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
-        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path.",
+        "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
         "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",
         "EamDbSettingsDialog.okButton.createDbDialog.message=Database does not exist, would you like to create it?",
         "EamDbSettingsDialog.okButton.databaseConnectionFailed.title=Database Connection Failed",

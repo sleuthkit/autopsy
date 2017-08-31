@@ -429,8 +429,7 @@ public final class SqliteEamDbSettings {
         } finally {
             EamDbUtil.closeConnection(conn);
         }
-        //return true;
-        return false; // temp testing
+        return true;
     }
 
     public boolean insertDefaultDatabaseContent() {
