@@ -8,6 +8,9 @@ import os
 import codecs
 import datetime
 import sys
+import psycopg2
+import psycopg2.extras
+import socket
 
 class TskDbDiff(object):
     """Compares two TSK/Autospy SQLite databases.
@@ -27,7 +30,7 @@ class TskDbDiff(object):
         autopsy_db_file:
         gold_db_file:
     """
-    def __init__(self, output_db, gold_db, output_dir=None, gold_bb_dump=None, gold_dump=None, verbose=False):
+    def __init__(self, output_db, gold_db, output_dir=None, gold_bb_dump=None, gold_dump=None, verbose=False, isMultiUser=False, pgSettings=None):
         """Constructor for TskDbDiff.
 
         Args:
@@ -51,6 +54,12 @@ class TskDbDiff(object):
         self._bb_dump = ""
         self._dump = ""
         self.verbose = verbose
+        self.isMultiUser = isMultiUser
+        self.pgSettings = pgSettings
+
+        if self.isMultiUser and not self.pgSettings:
+            print("Missing PostgreSQL database connection settings data.")
+            sys.exit(1)
 
         if self.gold_bb_dump is None:
             self._generate_gold_bb_dump = True
@@ -68,13 +77,13 @@ class TskDbDiff(object):
 
         # generate the gold database dumps if necessary     
         if self._generate_gold_dump:       
-            TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump)     
+            TskDbDiff._dump_output_db_nonbb(self.gold_db_file, self.gold_dump, self.isMultiUser, self.pgSettings)     
         if self._generate_gold_bb_dump:        
-            TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump)
+            TskDbDiff._dump_output_db_bb(self.gold_db_file, self.gold_bb_dump, self.isMultiUser, self.pgSettings)
 
         # generate the output database dumps (both DB and BB)
-        TskDbDiff._dump_output_db_nonbb(self.output_db_file, self._dump)
-        TskDbDiff._dump_output_db_bb(self.output_db_file, self._bb_dump)
+        TskDbDiff._dump_output_db_nonbb(self.output_db_file, self._dump, self.isMultiUser, self.pgSettings)
+        TskDbDiff._dump_output_db_bb(self.output_db_file, self._bb_dump, self.isMultiUser, self.pgSettings)
 
         # Compare non-BB
         dump_diff_pass = self._diff(self._dump, self.gold_dump, self._dump_diff)
@@ -163,7 +172,7 @@ class TskDbDiff(object):
         return False
 
 
-    def _dump_output_db_bb(db_file, bb_dump_file):
+    def _dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings):
         """Dumps sorted text results to the given output location.
 
         Smart method that deals with a blackboard comparison to avoid issues
@@ -175,12 +184,14 @@ class TskDbDiff(object):
         """
 
         unsorted_dump = TskDbDiff._get_tmp_file("dump_data", ".txt")
-        conn = sqlite3.connect(db_file)
-        conn.text_factory = lambda x: x.decode("utf-8", "ignore")
-        conn.row_factory = sqlite3.Row
-
-        artifact_cursor = conn.cursor()
-
+        if isMultiUser:
+            conn, unused_db = db_connect(db_file, isMultiUser, pgSettings)
+            artifact_cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        else: # Use Sqlite
+            conn = sqlite3.connect(db_file)
+            conn.text_factory = lambda x: x.decode("utf-8", "ignore")
+            conn.row_factory = sqlite3.Row
+            artifact_cursor = conn.cursor()
         # Get the list of all artifacts (along with type and associated file)
         # @@@ Could add a SORT by parent_path in here since that is how we are going to later sort it.
         artifact_cursor.execute("SELECT tsk_files.parent_path, tsk_files.name, blackboard_artifact_types.display_name, blackboard_artifacts.artifact_id FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id")
@@ -201,14 +212,22 @@ class TskDbDiff(object):
                 else:
                     database_log.write(row["name"] + ' <artifact type="' + row["display_name"] + '" > ')
 
-                # Get attributes for this artifact
-                attribute_cursor = conn.cursor()
+                if isMultiUser:
+                    attribute_cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+                else:
+                    attribute_cursor = conn.cursor()
                 looptry = True
                 artifact_count += 1
                 try:
                     art_id = ""
                     art_id = str(row["artifact_id"])
-                    attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
+                  
+                    # Get attributes for this artifact
+                    if isMultiUser:
+                        attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id = %s ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
+                    else:
+                        attribute_cursor.execute("SELECT blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double FROM blackboard_attributes INNER JOIN blackboard_attribute_types ON blackboard_attributes.attribute_type_id = blackboard_attribute_types.attribute_type_id WHERE artifact_id =? ORDER BY blackboard_attributes.source, blackboard_attribute_types.display_name, blackboard_attributes.value_type, blackboard_attributes.value_text, blackboard_attributes.value_int32, blackboard_attributes.value_int64, blackboard_attributes.value_double", [art_id])
+                    
                     attributes = attribute_cursor.fetchall()
                 
                     # Print attributes
@@ -238,13 +257,13 @@ class TskDbDiff(object):
                             elif attr["value_type"] == 2:
                                 attr_value_as_string = str(attr["value_int64"])                        
                             elif attr["value_type"] == 3:
-                                attr_value_as_string = str(attr["value_double"])                        
+                                attr_value_as_string = "%20.10f" % float((attr["value_double"])) #use exact format from db schema to avoid python auto format double value to (0E-10) scientific style                       
                             elif attr["value_type"] == 4:
                                 attr_value_as_string = "bytes"                        
                             elif attr["value_type"] == 5:
                                 attr_value_as_string = str(attr["value_int64"])                        
                             if attr["display_name"] == "Associated Artifact":
-                                attr_value_as_string = getAssociatedArtifactType(db_file, attr_value_as_string)                            
+                                attr_value_as_string = getAssociatedArtifactType(attribute_cursor, attr_value_as_string, isMultiUser)                            
                             patrn = re.compile("[\n\0\a\b\r\f]")
                             attr_value_as_string = re.sub(patrn, ' ', attr_value_as_string)
                             database_log.write('<attribute source="' + attr["source"] + '" type="' + attr["display_name"] + '" value="' + attr_value_as_string + '" />')
@@ -283,7 +302,7 @@ class TskDbDiff(object):
         subprocess.call(srtcmdlst)
 
 
-    def _dump_output_db_nonbb(db_file, dump_file):
+    def _dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings):
         """Dumps a database to a text file.
 
         Does not dump the artifact and attributes.
@@ -293,43 +312,59 @@ class TskDbDiff(object):
             dump_file: a pathto_File, the location to dump the non-blackboard database items
         """
 
-        # Make a copy that we can modify
-        backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
-        shutil.copy(db_file, backup_db_file)
-        # We sometimes get situations with messed up permissions
-        os.chmod (backup_db_file, 0o777)
-
-        conn = sqlite3.connect(backup_db_file)
-        id_files_table = build_id_files_table(conn.cursor())
-        id_vs_parts_table = build_id_vs_parts_table(conn.cursor())
-        id_vs_info_table = build_id_vs_info_table(conn.cursor())
-        id_fs_info_table = build_id_fs_info_table(conn.cursor())
-        id_objects_table = build_id_objects_table(conn.cursor())
-        id_artifact_types_table = build_id_artifact_types_table(conn.cursor())
+        conn, backup_db_file = db_connect(db_file, isMultiUser, pgSettings)
+        id_files_table = build_id_files_table(conn.cursor(), isMultiUser)
+        id_vs_parts_table = build_id_vs_parts_table(conn.cursor(), isMultiUser)
+        id_vs_info_table = build_id_vs_info_table(conn.cursor(), isMultiUser)
+        id_fs_info_table = build_id_fs_info_table(conn.cursor(), isMultiUser)
+        id_objects_table = build_id_objects_table(conn.cursor(), isMultiUser)
+        id_artifact_types_table = build_id_artifact_types_table(conn.cursor(), isMultiUser)
         id_obj_path_table = build_id_obj_path_table(id_files_table, id_objects_table, id_artifact_types_table)
 
-        conn.text_factory = lambda x: x.decode("utf-8", "ignore")
-
-        # Delete the blackboard tables
-        conn.execute("DROP TABLE blackboard_artifacts")
-        conn.execute("DROP TABLE blackboard_attributes")
-
-        # Write to the database dump
-        with codecs.open(dump_file, "wb", "utf_8") as db_log:
-            for line in conn.iterdump():
-                line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table)
-                db_log.write('%s\n' % line)
-            # Now sort the file    
-            
+                #line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table)
+        if isMultiUser: # Use PostgreSQL
+            os.environ['PGPASSWORD']=pgSettings.password
+            pgDump = ["pg_dump", "--inserts", "-U", pgSettings.username, "-h", pgSettings.pgHost, "-p", pgSettings.pgPort, "-d", db_file, "-E", "utf-8", "-T", "blackboard_artifacts", "-T", "blackboard_attributes", "-f", "postgreSQLDump.sql"]
+            subprocess.call(pgDump)
+            postgreSQL_db = codecs.open("postgreSQLDump.sql", "r", "utf-8")
+            # Write to the database dump
+            with codecs.open(dump_file, "wb", "utf_8") as db_log:
+                dump_line = ''
+                for line in postgreSQL_db:
+                    line = line.strip('\r\n ')
+                    # Deal with pg_dump result file
+                    if line.startswith('--') or line.lower().startswith('alter') or not line: # It's comment or alter statement or empty line
+                        continue
+                    elif not line.endswith(';'): # Statement not finished
+                        dump_line += line
+                        continue
+                    else:
+                        dump_line += line
+                    dump_line = normalize_db_entry(dump_line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table) 
+                    db_log.write('%s\n' % dump_line)
+                    dump_line = ''
+            postgreSQL_db.close()
+        else: # use Sqlite
+            # Delete the blackboard tables
+            conn.text_factory = lambda x: x.decode("utf-8", "ignore")
+            conn.execute("DROP TABLE blackboard_artifacts")
+            conn.execute("DROP TABLE blackboard_attributes")
+            # Write to the database dump
+            with codecs.open(dump_file, "wb", "utf_8") as db_log:
+                for line in conn.iterdump():
+                    line = normalize_db_entry(line, id_obj_path_table, id_vs_parts_table, id_vs_info_table, id_fs_info_table, id_objects_table)
+                    db_log.write('%s\n' % line)
+        # Now sort the file  
         srtcmdlst = ["sort", dump_file, "-o", dump_file]
         subprocess.call(srtcmdlst)
 
         conn.close()
         # cleanup the backup
-        os.remove(backup_db_file)
+        if backup_db_file:
+            os.remove(backup_db_file)
 
 
-    def dump_output_db(db_file, dump_file, bb_dump_file):
+    def dump_output_db(db_file, dump_file, bb_dump_file, isMultiUser, pgSettings):
         """Dumps the given database to text files for later comparison.
 
         Args:
@@ -337,8 +372,8 @@ class TskDbDiff(object):
             dump_file: a pathto_File, the location to dump the non-blackboard database items
             bb_dump_file: a pathto_File, the location to dump the blackboard database items
         """
-        TskDbDiff._dump_output_db_nonbb(db_file, dump_file)
-        TskDbDiff._dump_output_db_bb(db_file, bb_dump_file)
+        TskDbDiff._dump_output_db_nonbb(db_file, dump_file, isMultiUser, pgSettings)
+        TskDbDiff._dump_output_db_bb(db_file, bb_dump_file, isMultiUser, pgSettings)
 
 
     def _get_tmp_file(base, ext):
@@ -349,6 +384,26 @@ class TskDbDiff(object):
 class TskDbDiffException(Exception):
     pass
 
+class PGSettings(object):
+    def __init__(self, pgHost=None, pgPort=5432, user=None, password=None):
+        self.pgHost = pgHost
+        self.pgPort = pgPort
+        self.username = user
+        self.password = password
+
+    def get_pgHost():
+        return self.pgHost
+
+    def get_pgPort():
+        return self.pgPort
+
+    def get_username():
+        return self.username
+
+    def get_password():
+        return self.password
+
+
 def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info_table, objects_table):
     """ Make testing more consistent and reasonable by doctoring certain db entries.
 
@@ -357,25 +412,23 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         files_table: a map from object ids to file paths.
     """
 
-    files_index = line.find('INSERT INTO "tsk_files"')
-    path_index = line.find('INSERT INTO "tsk_files_path"')
-    object_index = line.find('INSERT INTO "tsk_objects"')
-    report_index = line.find('INSERT INTO "reports"')
-    layout_index = line.find('INSERT INTO "tsk_file_layout"')
-    data_source_info_index = line.find('INSERT INTO "data_source_info"')
-    ingest_job_index = line.find('INSERT INTO "ingest_jobs"')
-
+    # Sqlite statement use double quotes for table name, PostgreSQL doesn't. We check both databases results for normalization.
+    files_index = line.find('INSERT INTO "tsk_files"') > -1 or line.find('INSERT INTO tsk_files ') > -1
+    path_index = line.find('INSERT INTO "tsk_files_path"') > -1 or line.find('INSERT INTO tsk_files_path ') > -1
+    object_index = line.find('INSERT INTO "tsk_objects"') > -1 or line.find('INSERT INTO tsk_objects ') > -1
+    report_index = line.find('INSERT INTO "reports"') > -1 or line.find('INSERT INTO reports ') > -1
+    layout_index = line.find('INSERT INTO "tsk_file_layout"') > -1 or line.find('INSERT INTO tsk_file_layout ') > -1
+    data_source_info_index = line.find('INSERT INTO "data_source_info"') > -1 or line.find('INSERT INTO data_source_info ') > -1
+    ingest_job_index = line.find('INSERT INTO "ingest_jobs"') > -1 or line.find('INSERT INTO ingest_jobs ') > -1
     parens = line[line.find('(') + 1 : line.rfind(')')]
     fields_list = parens.replace(" ", "").split(',')
     
     # remove object ID
-    if (files_index != -1):
-        obj_id = fields_list[0]
-        path = files_table[int(obj_id)]
+    if files_index:
         newLine = ('INSERT INTO "tsk_files" VALUES(' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
-    elif (path_index != -1):
+    elif path_index:
         obj_id = int(fields_list[0])
         objValue = files_table[obj_id]
         # remove the obj_id from ModuleOutput/EmbeddedFileExtractor directory
@@ -387,16 +440,21 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
             pathValue = fields_list[1][:idx_pre+1] + dir_to_replace + fields_list[1][idx_pos:]
         else:
             pathValue = fields_list[1]
+        # remove localhost from postgres par_obj_name
+        multiOutput_idx = pathValue.find('ModuleOutput')
+        if multiOutput_idx > -1:
+            pathValue = "'" + pathValue[pathValue.find('ModuleOutput'):] #postgres par_obj_name include losthost 
+
         newLine = ('INSERT INTO "tsk_files_path" VALUES(' + objValue + ', ' + pathValue + ', ' + ', '.join(fields_list[2:]) + ');') 
         return newLine
     # remove object ID
-    elif (layout_index != -1):
+    elif layout_index:
         obj_id = fields_list[0]
         path= files_table[int(obj_id)]
         newLine = ('INSERT INTO "tsk_file_layout" VALUES(' + path + ', ' + ', '.join(fields_list[1:]) + ');') 
         return newLine
     # remove object ID
-    elif (object_index != -1):
+    elif object_index:
         obj_id = fields_list[0]
         parent_id = fields_list[1]
         newLine = 'INSERT INTO "tsk_objects" VALUES('
@@ -434,47 +492,38 @@ def normalize_db_entry(line, files_table, vs_parts_table, vs_info_table, fs_info
         else:
             return line 
     # remove time-based information, ie Test_6/11/14 -> Test    
-    elif (report_index != -1):
+    elif report_index:
         fields_list[1] = "AutopsyTestCase"
         fields_list[2] = "0"
-        newLine = ('INSERT INTO "reports" VALUES(' + ','.join(fields_list) + ');')
+        newLine = ('INSERT INTO "reports" VALUES(' + ','.join(fields_list[1:]) + ');') # remove report_id
         return newLine
-    elif (data_source_info_index != -1):
+    elif data_source_info_index:
         fields_list[1] = "{device id}"
         newLine = ('INSERT INTO "data_source_info" VALUES(' + ','.join(fields_list) + ');')
         return newLine
-    elif (ingest_job_index != -1):
+    elif ingest_job_index:
         fields_list[2] = "{host_name}"
         start_time = int(fields_list[3])
         end_time = int(fields_list[4])
         if (start_time <= end_time):
             fields_list[3] = "0"
             fields_list[4] = "0"
-        newLine = ('INSERT INTO "injest_jobs" VALUES(' + ','.join(fields_list) + ');')
+        newLine = ('INSERT INTO "ingest_jobs" VALUES(' + ','.join(fields_list) + ');')
         return newLine
     else:
         return line
 
-def getAssociatedArtifactType(db_file, artifact_id):
-    # Make a copy that we can modify
-    backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
-    shutil.copy(db_file, backup_db_file)
-    # We sometimes get situations with messed up permissions
-    os.chmod (backup_db_file, 0o777)
+def getAssociatedArtifactType(cur, artifact_id, isMultiUser):
+    if isMultiUser:
+        cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=%s",[artifact_id])
+    else:
+        cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",[artifact_id])
 
-    conn = sqlite3.connect(backup_db_file)
-    cur = conn.cursor()
-    #artifact_cursor.execute("SELECT display_name FROM blackboard_artifact_types WHERE artifact_id=?",[artifact_id])
-    cur.execute("SELECT tsk_files.parent_path, blackboard_artifact_types.display_name FROM blackboard_artifact_types INNER JOIN blackboard_artifacts ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id INNER JOIN tsk_files ON tsk_files.obj_id = blackboard_artifacts.obj_id WHERE artifact_id=?",[artifact_id])
     info = cur.fetchone()
     
-    conn.close()
-    # cleanup the backup
-    os.remove(backup_db_file)
-
     return "File path: " + info[0] + " Artifact Type: " + info[1]
 
-def build_id_files_table(db_cursor):
+def build_id_files_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to file paths.
 
     Args:
@@ -482,10 +531,10 @@ def build_id_files_table(db_cursor):
     """
     # for each row in the db, take the object id, parent path, and name, then create a tuple in the dictionary
     # with the object id as the key and the full file path (parent + name) as the value
-    mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in db_cursor.execute("SELECT obj_id, parent_path, name FROM tsk_files")])
+    mapping = dict([(row[0], str(row[1]) + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, parent_path, name FROM tsk_files")])
     return mapping
 
-def build_id_vs_parts_table(db_cursor):
+def build_id_vs_parts_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to vs_parts.
 
     Args:
@@ -493,10 +542,10 @@ def build_id_vs_parts_table(db_cursor):
     """
     # for each row in the db, take the object id, addr, and start, then create a tuple in the dictionary
     # with the object id as the key and (addr + start) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in db_cursor.execute("SELECT obj_id, addr, start FROM tsk_vs_parts")])
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, addr, start FROM tsk_vs_parts")])
     return mapping
 
-def build_id_vs_info_table(db_cursor):
+def build_id_vs_info_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to vs_info.
 
     Args:
@@ -504,11 +553,11 @@ def build_id_vs_info_table(db_cursor):
     """
     # for each row in the db, take the object id, vs_type, and img_offset, then create a tuple in the dictionary
     # with the object id as the key and (vs_type + img_offset) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in db_cursor.execute("SELECT obj_id, vs_type, img_offset FROM tsk_vs_info")])
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, vs_type, img_offset FROM tsk_vs_info")])
     return mapping
 
      
-def build_id_fs_info_table(db_cursor):
+def build_id_fs_info_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to fs_info.
 
     Args:
@@ -516,10 +565,10 @@ def build_id_fs_info_table(db_cursor):
     """
     # for each row in the db, take the object id, img_offset, and fs_type, then create a tuple in the dictionary
     # with the object id as the key and (img_offset + fs_type) as the value
-    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in db_cursor.execute("SELECT obj_id, img_offset, fs_type FROM tsk_fs_info")])
+    mapping = dict([(row[0], str(row[1]) + '_' + str(row[2])) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT obj_id, img_offset, fs_type FROM tsk_fs_info")])
     return mapping
 
-def build_id_objects_table(db_cursor):
+def build_id_objects_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to par_id.
 
     Args:
@@ -527,10 +576,10 @@ def build_id_objects_table(db_cursor):
     """
     # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
     # with the object id as the key and par_obj_id, type as the value
-    mapping = dict([(row[0], [row[1], row[2]]) for row in db_cursor.execute("SELECT * FROM tsk_objects")])
+    mapping = dict([(row[0], [row[1], row[2]]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT * FROM tsk_objects")])
     return mapping
 
-def build_id_artifact_types_table(db_cursor):
+def build_id_artifact_types_table(db_cursor, isPostgreSQL):
     """Build the map of object ids to artifact ids.
 
     Args:
@@ -538,7 +587,7 @@ def build_id_artifact_types_table(db_cursor):
     """
     # for each row in the db, take the object id, par_obj_id, then create a tuple in the dictionary
     # with the object id as the key and artifact type as the value
-    mapping = dict([(row[0], row[1]) for row in db_cursor.execute("SELECT blackboard_artifacts.artifact_obj_id, blackboard_artifact_types.type_name FROM blackboard_artifacts INNER JOIN blackboard_artifact_types ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id ")])
+    mapping = dict([(row[0], row[1]) for row in sql_select_execute(db_cursor, isPostgreSQL, "SELECT blackboard_artifacts.artifact_obj_id, blackboard_artifact_types.type_name FROM blackboard_artifacts INNER JOIN blackboard_artifact_types ON blackboard_artifact_types.artifact_type_id = blackboard_artifacts.artifact_type_id ")])
     return mapping
 
 
@@ -564,6 +613,27 @@ def build_id_obj_path_table(files_table, objects_table, artifacts_table):
                 path = mapping[par_obj_id] 
                 mapping[k] = path + "/" + artifacts_table[v[0]]
     return mapping
+
+def db_connect(db_file, isMultiUser, pgSettings=None):
+    if isMultiUser: # use PostgreSQL
+        try:
+            return psycopg2.connect("dbname=" + db_file + " user=" + pgSettings.username + " host=" + pgSettings.pgHost + " password=" + pgSettings.password), None
+        except:
+            print("Failed to connect to the database: " + db_file)
+    else: # Sqlite
+        # Make a copy that we can modify
+        backup_db_file = TskDbDiff._get_tmp_file("tsk_backup_db", ".db")
+        shutil.copy(db_file, backup_db_file)
+        # We sometimes get situations with messed up permissions
+        os.chmod (backup_db_file, 0o777)
+        return sqlite3.connect(backup_db_file), backup_db_file
+
+def sql_select_execute(cursor, isPostgreSQL, sql_stmt):
+    if isPostgreSQL: 
+        cursor.execute(sql_stmt)
+        return cursor.fetchall()
+    else:
+        return cursor.execute(sql_stmt)
 
 def main():
     try:
