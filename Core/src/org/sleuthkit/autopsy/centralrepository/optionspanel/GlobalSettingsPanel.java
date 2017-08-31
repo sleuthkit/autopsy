@@ -84,7 +84,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         lbDbPlatformValue = new javax.swing.JLabel();
         lbDbNameValue = new javax.swing.JLabel();
         lbDbLocationValue = new javax.swing.JLabel();
-        lbConfigCentralRepo = new javax.swing.JLabel();
         pnDatabaseContentButtons = new javax.swing.JPanel();
         bnImportDatabase = new javax.swing.JButton();
         bnManageTags = new javax.swing.JButton();
@@ -109,9 +108,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
-        lbConfigCentralRepo.setForeground(new java.awt.Color(255, 0, 0));
-        org.openide.awt.Mnemonics.setLocalizedText(lbConfigCentralRepo, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbConfigCentralRepo.text")); // NOI18N
-
         javax.swing.GroupLayout pnDatabaseConfigurationLayout = new javax.swing.GroupLayout(pnDatabaseConfiguration);
         pnDatabaseConfiguration.setLayout(pnDatabaseConfigurationLayout);
         pnDatabaseConfigurationLayout.setHorizontalGroup(
@@ -130,10 +126,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                                 .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
-                        .addComponent(bnDbConfigure)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lbConfigCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 361, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(bnDbConfigure))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         pnDatabaseConfigurationLayout.setVerticalGroup(
@@ -152,9 +145,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                     .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbDbLocationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
-                .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(bnDbConfigure)
-                    .addComponent(lbConfigCentralRepo))
+                .addComponent(bnDbConfigure)
                 .addContainerGap())
         );
 
@@ -411,7 +402,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         lbDbPlatformTypeLabel.setEnabled(enable && !ingestRunning);
         lbDbPlatformValue.setEnabled(enable && !ingestRunning);
         tbOops.setEnabled(enable && !ingestRunning);
-        lbConfigCentralRepo.setVisible(enable && EamDbPlatformEnum.getSelectedPlatform().equals(DISABLED));
     }
 
     /**
@@ -436,7 +426,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
     private javax.swing.JCheckBox cbUseCentralRepo;
-    private javax.swing.JLabel lbConfigCentralRepo;
     private javax.swing.JLabel lbDbLocationLabel;
     private javax.swing.JLabel lbDbLocationValue;
     private javax.swing.JLabel lbDbNameLabel;

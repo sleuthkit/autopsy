@@ -83,11 +83,7 @@
                               <Component id="lbDbLocationValue" alignment="1" min="-2" pref="711" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="bnDbConfigure" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="lbConfigCentralRepo" min="-2" pref="361" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="bnDbConfigure" alignment="0" min="-2" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace max="32767" attributes="0"/>
               </Group>
@@ -112,10 +108,7 @@
                       <Component id="lbDbLocationValue" min="-2" pref="14" max="-2" attributes="0"/>
                   </Group>
                   <EmptySpace pref="11" max="32767" attributes="0"/>
-                  <Group type="103" groupAlignment="3" attributes="0">
-                      <Component id="bnDbConfigure" alignment="3" min="-2" max="-2" attributes="0"/>
-                      <Component id="lbConfigCentralRepo" alignment="3" min="-2" max="-2" attributes="0"/>
-                  </Group>
+                  <Component id="bnDbConfigure" min="-2" max="-2" attributes="0"/>
                   <EmptySpace max="-2" attributes="0"/>
               </Group>
           </Group>
@@ -158,16 +151,6 @@
         <Component class="javax.swing.JLabel" name="lbDbNameValue">
         </Component>
         <Component class="javax.swing.JLabel" name="lbDbLocationValue">
-        </Component>
-        <Component class="javax.swing.JLabel" name="lbConfigCentralRepo">
-          <Properties>
-            <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="0" green="0" red="ff" type="rgb"/>
-            </Property>
-            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
-              <ResourceString bundle="org/sleuthkit/autopsy/centralrepository/optionspanel/Bundle.properties" key="GlobalSettingsPanel.lbConfigCentralRepo.text" replaceFormat="org.openide.util.NbBundle.getMessage({sourceFileName}.class, &quot;{key}&quot;)"/>
-            </Property>
-          </Properties>
         </Component>
       </SubComponents>
     </Container>
