@@ -94,6 +94,7 @@ public class AutopsyTestCases {
 
     public void testNewCaseWizardOpen(String title) {
         logger.info("New Case");
+        resetTimeouts("WindowWaiter.WaitWindowTimeout", 240000);
         NbDialogOperator nbdo = new NbDialogOperator(title);
         JButtonOperator jbo = new JButtonOperator(nbdo, 0); // the "New Case" button
         jbo.pushNoBlock();
@@ -121,8 +122,8 @@ public class AutopsyTestCases {
         */
         new Timeout("pausing", 120000).sleep();
         logger.info("Starting Add Image process");
+        resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000);
         WizardOperator wo = new WizardOperator("Add Data Source");
-        wo.setTimeouts(resetTimeouts("WindowWaiter.WaitWindowTimeOut", 240000));
         while(!wo.btNext().isEnabled()){
             new Timeout("pausing", 1000).sleep(); // give it a second till the Add Data Source dialog enabled
         }
@@ -299,6 +300,7 @@ public class AutopsyTestCases {
 
     public void testGenerateReportButton() throws IOException {
         logger.info("Generate Report Button");
+        resetTimeouts("ComponentOperator.WaitComponentTimeout", 240000);
         JDialog reportDialog = JDialogOperator.waitJDialog("Generate Report", false, false);
         JDialogOperator reportDialogOperator = new JDialogOperator(reportDialog);
         JListOperator listOperator = new JListOperator(reportDialogOperator);
@@ -307,12 +309,10 @@ public class AutopsyTestCases {
         Date date = new Date();
         String datenotime = dateFormat.format(date);
         listOperator.clickOnItem(0, 1);
-        new Timeout("pausing", 2000).sleep();
         jbo0.pushNoBlock();
         new Timeout("pausing", 2000).sleep();
         JButtonOperator jbo1 = new JButtonOperator(reportDialogOperator, "Finish");
         jbo1.pushNoBlock();
-        new Timeout("pausing", 1000).sleep();
         JDialog previewDialog = JDialogOperator.waitJDialog("Progress", false, false);
         screenshot("Progress");
         JDialogOperator previewDialogOperator = new JDialogOperator(previewDialog);
