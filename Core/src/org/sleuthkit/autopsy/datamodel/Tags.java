@@ -123,7 +123,8 @@ public class Tags implements AutopsyVisitableItem {
         private final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
                 Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
                 Case.Events.CONTENT_TAG_ADDED,
-                Case.Events.CONTENT_TAG_DELETED);
+                Case.Events.CONTENT_TAG_DELETED,
+                Case.Events.CURRENT_CASE);
 
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override

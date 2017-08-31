@@ -69,9 +69,10 @@ public class BlackboardArtifactNode extends DisplayableItemNode {
 
     private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
     private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
-        Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
-        Case.Events.CONTENT_TAG_ADDED,
-        Case.Events.CONTENT_TAG_DELETED);
+            Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
+            Case.Events.CONTENT_TAG_ADDED,
+            Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.CURRENT_CASE);
 
     private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES).
