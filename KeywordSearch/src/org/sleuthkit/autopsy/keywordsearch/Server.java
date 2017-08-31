@@ -1007,6 +1007,7 @@ public class Server {
             try {
                 return currentCore.query(sq);
             } catch (SolrServerException ex) {
+                logger.log(Level.SEVERE, "Solr query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -1034,6 +1035,7 @@ public class Server {
             try {
                 return currentCore.query(sq, method);
             } catch (SolrServerException | IOException ex) {
+                logger.log(Level.SEVERE, "Solr query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query2.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -1060,6 +1062,7 @@ public class Server {
             try {
                 return currentCore.queryTerms(sq);
             } catch (SolrServerException | IOException ex) {
+                logger.log(Level.SEVERE, "Solr terms query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryTerms.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -1319,10 +1322,11 @@ public class Server {
         /**
          * get the text from the content field for the given file
          *
-         * @param contentID
-         * @param chunkID
+         * @param contentID Solr document ID
+         * @param chunkID   Chunk ID of the Solr document
          *
-         * @return
+         * @return Text from matching Solr document (as String). Null if no
+         * matching Solr document found or error while getting content from Solr
          */
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
@@ -1352,7 +1356,7 @@ public class Server {
                     }
                 }
             } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error getting content from Solr. Solr document id " + contentID + ", chunk id " + chunkID + ", query: " + filterQuery, ex); //NON-NLS
                 return null;
             }
 
