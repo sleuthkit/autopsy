@@ -354,7 +354,7 @@ public class EamDbSettingsDialog extends JDialog {
     @Messages({"EamDbSettingsDialog.okButton.createDbError.title=Unable to Create Database",
         "EamDbSettingsDialog.okButton.createSQLiteDbError.message=Unable to create SQLite Database, please ensure location exists and you have write permissions and try again.",
         "EamDbSettingsDialog.okButton.createPostgresDbError.message=Unable to create Postgres Database, please ensure address, port, and login credentials are correct for Postgres server and try again."})
-    private void createDb(boolean removeIncompleteDatabase) {
+    private void createDb() {
         boolean result = false;
         boolean dbCreated = true;
         switch (selectedPlatform) {
@@ -368,7 +368,7 @@ public class EamDbSettingsDialog extends JDialog {
                 }
                 if (!result) {
                     // Remove the incomplete database
-                    if(dbCreated && removeIncompleteDatabase){
+                    if(dbCreated){
                         dbSettingsPostgres.deleteDatabase();
                     }
                     
@@ -389,7 +389,7 @@ public class EamDbSettingsDialog extends JDialog {
                             && dbSettingsSqlite.insertDefaultDatabaseContent();
                 }
                 if (!result) {
-                    if(dbCreated && removeIncompleteDatabase){
+                    if(dbCreated){
                         dbSettingsSqlite.deleteDatabase();
                     }
                                         
@@ -435,7 +435,7 @@ public class EamDbSettingsDialog extends JDialog {
                     Bundle.EamDbSettingsDialog_okButton_createDbDialog_message(),
                     Bundle.EamDbSettingsDialog_okButton_createDbDialog_title(),
                     JOptionPane.YES_NO_OPTION)) {
-                createDb(testingStatus == DatabaseTestResult.DB_DOES_NOT_EXIST);
+                createDb();
             }
         }
 

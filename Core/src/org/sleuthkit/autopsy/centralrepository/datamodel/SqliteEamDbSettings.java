@@ -110,16 +110,18 @@ public final class SqliteEamDbSettings {
         ModuleSettings.setConfigSetting("CentralRepository", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
     
+    /**
+     * Verify that the db file exists.
+     *
+     * @return true if exists, else false
+     */
     public boolean dbFileExists() {
-        //if(dbDirectoryExists()){
-            File dbFile = new File(getFileNameWithPath());
-            if(! dbFile.exists()){
-                return false;
-            }
-            // It's unlikely, but make sure the file isn't actually a directory
-            return ( ! dbFile.isDirectory());
-        //}
-        //return false;
+        File dbFile = new File(getFileNameWithPath());
+        if(! dbFile.exists()){
+            return false;
+        }
+        // It's unlikely, but make sure the file isn't actually a directory
+        return ( ! dbFile.isDirectory());
     }
 
     /**
