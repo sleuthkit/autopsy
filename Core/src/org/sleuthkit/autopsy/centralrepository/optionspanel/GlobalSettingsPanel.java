@@ -261,6 +261,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         store();
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
         load(); // reload db settings content and update buttons
+        if (dialog.wasConfigurationChanged()) {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
     private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
@@ -315,7 +318,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return true if it's okay, false otherwise.
      */
     public boolean valid() {
-        return !(cbUseCentralRepo.isSelected() && lbDbPlatformValue.getText().equals(DISABLED.toString()));
+        return !cbUseCentralRepo.isSelected() || !lbDbPlatformValue.getText().equals(DISABLED.toString());
     }
 
     @Override
