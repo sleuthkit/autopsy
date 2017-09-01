@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import org.openide.nodes.Children;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +51,9 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
 
     private static final Logger LOGGER = Logger.getLogger(AbstractAbstractFileNode.class.getName());
 
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.CURRENT_CASE,
+            Case.Events.CONTENT_TAG_ADDED, Case.Events.CONTENT_TAG_DELETED);
+
     /**
      * @param <T> type of the AbstractFile data to encapsulate
      * @param abstractFile file to encapsulate
@@ -68,13 +73,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 }
             }
         }
-        // Listen for case events so that we can detect when case is closed
-        Case.addPropertyChangeListener(pcl);
+        // Listen for case events so that we can detect when the case is closed
+        // or when tags are added.
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
     }
 
     private void removeListeners() {
         IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-        Case.removePropertyChangeListener(pcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -96,7 +102,11 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
                 // If so, refresh our children.
                 try {
                     Children parentsChildren = getParentNode().getChildren();
-                    if (parentsChildren != null) {
+                    // We only want to refresh our parents children if we are in the
+                    // data sources branch of the tree. The parent nodes in other
+                    // branches of the tree (e.g. File Types and Deleted Files) do
+                    // not need to be refreshed.
+                    if (parentsChildren instanceof ContentChildren) {
                         ((ContentChildren) parentsChildren).refreshChildren();
                         parentsChildren.getNodesCount();
                     }

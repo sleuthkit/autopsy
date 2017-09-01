@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -229,7 +230,7 @@ public class IngestManager {
      * opened/closed) events.
      */
     private void subscribeToCaseEvents() {
-        Case.addEventSubscriber(Case.Events.CURRENT_CASE.toString(), (PropertyChangeEvent event) -> {
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent event) -> {
             if (event.getNewValue() != null) {
                 handleCaseOpened();
             } else {

@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.text.MessageFormat;
+import java.util.EnumSet;
 import java.util.Map;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -81,7 +82,7 @@ public final class ReportWizardAction extends CallableSystemAction implements Pr
 
     public ReportWizardAction() {
         setEnabled(false);
-        Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), (PropertyChangeEvent evt) -> {
             if (evt.getPropertyName().equals(Case.Events.CURRENT_CASE.toString())) {
                 Case newCase = (Case) evt.getNewValue();
                 setEnabled(newCase != null && RuntimeProperties.runningWithGUI());
