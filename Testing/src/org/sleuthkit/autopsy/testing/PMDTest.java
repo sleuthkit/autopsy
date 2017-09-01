@@ -28,9 +28,11 @@ public class PMDTest {
         return pmd;
     }
     
+    public String getCheckVarLocation() {
+        return check_var_location;
+    }
     private void testPMD() {
-        pmd = "Test PMD again.";
-        check_var_location = "PMD check variable position.";
+        pmd = "PMD Test unused method.";
     }
     
     private String check_var_location = "Not a good position.";
