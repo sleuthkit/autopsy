@@ -387,11 +387,10 @@ public class AutopsyTestCases {
         public PMDTest(long test) {
             pmd = "Test PMD settings";
             this.test = setTest(test);
-            check_var_location = "Not a good position";
         }
     
         public long setTest(long test){
-            String abc;
+            String unused;
             return test++;
         }
     
@@ -401,9 +400,11 @@ public class AutopsyTestCases {
     
         private void testPMD() {
             pmd = "Test PMD again.";
+            check_var_location = "PMD check variable position.";
+
         }
     
-        private String check_var_location;
+        private String check_var_location = "Not a good position";
 }
 
 }
