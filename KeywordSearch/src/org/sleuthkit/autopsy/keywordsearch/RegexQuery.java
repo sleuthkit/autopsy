@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrQuery.SortClause;
@@ -69,31 +69,34 @@ import org.sleuthkit.datamodel.TskData;
 final class RegexQuery implements KeywordSearchQuery {
 
     public static final Logger LOGGER = Logger.getLogger(RegexQuery.class.getName());
-    private final List<KeywordQueryFilter> filters = new ArrayList<>();
 
-    private final KeywordList keywordList;
-    private final Keyword originalKeyword; // The regular expression originalKeyword used to perform the search.
-    private String field = Server.Schema.CONTENT_STR.toString();
-    private final String keywordString;
-    static final private int MAX_RESULTS_PER_CURSOR_MARK = 512;
-    private boolean escaped;
-    private String escapedQuery;
-
-    private final int MIN_EMAIL_ADDR_LENGTH = 8;
-
-    // Lucene regular expressions do not support the following Java predefined
-    // and POSIX character classes. There are other valid Java character classes
-    // that are not supported by Lucene but we do not check for all of them.
-    // See https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
-    // for Java regex syntax.
-    // See https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html
-    // for Lucene syntax.
-    // We use \p as a shortcut for all of the character classes of the form \p{XXX}.
+    /**
+     * Lucene regular expressions do not support the following Java predefined
+     * and POSIX character classes. There are other valid Java character classes
+     * that are not supported by Lucene but we do not check for all of them. See
+     * https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html
+     * for Java regex syntax. See
+     * https://lucene.apache.org/core/6_4_0/core/org/apache/lucene/util/automaton/RegExp.html
+     * for Lucene syntax. We use \p as a shortcut for all of the character
+     * classes of the form \p{XXX}.
+     */
     private static final CharSequence[] UNSUPPORTED_CHARS = {"\\d", "\\D", "\\w", "\\W", "\\s", "\\S", "\\n",
         "\\t", "\\r", "\\f", "\\a", "\\e", "\\v", "\\V", "\\h", "\\H", "\\p"}; //NON-NLS
 
-    private boolean queryStringContainsWildcardPrefix = false;
-    private boolean queryStringContainsWildcardSuffix = false;
+    private static final CreditCardValidator CREDIT_CARD_VALIDATOR = new CreditCardValidator();
+    private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
+    private static final int MIN_EMAIL_ADDR_LENGTH = 8;
+
+    private final List<KeywordQueryFilter> filters = new ArrayList<>();
+    private final KeywordList keywordList;
+    private final Keyword originalKeyword; // The regular expression originalKeyword used to perform the search.
+    private final String keywordString;
+    private final boolean queryStringContainsWildcardPrefix;
+    private final boolean queryStringContainsWildcardSuffix;
+
+    private boolean escaped;
+    private String escapedQuery;
+    private String field = Server.Schema.CONTENT_STR.toString();
 
     /**
      * Constructor with query to process.
@@ -106,13 +109,8 @@ final class RegexQuery implements KeywordSearchQuery {
         this.originalKeyword = keyword;
         this.keywordString = keyword.getSearchTerm();
 
-        if (this.keywordString.startsWith(".*")) {
-            this.queryStringContainsWildcardPrefix = true;
-        }
-
-        if (this.keywordString.endsWith(".*")) {
-            this.queryStringContainsWildcardSuffix = true;
-        }
+        this.queryStringContainsWildcardPrefix = this.keywordString.startsWith(".*");
+        this.queryStringContainsWildcardSuffix = this.keywordString.endsWith(".*");
     }
 
     @Override
@@ -288,11 +286,7 @@ final class RegexQuery implements KeywordSearchQuery {
                      */
                     if (originalKeyword.getArtifactAttributeType() == BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                         Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-                        if (ccnMatcher.find()) {
-                            final String ccn = CharMatcher.anyOf(" -").removeFrom(ccnMatcher.group("ccn"));
-                            if (false == TermsComponentQuery.CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
-                                continue;
-                            }
+                        if (ccnMatcher.find() && CREDIT_CARD_VALIDATOR.isValidCCN(ccnMatcher.group("ccn"))) {
                         } else {
                             continue;
                         }
@@ -480,7 +474,7 @@ final class RegexQuery implements KeywordSearchQuery {
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-      
+
         hit.getArtifactID().ifPresent(artifactID
                 -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
         );
@@ -518,8 +512,8 @@ final class RegexQuery implements KeywordSearchQuery {
      * same fields as the track two data, plus the account holder's name.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param matcher       A matcher for the snippet.
+     *                     creating duplicate attributes.
+     * @param matcher      A matcher for the snippet.
      */
     static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
         parseTrack2Data(attributeMap, matcher);
@@ -531,12 +525,12 @@ final class RegexQuery implements KeywordSearchQuery {
      * value parsed from the snippet for a credit account number hit.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param attrType      The type of attribute to create.
-     * @param groupName     The group name of the regular expression that was
-     *                      used to parse the attribute data.
-     * @param matcher       A matcher for the snippet.
-
+     *                     creating duplicate attributes.
+     * @param attrType     The type of attribute to create.
+     * @param groupName    The group name of the regular expression that was
+     *                     used to parse the attribute data.
+     * @param matcher      A matcher for the snippet.
+     *
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, BlackboardAttribute.ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
