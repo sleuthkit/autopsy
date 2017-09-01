@@ -52,7 +52,6 @@ import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
-import org.sleuthkit.datamodel.CommunicationsManager;
 
 /**
  * File-level ingest module that detects MBOX files based on signature.
@@ -414,11 +413,11 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
                 senderAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.EMAIL, senderAddress, EmailParserModuleFactory.getModuleName(), abstractFile);
             }
             catch(TskCoreException ex) {
-                 logger.log(Level.WARNING, "Failed to create account for email address  " + from, ex); //NON-NLS
+                 logger.log(Level.WARNING, "Failed to create account for email address  " + senderAddress, ex); //NON-NLS
             }
         }
         else {
-             logger.log(Level.WARNING, "Failed to find sender address, from  "+ from); //NON-NLS
+             logger.log(Level.WARNING, "Failed to find sender address, from  = "+ from); //NON-NLS
         }
         
         List<String> recipientAddresses = new ArrayList<>();
