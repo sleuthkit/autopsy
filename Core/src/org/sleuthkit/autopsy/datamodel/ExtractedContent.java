@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -251,14 +252,14 @@ public class ExtractedContent implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
-            Case.addPropertyChangeListener(pcl);
+            Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
         }
 
         @Override
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removePropertyChangeListener(pcl);
+            Case.removeEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), pcl);
             typeNodeList.clear();
         }
 
@@ -309,7 +310,7 @@ public class ExtractedContent implements AutopsyVisitableItem {
      */
     public class TypeNode extends DisplayableItemNode {
 
-        private BlackboardArtifact.Type type;
+        private final BlackboardArtifact.Type type;
         private long childCount = 0;
 
         TypeNode(BlackboardArtifact.Type type) {

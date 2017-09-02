@@ -23,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.EnumSet;
 import java.util.logging.Level;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
@@ -76,7 +77,7 @@ class DropdownToolbar extends javax.swing.JPanel {
     private void customizeComponents() {
         searchSettingsChangeListener = new SearchSettingsChangeListener();
         KeywordSearch.getServer().addServerActionListener(searchSettingsChangeListener);
-        Case.addPropertyChangeListener(searchSettingsChangeListener);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE), searchSettingsChangeListener);
 
         DropdownListSearchPanel listsPanel = DropdownListSearchPanel.getDefault();
         listsPanel.addSearchButtonActionListener((ActionEvent e) -> {

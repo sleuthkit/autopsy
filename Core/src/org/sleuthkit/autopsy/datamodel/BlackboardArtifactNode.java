@@ -25,31 +25,29 @@ import java.beans.PropertyChangeListener;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.Action;
-import org.openide.nodes.Children;
-import org.openide.nodes.Node;
 import org.openide.nodes.Sheet;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.openide.util.lookup.Lookups;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
-import static org.sleuthkit.autopsy.datamodel.DataModelActionsFactory.VIEW_IN_NEW_WINDOW;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import static org.sleuthkit.autopsy.datamodel.DisplayableItemNode.findLinked;
-import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewArtifactInTimelineAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -68,6 +66,11 @@ import org.sleuthkit.datamodel.TskCoreException;
 public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifact> {
 
     private static final Logger LOGGER = Logger.getLogger(BlackboardArtifactNode.class.getName());
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
+            Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
+            Case.Events.CONTENT_TAG_ADDED,
+            Case.Events.CONTENT_TAG_DELETED,
+            Case.Events.CURRENT_CASE);
 
     private static Cache<Long, Content> contentCache = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES).
@@ -76,7 +79,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     private final BlackboardArtifact artifact;
     private Content associated = null;
     private List<NodeProperty<? extends Object>> customProperties;
-    
+
     /*
      * Artifact types which should have the full unique path of the associated
      * content as a property.
@@ -128,8 +131,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
     };
 
     /**
-     * Construct blackboard artifact node from an artifact and using provided
-     * icon
+     * Construct blackboard artifact node from an artifact, overriding the
+     * standard icon with the one at the path provided.
+     *
      *
      * @param artifact artifact to encapsulate
      * @param iconPath icon to use for the artifact
@@ -138,19 +142,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         super(artifact, createLookup(artifact));
 
         this.artifact = artifact;
-        
+
         // Look for associated Content  i.e. the source file for the artifact
-        for (Content content : this.getLookup().lookupAll(Content.class)) {
-            if ( (content != null)  && (!(content instanceof BlackboardArtifact)) ){
-                this.associated = content;
+        for (Content lookupContent : this.getLookup().lookupAll(Content.class)) {
+            if ((lookupContent != null) && (!(lookupContent instanceof BlackboardArtifact))) {
+                this.associated = lookupContent;
                 break;
             }
         }
-        
+
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
-        Case.addPropertyChangeListener(pcl);
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
     }
 
     /**
@@ -160,18 +164,17 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      * @param artifact artifact to encapsulate
      */
     public BlackboardArtifactNode(BlackboardArtifact artifact) {
-        
         this(artifact, ExtractedContent.getIconFilePath(artifact.getArtifactTypeID()));
     }
 
     private void removeListeners() {
-        Case.removePropertyChangeListener(pcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
     }
 
     public BlackboardArtifact getArtifact() {
         return this.artifact;
     }
-    
+
     @Override
     @NbBundle.Messages({
         "BlackboardArtifactNode.getAction.errorTitle=Error getting actions",
@@ -221,7 +224,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
      */
     private void setDisplayName() {
         String displayName = ""; //NON-NLS
-        
+
         // If this is a node for a keyword hit on an artifact, we set the
         // display name to be the artifact type name followed by " Artifact"
         // e.g. "Messages Artifact".
@@ -245,30 +248,29 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 // Do nothing since the display name will be set to the file name.
             }
         }
-        
+
         if (displayName.isEmpty() && artifact != null) {
             displayName = artifact.getName();
         }
-        
+
         this.setDisplayName(displayName);
-        
+
     }
 
     /**
-     * Return the name of the associated source file/content 
-     * 
+     * Return the name of the associated source file/content
+     *
      * @return source file/content name
      */
     public String getSrcName() {
-        
+
         String srcName = "";
         if (associated != null) {
-            srcName =  associated.getName();
+            srcName = associated.getName();
         }
         return srcName;
     }
-    
-    
+
     @NbBundle.Messages({
         "BlackboardArtifactNode.createSheet.artifactType.displayName=Artifact Type",
         "BlackboardArtifactNode.createSheet.artifactType.name=Artifact Type",
@@ -476,11 +478,9 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_SET_NAME.getTypeID()
                         || attributeTypeID == ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE.getTypeID()) {
-                } 
-                else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
-                    addEmailMsgProperty (map, attribute);
-                }  
-                else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+                } else if (artifact.getArtifactTypeID() == BlackboardArtifact.ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) {
+                    addEmailMsgProperty(map, attribute);
+                } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
                     map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
                 } else if (artifact.getArtifactTypeID() == ARTIFACT_TYPE.TSK_TOOL_OUTPUT.getTypeID()
                         && attributeTypeID == ATTRIBUTE_TYPE.TSK_TEXT.getTypeID()) {
@@ -496,8 +496,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                         value = value.substring(0, 512);
                     }
                     map.put(attribute.getAttributeType().getDisplayName(), value);
-                } 
-                else {
+                } else {
                     map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
                 }
             }
@@ -506,14 +505,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
     }
 
-/**
+    /**
      * Fill map with EmailMsg properties, not all attributes are filled
      *
      * @param map       map with preserved ordering, where property names/values
      *                  are put
      * @param attribute attribute to check/fill as property
      */
- private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute ) {
+    private void addEmailMsgProperty(Map<String, Object> map, BlackboardAttribute attribute) {
 
         final int attributeTypeID = attribute.getAttributeType().getTypeID();
 
@@ -523,23 +522,19 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
                 || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_RTF.getTypeID()
                 || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_BCC.getTypeID()
                 || attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CC.getTypeID()
-        || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()
-            ) {
+                || attributeTypeID == ATTRIBUTE_TYPE.TSK_HEADERS.getTypeID()) {
 
             // do nothing
-    }
-    else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
+        } else if (attributeTypeID == ATTRIBUTE_TYPE.TSK_EMAIL_CONTENT_PLAIN.getTypeID()) {
 
             String value = attribute.getDisplayString();
             if (value.length() > 160) {
                 value = value.substring(0, 160) + "...";
             }
             map.put(attribute.getAttributeType().getDisplayName(), value);
-    }
-   else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
+        } else if (attribute.getAttributeType().getValueType() == BlackboardAttribute.TSK_BLACKBOARD_ATTRIBUTE_VALUE_TYPE.DATETIME) {
             map.put(attribute.getAttributeType().getDisplayName(), ContentUtils.getStringTime(attribute.getValueLong(), associated));
-    }
-    else {
+        } else {
             map.put(attribute.getAttributeType().getDisplayName(), attribute.getDisplayString());
         }
 
@@ -586,6 +581,6 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
 
     @Override
     public <T> T accept(ContentNodeVisitor<T> v) {
-         return v.visit(this);
+        return v.visit(this);
     }
 }

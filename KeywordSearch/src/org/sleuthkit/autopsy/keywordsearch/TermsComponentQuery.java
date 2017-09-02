@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 
@@ -96,7 +97,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?:\\?" // end sentinal: ? //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?");//close nested optional groups //NON-NLS
-     static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
+    static final Pattern CREDIT_CARD_TRACK2_PATTERN = Pattern.compile(
             /*
              * Track 2 is numeric plus six punctuation symbolls :;<=>?
              *
@@ -115,7 +116,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?:[:;<=>?]" //end sentinel //NON-NLS
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
-     static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
+    static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
 
     /**
      * Constructs an object that implements a regex query that will be performed
@@ -315,27 +316,12 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             }
             results.addResult(new Keyword(term.getTerm(), false, true, originalKeyword.getListName(), originalKeyword.getOriginalTerm()), new ArrayList<>(termHits));
         }
-        return results; 
+        return results;
     }
 
-    /**
-     * Converts the keyword hits for a given search term into artifacts.
-     *
-     * @param foundKeyword The keyword that was found by the search.
-     * @param hit        The keyword hit.
-     * @param snippet    The document snippet that contains the hit
-     * @param listName   The name of the keyword list that contained the keyword
-     *                   for which the hit was found.
-     *
-     *
-     *
-     * @return An object that wraps an artifact and a mapping by id of its
-     *         attributes.
-     */
-    // TODO: Are we actually making meaningful use of the KeywordCachedArtifact
-    // class?
+    
     @Override
-    public KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
+    public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         /*
          * Create either a "plain vanilla" keyword hit artifact with keyword and
          * regex attributes, or a credit card account artifact with attributes
@@ -347,9 +333,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         if (originalKeyword.getArtifactAttributeType() != ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD, MODULE_NAME, foundKeyword.getSearchTerm()));
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP, MODULE_NAME, originalKeyword.getSearchTerm()));
-            
+
             try {
-                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
+                newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_KEYWORD_HIT);
 
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for keyword hit to blackboard", ex); //NON-NLS
@@ -375,7 +361,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
                 if (hit.isArtifactHit()) {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifact().getArtifactID())); //NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContent().getId())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContentID())); //NON-NLS
                 }
                 return null;
             }
@@ -411,8 +397,8 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * document id to support showing just the chunk that contained the
              * hit.
              */
-            if (hit.getContent() instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile) hit.getContent();
+            if (content instanceof AbstractFile) {
+                AbstractFile file = (AbstractFile)content;
                 if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
                         || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
                     attributes.add(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
@@ -423,7 +409,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * Create an account artifact.
              */
             try {
-                newArtifact = hit.getContent().newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
+                newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for account to blackboard", ex); //NON-NLS
                 return null;
@@ -442,12 +428,10 @@ final class TermsComponentQuery implements KeywordSearchQuery {
 
         // TermsComponentQuery is now being used exclusively for substring searches.
         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
-        
+
         try {
             newArtifact.addAttributes(attributes);
-            KeywordCachedArtifact writeResult = new KeywordCachedArtifact(newArtifact);
-            writeResult.add(attributes);
-            return writeResult;
+            return newArtifact;
         } catch (TskCoreException e) {
             LOGGER.log(Level.SEVERE, "Error adding bb attributes for terms search artifact", e); //NON-NLS
             return null;

@@ -94,6 +94,8 @@ class FileSearchPanel extends javax.swing.JPanel {
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.metadata"), metadataFilters));
 
         this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "FileSearchPanel.filterTitle.knownStatus"), new KnownStatusSearchFilter()));
+        
+        this.filterAreas.add(new FilterArea(NbBundle.getMessage(this.getClass(), "HashSearchPanel.md5CheckBox.text"), new HashSearchFilter()));
 
         for (FilterArea fa : this.filterAreas) {
             fa.setMaximumSize(new Dimension(Integer.MAX_VALUE, fa.getMinimumSize().height));

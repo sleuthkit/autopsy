@@ -21,9 +21,11 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.logging.Level;
 import org.openide.nodes.ChildFactory;
 import org.openide.nodes.Children;
@@ -118,6 +120,12 @@ public class Tags implements AutopsyVisitableItem {
 
     private class TagNameNodeFactory extends ChildFactory.Detachable<TagName> implements Observer {
 
+        private final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED,
+                Case.Events.BLACKBOARD_ARTIFACT_TAG_DELETED,
+                Case.Events.CONTENT_TAG_ADDED,
+                Case.Events.CONTENT_TAG_DELETED,
+                Case.Events.CURRENT_CASE);
+
         private final PropertyChangeListener pcl = new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
@@ -171,7 +179,7 @@ public class Tags implements AutopsyVisitableItem {
         protected void addNotify() {
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
-            Case.addPropertyChangeListener(pcl);
+            Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             tagResults.update();
             tagResults.addObserver(this);
         }
@@ -180,7 +188,7 @@ public class Tags implements AutopsyVisitableItem {
         protected void removeNotify() {
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removePropertyChangeListener(pcl);
+            Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
             tagResults.deleteObserver(this);
         }
 
