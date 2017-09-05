@@ -72,24 +72,38 @@ public class IngestEventsListener {
         IngestManager.getInstance().removeIngestJobEventListener(pcl2);
     }
 
+    /**
+     * Enable this IngestEventsListener to add contents to the Central
+     * Repository.
+     *
+     */
     public synchronized static void enableCentralRepositoryModule() {
-        ingestJobCounter++;
+        ingestJobCounter++;  //Should be called once in the central repository module's startup method.
     }
-    
+
+    /**
+     * Disable this IngestEventsListener from adding contents to the Central
+     * Repository.
+     */
     public synchronized static void disableCentralRepositoryModule() {
-        ingestJobCounter--;
+        ingestJobCounter--; //Should be called once in the central repository module's shutdown method.
     }
-    
-    private synchronized static long getIngestJobCounter(){
-        return ingestJobCounter;
-    } 
-    
+
+    /**
+     * Wether or not the Central Repository Module is enabled for any of the
+     * currently running ingest jobs.
+     *
+     * @return boolean True for Central Repo enabled, False for disabled
+     */
+    private synchronized static boolean isCentralRepositoryModuleEnabled() {
+        return ingestJobCounter > 0;
+    }
+
     private class IngestModuleEventListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            
-            if (getIngestJobCounter() > 0) {
+            if (isCentralRepositoryModuleEnabled()) {
                 EamDb dbManager;
                 try {
                     dbManager = EamDb.getInstance();
@@ -150,7 +164,6 @@ public class IngestEventsListener {
             }
         }
     }
-    
 
     private class IngestJobEventListener implements PropertyChangeListener {
 
