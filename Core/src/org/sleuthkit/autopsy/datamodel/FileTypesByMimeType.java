@@ -24,11 +24,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
@@ -44,7 +46,6 @@ import static org.sleuthkit.autopsy.core.UserPreferences.hideSlackFilesInViewsTr
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -79,6 +80,8 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
      */
     private final PropertyChangeListener pcl;
 
+    private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
+
     /**
      * Create the base expression used as the where clause in the queries for
      * files by mime type. Filters out certain kinds of files and directories,
@@ -102,7 +105,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
     private void removeListeners() {
         deleteObservers();
         IngestManager.getInstance().removeIngestJobEventListener(pcl);
-        Case.removePropertyChangeListener(pcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
     }
 
     /**
@@ -175,7 +178,7 @@ public final class FileTypesByMimeType extends Observable implements AutopsyVisi
             }
         };
         IngestManager.getInstance().addIngestJobEventListener(pcl);
-        Case.addPropertyChangeListener(pcl);
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         populateHashMap();
     }
 
