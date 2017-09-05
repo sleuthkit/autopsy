@@ -46,6 +46,7 @@ import org.sleuthkit.datamodel.HashUtility;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
+import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
 import org.sleuthkit.datamodel.TskDataException;
 
 /**
@@ -155,6 +156,7 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
+        IngestEventsListener.disableCentralRepositoryModule();
         if (EamDb.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
@@ -195,6 +197,7 @@ class IngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
+        IngestEventsListener.enableCentralRepositoryModule();
         if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
