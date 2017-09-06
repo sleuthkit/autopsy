@@ -151,7 +151,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
                 # create relationship between accounts
                 Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [contactAccount], artifact);
-            
+
                 oldName = name
 
                 bbartifacts.append(artifact)
