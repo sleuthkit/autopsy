@@ -323,6 +323,8 @@ public class EamCaseEditDetailsDialog extends JDialog {
 
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerNameLabel.text")); // NOI18N
 
+        tfExaminerNameText.setEditable(false);
+
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerEmailLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerEmailLabel.text")); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerPhoneLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerPhoneLabel.text")); // NOI18N
