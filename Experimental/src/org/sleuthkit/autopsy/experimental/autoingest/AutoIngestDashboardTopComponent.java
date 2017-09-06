@@ -33,7 +33,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
-@TopComponent.Registration(mode = "AID", openAtStartup = false)
+@TopComponent.Registration(mode = "dashboard", openAtStartup = false)
 @Messages({
     "CTL_AutoIngestDashboardAction=Auto Ingest Dashboard",
     "CTL_AutoIngestDashboardTopComponent=Auto Ingest Dashboard",
