@@ -59,6 +59,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository"})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
+        
+        // The hash set functions of central repo are not being included in the current release.
+        bnImportDatabase.setVisible(false);
     }
 
     private void addIngestJobEventsListener() {

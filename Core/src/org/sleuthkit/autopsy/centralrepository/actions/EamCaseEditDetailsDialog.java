@@ -82,6 +82,9 @@ public class EamCaseEditDetailsDialog extends JDialog {
     private void customizeComponents() {
         setTextBoxListeners();
         setTextAreaListeners();
+        
+        // The organization functions of central repo are not being included in the current release.
+        this.pnOrganization.setVisible(false);
 
     }
 
