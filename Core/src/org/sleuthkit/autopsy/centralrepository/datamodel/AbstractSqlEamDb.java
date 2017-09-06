@@ -1524,9 +1524,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, EamArtifact.Type contentType) throws EamDbException {
         Connection conn = connect();
-
+        
         PreparedStatement bulkPs = null;
         try {
+            conn.setAutoCommit(false);
+            
             // FUTURE: have a separate global_files table for each Type.
             String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
                     + getConflictClause();
@@ -1542,8 +1544,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
             }
 
             bulkPs.executeBatch();
+            conn.commit();
         } catch (SQLException ex) {
-            throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS
+            try{
+                conn.rollback();
+            } catch (SQLException ex2){
+                // We're alredy in an error state
+            }
+            throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS           
         } finally {
             EamDbUtil.closePreparedStatement(bulkPs);
             EamDbUtil.closeConnection(conn);
