@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2017 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
@@ -36,10 +38,9 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 @TopComponent.Registration(mode = "dashboard", openAtStartup = false)
 @Messages({
     "CTL_AutoIngestDashboardAction=Auto Ingest Dashboard",
-    "CTL_AutoIngestDashboardTopComponent=Auto Ingest Dashboard",
-    "HINT_AutoIngestDashboardTopComponent=This is an Auto Ingest Dashboard window"
-})
+    "CTL_AutoIngestDashboardTopComponent=Auto Ingest Dashboard"})
 public final class AutoIngestDashboardTopComponent extends TopComponent {
+
     public final static String PREFERRED_ID = "AutoIngestDashboardTopComponent"; // NON-NLS
     private static final Logger logger = Logger.getLogger(AutoIngestDashboardTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
@@ -57,18 +58,21 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
             AutoIngestDashboard dashboard = AutoIngestDashboard.getInstance();
             tc.add(dashboard);
             dashboard.setSize(dashboard.getPreferredSize());
-            
-            tc.open();
+
+            if (tc.isOpened() == false) {
+                tc.open();
+            }
+            tc.toFront();
             tc.requestActive();
         }
     }
 
     public static void closeTopComponent() {
         if (topComponentInitialized) {
-            final TopComponent etc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
-            if (etc != null) {
+            final TopComponent tc = WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+            if (tc != null) {
                 try {
-                    etc.close();
+                    tc.close();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
@@ -79,7 +83,23 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
     public AutoIngestDashboardTopComponent() {
         initComponents();
         setName(Bundle.CTL_AutoIngestDashboardTopComponent());
-        setToolTipText(Bundle.HINT_AutoIngestDashboardTopComponent());
+    }
+
+    @Override
+    public List<Mode> availableModes(List<Mode> modes) {
+        /*
+         * This looks like the right thing to do, but online discussions seems
+         * to indicate this method is effectively deprecated. A break point
+         * placed here was never hit.
+         */
+        return modes.stream().filter(mode -> mode.getName().equals("dashboard") || mode.getName().equals("ImageGallery"))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void componentOpened() {
+        super.componentOpened();
+        WindowManager.getDefault().setTopComponentFloating(this, true);
     }
 
     /**
@@ -104,5 +124,4 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-
 }

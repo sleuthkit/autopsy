@@ -34,7 +34,7 @@
     
       <folder name="Windows2">
         <folder name="Modes">
-            <file name="AID.wsmode" url="AIDWsmode.xml"/>
+            <file name="dashboard.wsmode" url="dashboardWsmode.xml"/>
              </folder>
     </folder>
 
