@@ -18,8 +18,11 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.Content;
+
 /**
- * Interface for kewyord search queries. 
+ * Interface for kewyord search queries.
  */
 interface KeywordSearchQuery {
 
@@ -30,18 +33,20 @@ interface KeywordSearchQuery {
      *
      * @return true if the query passed validation
      */
-     boolean validate();
+    boolean validate();
 
     /**
      * execute query and return results without publishing them return results
      * for all matching terms
      *
-     * @throws KeywordSearchModuleException error while executing Solr term query
-     * @throws NoOpenCoreException if query failed due to server error, this
-     *                             could be a notification to stop processing
+     * @throws KeywordSearchModuleException error while executing Solr term
+     *                                      query
+     * @throws NoOpenCoreException          if query failed due to server error,
+     *                                      this could be a notification to stop
+     *                                      processing
      * @return
      */
-     QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException;
+    QueryResults performQuery() throws KeywordSearchModuleException, NoOpenCoreException;
 
     /**
      * Set an optional filter to narrow down the search Adding multiple filters
@@ -49,54 +54,67 @@ interface KeywordSearchQuery {
      *
      * @param filter filter to set on the query
      */
-     void addFilter(KeywordQueryFilter filter);
+    void addFilter(KeywordQueryFilter filter);
 
     /**
      * Set an optional SOLR field to narrow down the search
      *
      * @param field field to set on the query
      */
-     void setField(String field);
+    void setField(String field);
 
     /**
      * Modify the query string to be searched as a substring instead of a whole
      * word
-     *
-     * @param isSubstring
      */
-     void setSubstringQuery();
+    void setSubstringQuery();
 
     /**
      * escape the query string and use the escaped string in the query
      */
-     void escape();
+    void escape();
 
     /**
      *
      * @return true if query was escaped
      */
-     boolean isEscaped();
+    boolean isEscaped();
 
     /**
      *
      * @return true if query is a literal query (non regex)
      */
-     boolean isLiteral();
+    boolean isLiteral();
 
     /**
      * return original keyword/query string
      *
      * @return the query String supplied originally
      */
-     String getQueryString();
+    String getQueryString();
 
     /**
      * return escaped keyword/query string if escaping was done
      *
      * @return the escaped query string, or original string if no escaping done
      */
-     String getEscapedQueryString();
+    String getEscapedQueryString();
 
-     KeywordCachedArtifact writeSingleFileHitsToBlackBoard(Keyword keyword, KeywordHit hit, String snippet, String listName);
-
+    /**
+     * Converts the keyword hits for a given search term into artifacts.
+     *
+     * @param content      The Content object associated with the hit.
+     * @param foundKeyword The keyword that was found by the search, this may be
+     *                     different than the Keyword that was searched if, for
+     *                     example, it was a RegexQuery.
+     * @param hit          The keyword hit.
+     * @param snippet      The document snippet that contains the hit.
+     * @param listName     The name of the keyword list that contained the
+     *                     keyword for which the hit was found.
+     *
+     *
+     * @return The newly created artifact or Null if there was a problem
+     *         creating it.
+     */
+    BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName);
 }

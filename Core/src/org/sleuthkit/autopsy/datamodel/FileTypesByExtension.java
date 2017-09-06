@@ -21,10 +21,11 @@ package org.sleuthkit.autopsy.datamodel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.apache.commons.lang.StringUtils;
@@ -39,8 +40,6 @@ import org.sleuthkit.autopsy.core.UserPreferences;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.datamodel.FileTypes.FileTypesKey;
 import org.sleuthkit.autopsy.ingest.IngestManager;
-import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
@@ -75,9 +74,11 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
     private class FileTypesByExtObservable extends Observable {
 
         private final PropertyChangeListener pcl;
+        private final Set<Case.Events> CASE_EVENTS_OF_INTEREST;
 
         private FileTypesByExtObservable() {
             super();
+            this.CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.DATA_SOURCE_ADDED, Case.Events.CURRENT_CASE);
             this.pcl = (PropertyChangeEvent evt) -> {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(IngestManager.IngestModuleEvent.CONTENT_CHANGED.toString())
@@ -109,15 +110,14 @@ public final class FileTypesByExtension implements AutopsyVisitableItem {
 
             IngestManager.getInstance().addIngestJobEventListener(pcl);
             IngestManager.getInstance().addIngestModuleEventListener(pcl);
-            Case.addPropertyChangeListener(pcl);
-
+            Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         }
 
         private void removeListeners() {
             deleteObservers();
             IngestManager.getInstance().removeIngestJobEventListener(pcl);
             IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-            Case.removePropertyChangeListener(pcl);
+            Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
         }
 
         private void update() {
