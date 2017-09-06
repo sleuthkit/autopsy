@@ -517,8 +517,8 @@ final class RegexQuery implements KeywordSearchQuery {
      * same fields as the track two data, plus the account holder's name.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                     creating duplicate attributes.
-     * @param matcher      A matcher for the snippet.
+     *                      creating duplicate attributes.
+     * @param matcher       A matcher for the snippet.
      */
     static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
         parseTrack2Data(attributeMap, matcher);
@@ -530,11 +530,12 @@ final class RegexQuery implements KeywordSearchQuery {
      * value parsed from the snippet for a credit account number hit.
      *
      * @param attributeMap A map of artifact attribute objects, used to avoid
-     *                     creating duplicate attributes.
-     * @param attrType     The type of attribute to create.
-     * @param groupName    The group name of the regular expression that was
-     *                     used to parse the attribute data.
-     * @param matcher      A matcher for the snippet.
+     *                      creating duplicate attributes.
+     * @param attrType      The type of attribute to create.
+     * @param groupName     The group name of the regular expression that was
+     *                      used to parse the attribute data.
+     * @param matcher       A matcher for the snippet.
+
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, BlackboardAttribute.ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
