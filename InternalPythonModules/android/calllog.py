@@ -92,7 +92,7 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
 
             global deviceAccount
             deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
-            
+
             absFiles = fileManager.findFiles(dataSource, "logs.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db"))
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))

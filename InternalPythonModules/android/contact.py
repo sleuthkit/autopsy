@@ -58,7 +58,7 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
-        
+
             # Create a 'Device' account using the data source device id
             datasourceObjId = dataSource.getDataSource().getId()
             ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)

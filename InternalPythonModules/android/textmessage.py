@@ -67,7 +67,7 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
 
             global deviceAccount
             deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
-            
+
             absFiles = fileManager.findFiles(dataSource, "mmssms.db")
             for abstractFile in absFiles:
                 try:
