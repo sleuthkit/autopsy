@@ -61,7 +61,7 @@ public final class CoordinationService {
     @GuardedBy("CoordinationService.class")
     private static CoordinationService instance;
     private final CuratorFramework curator;
-    @GuardedBy("categoryNodeToPath")    
+    @GuardedBy("categoryNodeToPath")
     private final Map<String, String> categoryNodeToPath;
 
     /**
@@ -151,7 +151,7 @@ public final class CoordinationService {
          * Create the top-level root and category nodes.
          */
         String rootNode = rootNodeName;
-        
+
         if (!rootNode.startsWith("/")) {
             rootNode = "/" + rootNode;
         }
@@ -358,20 +358,24 @@ public final class CoordinationService {
             }
         }
     }
-    
-    //DLG: header
-    //DLG: throw exception
-    //DLG: throw new CoordinationServiceException(String.format("Failed to set data for %s", fullNodePath), ex);
-    public List<String> getNodeList(CategoryNode category) {
-        List<String> list = null;
-        
+
+    /**
+     * Gets a list of the child nodes of a category in the namespace.
+     *
+     * @param category The desired category in the namespace.
+     *
+     * @return A list of child node names.
+     *
+     * @throws CoordinationServiceException If there is an error getting the
+     *                                      node list.
+     */
+    public List<String> getNodeList(CategoryNode category) throws CoordinationServiceException {
         try {
-            list = curator.getChildren().forPath(categoryNodeToPath.get(category.getDisplayName()));
+            List<String> list = curator.getChildren().forPath(categoryNodeToPath.get(category.getDisplayName()));
+            return list;
         } catch (Exception ex) {
-            Logger.getLogger(CoordinationService.class.getName()).log(Level.SEVERE, null, ex);
+            throw new CoordinationServiceException(String.format("Failed to get node list for %s", category.getDisplayName()), ex);
         }
-        
-        return list;
     }
 
     /**
