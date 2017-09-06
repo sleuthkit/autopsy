@@ -86,7 +86,17 @@ public class IngestEventsListener {
      * Repository.
      */
     public synchronized static void disableCentralRepositoryModule() {
-        ingestJobCounter--; //Should be called once in the central repository module's shutdown method.
+        if (isCentralRepositoryModuleEnabled()) {  //prevent it ingestJobCounter from going negative
+            ingestJobCounter--;  //Should be called once in the central repository module's shutdown method.
+        }
+    }
+
+    /**
+     * Reset the counter which keeps track of if the Central Repository Module
+     * is being run during injest to 0.
+     */
+    synchronized static void resetIngestJobCounter() {
+        ingestJobCounter = 0;  //called when a case is opened in case for some reason counter was not reset
     }
 
     /**

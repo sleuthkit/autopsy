@@ -194,7 +194,7 @@ public class CaseEventListener implements PropertyChangeListener {
                  */
                 if ((null == evt.getOldValue()) && (evt.getNewValue() instanceof Case)) {
                     Case curCase = (Case) evt.getNewValue();
-
+                    IngestEventsListener.resetIngestJobCounter();
                     try {
                         // only add default evidence tag if case is open and it doesn't already exist in the tags list.
                         if (Case.isCaseOpen()
