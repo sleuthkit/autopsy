@@ -55,6 +55,15 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
+	    # Create a 'Device' account using the data source device id
+	    datasourceObjId = dataSource.getDataSource().getId()
+ 	    ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+	    deviceID = ds.getDeviceId()
+
+	    global deviceAccount
+            deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+	    
+
             absFiles = fileManager.findFiles(dataSource, "tc.db")
             for abstractFile in absFiles:
                 try:

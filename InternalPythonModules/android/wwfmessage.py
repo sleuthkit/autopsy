@@ -52,6 +52,18 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
+
+	    global wwfAccountType
+	    wwfAccountType = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addAccountType("WWF", "Words with Friends")
+
+	    # Create a 'Device' account using the data source device id
+	    datasourceObjId = dataSource.getDataSource().getId()
+ 	    ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+	    deviceID = ds.getDeviceId()
+
+	    global deviceAccount
+            deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+	    
             absFiles = fileManager.findFiles(dataSource, "WordsFramework")
             for abstractFile in absFiles:
                 try:
@@ -94,6 +106,12 @@ class WWFMessageAnalyzer(general.AndroidComponentAnalyzer):
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MSG_ID, general.MODULE_NAME, game_id))
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, message))
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "Words With Friends Message"))
+
+		# Create an account
+		wwfAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(wwfAccountType, user_id, general.MODULE_NAME, abstractFile);
+
+		# create relationship between accounts
+            	Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [wwfAccount], artifact);
 
                 try:
                     # index the artifact for keyword search
