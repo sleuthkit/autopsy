@@ -146,6 +146,11 @@ public interface EamDb {
      * @param eamCase The case to add
      */
     void newCase(EamCase eamCase) throws EamDbException;
+    
+     /**
+     * Creates new Case in the database from the currently open case
+     */
+    void newCaseFromCurrentCase() throws EamDbException;   
 
     /**
      * Updates an existing Case in the database

@@ -70,6 +70,9 @@ public class EamCaseEditDetailsDialog extends JDialog {
         try {
             this.dbManager = EamDb.getInstance();
             this.eamCase = this.dbManager.getCaseDetails(Case.getCurrentCase().getName());
+            if(this.eamCase == null){
+                dbManager.newCaseFromCurrentCase();
+            }
             initComponents();
             loadData();
             customizeComponents();
