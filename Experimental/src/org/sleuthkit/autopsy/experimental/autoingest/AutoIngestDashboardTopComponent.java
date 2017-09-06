@@ -19,28 +19,21 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.util.logging.Level;
-import org.netbeans.api.settings.ConvertAsProperties;
-import org.openide.awt.ActionID;
-import org.openide.awt.ActionReference;
-import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
+import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
  * Top component which displays the Auto Ingest Dashboard interface.
  */
-@ConvertAsProperties(
-        dtd = "-//org.sleuthkit.autopsy.experimental.autoingest//AutoIngestDashboard//EN",
-        autostore = false
-)
 @TopComponent.Description(
         preferredID = "AutoIngestDashboardTopComponent",
         //iconBase="SET/PATH/TO/ICON/HERE", 
         persistenceType = TopComponent.PERSISTENCE_NEVER
 )
-@TopComponent.Registration(mode = "dashboard", openAtStartup = false)
+@TopComponent.Registration(mode = "AID", openAtStartup = false)
 @Messages({
     "CTL_AutoIngestDashboardAction=Auto Ingest Dashboard",
     "CTL_AutoIngestDashboardTopComponent=Auto Ingest Dashboard",
@@ -48,7 +41,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 })
 public final class AutoIngestDashboardTopComponent extends TopComponent {
     public final static String PREFERRED_ID = "AutoIngestDashboardTopComponent"; // NON-NLS
-    private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboardTopComponent.class.getName());
+    private static final Logger logger = Logger.getLogger(AutoIngestDashboardTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
 
     public static void openTopComponent() {
@@ -77,7 +70,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                 try {
                     etc.close();
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
+                    logger.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
@@ -111,25 +104,5 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
-    @Override
-    public void componentOpened() {
-        // TODO add custom code on component opening
-    }
 
-    @Override
-    public void componentClosed() {
-        // TODO add custom code on component closing
-    }
-
-    void writeProperties(java.util.Properties p) {
-        // better to version settings since initial version as advocated at
-        // http://wiki.apidesign.org/wiki/PropertyFiles
-        p.setProperty("version", "1.0");
-        // TODO store your settings
-    }
-
-    void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
-        // TODO read your settings according to their version
-    }
 }
