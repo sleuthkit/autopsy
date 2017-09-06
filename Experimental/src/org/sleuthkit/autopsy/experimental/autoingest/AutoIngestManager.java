@@ -1219,9 +1219,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          * visited. Checks if the task thread has been interrupted because auto
          * ingest is shutting down and terminates the scan if that is the case.
          *
-         * @param dirPath  The directory about to be visited.
-         * @param dirAttrs The basic file attributes of the directory about to
-         *                 be visited.
+         * @param dirPath The directory about to be visited.
+         * @param unused  Unused.
          *
          * @return TERMINATE if the task thread has been interrupted, CONTINUE
          *         if it has not.
