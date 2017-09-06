@@ -244,7 +244,8 @@ public final class SqliteEamDbSettings {
         createOrganizationsTable.append("org_name text NOT NULL,");
         createOrganizationsTable.append("poc_name text NOT NULL,");
         createOrganizationsTable.append("poc_email text NOT NULL,");
-        createOrganizationsTable.append("poc_phone text NOT NULL");
+        createOrganizationsTable.append("poc_phone text NOT NULL,");
+        createOrganizationsTable.append("CONSTRAINT org_name_unique UNIQUE (org_name)");
         createOrganizationsTable.append(")");
 
         // NOTE: The organizations will only have a small number of rows, so
@@ -286,7 +287,8 @@ public final class SqliteEamDbSettings {
         createReferenceSetsTable.append("set_name text NOT NULL,");
         createReferenceSetsTable.append("version text NOT NULL,");
         createReferenceSetsTable.append("import_date text NOT NULL,");
-        createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createReferenceSetsTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createReferenceSetsTable.append("CONSTRAINT hash_set_unique UNIQUE (set_name, version)");
         createReferenceSetsTable.append(")");
 
         String referenceSetsIdx1 = "CREATE INDEX IF NOT EXISTS reference_sets_org_id ON reference_sets (org_id)";
