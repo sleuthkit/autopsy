@@ -48,6 +48,8 @@ from org.sleuthkit.datamodel import Account
 import traceback
 import general
 
+deviceAccount = None
+
 """
 Locates a variety of different call log databases, parses them, and populates the blackboard.
 """
@@ -83,15 +85,14 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
     def analyze(self, dataSource, fileManager, context):
         try:
 
-	    # Create a 'Device' account using the data source device id
-	    datasourceObjId = dataSource.getDataSource().getId()
- 	    ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
-	    deviceID = ds.getDeviceId()
+            # Create a 'Device' account using the data source device id
+            datasourceObjId = dataSource.getDataSource().getId()
+            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+            deviceID = ds.getDeviceId()
 
-	    global deviceAccount
+            global deviceAccount
             deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
-	    
-
+            
             absFiles = fileManager.findFiles(dataSource, "logs.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts.db"))
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))
@@ -141,11 +142,11 @@ class CallLogAnalyzer(general.AndroidComponentAnalyzer):
                             artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_DIRECTION, general.MODULE_NAME, directionString))
                             artifact.addAttribute(BlackboardAttribute(ATTRIBUTE_TYPE.TSK_NAME, general.MODULE_NAME, name))
 
-			    # Create an account
-			    calllogAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.PHONE, number, general.MODULE_NAME, abstractFile);
+                            # Create an account
+                            calllogAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.PHONE, number, general.MODULE_NAME, abstractFile);
 
-			    # create relationship between accounts
-            		    Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [calllogAccount], artifact);
+                            # create relationship between accounts
+                            Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [calllogAccount], artifact);
 
                             bbartifacts.append(artifact)
 
