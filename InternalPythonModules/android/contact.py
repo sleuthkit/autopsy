@@ -146,7 +146,6 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
                     acctType = Account.Type.EMAIL
 
-        
                 # Create an account
                 contactAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(acctType, data1, general.MODULE_NAME, abstractFile);
 
