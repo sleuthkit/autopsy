@@ -259,7 +259,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Creates new Case in the database from the currently open case
      */
     @Override    
-    public void newCaseFromCurrentCase() throws EamDbException{
+    public EamCase newCaseFromCurrentCase() throws EamDbException{
         Case curCase = Case.getCurrentCase();
         if(curCase == null){
             throw new EamDbException("No case open");
@@ -277,6 +277,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 null,
                 null);        
         newCase(curCeCase);
+        return curCeCase;
     }
 
     /**

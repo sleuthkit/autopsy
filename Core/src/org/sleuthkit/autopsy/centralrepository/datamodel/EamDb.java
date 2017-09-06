@@ -150,7 +150,7 @@ public interface EamDb {
      /**
      * Creates new Case in the database from the currently open case
      */
-    void newCaseFromCurrentCase() throws EamDbException;   
+    EamCase newCaseFromCurrentCase() throws EamDbException;   
 
     /**
      * Updates an existing Case in the database
