@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagAddedEvent;
+import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
@@ -140,12 +141,6 @@ public class CaseEventListener implements PropertyChangeListener {
                         return;
                     }
                 }
-                
-                //final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
-                //final ContentTag tagAdded = tagAddedEvent.getAddedTag();
-                // TODO: detect failed cast and break if so.
-                //final AbstractFile af = (AbstractFile) tagAdded.getContent();
-                //final TagName tagName = tagAdded.getName();
 
                 if ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                         || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
@@ -195,100 +190,96 @@ public class CaseEventListener implements PropertyChangeListener {
                         Thread t = new Thread(r);
                         t.start();
                     } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type during CONTENT_TAG_ADDED event.", ex);
+                        LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type during CONTENT_TAG_ADDED/CONTENT_TAG_DELETED event.", ex);
                     }
                 
             } // CONTENT_TAG_ADDED, CONTENT_TAG_DELETED
             break;
 
+            case BLACKBOARD_ARTIFACT_TAG_DELETED:
             case BLACKBOARD_ARTIFACT_TAG_ADDED: {
                 if (!EamDb.isEnabled()) {
                     return;
                 }
-
-                final BlackBoardArtifactTagAddedEvent bbTagAddedEvent = (BlackBoardArtifactTagAddedEvent) evt;
-                final BlackboardArtifactTag bbTagAdded = bbTagAddedEvent.getAddedTag();
-                final AbstractFile af = (AbstractFile) bbTagAdded.getContent();
-                final BlackboardArtifact bbArtifact = bbTagAdded.getArtifact();
-                final TagName tagName = bbTagAdded.getName();
-
-                if (af.getKnown() == TskData.FileKnown.KNOWN) {
-                    break;
-                }
-
-                if (dbManager.getBadTags().contains(tagName.getDisplayName())) {
-                    try {
-                        List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                        for (EamArtifact eamArtifact : convertedArtifacts) {
-                            eamArtifact.getInstances().get(0).setComment(bbTagAdded.getComment());
-                            Runnable r = new KnownStatusChangeRunner(eamArtifact, TskData.FileKnown.BAD);
-                            // TODO: send r into a thread pool instead
-                            Thread t = new Thread(r);
-                            t.start();
-                        }
-                    } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error, unable to get artifact types during BLACKBOARD_ARTIFACT_TAG_ADDED event.", ex);
-                    }
-                }
-            } // BLACKBOARD_ARTIFACT_TAG_ADDED
-            break;
-/*
-            case CONTENT_TAG_DELETED: { // Still need artifact one
-                if (!EamDb.isEnabled()) {
-                    return;
-                }
-
-                final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
-                long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
                 
-                String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
-                if(! dbManager.getBadTags().contains(tagName)){
-                    // If the tag that got removed isn't on the list of central repo tags, do nothing
-                    return;
-                }
-                
-                System.out.println("\n#### Content ID: " + contentID);
-                try{
-                    // Get the content object that was just untagged and its list of remaining tags
-                    Content content = Case.getCurrentCase().getSleuthkitCase().getContentById(contentID);
-                    Services services = Case.getCurrentCase().getServices();
-                    TagsManager tagsManager = services.getTagsManager();
-                    List<ContentTag> tags = tagsManager.getContentTagsByContent(content);
+                Content content;
+                BlackboardArtifact bbArtifact;
+                TskData.FileKnown knownStatus;
+                String comment;
+                if(Case.Events.valueOf(evt.getPropertyName()) == Case.Events.BLACKBOARD_ARTIFACT_TAG_ADDED){
+                    // For added tags, we want to change the known status to BAD if the 
+                    // tag that was just added is in the list of central repo tags.
+                    final BlackBoardArtifactTagAddedEvent tagAddedEvent = (BlackBoardArtifactTagAddedEvent) evt;
+                    final BlackboardArtifactTag tagAdded = tagAddedEvent.getAddedTag();
                     
-                    for(ContentTag tag:tags){
-                        System.out.println("   " + tag.getName().getDisplayName());
-                    }   
-                    
-                    System.out.println("Tag Name: " + tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName());
-           
-                    // temp
-                    List<String> badTagsRemaining = tags.stream()
-                            .map(tag -> tag.getName().getDisplayName())
-                            .filter(dbManager.getBadTags()::contains)
-                            .collect(Collectors.toList());
-                    
-                    System.out.println("Bad tags remaining: " );
-                    for(String s:badTagsRemaining){
-                        System.out.println("  " + s);
+                    if(dbManager.getBadTags().contains(tagAdded.getName().getDisplayName())){
+                        content = tagAdded.getContent();
+                        bbArtifact = tagAdded.getArtifact();
+                        knownStatus = TskData.FileKnown.BAD;
+                        comment = tagAdded.getComment();
+                    } else {
+                        // The added tag isn't flagged as bad in central repo, so do nothing
+                        return;
                     }
+                } else { //BLACKBOARD_ARTIFACT_TAG_DELETED
+                    // For deleted tags, we want to set the file status to UNKNOWN if:
+                    //   - The tag that was just removed is known bad in central repo
+                    //   - There are no remaining tags that are known bad 
+                    final BlackBoardArtifactTagDeletedEvent tagDeletedEvent = (BlackBoardArtifactTagDeletedEvent) evt;
+                    long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
+                    long artifactID = tagDeletedEvent.getDeletedTagInfo().getArtifactID();
+
+                    String tagName = tagDeletedEvent.getDeletedTagInfo().getName().getDisplayName();
+                    if(! dbManager.getBadTags().contains(tagName)){
+                        // If the tag that got removed isn't on the list of central repo tags, do nothing
+                        return;
+                    }        
                     
-                    // If there are no more notable central repo tags, remove the BAD status from the file
-                    if(tags.stream()
+                    try{
+                        // Get the remaining tags on the artifact
+                        content = Case.getCurrentCase().getSleuthkitCase().getContentById(contentID);
+                        bbArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(artifactID);
+                        TagsManager tagsManager = Case.getCurrentCase().getServices().getTagsManager();                        
+                        List<BlackboardArtifactTag> tags = tagsManager.getBlackboardArtifactTagsByArtifact(bbArtifact);
+                        
+                        if(tags.stream()
                             .map(tag -> tag.getName().getDisplayName())
                             .filter(dbManager.getBadTags()::contains)
                             .collect(Collectors.toList())
                             .isEmpty()){
-                        System.out.println("!! Want to remove BAD status!");
-                        
+                            
+                                // There are no more bad tags on the object
+                                knownStatus = TskData.FileKnown.UNKNOWN;
+                                comment = "";
+
+                        } else {
+                            // There's still at least one bad tag, so leave the known status as is
+                            return;
+                        }
+                    } catch (TskCoreException ex){
+                        LOGGER.log(Level.SEVERE, "Failed to find content", ex);
+                        return;
                     }
-                    
-                
-                } catch (TskCoreException ex){
-                    
                 }
-            }
-            break; // CONTENT_TAG_DELETED*/
-            
+                
+                if((content instanceof AbstractFile) && (((AbstractFile)content).getKnown() == TskData.FileKnown.KNOWN)){
+                    return;
+                }
+
+                try {
+                    List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
+                    for (EamArtifact eamArtifact : convertedArtifacts) {
+                        eamArtifact.getInstances().get(0).setComment(comment);
+                        Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
+                        // TODO: send r into a thread pool instead
+                        Thread t = new Thread(r);
+                        t.start();
+                    }
+                } catch (EamDbException ex) {
+                    LOGGER.log(Level.SEVERE, "Error, unable to get artifact types during BLACKBOARD_ARTIFACT_TAG_ADDED/BLACKBOARD_ARTIFACT_TAG_DELETED event.", ex);
+                }
+            } // BLACKBOARD_ARTIFACT_TAG_ADDED, BLACKBOARD_ARTIFACT_TAG_DELETED
+
             case DATA_SOURCE_ADDED: {
                 if (!EamDb.isEnabled()) {
                     break;
