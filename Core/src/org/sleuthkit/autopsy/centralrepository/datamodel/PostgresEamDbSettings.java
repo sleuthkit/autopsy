@@ -281,6 +281,27 @@ public final class PostgresEamDbSettings {
         return true;
 
     }
+    
+    public boolean deleteDatabase() {
+        Connection conn = getEphemeralConnection(true);
+        if (null == conn) {
+            return false;
+        }
+
+        String sql = "DROP DATABASE %s"; // NON-NLS
+        try {
+            Statement stmt;
+            stmt = conn.createStatement();
+            stmt.execute(String.format(sql, getDbName()));
+        } catch (SQLException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to execute drop database statement.", ex); // NON-NLS
+            return false;
+        } finally {
+            EamDbUtil.closeConnection(conn);
+        }
+        return true;
+
+    }
 
     /**
      * Initialize the database schema.

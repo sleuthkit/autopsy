@@ -109,6 +109,20 @@ public final class SqliteEamDbSettings {
         ModuleSettings.setConfigSetting("CentralRepository", "db.sqlite.bulkThreshold", Integer.toString(getBulkThreshold())); // NON-NLS
         ModuleSettings.setConfigSetting("CentralRepository", "db.badTags", String.join(",", badTags)); // NON-NLS
     }
+    
+    /**
+     * Verify that the db file exists.
+     *
+     * @return true if exists, else false
+     */
+    public boolean dbFileExists() {
+        File dbFile = new File(getFileNameWithPath());
+        if(! dbFile.exists()){
+            return false;
+        }
+        // It's unlikely, but make sure the file isn't actually a directory
+        return ( ! dbFile.isDirectory());
+    }
 
     /**
      * Verify that the db directory path exists.
@@ -147,6 +161,15 @@ public final class SqliteEamDbSettings {
         }
 
         return true;
+    }
+    
+    /**
+     * Delete the database
+     * @return 
+     */
+    public boolean deleteDatabase() {
+        File dbFile = new File(this.getFileNameWithPath());
+        return dbFile.delete();
     }
 
     /**
