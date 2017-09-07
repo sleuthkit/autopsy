@@ -2685,7 +2685,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
      * locally to auto ingest manager clients that register as observers and are
      * broadcast to other auto ingest nodes.
      */
-    enum Event {
+    public enum Event {
 
         INPUT_SCAN_COMPLETED,
         JOB_STARTED,

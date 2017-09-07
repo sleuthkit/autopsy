@@ -255,6 +255,8 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return -date1.compareTo(date2);
     }
 
+    // DLG: Add a toString override
+    
     /**
      * Custom comparator that allows us to sort List<AutoIngestJob> on reverse
      * chronological date modified (descending)

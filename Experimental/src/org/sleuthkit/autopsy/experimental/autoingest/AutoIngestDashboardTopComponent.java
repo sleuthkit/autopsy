@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.awt.ActionID;
 import org.openide.awt.ActionReference;
+import org.openide.util.Exceptions;
 import org.openide.windows.TopComponent;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
@@ -47,6 +48,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
     "HINT_AutoIngestDashboardTopComponent=This is an Auto Ingest Dashboard window"
 })
 public final class AutoIngestDashboardTopComponent extends TopComponent {
+
     public final static String PREFERRED_ID = "AutoIngestDashboardTopComponent"; // NON-NLS
     private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboardTopComponent.class.getName());
     private static boolean topComponentInitialized = false;
@@ -61,12 +63,17 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                 mode.dockInto(tc);
             }
 
-            AutoIngestDashboard dashboard = AutoIngestDashboard.getInstance();
-            tc.add(dashboard);
-            dashboard.setSize(dashboard.getPreferredSize());
-            
-            tc.open();
-            tc.requestActive();
+            AutoIngestDashboard dashboard;
+            try {
+                dashboard = AutoIngestDashboard.createDashboard();
+                tc.add(dashboard);
+                dashboard.setSize(dashboard.getPreferredSize());
+                tc.open();
+                tc.requestActive();
+            } catch (AutoIngestDashboard.AutoIngestDashboardException ex) {
+                // DLG: Catch the exeption, log it, and pop up an error dialog
+                // with a user-friendly message
+            }
         }
     }
 

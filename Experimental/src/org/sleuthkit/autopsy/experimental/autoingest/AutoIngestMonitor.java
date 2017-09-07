@@ -53,10 +53,10 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
     private static final String EVENT_CHANNEL_NAME = "Auto-Ingest-Manager-Events"; //NON-NLS
     private static final Set<String> EVENT_LIST = new HashSet<>(Arrays.asList(new String[]{
-        Event.JOB_STATUS_UPDATED.toString(),
-        Event.JOB_COMPLETED.toString(),
-        Event.CASE_PRIORITIZED.toString(),
-        Event.JOB_STARTED.toString()}));
+        AutoIngestManager.Event.JOB_STATUS_UPDATED.toString(),
+        AutoIngestManager.Event.JOB_COMPLETED.toString(),
+        AutoIngestManager.Event.CASE_PRIORITIZED.toString(),
+        AutoIngestManager.Event.JOB_STARTED.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
     private final ScheduledThreadPoolExecutor coordSvcQueryExecutor;
@@ -155,7 +155,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
         // DLG: Remove job from event from pending queue, if present
         // DLG: Add job to running jobs list
         setChanged();
-        notifyObservers(Event.JOB_STARTED);
+        notifyObservers();
     }
 
     /**
@@ -166,7 +166,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     private void handleJobStatusEvent(AutoIngestJobStatusEvent event) {
         // DLG: Replace job in running list with job from event
         setChanged();
-        notifyObservers(Event.JOB_STATUS_UPDATED);
+        notifyObservers();
     }
 
     /**
@@ -178,7 +178,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
         // DLG: Remove job from event from running list, if present
         // DLG: Add job to completed list
         setChanged();
-        notifyObservers(Event.JOB_COMPLETED);
+        notifyObservers();
     }
 
     /**
@@ -189,7 +189,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     private void handleCasePrioritizationEvent(AutoIngestCasePrioritizedEvent event) {
         // DLG: Replace job in pending queue with job from event
         setChanged();
-        notifyObservers(Event.CASE_PRIORITIZED);
+        notifyObservers();
     }
 
     /**
@@ -236,61 +236,18 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @return The snapshot.
      */
     private JobsSnapshot queryCoordinationService() {
-        JobsSnapshot newJobsSnapshot = new JobsSnapshot();
-        List<String> nodeList;
         try {
-            nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
+            JobsSnapshot newJobsSnapshot = new JobsSnapshot();
+            List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
             for (String node : nodeList) {
                 // DLG: Do not need a lock here
                 // DLG: Get the node data and construct a AutoIngestJobNodeData object (rename ManifestNodeData => AutoIngestJobData)
-                // DLG: Construct an AutoIngestJob object from the 
+                // DLG: Construct an AutoIngestJob object from the AutoIngestJobNodeData object, need new AutoIngestJob constructor 
             }
             return newJobsSnapshot;
         } catch (CoordinationServiceException ex) {
             LOGGER.log(Level.SEVERE, "Failed to get node list from coordination service", ex);
-        }
-    }
-
-    /**
-     * Bumps the priority of all pending ingest jobs for a specified case.
-     *
-     * @param caseName The name of the case to be prioritized.
-     */
-    void prioritizeCase(final String caseName) {
-        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
-        int maxPriority = 0;
-        synchronized (jobsLock) {
-            for (AutoIngestJob job : pendingJobs) {
-                if (job.getNodeData().getPriority() > maxPriority) {
-                    maxPriority = job.getNodeData().getPriority();
-                }
-                if (job.getNodeData().getCaseName().equals(caseName)) {
-                    prioritizedJobs.add(job);
-                }
-            }
-            if (!prioritizedJobs.isEmpty()) {
-                ++maxPriority;
-                for (AutoIngestJob job : prioritizedJobs) {
-                    String manifestNodePath = job.getNodeData().getManifestFilePath().toString();
-                    try {
-                        ManifestNodeData nodeData = new ManifestNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                        nodeData.setPriority(maxPriority);
-                        coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
-                    } catch (ManifestNodeDataException ex) {
-                    } catch (CoordinationServiceException ex) {
-                    } catch (InterruptedException ex) {
-                    }
-                    job.getNodeData().setPriority(maxPriority);
-                }
-            }
-
-            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
-        }
-
-        if (!prioritizedJobs.isEmpty()) {
-            new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
-            }).start();
+            return new JobsSnapshot();
         }
     }
 
@@ -299,40 +256,51 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      *
      * @param manifestPath The manifest file path for the job to be prioritized.
      */
-    void prioritizeJob(Path manifestPath) {
-        int maxPriority = 0;
+    JobsSnapshot prioritizeJob(Path manifestFilePath) throws AutoIngestMonitorException {
+        int highestPriority = 0;
         AutoIngestJob prioritizedJob = null;
         synchronized (jobsLock) {
-            for (AutoIngestJob job : pendingJobs) {
-                if (job.getNodeData().getPriority() > maxPriority) {
-                    maxPriority = job.getNodeData().getPriority();
+            /*
+             * Get the highest known priority and make sure the job is still in
+             * the pending jobs queue.
+             */
+            for (AutoIngestJob job : jobsSnapshot.getPendingJobs()) {
+                if (job.getNodeData().getPriority() > highestPriority) {
+                    highestPriority = job.getNodeData().getPriority();
                 }
-                if (job.getNodeData().getManifestFilePath().equals(manifestPath)) {
+                if (job.getNodeData().getManifestFilePath().equals(manifestFilePath)) {
                     prioritizedJob = job;
                 }
             }
+
+            /*
+             * If the job was still in the pending jobs queue, bump its
+             * priority.
+             */
             if (null != prioritizedJob) {
-                ++maxPriority;
+                ++highestPriority;
                 String manifestNodePath = prioritizedJob.getNodeData().getManifestFilePath().toString();
                 try {
                     ManifestNodeData nodeData = new ManifestNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                    nodeData.setPriority(maxPriority);
+                    nodeData.setPriority(highestPriority);
                     coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
-                } catch (ManifestNodeDataException ex) {
-                } catch (CoordinationServiceException ex) {
-                } catch (InterruptedException ex) {
+                } catch (ManifestNodeDataException | CoordinationServiceException | InterruptedException ex) {
+                    throw new AutoIngestMonitorException("Error bumping priority for job " + prioritizedJob.toString(), ex);
                 }
-                prioritizedJob.getNodeData().setPriority(maxPriority);
+                prioritizedJob.getNodeData().setPriority(highestPriority);
+            }
+            
+            /*
+             * Publish a prioritization event.
+             */
+            if (null != prioritizedJob) {
+                final String caseName = prioritizedJob.getNodeData().getCaseName();
+                new Thread(() -> {
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                }).start();
             }
 
-            Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
-        }
-
-        if (null != prioritizedJob) {
-            final String caseName = prioritizedJob.getNodeData().getCaseName();
-            new Thread(() -> {
-                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
-            }).start();
+            return jobsSnapshot;
         }
     }
 
@@ -356,24 +324,10 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                     jobsSnapshot = newJobsSnapshot;
                 }
                 setChanged();
-                notifyObservers(Event.INPUT_SCAN_COMPLETED); // RJCTODO: Change this event name
+                notifyObservers();
             }
         }
 
-    }
-
-    /*
-     * Events published by an auto ingest monitor. The events are published
-     * locally to auto ingest monitor clients that register as observers.
-     */
-    enum Event {
-
-        INPUT_SCAN_COMPLETED,
-        JOB_STARTED,
-        JOB_STATUS_UPDATED,
-        JOB_COMPLETED,
-        CASE_PRIORITIZED,
-        CASE_DELETED
     }
 
     /**
