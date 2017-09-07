@@ -66,7 +66,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
             tc.toFront();
             tc.requestActive();
             } catch (AutoIngestDashboard.AutoIngestDashboardException ex) {
-                // DLG: Catch the exeption, log it, and pop up an error dialog
+                // DLG: Catch the exception, log it, and pop up an error dialog
                 // with a user-friendly message
             }
         }
