@@ -57,7 +57,8 @@ public class EamDbSettingsDialog extends JDialog {
      */
     @Messages({"EamDbSettingsDialog.title.text=Central Repository Database Configuration",
         "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
-        "EamDbSettingsDialog.lbDatabaseType.text=Database type :"})
+        "EamDbSettingsDialog.lbDatabaseType.text=Database type :",
+        "EamDbSettingsDialog.fcDatabasePath.title=Select location for central_repository.db"})
 
     public EamDbSettingsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
@@ -75,6 +76,7 @@ public class EamDbSettingsDialog extends JDialog {
 
         initComponents();
         fcDatabasePath.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        fcDatabasePath.setDialogTitle(Bundle.EamDbSettingsDialog_fcDatabasePath_title());
         cbDatabaseType.setSelectedItem(selectedPlatform);
         customizeComponents();
         valid();
@@ -301,7 +303,6 @@ public class EamDbSettingsDialog extends JDialog {
 
     @Messages({"EamDbSettingsDialog.chooserPath.failedToGetDbPathMsg=Selected database path is invalid. Try again."})
     private void bnDatabasePathFileOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDatabasePathFileOpenActionPerformed
-        fcDatabasePath.setCurrentDirectory(new File(dbSettingsSqlite.getDbDirectory()));
         fcDatabasePath.setSelectedFile(new File(dbSettingsSqlite.getDbDirectory()));
         if (fcDatabasePath.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             File databaseFile = fcDatabasePath.getSelectedFile();
