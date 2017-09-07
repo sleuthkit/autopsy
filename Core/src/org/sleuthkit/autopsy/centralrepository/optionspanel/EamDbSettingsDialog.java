@@ -51,6 +51,7 @@ public class EamDbSettingsDialog extends JDialog {
     private final SqliteEamDbSettings dbSettingsSqlite;
     private DatabaseTestResult testingStatus;
     private EamDbPlatformEnum selectedPlatform;
+    private boolean configurationChanged = false;
 
     /**
      * Creates new form EamDbSettingsDialog
@@ -406,6 +407,14 @@ public class EamDbSettingsDialog extends JDialog {
         testingStatus = DatabaseTestResult.TESTEDOK;
         valid();
     }
+    /**
+     * Returns if changes to the central repository configuration were successfully applied
+     * 
+     * @return true if the database configuration was successfully changed false if it was not
+     */
+    boolean wasConfigurationChanged() {
+        return configurationChanged;
+    }
 
     @Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
@@ -483,6 +492,7 @@ public class EamDbSettingsDialog extends JDialog {
                 //  in case we are still using the same instance.
                 try {
                     EamDb.getInstance().updateSettings();
+                    configurationChanged = true;
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex); //NON-NLS
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -497,6 +507,7 @@ public class EamDbSettingsDialog extends JDialog {
                 //  in case we are still using the same instance.
                 try {
                     EamDb.getInstance().updateSettings();
+                    configurationChanged = true;
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, Bundle.EamDbSettingsDialog_okButton_connectionErrorMsg_text(), ex);  //NON-NLS
                     setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
