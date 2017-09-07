@@ -454,7 +454,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         List<AutoIngestJob> pendingJobs = jobsSnapshot.getPendingJobs();
         List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
         List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
-        // DLG: Do the appropriate sorts.
+        // DLG: Do the appropriate sorts for each table.
         refreshTable(pendingJobs, pendingTable, pendingTableModel);
         refreshTable(runningJobs, runningTable, runningTableModel);
         refreshTable(completedJobs, completedTable, completedTableModel);
@@ -644,7 +644,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             refreshTable(pendingJobs, pendingTable, pendingTableModel);
             refreshTable(runningJobs, runningTable, runningTableModel);
             refreshTable(completedJobs, completedTable, completedTableModel);
-            refreshButton.setEnabled(true);
         }
     }
 
@@ -767,7 +766,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
         org.openide.awt.Mnemonics.setLocalizedText(refreshButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.refreshButton.text")); // NOI18N
         refreshButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.refreshButton.toolTipText")); // NOI18N
-        refreshButton.setEnabled(false);
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
