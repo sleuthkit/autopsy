@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -166,7 +166,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestDashboard() {
-        autoIngestMonitor = AutoIngestMonitor.getInstance();
+        autoIngestMonitor = AutoIngestMonitor.createMonitor();
         
         pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
             private static final long serialVersionUID = 1L;
@@ -524,7 +524,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         try {
             autoIngestMonitor.startUp();
             autoIngestStarted = true;
-        } catch (AutoIngestMonitor.AutoIngestMonitorStartupException ex) {
+        } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
             tbStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.AutoIngestStartupError"));
             autoIngestMonitor = null;
@@ -557,7 +557,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          */
         updateExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(UPDATE_TASKS_THREAD_NAME).build());
         updateExecutor.submit(new UpdateAllJobsTablesTask());
-        autoIngestMonitor.scanInputDirsNow();
+        autoIngestMonitor.queryCoordinationService();
 
 		//bnPause.setEnabled(true);
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text"));
@@ -656,27 +656,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 case JOB_COMPLETED:
                 case CASE_DELETED:
                     updateExecutor.submit(new UpdateAllJobsTablesTask());
-                    break;
-                case PAUSED_BY_REQUEST:
-                    EventQueue.invokeLater(() -> {
-                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.paused"));
-                        bnRefresh.setEnabled(false);
-                        isPaused = true;
-                    });
-                    break;
-                case PAUSED_FOR_SYSTEM_ERROR:
-                    EventQueue.invokeLater(() -> {
-                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PauseDueToSystemError"));
-                        bnRefresh.setEnabled(false);
-                        pause(false);
-                        isPaused = true;
-                        setServicesStatusMessage();
-                    });
-                    break;
-                case RESUMED:
-                    EventQueue.invokeLater(() -> {
-                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.running"));
-                    });
                     break;
                 case CASE_PRIORITIZED:
                     updateExecutor.submit(new UpdatePendingJobsTableTask());
