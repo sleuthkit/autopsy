@@ -186,16 +186,20 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
                 properties.put(TSK_KEYWORD_PREVIEW.getDisplayName(), hit.getSnippet());
             }
 
-            try {
-                String hitName = hit.isArtifactHit()
-                        ? tskCase.getBlackboardArtifact(hit.getArtifactID().get()).getDisplayName() + " Artifact" //NON-NLS
-                        : contentName;
-                hitNumber++;
-                tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, queryRequest, queryResults));
-            } catch (TskCoreException ex) {
-                Exceptions.printStackTrace(ex);
-                return false;
+            String hitName;
+            if (hit.isArtifactHit()) {
+                try {
+                    hitName = tskCase.getBlackboardArtifact(hit.getArtifactID().get()).getDisplayName() + " Artifact"; //NON-NLS
+                } catch (TskCoreException ex) {
+                    logger.log(Level.SEVERE, "Error getting blckboard artifact by id", ex);
+                    return false;
+                }
+            } else {
+                hitName = contentName;
             }
+            hitNumber++;
+            tempList.add(new KeyValueQueryContent(hitName, properties, hitNumber, hit.getSolrObjectId(), content, queryRequest, queryResults));
+
         }
 
         // Add all the nodes to toPopulate at once. Minimizes node creation

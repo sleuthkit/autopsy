@@ -18,11 +18,12 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.sleuthkit.autopsy.casemodule.Case;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
@@ -76,8 +77,16 @@ class KeywordHit implements Comparable<KeywordHit> {
          */
         if (hitOnArtifact) {
             SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
-            BlackboardArtifact artifact = caseDb.getBlackboardArtifact(this.solrObjectId);
-            contentID = artifact.getObjectID();
+            try (SleuthkitCase.CaseDbQuery executeQuery = caseDb.executeQuery("select obj_id from blackboard_artifacts where artifact_id = " + this.solrObjectId);
+                    ResultSet resultSet = executeQuery.getResultSet();) {
+                if (resultSet.next()) {
+                    contentID = resultSet.getLong("obj_id");
+                } else {
+                    throw new TskCoreException("Failed to get obj_id for artifact with artifact_id =" + this.solrObjectId + ".  No matching artifact was found.");
+                }
+            } catch (SQLException ex) {
+                throw new TskCoreException("Error getting obj_id for artifact with artifact_id =" + this.solrObjectId, ex);
+            }
         } else {
             //else the object id is for content.
             contentID = this.solrObjectId;
