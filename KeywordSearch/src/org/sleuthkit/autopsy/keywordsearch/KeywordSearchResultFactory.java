@@ -18,13 +18,10 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import com.google.common.collect.SetMultimap;
-import com.google.common.collect.TreeMultimap;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,6 +38,7 @@ import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.AbstractAbstractFileNode;
@@ -50,12 +48,13 @@ import org.sleuthkit.autopsy.datamodel.KeyValue;
 import org.sleuthkit.autopsy.datamodel.KeyValueNode;
 import org.sleuthkit.autopsy.keywordsearch.KeywordSearchResultFactory.KeyValueQueryContent;
 import org.sleuthkit.datamodel.AbstractFile;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW;
 import static org.sleuthkit.datamodel.BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_REGEXP;
 import org.sleuthkit.datamodel.Content;
+import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Node factory that performs the keyword search and creates children nodes for
@@ -69,16 +68,16 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
     private static final Logger logger = Logger.getLogger(KeywordSearchResultFactory.class.getName());
 
     //common properties (superset of all Node properties) to be displayed as columns
-    static final List<String> COMMON_PROPERTIES
-            = Stream.concat(
+    static final List<String> COMMON_PROPERTIES =
+            Stream.concat(
                     Stream.of(
                             TSK_KEYWORD,
                             TSK_KEYWORD_REGEXP,
                             TSK_KEYWORD_PREVIEW)
-                    .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
+                            .map(BlackboardAttribute.ATTRIBUTE_TYPE::getDisplayName),
                     Arrays.stream(AbstractAbstractFileNode.AbstractFilePropertyType.values())
-                    .map(Object::toString))
-            .collect(Collectors.toList());
+                            .map(Object::toString))
+                    .collect(Collectors.toList());
 
     private final Collection<QueryRequest> queryRequests;
 
@@ -91,7 +90,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * properties are displayed as columns (since we are doing lazy child Node
      * load we need to preinitialize properties when sending parent Node)
      *
-     * @param toSet property set map for a Node
+     * @param toPopulate property set map for a Node
      */
     @Override
     protected boolean createKeys(List<KeyValueQueryContent> toPopulate) {
@@ -144,6 +143,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
         }
+        SleuthkitCase tskCase = null;
+        try {
+            tskCase = Case.getCurrentCase().getSleuthkitCase();
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "There was no case open.", ex); //NON-NLS
+            return false;
+        }
 
         int hitNumber = 0;
         List<KeyValueQueryContent> tempList = new ArrayList<>();
@@ -153,8 +159,20 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
              * Get file properties.
              */
             Map<String, Object> properties = new LinkedHashMap<>();
-            Content content = hit.getContent();
-            String contentName = content.getName();
+            Content content = null;
+            String contentName = "";
+            try {
+                content = tskCase.getContentById(hit.getContentID());
+                if (content == null) {
+                    logger.log(Level.SEVERE, "There was a error getting content by id."); //NON-NLS
+                    return false;
+                }
+            } catch (TskCoreException ex) {
+                logger.log(Level.SEVERE, "There was a error getting content by id.", ex); //NON-NLS
+                return false;
+            }
+
+            contentName = content.getName();
             if (content instanceof AbstractFile) {
                 AbstractFsContentNode.fillPropertyMap(properties, (AbstractFile) content);
             } else {
@@ -222,6 +240,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
 
         //wrap in KeywordSearchFilterNode for the markup content, might need to override FilterNode for more customization
         return new KeywordSearchFilterNode(hits, kvNode);
+
     }
 
     /**
@@ -240,13 +259,14 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
          * NOTE Parameters are defined based on how they are currently used in
          * practice
          *
-         * @param name    File name that has hit.
-         * @param map     Contains content metadata, snippets, etc. (property
-         *                map)
-         * @param id      User incremented ID
-         * @param content File that had the hit.
-         * @param query   Query used in search
-         * @param hits    Full set of search results (for all files! @@@)
+         * @param name         File name that has hit.
+         * @param map          Contains content metadata, snippets, etc.
+         *                     (property map)
+         * @param id           User incremented ID
+         * @param solrObjectId
+         * @param content      File that had the hit.
+         * @param query        Query used in search
+         * @param hits         Full set of search results (for all files! @@@)
          */
         KeyValueQueryContent(String name, Map<String, Object> map, int id, long solrObjectId, Content content, KeywordSearchQuery query, QueryResults hits) {
             super(name, map, id);
@@ -278,13 +298,12 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
      * worker for writing results to bb, with progress bar, cancellation, and
      * central registry of workers to be stopped when case is closed
      */
-    static class BlackboardResultWriter extends SwingWorker<Object, Void> {
+    static class BlackboardResultWriter extends SwingWorker<Void, Void> {
 
         private static final List<BlackboardResultWriter> writers = new ArrayList<>();
         private ProgressHandle progress;
         private final KeywordSearchQuery query;
         private final QueryResults hits;
-        private Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
         private static final int QUERY_DISPLAY_LEN = 40;
 
         BlackboardResultWriter(QueryResults hits, String listName) {
@@ -298,13 +317,13 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
         }
 
         @Override
-        protected Object doInBackground() throws Exception {
+        protected Void doInBackground() throws Exception {
             registerWriter(this); //register (synchronized on class) outside of writerLock to prevent deadlock
             final String queryStr = query.getQueryString();
             final String queryDisp = queryStr.length() > QUERY_DISPLAY_LEN ? queryStr.substring(0, QUERY_DISPLAY_LEN - 1) + " ..." : queryStr;
             try {
                 progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "KeywordSearchResultFactory.progress.saving", queryDisp), () -> BlackboardResultWriter.this.cancel(true));
-                newArtifacts = hits.writeAllHitsToBlackBoard(progress, null, this, false);
+                hits.writeAllHitsToBlackBoard(progress, null, this, false);
             } finally {
                 finalizeWorker();
             }

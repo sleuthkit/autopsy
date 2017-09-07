@@ -18,8 +18,6 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
-import java.util.LinkedHashMap;
-
 /**
  * Interface to provide HTML text to display in ExtractedContentViewer. There is
  * a SOLR implementation of this that interfaces with SOLR to highlight the
@@ -138,4 +136,5 @@ interface IndexedText {
      * @return the current item number
      */
     int currentItem();
+
 }

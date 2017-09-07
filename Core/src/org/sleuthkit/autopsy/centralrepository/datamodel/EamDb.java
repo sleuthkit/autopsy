@@ -36,8 +36,11 @@ public interface EamDb {
      * @throws EamDbException
      */
     static EamDb getInstance() throws EamDbException {
-        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
 
+        EamDbPlatformEnum selectedPlatform = EamDbPlatformEnum.DISABLED;
+        if (EamDbUtil.useCentralRepo()) {
+            selectedPlatform = EamDbPlatformEnum.getSelectedPlatform();
+        }
         switch (selectedPlatform) {
             case POSTGRESQL:
                 return PostgresEamDb.getInstance();
@@ -86,7 +89,8 @@ public interface EamDb {
      * @return Is the database enabled
      */
     static boolean isEnabled() {
-        return EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
+        return EamDbUtil.useCentralRepo()
+                && EamDbPlatformEnum.getSelectedPlatform() != EamDbPlatformEnum.DISABLED;
     }
 
     /**

@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.nio.file.Path;
@@ -743,7 +744,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
     }//GEN-LAST:event_prioritizeButtonActionPerformed
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration - do not modify                     
     private javax.swing.JScrollPane completedScrollPane;
     private javax.swing.JTable completedTable;
     private javax.swing.JLabel lbCompleted;
@@ -757,7 +758,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JScrollPane runningScrollPane;
     private javax.swing.JTable runningTable;
     private javax.swing.JTextField tbServicesStatusMessage;
-    // End of variables declaration//GEN-END:variables
+    // End of variables declaration                   
 
     /*
      * The enum is used in conjunction with the DefaultTableModel class to

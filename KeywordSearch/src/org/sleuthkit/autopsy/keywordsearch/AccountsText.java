@@ -73,7 +73,7 @@ class AccountsText implements IndexedText {
     private final long solrObjectId;
     private final Collection<? extends BlackboardArtifact> artifacts;
     private final Set<String> accountNumbers = new HashSet<>();
-    private final String displayName;
+    private final String title;
 
     @GuardedBy("this")
     private boolean isPageInfoLoaded = false;
@@ -105,7 +105,7 @@ class AccountsText implements IndexedText {
     AccountsText(long objectID, Collection<? extends BlackboardArtifact> artifacts) {
         this.solrObjectId = objectID;
         this.artifacts = artifacts;
-        displayName = artifacts.size() == 1
+        title = artifacts.size() == 1
                 ? Bundle.AccountsText_creditCardNumber()
                 : Bundle.AccountsText_creditCardNumbers();
     }
@@ -227,11 +227,17 @@ class AccountsText implements IndexedText {
             }
 
             //add both the canonical form and the form in the text as accountNumbers to highlight.
-            this.accountNumbers.add(artifact.getAttribute(TSK_KEYWORD).getValueString());
-            this.accountNumbers.add(artifact.getAttribute(TSK_CARD_NUMBER).getValueString());
+            BlackboardAttribute attribute = artifact.getAttribute(TSK_KEYWORD);
+            if (attribute != null) {
+                this.accountNumbers.add(attribute.getValueString());
+            }
+            attribute = artifact.getAttribute(TSK_CARD_NUMBER);
+            if (attribute != null) {
+                this.accountNumbers.add(attribute.getValueString());
+            }
             
             //if the chunk id is present just use that.
-            Optional<Integer> chunkID = 
+            Optional<Integer> chunkID =
                     Optional.ofNullable(artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID))
                             .map(BlackboardAttribute::getValueString)
                             .map(String::trim)
@@ -245,10 +251,10 @@ class AccountsText implements IndexedText {
                 needsQuery = true;
             }
         }
-        
+
         if (needsQuery) {
             // Run a query to figure out which chunks for the current object have hits.
-            Keyword queryKeyword = new Keyword(CCN_REGEX, false, false); 
+            Keyword queryKeyword = new Keyword(CCN_REGEX, false, false);
             KeywordSearchQuery chunksQuery = KeywordSearchUtil.getQueryForKeyword(queryKeyword, new KeywordList(Arrays.asList(queryKeyword)));
             chunksQuery.addFilter(new KeywordQueryFilter(KeywordQueryFilter.FilterType.CHUNK, this.solrObjectId));
             //load the chunks/pages from the result of the query.
@@ -353,7 +359,7 @@ class AccountsText implements IndexedText {
 
     @Override
     public String toString() {
-        return displayName;
+        return title;
     }
 
     @Override

@@ -27,13 +27,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT;
 import static org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT;
@@ -91,7 +91,7 @@ public class ExtractedContentViewer implements DataContentViewer {
         }
 
         Lookup nodeLookup = node.getLookup();
-        Content content = nodeLookup.lookup(Content.class);
+        AbstractFile content = nodeLookup.lookup(AbstractFile.class);
 
         /*
          * Assemble a collection of all of the indexed text "sources" for the
@@ -173,7 +173,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
         }
         panel.updateControls(currentSource);
-        setPanel(sources);
+        setPanel(content.getName(),sources);
     }
 
     static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
@@ -254,7 +254,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel(new ArrayList<>());
+        setPanel("",new ArrayList<>());
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -312,9 +312,10 @@ public class ExtractedContentViewer implements DataContentViewer {
      *
      * @param sources
      */
-    private void setPanel(List<IndexedText> sources) {
+    private void setPanel(String contentName, List<IndexedText> sources) {
+        
         if (panel != null) {
-            panel.setSources(sources);
+            panel.setSources(contentName, sources);
         }
     }
 

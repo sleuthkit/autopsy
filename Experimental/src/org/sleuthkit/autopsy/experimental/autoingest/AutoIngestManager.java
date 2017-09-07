@@ -2646,8 +2646,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                          * back into hostNamesToRunningJobs as a result of
                          * processing the job status update.
                          */
-                        SYS_LOGGER.log(Level.WARNING, "Auto ingest node {0} timed out while processing folder {1}",
-                                new Object[]{job.getNodeName(), job.getNodeData().getManifestFilePath().toString()});
                         hostNamesToRunningJobs.remove(job.getNodeName());
                         setChanged();
                         notifyObservers(Event.JOB_COMPLETED);
