@@ -55,15 +55,20 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                 mode.dockInto(tc);
             }
 
-            AutoIngestDashboard dashboard = AutoIngestDashboard.getInstance();
-            tc.add(dashboard);
-            dashboard.setSize(dashboard.getPreferredSize());
-
+            AutoIngestDashboard dashboard;
+            try {
+                dashboard = AutoIngestDashboard.createDashboard();
+                tc.add(dashboard);
+                dashboard.setSize(dashboard.getPreferredSize());
             if (tc.isOpened() == false) {
                 tc.open();
             }
             tc.toFront();
             tc.requestActive();
+            } catch (AutoIngestDashboard.AutoIngestDashboardException ex) {
+                // DLG: Catch the exception, log it, and pop up an error dialog
+                // with a user-friendly message
+            }
         }
     }
 
@@ -74,7 +79,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
                 try {
                     tc.close();
                 } catch (Exception e) {
-                    logger.log(Level.SEVERE, "failed to close " + PREFERRED_ID, e); // NON-NLS
+                    logger.log(Level.SEVERE, "Failed to close " + PREFERRED_ID, e); // NON-NLS
                 }
             }
         }
@@ -124,4 +129,5 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
+
 }
