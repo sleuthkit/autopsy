@@ -62,7 +62,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * Constructs an automated ingest job for a manifest. The manifest specifies
      * a co-located data source and a case to which the data source is to be
      * added.
-     * 
+     *
      * Note: Manifest objects will be phased out and no longer be part of the
      * AutoIngestJob class.
      *
@@ -72,6 +72,13 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * @param nodeName          If the job is in progress, the node doing the
      *                          processing, otherwise the locla host.
      * @param stage             The processing stage for display purposes.
+     */
+    /*
+     * DLG: We need a contrucotr that takes just the node data. When we have
+     * added the case dierectory path, the host name and the stage data to the
+     * ZK nodes, we probably cna use that constructor only. I'm thinking this
+     * because we will creater node data with initial values when we first
+     * discover the nodes, and then we will continue to update it.
      */
     AutoIngestJob(ManifestNodeData nodeData, Path caseDirectoryPath, String nodeName, Stage stage) {
         this.nodeData = nodeData;
@@ -234,10 +241,10 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         if (obj == this) {
             return true;
         }
-        
+
         Path manifestPath1 = this.getNodeData().getManifestFilePath();
-        Path manifestPath2 = ((AutoIngestJob)obj).getNodeData().getManifestFilePath();
-        
+        Path manifestPath2 = ((AutoIngestJob) obj).getNodeData().getManifestFilePath();
+
         return manifestPath1.equals(manifestPath2);
     }
 
@@ -251,12 +258,11 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     public int compareTo(AutoIngestJob o) {
         Date date1 = this.getNodeData().getManifestFileDate();
         Date date2 = o.getNodeData().getManifestFileDate();
-        
+
         return -date1.compareTo(date2);
     }
 
     // DLG: Add a toString override
-    
     /**
      * Custom comparator that allows us to sort List<AutoIngestJob> on reverse
      * chronological date modified (descending)
@@ -278,7 +284,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         public int compare(AutoIngestJob job, AutoIngestJob anotherJob) {
             Integer priority1 = job.getNodeData().getPriority();
             Integer priority2 = anotherJob.getNodeData().getPriority();
-            
+
             return -priority1.compareTo(priority2);
         }
 
@@ -300,7 +306,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
             } else {
                 String caseName1 = o1.getNodeData().getCaseName();
                 String caseName2 = o2.getNodeData().getCaseName();
-                
+
                 return caseName1.compareToIgnoreCase(caseName2);
             }
         }

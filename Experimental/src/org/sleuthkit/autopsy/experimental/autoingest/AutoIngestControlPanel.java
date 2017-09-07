@@ -53,13 +53,8 @@ import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.DialogDisplayer;
 import org.openide.LifecycleManager;
 import org.openide.NotifyDescriptor;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.CaseNewAction;
-import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -69,6 +64,11 @@ import org.sleuthkit.autopsy.ingest.IngestProgressSnapshotDialog;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.CaseDeletionResult;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnapshot;
 
+/*
+ * DLG: sort out bundle key value pairs, this class is depending on some for
+ * AuotIngestDashboard, whivh may not exist or may go away. It should have all
+ * of its own key value pairs defined using the @Messages annotatino.
+ */
 /**
  * A panel for monitoring automated ingest by a cluster, and for controlling
  * automated ingest for a single node within the cluster. There can be at most
@@ -183,8 +183,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      */
     private AutoIngestControlPanel() {
         //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
-         WindowManager.getDefault().getMainWindow().setEnabled(false);
-        
+        WindowManager.getDefault().getMainWindow().setEnabled(false);
+
         manager = AutoIngestManager.getInstance();
 
         pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
@@ -632,12 +632,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         updateExecutor.submit(new UpdateAllJobsTablesTask());
         manager.scanInputDirsNow();
 
-		//bnPause.setEnabled(true);
+        //bnPause.setEnabled(true);
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.text"));
         bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.toolTipText"));
         bnRefresh.setEnabled(true);
         bnOptions.setEnabled(false);
-        
+
         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.running"));
     }
 
@@ -743,7 +743,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     break;
                 case PAUSED_BY_REQUEST:
                     EventQueue.invokeLater(() -> {
-                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.paused"));
+                        tbStatusMessage.setText(Bundle.AutoIngestControlPanel_bnPause_paused());
                         bnOptions.setEnabled(true);
                         bnRefresh.setEnabled(false);
                         isPaused = true;
@@ -751,7 +751,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     break;
                 case PAUSED_FOR_SYSTEM_ERROR:
                     EventQueue.invokeLater(() -> {
-                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.PauseDueToSystemError"));
+                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PauseDueToSystemError"));
                         bnOptions.setEnabled(true);
                         bnRefresh.setEnabled(false);
                         pause(false);
@@ -799,8 +799,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /**
          * Change the pause button text and tool tip to make it a resume button.
          */
-        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnResume.text"));
-        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.toolTipTextResume"));
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnResume.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.toolTipTextResume"));
 
         if (buttonClicked) {
             /**
@@ -825,9 +825,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * Change the resume button text and tool tip to make it a pause button.
          */
         bnOptions.setEnabled(false);
-        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.text"));
-        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.toolTipText"));
-        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.running"));
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.toolTipText"));
+        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.running"));
         bnRefresh.setEnabled(true);
 
         /**
@@ -1080,11 +1080,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
         }
     }
-    
+
     /**
      * Get the current lists of jobs and update the UI.
      */
-    private void refreshTables(){
+    private void refreshTables() {
         JobsSnapshot jobsSnapshot = manager.getCurrentJobsSnapshot();
         refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
         refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
@@ -1540,7 +1540,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * @param evt The button click event.
      */
     private void bnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPauseActionPerformed
-        
+
         if (!autoIngestStarted) {
             //put up a wait cursor during the start up operation
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
