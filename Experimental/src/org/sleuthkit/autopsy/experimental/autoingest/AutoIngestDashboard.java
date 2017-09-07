@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 - 2017 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.nio.file.Path;
@@ -42,19 +41,17 @@ import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
 
 /**
- * A panel for monitoring an automated ingest cluster.
+ * A dashboard for monitoring an automated ingest cluster.
  */
 public final class AutoIngestDashboard extends JPanel implements Observer {
 
     private static final long serialVersionUID = 1L;
-    private static final Logger LOGGER = Logger.getLogger(AutoIngestDashboard.class.getName());
     private static final int GENERIC_COL_MIN_WIDTH = 30;
     private static final int GENERIC_COL_MAX_WIDTH = 2000;
     private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
@@ -77,6 +74,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_MAX_WIDTH = 2000;
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
     private static final String UPDATE_TASKS_THREAD_NAME = "AID-update-tasks-%d";
+    private static final Logger logger = Logger.getLogger(AutoIngestDashboard.class.getName());
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
@@ -85,14 +83,13 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
     // DLG: The Viking code needs to be updated, too. See VikingStartupWindow, 
     // which should be using the AutoIngestControlPanel, not the AutoIngestDashboard. 
-    // Viking will not compile with this code.
     /**
-     * Creates a dashboard panel for monitoring an automated ingest cluster.
+     * Creates a dashboard for monitoring an automated ingest cluster.
      *
-     * @return The dashboard panel.
+     * @return The dashboard.
      *
      * @throws AutoIngestDashboardException If there is a problem creating the
-     *                                      dashboard panel.
+     *                                      dashboard.
      */
     public static AutoIngestDashboard createDashboard() throws AutoIngestDashboardException {
         AutoIngestDashboard dashBoard = new AutoIngestDashboard();
@@ -183,7 +180,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                         serviceStatus = NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
                     }
                 } catch (ServicesMonitor.ServicesMonitorException ex) {
-                    LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
+                    logger.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
                 }
                 return serviceStatus;
             }
@@ -499,7 +496,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             }
             setSelectedEntry(table, tableModel, currentRow);
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Error refreshing table " + table.toString(), ex);
+            logger.log(Level.SEVERE, "Error refreshing table " + table.toString(), ex);
         }
     }
 
@@ -551,6 +548,137 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         table.clearSelection();
     }
 
+    /*
+     * The enum is used in conjunction with the DefaultTableModel class to
+     * provide table models for the JTables used to display a view of the
+     * pending jobs queue, running jobs list, and completed jobs list for an
+     * auto ingest cluster. The enum allows the columns of the table model to be
+     * described by either an enum ordinal or a column header string.
+     */
+    private enum JobsTableModelColumns {
+
+        // DLG: Go through the bundles.properties file and delete and unused key-value pairs.
+        CASE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Case")),
+        DATA_SOURCE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ImageFolder")),
+        HOST_NAME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.HostName")),
+        CREATED_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CreatedTime")),
+        STARTED_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StartedTime")),
+        COMPLETED_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CompletedTime")),
+        STAGE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Stage")),
+        STAGE_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime")),
+        STATUS(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
+        CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
+        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath"));
+
+        private final String header;
+
+        private JobsTableModelColumns(String header) {
+            this.header = header;
+        }
+
+        private String getColumnHeader() {
+            return header;
+        }
+
+        private static final String[] headers = {
+            CASE.getColumnHeader(),
+            DATA_SOURCE.getColumnHeader(),
+            HOST_NAME.getColumnHeader(),
+            CREATED_TIME.getColumnHeader(),
+            STARTED_TIME.getColumnHeader(),
+            COMPLETED_TIME.getColumnHeader(),
+            STAGE.getColumnHeader(),
+            STATUS.getColumnHeader(),
+            STAGE_TIME.getColumnHeader(),
+            CASE_DIRECTORY_PATH.getColumnHeader(),
+            MANIFEST_FILE_PATH.getColumnHeader()};
+    }
+
+    /**
+     * A task that gets the current snapshot of the pending, running and
+     * completed auto ingest jobs lists for an auto ingest cluster from the auto
+     * ingest monitor, sorts them, and queues a UI components refresh task for
+     * execution in the EDT.
+     */
+    private class GetJobsSnapshotTask implements Runnable {
+
+        @Override
+        public void run() {
+            AutoIngestMonitor.JobsSnapshot jobsSnapshot = autoIngestMonitor.getJobsSnapshot();
+            List<AutoIngestJob> pendingJobs = jobsSnapshot.getPendingJobs();
+            List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
+            List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
+            // DLG: Do the appropriate sorts in this background task.
+            EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
+        }
+    }
+
+    /**
+     * A task that refreshes the UI components on this panel to reflect a
+     * snapshot of the pending, running and completed auto ingest jobs lists of
+     * an auto ingest cluster.
+     */
+    private class RefreshComponentsTask implements Runnable {
+
+        private final List<AutoIngestJob> pendingJobs;
+        private final List<AutoIngestJob> runningJobs;
+        private final List<AutoIngestJob> completedJobs;
+
+        /**
+         * Constructs a task that refreshes the UI components on this panel to
+         * reflect a snapshot of the pending, running and completed auto ingest
+         * jobs lists of an auto ingest cluster.
+         *
+         * @param pendingJobs   The pending jobs list.
+         * @param runningJobs   The running jobs list.
+         * @param completedJobs The completed jobs list.
+         */
+        RefreshComponentsTask(List<AutoIngestJob> pendingJobs, List<AutoIngestJob> runningJobs, List<AutoIngestJob> completedJobs) {
+            this.pendingJobs = pendingJobs;
+            this.runningJobs = runningJobs;
+            this.completedJobs = completedJobs;
+        }
+
+        @Override
+        public void run() {
+            refreshTable(pendingJobs, pendingTable, pendingTableModel);
+            refreshTable(runningJobs, runningTable, runningTableModel);
+            refreshTable(completedJobs, completedTable, completedTableModel);
+            refreshButton.setEnabled(true);
+        }
+    }
+
+    /**
+     * Exception type thrown when there is an error completing an auto ingest
+     * dashboard operation.
+     */
+    static final class AutoIngestDashboardException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * Constructs an instance of the exception type thrown when there is an
+         * error completing an auto ingest dashboard operation.
+         *
+         * @param message The exception message.
+         */
+        private AutoIngestDashboardException(String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs an instance of the exception type thrown when there is an
+         * error completing an auto ingest dashboard operation.
+         *
+         * @param message The exception message.
+         * @param cause   A Throwable cause for the error.
+         */
+        private AutoIngestDashboardException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+    }
+		
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -744,7 +872,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
     }//GEN-LAST:event_prioritizeButtonActionPerformed
 
-    // Variables declaration - do not modify                     
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane completedScrollPane;
     private javax.swing.JTable completedTable;
     private javax.swing.JLabel lbCompleted;
@@ -758,137 +886,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JScrollPane runningScrollPane;
     private javax.swing.JTable runningTable;
     private javax.swing.JTextField tbServicesStatusMessage;
-    // End of variables declaration                   
-
-    /*
-     * The enum is used in conjunction with the DefaultTableModel class to
-     * provide table models for the JTables used to display a view of the
-     * pending jobs queue, running jobs list, and completed jobs list for an
-     * auto ingest cluster. The enum allows the columns of the table model to be
-     * described by either an enum ordinal or a column header string.
-     */
-    private enum JobsTableModelColumns {
-
-        // DLG: Go through the bundles.properties file and delete and unused key-value pairs.
-        CASE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Case")),
-        DATA_SOURCE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ImageFolder")),
-        HOST_NAME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.HostName")),
-        CREATED_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CreatedTime")),
-        STARTED_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StartedTime")),
-        COMPLETED_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CompletedTime")),
-        STAGE(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Stage")),
-        STAGE_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime")),
-        STATUS(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
-        CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
-        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath"));
-
-        private final String header;
-
-        private JobsTableModelColumns(String header) {
-            this.header = header;
-        }
-
-        private String getColumnHeader() {
-            return header;
-        }
-
-        private static final String[] headers = {
-            CASE.getColumnHeader(),
-            DATA_SOURCE.getColumnHeader(),
-            HOST_NAME.getColumnHeader(),
-            CREATED_TIME.getColumnHeader(),
-            STARTED_TIME.getColumnHeader(),
-            COMPLETED_TIME.getColumnHeader(),
-            STAGE.getColumnHeader(),
-            STATUS.getColumnHeader(),
-            STAGE_TIME.getColumnHeader(),
-            CASE_DIRECTORY_PATH.getColumnHeader(),
-            MANIFEST_FILE_PATH.getColumnHeader()};
-    }
-
-    /**
-     * A task that gets the current snapshot of the pending, running and
-     * completed auto ingest jobs lists for an auto ingest cluster from the auto
-     * ingest monitor, sorts them, and queues a UI components refresh task for
-     * execution in the EDT.
-     */
-    private class GetJobsSnapshotTask implements Runnable {
-
-        @Override
-        public void run() {
-            AutoIngestMonitor.JobsSnapshot jobsSnapshot = autoIngestMonitor.getJobsSnapshot();
-            List<AutoIngestJob> pendingJobs = jobsSnapshot.getPendingJobs();
-            List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
-            List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
-            // DLG: Do the appropriate sorts in this background task.
-            EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
-        }
-    }
-
-    /**
-     * A task that refreshes the UI components on this panel to reflect a
-     * snapshot of the pending, running and completed auto ingest jobs lists of
-     * an auto ingest cluster.
-     */
-    private class RefreshComponentsTask implements Runnable {
-
-        private final List<AutoIngestJob> pendingJobs;
-        private final List<AutoIngestJob> runningJobs;
-        private final List<AutoIngestJob> completedJobs;
-
-        /**
-         * Constructs a task that refreshes the UI components on this panel to
-         * reflect a snapshot of the pending, running and completed auto ingest
-         * jobs lists of an auto ingest cluster.
-         *
-         * @param pendingJobs   The pending jobs list.
-         * @param runningJobs   The running jobs list.
-         * @param completedJobs The completed jobs list.
-         */
-        RefreshComponentsTask(List<AutoIngestJob> pendingJobs, List<AutoIngestJob> runningJobs, List<AutoIngestJob> completedJobs) {
-            this.pendingJobs = pendingJobs;
-            this.runningJobs = runningJobs;
-            this.completedJobs = completedJobs;
-        }
-
-        @Override
-        public void run() {
-            refreshTable(pendingJobs, pendingTable, pendingTableModel);
-            refreshTable(runningJobs, runningTable, runningTableModel);
-            refreshTable(completedJobs, completedTable, completedTableModel);
-            refreshButton.setEnabled(true);
-        }
-    }
-
-    /**
-     * Exception type thrown when there is an error completing an auto ingest
-     * dashboard operation.
-     */
-    static final class AutoIngestDashboardException extends Exception {
-
-        private static final long serialVersionUID = 1L;
-
-        /**
-         * Constructs an instance of the exception type thrown when there is an
-         * error completing an auto ingest dashboard operation.
-         *
-         * @param message The exception message.
-         */
-        private AutoIngestDashboardException(String message) {
-            super(message);
-        }
-
-        /**
-         * Constructs an instance of the exception type thrown when there is an
-         * error completing an auto ingest dashboard operation.
-         *
-         * @param message The exception message.
-         * @param cause   A Throwable cause for the error.
-         */
-        private AutoIngestDashboardException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-    }
+    // End of variables declaration//GEN-END:variables
 
 }
