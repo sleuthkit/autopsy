@@ -23,19 +23,22 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
- * Thread to send info to remote DB that tags a file as known bad.
+ * Thread to send info to remote DB that tags a file as known, unknown, or known bad.
  */
-public class BadFileTagRunner implements Runnable {
+public class KnownStatusChangeRunner implements Runnable {
 
-    private static final Logger LOGGER = Logger.getLogger(BadFileTagRunner.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(KnownStatusChangeRunner.class.getName());
     private static final long serialVersionUID = 1L;
 
     private final EamArtifact artifact;
+    private final FileKnown knownStatus;
 
-    public BadFileTagRunner(EamArtifact artifact) {
+    public KnownStatusChangeRunner(EamArtifact artifact, FileKnown knownStatus) {
         this.artifact = artifact;
+        this.knownStatus = knownStatus;
     }
 
     @Override
@@ -47,7 +50,7 @@ public class BadFileTagRunner implements Runnable {
 
         try {
             EamDb dbManager = EamDb.getInstance();
-            dbManager.setArtifactInstanceKnownBad(this.artifact);
+            dbManager.setArtifactInstanceKnownStatus(this.artifact, this.knownStatus);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
         }
