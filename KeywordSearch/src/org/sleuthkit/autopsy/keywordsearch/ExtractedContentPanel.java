@@ -18,17 +18,15 @@
  */
 package org.sleuthkit.autopsy.keywordsearch;
 
+import com.google.common.base.Strings;
 import java.awt.ComponentOrientation;
 import java.awt.EventQueue;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
-import javax.swing.JMenuItem;
 import javax.swing.JTextPane;
 import javax.swing.SizeRequirements;
 import javax.swing.SwingWorker;
@@ -45,6 +43,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.EscapeUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.TextUtil;
+import static org.sleuthkit.autopsy.keywordsearch.Bundle.*;
 
 /**
  * Panel displays HTML content sent to ExtractedContentViewer, and provides a
@@ -52,7 +51,8 @@ import org.sleuthkit.autopsy.coreutils.TextUtil;
  */
 class ExtractedContentPanel extends javax.swing.JPanel {
 
-    private static Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
+    private static final Logger logger = Logger.getLogger(ExtractedContentPanel.class.getName());
+    private String contentName;
 
     ExtractedContentPanel() {
         initComponents();
@@ -124,32 +124,17 @@ class ExtractedContentPanel extends javax.swing.JPanel {
 
         extractedTextPane.setEditorKit(editorKit);
 
-        sourceComboBox.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                if (e.getStateChange() == ItemEvent.SELECTED) {
-                    IndexedText source = (IndexedText) e.getItem();
-                    setMarkup(source);
-                }
+        sourceComboBox.addItemListener((ItemEvent e) -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                setMarkup((IndexedText) e.getItem());
             }
         });
 
-        setSources(new ArrayList<IndexedText>());
+        setSources("",new ArrayList<>());
 
         extractedTextPane.setComponentPopupMenu(rightClickMenu);
-        ActionListener actList = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JMenuItem jmi = (JMenuItem) e.getSource();
-                if (jmi.equals(copyMenuItem)) {
-                    extractedTextPane.copy();
-                } else if (jmi.equals(selectAllMenuItem)) {
-                    extractedTextPane.selectAll();
-                }
-            }
-        };
-        copyMenuItem.addActionListener(actList);
-        selectAllMenuItem.addActionListener(actList);
+        copyMenuItem.addActionListener(actionEvent -> extractedTextPane.copy());
+        selectAllMenuItem.addActionListener(actionEvent -> extractedTextPane.selectAll());
     }
 
     /**
@@ -364,8 +349,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
 
     void refreshCurrentMarkup() {
-        IndexedText ms = (IndexedText) sourceComboBox.getSelectedItem();
-        setMarkup(ms);
+        setMarkup(getSelectedSource());
     }
 
     /**
@@ -374,13 +358,12 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      *
      * @param sources
      */
-    void setSources(List<IndexedText> sources) {
+    void setSources(String contentName, List<IndexedText> sources) {
+        this.contentName = contentName;
         sourceComboBox.removeAllItems();
         setPanelText(null, false);
 
-        for (IndexedText ms : sources) {
-            sourceComboBox.addItem(ms);
-        }
+        sources.forEach(sourceComboBox::addItem);
 
         if (!sources.isEmpty()) {
             sourceComboBox.setSelectedIndex(0);
@@ -411,9 +394,8 @@ class ExtractedContentPanel extends javax.swing.JPanel {
     }
 
     private void setPanelText(String text, boolean detectDirection) {
-        if (text == null) {
-            text = "";
-        }
+
+        text = Strings.nullToEmpty(text);
 
         if (detectDirection) {
             //detect text direction using first 1024 chars and set it
@@ -640,9 +622,10 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      * text). Updates GUI in GUI thread and gets markup in background thread. To
      * be invoked from GUI thread only.
      */
+    @NbBundle.Messages("ExtractedContentPanel.setMarkup.panelTxt=<span style='font-style:italic'>Loading text... Please wait</span>")
     private void setMarkup(IndexedText source) {
-        setPanelText(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.setMarkup.panelTxt"), false);
-        new SetMarkupWorker(source).execute();
+        setPanelText(ExtractedContentPanel_setMarkup_panelTxt(), false);
+        new SetMarkupWorker(contentName,source).execute();
     }
 
     /**
@@ -652,18 +635,21 @@ class ExtractedContentPanel extends javax.swing.JPanel {
      */
     private final class SetMarkupWorker extends SwingWorker<String, Void> {
 
+        private final String contentName;
+
         private final IndexedText source;
 
         private ProgressHandle progress;
 
-        SetMarkupWorker(IndexedText source) {
+        SetMarkupWorker(String contentName,IndexedText source) {
+            this.contentName = contentName;
             this.source = source;
         }
 
         @Override
+        @NbBundle.Messages({"# 0 - Content name","ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}"})
         protected String doInBackground() throws Exception {
-            progress = ProgressHandle.createHandle(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.loading"));
-            progress.setDisplayName(NbBundle.getMessage(this.getClass(), "ExtractedContentPanel.SetMarkup.progress.displayName"));
+            progress = ProgressHandle.createHandle(ExtractedContentPanel_SetMarkup_progress_loading(contentName));
             progress.start();
             progress.switchToIndeterminate();
 

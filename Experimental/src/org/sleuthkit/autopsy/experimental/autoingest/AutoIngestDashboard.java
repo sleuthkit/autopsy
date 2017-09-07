@@ -19,12 +19,15 @@
 package org.sleuthkit.autopsy.experimental.autoingest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.beans.PropertyChangeEvent;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -33,11 +36,8 @@ import java.util.Observer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
-import javax.swing.DefaultListSelectionModel;
-import java.awt.Color;
-import java.beans.PropertyChangeEvent;
-import java.util.Collections;
 import java.util.logging.Logger;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -48,7 +48,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 import org.openide.LifecycleManager;
 import org.openide.util.NbBundle;
-import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -148,7 +147,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
      *
      * @return The panel.
      */
-    public static AutoIngestDashboard getInstance() {
+    synchronized public static AutoIngestDashboard getInstance() {
         if (null == instance) {
             /*
              * Two stage construction is used here to avoid publishing a
@@ -583,12 +582,12 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         updateExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(UPDATE_TASKS_THREAD_NAME).build());
         updateExecutor.submit(new UpdateAllJobsTablesTask());
 
-		//bnPause.setEnabled(true);
+        //bnPause.setEnabled(true);
         bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.text"));
         bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.toolTipText"));
         bnRefresh.setEnabled(true);
         bnOptions.setEnabled(false);
-        
+
         tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.bnPause.running"));
     }
 
@@ -1011,11 +1010,11 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
         }
     }
-    
+
     /**
      * Get the current lists of jobs and update the UI.
      */
-    private void refreshTables(){
+    private void refreshTables() {
     }
 
     /**

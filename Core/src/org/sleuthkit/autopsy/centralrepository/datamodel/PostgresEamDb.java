@@ -73,8 +73,8 @@ public class PostgresEamDb extends AbstractSqlEamDb {
         try {
             synchronized(this) {
                 if(connectionPool != null){
-                connectionPool.close();
-                connectionPool = null; // force it to be re-created on next connect()
+                    connectionPool.close();
+                    connectionPool = null; // force it to be re-created on next connect()
                 }
             }
         } catch (SQLException ex) {
