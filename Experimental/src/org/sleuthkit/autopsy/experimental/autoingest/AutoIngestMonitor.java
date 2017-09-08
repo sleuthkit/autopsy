@@ -313,7 +313,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
          */
         @Override
         public void run() {
-            if (Thread.currentThread().isInterrupted()) {
+            if (!Thread.currentThread().isInterrupted()) {
                 JobsSnapshot newJobsSnapshot = queryCoordinationService();
                 synchronized (jobsLock) {
                     jobsSnapshot = newJobsSnapshot;
