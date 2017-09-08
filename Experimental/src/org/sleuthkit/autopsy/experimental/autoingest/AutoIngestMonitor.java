@@ -236,7 +236,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
             for (String node : nodeList) {
                 // DLG: Do not need a lock here
-                // DLG: Get the node data and construct a AutoIngestJobNodeData object (rename ManifestNodeData => AutoIngestJobData)
+                // DLG: Get the node data and construct a AutoIngestJobNodeData object (rename AutoIngestJobNodeData => AutoIngestJobData)
                 // DLG: Construct an AutoIngestJob object from the AutoIngestJobNodeData object, need new AutoIngestJob constructor 
             }
             return newJobsSnapshot;
@@ -276,10 +276,10 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                 ++highestPriority;
                 String manifestNodePath = prioritizedJob.getNodeData().getManifestFilePath().toString();
                 try {
-                    ManifestNodeData nodeData = new ManifestNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                    AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
                     nodeData.setPriority(highestPriority);
                     coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
-                } catch (ManifestNodeDataException | CoordinationServiceException | InterruptedException ex) {
+                } catch (AutoIngestJobNodeDataException | CoordinationServiceException | InterruptedException ex) {
                     throw new AutoIngestMonitorException("Error bumping priority for job " + prioritizedJob.toString(), ex);
                 }
                 prioritizedJob.getNodeData().setPriority(highestPriority);

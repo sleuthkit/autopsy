@@ -41,10 +41,10 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
     private static final long serialVersionUID = 1L;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private final ManifestNodeData nodeData;
+    private final AutoIngestJobNodeData nodeData;
     private final String nodeName;
     @GuardedBy("this")
-    private String caseDirectoryPath;   // DLG: Replace with ManifestNodeData.caseDirectoryPath
+    private String caseDirectoryPath;   // DLG: Replace with AutoIngestJobNodeData.caseDirectoryPath
     @GuardedBy("this")
     private Stage stage;
     @GuardedBy("this")
@@ -80,7 +80,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * because we will creater node data with initial values when we first
      * discover the nodes, and then we will continue to update it.
      */
-    AutoIngestJob(ManifestNodeData nodeData, Path caseDirectoryPath, String nodeName, Stage stage) {
+    AutoIngestJob(AutoIngestJobNodeData nodeData, Path caseDirectoryPath, String nodeName, Stage stage) {
         this.nodeData = nodeData;
         if (null != caseDirectoryPath) {
             this.caseDirectoryPath = caseDirectoryPath.toString();
@@ -97,7 +97,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *
      * @return The node data.
      */
-    ManifestNodeData getNodeData() {
+    AutoIngestJobNodeData getNodeData() {
         return this.nodeData;
     }
 
@@ -263,6 +263,12 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     // DLG: Add a toString override
+    @Override
+    public String toString() {
+        // DLG: FINISH ME!
+        return "";
+    }
+    
     /**
      * Custom comparator that allows us to sort List<AutoIngestJob> on reverse
      * chronological date modified (descending)

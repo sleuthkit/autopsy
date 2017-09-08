@@ -67,7 +67,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
             try {
                 dashboard = AutoIngestDashboard.createDashboard();
                 tc.add(dashboard);
-                dashboard.setSize(dashboard.getPreferredSize());
+                dashboard.setSize(992, 744);
                 if (tc.isOpened() == false) {
                     tc.open();
                 }

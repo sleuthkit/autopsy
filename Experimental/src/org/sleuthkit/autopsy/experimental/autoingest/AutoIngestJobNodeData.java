@@ -28,11 +28,11 @@ import javax.lang.model.type.TypeKind;
 /**
  * A coordination service node data transfer object for an auto ingest job.
  */
-final class ManifestNodeData implements Serializable {
+final class AutoIngestJobNodeData implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final int NODE_DATA_VERSION = 1;
-    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 65831;
+    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131493;
     private static final int DEFAULT_PRIORITY = 0;
 
     /*
@@ -51,9 +51,13 @@ final class ManifestNodeData implements Serializable {
     private int version;
     private String deviceId;
     private String caseName;
+    private String caseDirectoryPath;
     private long manifestFileDate;
     private String manifestFilePath;
     private String dataSourcePath;
+    private String processingStage;
+    private long processingStageStartDate;
+    private String processingHost;
 
     //DLG: Add caseDirectoryPath from AutoIngestJob
     /*
@@ -83,7 +87,7 @@ final class ManifestNodeData implements Serializable {
      *
      * @param nodeData The raw bytes received from the coordination service.
      */
-    ManifestNodeData(byte[] nodeData) throws ManifestNodeDataException {
+    AutoIngestJobNodeData(byte[] nodeData) throws AutoIngestJobNodeDataException {
         ByteBuffer buffer = ByteBuffer.wrap(nodeData);
         this.coordSvcNodeDataWasSet = buffer.hasRemaining();
         if (this.coordSvcNodeDataWasSet) {
@@ -111,25 +115,34 @@ final class ManifestNodeData implements Serializable {
         }
 
         if (buffer.hasRemaining()) {
-            // Version is greater than 1
+            /*
+             * There are more than 24 bytes in the buffer, so we assume the
+             * version is greater than '0'.
+             */
             this.version = buffer.getInt();
             if (this.version > NODE_DATA_VERSION) {
-                throw new ManifestNodeDataException(String.format(
-                        "Node data version %d is not suppored.",
-                        this.version));
+                throw new AutoIngestJobNodeDataException(String.format("Node data version %d is not suppored.", this.version));
             }
             this.deviceId = getStringFromBuffer(buffer, TypeKind.BYTE);
             this.caseName = getStringFromBuffer(buffer, TypeKind.BYTE);
+            //DLG: this.caseDirectoryPath = getStringFromBuffer(buffer, TypeKind.SHORT);
             this.manifestFileDate = buffer.getLong();
             this.manifestFilePath = getStringFromBuffer(buffer, TypeKind.SHORT);
             this.dataSourcePath = getStringFromBuffer(buffer, TypeKind.SHORT);
+            //DLG: this.processingStage = getStringFromBuffer(buffer, TypeKind.BYTE);
+            //DLG: this.processingStageStartDate = buffer.getLong();
+            //DLG: this.processingHost = getStringFromBuffer(buffer, TypeKind.SHORT);
         } else {
-            this.version = 1;
+            this.version = 0;
             this.deviceId = "";
             this.caseName = "";
+            this.caseDirectoryPath = "";
             this.manifestFileDate = 0L;
             this.manifestFilePath = "";
             this.dataSourcePath = "";
+            this.processingStage = "";
+            this.processingStageStartDate = 0L;
+            this.processingHost = "";
         }
     }
 
@@ -146,7 +159,7 @@ final class ManifestNodeData implements Serializable {
      *                        completed.
      * @param errorsOccurred  Boolean to determine if errors have occurred.
      */
-    ManifestNodeData(Manifest manifest, ProcessingStatus status, int priority, int numberOfCrashes, Date completedDate, boolean errorOccurred) {
+    AutoIngestJobNodeData(Manifest manifest, ProcessingStatus status, int priority, int numberOfCrashes, Date completedDate, boolean errorOccurred) {
         this.coordSvcNodeDataWasSet = false;
         this.status = status;
         this.priority = priority;
@@ -427,9 +440,13 @@ final class ManifestNodeData implements Serializable {
             // Write data
             putStringIntoBuffer(deviceId, buffer, TypeKind.BYTE);
             putStringIntoBuffer(caseName, buffer, TypeKind.BYTE);
+            //DLG: putStringIntoBuffer(caseDirectoryPath, buffer, TypeKind.SHORT);
             buffer.putLong(this.manifestFileDate);
             putStringIntoBuffer(manifestFilePath, buffer, TypeKind.SHORT);
             putStringIntoBuffer(dataSourcePath, buffer, TypeKind.SHORT);
+            //DLG: putStringIntoBuffer(processingStage, buffer, TypeKind.BYTE);
+            //DLG: buffer.putLong(this.processingStageStartDate);
+            //DLG: putStringIntoBuffer(processingHost, buffer, TypeKind.SHORT);
         }
 
         // Prepare the array
