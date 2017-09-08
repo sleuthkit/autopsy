@@ -31,5 +31,11 @@
             </file>        
         </folder>    
     </folder>       
+    
+      <folder name="Windows2">
+        <folder name="Modes">
+            <file name="dashboard.wsmode" url="dashboardWsmode.xml"/>
+             </folder>
+    </folder>
 
 </filesystem>

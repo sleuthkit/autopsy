@@ -26,6 +26,7 @@ import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -151,7 +152,7 @@ public final class DirectoryTreeTopComponent extends TopComponent implements Dat
                 }
             }
         });
-        Case.addEventSubscriber(new HashSet<>(Arrays.asList(Case.Events.CURRENT_CASE.toString(), Case.Events.DATA_SOURCE_ADDED.toString())), this);
+        Case.addEventTypeSubscriber(EnumSet.of(Case.Events.CURRENT_CASE, Case.Events.DATA_SOURCE_ADDED), this);
         this.em.addPropertyChangeListener(this);
         IngestManager.getInstance().addIngestJobEventListener(this);
         IngestManager.getInstance().addIngestModuleEventListener(this);

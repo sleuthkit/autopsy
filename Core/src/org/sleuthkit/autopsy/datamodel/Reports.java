@@ -28,7 +28,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -103,8 +105,10 @@ public final class Reports implements AutopsyVisitableItem {
      */
     private static final class ReportNodeFactory extends ChildFactory<Report> {
 
+        private static final Set<Case.Events> CASE_EVENTS_OF_INTEREST = EnumSet.of(Case.Events.REPORT_ADDED, Case.Events.REPORT_DELETED);
+
         ReportNodeFactory() {
-            Case.addPropertyChangeListener((PropertyChangeEvent evt) -> {
+            Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, (PropertyChangeEvent evt) -> {
                 String eventType = evt.getPropertyName();
                 if (eventType.equals(Case.Events.REPORT_ADDED.toString()) || eventType.equals(Case.Events.REPORT_DELETED.toString())) {
                     /**

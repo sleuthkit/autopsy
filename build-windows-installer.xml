@@ -170,7 +170,7 @@
         <!-- Update configuration file to include jre -->
         <property name="inst.property.file" value="${inst-path}/etc/${app.name}.conf" />
         <!-- Sets max heap size to be ${jvm.max.mem} which is set in the run-ai-(32/64) target -->
-        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem}m -J-XX:MaxPermSize=128M -J-Xverify:none &quot;" />
+        <var name="jvm.args" value="&quot;--branding ${app.name} -J-Xms24m -J-Xmx${jvm.max.mem}m -J-XX:MaxPermSize=128M -J-Xverify:none -J-XX:+UseG1GC -J-XX:+UseStringDeduplication &quot;" />
         <propertyfile file="${inst.property.file}">
             <!-- Note: can be higher on 64 bit systems, should be in sync with project.properties -->
             <entry key="default_options" value="@JVM_OPTIONS" />
