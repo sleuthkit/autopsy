@@ -73,6 +73,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnaps
 @Messages({
     "AutoIngestControlPanel.bnPause.text=Pause",
     "AutoIngestControlPanel.bnPause.paused=Paused",
+    "AutoIngestControlPanel.bnPause.running=Running",
     "AutoIngestControlPanel.bnPause.confirmHeader=Are you sure you want to pause?",
     "AutoIngestControlPanel.bnPause.warningText=Pause will occur after the current job completes processing. This could take a long time. Continue?",
     "AutoIngestControlPanel.bnPause.toolTipText=Suspend processing of Pending Jobs",
