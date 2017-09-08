@@ -469,7 +469,7 @@ final class RegexQuery implements KeywordSearchQuery {
             try {
                 Account ccAccount = 
                 Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(),
-                        MODULE_NAME, hit.getContent());
+                        MODULE_NAME, content);
                 
                 newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccount.getArtifactId());
             } catch (TskCoreException ex) {
