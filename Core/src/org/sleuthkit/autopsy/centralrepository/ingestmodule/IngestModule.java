@@ -1,7 +1,7 @@
 /*
  * Central Repository
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -156,21 +156,10 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        if (EamDb.isEnabled() == false) {
-            /*
-             * Not signaling an error for now. This is a workaround for the way
-             * all newly didscovered ingest modules are automatically anabled.
-             *
-             * TODO (JIRA-2731): Add isEnabled API for ingest modules.
-             */
+        if ((EamDb.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
             return;
         }
         
-        // If either of these are null, then the ingest module never got through startup
-        if((eamCase == null) || (eamDataSource == null)){
-            return;
-        }
-
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();
