@@ -53,13 +53,9 @@ import org.netbeans.api.options.OptionsDisplayer;
 import org.openide.DialogDisplayer;
 import org.openide.LifecycleManager;
 import org.openide.NotifyDescriptor;
-import org.openide.filesystems.FileObject;
-import org.openide.filesystems.FileUtil;
 import org.openide.util.NbBundle;
-import org.openide.util.actions.CallableSystemAction;
+import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.casemodule.CaseNewAction;
-import org.sleuthkit.autopsy.casemodule.CaseOpenAction;
 import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
@@ -119,20 +115,33 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * allows the columns of the table model to be described by either an enum
      * ordinal or a column header string.
      */
+    @Messages({
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Case=Case",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ImageFolder=Data Source",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.HostName=Host Name",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CreatedTime=Job Created",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StartedTime=Stage Started",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CompletedTime=Job Completed",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Stage=Stage",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status=Status",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder=Case Folder",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob= Local Job?",
+        "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath= Manifest File Path"
+    })
     private enum JobsTableModelColumns {
 
-        CASE(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Case")),
-        DATA_SOURCE(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ImageFolder")),
-        HOST_NAME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.HostName")),
-        CREATED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CreatedTime")),
-        STARTED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StartedTime")),
-        COMPLETED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CompletedTime")),
-        STAGE(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Stage")),
-        STAGE_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime")),
-        STATUS(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
-        CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
-        IS_LOCAL_JOB(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.LocalJob")),
-        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath"));
+        CASE(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Case")),
+        DATA_SOURCE(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ImageFolder")),
+        HOST_NAME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.HostName")),
+        CREATED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CreatedTime")),
+        STARTED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StartedTime")),
+        COMPLETED_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CompletedTime")),
+        STAGE(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Stage")),
+        STAGE_TIME(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.StageTime")),
+        STATUS(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.Status")),
+        CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.CaseFolder")),
+        IS_LOCAL_JOB(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.LocalJob")),
+        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.JobsTableModel.ColumnHeader.ManifestFilePath"));
 
         private final String header;
 
@@ -182,9 +191,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestControlPanel() {
+            
         //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
-         WindowManager.getDefault().getMainWindow().setEnabled(false);
-        
+        WindowManager.getDefault().getMainWindow().setEnabled(false);
+
         manager = AutoIngestManager.getInstance();
 
         pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
@@ -231,6 +241,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * Queries the services monitor and sets the text for the services status
      * text box.
      */
+    @Messages({
+        "AutoIngestControlPanel.tbServicesStatusMessage.Message=Case databases {0}, keyword search {1}, coordination {2}, messaging {3} ",
+        "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up=up",
+        "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down=down",
+        "AutoIngestControlPanel.tbServicesStatusMessage.Message.Unknown=unknown"
+    })
     private void setServicesStatusMessage() {
         new SwingWorker<Void, Void>() {
 
@@ -254,14 +270,14 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
              * @return The status string.
              */
             private String getServiceStatus(ServicesMonitor.Service service) {
-                String serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Unknown");
+                String serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Unknown");
                 try {
                     ServicesMonitor servicesMonitor = ServicesMonitor.getInstance();
                     serviceStatus = servicesMonitor.getServiceStatus(service.toString());
                     if (serviceStatus.compareTo(ServicesMonitor.ServiceStatus.UP.toString()) == 0) {
-                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
                     } else {
-                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Down");
+                        serviceStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down");
                     }
                 } catch (ServicesMonitor.ServicesMonitorException ex) {
                     SYS_LOGGER.log(Level.SEVERE, String.format("Dashboard error getting service status for %s", service), ex);
@@ -271,8 +287,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
 
             @Override
             protected void done() {
-                tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message", caseDatabaseServerStatus, keywordSearchServiceStatus, keywordSearchServiceStatus, messagingStatus));
-                String upStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.tbServicesStatusMessage.Message.Up");
+                tbServicesStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message", caseDatabaseServerStatus, keywordSearchServiceStatus, keywordSearchServiceStatus, messagingStatus));
+                String upStatus = NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up");
                 if (caseDatabaseServerStatus.compareTo(upStatus) != 0
                         || keywordSearchServiceStatus.compareTo(upStatus) != 0
                         || messagingStatus.compareTo(upStatus) != 0) {
@@ -554,12 +570,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         enablePendingTableButtons(false);
         bnShowCaseLog.setEnabled(false);
         bnReprocessJob.setEnabled(false);
-        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnStart.text"));
-        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnStart.toolTipText"));
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnStart.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnStart.toolTipText"));
         bnPause.setEnabled(true);    //initial label for bnPause is 'Start' and it's enabled for user to start the process
         bnRefresh.setEnabled(false); //at initial stage, nothing to refresh
         enableRunningTableButtons(false);
-        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnStart.startMessage"));
+        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnStart.startMessage"));
     }
 
     /**
@@ -598,12 +614,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             autoIngestStarted = true;
         } catch (AutoIngestManager.AutoIngestManagerStartupException ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
-            tbStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.AutoIngestStartupError"));
+            tbStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.AutoIngestStartupError"));
             manager = null;
 
             JOptionPane.showMessageDialog(this,
-                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.AutoIngestStartupFailed.Message"),
-                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.AutoIngestStartupFailed.Title"),
+                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.AutoIngestStartupFailed.Message"),
+                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.AutoIngestStartupFailed.Title"),
                     JOptionPane.ERROR_MESSAGE);
             bnOptions.setEnabled(true);
 
@@ -632,13 +648,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         updateExecutor.submit(new UpdateAllJobsTablesTask());
         manager.scanInputDirsNow();
 
-		//bnPause.setEnabled(true);
-        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.text"));
-        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.toolTipText"));
+        //bnPause.setEnabled(true);
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.toolTipText"));
         bnRefresh.setEnabled(true);
         bnOptions.setEnabled(false);
-        
-        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.running"));
+
+        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.running"));
     }
 
     /**
@@ -655,13 +671,13 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * was grabbing the monitor?
          */
         Object[] options = {
-            NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.OK"),
-            NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.Cancel")};
+            NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.OK"),
+            NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.Cancel")};
         int reply = JOptionPane.OK_OPTION;
 
         if (null != manager && IngestManager.getInstance().isIngestRunning()) {
             reply = JOptionPane.showOptionDialog(this,
-                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.ExitConsequences"),
+                    NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.ExitConsequences"),
                     NbBundle.getMessage(AutoIngestControlPanel.class, "ConfirmationDialog.ConfirmExitHeader"),
                     JOptionPane.DEFAULT_OPTION,
                     JOptionPane.WARNING_MESSAGE,
@@ -675,7 +691,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
              * appears (if there is time to see it).
              */
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.ExitingStatus"));
+            tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.ExitingStatus"));
 
             /*
              * Shut down the table refresh task executor.
@@ -716,7 +732,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     /**
      * @inheritDoc
      */
-    @NbBundle.Messages({
+    @Messages({
         "AutoIngestControlPanel.bnPause.paused=Paused",
         "AutoIngestControlPanel.PauseDueToDatabaseServiceDown=Paused, unable to communicate with case database service.",
         "AutoIngestControlPanel.PauseDueToKeywordSearchServiceDown=Paused, unable to communicate with keyword search service.",
@@ -743,7 +759,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     break;
                 case PAUSED_BY_REQUEST:
                     EventQueue.invokeLater(() -> {
-                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.paused"));
+                        tbStatusMessage.setText(Bundle.AutoIngestControlPanel_bnPause_paused());
                         bnOptions.setEnabled(true);
                         bnRefresh.setEnabled(false);
                         isPaused = true;
@@ -799,8 +815,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         /**
          * Change the pause button text and tool tip to make it a resume button.
          */
-        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnResume.text"));
-        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.toolTipTextResume"));
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnResume.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.toolTipTextResume"));
 
         if (buttonClicked) {
             /**
@@ -825,9 +841,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * Change the resume button text and tool tip to make it a pause button.
          */
         bnOptions.setEnabled(false);
-        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.text"));
-        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.toolTipText"));
-        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.running"));
+        bnPause.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.text"));
+        bnPause.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.toolTipText"));
+        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.running"));
         bnRefresh.setEnabled(true);
 
         /**
@@ -1061,7 +1077,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
                 AutoIngestJob.StageDetails status = job.getStageDetails();
-                ManifestNodeData nodeData = job.getNodeData();
+                AutoIngestJobNodeData nodeData = job.getNodeData();
                 tableModel.addRow(new Object[]{
                     nodeData.getCaseName(), // CASE
                     nodeData.getDataSourcePath().getFileName(), // DATA_SOURCE
@@ -1080,11 +1096,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
         }
     }
-    
+
     /**
      * Get the current lists of jobs and update the UI.
      */
-    private void refreshTables(){
+    private void refreshTables() {
         JobsSnapshot jobsSnapshot = manager.getCurrentJobsSnapshot();
         refreshTable(jobsSnapshot.getCompletedJobs(), completedTableModel, null);
         refreshTable(jobsSnapshot.getPendingJobs(), pendingTableModel, null);
@@ -1449,6 +1465,9 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      *
      * @param evt The button click event.
      */
+    @Messages({
+        "AutoIngestControlPanel.DeletionFailed=Deletion failed for job"
+    })
     private void bnDeleteCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnDeleteCaseActionPerformed
         if (completedTableModel.getRowCount() < 0 || completedTable.getSelectedRow() < 0) {
             return;
@@ -1481,12 +1500,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 if (CaseDeletionResult.FAILED == result) {
                     JOptionPane.showMessageDialog(this,
                             String.format("Could not delete case %s. It may be in in use.", caseName),
-                            org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.DeletionFailed"),
+                            org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
                             JOptionPane.INFORMATION_MESSAGE);
                 } else if (CaseDeletionResult.PARTIALLY_DELETED == result) {
                     JOptionPane.showMessageDialog(this,
                             String.format("Could not delete case %s. See system log for details.", caseName),
-                            org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.DeletionFailed"),
+                            org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
                             JOptionPane.INFORMATION_MESSAGE);
                 }
             }
@@ -1539,8 +1558,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      *
      * @param evt The button click event.
      */
+    @Messages({
+        "AutoIngestControlPanel.bnPause.pausing=Pausing after current job completes..."
+    })
     private void bnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPauseActionPerformed
-        
+
         if (!autoIngestStarted) {
             //put up a wait cursor during the start up operation
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -1552,7 +1574,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             return;
         }
         if (!isPaused) {
-            tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.bnPause.pausing"));
+            tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.pausing"));
             pause(true);
         } else {
             resume();
@@ -1634,6 +1656,10 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      *
      * @param evt The button click event.
      */
+    @Messages({
+        "AutoIngestControlPanel.ShowLogFailed.Title=Unable to display case log",
+        "AutoIngestControlPanel.ShowLogFailed.Message=Case log file does not exist"
+    })
     private void bnShowCaseLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnShowCaseLogActionPerformed
         try {
             int selectedRow = completedTable.getSelectedRow();
@@ -1644,8 +1670,8 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     if (pathToLog.toFile().exists()) {
                         Desktop.getDesktop().edit(pathToLog.toFile());
                     } else {
-                        JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.ShowLogFailed.Message"),
-                                org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestDashboard.ShowLogFailed.Title"), JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.ShowLogFailed.Message"),
+                                org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.ShowLogFailed.Title"), JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
                     MessageNotifyUtil.Message.warn("The case directory for this job has been deleted.");

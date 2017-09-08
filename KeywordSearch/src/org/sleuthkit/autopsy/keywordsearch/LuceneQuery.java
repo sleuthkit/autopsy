@@ -396,10 +396,10 @@ class LuceneQuery implements KeywordSearchQuery {
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query +". Solr doc id " + solrObjectId + ", chunkID " + chunkID , ex); //NON-NLS
             throw ex;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query +". Solr doc id " + solrObjectId + ", chunkID " + chunkID , ex); //NON-NLS
             return "";
         }
     }

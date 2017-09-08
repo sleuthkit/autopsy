@@ -65,27 +65,14 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     private JobsSnapshot jobsSnapshot;
 
     /**
-     * Creates an auto ingest monitor responsible for monitoring and reporting
-     * the processing of auto ingest jobs.
-     *
-     * @return The auto ingest monitor.
-     *
-     * @throws AutoIngestMonitorException If the monitor cannot be created.
-     */
-    static AutoIngestMonitor createMonitor() throws AutoIngestMonitorException {
-        AutoIngestMonitor monitor = new AutoIngestMonitor();
-        monitor.startUp();
-        return monitor;
-    }
-
-    /**
      * Constructs an auto ingest monitor responsible for monitoring and
      * reporting the processing of auto ingest jobs.
      */
-    private AutoIngestMonitor() {
+    AutoIngestMonitor() {
         eventPublisher = new AutopsyEventPublisher();
         coordSvcQueryExecutor = new ScheduledThreadPoolExecutor(NUM_COORD_SVC_QUERY_THREADS, new ThreadFactoryBuilder().setNameFormat(COORD_SVC_QUERY_THREAD_NAME).build());
         jobsLock = new Object();
+        jobsSnapshot = new JobsSnapshot();
     }
 
     /**
@@ -94,7 +81,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @throws AutoIngestMonitorException If there is a problem starting the
      *                                    auto ingest monitor.
      */
-    private void startUp() throws AutoIngestMonitor.AutoIngestMonitorException {
+    void startUp() throws AutoIngestMonitor.AutoIngestMonitorException {
         try {
             coordinationService = CoordinationService.getInstance();
         } catch (CoordinationServiceException ex) {
@@ -152,10 +139,12 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @param event A auto ingest job started event.
      */
     private void handleJobStartedEvent(AutoIngestJobStartedEvent event) {
-        // DLG: Remove job from event from pending queue, if present
-        // DLG: Add job to running jobs list
-        setChanged();
-        notifyObservers();
+        synchronized (jobsLock) {
+            // DLG: Remove job from pending queue, if present
+            // DLG: Add job to running jobs list
+            setChanged();
+            notifyObservers(jobsSnapshot);
+        }
     }
 
     /**
@@ -164,9 +153,11 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @param event A auto ingest job status event.
      */
     private void handleJobStatusEvent(AutoIngestJobStatusEvent event) {
-        // DLG: Replace job in running list with job from event
-        setChanged();
-        notifyObservers();
+        synchronized (jobsLock) {
+            // DLG: Replace job in running list with job from event
+            setChanged();
+            notifyObservers(jobsSnapshot);
+        }
     }
 
     /**
@@ -175,10 +166,12 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @param event A auto ingest job completed event.
      */
     private void handleJobCompletedEvent(AutoIngestJobCompletedEvent event) {
-        // DLG: Remove job from event from running list, if present
-        // DLG: Add job to completed list
-        setChanged();
-        notifyObservers();
+        synchronized (jobsLock) {
+            // DLG: Remove job from event from running list, if present
+            // DLG: Add job to completed list
+            setChanged();
+            notifyObservers(jobsSnapshot);
+        }
     }
 
     /**
@@ -187,9 +180,11 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @param event A job/case prioritization event.
      */
     private void handleCasePrioritizationEvent(AutoIngestCasePrioritizedEvent event) {
-        // DLG: Replace job in pending queue with job from event
-        setChanged();
-        notifyObservers();
+        synchronized (jobsLock) {
+            // DLG: Replace job in pending queue with job from event
+            setChanged();
+            notifyObservers(jobsSnapshot);
+        }
     }
 
     /**
@@ -241,7 +236,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             List<String> nodeList = coordinationService.getNodeList(CoordinationService.CategoryNode.MANIFESTS);
             for (String node : nodeList) {
                 // DLG: Do not need a lock here
-                // DLG: Get the node data and construct a AutoIngestJobNodeData object (rename ManifestNodeData => AutoIngestJobData)
+                // DLG: Get the node data and construct a AutoIngestJobNodeData object (rename AutoIngestJobNodeData => AutoIngestJobData)
                 // DLG: Construct an AutoIngestJob object from the AutoIngestJobNodeData object, need new AutoIngestJob constructor 
             }
             return newJobsSnapshot;
@@ -281,15 +276,15 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                 ++highestPriority;
                 String manifestNodePath = prioritizedJob.getNodeData().getManifestFilePath().toString();
                 try {
-                    ManifestNodeData nodeData = new ManifestNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                    AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
                     nodeData.setPriority(highestPriority);
                     coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
-                } catch (ManifestNodeDataException | CoordinationServiceException | InterruptedException ex) {
+                } catch (AutoIngestJobNodeDataException | CoordinationServiceException | InterruptedException ex) {
                     throw new AutoIngestMonitorException("Error bumping priority for job " + prioritizedJob.toString(), ex);
                 }
                 prioritizedJob.getNodeData().setPriority(highestPriority);
             }
-            
+
             /*
              * Publish a prioritization event.
              */
