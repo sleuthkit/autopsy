@@ -49,16 +49,16 @@ class KeywordHit implements Comparable<KeywordHit> {
     /**
      * Constructor
      *
-     * @param solrDocumentId The ID of the document this hit is in.
+     * @param solrDocumentId The id of the document this hit is in.
      * @param snippet        A small amount of text from the document containing
      *                       the hit.
      * @param hit            The exact text from the document that was the hit.
-     *                       For some searches (ie substring,regex) this will be
+     *                       For some searches (ie substring, regex) this will be
      *                       different than the search term.
      *
      * @throws TskCoreException If there is a problem getting the underlying
      *                          content associated with a hit on the text of an
-     *                          artifact..
+     *                          artifact.
      */
     KeywordHit(String solrDocumentId, String snippet, String hit) throws TskCoreException {
         this.snippet = StringUtils.stripToEmpty(snippet);
