@@ -341,6 +341,8 @@ class HighlightedText implements IndexedText {
 
     @Override
     public String getText() {
+        String chunkID = "";
+        String highlightField = "";
         try {
             loadPageInfo(); //inits once
             SolrQuery q = new SolrQuery();
@@ -348,14 +350,14 @@ class HighlightedText implements IndexedText {
 
             String contentIdStr = Long.toString(this.objectId);
             if (numberPages != 0) {
-                final String chunkID = Integer.toString(this.currentPage);
+                chunkID = Integer.toString(this.currentPage);
                 contentIdStr += "0".equals(chunkID) ? "" : "_" + chunkID;
             }
             final String filterQuery = Server.Schema.ID.toString() + ":" + KeywordSearchUtil.escapeLuceneQuery(contentIdStr);
 
             double indexSchemaVersion = NumberUtils.toDouble(solrServer.getIndexInfo().getSchemaVersion());
             //choose field to highlight based on isLiteral and Solr index schema version.
-            String highlightField = (isLiteral || (indexSchemaVersion < 2.0))
+            highlightField = (isLiteral || (indexSchemaVersion < 2.0))
                     ? LuceneQuery.HIGHLIGHT_FIELD
                     : Server.Schema.CONTENT_STR.toString();
             if (isLiteral) {
@@ -419,7 +421,7 @@ class HighlightedText implements IndexedText {
 
             return "<html><pre>" + highlightedContent + "</pre></html>"; //NON-NLS
         } catch (TskCoreException | KeywordSearchModuleException | NoOpenCoreException ex) {
-            logger.log(Level.SEVERE, "Error getting highlighted text for " + objectId, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + objectId + ", chunkID " + chunkID + ", highlight query: " + highlightField, ex); //NON-NLS
             return NbBundle.getMessage(this.getClass(), "HighlightedMatchesSource.getMarkup.queryFailedMsg");
         }
     }

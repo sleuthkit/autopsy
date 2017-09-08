@@ -317,7 +317,7 @@ class AccountsText implements IndexedText {
             // extracted content (minus highlight tags) is HTML-escaped
             return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.WARNING, "Error getting highlighted text for " + solrObjectId, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage , ex); //NON-NLS
             return Bundle.AccountsText_getMarkup_queryFailedMsg();
         }
     }
