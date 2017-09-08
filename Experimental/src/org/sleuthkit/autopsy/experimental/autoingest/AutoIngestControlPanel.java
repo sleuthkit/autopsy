@@ -70,6 +70,48 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnaps
  * automated ingest for a single node within the cluster. There can be at most
  * one such panel per node.
  */
+@Messages({
+    "AutoIngestControlPanel.bnPause.paused=Paused",
+    "AutoIngestControlPanel.bnPause.running=Running",
+    "AutoIngestControlPanel.bnPause.text=Pause",
+    "AutoIngestControlPanel.bnPause.toolTipText=Suspend processing of Pending Jobs",
+    "AutoIngestControlPanel.bnStart.startMessage=Waiting to start",
+    "AutoIngestControlPanel.bnStart.text=Start",
+    "AutoIngestControlPanel.bnStart.toolTipText=Start processing auto ingest jobs",
+    "AutoIngestControlPanel.pendingTable.toolTipText=The Pending table displays the order upcoming Jobs will be processed with the top of the list first",
+    "AutoIngestControlPanel.runningTable.toolTipText=The Running table displays the currently running Job and information about it",
+    "AutoIngestControlPanel.completedTable.toolTipText=The Completed table shows all Jobs that have been processed already",
+    "AutoIngestControlPanel.bnCancelJob.text=&Cancel Job",
+    "AutoIngestControlPanel.bnCancelJob.toolTipText=Cancel processing of the current Job and move on to the next Job. This functionality is only available for jobs running on current AIM node.",
+    "AutoIngestControlPanel.bnDeleteCase.text=&Delete Case",
+    "AutoIngestControlPanel.bnDeleteCase.toolTipText=Delete the selected Case in its entirety",
+    "AutoIngestControlPanel.lbPending.text=Pending Jobs",
+    "AutoIngestControlPanel.lbRunning.text=Running Jobs",
+    "AutoIngestControlPanel.lbCompleted.text=Completed Jobs",
+    "AutoIngestControlPanel.bnRefresh.text=&Refresh",
+    "AutoIngestControlPanel.bnRefresh.toolTipText=Refresh displayed tables",
+    "AutoIngestControlPanel.bnCancelModule.text=Cancel &Module",
+    "AutoIngestControlPanel.bnCancelModule.toolTipText=Cancel processing of the current module within the Job and move on to the next module within the Job. This functionality is only available for jobs running on current AIM node.",
+    "AutoIngestControlPanel.bnExit.text=&Exit",
+    "AutoIngestControlPanel.bnExit.toolTipText=Exit Application",
+    "AutoIngestControlPanel.bnOptions.text=&Options",
+    "AutoIngestControlPanel.bnOptions.toolTipText=Display options panel. All processing must be paused to open the options panel.",
+    "AutoIngestControlPanel.bnShowProgress.text=Ingest Progress",
+    "AutoIngestControlPanel.bnShowProgress.toolTipText=Show the progress of the currently running Job. This functionality is only available for jobs running on current AIM node.",
+    "AutoIngestControlPanel.bnPrioritizeCase.text=Prioritize Case",
+    "AutoIngestControlPanel.bnPrioritizeCase.toolTipText=Move all images associated with a case to top of Pending queue.",
+    "AutoIngestControlPanel.bnShowCaseLog.text=Show Case &Log",
+    "AutoIngestControlPanel.bnShowCaseLog.toolTipText=Display case log file for selected case",
+    "AutoIngestControlPanel.tbStatusMessage.text=",
+    "AutoIngestControlPanel.lbStatus.text=Status:",
+    "AutoIngestControlPanel.bnPrioritizeJob.text=Prioritize Job",
+    "AutoIngestControlPanel.bnPrioritizeJob.toolTipText=Move this folder to the top of the Pending queue.",
+    "AutoIngestControlPanel.bnPrioritizeJob.actionCommand=<AutoIngestDashboard.bnPrioritizeJob.text>",
+    "AutoIngestControlPanel.lbServicesStatus.text=Services Status:",
+    "AutoIngestControlPanel.tbServicesStatusMessage.text=",
+    "AutoIngestControlPanel.bnOpenLogDir.text=Open System Logs Directory",
+    "AutoIngestControlPanel.bnReprocessJob.text=Reprocess Job"
+})
 public final class AutoIngestControlPanel extends JPanel implements Observer {
 
     private static final long serialVersionUID = 1L;
@@ -98,7 +140,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
     private static final Logger SYS_LOGGER = AutoIngestSystemLogger.getLogger();
     private static AutoIngestControlPanel instance;
-    private DefaultTableModel pendingTableModel;    //DLG: Make this 'final'!
+    private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
     private AutoIngestManager manager;
@@ -198,23 +240,14 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         
         manager = AutoIngestManager.getInstance();
         
-        try {
-            pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-                private static final long serialVersionUID = 1L;
+        pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
+            private static final long serialVersionUID = 1L;
 
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-        } catch (Throwable ex) {
-            //DLG: Temporary code for troubleshooting.
-            SYS_LOGGER.log(Level.SEVERE, "AutoIngestControlPanel() error:", ex);
-            //DLG: Temporary code for troubleshooting. Remove when done!
-            pendingTableModel = null;
-            //////////////////////////////////////////////////////////////
-        }
-
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
         runningTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
             private static final long serialVersionUID = 1L;
@@ -614,6 +647,11 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * subscribes to services monitor events and starts a task to populate the
      * auto ingest job tables. The Refresh and Pause buttons are enabled.
      */
+    @Messages({
+        "AutoIngestControlPanel.AutoIngestStartupError=Failed to start automated ingest. Verify Multi-user Settings.",
+        "AutoIngestControlPanel.AutoIngestStartupFailed.Message=Failed to start automated ingest.\nPlease see auto ingest system log for details.",
+        "AutoIngestControlPanel.AutoIngestStartupFailed.Title=Automated Ingest Error",
+    })
     private void startUp() {
 
         /*
@@ -671,6 +709,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * Shuts down auto ingest by shutting down the auto ingest manager and doing
      * an application exit.
      */
+    @Messages({
+        "AutoIngestControlPanel.OK=OK",
+        "AutoIngestControlPanel.Cancel=Cancel",
+        "AutoIngestControlPanel.ExitConsequences=This will cancel any currently running job on this host. Exiting while a job is running potentially leaves the case in an inconsistent or corrupted state.",
+        "AutoIngestControlPanel.ExitingStatus=Exiting..."
+    })
     public void shutdown() {
         /*
          * Confirm that the user wants to proceed, letting him or her no that if
@@ -743,7 +787,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * @inheritDoc
      */
     @Messages({
-        "AutoIngestControlPanel.bnPause.paused=Paused",
         "AutoIngestControlPanel.PauseDueToDatabaseServiceDown=Paused, unable to communicate with case database service.",
         "AutoIngestControlPanel.PauseDueToKeywordSearchServiceDown=Paused, unable to communicate with keyword search service.",
         "AutoIngestControlPanel.PauseDueToCoordinationServiceDown=Paused, unable to communicate with coordination service.",
@@ -751,10 +794,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         "AutoIngestControlPanel.PauseDueToSharedConfigError=Paused, unable to update shared configuration.",
         "AutoIngestControlPanel.PauseDueToIngestJobStartFailure=Paused, unable to start ingest job processing.",
         "AutoIngestControlPanel.PauseDueToFileExporterError=Paused, unable to load File Exporter settings.",
-        "AutoIngestControlPanel.bnPause.running=Running",
-        "AutoIngestControlPanel.bnStart.startMessage=Waiting to start",
-        "AutoIngestControlPanel.bnStart.text=Start",
-        "AutoIngestControlPanel.bnStart.toolTipText=Start processing auto ingest jobs"
     })
     @Override
     public void update(Observable o, Object arg) {
@@ -1122,43 +1161,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
-    @Messages({
-        "AutoIngestControlPanel.pendingTable.toolTipText=The Pending table displays the order upcoming Jobs will be processed with the top of the list first",
-        "AutoIngestControlPanel.runningTable.toolTipText=The Running table displays the currently running Job and information about it",
-        "AutoIngestControlPanel.completedTable.toolTipText=The Completed table shows all Jobs that have been processed already",
-        "AutoIngestControlPanel.bnCancelJob.text=&Cancel Job",
-        "AutoIngestControlPanel.bnCancelJob.toolTipText=Cancel processing of the current Job and move on to the next Job. This functionality is only available for jobs running on current AIM node.",
-        "AutoIngestControlPanel.bnDeleteCase.text=&Delete Case",
-        "AutoIngestControlPanel.bnDeleteCase.toolTipText=Delete the selected Case in its entirety",
-        "AutoIngestControlPanel.lbPending.text=Pending Jobs",
-        "AutoIngestControlPanel.lbRunning.text=Running Jobs",
-        "AutoIngestControlPanel.lbCompleted.text=Completed Jobs",
-        "AutoIngestControlPanel.bnRefresh.text=&Refresh",
-        "AutoIngestControlPanel.bnRefresh.toolTipText=Refresh displayed tables",
-        "AutoIngestControlPanel.bnCancelModule.text=Cancel &Module",
-        "AutoIngestControlPanel.bnCancelModule.toolTipText=Cancel processing of the current module within the Job and move on to the next module within the Job. This functionality is only available for jobs running on current AIM node.",
-        "AutoIngestControlPanel.bnExit.text=&Exit",
-        "AutoIngestControlPanel.bnExit.toolTipText=Exit Application",
-        "AutoIngestControlPanel.bnOptions.text=&Options",
-        "AutoIngestControlPanel.bnOptions.toolTipText=Display options panel. All processing must be paused to open the options panel.",
-        "AutoIngestControlPanel.bnShowProgress.text=Ingest Progress",
-        "AutoIngestControlPanel.bnShowProgress.toolTipText=Show the progress of the currently running Job. This functionality is only available for jobs running on current AIM node.",
-        "AutoIngestControlPanel.bnPause.text=Pause",
-        "AutoIngestControlPanel.bnPause.toolTipText=Suspend processing of Pending Jobs",
-        "AutoIngestControlPanel.bnPrioritizeCase.text=Prioritize Case",
-        "AutoIngestControlPanel.bnPrioritizeCase.toolTipText=Move all images associated with a case to top of Pending queue.",
-        "AutoIngestControlPanel.bnShowCaseLog.text=Show Case &Log",
-        "AutoIngestControlPanel.bnShowCaseLog.toolTipText=Display case log file for selected case",
-        "AutoIngestControlPanel.tbStatusMessage.text=",
-        "AutoIngestControlPanel.lbStatus.text=Status:",
-        "AutoIngestControlPanel.bnPrioritizeJob.text=Prioritize Job",
-        "AutoIngestControlPanel.bnPrioritizeJob.toolTipText=Move this folder to the top of the Pending queue.",
-        "AutoIngestControlPanel.bnPrioritizeJob.actionCommand=<AutoIngestDashboard.bnPrioritizeJob.text>",
-        "AutoIngestControlPanel.lbServicesStatus.text=Services Status:",
-        "AutoIngestControlPanel.tbServicesStatusMessage.text=",
-        "AutoIngestControlPanel.bnOpenLogDir.text=Open System Logs Directory",
-        "AutoIngestControlPanel.bnReprocessJob.text=Reprocess Job"
-    })
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
