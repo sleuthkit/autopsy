@@ -42,6 +42,7 @@ The following topics are available here:
  - \subpage ad_hoc_keyword_search_page
  - \subpage timeline_page
  - \subpage stix_page
+ - \subpage central_repo_page
  - \subpage logs_and_output_page
 - Reporting
  - \subpage tagging_page

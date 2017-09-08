@@ -1,0 +1,35 @@
+/*! \page central_repo_page Central Repository
+
+\section overview Overview
+
+The Central Repository allows a user to find matching artifacts both across cases and across data sources in the same case. It is a combination of an ingest module that extracts, stores, and compares properties against lists of known or known bad properties, a database that stores these properties, and an additional panel in Autopsy to display other instances of each property. The Central Repository database can either be SQLite or PostgreSQL.
+
+The following are some use cases for the Central Repository:
+- <b>Finding Other Instances of a Property</b>
+ - If you find a file or Autopsy artifact (such as a Web History item), there is a content viewer in the bottom right that will show you other cases that had this same file or that had items with the same feature (such as Domain name).   You will also be able to see what other data sources in the same case had this feature. 
+- <b>Alerting When Previously Notable Properties Occur</b>
+ - You can use the Central Repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as 'BAD' they will be added to the Interesting Items section of the tree when seen again in any future cases.
+
+\section terms Terms and Concepts
+
+- <b>Central Repository</b> - The Autopsy feature containing the Central Repository Database and Correlation Engine Ingest Module. Also responsible for displaying correlated properties to the user
+- <b>Central Repository Database</b> - the SQLite or PostgreSQL database that holds all the data
+- <b>Correlation Engine Ingest Module</b> - The ingest module responsible for adding new properties to the database and comparing these properties against the Known/Known Bad lists
+- <b>Property</b> - The data being stored/correlated. These can be file paths/MD5 hashes, email addresses, phone numbers, etc.
+
+\section setup Setup
+
+To start, open the main options panel and select the Central Repository icon. 
+
+\image html placeholder.jpg
+
+\subsection db_setup Setting up the Database
+
+On the Central Repository options panel, check the 'Use a Central Repository' option and then click the Configure button to set up a database. There are two options here:
+- <b>SQLite</b> - This option stores the database in a file. It should only be used when a single client will be accessing the database.
+- <b>PostgreSQL</b> - This option uses a database server running either on the user's host or a remote server. This option must be used if multiple users will be using the same database.
+
+Once a database has been configured, the lower two buttons on the main panel will be enabled, which will be described below.
+
+
+*/
