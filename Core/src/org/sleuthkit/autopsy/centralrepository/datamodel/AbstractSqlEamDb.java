@@ -256,23 +256,24 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
      /**
-     * Creates new Case in the database from the currently open case
+     * Creates new Case in the database from the given case
+     * 
+     * @param case The case to add
      */
     @Override    
-    public EamCase newCaseFromCurrentCase() throws EamDbException{
-        Case curCase = Case.getCurrentCase();
-        if(curCase == null){
-            throw new EamDbException("No case open");
+    public EamCase newCase(Case autopsyCase) throws EamDbException{
+        if(autopsyCase == null){
+            throw new EamDbException("Case is null");
         }
         
         EamCase curCeCase = new EamCase(
                 -1,
-                curCase.getName(), // unique case ID
+                autopsyCase.getName(), // unique case ID
                 EamOrganization.getDefault(),
-                curCase.getDisplayName(),
-                curCase.getCreatedDate(),
-                curCase.getNumber(),
-                curCase.getExaminer(),
+                autopsyCase.getDisplayName(),
+                autopsyCase.getCreatedDate(),
+                autopsyCase.getNumber(),
+                autopsyCase.getExaminer(),
                 null,
                 null,
                 null);        

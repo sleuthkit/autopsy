@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Sqlite implementation of the Central Repository database.
@@ -262,6 +263,21 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }       
     }
+    
+     /**
+     * Creates new Case in the database from the given case
+     * 
+     * @param case The case to add
+     */
+    @Override
+    public EamCase newCase(Case autopsyCase) throws EamDbException {
+         try{
+            acquireExclusiveLock();
+            return super.newCase(autopsyCase);
+        } finally {
+            releaseExclusiveLock();
+        }          
+    }    
     
     /**
      * Creates new Case in the database
