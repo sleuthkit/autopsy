@@ -30,7 +30,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 /**
  * Represents the fact that a file or an artifact associated with a file had a
  * keyword hit. All instances make both the document id of the Solr document
- * where the keyword was found and the object Id of the file available to
+ * where the keyword was found and the object id of the file available to
  * clients. Keyword hits on the indexed text of an artifact also make the
  * artifact available to clients.
  */
