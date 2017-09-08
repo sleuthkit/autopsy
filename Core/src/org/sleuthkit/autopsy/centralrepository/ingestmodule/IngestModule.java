@@ -39,6 +39,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -164,6 +165,11 @@ class IngestModule implements FileIngestModule {
              */
             return;
         }
+        
+        // If either of these are null, then the ingest module never got through startup
+        if((eamCase == null) || (eamDataSource == null)){
+            return;
+        }
 
         EamDb dbManager;
         try {
@@ -210,6 +216,13 @@ class IngestModule implements FileIngestModule {
             }
             return;
         }
+        
+        // Don't allow sqlite central repo databases to be used for multi user cases
+        if((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) 
+                && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)){
+            LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite Central Repository.");
+            throw new IngestModuleException("Cannot run on a multi-user case with a SQLite Central Repository."); // NON-NLS
+        }
 
         jobId = context.getJobId();
         eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
@@ -231,7 +244,7 @@ class IngestModule implements FileIngestModule {
             LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); // NON-NLS
             throw new IngestModuleException("Error connecting to Central Repository database.", ex); // NON-NLS
         }
-
+        
         try {
             filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
         } catch (EamDbException ex) {
