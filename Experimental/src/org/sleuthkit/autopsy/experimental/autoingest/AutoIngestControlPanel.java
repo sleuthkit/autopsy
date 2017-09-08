@@ -89,6 +89,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnaps
     "AutoIngestControlPanel.bnCancelJob.toolTipText=Cancel processing of the current Job and move on to the next Job. This functionality is only available for jobs running on current AIM node.",
     "AutoIngestControlPanel.bnDeleteCase.text=&Delete Case",
     "AutoIngestControlPanel.bnDeleteCase.toolTipText=Delete the selected Case in its entirety",
+    "AutoIngestControlPanel.bnResume.text=Resume",
     "AutoIngestControlPanel.lbPending.text=Pending Jobs",
     "AutoIngestControlPanel.lbRunning.text=Running Jobs",
     "AutoIngestControlPanel.lbCompleted.text=Completed Jobs",
@@ -110,11 +111,24 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnaps
     "AutoIngestControlPanel.lbStatus.text=Status:",
     "AutoIngestControlPanel.bnPrioritizeJob.text=Prioritize Job",
     "AutoIngestControlPanel.bnPrioritizeJob.toolTipText=Move this folder to the top of the Pending queue.",
-    "AutoIngestControlPanel.bnPrioritizeJob.actionCommand=<AutoIngestDashboard.bnPrioritizeJob.text>",
+    "AutoIngestControlPanel.bnPrioritizeJob.actionCommand=<AutoIngestControlPanel.bnPrioritizeJob.text>",
     "AutoIngestControlPanel.lbServicesStatus.text=Services Status:",
     "AutoIngestControlPanel.tbServicesStatusMessage.text=",
     "AutoIngestControlPanel.bnOpenLogDir.text=Open System Logs Directory",
-    "AutoIngestControlPanel.bnReprocessJob.text=Reprocess Job"
+    "AutoIngestControlPanel.bnReprocessJob.text=Reprocess Job",
+    "AutoIngestControlPanel.bnPrioritizeFolder.label=<AutoIngestControlPanel.bnPrioritizeJob.text>",
+    "AutoIngestControlPanel.Cancelling=Cancelling...",
+    "AutoIngestControlPanel.AutoIngestStartupWarning.Title=Automated Ingest Warning",
+    "AutoIngestControlPanel.AutoIngestStartupWarning.Message=Failed to establish remote communications with other automated ingest nodes.\nAuto ingest dashboard will only be able to display local ingest job events.\nPlease verify Multi-User settings (Options->Multi-User). See application log for details.",
+    "AutoIngestControlPanel.UpdatingSharedConfig=Updating shared configuration",
+    "AutoIngestControlPanel.SharedConfigurationDisabled=Shared configuration disabled",
+    "AutoIngestControlPanel.EnableConfigurationSettings=Enable shared configuration from the options panel before uploading",
+    "AutoIngestControlPanel.ErrorUploadingConfiguration=Error uploading configuration",
+    "AutoIngestControlPanel.UploadSuccessTitle=Success",
+    "AutoIngestControlPanel.UploadSuccess=Shared configuration successfully uploaded",
+    "AutoIngestControlPanel.UploadFailedTitle=Failed",
+    "AutoIngestControlPanel.ConfigLocked=The shared configuration directory is locked because upload from another node is in progress. \nIf this is an error, you can unlock the directory and then retry the upload.",
+    "AutoIngestControlPanel.ConfigLockedTitle=Configuration directory locked"
 })
 public final class AutoIngestControlPanel extends JPanel implements Observer {
 
