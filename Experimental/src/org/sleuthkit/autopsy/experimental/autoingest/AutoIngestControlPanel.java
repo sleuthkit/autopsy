@@ -191,49 +191,38 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestControlPanel() {
-        //DLG: Temporary code for troubleshooting. Remove when done!
-        manager = null;
-        pendingTableModel = null;
-        runningTableModel = null;
-        completedTableModel = null;
-            //////////////////////////////////////////////////////////////
-        try {
             
-            //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
-            WindowManager.getDefault().getMainWindow().setEnabled(false);
+        //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
+        WindowManager.getDefault().getMainWindow().setEnabled(false);
 
-            manager = AutoIngestManager.getInstance();
+        manager = AutoIngestManager.getInstance();
 
-            pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-                private static final long serialVersionUID = 1L;
+        pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
+            private static final long serialVersionUID = 1L;
 
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
-            runningTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-                private static final long serialVersionUID = 1L;
+        runningTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
+            private static final long serialVersionUID = 1L;
 
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
-            completedTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
-                private static final long serialVersionUID = 1L;
+        completedTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
+            private static final long serialVersionUID = 1L;
 
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-        } catch (Throwable ex) {
-            //DLG: Temporary code for troubleshooting.
-            SYS_LOGGER.log(Level.SEVERE, "AutoIngestControlPanel() error:", ex);
-        }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
 
         initComponents(); // Generated code.
         setServicesStatusMessage();
