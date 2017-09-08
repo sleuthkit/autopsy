@@ -72,6 +72,7 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnaps
  */
 @Messages({
     "AutoIngestControlPanel.bnPause.text=Pause",
+    "AutoIngestControlPanel.bnPause.paused=Paused",
     "AutoIngestControlPanel.bnPause.confirmHeader=Are you sure you want to pause?",
     "AutoIngestControlPanel.bnPause.warningText=Pause will occur after the current job completes processing. This could take a long time. Continue?",
     "AutoIngestControlPanel.bnPause.toolTipText=Suspend processing of Pending Jobs",
@@ -810,7 +811,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     break;
                 case PAUSED_BY_REQUEST:
                     EventQueue.invokeLater(() -> {
-                        tbStatusMessage.setText(Bundle.AutoIngestControlPanel_bnPause_paused());
+                        tbStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.bnPause.paused"));
                         bnOptions.setEnabled(true);
                         bnRefresh.setEnabled(false);
                         isPaused = true;
@@ -1609,9 +1610,6 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      *
      * @param evt The button click event.
      */
-    @Messages({
-        "AutoIngestControlPanel.bnPause.pausing=Pausing after current job completes..."
-    })
     private void bnPauseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPauseActionPerformed
 
         if (!autoIngestStarted) {
