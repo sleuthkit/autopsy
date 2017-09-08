@@ -317,9 +317,9 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                 JobsSnapshot newJobsSnapshot = queryCoordinationService();
                 synchronized (jobsLock) {
                     jobsSnapshot = newJobsSnapshot;
+                    setChanged();
+                    notifyObservers(jobsSnapshot);
                 }
-                setChanged();
-                notifyObservers();
             }
         }
 
