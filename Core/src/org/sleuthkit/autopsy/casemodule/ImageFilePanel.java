@@ -20,10 +20,8 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
 import java.util.Calendar;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
-import java.util.Optional;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -67,7 +65,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         this.contextName = context;
 
         initComponents();
-        // load and add all timezone
+
+        // Populate the drop down list of time zones
         for (String id : SimpleTimeZone.getAvailableIDs()) {
             timeZoneComboBox.addItem(timeZoneToString(TimeZone.getTimeZone(id)));
         }
@@ -80,9 +79,11 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
 
-        LinkedList<FileFilter> filters = new LinkedList<>(fileChooserFilters);
-        Optional.of(filters.poll()).ifPresent(fileChooser::setFileFilter);
-        filters.forEach(fileChooser::addChoosableFileFilter);
+        fileChooserFilters.forEach(fileChooser::addChoosableFileFilter);
+        if (fileChooserFilters.isEmpty() == false) {
+            fileChooser.setFileFilter(fileChooserFilters.get(0));
+        }
+
     }
 
     /**
@@ -302,10 +303,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             }
         }
     }
-    /**
-     * Populates the drop down list for the time zones and then makes the local
-     * machine time zone to be selected.
-     */
 
     /**
      * Get a string representation of a TimeZone for use in the drop down list.
