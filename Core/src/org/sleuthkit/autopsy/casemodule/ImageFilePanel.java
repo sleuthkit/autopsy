@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.casemodule;
 import java.io.File;
 import java.util.Calendar;
 import java.util.List;
-import java.util.MissingResourceException;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -30,7 +29,9 @@ import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.openide.util.NbBundle;
+import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -39,7 +40,9 @@ import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 /**
- * ImageTypePanel for adding an image file such as .img, .E0x, .00x, etc.
+ * Panel for adding an image file such as .img, .E0x, .00x, etc. Allows the user
+ * to select a file as well as choose the timezone and whether to ignore orphan
+ * files in FAT32.
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
 
@@ -63,7 +66,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      */
     private ImageFilePanel(String context, List<FileFilter> fileChooserFilters) {
         this.contextName = context;
-
         initComponents();
 
         // Populate the drop down list of time zones
@@ -78,12 +80,10 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         fileChooser.setDragEnabled(false);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
-
         fileChooserFilters.forEach(fileChooser::addChoosableFileFilter);
         if (fileChooserFilters.isEmpty() == false) {
             fileChooser.setFileFilter(fileChooserFilters.get(0));
         }
-
     }
 
     /**
@@ -97,11 +97,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * @return instance of the ImageFilePanel
      */
     public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
-
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
         // post-constructor initialization of listener support without leaking references of uninitialized objects
         instance.pathTextField.getDocument().addDocumentListener(instance);
-
         return instance;
     }
 
@@ -194,16 +192,15 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
     }// </editor-fold>//GEN-END:initComponents
 
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
-        String oldText = pathTextField.getText();
+        String oldText = getContentPaths();
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentDir = new File(oldText);
         if (currentDir.exists()) {
             fileChooser.setCurrentDirectory(currentDir);
         }
 
-        int retval = fileChooser.showOpenDialog(this);
-        if (retval == JFileChooser.APPROVE_OPTION) {
-            pathTextField.setText(fileChooser.getSelectedFile().getPath());
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            setContentPath(fileChooser.getSelectedFile().getPath());
         }
 
         updateHelper();
@@ -240,7 +237,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     public String getTimeZone() {
         String tz = timeZoneComboBox.getSelectedItem().toString();
-        return tz.substring(tz.indexOf(")") + 2).trim();
+        return tz.substring(tz.indexOf(')') + 2).trim();
     }
 
     public boolean getNoFatOrphans() {
@@ -257,34 +254,23 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      *
      * @return true if a proper image has been selected, false otherwise
      */
+    @NbBundle.Messages("DataSourceOnCDriveError.text=Warning: Path to multi-user data source is on \"C:\" drive")
     public boolean validatePanel() {
         errorLabel.setVisible(false);
         String path = getContentPaths();
-        if (path == null || path.isEmpty()) {
+        if (StringUtils.isBlank(path)) {
             return false;
         }
 
         // display warning if there is one (but don't disable "next" button)
-        warnIfPathIsInvalid(path);
-
-        boolean isExist = new File(path).isFile();
-        boolean isPhysicalDrive = DriveUtils.isPhysicalDrive(path);
-        boolean isPartition = DriveUtils.isPartition(path);
-
-        return (isExist || isPhysicalDrive || isPartition);
-    }
-
-    /**
-     * Validates path to selected data source and displays warning if it is
-     * invalid.
-     *
-     * @param path Absolute path to the selected data source
-     */
-    private void warnIfPathIsInvalid(String path) {
-        if (!PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
+        if (false == PathValidator.isValid(path, Case.getCurrentCase().getCaseType())) {
             errorLabel.setVisible(true);
-            errorLabel.setText(NbBundle.getMessage(this.getClass(), "DataSourceOnCDriveError.text"));
+            errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
         }
+        
+        return new File(path).isFile()
+                || DriveUtils.isPhysicalDrive(path)
+                || DriveUtils.isPartition(path);
     }
 
     public void storeSettings() {
@@ -297,10 +283,8 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     public void readSettings() {
         String lastImagePath = ModuleSettings.getConfigSetting(contextName, PROP_LASTIMAGE_PATH);
-        if (null != lastImagePath) {
-            if (!lastImagePath.isEmpty()) {
-                pathTextField.setText(lastImagePath);
-            }
+        if (StringUtils.isNotBlank(lastImagePath)) {
+            setContentPath(lastImagePath);
         }
     }
 
@@ -316,8 +300,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         int offset = zone.getRawOffset() / 1000;
         int hour = offset / 3600;
         int minutes = (offset % 3600) / 60;
-        String item = String.format("(GMT%+d:%02d) %s", hour, minutes, zone.getID()); //NON-NLS
-        return item;
+        return String.format("(GMT%+d:%02d) %s", hour, minutes, zone.getID()); //NON-NLS
     }
 
     @Override
@@ -341,14 +324,15 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * to be caught by the parent panel.
      *
      */
-    private void updateHelper() throws MissingResourceException {
+    @NbBundle.Messages({"ImageFilePanel.moduleErr=Module Error",
+        "ImageFilePanel.moduleErr.msg=A module caused an error listening to ImageFilePanel updates."
+        + " See log to determine which module. Some data could be incomplete.\n"})
+    private void updateHelper() {
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        } catch (Exception ee) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.moduleErr"),
-                    NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.moduleErr.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e); //NON-NLS
+            MessageNotifyUtil.Notify.error(ImageFilePanel_moduleErr(), ImageFilePanel_moduleErr_msg());
         }
     }
 
