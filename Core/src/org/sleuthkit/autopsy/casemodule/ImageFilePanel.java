@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2016 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,22 +20,24 @@ package org.sleuthkit.autopsy.casemodule;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.MissingResourceException;
+import java.util.Optional;
 import java.util.SimpleTimeZone;
 import java.util.TimeZone;
+import java.util.logging.Level;
 import javax.swing.JFileChooser;
+import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
-
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
-import org.sleuthkit.autopsy.coreutils.ModuleSettings;
-import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
-import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.DriveUtils;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.autopsy.coreutils.ModuleSettings;
 import org.sleuthkit.autopsy.coreutils.PathValidator;
 
 /**
@@ -43,60 +45,63 @@ import org.sleuthkit.autopsy.coreutils.PathValidator;
  */
 public class ImageFilePanel extends JPanel implements DocumentListener {
 
-    private final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
     private static final Logger logger = Logger.getLogger(ImageFilePanel.class.getName());
-    private final JFileChooser fc = new JFileChooser();
+    private static final String PROP_LASTIMAGE_PATH = "LBL_LastImage_PATH"; //NON-NLS
 
-    // Externally supplied name is used to store settings 
+    private final JFileChooser fileChooser = new JFileChooser();
+
+    /**
+     * Externally supplied name is used to store settings
+     */
     private final String contextName;
 
     /**
      * Creates new form ImageFilePanel
      *
-     * @param context            a string context name used to read/store last
-     *                           used settings
-     * @param fileChooserFilters a list of filters to be used with the
-     *                           FileChooser
+     * @param context            A string context name used to read/store last
+     *                           used settings.
+     * @param fileChooserFilters A list of filters to be used with the
+     *                           FileChooser.
      */
     private ImageFilePanel(String context, List<FileFilter> fileChooserFilters) {
+        this.contextName = context;
+
         initComponents();
-        fc.setDragEnabled(false);
-        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fc.setMultiSelectionEnabled(false);
+        // load and add all timezone
+        for (String id : SimpleTimeZone.getAvailableIDs()) {
+            timeZoneComboBox.addItem(timeZoneToString(TimeZone.getTimeZone(id)));
+        }
+        // set the selected timezone to the current timezone
+        timeZoneComboBox.setSelectedItem(timeZoneToString(Calendar.getInstance().getTimeZone()));
 
         errorLabel.setVisible(false);
 
-        boolean firstFilter = true;
-        for (FileFilter filter : fileChooserFilters) {
-            if (firstFilter) {  // set the first on the list as the default selection
-                fc.setFileFilter(filter);
-                firstFilter = false;
-            } else {
-                fc.addChoosableFileFilter(filter);
-            }
-        }
+        fileChooser.setDragEnabled(false);
+        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fileChooser.setMultiSelectionEnabled(false);
 
-        this.contextName = context;
-
+        LinkedList<FileFilter> filters = new LinkedList<>(fileChooserFilters);
+        Optional.of(filters.poll()).ifPresent(fileChooser::setFileFilter);
+        filters.forEach(fileChooser::addChoosableFileFilter);
     }
 
     /**
      * Creates and returns an instance of a ImageFilePanel.
+     *
+     * @param context            A string context name used to read/store last
+     *                           used settings.
+     * @param fileChooserFilters A list of filters to be used with the
+     *                           FileChooser.
+     *
      * @return instance of the ImageFilePanel
      */
     public static synchronized ImageFilePanel createInstance(String context, List<FileFilter> fileChooserFilters) {
 
         ImageFilePanel instance = new ImageFilePanel(context, fileChooserFilters);
-        instance.postInit();
-        instance.createTimeZoneList();
+        // post-constructor initialization of listener support without leaking references of uninitialized objects
+        instance.pathTextField.getDocument().addDocumentListener(instance);
 
         return instance;
-    }
-
-    //post-constructor initialization to properly initialize listener support
-    //without leaking references of uninitialized objects
-    private void postInit() {
-        pathTextField.getDocument().addDocumentListener(this);
     }
 
     /**
@@ -104,7 +109,6 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
      */
-    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -187,29 +191,21 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
-    @SuppressWarnings("deprecation")
+
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         String oldText = pathTextField.getText();
         // set the current directory of the FileChooser if the ImagePath Field is valid
         File currentDir = new File(oldText);
         if (currentDir.exists()) {
-            fc.setCurrentDirectory(currentDir);
+            fileChooser.setCurrentDirectory(currentDir);
         }
 
-        int retval = fc.showOpenDialog(this);
+        int retval = fileChooser.showOpenDialog(this);
         if (retval == JFileChooser.APPROVE_OPTION) {
-            String path = fc.getSelectedFile().getPath();
-            pathTextField.setText(path);
+            pathTextField.setText(fileChooser.getSelectedFile().getPath());
         }
 
-        try {
-            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.FOCUS_NEXT.toString(), false, true);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", e); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
+        updateHelper();
     }//GEN-LAST:event_browseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -234,6 +230,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
 
     /**
      * Set the path of the image file.
+     *
      * @param s path of the image file
      */
     public void setContentPath(String s) {
@@ -305,41 +302,40 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             }
         }
     }
-
     /**
-     * Creates the drop down list for the time zones and then makes the local
+     * Populates the drop down list for the time zones and then makes the local
      * machine time zone to be selected.
      */
-    public void createTimeZoneList() {
-        // load and add all timezone
-        String[] ids = SimpleTimeZone.getAvailableIDs();
-        for (String id : ids) {
-            TimeZone zone = TimeZone.getTimeZone(id);
-            int offset = zone.getRawOffset() / 1000;
-            int hour = offset / 3600;
-            int minutes = (offset % 3600) / 60;
-            String item = String.format("(GMT%+d:%02d) %s", hour, minutes, id); //NON-NLS
 
-            /*
-             * DateFormat dfm = new SimpleDateFormat("z");
-             * dfm.setTimeZone(zone); boolean hasDaylight =
-             * zone.useDaylightTime(); String first = dfm.format(new Date(2010,
-             * 1, 1)); String second = dfm.format(new Date(2011, 6, 6)); int mid
-             * = hour * -1; String result = first + Integer.toString(mid);
-             * if(hasDaylight){ result = result + second; }
-             * timeZoneComboBox.addItem(item + " (" + result + ")");
-             */
-            timeZoneComboBox.addItem(item);
-        }
-        // get the current timezone
-        TimeZone thisTimeZone = Calendar.getInstance().getTimeZone();
-        int thisOffset = thisTimeZone.getRawOffset() / 1000;
-        int thisHour = thisOffset / 3600;
-        int thisMinutes = (thisOffset % 3600) / 60;
-        String formatted = String.format("(GMT%+d:%02d) %s", thisHour, thisMinutes, thisTimeZone.getID()); //NON-NLS
+    /**
+     * Get a string representation of a TimeZone for use in the drop down list.
+     *
+     * @param zone The TimeZone to make a string for
+     *
+     * @return A string representation of a TimeZone for use in the drop down
+     *         list.
+     */
+    static private String timeZoneToString(TimeZone zone) {
+        int offset = zone.getRawOffset() / 1000;
+        int hour = offset / 3600;
+        int minutes = (offset % 3600) / 60;
+        String item = String.format("(GMT%+d:%02d) %s", hour, minutes, zone.getID()); //NON-NLS
+        return item;
+    }
 
-        // set the selected timezone
-        timeZoneComboBox.setSelectedItem(formatted);
+    @Override
+    public void insertUpdate(DocumentEvent e) {
+        updateHelper();
+    }
+
+    @Override
+    public void removeUpdate(DocumentEvent e) {
+        updateHelper();
+    }
+
+    @Override
+    public void changedUpdate(DocumentEvent e) {
+        updateHelper();
     }
 
     /**
@@ -347,42 +343,14 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
      * it's DocumentEventListener. Each update function fires a property change
      * to be caught by the parent panel.
      *
-     * @param e the event, which is ignored
      */
-    @Override
-    public void insertUpdate(DocumentEvent e) {
-
+    private void updateHelper() throws MissingResourceException {
         try {
             firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
         } catch (Exception ee) {
             logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
-    }
-
-    @Override
-    public void removeUpdate(DocumentEvent e) {
-        try {
-            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        } catch (Exception ee) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
-                    MessageNotifyUtil.MessageType.ERROR);
-        }
-    }
-
-    @Override
-    public void changedUpdate(DocumentEvent e) {
-
-        try {
-            firePropertyChange(DataSourceProcessor.DSP_PANEL_EVENT.UPDATE_UI.toString(), false, true);
-        } catch (Exception ee) {
-            logger.log(Level.SEVERE, "ImageFilePanel listener threw exception", ee); //NON-NLS
-            MessageNotifyUtil.Notify.show(NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr"),
-                    NbBundle.getMessage(this.getClass(), "ImageFilePanel.moduleErr.msg"),
+            MessageNotifyUtil.Notify.show(NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.moduleErr"),
+                    NbBundle.getMessage(ImageFilePanel.class, "ImageFilePanel.moduleErr.msg"),
                     MessageNotifyUtil.MessageType.ERROR);
         }
     }
