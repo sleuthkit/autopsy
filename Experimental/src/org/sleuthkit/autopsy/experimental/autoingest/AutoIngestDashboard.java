@@ -79,8 +79,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private final DefaultTableModel completedTableModel;
     private AutoIngestMonitor autoIngestMonitor;
 
-    // DLG: The Viking code needs to be updated, too. See VikingStartupWindow, 
-    // which should be using the AutoIngestControlPanel, not the AutoIngestDashboard.
     /**
      * Creates a dashboard for monitoring an automated ingest cluster.
      *
@@ -464,8 +462,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             Path currentRow = getSelectedEntry(table, tableModel);
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
-                if (job.getNodeData().getVersion() < 2) {
-                    // Ignore version '1' nodes since they don't carry enough
+                if (job.getNodeData().getVersion() < 1) {
+                    // Ignore version '0' nodes since they don't carry enough
                     // data to populate the table.
                     continue;
                 }
@@ -482,7 +480,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     nodeData.getErrorsOccurred(), // STATUS
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    nodeData.getManifestFilePath()}); // MANIFEST_FILE_PATH
+                    nodeData.getManifestFilePath()//DLG: , // MANIFEST_FILE_PATH
+                    //DLG: job
+                }); // JOB
             }
             setSelectedEntry(table, tableModel, currentRow);
         } catch (Exception ex) {
@@ -558,7 +558,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         STAGE_TIME(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.StageTime")),
         STATUS(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
-        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath"));
+        MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath")); //DLG:,
+        //DLG: JOB("");
 
         private final String header;
 
@@ -590,8 +591,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             STATUS.getColumnHeader(),
             STAGE_TIME.getColumnHeader(),
             CASE_DIRECTORY_PATH.getColumnHeader(),
-            MANIFEST_FILE_PATH.getColumnHeader()};
-    }
+            MANIFEST_FILE_PATH.getColumnHeader() //DLG: ,
+            //DLG: JOB.getColumnHeader()
+        };
+    };
 
     /**
      * A task that refreshes the UI components on this panel to reflect a
