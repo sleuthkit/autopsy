@@ -66,7 +66,7 @@ that when a file/artifact is tagged by the user, any property created from that 
 this point, whenever the Correlation Engine Ingest Module creates a property that matches this Bad one, it is automatically flagged 
 and added to the list of Interesting Items.
 
-\image html placeholder.jpg
+\image html central_repo_manage_tags.png
 
 By default there is a tag called "Evidence" as the only tag associated with this module. To associate one or more tag(s) with this module, check the Correlate box next to the tag
 name(s) and click OK. To create additional tags, use the Tags options panel.
