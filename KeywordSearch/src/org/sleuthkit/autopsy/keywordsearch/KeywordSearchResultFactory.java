@@ -140,7 +140,7 @@ class KeywordSearchResultFactory extends ChildFactory<KeyValueQueryContent> {
             queryResults = queryRequest.performQuery();
         } catch (KeywordSearchModuleException | NoOpenCoreException ex) {
             logger.log(Level.SEVERE, "Could not perform the query " + queryRequest.getQueryString(), ex); //NON-NLS
-            MessageNotifyUtil.Notify.error(org.sleuthkit.autopsy.keywordsearch.Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
+            MessageNotifyUtil.Notify.error(Bundle.KeywordSearchResultFactory_query_exception_msg() + queryRequest.getQueryString(), ex.getCause().getMessage());
             return false;
         }
         SleuthkitCase tskCase = null;
