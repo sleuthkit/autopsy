@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011-2014 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,7 +45,7 @@ import org.sleuthkit.datamodel.LocalFile;
 import org.sleuthkit.datamodel.LocalDirectory;
 import org.sleuthkit.datamodel.ReadContentInputStream;
 import org.sleuthkit.datamodel.SlackFile;
-import org.sleuthkit.datamodel.TskException;
+import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.VirtualDirectory;
 
 /**
@@ -145,7 +145,7 @@ public final class ContentUtils {
                     return TimeZone.getDefault();
                 }
             }
-        } catch (TskException ex) {
+        } catch (TskCoreException ex) {
             return TimeZone.getDefault();
         }
     }
@@ -260,6 +260,8 @@ public final class ContentUtils {
 
     /**
      * Helper to ignore the '.' and '..' directories
+     * @param dir  the directory to check
+     * @return true if dir is a '.' or '..' directory, false otherwise
      */
     public static boolean isDotDirectory(AbstractFile dir) {
         String name = dir.getName();
@@ -404,7 +406,7 @@ public final class ContentUtils {
                 int numProcessed = 0;
                 // recurse on children
                 for (Content child : dir.getChildren()) {
-                    if (child instanceof AbstractFile){
+                    if (child instanceof FsContent){
                         java.io.File childFile = getFsContentDest(child);
                         ExtractFscContentVisitor<T, V> childVisitor
                                 = new ExtractFscContentVisitor<>(childFile, progress, worker, false);
@@ -421,7 +423,7 @@ public final class ContentUtils {
                         numProcessed++;
                     }
                 }
-            } catch (TskException ex) {
+            } catch (TskCoreException ex) {
                 logger.log(Level.SEVERE,
                         "Trouble fetching children to extract.", ex); //NON-NLS
             }
