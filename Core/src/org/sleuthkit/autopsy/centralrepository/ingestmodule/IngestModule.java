@@ -157,7 +157,7 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        IngestEventsListener.disableCorrelationEngineModule();
+        IngestEventsListener.decrementCorrelationEngineModuleCount();
         if ((EamDb.isEnabled() == false) || (eamCase == null) || (eamDataSource == null)) {
             return;
         }
@@ -191,7 +191,7 @@ class IngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException { 
-        IngestEventsListener.enableCorrelationEngineModule();
+        IngestEventsListener.incrementCorrelationEngineModuleCount();
         if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a

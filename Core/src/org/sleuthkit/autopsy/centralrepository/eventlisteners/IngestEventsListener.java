@@ -52,7 +52,7 @@ public class IngestEventsListener {
     private static final Logger LOGGER = Logger.getLogger(EamArtifact.class.getName());
 
     final Collection<String> addedCeArtifactTrackerSet = new LinkedHashSet<>();
-    private static long ceModuleInstanceCount = 0;
+    private static int ceModuleInstanceCount = 0;
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
 
@@ -77,7 +77,7 @@ public class IngestEventsListener {
      * Engine.
      *
      */
-    public synchronized static void enableCorrelationEngineModule() {
+    public synchronized static void incrementCorrelationEngineModuleCount() {
         ceModuleInstanceCount++;  //Should be called once in the Correlation Engine module's startup method.
     }
 
@@ -85,8 +85,8 @@ public class IngestEventsListener {
      * Disable this IngestEventsListener from adding contents to the Correlation
      * Engine.
      */
-    public synchronized static void disableCorrelationEngineModule() {
-        if (isCorrelationEngineModuleEnabled()) {  //prevent it ingestJobCounter from going negative
+    public synchronized static void decrementCorrelationEngineModuleCount() {
+        if (getCeModuleInstanceCount()>0) {  //prevent it ingestJobCounter from going negative
             ceModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
         }
     }
@@ -105,15 +105,15 @@ public class IngestEventsListener {
      *
      * @return boolean True for Correlation Engine enabled, False for disabled
      */
-    private synchronized static boolean isCorrelationEngineModuleEnabled() {
-        return ceModuleInstanceCount > 0;
+    private synchronized static int getCeModuleInstanceCount() {
+        return ceModuleInstanceCount;
     }
 
     private class IngestModuleEventListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (isCorrelationEngineModuleEnabled()) {
+            if (getCeModuleInstanceCount() > 0) {
                 EamDb dbManager;
                 try {
                     dbManager = EamDb.getInstance();
