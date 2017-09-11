@@ -544,13 +544,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     String manifestNodePath = job.getNodeData().getManifestFilePath().toString();
                     try {
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                        /* DLG:
-                        nodeData.setDeviceId(manifest.getDeviceId());
-                        nodeData.setCaseName(manifest.getCaseName());
-                        nodeData.setManifestFileDate(manifest.getDateFileCreated());
-                        nodeData.setManifestFilePath(manifestPath);
-                        nodeData.setDataSourcePath(manifest.getDataSourcePath());
-                        */
                         nodeData.setPriority(maxPriority);
                         coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
                     } catch (AutoIngestJobNodeDataException ex) {
@@ -600,13 +593,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 String manifestNodePath = prioritizedJob.getNodeData().getManifestFilePath().toString();
                 try {
                     AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                    /* DLG:
-                    nodeData.setDeviceId(manifest.getDeviceId());
-                    nodeData.setCaseName(manifest.getCaseName());
-                    nodeData.setManifestFileDate(manifest.getDateFileCreated());
-                    nodeData.setManifestFilePath(manifestPath);
-                    nodeData.setDataSourcePath(manifest.getDataSourcePath());
-                    */
                     nodeData.setPriority(maxPriority);
                     coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
                 } catch (AutoIngestJobNodeDataException ex) {
@@ -748,13 +734,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 for (Path manifestPath : manifestPaths) {
                     try {
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
-                        /* DLG:
-                        nodeData.setDeviceId(manifest.getDeviceId());
-                        nodeData.setCaseName(manifest.getCaseName());
-                        nodeData.setManifestFileDate(manifest.getDateFileCreated());
-                        nodeData.setManifestFilePath(manifestPath);
-                        nodeData.setDataSourcePath(manifest.getDataSourcePath());
-                        */
                         nodeData.setStatus(AutoIngestJobNodeData.ProcessingStatus.DELETED);
                         coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString(), nodeData.toArray());
                     } catch (AutoIngestJobNodeDataException ex) {
@@ -1049,11 +1028,21 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     if (null != rawData) {
                         try {
                             AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(rawData);
-                            nodeData.setDeviceId(manifest.getDeviceId());
-                            nodeData.setCaseName(manifest.getCaseName());
-                            nodeData.setManifestFileDate(manifest.getDateFileCreated());
-                            nodeData.setManifestFilePath(manifest.getFilePath());
-                            nodeData.setDataSourcePath(manifest.getDataSourcePath());
+                            if(nodeData.getVersion() < 1) {
+                                /*
+                                 * A version '0' node doesn't have a sufficient
+                                 * amount of data to populate the jobs tables,
+                                 * so we will it here.
+                                 */
+                                nodeData.setDeviceId(manifest.getDeviceId());
+                                nodeData.setCaseName(manifest.getCaseName());
+                                nodeData.setManifestFileDate(manifest.getDateFileCreated());
+                                nodeData.setManifestFilePath(manifest.getFilePath());
+                                nodeData.setDataSourcePath(manifest.getDataSourcePath());
+                                nodeData.setVersion(1);
+                                rawData = nodeData.toArray();
+                                coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString(), rawData);
+                            }
                             
                             if (nodeData.coordSvcNodeDataWasSet()) {
                                 ProcessingStatus processingStatus = nodeData.getStatus();
@@ -1153,51 +1142,66 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          */
         private void doRecoveryIfCrashed(AutoIngestJobNodeData nodeData) throws InterruptedException {
             String manifestPath = nodeData.getManifestFilePath().toString();
-            if (nodeData.coordSvcNodeDataWasSet() && ProcessingStatus.PROCESSING == nodeData.getStatus()) {
-                SYS_LOGGER.log(Level.SEVERE, "Attempting crash recovery for {0}", manifestPath);
-                int numberOfCrashes = nodeData.getNumberOfCrashes();
-                ++numberOfCrashes;
-                nodeData.setNumberOfCrashes(numberOfCrashes);
-                nodeData.setCompletedDate(new Date(0));
-                nodeData.setErrorsOccurred(true);
-                if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
-                    nodeData.setStatus(PENDING);
-                    Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, nodeData.getCaseName());
-                    newPendingJobsList.add(new AutoIngestJob(nodeData, caseDirectoryPath, LOCAL_HOST_NAME, AutoIngestJob.Stage.PENDING));
-                    if (null != caseDirectoryPath) {
-                        try {
-                            AutoIngestAlertFile.create(caseDirectoryPath);
-                        } catch (AutoIngestAlertFileException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error creating alert file for crashed job for %s", manifestPath), ex);
+            try {
+                Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifestPath);
+                if (null != manifestLock) {
+                    try {
+                        if (nodeData.coordSvcNodeDataWasSet() && ProcessingStatus.PROCESSING == nodeData.getStatus()) {
+                            SYS_LOGGER.log(Level.SEVERE, "Attempting crash recovery for {0}", manifestPath);
+                            int numberOfCrashes = nodeData.getNumberOfCrashes();
+                            ++numberOfCrashes;
+                            nodeData.setNumberOfCrashes(numberOfCrashes);
+                            nodeData.setCompletedDate(new Date(0));
+                            nodeData.setErrorsOccurred(true);
+                            if (numberOfCrashes <= AutoIngestUserPreferences.getMaxNumTimesToProcessImage()) {
+                                nodeData.setStatus(PENDING);
+                                Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, nodeData.getCaseName());
+                                newPendingJobsList.add(new AutoIngestJob(nodeData, caseDirectoryPath, LOCAL_HOST_NAME, AutoIngestJob.Stage.PENDING));
+                                if (null != caseDirectoryPath) {
+                                    try {
+                                        AutoIngestAlertFile.create(caseDirectoryPath);
+                                    } catch (AutoIngestAlertFileException ex) {
+                                        SYS_LOGGER.log(Level.SEVERE, String.format("Error creating alert file for crashed job for %s", manifestPath), ex);
+                                    }
+                                    try {
+                                        new AutoIngestJobLogger(nodeData.getManifestFilePath(), nodeData.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryWithRetry();
+                                    } catch (AutoIngestJobLoggerException ex) {
+                                        SYS_LOGGER.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
+                                    }
+                                }
+                            } else {
+                                nodeData.setStatus(COMPLETED);
+                                Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, nodeData.getCaseName());
+                                newCompletedJobsList.add(new AutoIngestJob(nodeData, caseDirectoryPath, LOCAL_HOST_NAME, AutoIngestJob.Stage.COMPLETED));
+                                if (null != caseDirectoryPath) {
+                                    try {
+                                        AutoIngestAlertFile.create(caseDirectoryPath);
+                                    } catch (AutoIngestAlertFileException ex) {
+                                        SYS_LOGGER.log(Level.SEVERE, String.format("Error creating alert file for crashed job for %s", manifestPath), ex);
+                                    }
+                                    try {
+                                        new AutoIngestJobLogger(nodeData.getManifestFilePath(), nodeData.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
+                                    } catch (AutoIngestJobLoggerException ex) {
+                                        SYS_LOGGER.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
+                                    }
+                                }
+                            }
+                            try {
+                                coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath, nodeData.toArray());
+                            } catch (CoordinationServiceException ex) {
+                                SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
+                            }
                         }
+                    } finally {
                         try {
-                            new AutoIngestJobLogger(nodeData.getManifestFilePath(), nodeData.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryWithRetry();
-                        } catch (AutoIngestJobLoggerException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
-                        }
-                    }
-                } else {
-                    nodeData.setStatus(COMPLETED);
-                    Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, nodeData.getCaseName());
-                    newCompletedJobsList.add(new AutoIngestJob(nodeData, caseDirectoryPath, LOCAL_HOST_NAME, AutoIngestJob.Stage.COMPLETED));
-                    if (null != caseDirectoryPath) {
-                        try {
-                            AutoIngestAlertFile.create(caseDirectoryPath);
-                        } catch (AutoIngestAlertFileException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error creating alert file for crashed job for %s", manifestPath), ex);
-                        }
-                        try {
-                            new AutoIngestJobLogger(nodeData.getManifestFilePath(), nodeData.getDataSourceFileName(), caseDirectoryPath).logCrashRecoveryNoRetry();
-                        } catch (AutoIngestJobLoggerException ex) {
-                            SYS_LOGGER.log(Level.SEVERE, String.format("Error creating case auto ingest log entry for crashed job for %s", manifestPath), ex);
+                            manifestLock.release();
+                        } catch (CoordinationServiceException ex) {
+                            SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to release exclusive lock for %s", manifestPath), ex);
                         }
                     }
                 }
-                try {
-                    coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath, nodeData.toArray());
-                } catch (CoordinationServiceException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifestPath), ex);
-                }
+            } catch (CoordinationServiceException ex) {
+                SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to get exclusive lock for %s", manifestPath), ex);
             }
         }
 
@@ -1647,13 +1651,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                     try {
                         AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
-                        /* DLG:
-                        nodeData.setDeviceId(manifest.getDeviceId());
-                        nodeData.setCaseName(manifest.getCaseName());
-                        nodeData.setManifestFileDate(manifest.getDateFileCreated());
-                        nodeData.setManifestFilePath(manifestPath);
-                        nodeData.setDataSourcePath(manifest.getDataSourcePath());
-                        */
                         if (!nodeData.getStatus().equals(PENDING)) {
                             /*
                              * Due to a timing issue or a missed event, a
@@ -1729,13 +1726,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         private void processJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, AutoIngestJobNodeDataException {
             Path manifestPath = currentJob.getNodeData().getManifestFilePath();
             AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
-            /* DLG:
-            nodeData.setDeviceId(manifest.getDeviceId());
-            nodeData.setCaseName(manifest.getCaseName());
-            nodeData.setManifestFileDate(manifest.getDateFileCreated());
-            nodeData.setManifestFilePath(manifestPath);
-            nodeData.setDataSourcePath(manifest.getDataSourcePath());
-            */
             nodeData.setStatus(PROCESSING);
             coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString(), nodeData.toArray());
             SYS_LOGGER.log(Level.INFO, "Started processing of {0}", manifestPath);
@@ -1755,13 +1745,6 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 }
 
                 nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestPath.toString()));
-                /* DLG:
-                nodeData.setDeviceId(manifest.getDeviceId());
-                nodeData.setCaseName(manifest.getCaseName());
-                nodeData.setManifestFileDate(manifest.getDateFileCreated());
-                nodeData.setManifestFilePath(manifestPath);
-                nodeData.setDataSourcePath(manifest.getDataSourcePath());
-                */
                 if (currentJob.isCompleted() || currentJob.isCanceled()) {
                     nodeData.setStatus(COMPLETED);
                     Date completedDate = new Date();
