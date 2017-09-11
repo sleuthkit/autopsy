@@ -824,7 +824,7 @@ public class Server {
 
             return new Core(coreName, theCase.getCaseType(), index);
 
-        } catch (SolrServerException | SolrException | IOException ex) {
+        } catch (Exception ex) {
             throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.openCore.exception.cantOpen.msg"), ex);
         }
     }
@@ -1007,6 +1007,7 @@ public class Server {
             try {
                 return currentCore.query(sq);
             } catch (SolrServerException ex) {
+                logger.log(Level.SEVERE, "Solr query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -1034,6 +1035,7 @@ public class Server {
             try {
                 return currentCore.query(sq, method);
             } catch (SolrServerException | IOException ex) {
+                logger.log(Level.SEVERE, "Solr query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.query2.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -1060,6 +1062,7 @@ public class Server {
             try {
                 return currentCore.queryTerms(sq);
             } catch (SolrServerException | IOException ex) {
+                logger.log(Level.SEVERE, "Solr terms query failed: " + sq.getQuery(), ex); //NON-NLS
                 throw new KeywordSearchModuleException(NbBundle.getMessage(this.getClass(), "Server.queryTerms.exception.msg", sq.getQuery()), ex);
             }
         } finally {
@@ -1231,6 +1234,8 @@ public class Server {
         // the server to access a core needs to be built from a URL with the
         // core in it, and is only good for core-specific operations
         private final HttpSolrServer solrCore;
+        
+        private final int QUERY_TIMEOUT_MILLISECONDS = 86400000; // 24 Hours = 86,400,000 Milliseconds
 
         private Core(String name, CaseType caseType, Index index) {
             this.name = name;
@@ -1240,7 +1245,8 @@ public class Server {
             this.solrCore = new HttpSolrServer(currentSolrServer.getBaseURL() + "/" + name); //NON-NLS
 
             //TODO test these settings
-            //solrCore.setSoTimeout(1000 * 60);  // socket read timeout, make large enough so can index larger files
+            // socket read timeout, make large enough so can index larger files
+            solrCore.setSoTimeout(QUERY_TIMEOUT_MILLISECONDS);  
             //solrCore.setConnectionTimeout(1000);
             solrCore.setDefaultMaxConnectionsPerHost(2);
             solrCore.setMaxTotalConnections(5);
@@ -1316,10 +1322,11 @@ public class Server {
         /**
          * get the text from the content field for the given file
          *
-         * @param contentID
-         * @param chunkID
+         * @param contentID Solr document ID
+         * @param chunkID   Chunk ID of the Solr document
          *
-         * @return
+         * @return Text from matching Solr document (as String). Null if no
+         * matching Solr document found or error while getting content from Solr
          */
         private String getSolrContent(long contentID, int chunkID) {
             final SolrQuery q = new SolrQuery();
@@ -1349,7 +1356,7 @@ public class Server {
                     }
                 }
             } catch (SolrServerException ex) {
-                logger.log(Level.WARNING, "Error getting content from Solr", ex); //NON-NLS
+                logger.log(Level.SEVERE, "Error getting content from Solr. Solr document id " + contentID + ", chunk id " + chunkID + ", query: " + filterQuery, ex); //NON-NLS
                 return null;
             }
 

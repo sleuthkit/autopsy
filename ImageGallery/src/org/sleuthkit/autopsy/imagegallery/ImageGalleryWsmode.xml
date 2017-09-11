@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mode version="2.4">
+    <name unique="ImageGallery"/>
+    <kind type="editor"/>
+    <state type="separated"/>
+    <bounds x="508" y="159" width="1000" height="750"/>
+    <frame state="0"/>
+    
+    <empty-behavior permanent="false"/>
+</mode>

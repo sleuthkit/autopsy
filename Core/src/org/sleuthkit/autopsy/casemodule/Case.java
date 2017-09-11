@@ -377,7 +377,9 @@ public class Case {
      *
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
+     * @deprecated Use addEventTypeSubscriber instead.
      */
+    @Deprecated
     public static void addEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventNames, subscriber);
     }
@@ -385,9 +387,23 @@ public class Case {
     /**
      * Adds a subscriber to specific case events.
      *
-     * @param eventName  The event the subscriber is interested in.
+     * @param eventTypes The events the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
      */
+    public static void addEventTypeSubscriber(Set<Events> eventTypes, PropertyChangeListener subscriber) {
+        eventTypes.forEach((Events event) -> {
+            eventPublisher.addSubscriber(event.toString(), subscriber);
+        });
+    }
+
+    /**
+     * Adds a subscriber to specific case events.
+     *
+     * @param eventName  The event the subscriber is interested in.
+     * @param subscriber The subscriber (PropertyChangeListener) to add.
+     * @deprecated Use addEventTypeSubscriber instead.
+     */
+    @Deprecated
     public static void addEventSubscriber(String eventName, PropertyChangeListener subscriber) {
         eventPublisher.addSubscriber(eventName, subscriber);
     }
@@ -410,6 +426,18 @@ public class Case {
      */
     public static void removeEventSubscriber(Set<String> eventNames, PropertyChangeListener subscriber) {
         eventPublisher.removeSubscriber(eventNames, subscriber);
+    }
+
+    /**
+     * Removes a subscriber to specific case events.
+     *
+     * @param eventTypes The events the subscriber is no longer interested in.
+     * @param subscriber The subscriber (PropertyChangeListener) to remove.
+     */
+    public static void removeEventTypeSubscriber(Set<Events> eventTypes, PropertyChangeListener subscriber) {
+        eventTypes.forEach((Events event) -> {
+            eventPublisher.removeSubscriber(event.toString(), subscriber);
+        });
     }
 
     /**
@@ -1101,7 +1129,7 @@ public class Case {
     }
 
     /**
-     * Gets the immutable case name.
+     * Gets the unique and immutable case name.
      *
      * @return The case name.
      */

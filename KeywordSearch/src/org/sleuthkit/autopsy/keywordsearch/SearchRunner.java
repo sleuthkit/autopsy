@@ -19,7 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,7 +45,6 @@ import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.coreutils.StopWatch;
 import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestServices;
-import org.sleuthkit.datamodel.BlackboardArtifact;
 
 /**
  * Singleton keyword search manager: Launches search threads for each job and
@@ -482,9 +480,7 @@ public final class SearchRunner {
                     if (!newResults.getKeywords().isEmpty()) {
 
                         // Write results to BB
-                        //new artifacts created, to report to listeners
-                        Collection<BlackboardArtifact> newArtifacts = new ArrayList<>();
-
+                        
                         //scale progress bar more more granular, per result sub-progress, within per keyword
                         int totalUnits = newResults.getKeywords().size();
                         subProgresses[keywordsSearched].start(totalUnits);
@@ -496,7 +492,7 @@ public final class SearchRunner {
                         subProgresses[keywordsSearched].progress(keywordList.getName() + ": " + queryDisplayStr, unitProgress);
 
                         // Create blackboard artifacts                
-                        newArtifacts = newResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages());
+                        newResults.writeAllHitsToBlackBoard(null, subProgresses[keywordsSearched], this, keywordList.getIngestMessages());
 
                     } //if has results
 

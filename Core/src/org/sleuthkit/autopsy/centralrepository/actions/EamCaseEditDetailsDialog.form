@@ -406,6 +406,9 @@
           </Properties>
         </Component>
         <Component class="javax.swing.JTextField" name="tfExaminerNameText">
+          <Properties>
+            <Property name="editable" type="boolean" value="false"/>
+          </Properties>
         </Component>
         <Component class="javax.swing.JLabel" name="lbExaminerEmailLabel">
           <Properties>

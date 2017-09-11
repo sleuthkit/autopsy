@@ -442,6 +442,7 @@
             <file name="outputFloat.wsmode" url="outputFloatWsmode.xml"/>
             <folder name="floatingLeftBottom"/>
             <file name="floatingLeftBottom.wsmode" url="floatingLeftBottomWsmode.xml"/>
+            <file name="timeline.wsmode" url="timelineWsmode.xml"/>
         </folder>
     </folder>
     

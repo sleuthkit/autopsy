@@ -24,7 +24,7 @@
         Note there is no namespace collision with ver 3 -->
         <dependency conf="autopsy_core->*" org="commons-lang" name="commons-lang" rev="2.6"/> 
         <dependency conf="autopsy_core->*" org="commons-logging" name="commons-logging" rev="1.1.2"/>
-        <dependency conf="autopsy_core->*" org="commons-io" name="commons-io" rev="2.4"/>
+        <dependency conf="autopsy_core->*" org="commons-io" name="commons-io" rev="2.5"/>
         <dependency conf="autopsy_core->*" org="log4j" name="log4j" rev="1.2.17"/>
               
         <!-- <dependency conf="autopsy_core->*" org="org.jdom" name="jdom" rev="1.1.3"/> -->

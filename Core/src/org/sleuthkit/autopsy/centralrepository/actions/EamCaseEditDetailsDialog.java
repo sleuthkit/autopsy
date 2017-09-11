@@ -70,6 +70,9 @@ public class EamCaseEditDetailsDialog extends JDialog {
         try {
             this.dbManager = EamDb.getInstance();
             this.eamCase = this.dbManager.getCaseDetails(Case.getCurrentCase().getName());
+            if(this.eamCase == null){
+                this.eamCase = dbManager.newCase(Case.getCurrentCase());
+            }
             initComponents();
             loadData();
             customizeComponents();
@@ -82,6 +85,9 @@ public class EamCaseEditDetailsDialog extends JDialog {
     private void customizeComponents() {
         setTextBoxListeners();
         setTextAreaListeners();
+        
+        // The organization functions of central repo are not being included in the current release.
+        this.pnOrganization.setVisible(false);
 
     }
 
@@ -322,6 +328,8 @@ public class EamCaseEditDetailsDialog extends JDialog {
         pnExaminer.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.pnExaminer.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
 
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerNameLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerNameLabel.text")); // NOI18N
+
+        tfExaminerNameText.setEditable(false);
 
         org.openide.awt.Mnemonics.setLocalizedText(lbExaminerEmailLabel, org.openide.util.NbBundle.getMessage(EamCaseEditDetailsDialog.class, "EamCaseEditDetailsDialog.lbExaminerEmailLabel.text")); // NOI18N
 
