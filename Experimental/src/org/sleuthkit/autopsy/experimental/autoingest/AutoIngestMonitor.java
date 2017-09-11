@@ -182,6 +182,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     private void handleCasePrioritizationEvent(AutoIngestCasePrioritizedEvent event) {
         synchronized (jobsLock) {
             // DLG: Replace job in pending queue with job from event
+            // DLG: See 'bnPrioritizeCaseActionPerformed(ActionEvent)' in the AutoIngestControlPanel class!!!
             setChanged();
             notifyObservers(jobsSnapshot);
         }

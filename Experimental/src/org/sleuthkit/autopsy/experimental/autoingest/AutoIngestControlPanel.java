@@ -128,7 +128,8 @@ import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestManager.JobsSnaps
     "AutoIngestControlPanel.UploadSuccess=Shared configuration successfully uploaded",
     "AutoIngestControlPanel.UploadFailedTitle=Failed",
     "AutoIngestControlPanel.ConfigLocked=The shared configuration directory is locked because upload from another node is in progress. \nIf this is an error, you can unlock the directory and then retry the upload.",
-    "AutoIngestControlPanel.ConfigLockedTitle=Configuration directory locked"
+    "AutoIngestControlPanel.ConfigLockedTitle=Configuration directory locked",
+    "AutoIngestControlPanel.PauseDueToSystemError=Paused due to system error, please consult the auto ingest system log"
 })
 public final class AutoIngestControlPanel extends JPanel implements Observer {
 
