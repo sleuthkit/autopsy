@@ -88,7 +88,7 @@ class KeywordHit implements Comparable<KeywordHit> {
         hitOnArtifact = this.solrObjectId < 0;
 
         if (hitOnArtifact) {
-            // If the hit was in an artifact, look up the artifact.
+            // If the hit was in an artifact, look up the source content for the artifact.
             SleuthkitCase caseDb = Case.getCurrentCase().getSleuthkitCase();
             try (SleuthkitCase.CaseDbQuery executeQuery =
                     caseDb.executeQuery(GET_CONTENT_ID_FROM_ARTIFACT_ID + this.solrObjectId);
