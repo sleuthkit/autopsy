@@ -453,8 +453,8 @@ public class TimeLineController {
                             TimeLineController.this.showFullRange();
                         } else {
                             //prompt user to pick specific event and time range
-                            ShowInTimelineDialog showInTimelineDilaog
-                                    = (file == null)
+                            ShowInTimelineDialog showInTimelineDilaog =
+                                    (file == null)
                                             ? new ShowInTimelineDialog(TimeLineController.this, artifact)
                                             : new ShowInTimelineDialog(TimeLineController.this, file);
                             Optional<ViewInTimelineRequestedEvent> dialogResult = showInTimelineDilaog.showAndWait();
@@ -698,7 +698,9 @@ public class TimeLineController {
         if (topComponent == null) {
             topComponent = new TimeLineTopComponent(this);
         }
-        topComponent.open();
+        if (topComponent.isOpened() == false) {
+            topComponent.open();
+        }
         topComponent.toFront();
         /*
          * Make this top component active so its ExplorerManager's lookup gets

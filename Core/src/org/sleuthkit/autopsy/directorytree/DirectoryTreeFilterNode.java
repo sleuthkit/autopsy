@@ -25,7 +25,6 @@ import java.util.logging.Level;
 import javax.swing.Action;
 import org.openide.nodes.FilterNode;
 import org.openide.nodes.Node;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle;
 import org.openide.util.lookup.Lookups;
 import org.openide.util.lookup.ProxyLookup;
@@ -36,6 +35,7 @@ import org.sleuthkit.autopsy.datamodel.BlackboardArtifactNode;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
+import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.Image;
@@ -120,7 +120,7 @@ class DirectoryTreeFilterNode extends FilterNode {
     private int getVisibleChildCount(AbstractFile file) throws TskCoreException {
         List<Content> childList = file.getChildren();
 
-        int numVisibleChildren = file.getChildrenCount();
+        int numVisibleChildren = childList.size();
         boolean purgeKnownFiles = UserPreferences.hideKnownFilesInDataSourcesTree();
         boolean purgeSlackFiles = UserPreferences.hideSlackFilesInDataSourcesTree();
 
@@ -132,6 +132,14 @@ class DirectoryTreeFilterNode extends FilterNode {
                     AbstractFile childFile = (AbstractFile) child;
                     if ((purgeKnownFiles && childFile.getKnown() == TskData.FileKnown.KNOWN)
                             || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
+                        numVisibleChildren--;
+                    }
+                } else if(child instanceof BlackboardArtifact){
+                    BlackboardArtifact bba = (BlackboardArtifact) child;
+                    
+                    // Only message type artifacts are displayed in the tree
+                    if((bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) 
+                            && (bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())){
                         numVisibleChildren--;
                     }
                 }

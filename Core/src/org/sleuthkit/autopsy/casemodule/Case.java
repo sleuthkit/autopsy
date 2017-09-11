@@ -1129,7 +1129,7 @@ public class Case {
     }
 
     /**
-     * Gets the immutable case name.
+     * Gets the unique and immutable case name.
      *
      * @return The case name.
      */
