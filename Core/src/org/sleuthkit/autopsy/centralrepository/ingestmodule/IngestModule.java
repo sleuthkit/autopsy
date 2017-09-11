@@ -156,7 +156,6 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        IngestEventsListener.disableCorrelationEngineModule();
         if (EamDb.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
@@ -166,7 +165,7 @@ class IngestModule implements FileIngestModule {
              */
             return;
         }
-
+        IngestEventsListener.disableCorrelationEngineModule();
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();
@@ -196,8 +195,7 @@ class IngestModule implements FileIngestModule {
         "IngestModule.errorMessage.isNotEnabled=Central Repository settings are not initialized, cannot run Correlation Engine ingest module."
     })
     @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException {
-        IngestEventsListener.enableCorrelationEngineModule();
+    public void startUp(IngestJobContext context) throws IngestModuleException { 
         if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
@@ -213,7 +211,7 @@ class IngestModule implements FileIngestModule {
             }
             return;
         }
-
+        IngestEventsListener.enableCorrelationEngineModule();
         jobId = context.getJobId();
         eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
 
