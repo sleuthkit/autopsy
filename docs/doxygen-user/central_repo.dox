@@ -24,7 +24,7 @@ The following are some use cases for the Central Repository:
 
 To start, open the main options panel and select the Central Repository icon. 
 
-\image html placeholder.jpg
+\image html central_repo_options.png
 
 \subsection cr_db_setup Setting up the Database
 
@@ -77,7 +77,7 @@ The Correlation Engine ingest module can save different types of properties to t
 this setting can be changed on the options panel through the Manage Correlation Properties button. Note that these settings 
 are saved to the database, so in a multi-user setting any changes will affect all users.
 
-\image html placeholder.jpg
+\image html central_repo_types.png
 
 Descriptions of the property types:
 - <b>Files</b>
@@ -93,7 +93,7 @@ Descriptions of the property types:
 
 \section cr_using_repo Using the Central Repository
 
-\subsection cr_ingest_module Ingest Module
+\subsection cr_ingest_module Correlation Engine Module
 
 The Correlation Engine ingest module is responsible for adding properties to the database and comparing each property 
 against the list of Known/Known Bad property. It is best to run all ingest modules to get the most out of the Correlation 
@@ -109,7 +109,7 @@ to the database as a file or artifact of interest. Any future data source ingest
 will use those files or artifacts as if they were part of the Known Bad list, causing matching files from that 
 ingest to be added to the Interesting Artifacts list in that currently open case.
 
-\image html placeholder.jpg
+\image html central_repo_tag_file.png
 
 If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its
 Known Bad status in the Central Repository.

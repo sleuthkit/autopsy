@@ -33,6 +33,7 @@ The following topics are available here:
  - \subpage android_analyzer_page
  - \subpage interesting_files_identifier_page
  - \subpage photorec_carver_page
+ - \subpage cr_ingest_module
 - Manual Analysis
  - \subpage tree_viewer_page
  - \subpage result_viewer_page
