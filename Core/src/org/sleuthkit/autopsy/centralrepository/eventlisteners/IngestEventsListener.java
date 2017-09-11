@@ -52,7 +52,7 @@ public class IngestEventsListener {
     private static final Logger LOGGER = Logger.getLogger(EamArtifact.class.getName());
 
     final Collection<String> addedCeArtifactTrackerSet = new LinkedHashSet<>();
-    private static long ingestJobCounter = 0;
+    private static long ceModuleInstanceCount = 0;
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
 
@@ -73,47 +73,47 @@ public class IngestEventsListener {
     }
 
     /**
-     * Enable this IngestEventsListener to add contents to the Central
-     * Repository.
+     * Enable this IngestEventsListener to add contents to the Correlation
+     * Engine.
      *
      */
-    public synchronized static void enableCentralRepositoryModule() {
-        ingestJobCounter++;  //Should be called once in the central repository module's startup method.
+    public synchronized static void enableCorrelationEngineModule() {
+        ceModuleInstanceCount++;  //Should be called once in the Correlation Engine module's startup method.
     }
 
     /**
-     * Disable this IngestEventsListener from adding contents to the Central
-     * Repository.
+     * Disable this IngestEventsListener from adding contents to the Correlation
+     * Engine.
      */
-    public synchronized static void disableCentralRepositoryModule() {
-        if (isCentralRepositoryModuleEnabled()) {  //prevent it ingestJobCounter from going negative
-            ingestJobCounter--;  //Should be called once in the central repository module's shutdown method.
+    public synchronized static void disableCorrelationEngineModule() {
+        if (isCorrelationEngineModuleEnabled()) {  //prevent it ingestJobCounter from going negative
+            ceModuleInstanceCount--;  //Should be called once in the Correlation Engine module's shutdown method.
         }
     }
 
     /**
-     * Reset the counter which keeps track of if the Central Repository Module
+     * Reset the counter which keeps track of if the Correlation Engine Module
      * is being run during injest to 0.
      */
-    synchronized static void resetIngestJobCounter() {
-        ingestJobCounter = 0;  //called when a case is opened in case for some reason counter was not reset
+    synchronized static void resetCeModuleInstanceCount() {
+        ceModuleInstanceCount = 0;  //called when a case is opened in case for some reason counter was not reset
     }
 
     /**
-     * Wether or not the Central Repository Module is enabled for any of the
+     * Wether or not the Correlation Engine Module is enabled for any of the
      * currently running ingest jobs.
      *
-     * @return boolean True for Central Repo enabled, False for disabled
+     * @return boolean True for Correlation Engine enabled, False for disabled
      */
-    private synchronized static boolean isCentralRepositoryModuleEnabled() {
-        return ingestJobCounter > 0;
+    private synchronized static boolean isCorrelationEngineModuleEnabled() {
+        return ceModuleInstanceCount > 0;
     }
 
     private class IngestModuleEventListener implements PropertyChangeListener {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            if (isCentralRepositoryModuleEnabled()) {
+            if (isCorrelationEngineModuleEnabled()) {
                 EamDb dbManager;
                 try {
                     dbManager = EamDb.getInstance();

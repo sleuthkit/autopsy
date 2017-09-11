@@ -156,7 +156,7 @@ class IngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
-        IngestEventsListener.disableCentralRepositoryModule();
+        IngestEventsListener.disableCorrelationEngineModule();
         if (EamDb.isEnabled() == false) {
             /*
              * Not signaling an error for now. This is a workaround for the way
@@ -197,7 +197,7 @@ class IngestModule implements FileIngestModule {
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException {
-        IngestEventsListener.enableCentralRepositoryModule();
+        IngestEventsListener.enableCorrelationEngineModule();
         if (EamDb.isEnabled() == false) {
             /*
              * Not throwing the customary exception for now. This is a
