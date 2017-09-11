@@ -169,10 +169,9 @@ final class ExtractUnallocAction extends AbstractAction {
     private List<LayoutFile> getUnallocFiles(Content c) {
         UnallocVisitor uv = new UnallocVisitor();
         try {
-            List<Content> unallocFiles = c.getChildren();
-            if (null != unallocFiles && unallocFiles.isEmpty() == false) {
-                if (unallocFiles.get(0) instanceof AbstractContent) {
-                    return unallocFiles.get(0).accept(uv); //Launching it on the root directory
+            for (Content contentChild : c.getChildren()) {
+                if (contentChild instanceof AbstractContent) {
+                    return contentChild.accept(uv);  //call on first non-artifact child added to database
                 }
             }
         } catch (TskCoreException tce) {
@@ -339,7 +338,7 @@ final class ExtractUnallocAction extends AbstractAction {
             }
         } catch (TskCoreException tce) {
             logger.log(Level.SEVERE, "Unable to determine if image has a volume system, extraction may be incomplete", tce); //NON-NLS
-        } 
+        }
         return false;
     }
 
@@ -401,7 +400,7 @@ final class ExtractUnallocAction extends AbstractAction {
         public List<LayoutFile> visit(FileSystem fs) {
             try {
                 for (Content c : fs.getChildren()) {
-                    if (c instanceof AbstractFile){
+                    if (c instanceof AbstractFile) {
                         if (((AbstractFile) c).isRoot()) {
                             return c.accept(this);
                         }
