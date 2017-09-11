@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import javafx.animation.KeyValue;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
@@ -252,6 +253,32 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
+    }
+
+     /**
+     * Creates new Case in the database from the given case
+     * 
+     * @param case The case to add
+     */
+    @Override    
+    public EamCase newCase(Case autopsyCase) throws EamDbException{
+        if(autopsyCase == null){
+            throw new EamDbException("Case is null");
+        }
+        
+        EamCase curCeCase = new EamCase(
+                -1,
+                autopsyCase.getName(), // unique case ID
+                EamOrganization.getDefault(),
+                autopsyCase.getDisplayName(),
+                autopsyCase.getCreatedDate(),
+                autopsyCase.getNumber(),
+                autopsyCase.getExaminer(),
+                null,
+                null,
+                null);        
+        newCase(curCeCase);
+        return curCeCase;
     }
 
     /**

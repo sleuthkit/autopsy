@@ -356,6 +356,30 @@ public class CaseEventListener implements PropertyChangeListener {
                 }
             } // CURRENT_CASE
             break;
+            
+            case NAME: {
+                // The display name of the case has been changed
+                
+                if (!EamDb.isEnabled()) {
+                    break;
+                }
+                
+                if(evt.getNewValue() instanceof String){
+                    String newName = (String)evt.getNewValue();
+                    try {
+                        // See if the case is in the database. If it is, update the display name.
+                        EamCase existingCase = dbManager.getCaseDetails(Case.getCurrentCase().getName());
+
+                        if (null != existingCase) {
+                            existingCase.setDisplayName(newName);
+                            dbManager.updateCase(existingCase);
+                        }
+                    } catch (EamDbException ex) {
+                        LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
+                    }
+                }
+            } // NAME
+            break;
         }
     }
 }

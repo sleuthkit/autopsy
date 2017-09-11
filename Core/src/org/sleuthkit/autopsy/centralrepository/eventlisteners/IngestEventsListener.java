@@ -91,8 +91,7 @@ public class IngestEventsListener {
 
                     final ModuleDataEvent mde = (ModuleDataEvent) evt.getOldValue();
                     Collection<BlackboardArtifact> bbArtifacts = mde.getArtifacts();
-                    if (null == bbArtifacts) {
-                        LOGGER.log(Level.WARNING, "Error getting artifacts from Module Data Event. getArtifacts() returned null.");
+                    if (null == bbArtifacts) { //the ModuleDataEvents don't always have a collection of artifacts set
                         return;
                     }
                     List<EamArtifact> eamArtifacts = new ArrayList<>();

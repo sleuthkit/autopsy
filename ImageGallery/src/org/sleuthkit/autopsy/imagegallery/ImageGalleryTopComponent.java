@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2013-16 Basis Technology Corp.
+ * Copyright 2011-17 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@
  */
 package org.sleuthkit.autopsy.imagegallery;
 
+import java.util.List;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -28,12 +30,12 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.netbeans.api.settings.ConvertAsProperties;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.Mode;
+import org.openide.windows.RetainLocation;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -53,24 +55,37 @@ import org.sleuthkit.autopsy.imagegallery.gui.navpanel.HashHitGroupList;
  * this does not seem to function correctly unless a Netbeans provided explorer
  * view is present in the TopComponenet, even if it is invisible/ zero sized
  */
-@ConvertAsProperties(
-        dtd = "-//org.sleuthkit.autopsy.imagegallery//ImageGallery//EN",
-        autostore = false)
 @TopComponent.Description(
         preferredID = "ImageGalleryTopComponent",
         //iconBase = "org/sleuthkit/autopsy/imagegallery/images/lightbulb.png" use this to put icon in window title area,
         persistenceType = TopComponent.PERSISTENCE_NEVER)
-@TopComponent.Registration(mode = "timeline", openAtStartup = false)
+@RetainLocation("ImageGallery")
+@TopComponent.Registration(mode = "ImageGallery", openAtStartup = false)
 @Messages({
     "CTL_ImageGalleryAction=Image/Video Gallery",
-    "CTL_ImageGalleryTopComponent=Image/Video Gallery",
-    "HINT_ImageGalleryTopComponent=This is a Image/Video Gallery window"
+    "CTL_ImageGalleryTopComponent=Image/Video Gallery"
 })
 public final class ImageGalleryTopComponent extends TopComponent implements ExplorerManager.Provider, Lookup.Provider {
 
     public final static String PREFERRED_ID = "ImageGalleryTopComponent"; // NON-NLS
     private static final Logger LOGGER = Logger.getLogger(ImageGalleryTopComponent.class.getName());
-    private static boolean topComponentInitialized = false;
+    private static volatile boolean topComponentInitialized = false;
+
+    private final ExplorerManager em = new ExplorerManager();
+    private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
+
+    private final ImageGalleryController controller = ImageGalleryController.getDefault();
+
+    private SplitPane splitPane;
+    private StackPane centralStack;
+    private BorderPane borderPane = new BorderPane();
+    private StackPane fullUIStack;
+    private MetaDataPane metaDataTable;
+    private GroupPane groupPane;
+    private GroupTree groupTree;
+    private HashHitGroupList hashHitList;
+    private VBox leftPane;
+    private Scene myScene;
 
     public static void openTopComponent() {
         //TODO:eventually move to this model, throwing away everything and rebuilding controller groupmanager etc for each case.
@@ -81,15 +96,13 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         //            }
         //        }
         //        timeLineController.openTimeLine();
-        final ImageGalleryTopComponent tc = (ImageGalleryTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
+        final TopComponent tc =  WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
-            WindowManager.getDefault().isTopComponentFloating(tc);
-            Mode mode = WindowManager.getDefault().findMode("timeline"); // NON-NLS
-            if (mode != null) {
-                mode.dockInto(tc);
+            if (tc.isOpened() == false) {
+                tc.open();
             }
-            tc.open();
+            tc.toFront();
             tc.requestActive();
         }
     }
@@ -107,36 +120,8 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
         }
     }
 
-    private final ExplorerManager em = new ExplorerManager();
-
-    private final Lookup lookup = (ExplorerUtils.createLookup(em, getActionMap()));
-
-    private final ImageGalleryController controller = ImageGalleryController.getDefault();
-
-    private SplitPane splitPane;
-
-    private StackPane centralStack;
-
-    private BorderPane borderPane = new BorderPane();
-
-    private StackPane fullUIStack;
-
-    private MetaDataPane metaDataTable;
-
-    private GroupPane groupPane;
-
-    private GroupTree groupTree;
-    private HashHitGroupList hashHitList;
-
-    private VBox leftPane;
-
-    private Scene myScene;
-
     public ImageGalleryTopComponent() {
-
         setName(Bundle.CTL_ImageGalleryTopComponent());
-        setToolTipText(Bundle.HINT_ImageGalleryTopComponent());
-
         initComponents();
 
         Platform.runLater(() -> {//initialize jfx ui
@@ -200,25 +185,21 @@ public final class ImageGalleryTopComponent extends TopComponent implements Expl
     // End of variables declaration//GEN-END:variables
 
     @Override
-    public void componentOpened() {
+    public List<Mode> availableModes(List<Mode> modes) {
+        /*
+         * This looks like the right thing to do, but online discussions seems
+         * to indicate this method is effectively deprecated. A break point
+         * placed here was never hit.
+         */
 
+        return modes.stream().filter(mode -> mode.getName().equals("timeline") || mode.getName().equals("ImageGallery"))
+                .collect(Collectors.toList());
     }
 
     @Override
-    public void componentClosed() {
-        //TODO: we could do some cleanup here
-    }
-
-    void writeProperties(java.util.Properties p) {
-        // better to version settings since initial version as advocated at
-        // http://wiki.apidesign.org/wiki/PropertyFiles
-        p.setProperty("version", "1.0");
-        // TODO store your settings
-    }
-
-    void readProperties(java.util.Properties p) {
-        String version = p.getProperty("version");
-        // TODO read your settings according to their version
+    public void componentOpened() {
+        super.componentOpened();
+        WindowManager.getDefault().setTopComponentFloating(this, true);
     }
 
     @Override

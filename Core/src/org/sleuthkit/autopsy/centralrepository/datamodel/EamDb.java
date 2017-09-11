@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.util.List;
 import java.util.Set;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Main interface for interacting with the database
@@ -147,6 +148,13 @@ public interface EamDb {
      * @param eamCase The case to add
      */
     void newCase(EamCase eamCase) throws EamDbException;
+    
+     /**
+     * Creates new Case in the database from the given case
+     * 
+     * @param case The case to add
+     */
+    EamCase newCase(Case autopsyCase) throws EamDbException;   
 
     /**
      * Updates an existing Case in the database
