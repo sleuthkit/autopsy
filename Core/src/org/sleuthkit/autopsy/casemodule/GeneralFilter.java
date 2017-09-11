@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,11 @@
  */
 package org.sleuthkit.autopsy.casemodule;
 
-import org.openide.util.NbBundle;
-
 import java.io.File;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 import javax.swing.filechooser.FileFilter;
+import org.openide.util.NbBundle;
 
 /**
  * FileFilter helper class. Matches files based on extension
@@ -31,25 +30,28 @@ import javax.swing.filechooser.FileFilter;
 public class GeneralFilter extends FileFilter {
 
     // Extensions & Descriptions for commonly used filters
-    public static final List<String> RAW_IMAGE_EXTS = Arrays.asList(new String[]{".img", ".dd", ".001", ".aa", ".raw", ".bin"}); //NON-NLS
-    public static final String RAW_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.rawImageDesc.text");
+    public static final List<String> RAW_IMAGE_EXTS = Arrays.asList(".img", ".dd", ".001", ".aa", ".raw", ".bin"); //NON-NLS
+    @NbBundle.Messages("GeneralFilter.rawImageDesc.text=Raw Images (*.img, *.dd, *.001, *.aa, *.raw, *.bin)")
+    public static final String RAW_IMAGE_DESC = Bundle.GeneralFilter_rawImageDesc_text();
 
-    public static final List<String> ENCASE_IMAGE_EXTS = Arrays.asList(new String[]{".e01"}); //NON-NLS
-    public static final String ENCASE_IMAGE_DESC = NbBundle.getMessage(GeneralFilter.class,
-            "GeneralFilter.encaseImageDesc.text");
+    public static final List<String> ENCASE_IMAGE_EXTS = Arrays.asList(".e01"); //NON-NLS
+    @NbBundle.Messages("GeneralFilter.encaseImageDesc.text=Encase Images (*.e01)")
+    public static final String ENCASE_IMAGE_DESC = Bundle.GeneralFilter_encaseImageDesc_text();
 
-    public static final List<String> VIRTUAL_MACHINE_EXTS = Arrays.asList(new String[]{".vmdk", ".vhd"}); //NON-NLS
-    public static final String VIRTUAL_MACHINE_DESC = NbBundle.getMessage(GeneralFilter.class,
-            "GeneralFilter.virtualMachineImageDesc.text");
+    public static final List<String> VIRTUAL_MACHINE_EXTS = Arrays.asList(".vmdk", ".vhd"); //NON-NLS
+    @NbBundle.Messages("GeneralFilter.virtualMachineImageDesc.text=Virtual Machines (*.vmdk, *.vhd)")
+    public static final String VIRTUAL_MACHINE_DESC = Bundle.GeneralFilter_virtualMachineImageDesc_text();
 
-    public static final List<String> EXECUTABLE_EXTS = Arrays.asList(new String[]{".exe"}); //NON-NLS
-    public static final String EXECUTABLE_DESC = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.executableDesc.text");
+    public static final List<String> EXECUTABLE_EXTS = Arrays.asList(".exe"); //NON-NLS
+    @NbBundle.Messages("GeneralFilter.executableDesc.text=Executables (*.exe)")
+    public static final String EXECUTABLE_DESC = Bundle.GeneralFilter_executableDesc_text();
 
-    public static final List<String> GRAPHIC_IMAGE_EXTS = Arrays.asList(new String[]{".png", ".jpeg", ".jpg", ".gif", ".bmp"}); //NON-NLS
-    public static final String GRAPHIC_IMG_DECR = NbBundle.getMessage(GeneralFilter.class, "GeneralFilter.graphicImageDesc.text");
+    public static final List<String> GRAPHIC_IMAGE_EXTS = Arrays.asList(".png", ".jpeg", ".jpg", ".gif", ".bmp"); //NON-NLS
+    @NbBundle.Messages("GeneralFilter.graphicImageDesc.text=Images (*.png, *.jpg, *.jpeg, *.gif, *.bmp)")
+    public static final String GRAPHIC_IMG_DECR = Bundle.GeneralFilter_graphicImageDesc_text();
 
-    private List<String> extensions;
-    private String desc;
+    private final List<String> extensions;
+    private final String desc;
 
     public GeneralFilter(List<String> ext, String desc) {
         super();
@@ -69,15 +71,8 @@ public class GeneralFilter extends FileFilter {
         if (f.isDirectory()) {
             return true;
         } else {
-            Boolean result = false;
             String name = f.getName().toLowerCase();
-
-            for (String ext : extensions) {
-                if (name.endsWith(ext)) {
-                    result = result || true;
-                }
-            }
-            return result;
+            return extensions.stream().anyMatch(name::endsWith);
         }
     }
 
@@ -90,5 +85,4 @@ public class GeneralFilter extends FileFilter {
     public String getDescription() {
         return desc;
     }
-
 }

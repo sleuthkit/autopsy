@@ -59,6 +59,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository"})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
+        
+        // The hash set functions of central repo are not being included in the current release.
+        bnImportDatabase.setVisible(false);
     }
 
     private void addIngestJobEventsListener() {
@@ -260,6 +263,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         store();
         EamDbSettingsDialog dialog = new EamDbSettingsDialog();
         load(); // reload db settings content and update buttons
+        if (dialog.wasConfigurationChanged()) {
+            firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
+        }
     }//GEN-LAST:event_bnDbConfigureActionPerformed
 
     private void cbUseCentralRepoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbUseCentralRepoActionPerformed
@@ -314,7 +320,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return true if it's okay, false otherwise.
      */
     public boolean valid() {
-        return true;
+        return !cbUseCentralRepo.isSelected() || !lbDbPlatformValue.getText().equals(DISABLED.toString());
     }
 
     @Override
