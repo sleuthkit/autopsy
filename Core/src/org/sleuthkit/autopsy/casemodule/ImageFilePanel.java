@@ -25,6 +25,7 @@ import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -191,6 +192,9 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    @NbBundle.Messages({"ImageFilePanel.000.confirmationMessage=The selected file"
+        + " has extenson .001 but there is a .000 file in the sequence of raw images."
+        + "\nShould the .000 file be used as the start, instead of the selected .001 file?\n"})
     private void browseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseButtonActionPerformed
         String oldText = getContentPaths();
         // set the current directory of the FileChooser if the ImagePath Field is valid
@@ -200,7 +204,19 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
         }
 
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            setContentPath(fileChooser.getSelectedFile().getPath());
+            String path = fileChooser.getSelectedFile().getPath();
+            if (path.endsWith(".001")) {
+                String zeroX3_path = StringUtils.removeEnd(path, ".001") + ".000";
+                if (new File(zeroX3_path).exists()) {
+                    int showConfirmDialog = JOptionPane.showConfirmDialog(this,
+                            Bundle.ImageFilePanel_000_confirmationMessage(),
+                            "Choose .001 file?", JOptionPane.YES_NO_OPTION);
+                    if (showConfirmDialog == JOptionPane.YES_OPTION) {
+                        path = zeroX3_path;
+                    }
+                }
+            }
+            setContentPath(path);
         }
 
         updateHelper();
@@ -267,7 +283,7 @@ public class ImageFilePanel extends JPanel implements DocumentListener {
             errorLabel.setVisible(true);
             errorLabel.setText(Bundle.DataSourceOnCDriveError_text());
         }
-        
+
         return new File(path).isFile()
                 || DriveUtils.isPhysicalDrive(path)
                 || DriveUtils.isPartition(path);
