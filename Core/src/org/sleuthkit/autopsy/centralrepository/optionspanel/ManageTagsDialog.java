@@ -50,13 +50,26 @@ final class ManageTagsDialog extends javax.swing.JDialog {
      * unknown, known, or known bad.
      */
     @Messages({"ManageTagDialog.title=Manage Tags",
-    "ManageTagDialog.tagInfo.text=Additional tags can be created in the Tags options panel."})
+        "ManageTagDialog.tagInfo.text1=-Additional tags can be created in the tags options panel.",
+        "ManageTagDialog.tagInfo.text2=-Checking 'Implies Known Bad' for a tag name will give you the option of marking everyting with that tag in the current case as bad in the central repository.",
+        "ManageTagDialog.tagInfo.text3=-Un-checking 'Implies Known Bad' for a tag name will not have an effect on the central repository.",
+        "ManageTagDialog.tagInfo.text4=-Tagging an item with a tag which has 'Implies Known Bad' selected will flag the item as bad in the central repository.",
+        "ManageTagDialog.tagInfo.text5=-Untagging an item will remove the bad status for that item from the central repository if there are no other known bad tags on that item."})
     ManageTagsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ManageTagDialog_title(),
                 true); // NON-NLS
         initComponents();
         customizeComponents();
+        helpTextArea.setText(Bundle.ManageTagDialog_tagInfo_text1());
+        helpTextArea.append("\n");
+        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text2());
+        helpTextArea.append("\n");
+        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text3());
+        helpTextArea.append("\n");
+        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text4());
+        helpTextArea.append("\n");
+        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text5());
         display();
     }
 
@@ -113,10 +126,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         buttonGroup1 = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
+        tagScrollArea = new javax.swing.JScrollPane();
         tblTagNames = new javax.swing.JTable();
         lbWarnings = new javax.swing.JLabel();
-        tagInfo = new javax.swing.JLabel();
+        helpScrollPane = new javax.swing.JScrollPane();
+        helpTextArea = new javax.swing.JTextArea();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -157,9 +171,16 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(tblTagNames);
+        tagScrollArea.setViewportView(tblTagNames);
 
-        org.openide.awt.Mnemonics.setLocalizedText(tagInfo, org.openide.util.NbBundle.getMessage(ManageTagsDialog.class, "ManageTagDialog.tagInfo.text")); // NOI18N
+        helpTextArea.setEditable(false);
+        helpTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        helpTextArea.setColumns(20);
+        helpTextArea.setLineWrap(true);
+        helpTextArea.setRows(5);
+        helpTextArea.setWrapStyleWord(true);
+        helpTextArea.setFocusable(false);
+        helpScrollPane.setViewportView(helpTextArea);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -169,14 +190,14 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 223, Short.MAX_VALUE)
+                        .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(okButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(cancelButton))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(tagInfo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE)
+                            .addComponent(helpScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(tagScrollArea, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE)
                             .addComponent(lbWarnings, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(2, 2, 2)))
                 .addContainerGap())
@@ -188,16 +209,16 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 314, Short.MAX_VALUE)
+                .addComponent(helpScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 189, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tagInfo, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(tagScrollArea, javax.swing.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbWarnings, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(okButton)
                     .addComponent(cancelButton))
-                .addGap(16, 16, 16))
+                .addContainerGap())
         );
 
         pack();
@@ -241,10 +262,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane helpScrollPane;
+    private javax.swing.JTextArea helpTextArea;
     private javax.swing.JLabel lbWarnings;
     private javax.swing.JButton okButton;
-    private javax.swing.JLabel tagInfo;
+    private javax.swing.JScrollPane tagScrollArea;
     private javax.swing.JTable tblTagNames;
     // End of variables declaration//GEN-END:variables
 }
