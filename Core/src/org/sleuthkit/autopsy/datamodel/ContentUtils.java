@@ -39,7 +39,6 @@ import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.DerivedFile;
 import org.sleuthkit.datamodel.Directory;
 import org.sleuthkit.datamodel.File;
-import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.LayoutFile;
 import org.sleuthkit.datamodel.LocalFile;
@@ -407,7 +406,7 @@ public final class ContentUtils {
                 int numProcessed = 0;
                 // recurse on children
                 for (Content child : dir.getChildren()) {
-                    if (child instanceof FsContent){
+                    if (child instanceof AbstractFile){ //ensure the directory's artifact children are ignored
                         java.io.File childFile = getFsContentDest(child);
                         ExtractFscContentVisitor<T, V> childVisitor
                                 = new ExtractFscContentVisitor<>(childFile, progress, worker, false);
