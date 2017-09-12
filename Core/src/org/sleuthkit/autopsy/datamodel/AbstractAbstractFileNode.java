@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.openide.nodes.Children;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
+import org.openide.util.WeakListeners;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
@@ -69,17 +70,32 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             // If this is an archive file we will listen for ingest events
             // that will notify us when new content has been identified.
             if (FileTypeExtensions.getArchiveExtensions().contains(ext)) {
-                IngestManager.getInstance().addIngestModuleEventListener(pcl);
+                IngestManager.getInstance().addIngestModuleEventListener(weakPcl);
             }
         }
         // Listen for case events so that we can detect when the case is closed
         // or when tags are added.
-        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
+    }
+
+    /**
+     * The finalizer removes event listeners as the BlackboardArtifactNode is
+     * being garbage collected. Yes, we know that finalizers are considered to
+     * be "bad" but since the alternative also relies on garbage collection
+     * being run and we know that finalize will be called when the object is
+     * being GC'd it seems like this is a reasonable solution.
+     *
+     * @throws Throwable
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        removeListeners();
     }
 
     private void removeListeners() {
-        IngestManager.getInstance().removeIngestModuleEventListener(pcl);
-        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
+        IngestManager.getInstance().removeIngestModuleEventListener(weakPcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
 
     private final PropertyChangeListener pcl = (PropertyChangeEvent evt) -> {
@@ -130,6 +146,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
             }
         }
     };
+
+    // We pass a weak reference wrapper around the listener to the event publisher.
+    // This allows Netbeans to delete the node when the user navigates to another
+    // part of the tree (previously, nodes were not being deleted because the event
+    // publisher was holding onto a strong reference to the listener.
+    // We need to hold onto the weak reference here to support unregistering of
+    // the listener in removeListeners() below.
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
     private void updateSheet() {
         this.setSheet(createSheet());
