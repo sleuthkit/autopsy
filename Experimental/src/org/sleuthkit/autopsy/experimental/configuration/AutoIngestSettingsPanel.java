@@ -602,8 +602,8 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
     private void enableOptionsBasedOnMode(OptionsUiMode mode) {
         if (mode != OptionsUiMode.DOWNLOADING_CONFIGURATION) {
             boolean nonMasterSharedConfig = !masterNodeCheckBox.isSelected() && sharedConfigCheckbox.isSelected();
-            jRadioButtonAutomated.setEnabled(cbJoinAutoIngestCluster.isSelected() && !sharedConfigCheckbox.isSelected());
-            jRadioButtonReview.setEnabled(cbJoinAutoIngestCluster.isSelected() && !sharedConfigCheckbox.isSelected());
+            jRadioButtonAutomated.setEnabled(cbJoinAutoIngestCluster.isSelected());
+            jRadioButtonReview.setEnabled(cbJoinAutoIngestCluster.isSelected());
 
             jLabelSelectInputFolder.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
             inputPathTextField.setEnabled(mode == OptionsUiMode.AIM && !nonMasterSharedConfig);
@@ -1021,11 +1021,6 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         tbOops.setForeground(new java.awt.Color(255, 0, 0));
         tbOops.setText(org.openide.util.NbBundle.getMessage(AutoIngestSettingsPanel.class, "AutoIngestSettingsPanel.tbOops.text")); // NOI18N
         tbOops.setBorder(null);
-        tbOops.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                tbOopsActionPerformed(evt);
-            }
-        });
 
         javax.swing.GroupLayout nodePanelLayout = new javax.swing.GroupLayout(nodePanel);
         nodePanel.setLayout(nodePanelLayout);
@@ -1172,20 +1167,12 @@ public class AutoIngestSettingsPanel extends javax.swing.JPanel {
         } else {
             uploadButton.setEnabled(false);
         }
-        if (sharedConfigCheckbox.isEnabled()) {
-            jRadioButtonAutomated.setEnabled(false);
-            jRadioButtonReview.setEnabled(false);
-        }
     }//GEN-LAST:event_masterNodeCheckBoxItemStateChanged
 
     private void cbJoinAutoIngestClusterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbJoinAutoIngestClusterActionPerformed
         enableOptionsBasedOnMode(getModeFromRadioButtons());
         controller.changed();
     }//GEN-LAST:event_cbJoinAutoIngestClusterActionPerformed
-
-    private void tbOopsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbOopsActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_tbOopsActionPerformed
 
     private void browseOutputFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_browseOutputFolderButtonActionPerformed
         String oldText = outputPathTextField.getText().trim();
