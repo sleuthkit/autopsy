@@ -147,12 +147,14 @@ public abstract class AbstractAbstractFileNode<T extends AbstractFile> extends A
         }
     };
 
-    // We pass a weak reference wrapper around the listener to the event publisher.
-    // This allows Netbeans to delete the node when the user navigates to another
-    // part of the tree (previously, nodes were not being deleted because the event
-    // publisher was holding onto a strong reference to the listener.
-    // We need to hold onto the weak reference here to support unregistering of
-    // the listener in removeListeners() below.
+    /**
+     * We pass a weak reference wrapper around the listener to the event
+     * publisher. This allows Netbeans to delete the node when the user
+     * navigates to another part of the tree (previously, nodes were not being
+     * deleted because the event publisher was holding onto a strong reference
+     * to the listener. We need to hold onto the weak reference here to support
+     * unregistering of the listener in removeListeners() below.
+     */
     private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
 
     private void updateSheet() {
