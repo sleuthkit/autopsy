@@ -30,11 +30,9 @@ import org.sleuthkit.autopsy.casemodule.events.BlackBoardArtifactTagDeletedEvent
 import org.sleuthkit.autopsy.casemodule.events.ContentTagAddedEvent;
 import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
-import org.sleuthkit.autopsy.casemodule.services.Services;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDataSource;
@@ -46,7 +44,6 @@ import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentTag;
-import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
@@ -150,58 +147,6 @@ public class CaseEventListener implements PropertyChangeListener {
                 // TODO: send r into a thread pool instead
                 Thread t = new Thread(r);
                 t.start();
-                
-                /*
-                if ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                        || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                        || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
-                        || (af.getKnown() == TskData.FileKnown.KNOWN)
-                        || (af.isDir() == true)
-                        || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
-                    break;
-                }
-
-                String dsName;
-                try {
-                    dsName = af.getDataSource().getName();
-                } catch (TskCoreException ex) {
-                    LOGGER.log(Level.SEVERE, "Error, unable to get name of data source from abstract file during CONTENT_TAG_ADDED event.", ex);
-                    return;
-                }
-
-                    String md5 = af.getMd5Hash();
-                    if (md5 == null || md5.isEmpty()) {
-                        return;
-                    }
-                    String deviceId;
-                    try {
-                        deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
-                    } catch (TskCoreException | TskDataException ex) {
-                        LOGGER.log(Level.SEVERE, "Error, failed to get deviceID or data source from current case.", ex);
-                        return;
-                    }
-
-                    EamArtifact eamArtifact;
-                    try {
-                        EamArtifact.Type filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
-                        eamArtifact = new EamArtifact(filesType, af.getMd5Hash());
-                        EamArtifactInstance cei = new EamArtifactInstance(
-                                new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
-                                new EamDataSource(deviceId, dsName),
-                                af.getParentPath() + af.getName(),
-                                comment,
-                                knownStatus,
-                                EamArtifactInstance.GlobalStatus.LOCAL
-                        );
-                        eamArtifact.addInstance(cei);
-                        // send update to Central Repository db
-                        Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
-                        // TODO: send r into a thread pool instead
-                        Thread t = new Thread(r);
-                        t.start();
-                    } catch (EamDbException ex) {
-                        LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type during CONTENT_TAG_ADDED/CONTENT_TAG_DELETED event.", ex);
-                    }     */           
             } // CONTENT_TAG_ADDED, CONTENT_TAG_DELETED
             break;
 
