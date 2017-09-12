@@ -304,6 +304,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * text box.
      */
     @Messages({
+        "# {0} - case db status", "# {1} - search svc Status", "# {2} - coord svc Status", "# {3} - msg broker status", 
         "AutoIngestControlPanel.tbServicesStatusMessage.Message=Case databases {0}, keyword search {1}, coordination {2}, messaging {3} ",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up=up",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down=down",
