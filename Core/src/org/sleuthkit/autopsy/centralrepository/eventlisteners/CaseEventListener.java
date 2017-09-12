@@ -75,9 +75,21 @@ public class CaseEventListener implements PropertyChangeListener {
                 final ContentTagAddedEvent tagAddedEvent = (ContentTagAddedEvent) evt;
                 final ContentTag tagAdded = tagAddedEvent.getAddedTag();
                 // TODO: detect failed cast and break if so.
-                final AbstractFile af = (AbstractFile) tagAdded.getContent();
+                //final AbstractFile af = (AbstractFile) tagAdded.getContent();
                 final TagName tagName = tagAdded.getName();
+                
+                if (dbManager.getBadTags().contains(tagName.getDisplayName())) {
+                    final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(tagAdded.getContent(), 
+                            TskData.FileKnown.BAD, tagAdded.getComment());
 
+                    // send update to Central Repository db
+                    Runnable r = new BadFileTagRunner(eamArtifact);
+                    // TODO: send r into a thread pool instead
+                    Thread t = new Thread(r);
+                    t.start();
+                }
+                
+                /*
                 if ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
                         || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
                         || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
@@ -129,7 +141,7 @@ public class CaseEventListener implements PropertyChangeListener {
                     } catch (EamDbException ex) {
                         LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type during CONTENT_TAG_ADDED event.", ex);
                     }
-                }
+                }*/
             } // CONTENT_TAG_ADDED
             break;
 

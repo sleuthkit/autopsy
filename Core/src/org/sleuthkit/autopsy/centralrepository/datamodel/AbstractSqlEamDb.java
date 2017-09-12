@@ -33,12 +33,13 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import javafx.animation.KeyValue;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.ContentTag;
 
 /**
  *
@@ -1063,7 +1064,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
     /**
      * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact
-     * exists, it is updated. If eamArtifact does not exist nothing happens
+     * exists, it is updated. If eamArtifact does not exist it is added
+     * with knownStatus = "Bad"
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      */
@@ -1148,6 +1150,43 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closeResultSet(resultSet);
             EamDbUtil.closeConnection(conn);
         }
+    }
+    
+    /**
+     * Set knownBad status for all files/artifacts in the given case that
+     * are tagged with the given tag name. 
+     * Files/artifacts that are not already in the database will be added.
+     * @param tagName The name of the tag to search for
+     * @param curCase The case to search in
+     */
+    @Override
+    public void setArtifactsKnownBadByTag(String tagNameString, Case curCase) throws EamDbException{
+        try{
+            TagName tagName = curCase.getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagNameString);
+            
+            // First find any matching artifacts
+            List<BlackboardArtifactTag> artifactTags = curCase.getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
+            System.out.println("\n####### There are " + artifactTags.size() + " matching artifact tags for tag " + tagNameString);                     
+            
+            for(BlackboardArtifactTag bbTag:artifactTags){
+                List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbTag.getArtifact(), true, getCorrelationTypes(), true);
+                for (EamArtifact eamArtifact : convertedArtifacts) {
+                    setArtifactInstanceKnownBad(eamArtifact);
+                }
+            }
+
+            // Now search for files
+            List<ContentTag> fileTags = curCase.getSleuthkitCase().getContentTagsByTagName(tagName);
+            System.out.println("\n####### There are " + fileTags.size() + " matching file tags for tag " + tagNameString);
+            for(ContentTag contentTag:fileTags){
+                final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
+                            TskData.FileKnown.BAD, "");
+                setArtifactInstanceKnownBad(eamArtifact);
+            }
+        } catch (Exception ex){
+            // fix fix
+        }
+        
     }
 
     /**

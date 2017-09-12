@@ -27,8 +27,12 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 import javax.swing.JFrame;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.JOptionPane;
 import org.openide.util.NbBundle.Messages;
 import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -92,6 +96,8 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             boolean enabled = badTags.contains(tagName);
             model.addRow(new Object[]{tagName, enabled});
         }
+        CheckBoxModelListener listener = new CheckBoxModelListener();
+        model.addTableModelListener(listener);
     }
 
     private void display() {
@@ -229,6 +235,45 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             return false;
         }
         return true;
+    }
+    
+    public class CheckBoxModelListener implements TableModelListener {
+
+        @Override
+        public void tableChanged(TableModelEvent e) {
+            int row = e.getFirstRow();
+            int column = e.getColumn();
+            if (column == 1) {
+                DefaultTableModel model = (DefaultTableModel) e.getSource();
+                String columnName = model.getColumnName(column);
+                String tagName = (String) model.getValueAt(row, 0);
+                Boolean checked = (Boolean) model.getValueAt(row, column);
+                if (checked) {
+                    System.out.println(tagName + " " + columnName + ": " + true);
+                    
+                    
+                    if(Case.isCaseOpen()){
+                        int dialogButton = JOptionPane.YES_NO_OPTION;
+                        // The actual idea: Flag any files/artifacts that are already in the central repo and that match
+                        // this thing? Or maye not that first part. However it already works
+                        int dialogResult = JOptionPane.showConfirmDialog (null, "Tag the things??","Warning",dialogButton);
+                        if(dialogResult == JOptionPane.YES_OPTION){
+                            try{
+                                EamDb.getInstance().setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
+                            } catch (Exception ex) { // fix fix fix
+                                ex.printStackTrace();
+                            }
+                        }
+                    } else {
+                        System.out.println("  No case open");
+                    }
+                    
+                    
+                } else {
+                    System.out.println(tagName + " " + columnName + ": " + false);
+                }
+            }
+        }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
