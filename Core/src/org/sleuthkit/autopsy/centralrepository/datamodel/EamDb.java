@@ -20,6 +20,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 
 import java.util.List;
 import java.util.Set;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -319,12 +320,13 @@ public interface EamDb {
     void bulkInsertCases(List<EamCase> cases) throws EamDbException;
 
     /**
-     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact
+     * Sets an eamArtifact instance to the given known status. If eamArtifact
      * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
+     * @param FileKnown The status to change the artifact to
      */
-    void setArtifactInstanceKnownBad(EamArtifact eamArtifact) throws EamDbException;
+    void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
 
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
