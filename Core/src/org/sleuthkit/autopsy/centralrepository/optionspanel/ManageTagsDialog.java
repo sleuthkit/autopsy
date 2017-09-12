@@ -237,10 +237,14 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         return true;
     }
     
+    /**
+     * If the user sets a tag to "Implies known bad", give them the option to update
+     * any existing tagged items (in the current case only) in the central repo.
+     */
     public class CheckBoxModelListener implements TableModelListener {
-// For files/artifacts in the current case that are already tagged, 
         @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as known bad any files/artifacts in the current case that have this tag?",
-                    "ManageTagsDialog.updateCurrentCase.title=Update current case?"})
+                    "ManageTagsDialog.updateCurrentCase.title=Update current case?",
+                    "ManageTagsDialog.updateCurrentCase.error=Error updating existing Central Repository entries"})
         
         @Override
         public void tableChanged(TableModelEvent e) {
@@ -251,10 +255,10 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 String tagName = (String) model.getValueAt(row, 0);
                 Boolean checked = (Boolean) model.getValueAt(row, column);
                 if (checked) {
+                    
+                    // Don't do anything if there's no case open
                     if(Case.isCaseOpen()){
                         int dialogButton = JOptionPane.YES_NO_OPTION;
-                        // The actual idea: Flag any files/artifacts that are already in the central repo and that match
-                        // this thing? Or maye not that first part. However it already works
                         int dialogResult = JOptionPane.showConfirmDialog (
                                 null, 
                                 Bundle.ManageTagsDialog_updateCurrentCase_msg(),
@@ -263,8 +267,9 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                         if(dialogResult == JOptionPane.YES_OPTION){
                             try{
                                 EamDb.getInstance().setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
-                            } catch (Exception ex) { // fix fix fix
-                                ex.printStackTrace();
+                            } catch (EamDbException ex) {
+                                LOGGER.log(Level.SEVERE, "Failed to apply known bad status to current case", ex);
+                                JOptionPane.showMessageDialog(null, Bundle.ManageTagsDialog_updateCurrentCase_error());
                             }
                         }
                     }

@@ -1063,9 +1063,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact
+     * Sets an eamArtifact instance to the given knownStatus. If eamArtifact
      * exists, it is updated. If eamArtifact does not exist it is added
-     * with knownStatus = "Bad"
+     * with the given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      * @param FileKnown The status to change the artifact to
@@ -1166,8 +1166,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             TagName tagName = curCase.getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagNameString);
             
             // First find any matching artifacts
-            List<BlackboardArtifactTag> artifactTags = curCase.getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);
-            System.out.println("\n####### There are " + artifactTags.size() + " matching artifact tags for tag " + tagNameString);                     
+            List<BlackboardArtifactTag> artifactTags = curCase.getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);                  
             
             for(BlackboardArtifactTag bbTag:artifactTags){
                 List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbTag.getArtifact(), true, getCorrelationTypes(), true);
@@ -1178,7 +1177,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
             // Now search for files
             List<ContentTag> fileTags = curCase.getSleuthkitCase().getContentTagsByTagName(tagName);
-            System.out.println("\n####### There are " + fileTags.size() + " matching file tags for tag " + tagNameString);
             for(ContentTag contentTag:fileTags){
                 final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
                             TskData.FileKnown.BAD, "");
