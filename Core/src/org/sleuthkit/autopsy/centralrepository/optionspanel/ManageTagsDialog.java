@@ -61,6 +61,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 true); // NON-NLS
         initComponents();
         customizeComponents();
+        setupHelpTextArea();
+        display();
+    }
+
+    private void setupHelpTextArea() {
         helpTextArea.setText(Bundle.ManageTagDialog_tagInfo_text1());
         helpTextArea.append("\n");
         helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text2());
@@ -70,7 +75,6 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text4());
         helpTextArea.append("\n");
         helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text5());
-        display();
     }
 
     @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to Central Repository.",
