@@ -1068,9 +1068,10 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * with knownStatus = "Bad"
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
+     * @param FileKnown The status to change the artifact to
      */
     @Override
-    public void setArtifactInstanceKnownBad(EamArtifact eamArtifact) throws EamDbException {
+    public void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
         Connection conn = connect();
 
         if (1 != eamArtifact.getInstances().size()) {
@@ -1111,7 +1112,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 int instance_id = resultSet.getInt("id");
                 preparedUpdate = conn.prepareStatement(sqlUpdate.toString());
 
-                preparedUpdate.setString(1, TskData.FileKnown.BAD.name());
+                preparedUpdate.setString(1, knownStatus.name());
                 // NOTE: if the user tags the same instance as BAD multiple times,
                 // the comment from the most recent tagging is the one that will
                 // prevail in the DB.
@@ -1138,12 +1139,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     newDataSource(eamInstance.getEamDataSource());
                 }
                 
-                eamArtifact.getInstances().get(0).setKnownStatus(TskData.FileKnown.BAD);
+                eamArtifact.getInstances().get(0).setKnownStatus(knownStatus);
                 addArtifact(eamArtifact);
             }
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting/setting artifact instance knownStatus=Bad.", ex); // NON-NLS
+            throw new EamDbException("Error getting/setting artifact instance knownStatus=" + knownStatus.getName(), ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedUpdate);
             EamDbUtil.closePreparedStatement(preparedQuery);
@@ -1171,7 +1172,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             for(BlackboardArtifactTag bbTag:artifactTags){
                 List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbTag.getArtifact(), true, getCorrelationTypes(), true);
                 for (EamArtifact eamArtifact : convertedArtifacts) {
-                    setArtifactInstanceKnownBad(eamArtifact);
+                    setArtifactInstanceKnownStatus(eamArtifact,TskData.FileKnown.BAD);
                 }
             }
 
@@ -1181,7 +1182,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             for(ContentTag contentTag:fileTags){
                 final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
                             TskData.FileKnown.BAD, "");
-                setArtifactInstanceKnownBad(eamArtifact);
+                setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
             }
         } catch (Exception ex){
             // fix fix
