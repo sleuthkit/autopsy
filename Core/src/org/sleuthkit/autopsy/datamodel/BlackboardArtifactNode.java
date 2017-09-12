@@ -130,6 +130,14 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         }
     };
 
+    // We pass a weak reference wrapper around the listener to the event publisher.
+    // This allows Netbeans to delete the node when the user navigates to another
+    // part of the tree (previously, nodes were not being deleted because the event
+    // publisher was holding onto a strong reference to the listener.
+    // We need to hold onto the weak reference here to support unregistering of
+    // the listener in removeListeners() below.
+    private final PropertyChangeListener weakPcl = WeakListeners.propertyChange(pcl, null);
+
     /**
      * Construct blackboard artifact node from an artifact, overriding the
      * standard icon with the one at the path provided.
@@ -154,7 +162,7 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         this.setName(Long.toString(artifact.getArtifactID()));
         this.setDisplayName();
         this.setIconBaseWithExtension(iconPath);
-        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, WeakListeners.propertyChange(pcl, null));
+        Case.addEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
 
     /**
@@ -167,8 +175,22 @@ public class BlackboardArtifactNode extends AbstractContentNode<BlackboardArtifa
         this(artifact, ExtractedContent.getIconFilePath(artifact.getArtifactTypeID()));
     }
 
+    /**
+     * The finalizer removes event listeners as the BlackboardArtifactNode
+     * is being garbage collected. Yes, we know that finalizers are considered
+     * to be "bad" but since the alternative also relies on garbage collection
+     * being run and we know that finalize will be called when the object is
+     * being GC'd it seems like this is a reasonable solution.
+     * @throws Throwable
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        removeListeners();
+    }
+
     private void removeListeners() {
-        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, pcl);
+        Case.removeEventTypeSubscriber(CASE_EVENTS_OF_INTEREST, weakPcl);
     }
 
     public BlackboardArtifact getArtifact() {
