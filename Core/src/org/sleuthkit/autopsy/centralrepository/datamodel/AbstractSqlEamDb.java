@@ -40,6 +40,7 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.BlackboardArtifactTag;
 import org.sleuthkit.datamodel.TagName;
 import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  *
@@ -1182,8 +1183,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                             TskData.FileKnown.BAD, "");
                 setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
             }
-        } catch (Exception ex){
-            // fix fix
+        } catch (TskCoreException ex){
+            throw new EamDbException("Error updating artifacts", ex);
         }
         
     }
