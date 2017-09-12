@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2011 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,7 @@ import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
@@ -168,9 +169,10 @@ final class ExtractUnallocAction extends AbstractAction {
     private List<LayoutFile> getUnallocFiles(Content c) {
         UnallocVisitor uv = new UnallocVisitor();
         try {
-            List<Content> unallocFiles = c.getChildren();
-            if (null != unallocFiles && unallocFiles.isEmpty() == false) {
-                return unallocFiles.get(0).accept(uv); //Launching it on the root directory
+            for (Content contentChild : c.getChildren()) {
+                if (contentChild instanceof AbstractContent) {
+                    return contentChild.accept(uv);  //call on first non-artifact child added to database
+                }
             }
         } catch (TskCoreException tce) {
             logger.log(Level.WARNING, "Couldn't get a list of Unallocated Files, failed at sending out the visitor ", tce); //NON-NLS
@@ -228,17 +230,17 @@ final class ExtractUnallocAction extends AbstractAction {
             try {
                 progress = ProgressHandle.createHandle(
                         NbBundle.getMessage(this.getClass(), "ExtractUnallocAction.progress.extractUnalloc.title"), new Cancellable() {
-                            @Override
-                            public boolean cancel() {
-                                logger.log(Level.INFO, "Canceling extraction of unallocated space"); //NON-NLS
-                                canceled = true;
-                                if (progress != null) {
-                                    progress.setDisplayName(NbBundle.getMessage(this.getClass(),
-                                                    "ExtractUnallocAction.progress.displayName.cancelling.text"));
-                                }
-                                return true;
-                            }
-                        });
+                    @Override
+                    public boolean cancel() {
+                        logger.log(Level.INFO, "Canceling extraction of unallocated space"); //NON-NLS
+                        canceled = true;
+                        if (progress != null) {
+                            progress.setDisplayName(NbBundle.getMessage(this.getClass(),
+                                    "ExtractUnallocAction.progress.displayName.cancelling.text"));
+                        }
+                        return true;
+                    }
+                });
                 int MAX_BYTES = 8192;
                 byte[] buf = new byte[MAX_BYTES];    //read 8kb at a time                         
 
@@ -329,11 +331,15 @@ final class ExtractUnallocAction extends AbstractAction {
      */
     private boolean hasVolumeSystem(Image img) {
         try {
-            return (img.getChildren().get(0) instanceof VolumeSystem);
+            for (Content c : img.getChildren()) {
+                if (c instanceof VolumeSystem) {
+                    return true;
+                }
+            }
         } catch (TskCoreException tce) {
-            logger.log(Level.WARNING, "Unable to determine if image has a volume system, extraction may be incomplete", tce); //NON-NLS
-            return false;
+            logger.log(Level.SEVERE, "Unable to determine if image has a volume system, extraction may be incomplete", tce); //NON-NLS
         }
+        return false;
     }
 
     /**
@@ -394,8 +400,10 @@ final class ExtractUnallocAction extends AbstractAction {
         public List<LayoutFile> visit(FileSystem fs) {
             try {
                 for (Content c : fs.getChildren()) {
-                    if (((AbstractFile) c).isRoot()) {
-                        return c.accept(this);
+                    if (c instanceof AbstractFile) {
+                        if (((AbstractFile) c).isRoot()) {
+                            return c.accept(this);
+                        }
                     }
                 }
             } catch (TskCoreException tce) {
@@ -417,7 +425,7 @@ final class ExtractUnallocAction extends AbstractAction {
             try {
                 List<LayoutFile> lflst = new ArrayList<>();
                 for (Content layout : vd.getChildren()) {
-                    if(layout instanceof LayoutFile){
+                    if (layout instanceof LayoutFile) {
                         lflst.add((LayoutFile) layout);
                     }
                 }
