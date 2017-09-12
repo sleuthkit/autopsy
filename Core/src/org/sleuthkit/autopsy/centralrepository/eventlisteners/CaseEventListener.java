@@ -279,6 +279,7 @@ public class CaseEventListener implements PropertyChangeListener {
                     LOGGER.log(Level.SEVERE, "Error, unable to get artifact types during BLACKBOARD_ARTIFACT_TAG_ADDED/BLACKBOARD_ARTIFACT_TAG_DELETED event.", ex);
                 }
             } // BLACKBOARD_ARTIFACT_TAG_ADDED, BLACKBOARD_ARTIFACT_TAG_DELETED
+            break;
 
             case DATA_SOURCE_ADDED: {
                 if (!EamDb.isEnabled()) {
