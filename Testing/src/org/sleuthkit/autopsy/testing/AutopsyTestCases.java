@@ -64,8 +64,7 @@ public class AutopsyTestCases {
 
     private static final Logger logger = Logger.getLogger(AutopsyTestCases.class.getName());
     private long start;
-    
-    /**
+     /**
      * Escapes the slashes in a file or directory path.
      *
      * @param path The path to be escaped.
@@ -380,4 +379,32 @@ public class AutopsyTestCases {
             logger.log(Level.SEVERE, "Error saving messaging service connection info", ex); //NON-NLS
         }
     }
+    
+    class PMDTest {
+        private long test;
+        private String pmd;
+    
+        public PMDTest(long test) {
+            pmd = "Test PMD settings";
+            this.test = setTest(test);
+        }
+    
+        public long setTest(long test){
+            String unused;
+            return test++;
+        }
+    
+        public String getPmd() {
+            return pmd;
+        }   
+    
+        private void testPMD() {
+            pmd = "Test PMD again.";
+            check_var_location = "PMD check variable position.";
+
+        }
+    
+        private String check_var_location = "Not a good position";
+}
+
 }
