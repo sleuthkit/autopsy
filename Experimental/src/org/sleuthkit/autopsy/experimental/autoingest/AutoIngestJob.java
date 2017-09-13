@@ -20,7 +20,9 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.Serializable;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Objects;
@@ -29,7 +31,6 @@ import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
-import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobData.ProcessingStage;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 
 /**
@@ -40,16 +41,65 @@ import org.sleuthkit.autopsy.ingest.IngestJob;
 public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final int CURRENT_VERSION = 1;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private final AutoIngestJobData nodeData;
+    private final Manifest manifest;
+    private final String nodeName;
+    @GuardedBy("this")
+    private String caseDirectoryPath;
+    @GuardedBy("this")
+    private Integer priority;
+    @GuardedBy("this")
+    private Stage stage;
+    @GuardedBy("this")
+    private Date stageStartDate;
     @GuardedBy("this")
     transient private DataSourceProcessor dataSourceProcessor;
     @GuardedBy("this")
     transient private IngestJob ingestJob;
     @GuardedBy("this")
-    transient private boolean canceled;
+    transient private boolean cancelled;
     @GuardedBy("this")
     transient private boolean completed;
+    @GuardedBy("this")
+    private Date completedDate;
+    @GuardedBy("this")
+    private boolean errorsOccurred;
+    private final int version;
+
+    /**
+     * Constructs an automated ingest job for a manifest. The manifest specifies
+     * a co-located data source and a case to which the data source is to be
+     * added.
+     *
+     * @param manifest          The manifest
+     * @param caseDirectoryPath The path to the case directory for the job, may
+     *                          be null.
+     * @param priority          The priority of the job. The higher the number,
+     *                          the higher the priority.
+     * @param nodeName          If the job is in progress, the node doing the
+     *                          processing, otherwise the locla host.
+     * @param stage             The processing stage for display purposes.
+     * @param completedDate     The date when the job was completed. Use the
+     *                          epoch (January 1, 1970, 00:00:00 GMT) to
+     *                          indicate the the job is not completed, i.e., new
+     *                          Date(0L).
+     */
+    AutoIngestJob(Manifest manifest, Path caseDirectoryPath, int priority, String nodeName, Stage stage, Date completedDate, boolean errorsOccurred) {
+        this.manifest = manifest;
+        if (null != caseDirectoryPath) {
+            this.caseDirectoryPath = caseDirectoryPath.toString();
+        } else {
+            this.caseDirectoryPath = "";
+        }
+        this.priority = priority;
+        this.nodeName = nodeName;
+        this.stage = stage;
+        this.stageStartDate = manifest.getDateFileCreated();
+        this.completedDate = completedDate;
+        this.errorsOccurred = errorsOccurred;
+        this.version = AutoIngestJob.CURRENT_VERSION;
+    }
 
     /**
      * Constructs an automated ingest job for a manifest. The manifest specifies
@@ -59,38 +109,107 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * Note: Manifest objects will be phased out and no longer be part of the
      * AutoIngestJob class.
      *
-     * @param nodeData          The node data.
+     * @param nodeData The node data.
      */
     AutoIngestJob(AutoIngestJobData nodeData) {
-        this.nodeData = nodeData;
+        this.manifest = new Manifest(nodeData.getManifestFilePath(), nodeData.getManifestFileDate(), nodeData.getCaseName(), nodeData.getDeviceId(), nodeData.getDataSourcePath(), Collections.emptyMap());
+        this.caseDirectoryPath = nodeData.getCaseDirectoryPath().toString();
+        this.priority = nodeData.getPriority(); // RJCTODO: This should probably go into the manifest...
+        this.nodeName = nodeData.getProcessingHost();
+        // this.stage = nodeData.getProcessingStage(); // RJCTODO
+        this.stageStartDate = nodeData.getProcessingStageStartDate();
+        this.completedDate = nodeData.getCompletedDate();
+        this.errorsOccurred = nodeData.getErrorsOccurred();
+        this.version = nodeData.getVersion();
     }
 
     /**
-     * Gets the auto ingest job node data.
+     * Gets the auto ingest jobmanifest.
      *
-     * @return The node data.
+     * @return The manifest.
      */
-    AutoIngestJobData getNodeData() {
-        return this.nodeData;
+    Manifest getManifest() {
+        return this.manifest;
     }
 
-    synchronized void setStage(ProcessingStage newStage) {
+    /**
+     * Queries whether or not a case directory path has been set for this auto
+     * ingest job.
+     *
+     * @return True or false
+     */
+    synchronized boolean hasCaseDirectoryPath() {
+        return (false == this.caseDirectoryPath.isEmpty());
+    }
+
+    /**
+     * Sets the path to the case directory of the case associated with this job.
+     *
+     * @param caseDirectoryPath The path to the case directory.
+     */
+    synchronized void setCaseDirectoryPath(Path caseDirectoryPath) {
+        this.caseDirectoryPath = caseDirectoryPath.toString();
+    }
+
+    /**
+     * Gets the path to the case directory of the case associated with this job,
+     * may be null.
+     *
+     * @return The case directory path or null if the case directory has not
+     *         been created yet.
+     */
+    synchronized Path getCaseDirectoryPath() {
+        if (!caseDirectoryPath.isEmpty()) {
+            return Paths.get(caseDirectoryPath);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Sets the priority of the job. A higher number indicates a higher
+     * priority.
+     *
+     * @param priority The priority.
+     */
+    synchronized void setPriority(Integer priority) {
+        this.priority = priority;
+    }
+
+    /**
+     * Gets the priority of the job. A higher number indicates a higher
+     * priority.
+     *
+     * @return The priority.
+     */
+    synchronized Integer getPriority() {
+        return this.priority;
+    }
+
+    synchronized void setStage(Stage newStage) {
         setStage(newStage, Date.from(Instant.now()));
     }
 
-    synchronized void setStage(ProcessingStage newStage, Date stateStartedDate) {
-        if (ProcessingStage.CANCELING == this.nodeData.getProcessingStage() && ProcessingStage.COMPLETED != newStage) {
+    synchronized void setStage(Stage newStage, Date stageStartDate) {
+        if (Stage.CANCELLING == this.stage && Stage.COMPLETED != newStage) {
             return;
         }
-        this.nodeData.setProcessingStage(newStage);
-        this.nodeData.setProcessingStageStartDate(stateStartedDate);
+        this.stage = newStage;
+        this.stageStartDate = stageStartDate;
+    }
+
+    synchronized Stage getStage() {
+        return this.stage;
+    }
+
+    synchronized Date getStageStartDate() {
+        return this.stageStartDate;
     }
 
     synchronized StageDetails getStageDetails() {
         String description;
         Date startDate;
-        ProcessingStage stage = nodeData.getProcessingStage();
-        if (ProcessingStage.CANCELING != stage && null != this.ingestJob) {
+        if (Stage.CANCELLING != this.stage && null != this.ingestJob) {
             IngestJob.ProgressSnapshot progress = this.ingestJob.getSnapshot();
             IngestJob.DataSourceIngestModuleHandle ingestModuleHandle = progress.runningDataSourceIngestModule();
             if (null != ingestModuleHandle) {
@@ -103,7 +222,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
                 if (!ingestModuleHandle.isCancelled()) {
                     description = ingestModuleHandle.displayName();
                 } else {
-                    description = String.format(ProcessingStage.CANCELING_MODULE.getDisplayText(), ingestModuleHandle.displayName());
+                    description = String.format(Stage.CANCELLING_MODULE.getDisplayText(), ingestModuleHandle.displayName());
                 }
             } else {
                 /**
@@ -114,12 +233,12 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
                  * parallel. For example, there is an ingest job created to
                  * ingest each extracted virtual machine.
                  */
-                description = ProcessingStage.ANALYZING_FILES.getDisplayText();
+                description = Stage.ANALYZING_FILES.getDisplayText();
                 startDate = progress.fileIngestStartTime();
             }
         } else {
-            description = stage.getDisplayText();
-            startDate = this.nodeData.getProcessingStageStartDate();
+            description = this.stage.getDisplayText();
+            startDate = this.stageStartDate;
         }
         return new StageDetails(description, startDate);
     }
@@ -137,9 +256,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     synchronized void cancel() {
-        setStage(ProcessingStage.CANCELING);
-        canceled = true;
-        nodeData.setErrorsOccurred(true);
+        setStage(Stage.CANCELLING);
+        cancelled = true;
+        errorsOccurred = true;
         if (null != dataSourceProcessor) {
             dataSourceProcessor.cancel();
         }
@@ -149,11 +268,11 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     synchronized boolean isCanceled() {
-        return canceled;
+        return cancelled;
     }
 
     synchronized void setCompleted() {
-        setStage(ProcessingStage.COMPLETED);
+        setStage(Stage.COMPLETED);
         completed = true;
     }
 
@@ -161,6 +280,52 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return completed;
     }
 
+    /**
+     * Sets the date the job was completed, with or without cancellation or
+     * errors.
+     *
+     * @param completedDate The completion date.
+     */
+    synchronized void setCompletedDate(Date completedDate) {
+        this.completedDate = completedDate;
+    }
+
+    /**
+     * Gets the date the job was completed, with or without cancellation or
+     * errors.
+     *
+     * @return True or false.
+     */
+    synchronized Date getCompletedDate() {
+        return completedDate;
+    }
+
+    /**
+     * Sets whether or not errors occurred during the processing of the job.
+     *
+     * @param errorsOccurred True or false;
+     */
+    synchronized void setErrorsOccurred(boolean errorsOccurred) {
+        this.errorsOccurred = errorsOccurred;
+    }
+
+    /**
+     * Queries whether or not errors occurred during the processing of the job.
+     *
+     * @return True or false.
+     */
+    synchronized boolean hasErrors() {
+        return this.errorsOccurred;
+    }
+
+    String getNodeName() {
+        return nodeName;
+    }
+
+    int getVersion() {
+        return this.version;
+    }
+    
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof AutoIngestJob)) {
@@ -169,32 +334,20 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         if (obj == this) {
             return true;
         }
-
-        Path manifestPath1 = this.getNodeData().getManifestFilePath();
-        Path manifestPath2 = ((AutoIngestJob) obj).getNodeData().getManifestFilePath();
-
-        return manifestPath1.equals(manifestPath2);
+        return this.getManifest().getFilePath().equals(((AutoIngestJob) obj).getManifest().getFilePath());
     }
 
     @Override
     public int hashCode() {
-        int hash = 71 * (Objects.hashCode(this.nodeData.getCaseDirectoryPath()));
+        int hash = 71 * (Objects.hashCode(this.caseDirectoryPath));
         return hash;
     }
 
     @Override
     public int compareTo(AutoIngestJob o) {
-        Date date1 = this.getNodeData().getManifestFileDate();
-        Date date2 = o.getNodeData().getManifestFileDate();
-
-        return -date1.compareTo(date2);
+        return -this.getManifest().getDateFileCreated().compareTo(o.getManifest().getDateFileCreated());
     }
 
-    @Override
-    public String toString() {
-        return nodeData.getCaseDirectoryPath().toString();
-    }
-    
     /**
      * Custom comparator that allows us to sort List<AutoIngestJob> on reverse
      * chronological date modified (descending)
@@ -203,8 +356,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            return -o1.getNodeData().getProcessingStageStartDate().compareTo(o2.getNodeData().getProcessingStageStartDate());
+            return -o1.getStageStartDate().compareTo(o2.getStageStartDate());
         }
+
     }
 
     /**
@@ -214,10 +368,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
         @Override
         public int compare(AutoIngestJob job, AutoIngestJob anotherJob) {
-            Integer priority1 = job.getNodeData().getPriority();
-            Integer priority2 = anotherJob.getNodeData().getPriority();
-
-            return -priority1.compareTo(priority2);
+            return -(job.getPriority().compareTo(anotherJob.getPriority()));
         }
 
     }
@@ -231,17 +382,43 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            if (o1.getNodeData().getProcessingHost().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+            if (o1.getNodeName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
                 return -1; // o1 is for current case, float to top
-            } else if (o2.getNodeData().getProcessingHost().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+            } else if (o2.getNodeName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
                 return 1; // o2 is for current case, float to top
             } else {
-                String caseName1 = o1.getNodeData().getCaseName();
-                String caseName2 = o2.getNodeData().getCaseName();
-
-                return caseName1.compareToIgnoreCase(caseName2);
+                return o1.getManifest().getCaseName().compareToIgnoreCase(o2.getManifest().getCaseName());
             }
         }
+
+    }
+
+    enum Stage {
+
+        PENDING("Pending"),
+        STARTING("Starting"),
+        UPDATING_SHARED_CONFIG("Updating shared configuration"),
+        CHECKING_SERVICES("Checking services"),
+        OPENING_CASE("Opening case"),
+        IDENTIFYING_DATA_SOURCE("Identifying data source type"),
+        ADDING_DATA_SOURCE("Adding data source"),
+        ANALYZING_DATA_SOURCE("Analyzing data source"),
+        ANALYZING_FILES("Analyzing files"),
+        EXPORTING_FILES("Exporting files"),
+        CANCELLING_MODULE("Cancelling module"),
+        CANCELLING("Cancelling"),
+        COMPLETED("Completed");
+
+        private final String displayText;
+
+        private Stage(String displayText) {
+            this.displayText = displayText;
+        }
+
+        String getDisplayText() {
+            return displayText;
+        }
+
     }
 
     @Immutable

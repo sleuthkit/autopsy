@@ -40,6 +40,7 @@ public final class Manifest implements Serializable {
     private final String dataSourcePath;
     private final Map<String, String> manifestProperties;
 
+    // RJCTODO
     public Manifest(Path manifestFilePath, String caseName, String deviceId, Path dataSourcePath, Map<String, String> manifestProperties) throws IOException {
         this.filePath = manifestFilePath.toString();
         BasicFileAttributes attrs = Files.readAttributes(manifestFilePath, BasicFileAttributes.class);
@@ -54,6 +55,20 @@ public final class Manifest implements Serializable {
         this.manifestProperties = new HashMap<>(manifestProperties);
     }
 
+    // RJCTODO
+    public Manifest(Path manifestFilePath, Date dateFileCreated, String caseName, String deviceId, Path dataSourcePath, Map<String, String> manifestProperties) {
+        this.filePath = manifestFilePath.toString();
+        this.dateFileCreated = dateFileCreated;
+        this.caseName = caseName;
+        this.deviceId = deviceId;
+        if (dataSourcePath != null) {
+            this.dataSourcePath = dataSourcePath.toString(); 
+        } else {
+            this.dataSourcePath = "";
+        }
+        this.manifestProperties = new HashMap<>(manifestProperties);
+    }    
+    
     public Path getFilePath() {
         return Paths.get(this.filePath);
     }

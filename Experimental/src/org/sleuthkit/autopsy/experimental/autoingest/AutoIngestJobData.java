@@ -131,7 +131,7 @@ final class AutoIngestJobData implements Serializable {
             this.manifestFileDate = 0L;
             this.manifestFilePath = "";
             this.dataSourcePath = "";
-            this.processingStage = (byte)ProcessingStage.PENDING.ordinal();
+            this.processingStage = (byte)AutoIngestJob.Stage.PENDING.ordinal();
             this.processingStageStartDate = 0L;
             this.processingHost = "";
         }
@@ -161,13 +161,13 @@ final class AutoIngestJobData implements Serializable {
         this.version = NODE_DATA_VERSION;
         this.deviceId = manifest.getDeviceId();
         this.caseName = manifest.getCaseName();
-        this.caseDirectoryPath = "";  //DLG:
+        this.caseDirectoryPath = "";  //DLG: RJCTODO: completed job has a case directory 
         this.manifestFileDate = manifest.getDateFileCreated().getTime();
         this.manifestFilePath = manifest.getFilePath().toString();
         this.dataSourcePath = manifest.getDataSourcePath().toString();
-        this.processingStage = (byte)ProcessingStage.PENDING.ordinal();   //DLG:
-        this.processingStageStartDate = 0L; //DLG:
-        this.processingHost = ""; //DLG:
+        this.processingStage = (byte)AutoIngestJob.Stage.PENDING.ordinal();
+        this.processingStageStartDate = 0L;
+        this.processingHost = "";
     }
 
     /**
@@ -455,8 +455,8 @@ final class AutoIngestJobData implements Serializable {
      *
      * @return The processing stage.
      */
-    ProcessingStage getProcessingStage() {
-        return ProcessingStage.values()[this.processingStage];
+    AutoIngestJob.Stage getProcessingStage() {
+        return AutoIngestJob.Stage.values()[this.processingStage];
     }
 
     /**
@@ -464,7 +464,7 @@ final class AutoIngestJobData implements Serializable {
      *
      * @param processingStage The processing stage.
      */
-    void setProcessingStage(ProcessingStage processingStage) {
+    void setProcessingStage(AutoIngestJob.Stage processingStage) {
         this.processingStage = (byte)processingStage.ordinal();
     }
 
@@ -512,7 +512,7 @@ final class AutoIngestJobData implements Serializable {
      * @param processingHost The host name.
      * @param processingStage The processing stage.
      */
-    public void upgradeNode(Manifest manifest, Path caseDirectoryPath, String processingHost, ProcessingStage processingStage) {
+    public void upgradeNode(Manifest manifest, Path caseDirectoryPath, String processingHost, AutoIngestJob.Stage processingStage) {
         if(this.version < NODE_DATA_VERSION) {
             this.setVersion(NODE_DATA_VERSION);
             this.setDeviceId(manifest.getDeviceId());
@@ -610,34 +610,6 @@ final class AutoIngestJobData implements Serializable {
         PROCESSING,
         COMPLETED,
         DELETED
-    }
-
-    enum ProcessingStage {
-
-        PENDING("Pending"),
-        STARTING("Starting"),
-        UPDATING_SHARED_CONFIG("Updating shared configuration"),
-        CHECKING_SERVICES("Checking services"),
-        OPENING_CASE("Opening case"),
-        IDENTIFYING_DATA_SOURCE("Identifying data source type"),
-        ADDING_DATA_SOURCE("Adding data source"),
-        ANALYZING_DATA_SOURCE("Analyzing data source"),
-        ANALYZING_FILES("Analyzing files"),
-        EXPORTING_FILES("Exporting files"),
-        CANCELING_MODULE("Canceling module"),
-        CANCELING("Canceling"),
-        COMPLETED("Completed");
-
-        private final String displayText;
-
-        private ProcessingStage(String displayText) {
-            this.displayText = displayText;
-        }
-
-        String getDisplayText() {
-            return displayText;
-        }
-
     }
 
 }

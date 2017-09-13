@@ -312,10 +312,10 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
              * the pending jobs queue.
              */
             for (AutoIngestJob job : jobsSnapshot.getPendingJobs()) {
-                if (job.getNodeData().getPriority() > highestPriority) {
-                    highestPriority = job.getNodeData().getPriority();
+                if (job.getPriority() > highestPriority) {
+                    highestPriority = job.getPriority();
                 }
-                if (job.getNodeData().getManifestFilePath().equals(manifestFilePath)) {
+                if (job.getManifest().getFilePath().equals(manifestFilePath)) {
                     prioritizedJob = job;
                 }
             }
@@ -326,7 +326,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
              */
             if (null != prioritizedJob) {
                 ++highestPriority;
-                String manifestNodePath = prioritizedJob.getNodeData().getManifestFilePath().toString();
+                String manifestNodePath = prioritizedJob.getManifest().getFilePath().toString();
                 try {
                     AutoIngestJobData nodeData = new AutoIngestJobData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
                     nodeData.setPriority(highestPriority);
@@ -334,14 +334,14 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                 } catch (AutoIngestJobDataException | CoordinationServiceException | InterruptedException ex) {
                     throw new AutoIngestMonitorException("Error bumping priority for job " + prioritizedJob.toString(), ex);
                 }
-                prioritizedJob.getNodeData().setPriority(highestPriority);
+                prioritizedJob.setPriority(highestPriority);
             }
 
             /*
              * Publish a prioritization event.
              */
             if (null != prioritizedJob) {
-                final String caseName = prioritizedJob.getNodeData().getCaseName();
+                final String caseName = prioritizedJob.getManifest().getCaseName();
                 new Thread(() -> {
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
                 }).start();

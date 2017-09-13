@@ -462,27 +462,26 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             Path currentRow = getSelectedEntry(table, tableModel);
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
-                if (job.getNodeData().getVersion() < 1) {
+                if (job.getVersion() < 1) {
                     // Ignore version '0' nodes since they don't carry enough
                     // data to populate the table.
                     continue;
                 }
                 AutoIngestJob.StageDetails status = job.getStageDetails();
-                AutoIngestJobData nodeData = job.getNodeData();
                 tableModel.addRow(new Object[]{
-                    nodeData.getCaseName(), // CASE
-                    nodeData.getDataSourcePath().getFileName(), // DATA_SOURCE
-                    job.getNodeData().getProcessingHost(), // HOST_NAME
-                    nodeData.getManifestFileDate(), // CREATED_TIME
-                    job.getNodeData().getProcessingStageStartDate(), // STARTED_TIME
-                    nodeData.getCompletedDate(), // COMPLETED_TIME
+                    job.getManifest().getCaseName(), // CASE
+                    job.getManifest().getDataSourcePath().getFileName(), // DATA_SOURCE
+                    job.getNodeName(), // HOST_NAME
+                    job.getManifest().getDateFileCreated(), // CREATED_TIME
+                    job.getStageStartDate(), // STARTED_TIME // RJCTODO: add "processing" to method names?
+                    job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-                    nodeData.getErrorsOccurred(), // STATUS
+                    job.hasErrors(), // STATUS //RJCTODO: Change name to getErrorsOccurred for consistency?
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
-                    job.getNodeData().getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    nodeData.getManifestFilePath()//DLG: , // MANIFEST_FILE_PATH
-                    //DLG: job
-                }); // JOB
+                    job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
+                    job.getManifest().getFilePath()//DLG: , // MANIFEST_FILE_PATH
+                    //DLG: Put job object in the table RJCTODO
+                });
             }
             setSelectedEntry(table, tableModel, currentRow);
         } catch (Exception ex) {
