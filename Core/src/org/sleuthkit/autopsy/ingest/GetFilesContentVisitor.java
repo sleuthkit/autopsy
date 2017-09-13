@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -83,7 +84,7 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
 
         try {
             for (Content child : parent.getChildren()) {
-                if (child instanceof AbstractFile){
+                if (child instanceof AbstractContent){
                     all.addAll(child.accept(this));
                 }
             }
