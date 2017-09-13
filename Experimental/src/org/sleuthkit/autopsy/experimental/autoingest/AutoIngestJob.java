@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015-2017 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,6 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 
 import java.io.Serializable;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Date;
@@ -30,6 +29,7 @@ import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.ThreadSafe;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataSourceProcessor;
 import org.sleuthkit.autopsy.coreutils.NetworkUtils;
+import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestJobData.ProcessingStage;
 import org.sleuthkit.autopsy.ingest.IngestJob;
 
 /**
@@ -41,14 +41,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
     private static final long serialVersionUID = 1L;
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private final AutoIngestJobNodeData nodeData;
-    private final String nodeName;
-    @GuardedBy("this")
-    private String caseDirectoryPath;   // DLG: Replace with AutoIngestJobNodeData.caseDirectoryPath
-    @GuardedBy("this")
-    private Stage stage;
-    @GuardedBy("this")
-    private Date stageStartDate;
+    private final AutoIngestJobData nodeData;
     @GuardedBy("this")
     transient private DataSourceProcessor dataSourceProcessor;
     @GuardedBy("this")
@@ -67,29 +60,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * AutoIngestJob class.
      *
      * @param nodeData          The node data.
-     * @param caseDirectoryPath The path to the case directory for the job, may
-     *                          be null.
-     * @param nodeName          If the job is in progress, the node doing the
-     *                          processing, otherwise the locla host.
-     * @param stage             The processing stage for display purposes.
      */
-    /*
-     * DLG: We need a contrucotr that takes just the node data. When we have
-     * added the case dierectory path, the host name and the stage data to the
-     * ZK nodes, we probably cna use that constructor only. I'm thinking this
-     * because we will creater node data with initial values when we first
-     * discover the nodes, and then we will continue to update it.
-     */
-    AutoIngestJob(AutoIngestJobNodeData nodeData, Path caseDirectoryPath, String nodeName, Stage stage) {
+    AutoIngestJob(AutoIngestJobData nodeData) {
         this.nodeData = nodeData;
-        if (null != caseDirectoryPath) {
-            this.caseDirectoryPath = caseDirectoryPath.toString();
-        } else {
-            this.caseDirectoryPath = "";
-        }
-        this.nodeName = nodeName;
-        this.stage = stage;
-        this.stageStartDate = nodeData.getManifestFileDate();
     }
 
     /**
@@ -97,68 +70,27 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      *
      * @return The node data.
      */
-    AutoIngestJobNodeData getNodeData() {
+    AutoIngestJobData getNodeData() {
         return this.nodeData;
     }
 
-    /**
-     * Queries whether or not a case directory path has been set for this auto
-     * ingest job.
-     *
-     * @return True or false
-     */
-    synchronized boolean hasCaseDirectoryPath() {
-        return (false == this.caseDirectoryPath.isEmpty());
-    }
-
-    /**
-     * Sets the path to the case directory of the case associated with this job.
-     *
-     * @param caseDirectoryPath The path to the case directory.
-     */
-    synchronized void setCaseDirectoryPath(Path caseDirectoryPath) {
-        this.caseDirectoryPath = caseDirectoryPath.toString();
-    }
-
-    /**
-     * Gets the path to the case directory of the case associated with this job,
-     * may be null.
-     *
-     * @return The case directory path or null if the case directory has not
-     *         been created yet.
-     */
-    synchronized Path getCaseDirectoryPath() {
-        if (!caseDirectoryPath.isEmpty()) {
-            return Paths.get(caseDirectoryPath);
-        } else {
-            return null;
-        }
-    }
-
-    synchronized void setStage(Stage newStage) {
+    synchronized void setStage(ProcessingStage newStage) {
         setStage(newStage, Date.from(Instant.now()));
     }
 
-    synchronized void setStage(Stage newState, Date stateStartedDate) {
-        if (Stage.CANCELING == this.stage && Stage.COMPLETED != newState) {
+    synchronized void setStage(ProcessingStage newStage, Date stateStartedDate) {
+        if (ProcessingStage.CANCELING == this.nodeData.getProcessingStage() && ProcessingStage.COMPLETED != newStage) {
             return;
         }
-        this.stage = newState;
-        this.stageStartDate = stateStartedDate;
-    }
-
-    synchronized Stage getStage() {
-        return this.stage;
-    }
-
-    synchronized Date getStageStartDate() {
-        return this.stageStartDate;
+        this.nodeData.setProcessingStage(newStage);
+        this.nodeData.setProcessingStageStartDate(stateStartedDate);
     }
 
     synchronized StageDetails getStageDetails() {
         String description;
         Date startDate;
-        if (Stage.CANCELING != this.stage && null != this.ingestJob) {
+        ProcessingStage stage = nodeData.getProcessingStage();
+        if (ProcessingStage.CANCELING != stage && null != this.ingestJob) {
             IngestJob.ProgressSnapshot progress = this.ingestJob.getSnapshot();
             IngestJob.DataSourceIngestModuleHandle ingestModuleHandle = progress.runningDataSourceIngestModule();
             if (null != ingestModuleHandle) {
@@ -171,7 +103,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
                 if (!ingestModuleHandle.isCancelled()) {
                     description = ingestModuleHandle.displayName();
                 } else {
-                    description = String.format(Stage.CANCELING_MODULE.getDisplayText(), ingestModuleHandle.displayName());
+                    description = String.format(ProcessingStage.CANCELING_MODULE.getDisplayText(), ingestModuleHandle.displayName());
                 }
             } else {
                 /**
@@ -182,12 +114,12 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
                  * parallel. For example, there is an ingest job created to
                  * ingest each extracted virtual machine.
                  */
-                description = Stage.ANALYZING_FILES.getDisplayText();
+                description = ProcessingStage.ANALYZING_FILES.getDisplayText();
                 startDate = progress.fileIngestStartTime();
             }
         } else {
-            description = this.stage.getDisplayText();
-            startDate = this.stageStartDate;
+            description = stage.getDisplayText();
+            startDate = this.nodeData.getProcessingStageStartDate();
         }
         return new StageDetails(description, startDate);
     }
@@ -205,7 +137,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     synchronized void cancel() {
-        setStage(Stage.CANCELING);
+        setStage(ProcessingStage.CANCELING);
         canceled = true;
         nodeData.setErrorsOccurred(true);
         if (null != dataSourceProcessor) {
@@ -221,16 +153,12 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     synchronized void setCompleted() {
-        setStage(Stage.COMPLETED);
+        setStage(ProcessingStage.COMPLETED);
         completed = true;
     }
 
     synchronized boolean isCompleted() {
         return completed;
-    }
-
-    String getNodeName() {
-        return nodeName;
     }
 
     @Override
@@ -250,7 +178,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
     @Override
     public int hashCode() {
-        int hash = 71 * (Objects.hashCode(this.caseDirectoryPath));
+        int hash = 71 * (Objects.hashCode(this.nodeData.getCaseDirectoryPath()));
         return hash;
     }
 
@@ -262,11 +190,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         return -date1.compareTo(date2);
     }
 
-    // DLG: Add a toString override
     @Override
     public String toString() {
-        // DLG: FINISH ME!
-        return "";
+        return nodeData.getCaseDirectoryPath().toString();
     }
     
     /**
@@ -277,7 +203,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            return -o1.getStageStartDate().compareTo(o2.getStageStartDate());
+            return -o1.getNodeData().getProcessingStageStartDate().compareTo(o2.getNodeData().getProcessingStageStartDate());
         }
     }
 
@@ -305,9 +231,9 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            if (o1.getNodeName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+            if (o1.getNodeData().getProcessingHost().equalsIgnoreCase(LOCAL_HOST_NAME)) {
                 return -1; // o1 is for current case, float to top
-            } else if (o2.getNodeName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+            } else if (o2.getNodeData().getProcessingHost().equalsIgnoreCase(LOCAL_HOST_NAME)) {
                 return 1; // o2 is for current case, float to top
             } else {
                 String caseName1 = o1.getNodeData().getCaseName();
@@ -316,34 +242,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
                 return caseName1.compareToIgnoreCase(caseName2);
             }
         }
-    }
-
-    enum Stage {
-
-        PENDING("Pending"),
-        STARTING("Starting"),
-        UPDATING_SHARED_CONFIG("Updating shared configuration"),
-        CHECKING_SERVICES("Checking services"),
-        OPENING_CASE("Opening case"),
-        IDENTIFYING_DATA_SOURCE("Identifying data source type"),
-        ADDING_DATA_SOURCE("Adding data source"),
-        ANALYZING_DATA_SOURCE("Analyzing data source"),
-        ANALYZING_FILES("Analyzing files"),
-        EXPORTING_FILES("Exporting files"),
-        CANCELING_MODULE("Canceling module"),
-        CANCELING("Canceling"),
-        COMPLETED("Completed");
-
-        private final String displayText;
-
-        private Stage(String displayText) {
-            this.displayText = displayText;
-        }
-
-        String getDisplayText() {
-            return displayText;
-        }
-
     }
 
     @Immutable

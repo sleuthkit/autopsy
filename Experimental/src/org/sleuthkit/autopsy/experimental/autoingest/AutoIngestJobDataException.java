@@ -21,7 +21,7 @@ package org.sleuthkit.autopsy.experimental.autoingest;
 /**
  * Exception thrown when a manifest node contains incompatible data.
  */
-public class AutoIngestJobNodeDataException extends Exception {
+public class AutoIngestJobDataException extends Exception {
 
     /**
      * Constructs an exception thrown when a manifest node contains incompatible
@@ -29,7 +29,7 @@ public class AutoIngestJobNodeDataException extends Exception {
      *
      * @param message An error message.
      */
-    public AutoIngestJobNodeDataException(String message) {
+    public AutoIngestJobDataException(String message) {
         super(message);
     }
 
@@ -40,7 +40,7 @@ public class AutoIngestJobNodeDataException extends Exception {
      * @param message An error message.
      * @param cause   An exception that caused this exception to be thrown.
      */
-    public AutoIngestJobNodeDataException(String message, Throwable cause) {
+    public AutoIngestJobDataException(String message, Throwable cause) {
         super(message, cause);
     }
 }

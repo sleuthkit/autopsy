@@ -1076,7 +1076,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * @return True or fale.
          */
         private boolean isLocalJob(AutoIngestJob job) {
-            return job.getNodeName().equals(LOCAL_HOST_NAME);
+            return job.getNodeData().getProcessingHost().equals(LOCAL_HOST_NAME);
         }
 
         /**
@@ -1145,19 +1145,19 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
                 AutoIngestJob.StageDetails status = job.getStageDetails();
-                AutoIngestJobNodeData nodeData = job.getNodeData();
+                AutoIngestJobData nodeData = job.getNodeData();
                 tableModel.addRow(new Object[]{
                     nodeData.getCaseName(), // CASE
                     nodeData.getDataSourcePath().getFileName(), // DATA_SOURCE
-                    job.getNodeName(), // HOST_NAME
+                    job.getNodeData().getProcessingHost(), // HOST_NAME
                     nodeData.getManifestFileDate(), // CREATED_TIME
-                    job.getStageStartDate(), // STARTED_TIME
+                    job.getNodeData().getProcessingStageStartDate(), // STARTED_TIME
                     nodeData.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
                     nodeData.getErrorsOccurred(), // STATUS
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
-                    job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    job.getNodeName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
+                    job.getNodeData().getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
+                    job.getNodeData().getProcessingHost().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
                     nodeData.getManifestFilePath()}); // MANIFEST_FILE_PATH
             }
         } catch (Exception ex) {
