@@ -125,7 +125,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
     private static int DEFAULT_JOB_PRIORITY = 0;
     private static final String AUTO_INGEST_THREAD_NAME = "AIM-job-processing-%d";
     private static final String LOCAL_HOST_NAME = NetworkUtils.getLocalHostName();
-    private static final String EVENT_CHANNEL_NAME = "Auto-Ingest-Manager-Events";
+    private static final String EVENT_CHANNEL_NAME = "Auto-Ingest-Events";
     private static final Set<String> EVENT_LIST = new HashSet<>(Arrays.asList(new String[]{
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),

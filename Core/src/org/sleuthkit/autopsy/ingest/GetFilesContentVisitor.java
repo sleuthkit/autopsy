@@ -83,7 +83,9 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
 
         try {
             for (Content child : parent.getChildren()) {
-                all.addAll(child.accept(this));
+                if (child instanceof AbstractFile){
+                    all.addAll(child.accept(this));
+                }
             }
         } catch (TskException ex) {
             logger.log(Level.SEVERE, "Error getting Content children", ex); //NON-NLS
