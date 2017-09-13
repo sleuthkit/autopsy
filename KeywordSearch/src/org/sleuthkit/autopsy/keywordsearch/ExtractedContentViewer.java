@@ -125,7 +125,7 @@ public class ExtractedContentViewer implements DataContentViewer {
                     //if there is kwh artifact use that to construct the HighlightedText
                     highlightedHitText = new HighlightedText(artifact);
                 } catch (TskCoreException ex) {
-                   logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Failed to create HighlightedText for " + artifact, ex); //NON-NLS
                 }
             }
 
@@ -173,7 +173,7 @@ public class ExtractedContentViewer implements DataContentViewer {
             }
         }
         panel.updateControls(currentSource);
-        setPanel(content.getName(),sources);
+        setPanel(content.getName(), sources);
     }
 
     static private IndexedText getRawArtifactText(Lookup nodeLookup) throws TskCoreException {
@@ -254,7 +254,7 @@ public class ExtractedContentViewer implements DataContentViewer {
 
     @Override
     public void resetComponent() {
-        setPanel("",new ArrayList<>());
+      
         panel.resetDisplay();
         currentNode = null;
         currentSource = null;
@@ -310,10 +310,11 @@ public class ExtractedContentViewer implements DataContentViewer {
      * Set the MarkupSources for the panel to display (safe to call even if the
      * panel hasn't been created yet)
      *
-     * @param sources
+     * @param contentName The name of the content to be displayed
+     * @param sources     A list of IndexedText that have different 'views' of
+     *                    the content.
      */
     private void setPanel(String contentName, List<IndexedText> sources) {
-        
         if (panel != null) {
             panel.setSources(contentName, sources);
         }
@@ -328,9 +329,10 @@ public class ExtractedContentViewer implements DataContentViewer {
      */
     private boolean solrHasContent(Long objectId) {
         final Server solrServer = KeywordSearch.getServer();
-        if (solrServer.coreIsOpen() == false)
+        if (solrServer.coreIsOpen() == false) {
             return false;
-        
+        }
+
         try {
             return solrServer.queryIsIndexed(objectId);
         } catch (NoOpenCoreException | KeywordSearchModuleException ex) {

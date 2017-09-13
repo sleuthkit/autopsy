@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.AbstractContent;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.ContentVisitor;
 import org.sleuthkit.datamodel.Directory;
@@ -83,7 +84,9 @@ abstract class GetFilesContentVisitor implements ContentVisitor<Collection<Abstr
 
         try {
             for (Content child : parent.getChildren()) {
-                all.addAll(child.accept(this));
+                if (child instanceof AbstractContent){
+                    all.addAll(child.accept(this));
+                }
             }
         } catch (TskException ex) {
             logger.log(Level.SEVERE, "Error getting Content children", ex); //NON-NLS

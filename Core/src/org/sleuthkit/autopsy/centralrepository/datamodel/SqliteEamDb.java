@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
@@ -592,10 +593,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      */
     @Override
-    public void setArtifactInstanceKnownBad(EamArtifact eamArtifact) throws EamDbException {
+    public void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
         try{
             acquireExclusiveLock();
-            super.setArtifactInstanceKnownBad(eamArtifact);
+            super.setArtifactInstanceKnownStatus(eamArtifact, knownStatus);
         } finally {
             releaseExclusiveLock();
         }     
