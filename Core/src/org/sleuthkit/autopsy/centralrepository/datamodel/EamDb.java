@@ -327,15 +327,6 @@ public interface EamDb {
      * @param FileKnown The status to change the artifact to
      */
     void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
-
-    /**
-     * Set knownBad status for all files/artifacts in the given case that
-     * are tagged with the given tag name. 
-     * Files/artifacts that are not already in the database will be added.
-     * @param tagName The name of the tag to search for
-     * @param curCase The case to search in
-     */
-    void setArtifactsKnownBadByTag(String tagNameString, Case curCase) throws EamDbException;
     
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =

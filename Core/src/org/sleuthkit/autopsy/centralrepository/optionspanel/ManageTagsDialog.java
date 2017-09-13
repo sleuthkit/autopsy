@@ -36,8 +36,14 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.BlackboardArtifactTag;
+import org.sleuthkit.datamodel.TagName;
+import org.sleuthkit.datamodel.ContentTag;
+import org.sleuthkit.datamodel.TskData;
 
 /**
  * Instances of this class allow a user to select an existing hash database and
@@ -266,7 +272,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                                 dialogButton);
                         if(dialogResult == JOptionPane.YES_OPTION){
                             try{
-                                EamDb.getInstance().setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
+                                setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
                             } catch (EamDbException ex) {
                                 LOGGER.log(Level.SEVERE, "Failed to apply known bad status to current case", ex);
                                 JOptionPane.showMessageDialog(null, Bundle.ManageTagsDialog_updateCurrentCase_error());
@@ -276,6 +282,41 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                 }
             }
         }
+    }
+    
+    /**
+     * Set knownBad status for all files/artifacts in the given case that
+     * are tagged with the given tag name. 
+     * Files/artifacts that are not already in the database will be added.
+     * @param tagName The name of the tag to search for
+     * @param curCase The case to search in
+     */
+    public void setArtifactsKnownBadByTag(String tagNameString, Case curCase) throws EamDbException{
+        try{
+            TagName tagName = curCase.getServices().getTagsManager().getDisplayNamesToTagNamesMap().get(tagNameString);
+            
+            // First find any matching artifacts
+            List<BlackboardArtifactTag> artifactTags = curCase.getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);                  
+            
+            for(BlackboardArtifactTag bbTag:artifactTags){
+                List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbTag.getArtifact(), true, 
+                        EamDb.getInstance().getCorrelationTypes(), true);
+                for (EamArtifact eamArtifact : convertedArtifacts) {
+                    EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact,TskData.FileKnown.BAD);
+                }
+            }
+
+            // Now search for files
+            List<ContentTag> fileTags = curCase.getSleuthkitCase().getContentTagsByTagName(tagName);
+            for(ContentTag contentTag:fileTags){
+                final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
+                            TskData.FileKnown.BAD, "");
+                EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
+            }
+        } catch (TskCoreException ex){
+            throw new EamDbException("Error updating artifacts", ex);
+        }
+        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
