@@ -327,7 +327,7 @@ public interface EamDb {
      * @param FileKnown The status to change the artifact to
      */
     void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
-
+    
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
      * "Bad".

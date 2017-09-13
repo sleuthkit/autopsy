@@ -600,7 +600,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         } finally {
             releaseExclusiveLock();
         }     
-    }    
+    }   
     
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
