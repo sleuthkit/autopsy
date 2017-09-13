@@ -116,7 +116,7 @@ public abstract class AbstractContentNode<T extends Content> extends ContentNode
  			+ "     AND (artifact_type_id = " + ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID() 
                         +          " OR artifact_type_id = " + ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() + ") "
  			+ "   UNION SELECT obj_id FROM tsk_objects WHERE par_obj_id = " + c.getId()
-                        + "     AND type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + ")"; //NON-NLS;
+                        + "     AND type = " + TskData.ObjectType.ABSTRACTFILE.getObjectType() + ") AS OBJECT_IDS"; //NON-NLS;
   
             
             try (SleuthkitCase.CaseDbQuery dbQuery = Case.getCurrentCase().getSleuthkitCase().executeQuery(query)) {
