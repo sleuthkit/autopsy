@@ -50,11 +50,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
      * unknown, known, or known bad.
      */
     @Messages({"ManageTagDialog.title=Manage Tags",
-        "ManageTagDialog.tagInfo.text1=-Additional tags can be created in the tags options panel.",
-        "ManageTagDialog.tagInfo.text2=-Checking 'Implies Known Bad' for a tag name will give you the option of marking everyting with that tag in the current case as bad in the central repository.",
-        "ManageTagDialog.tagInfo.text3=-Un-checking 'Implies Known Bad' for a tag name will not have an effect on the central repository.",
-        "ManageTagDialog.tagInfo.text4=-Tagging an item with a tag which has 'Implies Known Bad' selected will flag the item as bad in the central repository.",
-        "ManageTagDialog.tagInfo.text5=-Untagging an item will remove the bad status for that item from the central repository if there are no other known bad tags on that item."})
+        "ManageTagDialog.tagInfo.text=Select the tags to store in the Central Repository. Additional tags can be created in the tags options panel."})
     ManageTagsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ManageTagDialog_title(),
@@ -66,15 +62,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     }
 
     private void setupHelpTextArea() {
-        helpTextArea.setText(Bundle.ManageTagDialog_tagInfo_text1());
-        helpTextArea.append("\n");
-        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text2());
-        helpTextArea.append("\n");
-        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text3());
-        helpTextArea.append("\n");
-        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text4());
-        helpTextArea.append("\n");
-        helpTextArea.append(Bundle.ManageTagDialog_tagInfo_text5());
+        helpTextArea.setText(Bundle.ManageTagDialog_tagInfo_text());
     }
 
     @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to Central Repository.",
@@ -177,12 +165,16 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         });
         tagScrollArea.setViewportView(tblTagNames);
 
+        helpScrollPane.setBorder(null);
+
         helpTextArea.setEditable(false);
         helpTextArea.setBackground(new java.awt.Color(240, 240, 240));
         helpTextArea.setColumns(20);
+        helpTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         helpTextArea.setLineWrap(true);
-        helpTextArea.setRows(5);
+        helpTextArea.setRows(2);
         helpTextArea.setWrapStyleWord(true);
+        helpTextArea.setBorder(null);
         helpTextArea.setFocusable(false);
         helpScrollPane.setViewportView(helpTextArea);
 
@@ -213,9 +205,9 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(helpScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tagScrollArea, javax.swing.GroupLayout.DEFAULT_SIZE, 233, Short.MAX_VALUE)
+                .addComponent(helpScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(tagScrollArea, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbWarnings, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
