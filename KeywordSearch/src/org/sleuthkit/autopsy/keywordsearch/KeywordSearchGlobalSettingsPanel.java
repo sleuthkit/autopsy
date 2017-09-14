@@ -40,9 +40,9 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
     @NbBundle.Messages({"KeywordSearchGlobalSettingsPanel.Title=Global Keyword Search Settings"})
     private void customizeComponents() {
         setName(Bundle.KeywordSearchGlobalSettingsPanel_Title());
-        listsPanel = new GlobalListSettingsPanel();
-        languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
-        generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
+        if (listsPanel == null) listsPanel = new GlobalListSettingsPanel();
+        if (languagesPanel == null) languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
+        if (generalPanel == null) generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listTabTitle"), null,
                 listsPanel, NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.listLabToolTip"), 0);
         tabbedPane.insertTab(NbBundle.getMessage(this.getClass(), "KeywordSearchConfigurationPanel.customizeComponents.stringExtTitle"), null,
@@ -53,6 +53,9 @@ final class KeywordSearchGlobalSettingsPanel extends IngestModuleGlobalSettingsP
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
+        if (listsPanel == null) listsPanel = new GlobalListSettingsPanel();
+        if (languagesPanel == null) languagesPanel = new KeywordSearchGlobalLanguageSettingsPanel();
+        if (generalPanel == null) generalPanel = new KeywordSearchGlobalSearchSettingsPanel();
         listsPanel.addPropertyChangeListener(l);
         languagesPanel.addPropertyChangeListener(l);
         generalPanel.addPropertyChangeListener(l);
