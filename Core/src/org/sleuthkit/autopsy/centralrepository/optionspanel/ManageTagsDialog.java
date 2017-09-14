@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.optionspanel;
 
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.util.ArrayList;
@@ -102,7 +103,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             boolean enabled = badTags.contains(tagName);
             model.addRow(new Object[]{tagName, enabled});
         }
-        CheckBoxModelListener listener = new CheckBoxModelListener();
+        CheckBoxModelListener listener = new CheckBoxModelListener(this);
         model.addTableModelListener(listener);
     }
 
@@ -252,6 +253,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                     "ManageTagsDialog.updateCurrentCase.title=Update current case?",
                     "ManageTagsDialog.updateCurrentCase.error=Error updating existing Central Repository entries"})
         
+        javax.swing.JDialog dialog;
+        public CheckBoxModelListener(javax.swing.JDialog dialog){
+            this.dialog = dialog;
+        }
+        
         @Override
         public void tableChanged(TableModelEvent e) {
             int row = e.getFirstRow();
@@ -272,10 +278,13 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                                 dialogButton);
                         if(dialogResult == JOptionPane.YES_OPTION){
                             try{
+                                dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
                             } catch (EamDbException ex) {
                                 LOGGER.log(Level.SEVERE, "Failed to apply known bad status to current case", ex);
                                 JOptionPane.showMessageDialog(null, Bundle.ManageTagsDialog_updateCurrentCase_error());
+                            } finally {
+                                dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                             }
                         }
                     }
