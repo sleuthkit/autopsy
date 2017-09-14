@@ -304,7 +304,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * text box.
      */
     @Messages({
-        "# {0} - case db status", "# {1} - search svc Status", "# {2} - coord svc Status", "# {3} - msg broker status", 
+        "# {0} - case db status", "# {1} - search svc Status", "# {2} - coord svc Status", "# {3} - msg broker status",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message=Case databases {0}, keyword search {1}, coordination {2}, messaging {3} ",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up=up",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down=down",
@@ -679,7 +679,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         try {
             manager.startUp();
             autoIngestStarted = true;
-        } catch (AutoIngestManager.AutoIngestManagerStartupException ex) {
+        } catch (AutoIngestManager.AutoIngestManagerException ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
             tbStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.AutoIngestStartupError"));
             manager = null;
@@ -982,7 +982,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             List<AutoIngestJob> completedJobs = new ArrayList<>();
             manager.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
-            Collections.sort(completedJobs, new AutoIngestJob.ReverseDateCompletedComparator());
+            Collections.sort(completedJobs, new AutoIngestJob.ReverseCompletedDateComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
         }
     }
@@ -1075,7 +1075,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * @return True or fale.
          */
         private boolean isLocalJob(AutoIngestJob job) {
-            return job.getNodeName().equals(LOCAL_HOST_NAME); // RJCTODO: Is getProcessingHost a better name?
+            return job.getProcessingHostName().equals(LOCAL_HOST_NAME);
         }
 
         /**
@@ -1147,15 +1147,15 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                 tableModel.addRow(new Object[]{
                     job.getManifest().getCaseName(), // CASE
                     job.getManifest().getDataSourcePath().getFileName(), // DATA_SOURCE
-                    job.getNodeName(), // HOST_NAME
+                    job.getProcessingHostName(), // HOST_NAME
                     job.getManifest().getDateFileCreated(), // CREATED_TIME
-                    job.getStageStartDate(), // STARTED_TIME
+                    job.getProcessingStageStartDate(), // STARTED_TIME
                     job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-                    job.hasErrors(), // STATUS
+job.getErrorsOccurred(), // STATUS
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    job.getNodeName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
+                    job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
                     job.getManifest().getFilePath()}); // MANIFEST_FILE_PATH
             }
         } catch (Exception ex) {
@@ -1701,11 +1701,17 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      *
      * @param evt The button click event.
      */
+    @Messages({"AutoIngestControlPanel.casePrioritization.errorMessage=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})    
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            manager.prioritizeCase(caseName);
+            try {
+                manager.prioritizeCase(caseName);
+            } catch (AutoIngestManager.AutoIngestManagerException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a case", ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_casePrioritization_errorMessage());
+            }
             refreshTables();
             pendingTable.clearSelection();
             enablePendingTableButtons(false);
@@ -1753,12 +1759,18 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     options[0]);
         }
     }//GEN-LAST:event_bnShowCaseLogActionPerformed
-
+    
+    @Messages({"AutoIngestControlPanel.jobPrioritization.errorMessage=An error occurred when prioritizing the job."})    
     private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
-            manager.prioritizeJob(manifestFilePath);
+            try {
+                manager.prioritizeJob(manifestFilePath);
+            } catch (AutoIngestManager.AutoIngestManagerException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a case", ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_jobPrioritization_errorMessage());
+            }
             refreshTables();
             pendingTable.clearSelection();
             enablePendingTableButtons(false);

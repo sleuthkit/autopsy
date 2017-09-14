@@ -31,7 +31,6 @@ import java.util.logging.Level;
 import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
-import java.util.Collections;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.SwingWorker;
@@ -438,11 +437,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         List<AutoIngestJob> pendingJobs = jobsSnapshot.getPendingJobs();
         List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
         List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
-        
-        // DLG: DONE! Do the appropriate sorts for each table.
-        Collections.sort(pendingJobs, new AutoIngestJob.PriorityComparator());
-        runningJobs.sort(new AutoIngestJob.AlphabeticalComparator());
-        
+        pendingJobs.sort(new AutoIngestJob.PriorityComparator());
+        runningJobs.sort(new AutoIngestJob.CaseNameAndProcessingHostComparator());
+        completedJobs.sort(new AutoIngestJob.ReverseCompletedDateComparator());
         refreshTable(pendingJobs, pendingTable, pendingTableModel);
         refreshTable(runningJobs, runningTable, runningTableModel);
         refreshTable(completedJobs, completedTable, completedTableModel);
@@ -470,17 +467,16 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 AutoIngestJob.StageDetails status = job.getStageDetails();
                 tableModel.addRow(new Object[]{
                     job.getManifest().getCaseName(), // CASE
-                    job.getManifest().getDataSourcePath().getFileName(), // DATA_SOURCE
-                    job.getNodeName(), // HOST_NAME
+                    job.getManifest().getDataSourcePath().getFileName(), job.getProcessingHostName(), // HOST_NAME
                     job.getManifest().getDateFileCreated(), // CREATED_TIME
-                    job.getStageStartDate(), // STARTED_TIME // RJCTODO: add "processing" to method names?
+                    job.getProcessingStageStartDate(), // STARTED_TIME 
                     job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-                    job.hasErrors(), // STATUS //RJCTODO: Change name to getErrorsOccurred for consistency?
+                    job.getErrorsOccurred(), // STATUS 
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    job.getManifest().getFilePath()//DLG: , // MANIFEST_FILE_PATH
-                    //DLG: Put job object in the table RJCTODO
+                    job.getManifest().getFilePath() // MANIFEST_FILE_PATH
+                //DLG: Put job object in the table
                 });
             }
             setSelectedEntry(table, tableModel, currentRow);
@@ -591,7 +587,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             STAGE_TIME.getColumnHeader(),
             CASE_DIRECTORY_PATH.getColumnHeader(),
             MANIFEST_FILE_PATH.getColumnHeader() //DLG: ,
-            //DLG: JOB.getColumnHeader()
+        //DLG: JOB.getColumnHeader()
         };
     };
 
