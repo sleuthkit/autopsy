@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import javax.swing.BorderFactory;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -33,9 +32,7 @@ import org.netbeans.spi.sendopts.OptionProcessor;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
 import org.openide.util.Lookup;
-import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.autopsy.actions.IngestRunningCheck;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.CaseActionException;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata;
@@ -88,6 +85,8 @@ public class Installer extends ModuleInstall {
                             Case.openAsCurrentCase(caseFile);
                         } catch (CaseActionException ex) {
                             logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
+                 
+                        //TODO: notify user!
                         }
                         return;
                     }
