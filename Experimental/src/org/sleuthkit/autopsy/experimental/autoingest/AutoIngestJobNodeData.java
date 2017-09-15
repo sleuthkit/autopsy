@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.io.Serializable;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,20 +26,19 @@ import java.util.Date;
 import javax.lang.model.type.TypeKind;
 
 /**
- * A coordination service node data transfer object for an auto ingest job.
+ * An object that converts auto ingest job data for an auto ingest job
+ * coordination service node to and from byte arrays.
  */
-final class AutoIngestJobNodeData implements Serializable {
+final class AutoIngestJobNodeData {
 
-    private static final long serialVersionUID = 1L;
-    private static final int NODE_DATA_VERSION = 1;
-    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131493;
+    private static final int CURRENT_VERSION = 1;
+    private static final int MAX_POSSIBLE_NODE_DATA_SIZE = 131629;
     private static final int DEFAULT_PRIORITY = 0;
 
     /*
      * Version 0 fields.
      */
-    private final boolean coordSvcNodeDataWasSet;
-    private ProcessingStatus status;
+    private int processingStatus;
     private int priority;
     private int numberOfCrashes;
     private long completedDate;
@@ -49,228 +48,197 @@ final class AutoIngestJobNodeData implements Serializable {
      * Version 1 fields.
      */
     private int version;
-    private String deviceId;
-    private String caseName;
-    private String caseDirectoryPath;
-    private long manifestFileDate;
     private String manifestFilePath;
+    private long manifestFileDate;
+    private String caseName;
+    private String deviceId;
     private String dataSourcePath;
-    private String processingStage;
+    private String caseDirectoryPath;
+    private String processingHostName;
+    private byte processingStage;
     private long processingStageStartDate;
-    private String processingHost;
+    private String processingStageDetailsDescription;
+    private long processingStageDetailsStartDate;
 
-    //DLG: Add caseDirectoryPath from AutoIngestJob
-    /*
-     * DLG: Rename class to AutoIngestJobNodeData - Add String
-     * caseDirectoryPath. Needed to locate case auto ingest log and later, for
-     * case deletion
-     *
-     * Add String processingStage, long processingStageStartDate, String
-     * processingHost fields. These three fields are needed to populate running
-     * jobs table; use of auto ingest job data is not enough, because there
-     * would be no data until a status event was received by the auto ingest
-     * monitor.
-     *
-     * Update the AutoIngestManager code that creates ZK nodes for auto ingest
-     * jobs to write the new fields described above to new nodes
-     *
-     * Update the AutoIngestManager code that publishes auto ingest status
-     * events for the current job to update the the processing status fields
-     * described above in addition to publishing AutoIngestJobStatusEvents.
-     * Probably also need to write this data initially when a jo becomes the
-     * current job.
-     */
     /**
-     * Constructs a coordination service node data data transfer object for an
-     * auto ingest manifest from the raw bytes obtained from the coordination
-     * service.
+     * Uses an auto ingest job to construct an object that converts auto ingest
+     * job data for an auto ingest job coordination service node to and from
+     * byte arrays.
+     *
+     * @param job The job.
+     */
+    AutoIngestJobNodeData(AutoIngestJob job) {
+        setProcessingStatus(job.getProcessingStatus());
+        setPriority(job.getPriority());
+        setNumberOfCrashes(numberOfCrashes); // RJCTODO
+        setCompletedDate(job.getCompletedDate());
+        setErrorsOccurred(job.getErrorsOccurred());
+        this.version = CURRENT_VERSION;
+        Manifest manifest = job.getManifest();
+        setManifestFilePath(manifest.getFilePath());
+        setManifestFileDate(manifest.getDateFileCreated());
+        setCaseName(manifest.getCaseName());
+        setDeviceId(manifest.getDeviceId());
+        setDataSourcePath(manifest.getDataSourcePath());
+        setCaseDirectoryPath(job.getCaseDirectoryPath());
+        setProcessingHostName(job.getProcessingHostName());
+        setProcessingStage(job.getProcessingStage());
+        setProcessingStageStartDate(job.getProcessingStageStartDate());
+        setProcessingStageDetails(job.getStageDetails());
+    }
+
+    /**
+     * Uses a coordination service node data to construct an object that
+     * converts auto ingest job data for an auto ingest job coordination service
+     * node to and from byte arrays.
      *
      * @param nodeData The raw bytes received from the coordination service.
      */
-    AutoIngestJobNodeData(byte[] nodeData) throws AutoIngestJobNodeDataException {
+    AutoIngestJobNodeData(byte[] nodeData) throws InvalidDataException {
+        if (null == nodeData || nodeData.length == 0) {
+            throw new InvalidDataException(null == nodeData ? "Null nodeData byte array" : "Zero-length nodeData byte array");
+        }
+
+        /*
+         * Set default values for all fields.
+         */
+        this.processingStatus = AutoIngestJob.ProcessingStatus.PENDING.ordinal();
+        this.priority = DEFAULT_PRIORITY;
+        this.numberOfCrashes = 0;
+        this.completedDate = 0L;
+        this.errorsOccurred = false;
+        this.version = CURRENT_VERSION;
+        this.manifestFilePath = "";
+        this.manifestFileDate = 0L;
+        this.caseName = "";
+        this.deviceId = "";
+        this.dataSourcePath = "";
+        this.caseDirectoryPath = "";
+        this.processingHostName = "";
+        this.processingStage = (byte) AutoIngestJob.Stage.PENDING.ordinal();
+        this.processingStageStartDate = 0L;
+        this.processingStageDetailsDescription = "";
+        this.processingStageDetailsStartDate = 0L;
+
+        /*
+         * Get fields from node data.
+         */
         ByteBuffer buffer = ByteBuffer.wrap(nodeData);
-        this.coordSvcNodeDataWasSet = buffer.hasRemaining();
-        if (this.coordSvcNodeDataWasSet) {
-            int rawStatus = buffer.getInt();
-            if (ProcessingStatus.PENDING.ordinal() == rawStatus) {
-                this.status = ProcessingStatus.PENDING;
-            } else if (ProcessingStatus.PROCESSING.ordinal() == rawStatus) {
-                this.status = ProcessingStatus.PROCESSING;
-            } else if (ProcessingStatus.COMPLETED.ordinal() == rawStatus) {
-                this.status = ProcessingStatus.COMPLETED;
-            } else if (ProcessingStatus.DELETED.ordinal() == rawStatus) {
-                this.status = ProcessingStatus.DELETED;
+        try {
+            if (buffer.hasRemaining()) {
+                /*
+                 * Get version 0 fields.
+                 */
+                this.processingStatus = buffer.getInt();
+                this.priority = buffer.getInt();
+                this.numberOfCrashes = buffer.getInt();
+                this.completedDate = buffer.getLong();
+                int errorFlag = buffer.getInt();
+                this.errorsOccurred = (1 == errorFlag);
             }
-            this.priority = buffer.getInt();
-            this.numberOfCrashes = buffer.getInt();
-            this.completedDate = buffer.getLong();
-            int errorFlag = buffer.getInt();
-            this.errorsOccurred = (1 == errorFlag);
-        } else {
-            this.status = ProcessingStatus.PENDING;
-            this.priority = DEFAULT_PRIORITY;
-            this.numberOfCrashes = 0;
-            this.completedDate = 0L;
-            this.errorsOccurred = false;
-        }
 
-        if (buffer.hasRemaining()) {
-            /*
-             * There are more than 24 bytes in the buffer, so we assume the
-             * version is greater than '0'.
-             */
-            this.version = buffer.getInt();
-            if (this.version > NODE_DATA_VERSION) {
-                throw new AutoIngestJobNodeDataException(String.format("Node data version %d is not suppored.", this.version));
+            if (buffer.hasRemaining()) {
+                /*
+                 * Get version 1 fields.
+                 */
+                this.version = buffer.getInt();
+                this.deviceId = getStringFromBuffer(buffer, TypeKind.BYTE);
+                this.caseName = getStringFromBuffer(buffer, TypeKind.BYTE);
+                this.caseDirectoryPath = getStringFromBuffer(buffer, TypeKind.SHORT);
+                this.manifestFileDate = buffer.getLong();
+                this.manifestFilePath = getStringFromBuffer(buffer, TypeKind.SHORT);
+                this.dataSourcePath = getStringFromBuffer(buffer, TypeKind.SHORT);
+                this.processingStage = buffer.get();
+                this.processingStageStartDate = buffer.getLong();
+                this.processingStageDetailsDescription = getStringFromBuffer(buffer, TypeKind.BYTE);
+                this.processingStageDetailsStartDate = buffer.getLong();;
+                this.processingHostName = getStringFromBuffer(buffer, TypeKind.SHORT);
             }
-            this.deviceId = getStringFromBuffer(buffer, TypeKind.BYTE);
-            this.caseName = getStringFromBuffer(buffer, TypeKind.BYTE);
-            //DLG: this.caseDirectoryPath = getStringFromBuffer(buffer, TypeKind.SHORT);
-            this.manifestFileDate = buffer.getLong();
-            this.manifestFilePath = getStringFromBuffer(buffer, TypeKind.SHORT);
-            this.dataSourcePath = getStringFromBuffer(buffer, TypeKind.SHORT);
-            //DLG: this.processingStage = getStringFromBuffer(buffer, TypeKind.BYTE);
-            //DLG: this.processingStageStartDate = buffer.getLong();
-            //DLG: this.processingHost = getStringFromBuffer(buffer, TypeKind.SHORT);
-        } else {
-            this.version = 0;
-            this.deviceId = "";
-            this.caseName = "";
-            this.caseDirectoryPath = "";
-            this.manifestFileDate = 0L;
-            this.manifestFilePath = "";
-            this.dataSourcePath = "";
-            this.processingStage = "";
-            this.processingStageStartDate = 0L;
-            this.processingHost = "";
+
+        } catch (BufferUnderflowException ex) {
+            throw new InvalidDataException("Node data is incomplete", ex);
         }
     }
 
     /**
-     * Constructs a coordination service node data data transfer object for an
-     * auto ingest manifest from values provided by the auto ingest system.
+     * Gets the processing status of the job.
      *
-     * @param manifest        The manifest
-     * @param status          The processing status of the manifest.
-     * @param priority        The priority of the manifest.
-     * @param numberOfCrashes The number of times auto ingest jobs for the
-     *                        manifest have crashed during processing.
-     * @param completedDate   The date the auto ingest job for the manifest was
-     *                        completed.
-     * @param errorsOccurred  Boolean to determine if errors have occurred.
+     * @return The processing status.
      */
-    AutoIngestJobNodeData(Manifest manifest, ProcessingStatus status, int priority, int numberOfCrashes, Date completedDate, boolean errorOccurred) {
-        this.coordSvcNodeDataWasSet = false;
-        this.status = status;
-        this.priority = priority;
-        this.numberOfCrashes = numberOfCrashes;
-        this.completedDate = completedDate.getTime();
-        this.errorsOccurred = errorOccurred;
-
-        this.version = NODE_DATA_VERSION;
-        this.deviceId = manifest.getDeviceId();
-        this.caseName = manifest.getCaseName();
-        this.manifestFileDate = manifest.getDateFileCreated().getTime();
-        this.manifestFilePath = manifest.getFilePath().toString();
-        this.dataSourcePath = manifest.getDataSourcePath().toString();
+    AutoIngestJob.ProcessingStatus getProcessingStatus() {
+        return AutoIngestJob.ProcessingStatus.values()[this.processingStatus];
     }
 
     /**
-     * Indicates whether or not the coordination service node data was set,
-     * i.e., this object was constructed from raw bytes from the ccordination
-     * service node for the manifest.
+     * Sets the processing status of the job.
      *
-     * @return True or false.
+     * @param processingSatus The processing status.
      */
-    boolean coordSvcNodeDataWasSet() {
-        return this.coordSvcNodeDataWasSet;
+    void setProcessingStatus(AutoIngestJob.ProcessingStatus processingStatus) {
+        this.processingStatus = processingStatus.ordinal();
     }
 
     /**
-     * Gets the processing status of the manifest
+     * Gets the priority of the job.
      *
-     * @return The processing status of the manifest.
-     */
-    ProcessingStatus getStatus() {
-        return this.status;
-    }
-
-    /**
-     * Sets the processing status of the manifest
-     *
-     * @param status The processing status of the manifest.
-     */
-    void setStatus(ProcessingStatus status) {
-        this.status = status;
-    }
-
-    /**
-     * Gets the priority of the manifest.
-     *
-     * @return The priority of the manifest.
+     * @return The priority.
      */
     int getPriority() {
         return this.priority;
     }
 
     /**
-     * Sets the priority of the manifest. A higher number indicates a higheer
+     * Sets the priority of the job. A higher number indicates a higheer
      * priority.
      *
-     * @param priority The priority of the manifest.
+     * @param priority The priority.
      */
     void setPriority(int priority) {
         this.priority = priority;
     }
 
     /**
-     * Gets the number of times auto ingest jobs for the manifest have crashed
-     * during processing.
+     * Gets the number of times the job has crashed during processing.
      *
-     * @return The number of times auto ingest jobs for the manifest have
-     *         crashed during processing.
+     * @return The number of crashes.
      */
     int getNumberOfCrashes() {
         return this.numberOfCrashes;
     }
 
     /**
-     * Sets the number of times auto ingest jobs for the manifest have crashed
-     * during processing.
+     * Sets the number of times the job has crashed during processing.
      *
-     * @param numberOfCrashes The number of times auto ingest jobs for the
-     *                        manifest have crashed during processing.
+     * @param numberOfCrashes The number of crashes.
      */
     void setNumberOfCrashes(int numberOfCrashes) {
         this.numberOfCrashes = numberOfCrashes;
     }
 
     /**
-     * Gets the date the auto ingest job for the manifest was completed.
+     * Gets the date the job was completed. A completion date equal to the epoch
+     * (January 1, 1970, 00:00:00 GMT), i.e., Date.getTime() returns 0L,
+     * indicates the job has not been completed.
      *
-     * @return The date the auto ingest job for the manifest was completed. The
-     *         epoch (January 1, 1970, 00:00:00 GMT) indicates the date is not
-     *         set, i.e., Date.getTime() returns 0L.
+     * @return The job completion date.
      */
     Date getCompletedDate() {
         return new Date(this.completedDate);
     }
 
     /**
-     * Sets the date the auto ingest job for the manifest was completed.
+     * Sets the date the job was completed. A completion date equal to the epoch
+     * (January 1, 1970, 00:00:00 GMT), i.e., Date.getTime() returns 0L,
+     * indicates the job has not been completed.
      *
-     * @param completedDate The date the auto ingest job for the manifest was
-     *                      completed. Use the epoch (January 1, 1970, 00:00:00
-     *                      GMT) to indicate the date is not set, i.e., new
-     *                      Date(0L).
+     * @param completedDate The job completion date.
      */
     void setCompletedDate(Date completedDate) {
         this.completedDate = completedDate.getTime();
     }
 
     /**
-     * Queries whether or not any errors occurred during the processing of the
-     * auto ingest job for the manifest.
+     * Gets whether or not any errors occurred during the processing of the job.
      *
      * @return True or false.
      */
@@ -279,8 +247,7 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Sets whether or not any errors occurred during the processing of the auto
-     * ingest job for the manifest.
+     * Sets whether or not any errors occurred during the processing of job.
      *
      * @param errorsOccurred True or false.
      */
@@ -289,25 +256,17 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Get the node data version.
+     * Gets the node data version number.
      *
-     * @return The node data version.
+     * @return The version number.
      */
     int getVersion() {
         return this.version;
     }
 
     /**
-     * Set the node data version.
-     *
-     * @param version The node data version.
-     */
-    void setVersion(int version) {
-        this.version = version;
-    }
-
-    /**
-     * Get the device ID.
+     * Gets the device ID of the device associated with the data source for the
+     * job.
      *
      * @return The device ID.
      */
@@ -316,7 +275,8 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Set the device ID.
+     * Sets the device ID of the device associated with the data source for the
+     * job.
      *
      * @param deviceId The device ID.
      */
@@ -325,7 +285,7 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Get the case name.
+     * Gets the case name.
      *
      * @return The case name.
      */
@@ -334,7 +294,7 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Set the case name.
+     * Sets the case name.
      *
      * @param caseName The case name.
      */
@@ -343,11 +303,36 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
+     * Sets the path to the case directory of the case associated with the job.
+     *
+     * @param caseDirectoryPath The path to the case directory.
+     */
+    synchronized void setCaseDirectoryPath(Path caseDirectoryPath) {
+        if (caseDirectoryPath == null) {
+            this.caseDirectoryPath = "";
+        } else {
+            this.caseDirectoryPath = caseDirectoryPath.toString();
+        }
+    }
+
+    /**
+     * Gets the path to the case directory of the case associated with the job.
+     *
+     * @return The case directory path or null if the case directory has not
+     *         been created yet.
+     */
+    synchronized Path getCaseDirectoryPath() {
+        if (!caseDirectoryPath.isEmpty()) {
+            return Paths.get(caseDirectoryPath);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Gets the date the manifest was created.
      *
-     * @return The date the manifest was created. The epoch (January 1, 1970,
-     *         00:00:00 GMT) indicates the date is not set, i.e., Date.getTime()
-     *         returns 0L.
+     * @return The date the manifest was created.
      */
     Date getManifestFileDate() {
         return new Date(this.manifestFileDate);
@@ -356,16 +341,14 @@ final class AutoIngestJobNodeData implements Serializable {
     /**
      * Sets the date the manifest was created.
      *
-     * @param manifestFileDate The date the manifest was created. Use the epoch
-     *                         (January 1, 1970, 00:00:00 GMT) to indicate the
-     *                         date is not set, i.e., new Date(0L).
+     * @param manifestFileDate The date the manifest was created.
      */
     void setManifestFileDate(Date manifestFileDate) {
         this.manifestFileDate = manifestFileDate.getTime();
     }
 
     /**
-     * Get the manifest file path.
+     * Gets the manifest file path.
      *
      * @return The manifest file path.
      */
@@ -374,7 +357,7 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Set the manifest file path.
+     * Sets the manifest file path.
      *
      * @param manifestFilePath The manifest file path.
      */
@@ -387,7 +370,7 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Get the data source path.
+     * Gets the path of the data source for the job.
      *
      * @return The data source path.
      */
@@ -396,7 +379,7 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Get the file name portion of the data source path.
+     * Get the file name portion of the path of the data source for the job.
      *
      * @return The data source file name.
      */
@@ -405,7 +388,7 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Set the data source path.
+     * Sets the path of the data source for the job.
      *
      * @param dataSourcePath The data source path.
      */
@@ -418,16 +401,91 @@ final class AutoIngestJobNodeData implements Serializable {
     }
 
     /**
-     * Gets the node data as raw bytes that can be sent to the coordination
+     * Get the processing stage of the job.
+     *
+     * @return The processing stage.
+     */
+    AutoIngestJob.Stage getProcessingStage() {
+        return AutoIngestJob.Stage.values()[this.processingStage];
+    }
+
+    /**
+     * Sets the processing stage job.
+     *
+     * @param processingStage The processing stage.
+     */
+    void setProcessingStage(AutoIngestJob.Stage processingStage) {
+        this.processingStage = (byte) processingStage.ordinal();
+    }
+
+    /**
+     * Gets the processing stage start date.
+     *
+     * @return The processing stage start date.
+     */
+    Date getProcessingStageStartDate() {
+        return new Date(this.processingStageStartDate);
+    }
+
+    /**
+     * Sets the processing stage start date.
+     *
+     * @param processingStageStartDate The processing stage start date.
+     */
+    void setProcessingStageStartDate(Date processingStageStartDate) {
+        this.processingStageStartDate = processingStageStartDate.getTime();
+    }
+
+    /**
+     * Get the processing stage details.
+     *
+     * @return A processing stage details object.
+     */
+    AutoIngestJob.StageDetails getProcessingStageDetails() {
+        return new AutoIngestJob.StageDetails(this.processingStageDetailsDescription, new Date(this.processingStageDetailsStartDate));
+    }
+
+    /**
+     * Sets the details of the current processing stage.
+     *
+     * @param stageDetails A stage details object.
+     */
+    void setProcessingStageDetails(AutoIngestJob.StageDetails stageDetails) {
+        this.processingStageDetailsDescription = stageDetails.getDescription();
+        this.processingStageDetailsStartDate = stageDetails.getStartDate().getTime();
+    }
+
+    /**
+     * Gets the processing host name, may be the empty string.
+     *
+     * @return The processing host. The empty string if the job is not currently
+     *         being processed.
+     */
+    String getProcessingHostName() {
+        return this.processingHostName;
+    }
+
+    /**
+     * Sets the processing host name. May be the empty string.
+     *
+     * @param processingHost The processing host name. The empty string if the
+     *                       job is not currently being processed.
+     */
+    void setProcessingHostName(String processingHost) {
+        this.processingHostName = processingHost;
+    }
+
+    /**
+     * Gets the node data as a byte array that can be sent to the coordination
      * service.
      *
-     * @return The manifest node data as a byte array.
+     * @return The node data as a byte array.
      */
     byte[] toArray() {
         ByteBuffer buffer = ByteBuffer.allocate(MAX_POSSIBLE_NODE_DATA_SIZE);
 
         // Write data (compatible with version 0)
-        buffer.putInt(this.status.ordinal());
+        buffer.putInt(this.processingStatus);
         buffer.putInt(this.priority);
         buffer.putInt(this.numberOfCrashes);
         buffer.putLong(this.completedDate);
@@ -440,13 +498,15 @@ final class AutoIngestJobNodeData implements Serializable {
             // Write data
             putStringIntoBuffer(deviceId, buffer, TypeKind.BYTE);
             putStringIntoBuffer(caseName, buffer, TypeKind.BYTE);
-            //DLG: putStringIntoBuffer(caseDirectoryPath, buffer, TypeKind.SHORT);
+            putStringIntoBuffer(caseDirectoryPath, buffer, TypeKind.SHORT);
             buffer.putLong(this.manifestFileDate);
             putStringIntoBuffer(manifestFilePath, buffer, TypeKind.SHORT);
             putStringIntoBuffer(dataSourcePath, buffer, TypeKind.SHORT);
-            //DLG: putStringIntoBuffer(processingStage, buffer, TypeKind.BYTE);
-            //DLG: buffer.putLong(this.processingStageStartDate);
-            //DLG: putStringIntoBuffer(processingHost, buffer, TypeKind.SHORT);
+            buffer.put(this.processingStage);
+            buffer.putLong(this.processingStageStartDate);
+            putStringIntoBuffer(this.processingStageDetailsDescription, buffer, TypeKind.BYTE);
+            buffer.putLong(this.processingStageDetailsStartDate);
+            putStringIntoBuffer(processingHostName, buffer, TypeKind.SHORT);
         }
 
         // Prepare the array
@@ -457,6 +517,7 @@ final class AutoIngestJobNodeData implements Serializable {
         return array;
     }
 
+    // DGL: Document what is going on here and how the max buffer sie constant is calculated.
     private String getStringFromBuffer(ByteBuffer buffer, TypeKind lengthType) {
         int length = 0;
         String output = "";
@@ -479,6 +540,7 @@ final class AutoIngestJobNodeData implements Serializable {
         return output;
     }
 
+    // DGL: Document what is going on here and how the max buffer sie constant is calculated.
     private void putStringIntoBuffer(String stringValue, ByteBuffer buffer, TypeKind lengthType) {
         switch (lengthType) {
             case BYTE:
@@ -492,14 +554,17 @@ final class AutoIngestJobNodeData implements Serializable {
         buffer.put(stringValue.getBytes());
     }
 
-    /**
-     * Processing status for the auto ingest job for the manifest.
-     */
-    enum ProcessingStatus {
-        PENDING,
-        PROCESSING,
-        COMPLETED,
-        DELETED
+    final static class InvalidDataException extends Exception {
+
+        private static final long serialVersionUID = 1L;
+
+        private InvalidDataException(String message) {
+            super(message);
+        }
+
+        private InvalidDataException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
 }
