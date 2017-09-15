@@ -70,15 +70,17 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         display();
     }
 
-    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to Central Repository.",
-        "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags."})
+    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to central cepository.",
+        "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags.",
+        "ManageTagsDialog.tagColumn.header.text=Tags",
+        "ManageTagsDialog.notableColumn.header.text=Notable"})
     private void customizeComponents() {
         lbWarnings.setText("");
         EamDb dbManager;
         try {
             dbManager = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.");
+            LOGGER.log(Level.SEVERE, "Failed to connect to central repository database.");
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
             return;
         }
@@ -99,6 +101,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         Collections.sort(tagNames);
 
         DefaultTableModel model = (DefaultTableModel) tblTagNames.getModel();
+        model.setColumnIdentifiers(new String[] {Bundle.ManageTagsDialog_tagColumn_header_text(), Bundle.ManageTagsDialog_notableColumn_header_text()});
         for (String tagName : tagNames) {
             boolean enabled = badTags.contains(tagName);
             model.addRow(new Object[]{tagName, enabled});
@@ -150,7 +153,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Tag", "Implies Known Bad"
+                "", ""
             }
         ) {
             Class[] types = new Class [] {
@@ -237,7 +240,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             dbManager.setBadTags(badTags);
             dbManager.saveSettings();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database."); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to connect to central repository database."); // NON-NLS
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
             return false;
         }
