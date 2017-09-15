@@ -59,7 +59,7 @@ public class EamDbSettingsDialog extends JDialog {
      */
     @Messages({"EamDbSettingsDialog.title.text=Central Repository Database Configuration",
         "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
-        "EamDbSettingsDialog.lbDatabaseType.text=Database type :",
+        "EamDbSettingsDialog.lbDatabaseType.text=Database Type :",
         "EamDbSettingsDialog.fcDatabasePath.title=Select location for central_repository.db"})
 
     public EamDbSettingsDialog() {
@@ -94,7 +94,7 @@ public class EamDbSettingsDialog extends JDialog {
 
             @Override
             public String getDescription() {
-                return "Directories and Central Repository databases";
+                return "Directories and central repository databases";
             }
         });
         cbDatabaseType.setSelectedItem(selectedPlatform);
