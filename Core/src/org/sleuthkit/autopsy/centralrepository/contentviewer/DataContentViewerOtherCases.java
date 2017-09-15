@@ -66,8 +66,8 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
  * View correlation results from other cases
  */
 @ServiceProvider(service = DataContentViewer.class, position = 8)
-@Messages({"DataContentViewerOtherCases.title=Other Data Sources",
-    "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other data sources.",})
+@Messages({"DataContentViewerOtherCases.title=Other Occurrences",
+    "DataContentViewerOtherCases.toolTip=Displays instances of the selected file/artifact from other occurrences.",})
 public class DataContentViewerOtherCases extends javax.swing.JPanel implements DataContentViewer {
 
     private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
@@ -370,7 +370,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      *
      * @param node The node to view
      *
-     * @return A collection of Central Repository artifacts to display
+     * @return A collection of central repository artifacts to display
      */
     private Collection<EamArtifact> getArtifactsFromCorrelatableAttributes(Node node) {
         Collection<EamArtifact> ret = new ArrayList<>();
@@ -450,7 +450,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Query the db for artifact instances from other cases correlated to the
-     * given Central Repository artifact.
+     * given central repository artifact.
      *
      * @param eamArtifact The artifact to correlate against
      *
@@ -474,12 +474,12 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     }
 
     /**
-     * Get the Global File Instances matching the given eamArtifact and convert
-     * them to Central Repository Artifact Instancess.
+     * Get the global file instances matching the given eamArtifact and convert
+     * them to central repository artifact instancess.
      *
      * @param eamArtifact Artifact to use for ArtifactTypeEnum matching
      *
-     * @return List of Central Repository Artifact Instances, empty list if none
+     * @return List of central repository artifact instances, empty list if none
      *         found
      */
     public Collection<EamArtifactInstance> getReferenceInstancesAsArtifactInstances(EamArtifact eamArtifact) {
@@ -530,7 +530,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
      *
      * @param node The node being viewed.
      */
-    @Messages({"DataContentViewerOtherCases.table.isempty=There are no associated artifacts or files from other cases to display.",
+    @Messages({"DataContentViewerOtherCases.table.isempty=There are no associated artifacts or files from other occurrences to display.",
         "DataContentViewerOtherCases.table.noArtifacts=Correlation cannot be performed on the selected file; likely missing MD5 hash."})
     private void populateTable(Node node) {
         String dataSourceName = getDataSourceNameFromNode(node);
