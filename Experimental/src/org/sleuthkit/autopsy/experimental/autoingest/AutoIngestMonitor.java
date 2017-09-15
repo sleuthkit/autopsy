@@ -275,22 +275,20 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     /**
      * Bumps the priority of an auto ingest job.
      *
-     * @param manifestPath The manifest file path for the job to be prioritized.
+     * @param job The job to be prioritized.
      */
-    JobsSnapshot prioritizeJob(Path manifestFilePath) throws AutoIngestMonitorException {
+    // DLG: New method!!
+    JobsSnapshot prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
         int highestPriority = 0;
-        AutoIngestJob prioritizedJob = null;
+        
         synchronized (jobsLock) {
             /*
              * Get the highest known priority and make sure the job is still in
              * the pending jobs queue.
              */
-            for (AutoIngestJob job : jobsSnapshot.getPendingJobs()) {
-                if (job.getPriority() > highestPriority) {
-                    highestPriority = job.getPriority();
-                }
-                if (job.getManifest().getFilePath().equals(manifestFilePath)) {
-                    prioritizedJob = job;
+            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+                if (pendingJob.getPriority() > highestPriority) {
+                    highestPriority = pendingJob.getPriority();
                 }
             }
 
@@ -298,29 +296,26 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
              * If the job was still in the pending jobs queue, bump its
              * priority.
              */
-            if (null != prioritizedJob) {
-                ++highestPriority;
-                String manifestNodePath = prioritizedJob.getManifest().getFilePath().toString();
-                try {
-                    AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
-                    nodeData.setPriority(highestPriority);
-                    coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
-                } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
-                    throw new AutoIngestMonitorException("Error bumping priority for job " + prioritizedJob.toString(), ex);
-                }
-                prioritizedJob.setPriority(highestPriority);
+            ++highestPriority;
+            String manifestNodePath = job.getManifest().getFilePath().toString();
+            try {
+                AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                nodeData.setPriority(highestPriority);
+                coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+            } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
+                throw new AutoIngestMonitorException("Error bumping priority for job " + job.toString(), ex);
             }
+            job.setPriority(highestPriority);
 
             /*
              * Publish a prioritization event.
              */
-            if (null != prioritizedJob) {
-                final String caseName = prioritizedJob.getManifest().getCaseName();
-                new Thread(() -> {
-                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
-                }).start();
-            }
+            final String caseName = job.getManifest().getCaseName();
+            new Thread(() -> {
+                eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+            }).start();
 
+            jobsSnapshot.addOrReplacePendingJob(job);   //DLG: Is this needed?
             return jobsSnapshot;
         }
     }
