@@ -33,8 +33,6 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import javafx.animation.KeyValue;
 import org.sleuthkit.autopsy.casemodule.Case;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -1062,8 +1060,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Sets an eamArtifact instance to the given known status. If eamArtifact
-     * exists, it is updated. If eamArtifact does not exist nothing happens
+     * Sets an eamArtifact instance to the given knownStatus. If eamArtifact
+     * exists, it is updated. If eamArtifact does not exist it is added
+     * with the given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      * @param FileKnown The status to change the artifact to

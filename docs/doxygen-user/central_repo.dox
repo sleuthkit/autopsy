@@ -68,6 +68,9 @@ and added to the list of Interesting Items.
 
 \image html central_repo_manage_tags.png
 
+If a case is open, checking the Implies Known Bad checkbox will give you the option to add the known bad status to anything in the current case
+that has already been tagged. For example, if you create a tag named "Alpha", tag a few items and then go into Manage Tags and check the box for the Alpha tag, you can optionally choose to have the status for those tagged items changed in the Central Repository. The effect is the same as if you had checked the box in Manage Tags before tagging the items. Note that data from any previous cases will not be changed. 
+
 By default there is a tag called "Evidence" as the only tag associated with this module. To associate one or more tag(s) with this module, check the Correlate box next to the tag
 name(s) and click OK. To create additional tags, use the Tags options panel.
 
