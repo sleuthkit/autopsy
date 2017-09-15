@@ -1,7 +1,7 @@
 /*
  * Autopsy Forensic Browser
  *
- * Copyright 2015 Basis Technology Corp.
+ * Copyright 2011-2017 Basis Technology Corp.
  * Contact: carrier <at> sleuthkit <dot> org
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,9 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,10 +37,9 @@ public final class Manifest implements Serializable {
     private final String dataSourcePath;
     private final Map<String, String> manifestProperties;
 
-    public Manifest(Path manifestFilePath, String caseName, String deviceId, Path dataSourcePath, Map<String, String> manifestProperties) throws IOException {
+    public Manifest(Path manifestFilePath, Date dateFileCreated, String caseName, String deviceId, Path dataSourcePath, Map<String, String> manifestProperties) {
         this.filePath = manifestFilePath.toString();
-        BasicFileAttributes attrs = Files.readAttributes(manifestFilePath, BasicFileAttributes.class);
-        this.dateFileCreated = new Date(attrs.creationTime().toMillis());
+        this.dateFileCreated = dateFileCreated;
         this.caseName = caseName;
         this.deviceId = deviceId;
         if (dataSourcePath != null) {
@@ -52,8 +48,8 @@ public final class Manifest implements Serializable {
             this.dataSourcePath = "";
         }
         this.manifestProperties = new HashMap<>(manifestProperties);
-    }
-
+    }    
+    
     public Path getFilePath() {
         return Paths.get(this.filePath);
     }

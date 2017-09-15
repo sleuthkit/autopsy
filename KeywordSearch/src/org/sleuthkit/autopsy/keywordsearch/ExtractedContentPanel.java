@@ -637,7 +637,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
         }
 
         @Override
-        @NbBundle.Messages({"# 0 - Content name",
+        @NbBundle.Messages({"# {0} - Content name",
             "ExtractedContentPanel.SetMarkup.progress.loading=Loading text for {0}"})
         protected String doInBackground() throws Exception {
             progress = ProgressHandle.createHandle(Bundle.ExtractedContentPanel_SetMarkup_progress_loading(contentName));
