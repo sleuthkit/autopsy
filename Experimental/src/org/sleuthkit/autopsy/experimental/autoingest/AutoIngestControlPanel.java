@@ -253,12 +253,12 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * controlling automated ingest for a single node within the cluster.
      */
     private AutoIngestControlPanel() {
-            
+
         //Disable the main window so they can only use the dashboard (if we used setVisible the taskBar icon would go away)
         WindowManager.getDefault().getMainWindow().setEnabled(false);
-        
+
         manager = AutoIngestManager.getInstance();
-        
+
         pendingTableModel = new DefaultTableModel(JobsTableModelColumns.headers, 0) {
             private static final long serialVersionUID = 1L;
 
@@ -304,6 +304,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      * text box.
      */
     @Messages({
+        "# {0} - case db status", "# {1} - search svc Status", "# {2} - coord svc Status", "# {3} - msg broker status",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message=Case databases {0}, keyword search {1}, coordination {2}, messaging {3} ",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message.Up=up",
         "AutoIngestControlPanel.tbServicesStatusMessage.Message.Down=down",
@@ -669,8 +670,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
     @Messages({
         "AutoIngestControlPanel.AutoIngestStartupError=Failed to start automated ingest. Verify Multi-user Settings.",
         "AutoIngestControlPanel.AutoIngestStartupFailed.Message=Failed to start automated ingest.\nPlease see auto ingest system log for details.",
-        "AutoIngestControlPanel.AutoIngestStartupFailed.Title=Automated Ingest Error",
-    })
+        "AutoIngestControlPanel.AutoIngestStartupFailed.Title=Automated Ingest Error",})
     private void startUp() {
 
         /*
@@ -679,7 +679,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         try {
             manager.startUp();
             autoIngestStarted = true;
-        } catch (AutoIngestManager.AutoIngestManagerStartupException ex) {
+        } catch (AutoIngestManager.AutoIngestManagerException ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error starting up auto ingest", ex);
             tbStatusMessage.setText(NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.AutoIngestStartupError"));
             manager = null;
@@ -812,8 +812,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
         "AutoIngestControlPanel.PauseDueToWriteStateFilesFailure=Paused, unable to write to shared images or cases location.",
         "AutoIngestControlPanel.PauseDueToSharedConfigError=Paused, unable to update shared configuration.",
         "AutoIngestControlPanel.PauseDueToIngestJobStartFailure=Paused, unable to start ingest job processing.",
-        "AutoIngestControlPanel.PauseDueToFileExporterError=Paused, unable to load File Exporter settings.",
-    })
+        "AutoIngestControlPanel.PauseDueToFileExporterError=Paused, unable to load File Exporter settings.",})
     @Override
     public void update(Observable o, Object arg) {
 
@@ -983,7 +982,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             List<AutoIngestJob> completedJobs = new ArrayList<>();
             manager.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
-            Collections.sort(completedJobs, new AutoIngestJob.ReverseDateCompletedComparator());
+            Collections.sort(completedJobs, new AutoIngestJob.ReverseCompletedDateComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
         }
     }
@@ -1076,7 +1075,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
          * @return True or fale.
          */
         private boolean isLocalJob(AutoIngestJob job) {
-            return job.getNodeName().equals(LOCAL_HOST_NAME);
+            return job.getProcessingHostName().equals(LOCAL_HOST_NAME);
         }
 
         /**
@@ -1145,20 +1144,19 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
                 AutoIngestJob.StageDetails status = job.getStageDetails();
-                AutoIngestJobNodeData nodeData = job.getNodeData();
                 tableModel.addRow(new Object[]{
-                    nodeData.getCaseName(), // CASE
-                    nodeData.getDataSourcePath().getFileName(), // DATA_SOURCE
-                    job.getNodeName(), // HOST_NAME
-                    nodeData.getManifestFileDate(), // CREATED_TIME
-                    job.getStageStartDate(), // STARTED_TIME
-                    nodeData.getCompletedDate(), // COMPLETED_TIME
+                    job.getManifest().getCaseName(), // CASE
+                    job.getManifest().getDataSourcePath().getFileName(), // DATA_SOURCE
+                    job.getProcessingHostName(), // HOST_NAME
+                    job.getManifest().getDateFileCreated(), // CREATED_TIME
+                    job.getProcessingStageStartDate(), // STARTED_TIME
+                    job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-                    nodeData.getErrorsOccurred(), // STATUS
+job.getErrorsOccurred(), // STATUS
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
-                    job.getNodeName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
-                    nodeData.getManifestFilePath()}); // MANIFEST_FILE_PATH
+                    job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
+                    job.getManifest().getFilePath()}); // MANIFEST_FILE_PATH
             }
         } catch (Exception ex) {
             SYS_LOGGER.log(Level.SEVERE, "Dashboard error refreshing table", ex);
@@ -1703,11 +1701,17 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
      *
      * @param evt The button click event.
      */
+    @Messages({"AutoIngestControlPanel.casePrioritization.errorMessage=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})    
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
-            manager.prioritizeCase(caseName);
+            try {
+                manager.prioritizeCase(caseName);
+            } catch (AutoIngestManager.AutoIngestManagerException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a case", ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_casePrioritization_errorMessage());
+            }
             refreshTables();
             pendingTable.clearSelection();
             enablePendingTableButtons(false);
@@ -1755,12 +1759,18 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     options[0]);
         }
     }//GEN-LAST:event_bnShowCaseLogActionPerformed
-
+    
+    @Messages({"AutoIngestControlPanel.jobPrioritization.errorMessage=An error occurred when prioritizing the job."})    
     private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             Path manifestFilePath = (Path) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.MANIFEST_FILE_PATH.ordinal()));
-            manager.prioritizeJob(manifestFilePath);
+            try {
+                manager.prioritizeJob(manifestFilePath);
+            } catch (AutoIngestManager.AutoIngestManagerException ex) {
+                SYS_LOGGER.log(Level.SEVERE, "Error prioritizing a case", ex);
+                MessageNotifyUtil.Message.error(Bundle.AutoIngestControlPanel_jobPrioritization_errorMessage());
+            }
             refreshTables();
             pendingTable.clearSelection();
             enablePendingTableButtons(false);
