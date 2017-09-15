@@ -501,5 +501,6 @@ public final class ThunderbirdMboxFileIngestModule implements FileIngestModule {
 
     @Override
     public void shutDown() {
+        // nothing to shut down
     }
 }
