@@ -56,10 +56,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
-        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository",
+        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a central repository",
         "GlobalSettingsPanel.pnTagManagement.border.title=Tags",
         "GlobalSettingsPanel.pnCorrelationProperties.border.title=Correlation Properties",
-        "GlobalSettingsPanel.lbCentralRepository.text=The Central Repository allows you to correlate files and forensic artifacts between cases.",
+        "GlobalSettingsPanel.lbCentralRepository.text=A central repository allows you to correlate files and forensic artifacts between cases.",
         "GlobalSettingsPanel.manageTagsTextArea.text=Configure which tag names are associated with notable or known bad items. "
                 + "When these tags are used, the file or artifact will be recorded in the central repository. "
                 + "If that file or artifact is seen again in future cases, it will be flagged.",

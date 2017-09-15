@@ -61,7 +61,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
      * unknown, known, or known bad.
      */
     @Messages({"ManageTagDialog.title=Manage Tags",
-        "ManageTagDialog.tagInfo.text=Select the tags to store in the Central Repository. Additional tags can be created in the tags options panel."})
+        "ManageTagDialog.tagInfo.text=Select the tags that cause files and results to be recorded in the central repository. Additional tags can be created in the tags options panel."})
     ManageTagsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ManageTagDialog_title(),
@@ -76,7 +76,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         helpTextArea.setText(Bundle.ManageTagDialog_tagInfo_text());
     }
 
-    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to Central Repository.",
+    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to central repository.",
         "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags."})
     private void customizeComponents() {
         lbWarnings.setText("");
@@ -84,7 +84,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         try {
             dbManager = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.");
+            LOGGER.log(Level.SEVERE, "Failed to connect to central repository database.");
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
             return;
         }
@@ -261,7 +261,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             dbManager.setBadTags(badTags);
             dbManager.saveSettings();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database."); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Failed to connect to central repository database."); // NON-NLS
             lbWarnings.setText(Bundle.ManageTagsDialog_init_failedConnection_msg());
             return false;
         }
@@ -273,9 +273,9 @@ final class ManageTagsDialog extends javax.swing.JDialog {
      * any existing tagged items (in the current case only) in the central repo.
      */
     public class CheckBoxModelListener implements TableModelListener {
-        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as known bad any files/artifacts in the current case that have this tag?",
+        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as known bad any files/results in the current case that have this tag?",
                     "ManageTagsDialog.updateCurrentCase.title=Update current case?",
-                    "ManageTagsDialog.updateCurrentCase.error=Error updating existing Central Repository entries"})
+                    "ManageTagsDialog.updateCurrentCase.error=Error updating existing central repository entries"})
         
         javax.swing.JDialog dialog;
         public CheckBoxModelListener(javax.swing.JDialog dialog){
