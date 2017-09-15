@@ -59,11 +59,11 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         "GlobalSettingsPanel.cbUseCentralRepo.text=Use a central repository",
         "GlobalSettingsPanel.pnTagManagement.border.title=Tags",
         "GlobalSettingsPanel.pnCorrelationProperties.border.title=Correlation Properties",
-        "GlobalSettingsPanel.lbCentralRepository.text=A central repository allows you to correlate files and forensic artifacts between cases.",
+        "GlobalSettingsPanel.lbCentralRepository.text=A central repository allows you to correlate files and results between cases.",
         "GlobalSettingsPanel.manageTagsTextArea.text=Configure which tag names are associated with notable or known bad items. "
-                + "When these tags are used, the file or artifact will be recorded in the central repository. "
-                + "If that file or artifact is seen again in future cases, it will be flagged.",
-        "GlobalSettingsPanel.correlationPropertiesTextArea.text=Choose which file and artifact properties to store in the central central repository for later correlation."})
+                + "When these tags are used, the file or result will be recorded in the central repository. "
+                + "If that file or result is seen again in future cases, it will be flagged.",
+        "GlobalSettingsPanel.correlationPropertiesTextArea.text=Choose which file and result properties to store in the central central repository for later correlation."})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
         
