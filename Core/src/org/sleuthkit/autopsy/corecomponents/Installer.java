@@ -86,7 +86,7 @@ public class Installer extends ModuleInstall {
                         } catch (CaseActionException ex) {
                             logger.log(Level.SEVERE, String.format("Error opening case with metadata file path %s", caseFile), ex); //NON-NLS
                  
-                        //TODO: notify user!
+                        //JIRA-3035: notify user!
                         }
                         return;
                     }
