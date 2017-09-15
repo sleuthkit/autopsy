@@ -249,7 +249,7 @@ final class ManageCorrelationPropertiesDialog extends javax.swing.JDialog {
             try {
                 dbManager = EamDb.getInstance();
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to connect to Central Repository database.", ex);
+                LOGGER.log(Level.SEVERE, "Failed to connect to central repository database.", ex);
                 lbWarningMsg.setText(Bundle.ManageCorrelationPropertiesDialog_okbutton_failure());
                 return;
             }

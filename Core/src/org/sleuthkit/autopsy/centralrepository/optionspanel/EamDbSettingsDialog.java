@@ -59,7 +59,7 @@ public class EamDbSettingsDialog extends JDialog {
      */
     @Messages({"EamDbSettingsDialog.title.text=Central Repository Database Configuration",
         "EamDbSettingsDialog.lbSingleUserSqLite.text=SQLite should only be used by one examiner at a time.",
-        "EamDbSettingsDialog.lbDatabaseType.text=Database type :",
+        "EamDbSettingsDialog.lbDatabaseType.text=Database Type :",
         "EamDbSettingsDialog.fcDatabasePath.title=Select location for central_repository.db"})
 
     public EamDbSettingsDialog() {
@@ -94,7 +94,7 @@ public class EamDbSettingsDialog extends JDialog {
 
             @Override
             public String getDescription() {
-                return "Directories and Central Repository databases";
+                return "Directories and central repository databases";
             }
         });
         cbDatabaseType.setSelectedItem(selectedPlatform);
@@ -419,7 +419,7 @@ public class EamDbSettingsDialog extends JDialog {
                             Bundle.EamDbSettingsDialog_okButton_createPostgresDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                    LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
+                    LOGGER.severe("Unable to initialize database schema or insert contents into central repository.");
                     return;
                 }
                 break;
@@ -440,7 +440,7 @@ public class EamDbSettingsDialog extends JDialog {
                             Bundle.EamDbSettingsDialog_okButton_createSQLiteDbError_message(),
                             Bundle.EamDbSettingsDialog_okButton_createDbError_title(),
                             JOptionPane.WARNING_MESSAGE);
-                    LOGGER.severe("Unable to initialize database schema or insert contents into Central Repository.");
+                    LOGGER.severe("Unable to initialize database schema or insert contents into central repository.");
                     return;
                 }
                 break;
@@ -459,7 +459,7 @@ public class EamDbSettingsDialog extends JDialog {
 
     @Messages({"EamDbSettingsDialog.okButton.errorTitle.text=Restart Required.",
         "EamDbSettingsDialog.okButton.errorMsg.text=Please restart Autopsy to begin using the new database platform.",
-        "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to Central Repository database.",
+        "EamDbSettingsDialog.okButton.connectionErrorMsg.text=Failed to connect to central repository database.",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.title=Error Loading Database",
         "EamDbSettingsDialog.okButton.corruptDatabaseExists.message=Database exists but is not the right format. Manually delete it or choose a different path (if applicable).",
         "EamDbSettingsDialog.okButton.createDbDialog.title=Database Does Not Exist",
