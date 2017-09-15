@@ -185,7 +185,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         helpTextArea.setColumns(20);
         helpTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
         helpTextArea.setLineWrap(true);
-        helpTextArea.setRows(2);
+        helpTextArea.setRows(3);
         helpTextArea.setWrapStyleWord(true);
         helpTextArea.setBorder(null);
         helpTextArea.setFocusable(false);
@@ -218,9 +218,9 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(helpScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(helpScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(tagScrollArea, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
+                .addComponent(tagScrollArea, javax.swing.GroupLayout.DEFAULT_SIZE, 341, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lbWarnings, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
