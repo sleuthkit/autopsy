@@ -61,7 +61,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
      * unknown, known, or known bad.
      */
     @Messages({"ManageTagDialog.title=Manage Tags",
-        "ManageTagDialog.tagInfo.text=Select the tags that cause files and results to be recorded in the central repository. Additional tags can be created in the tags options panel."})
+        "ManageTagDialog.tagInfo.text=Select the tags that cause files and results to be recorded in the central repository. Additional tags can be created in the Tags options panel."})
     ManageTagsDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),
                 Bundle.ManageTagDialog_title(),
