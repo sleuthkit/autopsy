@@ -41,6 +41,7 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel import Account
 
 import traceback
 import general

@@ -417,7 +417,7 @@ final class RegexQuery implements KeywordSearchQuery {
             final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
             if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
                 if (hit.isArtifactHit()) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifact().getArtifactID())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
                 } else {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", foundKeyword.getSearchTerm(), hit.getSnippet(), hit.getContentID())); //NON-NLS
                 }
@@ -484,9 +484,10 @@ final class RegexQuery implements KeywordSearchQuery {
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-        if (hit.isArtifactHit()) {
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
-        }
+      
+        hit.getArtifactID().ifPresent(artifactID
+                -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+        );
 
         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.REGEX.ordinal()));
 

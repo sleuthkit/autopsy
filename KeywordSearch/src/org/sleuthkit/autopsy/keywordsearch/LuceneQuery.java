@@ -225,9 +225,11 @@ class LuceneQuery implements KeywordSearchQuery {
             }
         }
 
-        if (hit.isArtifactHit()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
-        }
+        
+        hit.getArtifactID().ifPresent(artifactID
+                -> attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+        );
+     
 
         try {
             bba.addAttributes(attributes); //write out to bb
@@ -396,10 +398,10 @@ class LuceneQuery implements KeywordSearchQuery {
                 return EscapeUtil.unEscapeHtml(contentHighlights.get(0)).trim();
             }
         } catch (NoOpenCoreException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query +". Solr doc id " + solrObjectId + ", chunkID " + chunkID , ex); //NON-NLS
             throw ex;
         } catch (KeywordSearchModuleException ex) {
-            logger.log(Level.WARNING, "Error executing Lucene Solr Query: " + query, ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error executing Lucene Solr Query: " + query +". Solr doc id " + solrObjectId + ", chunkID " + chunkID , ex); //NON-NLS
             return "";
         }
     }

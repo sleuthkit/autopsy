@@ -359,7 +359,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             final BlackboardAttribute ccnAttribute = parsedTrackAttributeMap.get(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_CARD_NUMBER));
             if (ccnAttribute == null || StringUtils.isBlank(ccnAttribute.getValueString())) {
                 if (hit.isArtifactHit()) {
-                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifact().getArtifactID())); //NON-NLS
+                    LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for artifact keyword hit: term = %s, snippet = '%s', artifact id = %d", searchTerm, hit.getSnippet(), hit.getArtifactID().get())); //NON-NLS
                 } else {
                     LOGGER.log(Level.SEVERE, String.format("Failed to parse credit card account number for content keyword hit: term = %s, snippet = '%s', object id = %d", searchTerm, hit.getSnippet(), hit.getContentID())); //NON-NLS
                 }
@@ -398,7 +398,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * hit.
              */
             if (content instanceof AbstractFile) {
-                AbstractFile file = (AbstractFile)content;
+                AbstractFile file = (AbstractFile) content;
                 if (file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS
                         || file.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS) {
                     attributes.add(new BlackboardAttribute(KEYWORD_SEARCH_DOCUMENT_ID, MODULE_NAME, hit.getSolrDocumentId()));
@@ -422,9 +422,10 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         if (snippet != null) {
             attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_KEYWORD_PREVIEW, MODULE_NAME, snippet));
         }
-        if (hit.isArtifactHit()) {
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, hit.getArtifact().getArtifactID()));
-        }
+
+        hit.getArtifactID().ifPresent(
+                artifactID -> attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, artifactID))
+        );
 
         // TermsComponentQuery is now being used exclusively for substring searches.
         attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_TYPE, MODULE_NAME, KeywordSearch.QueryType.SUBSTRING.ordinal()));
@@ -472,12 +473,12 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * Creates an attribute of the the given type to the given artifact with a
      * value parsed from the snippet for a credit account number hit.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param attrType      The type of attribute to create.
-     * @param groupName     The group name of the regular expression that was
-     *                      used to parse the attribute data.
-     * @param matcher       A matcher for the snippet.
+     * @param attributeMap A map of artifact attribute objects, used to avoid
+     *                     creating duplicate attributes.
+     * @param attrType     The type of attribute to create.
+     * @param groupName    The group name of the regular expression that was
+     *                     used to parse the attribute data.
+     * @param matcher      A matcher for the snippet.
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);

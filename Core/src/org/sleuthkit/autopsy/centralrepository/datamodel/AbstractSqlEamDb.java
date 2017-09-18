@@ -33,8 +33,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import javafx.animation.KeyValue;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskData;
@@ -252,6 +251,32 @@ public abstract class AbstractSqlEamDb implements EamDb {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeConnection(conn);
         }
+    }
+
+     /**
+     * Creates new Case in the database from the given case
+     * 
+     * @param case The case to add
+     */
+    @Override    
+    public EamCase newCase(Case autopsyCase) throws EamDbException{
+        if(autopsyCase == null){
+            throw new EamDbException("Case is null");
+        }
+        
+        EamCase curCeCase = new EamCase(
+                -1,
+                autopsyCase.getName(), // unique case ID
+                EamOrganization.getDefault(),
+                autopsyCase.getDisplayName(),
+                autopsyCase.getCreatedDate(),
+                autopsyCase.getNumber(),
+                autopsyCase.getExaminer(),
+                null,
+                null,
+                null);        
+        newCase(curCeCase);
+        return curCeCase;
     }
 
     /**
@@ -1035,13 +1060,15 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact
-     * exists, it is updated. If eamArtifact does not exist nothing happens
+     * Sets an eamArtifact instance to the given knownStatus. If eamArtifact
+     * exists, it is updated. If eamArtifact does not exist it is added
+     * with the given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
+     * @param FileKnown The status to change the artifact to
      */
     @Override
-    public void setArtifactInstanceKnownBad(EamArtifact eamArtifact) throws EamDbException {
+    public void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
         Connection conn = connect();
 
         if (1 != eamArtifact.getInstances().size()) {
@@ -1082,7 +1109,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 int instance_id = resultSet.getInt("id");
                 preparedUpdate = conn.prepareStatement(sqlUpdate.toString());
 
-                preparedUpdate.setString(1, TskData.FileKnown.BAD.name());
+                preparedUpdate.setString(1, knownStatus.name());
                 // NOTE: if the user tags the same instance as BAD multiple times,
                 // the comment from the most recent tagging is the one that will
                 // prevail in the DB.
@@ -1109,12 +1136,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     newDataSource(eamInstance.getEamDataSource());
                 }
                 
-                eamArtifact.getInstances().get(0).setKnownStatus(TskData.FileKnown.BAD);
+                eamArtifact.getInstances().get(0).setKnownStatus(knownStatus);
                 addArtifact(eamArtifact);
             }
 
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting/setting artifact instance knownStatus=Bad.", ex); // NON-NLS
+            throw new EamDbException("Error getting/setting artifact instance knownStatus=" + knownStatus.getName(), ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedUpdate);
             EamDbUtil.closePreparedStatement(preparedQuery);

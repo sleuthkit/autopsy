@@ -28,6 +28,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.datamodel.TskData;
+import org.sleuthkit.autopsy.casemodule.Case;
 
 /**
  * Sqlite implementation of the Central Repository database.
@@ -262,6 +264,21 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }       
     }
+    
+     /**
+     * Creates new Case in the database from the given case
+     * 
+     * @param case The case to add
+     */
+    @Override
+    public EamCase newCase(Case autopsyCase) throws EamDbException {
+         try{
+            acquireExclusiveLock();
+            return super.newCase(autopsyCase);
+        } finally {
+            releaseExclusiveLock();
+        }          
+    }    
     
     /**
      * Creates new Case in the database
@@ -576,14 +593,14 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      */
     @Override
-    public void setArtifactInstanceKnownBad(EamArtifact eamArtifact) throws EamDbException {
+    public void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
         try{
             acquireExclusiveLock();
-            super.setArtifactInstanceKnownBad(eamArtifact);
+            super.setArtifactInstanceKnownStatus(eamArtifact, knownStatus);
         } finally {
             releaseExclusiveLock();
         }     
-    }    
+    }   
     
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
