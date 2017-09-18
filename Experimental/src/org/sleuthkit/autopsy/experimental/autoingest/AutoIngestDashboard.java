@@ -18,6 +18,7 @@
  */
 package org.sleuthkit.autopsy.experimental.autoingest;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.awt.Cursor;
 import java.awt.EventQueue;
 import java.nio.file.Path;
@@ -31,6 +32,7 @@ import java.util.logging.Level;
 import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
+import java.util.concurrent.ExecutorService;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.SwingWorker;
@@ -44,6 +46,8 @@ import org.sleuthkit.autopsy.core.ServicesMonitor;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.experimental.autoingest.AutoIngestMonitor.JobsSnapshot;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * A dashboard for monitoring an automated ingest cluster.
@@ -72,11 +76,13 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private static final int COMPLETED_TIME_COL_MIN_WIDTH = 30;
     private static final int COMPLETED_TIME_COL_MAX_WIDTH = 2000;
     private static final int COMPLETED_TIME_COL_PREFERRED_WIDTH = 280;
+    private static final String UPDATE_TASKS_THREAD_NAME = "AID-update-tasks-%d";
     private static final Logger logger = Logger.getLogger(AutoIngestDashboard.class.getName());
     private final DefaultTableModel pendingTableModel;
     private final DefaultTableModel runningTableModel;
     private final DefaultTableModel completedTableModel;
     private AutoIngestMonitor autoIngestMonitor;
+    private ExecutorService updateExecutor;
 
     /**
      * Creates a dashboard for monitoring an automated ingest cluster.
@@ -422,12 +428,13 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         autoIngestMonitor = new AutoIngestMonitor();
         autoIngestMonitor.addObserver(this);
         autoIngestMonitor.startUp();
+        updateExecutor = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat(UPDATE_TASKS_THREAD_NAME).build());
+        updateExecutor.submit(new UpdateJobsSnapshotTask());
     }
 
     @Override
-    public void update(Observable observable, Object argument) {
-        JobsSnapshot jobsSnapshot = (JobsSnapshot) argument;
-        EventQueue.invokeLater(new RefreshComponentsTask(jobsSnapshot));
+    public void update(Observable observable, Object arg) {
+        updateExecutor.submit(new UpdateJobsSnapshotTask());
     }
 
     /**
@@ -556,7 +563,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         STATUS(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Status")),
         CASE_DIRECTORY_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.CaseFolder")),
         MANIFEST_FILE_PATH(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.ManifestFilePath")),
-        JOB("");
+        JOB(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.JobsTableModel.ColumnHeader.Job"));
 
         private final String header;
 
@@ -583,6 +590,23 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             JOB.getColumnHeader()
         };
     };
+
+    /**
+     * A task that gets the latest auto ingest jobs snapshot from the autop
+     * ingest monitor and queues a components refresh task for execution in the
+     * EDT.
+     */
+    private class UpdateJobsSnapshotTask implements Runnable {
+
+        /**
+         * @inheritDoc
+         */
+        @Override
+        public void run() {
+            JobsSnapshot jobsSnapshot = AutoIngestDashboard.this.autoIngestMonitor.getJobsSnapshot();
+            EventQueue.invokeLater(new RefreshComponentsTask(jobsSnapshot));
+        }
+    }
 
     /**
      * A task that refreshes the UI components on this panel to reflect a
