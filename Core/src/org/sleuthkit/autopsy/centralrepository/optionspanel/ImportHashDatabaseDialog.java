@@ -587,7 +587,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
             this.progress = ProgressHandle.createHandle(Bundle.ImportHashDatabaseDialog_ImportHashDatabaseWorker_displayName());
 
             if (!EamDb.isEnabled()) {
-                throw new EamDbException("Central Repository database is not enabled."); // NON-NLS
+                throw new EamDbException("Central repository database is not enabled."); // NON-NLS
             }
         }
 

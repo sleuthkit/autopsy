@@ -175,9 +175,9 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     }
 
     /**
-     * Add one local Central Repository Artifact to the table.
+     * Add one local central repository artifact to the table.
      *
-     * @param eamArtifact Central Repository Artifact to add to the
+     * @param eamArtifact central repository artifact to add to the
      *                   table
      */
     public void addEamArtifact(EamArtifact eamArtifact) {
