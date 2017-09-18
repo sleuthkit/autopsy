@@ -1793,7 +1793,7 @@ public class Case {
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
         "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database.",
         "Case.unsupportedSchemaVersionMessage=Unsupported DB schema version - see log for details",
-        "Case.databaseConnectionInfo.error.msg=Error accessing database server connection info. See Tools -> Options -> Multi-user.",
+        "Case.databaseConnectionInfo.error.msg=Error accessing database server connection info. See Tools, Options, Multi-User.",
         "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. "
         + "See Tools, Options, Multi-user."
     })
