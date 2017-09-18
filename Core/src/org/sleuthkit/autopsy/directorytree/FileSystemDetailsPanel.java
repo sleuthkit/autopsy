@@ -18,21 +18,44 @@
  */
 package org.sleuthkit.autopsy.directorytree;
 
-import java.awt.*;
 import java.awt.event.ActionListener;
+import org.openide.util.Exceptions;
+import org.sleuthkit.datamodel.FileSystem;
+import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This is the form / panel to show the File System Details.
  *
  * @author jantonius
  */
-class FileSystemDetailsPanel extends javax.swing.JPanel {
+final class FileSystemDetailsPanel extends javax.swing.JPanel {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Creates new form FileSystemDetailsPanel
      */
     FileSystemDetailsPanel() {
         initComponents();
+    }
+
+    FileSystemDetailsPanel(FsContent content) {
+        initComponents();
+        try {
+            FileSystem fSystem = content.getFileSystem();
+            setFileSystemTypeValue(fSystem.getFsType().toString());
+            setImageOffsetValue(Long.toString(fSystem.getImageOffset()));
+            setVolumeIDValue(Long.toString(fSystem.getId()));
+            setBlockSizeValue(Long.toString(fSystem.getBlock_size()));
+            setBlockCountValue(Long.toString(fSystem.getBlock_count()));
+            setRootInumValue(Long.toString(fSystem.getRoot_inum()));
+            setFirstInumValue(Long.toString(fSystem.getFirst_inum()));
+            setLastInumValue(Long.toString(fSystem.getLastInum()));
+        } catch (TskCoreException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+
     }
 
     /**
@@ -45,7 +68,6 @@ class FileSystemDetailsPanel extends javax.swing.JPanel {
     private void initComponents() {
 
         OKButton = new javax.swing.JButton();
-        jSplitPane1 = new javax.swing.JSplitPane();
         genInfoPanel = new javax.swing.JPanel();
         fsTypeLabel = new javax.swing.JLabel();
         imgOffsetLabel = new javax.swing.JLabel();
@@ -67,13 +89,8 @@ class FileSystemDetailsPanel extends javax.swing.JPanel {
         jSeparator1 = new javax.swing.JSeparator();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
-        detailInfoPanel = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
 
         OKButton.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.OKButton.text")); // NOI18N
-
-        jSplitPane1.setDividerLocation(180);
-        jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
         genInfoPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         genInfoPanel.setPreferredSize(new java.awt.Dimension(815, 170));
@@ -142,45 +159,47 @@ class FileSystemDetailsPanel extends javax.swing.JPanel {
         genInfoPanelLayout.setHorizontalGroup(
             genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(genInfoPanelLayout.createSequentialGroup()
-                .addGap(95, 95, 95)
+                .addGap(10, 10, 10)
                 .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(fsTypeLabel)
                     .addComponent(imgOffsetLabel)
                     .addComponent(volumeIDLabel)
                     .addComponent(blockSizeLabel))
-                .addGap(108, 108, 108)
-                .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(genInfoLabel)
+                .addGap(10, 10, 10)
+                .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(genInfoPanelLayout.createSequentialGroup()
-                        .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(blockSizeValue)
-                            .addComponent(volumeIDValue)
-                            .addComponent(imgOffsetValue)
-                            .addComponent(fsTypeValue))
-                        .addGap(31, 31, 31)
-                        .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel3))
-                        .addGap(33, 33, 33)
+                        .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(genInfoPanelLayout.createSequentialGroup()
+                                .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(blockSizeValue, javax.swing.GroupLayout.DEFAULT_SIZE, 112, Short.MAX_VALUE)
+                                    .addComponent(imgOffsetValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel2)
+                                    .addComponent(jLabel3)))
+                            .addComponent(volumeIDValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(fsTypeValue, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(10, 10, 10)
                         .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(31, 31, 31)
+                        .addGap(10, 10, 10)
                         .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(blockCountLabel)
                             .addComponent(rootInumLabel)
                             .addComponent(firstInumLabel)
-                            .addComponent(lastInumLabel))
-                        .addGap(111, 111, 111)
-                        .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(lastInumValue)
-                            .addComponent(firstInumValue)
-                            .addComponent(rootInumValue)
-                            .addComponent(blockCountValue))))
-                .addGap(245, 245, 245))
+                            .addComponent(lastInumLabel)))
+                    .addComponent(genInfoLabel))
+                .addGap(10, 10, 10)
+                .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(blockCountValue, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE)
+                    .addComponent(rootInumValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(firstInumValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lastInumValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         genInfoPanelLayout.setVerticalGroup(
             genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, genInfoPanelLayout.createSequentialGroup()
-                .addContainerGap(23, Short.MAX_VALUE)
+                .addContainerGap(19, Short.MAX_VALUE)
                 .addComponent(genInfoLabel)
                 .addGap(18, 18, 18)
                 .addGroup(genInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -222,36 +241,9 @@ class FileSystemDetailsPanel extends javax.swing.JPanel {
                             .addComponent(firstInumLabel)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                             .addComponent(lastInumLabel)))
-                    .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE))
+                    .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE))
                 .addContainerGap())
         );
-
-        jSplitPane1.setTopComponent(genInfoPanel);
-
-        detailInfoPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
-        detailInfoPanel.setPreferredSize(new java.awt.Dimension(516, 293));
-
-        jLabel1.setFont(jLabel1.getFont().deriveFont(jLabel1.getFont().getStyle() | java.awt.Font.BOLD, 18));
-        jLabel1.setText(org.openide.util.NbBundle.getMessage(FileSystemDetailsPanel.class, "FileSystemDetailsPanel.jLabel1.text")); // NOI18N
-
-        javax.swing.GroupLayout detailInfoPanelLayout = new javax.swing.GroupLayout(detailInfoPanel);
-        detailInfoPanel.setLayout(detailInfoPanelLayout);
-        detailInfoPanelLayout.setHorizontalGroup(
-            detailInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, detailInfoPanelLayout.createSequentialGroup()
-                .addContainerGap(278, Short.MAX_VALUE)
-                .addComponent(jLabel1)
-                .addGap(276, 276, 276))
-        );
-        detailInfoPanelLayout.setVerticalGroup(
-            detailInfoPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(detailInfoPanelLayout.createSequentialGroup()
-                .addGap(23, 23, 23)
-                .addComponent(jLabel1)
-                .addContainerGap(235, Short.MAX_VALUE))
-        );
-
-        jSplitPane1.setRightComponent(detailInfoPanel);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -260,19 +252,19 @@ class FileSystemDetailsPanel extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(367, 367, 367)
-                        .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 786, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(genInfoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 534, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(222, 222, 222)
+                        .addComponent(OKButton, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addComponent(genInfoPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(OKButton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -364,7 +356,6 @@ class FileSystemDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JLabel blockCountValue;
     private javax.swing.JLabel blockSizeLabel;
     private javax.swing.JLabel blockSizeValue;
-    private javax.swing.JPanel detailInfoPanel;
     private javax.swing.JLabel firstInumLabel;
     private javax.swing.JLabel firstInumValue;
     private javax.swing.JLabel fsTypeLabel;
@@ -373,11 +364,9 @@ class FileSystemDetailsPanel extends javax.swing.JPanel {
     private javax.swing.JPanel genInfoPanel;
     private javax.swing.JLabel imgOffsetLabel;
     private javax.swing.JLabel imgOffsetValue;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JSeparator jSeparator1;
-    private javax.swing.JSplitPane jSplitPane1;
     private javax.swing.JLabel lastInumLabel;
     private javax.swing.JLabel lastInumValue;
     private javax.swing.JLabel rootInumLabel;
