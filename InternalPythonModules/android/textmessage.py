@@ -42,9 +42,12 @@ from org.sleuthkit.datamodel import BlackboardArtifact
 from org.sleuthkit.datamodel import BlackboardAttribute
 from org.sleuthkit.datamodel import Content
 from org.sleuthkit.datamodel import TskCoreException
+from org.sleuthkit.datamodel import Account
 
 import traceback
 import general
+
+deviceAccount = None
 
 """
 Finds database with SMS/MMS messages and adds them to blackboard.
@@ -56,6 +59,15 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
 
     def analyze(self, dataSource, fileManager, context):
         try:
+
+            # Create a 'Device' account using the data source device id
+            datasourceObjId = dataSource.getDataSource().getId()
+            ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
+            deviceID = ds.getDeviceId()
+
+            global deviceAccount
+            deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+
             absFiles = fileManager.findFiles(dataSource, "mmssms.db")
             for abstractFile in absFiles:
                 try:
@@ -104,6 +116,12 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SUBJECT, general.MODULE_NAME, subject))
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_TEXT, general.MODULE_NAME, body))
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "SMS Message"))
+
+                # Create an account
+                msgAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
+
+                # create relationship between accounts
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [msgAccount], artifact);
 
                 bbartifacts.append(artifact)
                 try:
