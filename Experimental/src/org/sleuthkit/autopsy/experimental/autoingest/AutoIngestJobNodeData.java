@@ -121,7 +121,7 @@ final class AutoIngestJobNodeData {
         this.numberOfCrashes = 0;
         this.completedDate = 0L;
         this.errorsOccurred = false;
-        this.version = CURRENT_VERSION;
+        this.version = 0;
         this.manifestFilePath = "";
         this.manifestFileDate = 0L;
         this.caseName = "";
