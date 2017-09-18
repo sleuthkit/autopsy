@@ -1792,11 +1792,7 @@ public class Case {
     @Messages({
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
         "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database.",
-        "# {0} - unsupported  version",
-        "# {1} - app name",
-        "# {2} - maximum supported major scheme version",
-        "Case.unsupportedSchemaVersionMessage=Unsupported DB schema version: {0}\n"
-        + "The highest supported DB schema version for this release of {1} is {2}.X",
+        "Case.unsupportedSchemaVersionMessage=Unsupported DB schema version - see log for details",
         "Case.databaseConnectionInfo.error.msg=Error accessing database server connection info. See Tools -> Options -> Multi-user.",
         "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. "
         + "See Tools, Options, Multi-user."
@@ -1817,12 +1813,7 @@ public class Case {
                 throw new CaseActionException(Case_open_exception_multiUserCaseNotEnabled());
             }
         } catch (TskUnsupportedSchemaVersionException ex) {
-            throw new CaseActionException(
-                    Bundle.Case_unsupportedSchemaVersionMessage(
-                            ex.getUnsupportedVersion().toString(),
-                            Version.getName(),
-                            ex.getCurrentVersion().getMajor()),
-                    ex);
+            throw new CaseActionException(Bundle.Case_unsupportedSchemaVersionMessage(), ex);
         } catch (TskCoreException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotOpenCaseDatabase(), ex);
         }
