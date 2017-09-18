@@ -27,6 +27,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskDataException;
@@ -189,6 +190,75 @@ public class EamArtifactUtil {
         if (null != value) {
             return new EamArtifact(aType, value);
         } else {
+            return null;
+        }
+    }
+    
+    /**
+     * Create an EamArtifact from the given Content.
+     * Will return null if an artifact can not be created. Does not
+     * add the artifact to the database.
+     * 
+     * @param content     The content object
+     * @param knownStatus Unknown, known bad, or known
+     * @param comment     The comment for the new artifact (generally used for a tag comment)
+     * @return The new EamArtifact or null if creation failed
+     */
+    public static EamArtifact getEamArtifactFromContent(Content content, TskData.FileKnown knownStatus, String comment){
+        
+        if(! (content instanceof AbstractFile)){
+            return null;
+        }
+        
+        final AbstractFile af = (AbstractFile) content;
+
+        if ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
+                || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
+                || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
+                || (af.getKnown() == TskData.FileKnown.KNOWN)
+                || (af.isDir() == true)
+                || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
+            return null;
+        }
+
+        String dsName;
+        try {
+            dsName = af.getDataSource().getName();
+        } catch (TskCoreException ex) {
+            LOGGER.log(Level.SEVERE, "Error, unable to get name of data source from abstract file.", ex);
+            return null;
+        }
+        
+        // We need a hash to make the artifact
+        String md5 = af.getMd5Hash();
+        if (md5 == null || md5.isEmpty()) {
+            return null;
+        }
+        
+        String deviceId;
+        try {
+            deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
+        } catch (TskCoreException | TskDataException ex) {
+            LOGGER.log(Level.SEVERE, "Error, failed to get deviceID or data source from current case.", ex);
+            return null;
+        }
+
+        EamArtifact eamArtifact;
+        try {
+            EamArtifact.Type filesType = EamDb.getInstance().getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
+            eamArtifact = new EamArtifact(filesType, af.getMd5Hash());
+            EamArtifactInstance cei = new EamArtifactInstance(
+                    new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
+                    new EamDataSource(deviceId, dsName),
+                    af.getParentPath() + af.getName(),
+                    comment,
+                    TskData.FileKnown.BAD,
+                    EamArtifactInstance.GlobalStatus.LOCAL
+            );
+            eamArtifact.addInstance(cei);
+            return eamArtifact;
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type.", ex);
             return null;
         }
     }

@@ -170,7 +170,7 @@ public class EamArtifact implements Serializable {
          * 
          * @param id            Unique ID for this Correlation Type
          * @param displayName   Name of this type displayed in the UI.
-         * @param dbTableName   Central Repository db table where data of this type is stored.
+         * @param dbTableName   Central repository db table where data of this type is stored.
          *                      Must start with a lowercase letter and only contain
          *                      lowercase letters, numbers, and '_' characters.
          * @param supported     Is this Type currently supported
@@ -190,10 +190,10 @@ public class EamArtifact implements Serializable {
         /**
          * Constructior for custom types where we do not know the Type ID until
          * the row has been entered into the correlation_types table
-         * in the Central Repository.
+         * in the central repository.
          * 
          * @param displayName   Name of this type displayed in the UI.
-         * @param dbTableName   Central Repository db table where data of this type is stored
+         * @param dbTableName   Central repository db table where data of this type is stored
          *                      Must start with a lowercase letter and only contain
          *                      lowercase letters, numbers, and '_' characters.
          * @param supported     Is this Type currently supported

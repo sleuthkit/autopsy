@@ -187,7 +187,7 @@ class IngestModule implements FileIngestModule {
     // see ArtifactManagerTimeTester for details
     @Messages({
         "IngestModule.notfyBubble.title=Central Repository Not Initialized",
-        "IngestModule.errorMessage.isNotEnabled=Central Repository settings are not initialized, cannot run Correlation Engine ingest module."
+        "IngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Correlation Engine ingest module."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException { 
@@ -210,8 +210,8 @@ class IngestModule implements FileIngestModule {
         // Don't allow sqlite central repo databases to be used for multi user cases
         if((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) 
                 && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)){
-            LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite Central Repository.");
-            throw new IngestModuleException("Cannot run on a multi-user case with a SQLite Central Repository."); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
+            throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
         eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
@@ -230,8 +230,8 @@ class IngestModule implements FileIngestModule {
         try {
             dbManager = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); // NON-NLS
-            throw new IngestModuleException("Error connecting to Central Repository database.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
+            throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
         
         try {
