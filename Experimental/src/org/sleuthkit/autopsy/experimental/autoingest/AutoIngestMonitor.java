@@ -277,7 +277,6 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      *
      * @param job The job to be prioritized.
      */
-    // DLG: New method!!
     JobsSnapshot prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
         int highestPriority = 0;
         
@@ -315,7 +314,6 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                 eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
             }).start();
 
-            jobsSnapshot.addOrReplacePendingJob(job);   //DLG: Is this needed?
             return jobsSnapshot;
         }
     }

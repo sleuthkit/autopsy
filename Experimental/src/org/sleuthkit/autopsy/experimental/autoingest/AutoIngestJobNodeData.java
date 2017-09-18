@@ -332,14 +332,14 @@ final class AutoIngestJobNodeData {
     /**
      * Gets the path to the case directory of the case associated with the job.
      *
-     * @return The case directory path or null if the case directory has not
-     *         been created yet.
+     * @return The case directory path or an empty string path if the case
+     * directory has not been created yet.
      */
     synchronized Path getCaseDirectoryPath() {
         if (!caseDirectoryPath.isEmpty()) {
             return Paths.get(caseDirectoryPath);
         } else {
-            return null;
+            return Paths.get("");
         }
     }
 
