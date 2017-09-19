@@ -291,8 +291,8 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              */
             if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 Matcher matcher = CREDIT_CARD_NUM_PATTERN.matcher(term.getTerm());
-                matcher.find();
-                if (false == CREDIT_CARD_VALIDATOR.isValidCCN(matcher.group("ccn"))) {
+                if (false == matcher.find()
+                        || false == CREDIT_CARD_VALIDATOR.isValidCCN(matcher.group("ccn"))) {
                     continue;
                 }
             }

@@ -288,10 +288,10 @@ final class RegexQuery implements KeywordSearchQuery {
                      */
                     if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                         Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-                        if (ccnMatcher.find() && CREDIT_CARD_VALIDATOR.isValidCCN(ccnMatcher.group("ccn"))) {
-                        } else {
+                        if (false == ccnMatcher.find() ||
+                                false == CREDIT_CARD_VALIDATOR.isValidCCN(ccnMatcher.group("ccn"))) {
                             continue;
-                        }
+                        } 
                     }
 
                     /**
