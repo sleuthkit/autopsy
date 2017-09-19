@@ -29,7 +29,6 @@ import org.sleuthkit.autopsy.actions.AddContentTagAction;
 import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -78,7 +77,6 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
         for (Action a : super.getActions(true)) {
             actionsList.add(a);
         }
-        actionsList.add(new FileSystemDetailsAction(content));
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "SlackFileNode.viewFileInDir.text"), this.content));
             actionsList.add(null); // creates a menu separator

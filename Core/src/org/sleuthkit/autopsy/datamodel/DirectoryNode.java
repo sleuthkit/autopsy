@@ -30,7 +30,6 @@ import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
 import org.sleuthkit.autopsy.timeline.actions.ViewFileInTimelineAction;
@@ -83,7 +82,6 @@ public class DirectoryNode extends AbstractFsContentNode<AbstractFile> {
         for (Action a : super.getActions(true)) {
             actionsList.add(a);
         }
-        actionsList.add(new FileSystemDetailsAction(content));
         if (!getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(
                     NbBundle.getMessage(this.getClass(), "DirectoryNode.getActions.viewFileInDir.text"), this));

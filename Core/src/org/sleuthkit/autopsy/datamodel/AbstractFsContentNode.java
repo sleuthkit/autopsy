@@ -18,11 +18,16 @@
  */
 package org.sleuthkit.autopsy.datamodel;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import javax.swing.Action;
 import org.openide.nodes.Sheet;
 import org.openide.util.NbBundle;
 import org.sleuthkit.autopsy.coreutils.Logger;
+import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.datamodel.AbstractFile;
 
 /**
@@ -58,6 +63,14 @@ public abstract class AbstractFsContentNode<T extends AbstractFile> extends Abst
 
     public boolean getDirectoryBrowseMode() {
         return directoryBrowseMode;
+    }
+
+    @Override
+    public Action[] getActions(boolean context) {
+        List<Action> actionsList = new ArrayList<>();
+        actionsList.addAll(Arrays.asList(super.getActions(true)));
+        actionsList.add(new FileSystemDetailsAction(content));
+        return actionsList.toArray(new Action[actionsList.size()]);
     }
 
     @Override

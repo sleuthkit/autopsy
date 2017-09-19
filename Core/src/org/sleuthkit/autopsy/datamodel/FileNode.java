@@ -32,7 +32,6 @@ import org.sleuthkit.autopsy.actions.DeleteFileContentTagAction;
 import org.sleuthkit.autopsy.coreutils.ContextMenuExtensionPoint;
 import org.sleuthkit.autopsy.directorytree.ExternalViewerAction;
 import org.sleuthkit.autopsy.directorytree.ExtractAction;
-import org.sleuthkit.autopsy.directorytree.FileSystemDetailsAction;
 import org.sleuthkit.autopsy.directorytree.HashSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.directorytree.ViewContextAction;
@@ -148,7 +147,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(true)));
-        actionsList.add(new FileSystemDetailsAction(content));
+        
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
             actionsList.add(null); // Creates an item separator
