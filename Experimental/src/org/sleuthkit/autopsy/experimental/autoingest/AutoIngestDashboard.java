@@ -474,7 +474,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     // data to populate the table.
                     continue;
                 }
-                AutoIngestJob.StageDetails status = job.getStageDetails();
+                AutoIngestJob.StageDetails status = job.getProcessingStageDetails();
                 tableModel.addRow(new Object[]{
                     job.getManifest().getCaseName(), // CASE
                     job.getManifest().getDataSourcePath().getFileName(), job.getProcessingHostName(), // HOST_NAME

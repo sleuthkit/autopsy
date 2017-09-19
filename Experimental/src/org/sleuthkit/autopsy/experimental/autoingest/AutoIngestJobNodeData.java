@@ -98,7 +98,7 @@ final class AutoIngestJobNodeData {
         setProcessingHostName(job.getProcessingHostName());
         setProcessingStage(job.getProcessingStage());
         setProcessingStageStartDate(job.getProcessingStageStartDate());
-        setProcessingStageDetails(job.getStageDetails());
+        setProcessingStageDetails(job.getProcessingStageDetails());
     }
 
     /**
