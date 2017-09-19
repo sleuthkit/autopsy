@@ -75,7 +75,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     /*
      * Version 1 fields.
      */
-    private final int version;
+    private final int version; // For possible future use.
     @GuardedBy("this")
     private ProcessingStatus processingStatus;
     @GuardedBy("this")
@@ -415,15 +415,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      */
     synchronized void setProcessingHostName(String processingHostName) {
         this.nodeName = processingHostName;
-    }
-
-    /**
-     * Gets the version number of this object.
-     *
-     * @return The version number.
-     */
-    int getVersion() {
-        return this.version;
     }
 
     /**

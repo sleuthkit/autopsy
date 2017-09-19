@@ -475,11 +475,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
             Path currentRow = getSelectedEntry(table, tableModel);
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
-                if (job.getVersion() < 1) {
-                    // Ignore version '0' nodes since they don't carry enough
-                    // data to populate the table.
-                    continue;
-                }
                 AutoIngestJob.StageDetails status = job.getProcessingStageDetails();
                 tableModel.addRow(new Object[]{
                     job.getManifest().getCaseName(), // CASE

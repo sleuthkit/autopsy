@@ -239,6 +239,13 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             for (String node : nodeList) {
                 try {
                     AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, node));
+                    if (nodeData.getVersion() < 1) {
+                        /*
+                         * Ignore version '0' nodes that have not been
+                         * "upgraded" since they don't carry enough data.
+                         */
+                        continue;
+                    }
                     AutoIngestJob job = new AutoIngestJob(nodeData);
                     ProcessingStatus processingStatus = nodeData.getProcessingStatus();
                     switch (processingStatus) {
