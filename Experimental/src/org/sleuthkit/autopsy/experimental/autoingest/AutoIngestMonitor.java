@@ -142,7 +142,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             jobsSnapshot.removePendingJob(event.getJob());
             jobsSnapshot.addOrReplaceRunningJob(event.getJob());
             setChanged();
-            notifyObservers(null);
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -153,11 +153,14 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     private void handleJobStatusEvent(AutoIngestJobStatusEvent event) {
         synchronized (jobsLock) {
+            /*
+             * Currently this event is only published for running jobs.
+             */
             AutoIngestJob job = event.getJob();
-            jobsSnapshot.removePendingJob(job); // In case start event was missed.
+            jobsSnapshot.removePendingJob(job);
             jobsSnapshot.addOrReplaceRunningJob(job);
             setChanged();
-            notifyObservers(null);
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -168,10 +171,12 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     private void handleJobCompletedEvent(AutoIngestJobCompletedEvent event) {
         synchronized (jobsLock) {
-            jobsSnapshot.removeRunningJob(event.getJob());
-            jobsSnapshot.addOrReplaceCompletedJob(event.getJob());
+            AutoIngestJob job = event.getJob();
+            jobsSnapshot.removePendingJob(job);
+            jobsSnapshot.removeRunningJob(job);
+            jobsSnapshot.addOrReplaceCompletedJob(job);
             setChanged();
-            notifyObservers(null);
+            notifyObservers(jobsSnapshot);
         }
     }
 

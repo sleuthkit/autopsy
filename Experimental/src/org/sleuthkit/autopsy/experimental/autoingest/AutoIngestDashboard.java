@@ -434,6 +434,13 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
 
     @Override
     public void update(Observable observable, Object arg) {
+        /*
+         * By creating a task to get the latest jobs snapshot, the possibility
+         * of queuing a refresh task for the EDT with snaphot rendered stale by
+         * the handling of a user prioritization action, etc. on the EDT is
+         * avoided. This is why the snapshot pushed ny the auto ingest jobs
+         * monitor is ignored.
+         */
         updateExecutor.submit(new UpdateJobsSnapshotTask());
     }
 
