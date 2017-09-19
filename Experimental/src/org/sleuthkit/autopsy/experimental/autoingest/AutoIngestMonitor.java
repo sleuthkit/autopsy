@@ -153,7 +153,9 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     private void handleJobStatusEvent(AutoIngestJobStatusEvent event) {
         synchronized (jobsLock) {
-            jobsSnapshot.addOrReplaceRunningJob(event.getJob());
+            AutoIngestJob job = event.getJob();
+            jobsSnapshot.removePendingJob(job); // In case start event was missed.
+            jobsSnapshot.addOrReplaceRunningJob(job);
             setChanged();
             notifyObservers(null);
         }
