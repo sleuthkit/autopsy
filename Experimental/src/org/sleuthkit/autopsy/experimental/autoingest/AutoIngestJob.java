@@ -351,7 +351,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
 
     @Override
     public int hashCode() {
-        int hash = 71 * (Objects.hashCode(this.caseDirectoryPath));
+        int hash = 71 * (Objects.hashCode(this.getManifest().getFilePath()));
         return hash;
     }
 
