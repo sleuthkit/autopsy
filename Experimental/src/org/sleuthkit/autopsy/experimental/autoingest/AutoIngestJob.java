@@ -49,7 +49,8 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * Version 0 fields.
      */
     private final Manifest manifest;
-    private final String nodeName;
+    @GuardedBy("this")
+    private String nodeName;
     @GuardedBy("this")
     private String caseDirectoryPath;
     @GuardedBy("this")
@@ -93,7 +94,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
          * Version 0 fields.
          */
         this.manifest = manifest;
-        this.nodeName = AutoIngestJob.LOCAL_HOST_NAME;
+        this.nodeName = "";
         this.caseDirectoryPath = "";
         this.priority = DEFAULT_PRIORITY;
         this.stage = Stage.PENDING;
@@ -399,12 +400,21 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Gets the processing host for this job.
+     * Gets the processing host name for this job.
      *
-     * @return The processing host.
+     * @return The processing host name.
      */
     synchronized String getProcessingHostName() {
         return nodeName;
+    }
+
+    /**
+     * Sets the processing host name for this job.
+     *
+     * @param processingHostName The processing host name.
+     */
+    synchronized void setProcessingHostName(String processingHostName) {
+        this.nodeName = processingHostName;
     }
 
     /**
@@ -524,19 +534,19 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Comparator that supports doing an alphabetical sort of jobs based on case
-     * name.
+     * Comparator that supports doing an alphabetical sort of jobs based on a
+     * combination of case name and processing host.
      */
     static class CaseNameAndProcessingHostComparator implements Comparator<AutoIngestJob> {
 
         @Override
-        public int compare(AutoIngestJob o1, AutoIngestJob o2) {
-            if (o1.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
-                return -1; // o1 is for current case, float to top
-            } else if (o2.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
-                return 1; // o2 is for current case, float to top
+        public int compare(AutoIngestJob aJob, AutoIngestJob anotherJob) {
+            if (aJob.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+                return -1; // aJob is for this, float to top
+            } else if (anotherJob.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
+                return 1; // anotherJob is for this, float to top
             } else {
-                return o1.getManifest().getCaseName().compareToIgnoreCase(o2.getManifest().getCaseName());
+                return aJob.getManifest().getCaseName().compareToIgnoreCase(anotherJob.getManifest().getCaseName());
             }
         }
 

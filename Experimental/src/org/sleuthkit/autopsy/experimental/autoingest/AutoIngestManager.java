@@ -1866,10 +1866,11 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          */
         private void processJob() throws CoordinationServiceException, SharedConfigurationException, ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException, CaseManagementException, AnalysisStartupException, FileExportException, AutoIngestAlertFileException, AutoIngestJobLoggerException, InterruptedException, AutoIngestDataSourceProcessor.AutoIngestDataSourceProcessorException, AutoIngestJobNodeData.InvalidDataException {
             Path manifestPath = currentJob.getManifest().getFilePath();
-            currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PROCESSING);
-            updateCoordinationServiceNode(currentJob);
             SYS_LOGGER.log(Level.INFO, "Started processing of {0}", manifestPath);
+            currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PROCESSING);
             currentJob.setProcessingStage(AutoIngestJob.Stage.STARTING);
+            currentJob.setProcessingHostName(AutoIngestManager.LOCAL_HOST_NAME);
+            updateCoordinationServiceNode(currentJob);
             setChanged();
             notifyObservers(Event.JOB_STARTED);
             eventPublisher.publishRemotely(new AutoIngestJobStartedEvent(currentJob));
@@ -1892,6 +1893,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     // The job may get retried
                     currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PENDING);
                 }
+                currentJob.setProcessingHostName("");
                 updateCoordinationServiceNode(currentJob);
 
                 boolean retry = (!currentJob.isCanceled() && !currentJob.isCompleted());

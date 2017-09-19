@@ -455,7 +455,6 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         List<AutoIngestJob> runningJobs = jobsSnapshot.getRunningJobs();
         List<AutoIngestJob> completedJobs = jobsSnapshot.getCompletedJobs();
         pendingJobs.sort(new AutoIngestJob.PriorityComparator());
-        runningJobs.sort(new AutoIngestJob.CaseNameAndProcessingHostComparator());
         completedJobs.sort(new AutoIngestJob.ReverseCompletedDateComparator());
         refreshTable(pendingJobs, pendingTable, pendingTableModel);
         refreshTable(runningJobs, runningTable, runningTableModel);
