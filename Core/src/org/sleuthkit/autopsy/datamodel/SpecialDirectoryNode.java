@@ -29,6 +29,7 @@ import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
 import org.sleuthkit.datamodel.SpecialDirectory;
+import org.sleuthkit.datamodel.Content;
 
 /**
  * Parent class for special directory types (Local and Virtual)
