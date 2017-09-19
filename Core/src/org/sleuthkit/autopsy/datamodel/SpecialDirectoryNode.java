@@ -28,7 +28,6 @@ import org.sleuthkit.autopsy.directorytree.ExtractAction;
 import org.sleuthkit.autopsy.directorytree.FileSearchAction;
 import org.sleuthkit.autopsy.directorytree.NewWindowViewAction;
 import org.sleuthkit.autopsy.ingest.runIngestModuleWizard.RunIngestModulesAction;
-import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SpecialDirectory;
 
 /**
@@ -48,8 +47,7 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
      * @return
      */
     @Override
-    @NbBundle.Messages({"SpecialDirectoryNode.action.runIngestMods.text=Run Ingest Modules",
-        "SpecialDirectoryNode.getActions.viewInNewWin.text=View in New Window"
+    @NbBundle.Messages({"SpecialDirectoryNode.getActions.viewInNewWin.text=View in New Window"
     })
     public Action[] getActions(boolean popup) {
         List<Action> actions = new ArrayList<>();
@@ -58,7 +56,7 @@ public abstract class SpecialDirectoryNode extends AbstractAbstractFileNode<Spec
         }
 
         actions.add(new NewWindowViewAction(
-                Bundle.SpecialDirectoryNode_action_runIngestMods_text(), this));
+                Bundle.SpecialDirectoryNode_getActions_viewInNewWin_text(), this));
         actions.add(null); // creates a menu separator
         actions.add(ExtractAction.getInstance());
         actions.add(null); // creates a menu separator
