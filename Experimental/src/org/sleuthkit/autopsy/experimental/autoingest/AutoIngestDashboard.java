@@ -32,7 +32,6 @@ import java.util.logging.Level;
 import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
-import java.util.concurrent.ExecutorService;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.SwingWorker;
@@ -59,17 +58,17 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private static final int GENERIC_COL_MAX_WIDTH = 2000;
     private static final int PENDING_TABLE_COL_PREFERRED_WIDTH = 280;
     private static final int RUNNING_TABLE_COL_PREFERRED_WIDTH = 175;
-    private static final int ACTIVITY_TIME_COL_MIN_WIDTH = 250;
-    private static final int ACTIVITY_TIME_COL_MAX_WIDTH = 450;
+    private static final int STAGE_TIME_COL_MIN_WIDTH = 250;
+    private static final int STAGE_TIME_COL_MAX_WIDTH = 450;
     private static final int TIME_COL_MIN_WIDTH = 30;
     private static final int TIME_COL_MAX_WIDTH = 250;
     private static final int TIME_COL_PREFERRED_WIDTH = 140;
     private static final int NAME_COL_MIN_WIDTH = 100;
     private static final int NAME_COL_MAX_WIDTH = 250;
     private static final int NAME_COL_PREFERRED_WIDTH = 140;
-    private static final int ACTIVITY_COL_MIN_WIDTH = 70;
-    private static final int ACTIVITY_COL_MAX_WIDTH = 2000;
-    private static final int ACTIVITY_COL_PREFERRED_WIDTH = 300;
+    private static final int STAGE_COL_MIN_WIDTH = 70;
+    private static final int STAGE_COL_MAX_WIDTH = 2000;
+    private static final int STAGE_COL_PREFERRED_WIDTH = 300;
     private static final int STATUS_COL_MIN_WIDTH = 55;
     private static final int STATUS_COL_MAX_WIDTH = 250;
     private static final int STATUS_COL_PREFERRED_WIDTH = 55;
@@ -319,10 +318,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * jobs.
          */
         column = runningTable.getColumn(JobsTableModelColumns.STAGE.getColumnHeader());
-        column.setMinWidth(ACTIVITY_COL_MIN_WIDTH);
-        column.setMaxWidth(ACTIVITY_COL_MAX_WIDTH);
-        column.setPreferredWidth(ACTIVITY_COL_PREFERRED_WIDTH);
-        column.setWidth(ACTIVITY_COL_PREFERRED_WIDTH);
+        column.setMinWidth(STAGE_COL_MIN_WIDTH);
+        column.setMaxWidth(STAGE_COL_MAX_WIDTH);
+        column.setPreferredWidth(STAGE_COL_PREFERRED_WIDTH);
+        column.setWidth(STAGE_COL_PREFERRED_WIDTH);
 
         /*
          * Set up a column to display the ingest activity times associated with
@@ -331,9 +330,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         column = runningTable.getColumn(JobsTableModelColumns.STAGE_TIME.getColumnHeader());
         column.setCellRenderer(new DurationCellRenderer());
         column.setMinWidth(GENERIC_COL_MIN_WIDTH);
-        column.setMaxWidth(ACTIVITY_TIME_COL_MAX_WIDTH);
-        column.setPreferredWidth(ACTIVITY_TIME_COL_MIN_WIDTH);
-        column.setWidth(ACTIVITY_TIME_COL_MIN_WIDTH);
+        column.setMaxWidth(STAGE_TIME_COL_MAX_WIDTH);
+        column.setPreferredWidth(STAGE_TIME_COL_MIN_WIDTH);
+        column.setWidth(STAGE_TIME_COL_MIN_WIDTH);
 
         /*
          * Prevent sorting when a column header is clicked.
@@ -482,9 +481,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                     job.getManifest().getDateFileCreated(), // CREATED_TIME
                     job.getProcessingStageStartDate(), // STARTED_TIME 
                     job.getCompletedDate(), // COMPLETED_TIME
-                    status.getDescription(), // ACTIVITY
+                    status.getDescription(), // STAGE
                     job.getErrorsOccurred(), // STATUS 
-                    ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
+                    ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // STAGE_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getManifest().getFilePath(), // MANIFEST_FILE_PATH
                     job
