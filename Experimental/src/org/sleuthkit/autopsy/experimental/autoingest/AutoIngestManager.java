@@ -2777,6 +2777,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                         currentJob.getProcessingStageDetails();
                         setChanged();
                         notifyObservers(Event.JOB_STATUS_UPDATED);
+                        updateCoordinationServiceNode(currentJob);
                         eventPublisher.publishRemotely(new AutoIngestJobStatusEvent(currentJob));
                     }
 
