@@ -72,6 +72,16 @@ final class CreditCardValidator {
                     return false;
                 }
             }
+            if (cannonicalCCN.length() == 15
+                    && (cannonicalCCN.startsWith("34") || cannonicalCCN.startsWith("37"))) {
+                String[] splitCCN = rawCCN.split(separator.toString());
+
+                if (splitCCN.length != 3) {
+                    return false;
+                } else if (false == (splitCCN[0].length() == 4 && splitCCN[1].length() == 6 && splitCCN[2].length() == 5)) {
+                    return false;
+                }
+            }
         }
         return CREDIT_CARD_NUM_LUHN_CHECK.isValid(cannonicalCCN);
     }
