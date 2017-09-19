@@ -452,26 +452,49 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         this.numberOfCrashes = numberOfCrashes;
     }
 
+    /**
+     * Indicates whether some other job is "equal to" this job. Two jobs are
+     * equal if they have the same manifest file path.
+     *
+     * @param otherJob The job to which this job is to be compared.
+     *
+     * @return True or false.
+     */
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof AutoIngestJob)) {
+    public boolean equals(Object otherJob) {
+        if (!(otherJob instanceof AutoIngestJob)) {
             return false;
         }
-        if (obj == this) {
+        if (otherJob == this) {
             return true;
         }
-        return this.getManifest().getFilePath().equals(((AutoIngestJob) obj).getManifest().getFilePath());
+        return this.getManifest().getFilePath().equals(((AutoIngestJob) otherJob).getManifest().getFilePath());
     }
 
+    /**
+     * Returns a hash code value for the job. The hash code is derived from the
+     * manifest file path.
+     *
+     * @return The hash code.
+     */
     @Override
     public int hashCode() {
         int hash = 71 * (Objects.hashCode(this.getManifest().getFilePath()));
         return hash;
     }
 
+    /**
+     * Compares one job to another in a way that orders jobs by manifest
+     * creation date.
+     *
+     * @param otherJob The job to which this job is to be compared.
+     *
+     * @return A negative integer, zero, or a positive integer as this job is
+     *         less than, equal to, or greater than the specified job.
+     */
     @Override
-    public int compareTo(AutoIngestJob o) {
-        return -this.getManifest().getDateFileCreated().compareTo(o.getManifest().getDateFileCreated());
+    public int compareTo(AutoIngestJob otherJob) {
+        return -this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
     }
 
     /**
