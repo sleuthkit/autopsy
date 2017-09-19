@@ -37,6 +37,7 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CursorMarkParams;
 import org.openide.util.NbBundle;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.MessageNotifyUtil;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
@@ -404,7 +405,6 @@ final class RegexQuery implements KeywordSearchQuery {
              * Parse the credit card account attributes from the snippet for the
              * hit.
              */
-            attributes.add(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.getTypeName()));
             Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
             Matcher matcher = TermsComponentQuery.CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
             if (matcher.find()) {
@@ -467,7 +467,11 @@ final class RegexQuery implements KeywordSearchQuery {
              * Create an account artifact.
              */
             try {
-                newArtifact = content.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT);
+                Account ccAccount = 
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.CREDIT_CARD, ccnAttribute.getValueString(),
+                        MODULE_NAME, content);
+                
+                newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccount.getArtifactId());
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for account to blackboard", ex); //NON-NLS
                 return null;
