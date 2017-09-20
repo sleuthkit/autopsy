@@ -173,7 +173,7 @@ class ExtractedContentPanel extends javax.swing.JPanel {
             selectAllMenuItem.setText(org.openide.util.NbBundle.getMessage(ExtractedContentPanel.class, "ExtractedContentPanel.selectAllMenuItem.text")); // NOI18N
             rightClickMenu.add(selectAllMenuItem);
 
-            setPreferredSize(new java.awt.Dimension(640, 58));
+            setPreferredSize(new java.awt.Dimension(717, 58));
 
             jScrollPane1.setBackground(new java.awt.Color(255, 255, 255));
             jScrollPane1.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
