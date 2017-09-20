@@ -41,7 +41,7 @@ import org.sleuthkit.autopsy.modules.hashdatabase.HashDbManager.HashDbManagerExc
 /**
  * Instances of this class allow a user to select an existing hash database and
  * add it to the set of hash databases used to classify files as unknown, known,
- * or known bad.
+ * or notable.
  */
 final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
 
@@ -53,7 +53,7 @@ final class HashDbImportDatabaseDialog extends javax.swing.JDialog {
     /**
      * Displays a dialog that allows a user to select an existing hash database
      * and add it to the set of hash databases used to classify files as
-     * unknown, known, or known bad.
+     * unknown, known, or notable.
      */
     HashDbImportDatabaseDialog() {
         super((JFrame) WindowManager.getDefault().getMainWindow(),

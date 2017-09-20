@@ -74,7 +74,7 @@ final class HashLookupSettings implements Serializable {
      * Constructs a settings object to be serialized for hash lookups
      *
      * @param knownHashSets    The list known hash sets for the settings.
-     * @param knownBadHashSets The list of known bad hash sets for the settings.
+     * @param knownBadHashSets The list of notable hash sets for the settings.
      */
     HashLookupSettings(List<HashDbManager.HashDb> knownHashSets, List<HashDbManager.HashDb> knownBadHashSets) throws HashLookupSettingsException {
         hashDbInfoList = new ArrayList<>();
