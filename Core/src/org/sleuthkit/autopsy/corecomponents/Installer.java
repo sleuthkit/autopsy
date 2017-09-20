@@ -28,6 +28,8 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import org.netbeans.swing.tabcontrol.plaf.DefaultTabbedContainerUI;
 import org.openide.modules.ModuleInstall;
+import org.openide.windows.WindowManager;
+import org.sleuthkit.autopsy.casemodule.StartupWindowProvider;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
 /**
@@ -57,6 +59,9 @@ public class Installer extends ModuleInstall {
         UIManager.put("ViewTabDisplayerUI", "org.sleuthkit.autopsy.corecomponents.NoTabsTabDisplayerUI");
         UIManager.put(DefaultTabbedContainerUI.KEY_VIEW_CONTENT_BORDER, BorderFactory.createEmptyBorder());
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
+        WindowManager.getDefault().invokeWhenUIReady(() -> {
+            StartupWindowProvider.getInstance().open();
+        });
     }
 
     @Override
