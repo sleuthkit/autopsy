@@ -1072,7 +1072,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         Connection conn = connect();
 
         if (1 != eamArtifact.getInstances().size()) {
-            throw new EamDbException("Error: Artifact must have exactly one (1) Artifact Instance to set known bad."); // NON-NLS
+            throw new EamDbException("Error: Artifact must have exactly one (1) Artifact Instance to set as notable."); // NON-NLS
         }
 
         List<EamArtifactInstance> eamInstances = eamArtifact.getInstances();
@@ -1191,7 +1191,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 artifactInstances.add(artifactInstance);
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting known bad artifact instances.", ex); // NON-NLS
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1231,7 +1231,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             resultSet.next();
             badInstances = resultSet.getLong(1);
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting count of known bad artifact instances.", ex); // NON-NLS
+            throw new EamDbException("Error getting count of notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1283,7 +1283,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 caseNames.add(resultSet.getString("case_name"));
             }
         } catch (SQLException ex) {
-            throw new EamDbException("Error getting known bad artifact instances.", ex); // NON-NLS
+            throw new EamDbException("Error getting notable artifact instances.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);
@@ -1324,7 +1324,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             resultSet.next();
             badInstances = resultSet.getLong(1);
         } catch (SQLException ex) {
-            throw new EamDbException("Error determining if artifact is known bad by reference.", ex); // NON-NLS
+            throw new EamDbException("Error determining if artifact is notable by reference.", ex); // NON-NLS
         } finally {
             EamDbUtil.closePreparedStatement(preparedStatement);
             EamDbUtil.closeResultSet(resultSet);

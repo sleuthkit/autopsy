@@ -97,8 +97,8 @@ public class CaseEventListener implements PropertyChangeListener {
                     }
                 } else { // CONTENT_TAG_DELETED
                     // For deleted tags, we want to set the file status to UNKNOWN if:
-                    //   - The tag that was just removed is known bad in central repo
-                    //   - There are no remaining tags that are known bad 
+                    //   - The tag that was just removed is notable in central repo
+                    //   - There are no remaining tags that are notable 
                     final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
                     long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
 
@@ -177,8 +177,8 @@ public class CaseEventListener implements PropertyChangeListener {
                     }
                 } else { //BLACKBOARD_ARTIFACT_TAG_DELETED
                     // For deleted tags, we want to set the file status to UNKNOWN if:
-                    //   - The tag that was just removed is known bad in central repo
-                    //   - There are no remaining tags that are known bad 
+                    //   - The tag that was just removed is notable in central repo
+                    //   - There are no remaining tags that are notable 
                     final BlackBoardArtifactTagDeletedEvent tagDeletedEvent = (BlackBoardArtifactTagDeletedEvent) evt;
                     long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
                     long artifactID = tagDeletedEvent.getDeletedTagInfo().getArtifactID();

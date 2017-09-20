@@ -52,7 +52,7 @@ import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * This class implements a singleton that manages the set of hash databases used
- * to classify files as unknown, known or known bad.
+ * to classify files as unknown, known or notable.
  */
 public class HashDbManager implements PropertyChangeListener {
 
@@ -128,7 +128,7 @@ public class HashDbManager implements PropertyChangeListener {
 
     /**
      * Adds an existing hash database to the set of hash databases used to
-     * classify files as known or known bad and saves the configuration.
+     * classify files as known or notable and saves the configuration.
      *
      * @param hashSetName        Name used to represent the hash database in
      *                           user interface components.
@@ -176,7 +176,7 @@ public class HashDbManager implements PropertyChangeListener {
 
     /**
      * Adds a new hash database to the set of hash databases used to classify
-     * files as known or known bad and saves the configuration.
+     * files as known or notable and saves the configuration.
      *
      * @param hashSetName        Hash set name used to represent the hash
      *                           database in user interface components.
@@ -295,7 +295,7 @@ public class HashDbManager implements PropertyChangeListener {
 
     /**
      * Removes a hash database from the set of hash databases used to classify
-     * files as known or known bad and saves the configuration.
+     * files as known or notable and saves the configuration.
      *
      * @param hashDb
      *
@@ -387,7 +387,7 @@ public class HashDbManager implements PropertyChangeListener {
     }
 
     /**
-     * Gets all of the hash databases used to classify files as known bad.
+     * Gets all of the hash databases used to classify files as notable.
      *
      * @return A list, possibly empty, of hash databases.
      */

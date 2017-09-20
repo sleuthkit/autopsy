@@ -50,8 +50,8 @@ import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.TskException;
 
 @NbBundle.Messages({
-    "HashDbIngestModule.noKnownBadHashDbSetMsg=No known bad hash database set.",
-    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Known bad file search will not be executed.",
+    "HashDbIngestModule.noKnownBadHashDbSetMsg=No notable hash database set.",
+    "HashDbIngestModule.knownBadFileSearchWillNotExecuteWarn=Notable file search will not be executed.",
     "HashDbIngestModule.noKnownHashDbSetMsg=No known hash database set.",
     "HashDbIngestModule.knownFileSearchWillNotExecuteWarn=Known file search will not be executed."
 })
@@ -193,7 +193,7 @@ public class HashDbIngestModule implements FileIngestModule {
             }
         }
 
-        // look up in known bad first
+        // look up in notable first
         boolean foundBad = false;
         ProcessResult ret = ProcessResult.OK;
         for (HashDb db : knownBadHashSets) {
@@ -207,7 +207,7 @@ public class HashDbIngestModule implements FileIngestModule {
                     try {
                         skCase.setKnown(file, TskData.FileKnown.BAD);
                     } catch (TskException ex) {
-                        logger.log(Level.WARNING, "Couldn't set known bad state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                        logger.log(Level.WARNING, "Couldn't set notable state for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
                         services.postMessage(IngestMessage.createErrorMessage(
                                 HashLookupModuleFactory.getModuleName(),
                                 NbBundle.getMessage(this.getClass(),
@@ -240,7 +240,7 @@ public class HashDbIngestModule implements FileIngestModule {
                 totals.totalLookuptime.addAndGet(delta);
 
             } catch (TskException ex) {
-                logger.log(Level.WARNING, "Couldn't lookup known bad hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
+                logger.log(Level.WARNING, "Couldn't lookup notable hash for file " + name + " - see sleuthkit log for details", ex); //NON-NLS
                 services.postMessage(IngestMessage.createErrorMessage(
                         HashLookupModuleFactory.getModuleName(),
                         NbBundle.getMessage(this.getClass(),
@@ -253,7 +253,7 @@ public class HashDbIngestModule implements FileIngestModule {
             }
         }
 
-        // If the file is not in the known bad sets, search for it in the known sets. 
+        // If the file is not in the notable sets, search for it in the known sets. 
         // Any hit is sufficient to classify it as known, and there is no need to create 
         // a hit artifact or send a message to the application inbox.
         if (!foundBad) {

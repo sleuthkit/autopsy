@@ -152,7 +152,7 @@ public class IngestEventsListener {
                                             eamArtifacts.add(eamArtifact);
                                         }
                                     } catch (EamDbException ex) {
-                                        LOGGER.log(Level.SEVERE, "Error counting known bad artifacts.", ex);
+                                        LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);
                                     }
                                 }
                             }
