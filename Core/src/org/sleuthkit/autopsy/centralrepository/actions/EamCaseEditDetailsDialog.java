@@ -43,7 +43,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.optionspanel.AddNewOrganizationDialog;
 
 /**
- * Handle editing details of cases within the Central Repository
+ * Handle editing details of cases within the central repository
  */
 public class EamCaseEditDetailsDialog extends JDialog {
 
@@ -531,14 +531,14 @@ public class EamCaseEditDetailsDialog extends JDialog {
         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
         if (!EamDb.isEnabled()) {
-            LOGGER.log(Level.SEVERE, "Central Repository database not enabled"); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Central repository database not enabled"); // NON-NLS
             return;
         }
 
         try {
             dbManager.updateCase(eamCase);
         } catch (IllegalArgumentException | EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to central repository database", ex); // NON-NLS
         } finally {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }

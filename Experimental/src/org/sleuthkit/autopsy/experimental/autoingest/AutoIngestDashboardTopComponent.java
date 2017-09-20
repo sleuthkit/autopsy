@@ -50,10 +50,6 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
     @Messages({
         "AutoIngestDashboardTopComponent.exceptionMessage.failedToCreateDashboard=Failed to create Auto Ingest Dashboard.",})
     public static void openTopComponent() {
-        /*
-         * DLG: Please make the top component initial size big enough to show
-         * the whole dashboard.
-         */
         final AutoIngestDashboardTopComponent tc = (AutoIngestDashboardTopComponent) WindowManager.getDefault().findTopComponent(PREFERRED_ID);
         if (tc != null) {
             topComponentInitialized = true;
@@ -67,7 +63,7 @@ public final class AutoIngestDashboardTopComponent extends TopComponent {
             try {
                 dashboard = AutoIngestDashboard.createDashboard();
                 tc.add(dashboard);
-                dashboard.setSize(992, 744);
+                dashboard.setSize(dashboard.getPreferredSize());
                 if (tc.isOpened() == false) {
                     tc.open();
                 }

@@ -41,7 +41,7 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = Logger.getLogger(GlobalSettingsPanel.class.getName());
-
+    
     private final IngestJobEventPropertyChangeListener ingestJobEventListener;
 
     /**
@@ -56,7 +56,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     }
 
     @Messages({"GlobalSettingsPanel.title=Central Repository Settings",
-        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a Central Repository"})
+        "GlobalSettingsPanel.cbUseCentralRepo.text=Use a central repository",
+        "GlobalSettingsPanel.pnTagManagement.border.title=Tags",
+        "GlobalSettingsPanel.pnCorrelationProperties.border.title=Correlation Properties",
+        "GlobalSettingsPanel.lbCentralRepository.text=A central repository allows you to correlate files and results between cases.",
+        "GlobalSettingsPanel.manageTagsTextArea.text=Configure which tag names are associated with notable or known bad items. "
+                + "When these tags are used, the file or result will be recorded in the central repository. "
+                + "If that file or result is seen again in future cases, it will be flagged.",
+        "GlobalSettingsPanel.correlationPropertiesTextArea.text=Choose which file and result properties to store in the central central repository for later correlation."})
     private void customizeComponents() {
         setName(Bundle.GlobalSettingsPanel_title());
         
@@ -86,12 +93,18 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         lbDbPlatformValue = new javax.swing.JLabel();
         lbDbNameValue = new javax.swing.JLabel();
         lbDbLocationValue = new javax.swing.JLabel();
-        pnDatabaseContentButtons = new javax.swing.JPanel();
-        bnImportDatabase = new javax.swing.JButton();
-        bnManageTags = new javax.swing.JButton();
-        bnManageTypes = new javax.swing.JButton();
-        tbOops = new javax.swing.JTextField();
         cbUseCentralRepo = new javax.swing.JCheckBox();
+        bnImportDatabase = new javax.swing.JButton();
+        pnTagManagement = new javax.swing.JPanel();
+        bnManageTags = new javax.swing.JButton();
+        manageTagsScrollPane = new javax.swing.JScrollPane();
+        manageTagsTextArea = new javax.swing.JTextArea();
+        tbOops = new javax.swing.JTextField();
+        pnCorrelationProperties = new javax.swing.JPanel();
+        bnManageTypes = new javax.swing.JButton();
+        correlationPropertiesScrollPane = new javax.swing.JScrollPane();
+        correlationPropertiesTextArea = new javax.swing.JTextArea();
+        lbCentralRepository = new javax.swing.JLabel();
 
         setName(""); // NOI18N
 
@@ -118,18 +131,18 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addContainerGap()
                 .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
+                        .addComponent(bnDbConfigure)
+                        .addContainerGap())
+                    .addGroup(pnDatabaseConfigurationLayout.createSequentialGroup()
                         .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(lbDbPlatformTypeLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbDbNameLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 711, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(bnDbConfigure))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(lbDbNameValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbDbPlatformValue, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(lbDbLocationValue, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
         );
         pnDatabaseConfigurationLayout.setVerticalGroup(
             pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -146,10 +159,17 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
                 .addGroup(pnDatabaseConfigurationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lbDbLocationLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lbDbLocationValue, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(bnDbConfigure)
-                .addContainerGap())
+                .addGap(8, 8, 8))
         );
+
+        org.openide.awt.Mnemonics.setLocalizedText(cbUseCentralRepo, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbUseCentralRepo.text")); // NOI18N
+        cbUseCentralRepo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cbUseCentralRepoActionPerformed(evt);
+            }
+        });
 
         bnImportDatabase.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/sleuthkit/autopsy/centralrepository/images/import16.png"))); // NOI18N
         org.openide.awt.Mnemonics.setLocalizedText(bnImportDatabase, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnImportDatabase.label")); // NOI18N
@@ -160,6 +180,9 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
+        pnTagManagement.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnTagManagement.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnTagManagement.setPreferredSize(new java.awt.Dimension(674, 97));
+
         org.openide.awt.Mnemonics.setLocalizedText(bnManageTags, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.text")); // NOI18N
         bnManageTags.setToolTipText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.toolTipText")); // NOI18N
         bnManageTags.setActionCommand(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageTags.actionCommand")); // NOI18N
@@ -169,6 +192,57 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
+        manageTagsScrollPane.setBorder(null);
+
+        manageTagsTextArea.setEditable(false);
+        manageTagsTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        manageTagsTextArea.setColumns(20);
+        manageTagsTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        manageTagsTextArea.setLineWrap(true);
+        manageTagsTextArea.setRows(2);
+        manageTagsTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.manageTagsTextArea.text")); // NOI18N
+        manageTagsTextArea.setToolTipText("");
+        manageTagsTextArea.setWrapStyleWord(true);
+        manageTagsTextArea.setBorder(null);
+        manageTagsScrollPane.setViewportView(manageTagsTextArea);
+
+        javax.swing.GroupLayout pnTagManagementLayout = new javax.swing.GroupLayout(pnTagManagement);
+        pnTagManagement.setLayout(pnTagManagementLayout);
+        pnTagManagementLayout.setHorizontalGroup(
+            pnTagManagementLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnTagManagementLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnTagManagementLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnTagManagementLayout.createSequentialGroup()
+                        .addComponent(bnManageTags)
+                        .addGap(0, 555, Short.MAX_VALUE))
+                    .addGroup(pnTagManagementLayout.createSequentialGroup()
+                        .addComponent(manageTagsScrollPane)
+                        .addContainerGap())))
+        );
+        pnTagManagementLayout.setVerticalGroup(
+            pnTagManagementLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnTagManagementLayout.createSequentialGroup()
+                .addGap(7, 7, 7)
+                .addComponent(manageTagsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bnManageTags, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8))
+        );
+
+        tbOops.setEditable(false);
+        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
+        tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
+        tbOops.setBorder(null);
+        tbOops.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tbOopsActionPerformed(evt);
+            }
+        });
+
+        pnCorrelationProperties.setBorder(javax.swing.BorderFactory.createTitledBorder(null, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.pnCorrelationProperties.border.title"), javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Tahoma", 0, 12))); // NOI18N
+        pnCorrelationProperties.setPreferredSize(new java.awt.Dimension(674, 93));
+
         org.openide.awt.Mnemonics.setLocalizedText(bnManageTypes, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.bnManageProperties.text")); // NOI18N
         bnManageTypes.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -176,41 +250,44 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             }
         });
 
-        javax.swing.GroupLayout pnDatabaseContentButtonsLayout = new javax.swing.GroupLayout(pnDatabaseContentButtons);
-        pnDatabaseContentButtons.setLayout(pnDatabaseContentButtonsLayout);
-        pnDatabaseContentButtonsLayout.setHorizontalGroup(
-            pnDatabaseContentButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseContentButtonsLayout.createSequentialGroup()
+        correlationPropertiesScrollPane.setBorder(null);
+
+        correlationPropertiesTextArea.setEditable(false);
+        correlationPropertiesTextArea.setBackground(new java.awt.Color(240, 240, 240));
+        correlationPropertiesTextArea.setColumns(20);
+        correlationPropertiesTextArea.setFont(new java.awt.Font("Tahoma", 0, 11)); // NOI18N
+        correlationPropertiesTextArea.setLineWrap(true);
+        correlationPropertiesTextArea.setRows(2);
+        correlationPropertiesTextArea.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.correlationPropertiesTextArea.text")); // NOI18N
+        correlationPropertiesTextArea.setToolTipText("");
+        correlationPropertiesTextArea.setWrapStyleWord(true);
+        correlationPropertiesTextArea.setBorder(null);
+        correlationPropertiesScrollPane.setViewportView(correlationPropertiesTextArea);
+
+        javax.swing.GroupLayout pnCorrelationPropertiesLayout = new javax.swing.GroupLayout(pnCorrelationProperties);
+        pnCorrelationProperties.setLayout(pnCorrelationPropertiesLayout);
+        pnCorrelationPropertiesLayout.setHorizontalGroup(
+            pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(bnImportDatabase)
+                .addGroup(pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 642, Short.MAX_VALUE)
+                    .addGroup(pnCorrelationPropertiesLayout.createSequentialGroup()
+                        .addComponent(bnManageTypes)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
+        );
+        pnCorrelationPropertiesLayout.setVerticalGroup(
+            pnCorrelationPropertiesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnCorrelationPropertiesLayout.createSequentialGroup()
+                .addGap(7, 7, 7)
+                .addComponent(correlationPropertiesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(bnManageTags)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(bnManageTypes)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        pnDatabaseContentButtonsLayout.setVerticalGroup(
-            pnDatabaseContentButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnDatabaseContentButtonsLayout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(pnDatabaseContentButtonsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(bnImportDatabase)
-                    .addComponent(bnManageTags, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(bnManageTypes, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(34, 34, 34))
+                .addGap(8, 8, 8))
         );
 
-        tbOops.setEditable(false);
-        tbOops.setFont(tbOops.getFont().deriveFont(tbOops.getFont().getStyle() | java.awt.Font.BOLD, 12));
-        tbOops.setText(org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.tbOops.text")); // NOI18N
-        tbOops.setBorder(null);
-
-        org.openide.awt.Mnemonics.setLocalizedText(cbUseCentralRepo, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.cbUseCentralRepo.text")); // NOI18N
-        cbUseCentralRepo.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cbUseCentralRepoActionPerformed(evt);
-            }
-        });
+        org.openide.awt.Mnemonics.setLocalizedText(lbCentralRepository, org.openide.util.NbBundle.getMessage(GlobalSettingsPanel.class, "GlobalSettingsPanel.lbCentralRepository.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -219,26 +296,39 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(tbOops, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(lbCentralRepository, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(pnTagManagement, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(cbUseCentralRepo, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(bnImportDatabase, javax.swing.GroupLayout.Alignment.LEADING))
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(lbCentralRepository)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(cbUseCentralRepo)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(pnDatabaseConfiguration, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(pnTagManagement, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
+                .addComponent(pnCorrelationProperties, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, 0)
                 .addComponent(tbOops, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(pnDatabaseContentButtons, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGap(0, 0, 0)
+                .addComponent(bnImportDatabase))
         );
+
+        pnTagManagement.getAccessibleContext().setAccessibleName("");
     }// </editor-fold>//GEN-END:initComponents
 
     private void bnImportDatabaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnImportDatabaseActionPerformed
@@ -275,6 +365,10 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
         this.ingestStateUpdated();
         firePropertyChange(OptionsPanelController.PROP_CHANGED, null, null);
     }//GEN-LAST:event_cbUseCentralRepoActionPerformed
+
+    private void tbOopsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbOopsActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_tbOopsActionPerformed
 
     @Override
     @Messages({"GlobalSettingsPanel.validationerrMsg.mustConfigure=Configure the database to enable this module."})
@@ -398,7 +492,6 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private void enableDatabaseConfigureButton(Boolean enable) {
         boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
         pnDatabaseConfiguration.setEnabled(enable && !ingestRunning);
-        pnDatabaseContentButtons.setEnabled(enable && !ingestRunning);
         bnDbConfigure.setEnabled(enable && !ingestRunning);
         lbDbLocationLabel.setEnabled(enable && !ingestRunning);
         lbDbLocationValue.setEnabled(enable && !ingestRunning);
@@ -418,10 +511,14 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
      * @return True
      */
     private boolean enableButtonSubComponents(Boolean enable) {
-        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();
+        boolean ingestRunning = IngestManager.getInstance().isIngestRunning();   
+        pnCorrelationProperties.setEnabled(enable && !ingestRunning);
+        pnTagManagement.setEnabled(enable && !ingestRunning);
         bnManageTypes.setEnabled(enable && !ingestRunning);
         bnImportDatabase.setEnabled(enable && !ingestRunning);
         bnManageTags.setEnabled(enable && !ingestRunning);
+        manageTagsTextArea.setEnabled(enable && !ingestRunning);
+        correlationPropertiesTextArea.setEnabled(enable && !ingestRunning);
         return true;
     }
 
@@ -431,14 +528,20 @@ public final class GlobalSettingsPanel extends IngestModuleGlobalSettingsPanel i
     private javax.swing.JButton bnManageTags;
     private javax.swing.JButton bnManageTypes;
     private javax.swing.JCheckBox cbUseCentralRepo;
+    private javax.swing.JScrollPane correlationPropertiesScrollPane;
+    private javax.swing.JTextArea correlationPropertiesTextArea;
+    private javax.swing.JLabel lbCentralRepository;
     private javax.swing.JLabel lbDbLocationLabel;
     private javax.swing.JLabel lbDbLocationValue;
     private javax.swing.JLabel lbDbNameLabel;
     private javax.swing.JLabel lbDbNameValue;
     private javax.swing.JLabel lbDbPlatformTypeLabel;
     private javax.swing.JLabel lbDbPlatformValue;
+    private javax.swing.JScrollPane manageTagsScrollPane;
+    private javax.swing.JTextArea manageTagsTextArea;
+    private javax.swing.JPanel pnCorrelationProperties;
     private javax.swing.JPanel pnDatabaseConfiguration;
-    private javax.swing.JPanel pnDatabaseContentButtons;
+    private javax.swing.JPanel pnTagManagement;
     private javax.swing.JTextField tbOops;
     // End of variables declaration//GEN-END:variables
 }
