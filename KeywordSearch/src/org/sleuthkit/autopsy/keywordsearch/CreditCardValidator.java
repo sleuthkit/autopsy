@@ -19,7 +19,8 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.base.CharMatcher;
-import java.util.Arrays;
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
 
@@ -32,6 +33,7 @@ final class CreditCardValidator {
     }
 
     private static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
+    Set<Integer> allowedLengths = ImmutableSet.of(15, 16, 19);
 
     /**
      * Does the given string represent a valid credit card number? It must have
@@ -58,31 +60,82 @@ final class CreditCardValidator {
         }
 
         final String cannonicalCCN;
-        if (separator == null) {
-            cannonicalCCN = rawCCN;
+        String[] splitCCN;
+        if (separator != null) {
+            //there is a seperator, strip if for canoncial form of CCN
+            cannonicalCCN = CharMatcher.anyOf(separator.toString()).removeFrom(rawCCN);
+            splitCCN = rawCCN.split(separator.toString());
         } else {
-            //if there is a seperator, strip if for canoncial form of CCN
-            cannonicalCCN = CharMatcher.anyOf(" -").removeFrom(rawCCN);
-
-            //and validate digit grouping
-            if (cannonicalCCN.length() == 16) {
-                String[] splitCCN = rawCCN.split(separator.toString());
-                if (Arrays.stream(splitCCN).anyMatch(s -> s.length() != 4)
-                        || splitCCN.length != 4) {
-                    return false;
-                }
-            }
-            if (cannonicalCCN.length() == 15
-                    && (cannonicalCCN.startsWith("34") || cannonicalCCN.startsWith("37"))) {
-                String[] splitCCN = rawCCN.split(separator.toString());
-
-                if (splitCCN.length != 3) {
-                    return false;
-                } else if (false == (splitCCN[0].length() == 4 && splitCCN[1].length() == 6 && splitCCN[2].length() == 5)) {
-                    return false;
-                }
-            }
+            //else use 'defualt'values
+            cannonicalCCN = rawCCN;
+            splitCCN = new String[]{cannonicalCCN};
         }
+        
+        // validate digit grouping
+        switch (cannonicalCCN.length()) {
+            case 15:
+                if (false == isValid15DigitGrouping(splitCCN)) {
+                    return false;
+                }
+                break;
+            case 16:
+                if (false == isValid16DigitGrouping(splitCCN)) {
+                    return false;
+                }
+                break;
+            case 19:
+                if (false == isValid19DigitGrouping(splitCCN)) {
+                    return false;
+                }
+                break;
+            default:
+                return false;
+        }
+
         return CREDIT_CARD_NUM_LUHN_CHECK.isValid(cannonicalCCN);
+    }
+
+    private boolean isValid19DigitGrouping(String[] splitCCN) {
+        switch (splitCCN.length) {
+            case 1:
+                return true;
+            case 2:
+                return splitCCN[0].length() == 6
+                        && splitCCN[1].length() == 13;
+            case 5:
+                return splitCCN[0].length() == 4
+                        && splitCCN[1].length() == 4
+                        && splitCCN[2].length() == 4
+                        && splitCCN[3].length() == 4
+                        && splitCCN[4].length() == 3;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isValid16DigitGrouping(String[] splitCCN) {
+        switch (splitCCN.length) {
+            case 1:
+                return true;
+            case 4:
+                return splitCCN[0].length() == 4
+                        && splitCCN[1].length() == 4
+                        && splitCCN[2].length() == 4
+                        && splitCCN[3].length() == 4;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isValid15DigitGrouping(String[] splitCCN) {
+        switch (splitCCN.length) {
+            case 1:
+                return true;
+            case 3:
+                return (splitCCN[0].length() == 4 && splitCCN[1].length() == 6 && splitCCN[2].length() == 5);
+//                   UATP     || ((splitCCN[0].length() == 4 && splitCCN[1].length() == 5 && splitCCN[2].length() == 6));
+            default:
+                return false;
+        }
     }
 }

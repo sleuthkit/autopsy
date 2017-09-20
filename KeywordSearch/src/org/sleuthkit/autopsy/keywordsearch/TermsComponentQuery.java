@@ -73,8 +73,16 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * The following fields are part of the initial implementation of credit
      * card account search and should be factored into another class when time
      * permits.
+     *
+     *
      */
-    static final Pattern CREDIT_CARD_NUM_PATTERN = Pattern.compile("(?<ccn>[3-6]([ -]?[0-9]){11,18})");   //12-19 digits, with possible single spaces or dashes in between. First digit is 3,4,5, or 6 //NON-NLS
+    /**
+     * 15,16,19 digits, with possible single spaces or dashes in between. First
+     * digit is 1,2,3,4,5, or 6 
+     *
+     */
+    static final Pattern CREDIT_CARD_NUM_PATTERN =
+            Pattern.compile("(?<ccn>[2-6](([ -]?[0-9]){18}|([ -]?[0-9]){15}|([ -]?[0-9]){14}))");
     static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
             /*
              * Track 1 is alphanumeric.
@@ -87,7 +95,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             "(?:" //begin nested optinal group //NON-NLS
             + "%?" //optional start sentinal: % //NON-NLS
             + "B)?" //format code  //NON-NLS
-            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[2-6](([ -]?[0-9]){18}|([ -]?[0-9]){15}|([ -]?[0-9]){14}))" //15,16,19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "\\^" //separator //NON-NLS
             + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
             + "(?:\\^" //separator //NON-NLS
@@ -108,7 +116,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              *
              */
             "[:;<=>?]?" //(optional)start sentinel //NON-NLS
-            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[2-6](([ -]?[0-9]){18}|([ -]?[0-9]){15}|([ -]?[0-9]){14}))" //15,16,19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "(?:[:;<=>?]" //separator //NON-NLS
             + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
             + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
@@ -460,7 +468,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * hit and turns them into artifact attributes. The track 1 data has the
      * same fields as the track two data, plus the account holder's name.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
+     * @param attributeMap A map of artifact attribute objects, used to avoid
      *                      creating duplicate attributes.
      * @param matcher       A matcher for the snippet.
      */
