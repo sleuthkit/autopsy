@@ -65,6 +65,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.OpenOutputFolderAction;
 import org.sleuthkit.autopsy.appservices.AutopsyService;
 import org.sleuthkit.autopsy.appservices.AutopsyService.CaseContext;
+import static org.sleuthkit.autopsy.casemodule.Bundle.*;
 import org.sleuthkit.autopsy.casemodule.CaseMetadata.CaseMetadataException;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceEvent;
 import org.sleuthkit.autopsy.casemodule.events.AddingDataSourceFailedEvent;
@@ -110,6 +111,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.Report;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+import org.sleuthkit.datamodel.TskUnsupportedSchemaVersionException;
 
 /**
  * An Autopsy case. Currently, only one case at a time may be open.
@@ -125,7 +127,6 @@ public class Case {
     private static final String LOG_FOLDER = "Log"; //NON-NLS
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String TEMP_FOLDER = "Temp"; //NON-NLS
-    private static final int MIN_SECS_BETWEEN_TSK_ERROR_REPORTS = 60;
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final long EXECUTOR_AWAIT_TIMEOUT_SECS = 5;
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
@@ -377,6 +378,7 @@ public class Case {
      *
      * @param eventNames The events the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
+     *
      * @deprecated Use addEventTypeSubscriber instead.
      */
     @Deprecated
@@ -401,6 +403,7 @@ public class Case {
      *
      * @param eventName  The event the subscriber is interested in.
      * @param subscriber The subscriber (PropertyChangeListener) to add.
+     *
      * @deprecated Use addEventTypeSubscriber instead.
      */
     @Deprecated
@@ -1787,7 +1790,11 @@ public class Case {
      */
     @Messages({
         "Case.progressMessage.openingCaseDatabase=Opening case database...",
-        "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database."
+        "Case.exceptionMessage.couldNotOpenCaseDatabase=Failed to open case database.",
+        "Case.unsupportedSchemaVersionMessage=Unsupported DB schema version - see log for details",
+        "Case.databaseConnectionInfo.error.msg=Error accessing database server connection info. See Tools, Options, Multi-User.",
+        "Case.open.exception.multiUserCaseNotEnabled=Cannot open a multi-user case if multi-user cases are not enabled. "
+        + "See Tools, Options, Multi-user."
     })
     private void openCaseData(ProgressIndicator progressIndicator) throws CaseActionException {
         try {
@@ -1798,16 +1805,14 @@ public class Case {
             } else if (UserPreferences.getIsMultiUserModeEnabled()) {
                 try {
                     caseDb = SleuthkitCase.openCase(databaseName, UserPreferences.getDatabaseConnectionInfo(), metadata.getCaseDirectory());
-
                 } catch (UserPreferencesException ex) {
-                    throw new CaseActionException(NbBundle.getMessage(Case.class,
-                            "Case.databaseConnectionInfo.error.msg"), ex);
-
+                    throw new CaseActionException(Case_databaseConnectionInfo_error_msg(), ex);
                 }
             } else {
-                throw new CaseActionException(NbBundle.getMessage(Case.class,
-                        "Case.open.exception.multiUserCaseNotEnabled"));
+                throw new CaseActionException(Case_open_exception_multiUserCaseNotEnabled());
             }
+        } catch (TskUnsupportedSchemaVersionException ex) {
+            throw new CaseActionException(Bundle.Case_unsupportedSchemaVersionMessage(), ex);
         } catch (TskCoreException ex) {
             throw new CaseActionException(Bundle.Case_exceptionMessage_couldNotOpenCaseDatabase(), ex);
         }

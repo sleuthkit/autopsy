@@ -152,7 +152,7 @@ public class IngestEventsListener {
                                             eamArtifacts.add(eamArtifact);
                                         }
                                     } catch (EamDbException ex) {
-                                        LOGGER.log(Level.SEVERE, "Error counting known bad artifacts.", ex);
+                                        LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);
                                     }
                                 }
                             }
@@ -190,7 +190,8 @@ public class IngestEventsListener {
         }
     }
 
-    @NbBundle.Messages({"IngestEventsListener.prevcases.text=Previous Cases",
+    @NbBundle.Messages({"IngestEventsListener.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
+           "IngestEventsListener.prevCaseComment.text=Previous Case: ",
         "IngestEventsListener.ingestmodule.name=Correlation Engine"})
     private void postCorrelatedBadArtifactToBlackboard(BlackboardArtifact bbArtifact, List<String> caseDisplayNames) {
 
@@ -200,9 +201,9 @@ public class IngestEventsListener {
             String MODULE_NAME = Bundle.IngestEventsListener_ingestmodule_name();
             BlackboardArtifact tifArtifact = af.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestEventsListener_prevcases_text());
+                    Bundle.IngestEventsListener_prevTaggedSet_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                    "Previous Case: " + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
+                    Bundle.IngestEventsListener_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);
             tifArtifact.addAttribute(att2);
             tifArtifact.addAttribute(new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT, MODULE_NAME, bbArtifact.getArtifactID()));

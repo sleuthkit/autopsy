@@ -139,12 +139,10 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     private void handleJobStartedEvent(AutoIngestJobStartedEvent event) {
         synchronized (jobsLock) {
-            // DLG: TEST! Remove job from pending queue, if present
-            // DLG: TEST! Add job to running jobs list
             jobsSnapshot.removePendingJob(event.getJob());
             jobsSnapshot.addOrReplaceRunningJob(event.getJob());
             setChanged();
-            notifyObservers(null);
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -155,10 +153,14 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     private void handleJobStatusEvent(AutoIngestJobStatusEvent event) {
         synchronized (jobsLock) {
-            // DLG: TEST! Replace job in running list with job from event
-            jobsSnapshot.addOrReplaceRunningJob(event.getJob());
+            /*
+             * Currently this event is only published for running jobs.
+             */
+            AutoIngestJob job = event.getJob();
+            jobsSnapshot.removePendingJob(job);
+            jobsSnapshot.addOrReplaceRunningJob(job);
             setChanged();
-            notifyObservers(null);
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -169,12 +171,12 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     private void handleJobCompletedEvent(AutoIngestJobCompletedEvent event) {
         synchronized (jobsLock) {
-            // DLG: TEST! Remove job from event from running list, if present
-            // DLG: TEST! Add job to completed list
-            jobsSnapshot.removeRunningJob(event.getJob());
-            jobsSnapshot.addOrReplaceCompletedJob(event.getJob());
+            AutoIngestJob job = event.getJob();
+            jobsSnapshot.removePendingJob(job);
+            jobsSnapshot.removeRunningJob(job);
+            jobsSnapshot.addOrReplaceCompletedJob(job);
             setChanged();
-            notifyObservers(null);
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -237,6 +239,13 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             for (String node : nodeList) {
                 try {
                     AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, node));
+                    if (nodeData.getVersion() < 1) {
+                        /*
+                         * Ignore version '0' nodes that have not been
+                         * "upgraded" since they don't carry enough data.
+                         */
+                        continue;
+                    }
                     AutoIngestJob job = new AutoIngestJob(nodeData);
                     ProcessingStatus processingStatus = nodeData.getProcessingStatus();
                     switch (processingStatus) {

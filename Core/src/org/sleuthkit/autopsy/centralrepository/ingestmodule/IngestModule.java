@@ -54,7 +54,8 @@ import org.sleuthkit.datamodel.TskDataException;
  * Ingest module for inserting entries into the Central Repository database on
  * ingest of a data source
  */
-@Messages({"IngestModule.prevcases.text=Previous Cases"})
+@Messages({"IngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
+           "IngestModule.prevCaseComment.text=Previous Case: "})
 class IngestModule implements FileIngestModule {
 
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
@@ -120,12 +121,12 @@ class IngestModule implements FileIngestModule {
                     postCorrelatedBadFileToBlackboard(af, caseDisplayNames);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error counting known bad artifacts.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
 
-        // Make a TSK_HASHSET_HIT blackboard artifact for global known bad files
+        // Make a TSK_HASHSET_HIT blackboard artifact for global notable files
         try {
             if (dbManager.isArtifactlKnownBadByReference(filesType, md5)) {
                 postCorrelatedHashHitToBlackboard(af);
@@ -289,9 +290,9 @@ class IngestModule implements FileIngestModule {
             String MODULE_NAME = IngestModuleFactory.getModuleName();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestModule_prevcases_text());
+                    Bundle.IngestModule_prevTaggedSet_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                    "Previous Case: " + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
+                     Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);
             tifArtifact.addAttribute(att2);
 
@@ -319,7 +320,7 @@ class IngestModule implements FileIngestModule {
             String MODULE_NAME = IngestModuleFactory.getModuleName();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestModule_prevcases_text());
+                    Bundle.IngestModule_prevCaseComment_text());
             tifArtifact.addAttribute(att);
 
             try {
@@ -353,8 +354,8 @@ class IngestModule implements FileIngestModule {
         "IngestModule.postToBB.md5Hash=MD5 Hash",
         "IngestModule.postToBB.hashSetSource=Source of Hash",
         "IngestModule.postToBB.eamHit=Central Repository",
-        "# {0} - Name of file that is Known Bad",
-        "IngestModule.postToBB.knownBadMsg=Known Bad: {0}"})
+        "# {0} - Name of file that is Notable",
+        "IngestModule.postToBB.knownBadMsg=Notable: {0}"})
     public void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash) {
         StringBuilder detailsSb = new StringBuilder();
         //details

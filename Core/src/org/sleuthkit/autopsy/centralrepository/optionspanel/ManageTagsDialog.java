@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Instances of this class allow a user to select an existing hash database and
  * add it to the set of hash databases used to classify files as unknown, known,
- * or known bad.
+ * or notable.
  */
 final class ManageTagsDialog extends javax.swing.JDialog {
 
@@ -58,7 +58,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     /**
      * Displays a dialog that allows a user to select an existing hash database
      * and add it to the set of hash databases used to classify files as
-     * unknown, known, or known bad.
+     * unknown, known, or notable.
      */
     @Messages({"ManageTagDialog.title=Manage Tags",
         "ManageTagDialog.tagInfo.text=Select the tags that cause files and results to be recorded in the central repository. Additional tags can be created in the Tags options panel."})
@@ -72,12 +72,15 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         display();
     }
 
+
+    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to central cepository.",
+        "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags.",
+        "ManageTagsDialog.tagColumn.header.text=Tags",
+        "ManageTagsDialog.notableColumn.header.text=Notable"})
     private void setupHelpTextArea() {
         helpTextArea.setText(Bundle.ManageTagDialog_tagInfo_text());
     }
 
-    @Messages({"ManageTagsDialog.init.failedConnection.msg=Cannot connect to central repository.",
-        "ManageTagsDialog.init.failedGettingTags.msg=Unable to retrieve list of tags."})
     private void customizeComponents() {
         lbWarnings.setText("");
         EamDb dbManager;
@@ -105,6 +108,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
         Collections.sort(tagNames);
 
         DefaultTableModel model = (DefaultTableModel) tblTagNames.getModel();
+        model.setColumnIdentifiers(new String[] {Bundle.ManageTagsDialog_tagColumn_header_text(), Bundle.ManageTagsDialog_notableColumn_header_text()});
         for (String tagName : tagNames) {
             boolean enabled = badTags.contains(tagName);
             model.addRow(new Object[]{tagName, enabled});
@@ -158,7 +162,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
 
             },
             new String [] {
-                "Tag", "Implies Known Bad"
+                "", ""
             }
         ) {
             Class[] types = new Class [] {
@@ -269,11 +273,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     }
     
     /**
-     * If the user sets a tag to "Implies known bad", give them the option to update
+     * If the user sets a tag to "Notable", give them the option to update
      * any existing tagged items (in the current case only) in the central repo.
      */
     public class CheckBoxModelListener implements TableModelListener {
-        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as known bad any files/results in the current case that have this tag?",
+        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as notable any files/results in the current case that have this tag?",
                     "ManageTagsDialog.updateCurrentCase.title=Update current case?",
                     "ManageTagsDialog.updateCurrentCase.error=Error updating existing central repository entries"})
         
@@ -305,7 +309,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                                 dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
                             } catch (EamDbException ex) {
-                                LOGGER.log(Level.SEVERE, "Failed to apply known bad status to current case", ex);
+                                LOGGER.log(Level.SEVERE, "Failed to apply notable status to artifacts in current case", ex);
                                 JOptionPane.showMessageDialog(null, Bundle.ManageTagsDialog_updateCurrentCase_error());
                             } finally {
                                 dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
