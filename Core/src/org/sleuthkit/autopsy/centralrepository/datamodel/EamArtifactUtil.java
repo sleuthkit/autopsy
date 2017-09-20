@@ -200,7 +200,7 @@ public class EamArtifactUtil {
      * add the artifact to the database.
      * 
      * @param content     The content object
-     * @param knownStatus Unknown, known bad, or known
+     * @param knownStatus Unknown, notable, or known
      * @param comment     The comment for the new artifact (generally used for a tag comment)
      * @return The new EamArtifact or null if creation failed
      */
