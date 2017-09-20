@@ -65,7 +65,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Instances of this class allow a user to select an existing hash database and
  * add it to the set of hash databases used to classify files as unknown, known,
- * or known bad.
+ * or notable.
  */
 final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     private static final Logger LOGGER = Logger.getLogger(ImportHashDatabaseDialog.class.getName());
@@ -82,7 +82,7 @@ final class ImportHashDatabaseDialog extends javax.swing.JDialog {
     /**
      * Displays a dialog that allows a user to select an existing hash database
      * and add it to the set of hash databases used to classify files as
-     * unknown, known, or known bad.
+     * unknown, known, or notable.
      */
     @Messages({"ImportHashDatabaseDialog.importHashDbMsg=Import Hash Database"})
     ImportHashDatabaseDialog() {

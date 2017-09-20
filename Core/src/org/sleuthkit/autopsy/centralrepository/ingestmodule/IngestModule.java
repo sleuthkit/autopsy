@@ -121,12 +121,12 @@ class IngestModule implements FileIngestModule {
                     postCorrelatedBadFileToBlackboard(af, caseDisplayNames);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error counting known bad artifacts.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
 
-        // Make a TSK_HASHSET_HIT blackboard artifact for global known bad files
+        // Make a TSK_HASHSET_HIT blackboard artifact for global notable files
         try {
             if (dbManager.isArtifactlKnownBadByReference(filesType, md5)) {
                 postCorrelatedHashHitToBlackboard(af);
@@ -354,8 +354,8 @@ class IngestModule implements FileIngestModule {
         "IngestModule.postToBB.md5Hash=MD5 Hash",
         "IngestModule.postToBB.hashSetSource=Source of Hash",
         "IngestModule.postToBB.eamHit=Central Repository",
-        "# {0} - Name of file that is Known Bad",
-        "IngestModule.postToBB.knownBadMsg=Known Bad: {0}"})
+        "# {0} - Name of file that is Notable",
+        "IngestModule.postToBB.knownBadMsg=Notable: {0}"})
     public void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash) {
         StringBuilder detailsSb = new StringBuilder();
         //details

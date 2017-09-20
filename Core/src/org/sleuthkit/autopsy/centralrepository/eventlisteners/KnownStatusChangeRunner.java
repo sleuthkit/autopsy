@@ -26,7 +26,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
- * Thread to send info to remote DB that tags a file as known, unknown, or known bad.
+ * Thread to send info to remote DB that tags a file as known, unknown, or notable.
  */
 public class KnownStatusChangeRunner implements Runnable {
 
