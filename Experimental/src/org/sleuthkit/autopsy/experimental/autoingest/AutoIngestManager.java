@@ -468,7 +468,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 }
                 for (AutoIngestJob job : hostNamesToRunningJobs.values()) {
                     runningJobs.add(job);
-                    runningJobs.sort(new AutoIngestJob.CaseNameAndProcessingHostComparator());
+                    runningJobs.sort(new AutoIngestJob.LocalHostAndCaseComparator());
                 }
             }
             if (null != completedJobs) {
