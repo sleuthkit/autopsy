@@ -1948,7 +1948,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 new EamDataSource(resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
-                TskData.FileKnown.valueOf(resultSet.getString("known_status")),
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
                 EamArtifactInstance.GlobalStatus.LOCAL
         );
 
@@ -1996,7 +1996,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("id"),
                 resultSet.getInt("reference_set_id"),
                 resultSet.getString("value"),
-                TskData.FileKnown.valueOf(resultSet.getString("known_status")),
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
                 resultSet.getString("comment")
         );
 
