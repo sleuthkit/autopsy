@@ -1143,7 +1143,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             }
             tableModel.setRowCount(0);
             for (AutoIngestJob job : jobs) {
-                AutoIngestJob.StageDetails status = job.getStageDetails();
+                AutoIngestJob.StageDetails status = job.getProcessingStageDetails();
                 tableModel.addRow(new Object[]{
                     job.getManifest().getCaseName(), // CASE
                     job.getManifest().getDataSourcePath().getFileName(), // DATA_SOURCE
@@ -1152,7 +1152,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                     job.getProcessingStageStartDate(), // STARTED_TIME
                     job.getCompletedDate(), // COMPLETED_TIME
                     status.getDescription(), // ACTIVITY
-job.getErrorsOccurred(), // STATUS
+                    job.getErrorsOccurred(), // STATUS
                     ((Date.from(Instant.now()).getTime()) - (status.getStartDate().getTime())), // ACTIVITY_TIME
                     job.getCaseDirectoryPath(), // CASE_DIRECTORY_PATH
                     job.getProcessingHostName().equals(LOCAL_HOST_NAME), // IS_LOCAL_JOB
@@ -1701,7 +1701,7 @@ job.getErrorsOccurred(), // STATUS
      *
      * @param evt The button click event.
      */
-    @Messages({"AutoIngestControlPanel.casePrioritization.errorMessage=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})    
+    @Messages({"AutoIngestControlPanel.casePrioritization.errorMessage=An error occurred when prioritizing the case. Some or all jobs may not have been prioritized."})
     private void bnPrioritizeCaseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeCaseActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -1759,8 +1759,8 @@ job.getErrorsOccurred(), // STATUS
                     options[0]);
         }
     }//GEN-LAST:event_bnShowCaseLogActionPerformed
-    
-    @Messages({"AutoIngestControlPanel.jobPrioritization.errorMessage=An error occurred when prioritizing the job."})    
+
+    @Messages({"AutoIngestControlPanel.jobPrioritization.errorMessage=An error occurred when prioritizing the job."})
     private void bnPrioritizeJobActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bnPrioritizeJobActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));

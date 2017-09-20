@@ -42,7 +42,7 @@ public final class Manifest implements Serializable {
         this.dateFileCreated = dateFileCreated;
         this.caseName = caseName;
         this.deviceId = deviceId;
-        if (dataSourcePath != null) {
+        if (null != dataSourcePath) {
             this.dataSourcePath = dataSourcePath.toString(); 
         } else {
             this.dataSourcePath = "";
@@ -55,7 +55,7 @@ public final class Manifest implements Serializable {
     }
 
     public Date getDateFileCreated() {
-        return this.dateFileCreated;
+        return new Date(this.dateFileCreated.getTime());
     }
 
     public String getCaseName() {

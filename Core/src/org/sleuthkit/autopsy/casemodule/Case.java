@@ -127,7 +127,6 @@ public class Case {
     private static final String LOG_FOLDER = "Log"; //NON-NLS
     private static final String REPORTS_FOLDER = "Reports"; //NON-NLS
     private static final String TEMP_FOLDER = "Temp"; //NON-NLS
-    private static final int MIN_SECS_BETWEEN_TSK_ERROR_REPORTS = 60;
     private static final String MODULE_FOLDER = "ModuleOutput"; //NON-NLS
     private static final long EXECUTOR_AWAIT_TIMEOUT_SECS = 5;
     private static final String CASE_ACTION_THREAD_NAME = "%s-case-action";
