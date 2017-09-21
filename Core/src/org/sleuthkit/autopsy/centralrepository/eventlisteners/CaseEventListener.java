@@ -142,11 +142,15 @@ public class CaseEventListener implements PropertyChangeListener {
                 final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(af, 
                         knownStatus, comment);
 
-                // send update to Central Repository db
-                Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
-                // TODO: send r into a thread pool instead
-                Thread t = new Thread(r);
-                t.start();
+                if(eamArtifact != null){
+                    // send update to Central Repository db
+                    Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
+                    // TODO: send r into a thread pool instead
+                    Thread t = new Thread(r);
+                    t.start();
+                } else {
+                    LOGGER.log(Level.SEVERE, "Error creating artifact instance for {0}", af.getName());
+                }
             } // CONTENT_TAG_ADDED, CONTENT_TAG_DELETED
             break;
 
