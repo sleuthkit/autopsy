@@ -34,8 +34,9 @@ final class CreditCardValidator {
 
     /**
      * Does the given string represent a valid credit card number? It must have
-     * no separators, or only '-', or only ' '. If it has separators and is 16
-     * digits, they must be grouped in to four groups of four.
+     * no separators, or only '-', or only ' '. Checks digit grouping for
+     * 15,16,and 19 digit numbers. All other length numbers must be contiguous
+     * or begin with a group of 4 digits.
      *
      * @param rawCCN
      *
@@ -85,9 +86,21 @@ final class CreditCardValidator {
                     return false;
                 }
                 break;
+            default:
+                if (false == isValidOtherDigitGrouping(splitCCN)) {
+                    return false;
+                }
         }
 
         return CREDIT_CARD_NUM_LUHN_CHECK.isValid(cannonicalCCN);
+    }
+
+    private boolean isValidOtherDigitGrouping(String[] splitCCN) {
+        if (splitCCN.length == 1) {
+            return true;
+        } else {
+            return splitCCN[0].length() == 4;
+        }
     }
 
     private boolean isValid19DigitGrouping(String[] splitCCN) {

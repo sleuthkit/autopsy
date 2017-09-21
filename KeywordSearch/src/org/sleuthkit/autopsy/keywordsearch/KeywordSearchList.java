@@ -51,7 +51,7 @@ abstract class KeywordSearchList {
     private static final String URL_REGEX = "(((((h|H)(t|T))|(f|F))(t|T)(p|P)(s|S?)\\:\\/\\/)|(w|W){3,3}\\.)[a-zA-Z0-9\\-\\.]+\\.([a-zA-Z]{2,5})(\\:[0-9]+)*(\\/($|[a-zA-Z0-9\\.\\,\\;\\?\\'\\\\+&amp;%\\$#\\=~_\\-]+))*";  //NON-NLS
 
     /**
-     * 14-19 digits, with possible single spaces or dashes in between,
+     * 12-19 digits, with possible single spaces or dashes in between,
      * optionally preceded by % (start sentinel) and a B (format code). Note
      * that this regular expression is intentionally more broad than the regular
      * expression used by the code that validates credit card account numbers.
@@ -60,7 +60,7 @@ abstract class KeywordSearchList {
      *
      * //TODO: is this regex actually used anywhere? Does it matter?
      */
-    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){14,19}(\\^?)";  //NON-NLS
+    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";  //NON-NLS
 
     protected String filePath;
     Map<String, KeywordList> theLists; //the keyword data

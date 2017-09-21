@@ -50,33 +50,45 @@ public class CreditCardValidatorTest {
      * Test of isValidCCN method, of class CreditCardValidator.
      */
     @Test
-    public void testIsValidCCN() {
+    public void testIsValidCCN16() {
         System.out.println("isValidCCN");
         CreditCardValidator validator = new CreditCardValidator();
 
-        //rules for seperators and grouping for 16 digits
+        //rules for separators and grouping for 16 digits
+        assertEquals(true, validator.isValidCCN("1234567890318342"));// dashes
         assertEquals(true, validator.isValidCCN("1234-5678-9031-8342"));// dashes
         assertEquals(true, validator.isValidCCN("1234 5678 9031 8342"));// or spaces
-
+        
+        assertEquals(false, validator.isValidCCN("1234567890318341"));// luhn
         assertEquals(false, validator.isValidCCN("1234-5678-9031 8342")); //only one seperator
         assertEquals(false, validator.isValidCCN("1234-5678-90-318342")); //only four groups of four
         assertEquals(false, validator.isValidCCN("1234 5678 90 318342")); //only four groups of four
         assertEquals(false, validator.isValidCCN("1-2-3-4-5-6-7-8-9-0-3-1-8-3-4-2")); //only four groups of four
+    }
 
-        //amex are fifteen digits, and typically grouped 4 6 5
+    @Test
+    public void testIsValidCCN15() {
+        System.out.println("isValidCCN");
+        CreditCardValidator validator = new CreditCardValidator();
+        //amex are fifteen digits, and grouped 4 6 5
         //amex cards that strart with 34
         assertEquals(true, validator.isValidCCN("3431 136294 58529"));
         assertEquals(true, validator.isValidCCN("3431-136294-58529"));
         assertEquals(true, validator.isValidCCN("343113629458529"));
-        assertEquals(false, validator.isValidCCN("3431 13629458 529"));
+        
+        assertEquals(false, validator.isValidCCN("343113629458528")); //luhn
+        assertEquals(false, validator.isValidCCN("3431 13629458 529")); //grouping
+        assertEquals(false, validator.isValidCCN("3431 136294-58529")); //separators
 
         //amex cards that start with 37
         assertEquals(true, validator.isValidCCN("377585291285489"));
         assertEquals(true, validator.isValidCCN("3775-852912-85489"));
         assertEquals(true, validator.isValidCCN("3775 852912 85489"));
-        assertEquals(false, validator.isValidCCN("3775-852912 85489"));
-        assertEquals(false, validator.isValidCCN("37-7585-29-1285489"));
-        assertEquals(false, validator.isValidCCN("377585 29128548 9"));
+               
+        assertEquals(false, validator.isValidCCN("377585291285488")); //luhn
+        assertEquals(false, validator.isValidCCN("3775-852912 85489")); //separator
+        assertEquals(false, validator.isValidCCN("37-7585-29-1285489")); //grouping
+        assertEquals(false, validator.isValidCCN("377585 29128548 9")); //grouping
 
         //UATP are also 15 digits, start with 1 and are typically 4-5-6
 //        assertEquals(true, validator.isValidCCN("1409 56201 545229"));
@@ -84,19 +96,102 @@ public class CreditCardValidatorTest {
 //        assertEquals(true, validator.isValidCCN("140956201545229"));
 //        assertEquals(false, validator.isValidCCN("140 9562015 45229"));
 //        assertEquals(false, validator.isValidCCN("1409-56201 545229"));
+    }
 
-        //nineteen digit (visa) card
+    @Test
+    public void testIsValidCCN19() {
+        System.out.println("isValidCCN");
+        CreditCardValidator validator = new CreditCardValidator();
+        //nineteen digit (visa) cards 4-4-4-4-3
         assertEquals(true, validator.isValidCCN("4539747947839518654"));
         assertEquals(true, validator.isValidCCN("4539-7479-4783-9518-654"));
         assertEquals(true, validator.isValidCCN("4539 7479 4783 9518 654"));
-        assertEquals(false, validator.isValidCCN("4539-7479 4783 9518 654"));
-        assertEquals(false, validator.isValidCCN("45374 79 4783 9518 654"));
+
+        assertEquals(false, validator.isValidCCN("4539747947839518653")); //luhn
+        assertEquals(false, validator.isValidCCN("4539-7479 4783 9518 654")); //separators
+        assertEquals(false, validator.isValidCCN("45374 79 4783 9518 654")); //grouping
 
         //nineteen digit China UnionPay is 19 digits 6-13 (or 4-4-4-4) beging 62
         assertEquals(true, validator.isValidCCN("6239747947839518659"));
         assertEquals(true, validator.isValidCCN("623974 7947839518659"));
         assertEquals(true, validator.isValidCCN("623974-7947839518659"));
-        assertEquals(false, validator.isValidCCN("623974-79478395 18659"));
-        assertEquals(false, validator.isValidCCN("62397-47947839518659"));
+        /*
+         * China UnionPay may not use luhn ???
+         *
+         * https://stackoverflow.com/questions/7863058/does-the-luhn-algorithm-work-for-all-mainstream-credit-cards-discover-visa-m
+         */
+        assertEquals(false, validator.isValidCCN("6239747947839518658")); //luhn
+        assertEquals(false, validator.isValidCCN("623974-79478395 18659")); //separators
+        assertEquals(false, validator.isValidCCN("62397-47947839518659")); //grouping
+    }
+
+    @Test
+    public void testIsValidCCN18() {
+        System.out.println("isValidCCN");
+        CreditCardValidator validator = new CreditCardValidator();
+
+        assertEquals(true, validator.isValidCCN("123456789031834267"));
+        assertEquals(true, validator.isValidCCN("1234 5678 9031 8342 67"));
+        assertEquals(true, validator.isValidCCN("1234-56789031834-267"));
+
+        assertEquals(false, validator.isValidCCN("123456789031834266")); //luhn
+        assertEquals(false, validator.isValidCCN("123 456789031834267")); //grouping
+        assertEquals(false, validator.isValidCCN("1234-56789 031834267")); //separators
+    }
+
+    @Test
+    public void testIsValidCCN17() {
+        System.out.println("isValidCCN");
+        CreditCardValidator validator = new CreditCardValidator();
+
+        assertEquals(true, validator.isValidCCN("12345678903183426"));
+        assertEquals(true, validator.isValidCCN("1234 5678 9031 8342 6"));
+        assertEquals(true, validator.isValidCCN("1234-56789031834-26"));
+
+        assertEquals(false, validator.isValidCCN("12345678903183425"));//luhn
+        assertEquals(false, validator.isValidCCN("123 45678903183426")); //grouping
+        assertEquals(false, validator.isValidCCN("1234-56789 03183426")); //separators
+    }
+
+    @Test
+    public void testIsValidCCN14() {
+        System.out.println("isValidCCN");
+        CreditCardValidator validator = new CreditCardValidator();
+
+        assertEquals(true, validator.isValidCCN("12345678903183"));
+        assertEquals(true, validator.isValidCCN("1234 5678 9031 83"));
+        assertEquals(true, validator.isValidCCN("1234-5678903183"));
+
+        assertEquals(false, validator.isValidCCN("12345678903182"));//luhn
+        assertEquals(false, validator.isValidCCN("123 45678903183")); //grouping
+        assertEquals(false, validator.isValidCCN("1234-56789 03183")); //separators
+    }
+
+    @Test
+    public void testIsValidCCN13() {
+        System.out.println("isValidCCN");
+        CreditCardValidator validator = new CreditCardValidator();
+
+        assertEquals(true, validator.isValidCCN("1234567890318"));
+        assertEquals(true, validator.isValidCCN("1234 5678 9031 8"));
+        assertEquals(true, validator.isValidCCN("1234-567890318"));
+
+        assertEquals(false, validator.isValidCCN("1234567890317"));//luhn
+        assertEquals(false, validator.isValidCCN("123 4567890318")); //grouping 
+        assertEquals(false, validator.isValidCCN("1234-56789 0318")); //separators
+    }
+
+    @Test
+    public void testIsValidCCN12() {
+        System.out.println("isValidCCN");
+        CreditCardValidator validator = new CreditCardValidator();
+
+        assertEquals(true, validator.isValidCCN("123456789031"));
+        assertEquals(true, validator.isValidCCN("1234 5678 9031"));
+        assertEquals(true, validator.isValidCCN("1234-56789031"));
+
+        assertEquals(false, validator.isValidCCN("123456789030")); //luhn
+        assertEquals(false, validator.isValidCCN("123 456789031"));  //grouping
+        assertEquals(false, validator.isValidCCN("1234-56789 031")); //separators
     }
 }

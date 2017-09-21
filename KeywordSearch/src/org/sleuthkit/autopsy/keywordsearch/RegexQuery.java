@@ -289,13 +289,12 @@ final class RegexQuery implements KeywordSearchQuery {
                         case TSK_CARD_NUMBER:
                             /*
                              * If searching for credit card account numbers, do
-                             * a Luhn check on the term and discard it if it
+                             * extra validation on the term and discard it if it
                              * does not pass.
                              */
-
                             Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
 
-                            for (int rLength = hit.length(); rLength >= 15; rLength--) {
+                            for (int rLength = hit.length(); rLength >= 12; rLength--) {
                                 ccnMatcher.region(0, rLength);
                                 if (ccnMatcher.find()) {
                                     final String group = ccnMatcher.group("ccn");
