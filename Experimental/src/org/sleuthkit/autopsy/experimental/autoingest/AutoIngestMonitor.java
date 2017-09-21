@@ -221,7 +221,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     JobsSnapshot refreshJobsSnapshot() {
         synchronized (jobsLock) {
             jobsSnapshot = queryCoordinationService();
-            return jobsSnapshot.deepCopy();
+            return jobsSnapshot;
         }
     }
 
