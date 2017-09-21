@@ -42,6 +42,7 @@ import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.datamodel.VirtualDirectory;
+import org.sleuthkit.datamodel.Volume;
 
 /**
  * A node filter (decorator) that sets the actions for a node in the tree view
@@ -78,9 +79,10 @@ class DirectoryTreeFilterNode extends FilterNode {
     public String getDisplayName() {
         final Node orig = getOriginal();
         String name = orig.getDisplayName();
+
         if (orig instanceof AbstractContentNode) {
             AbstractFile file = getLookup().lookup(AbstractFile.class);
-            if ((file != null) && (false ==  (orig instanceof BlackboardArtifactNode)) ){
+            if ((file != null) && (false == (orig instanceof BlackboardArtifactNode))) {
                 try {
                     int numVisibleChildren = getVisibleChildCount(file);
 
@@ -94,14 +96,13 @@ class DirectoryTreeFilterNode extends FilterNode {
                 } catch (TskCoreException ex) {
                     logger.log(Level.SEVERE, "Error getting children count to display for file: " + file, ex); //NON-NLS
                 }
-            }
-            else if (orig instanceof BlackboardArtifactNode) {
-                BlackboardArtifact artifact = ((BlackboardArtifactNode) orig).getArtifact();           
+            } else if (orig instanceof BlackboardArtifactNode) {
+                BlackboardArtifact artifact = ((BlackboardArtifactNode) orig).getArtifact();
                 try {
                     int numAttachments = artifact.getChildrenCount();
                     name = name + " \u200E(\u200E" + numAttachments + ")\u200E";  //NON-NLS
                 } catch (TskCoreException ex) {
-                   logger.log(Level.SEVERE, "Error getting chidlren count for atifact: " + artifact, ex); //NON-NLS
+                    logger.log(Level.SEVERE, "Error getting chidlren count for atifact: " + artifact, ex); //NON-NLS
                 }
             }
         }
@@ -134,18 +135,17 @@ class DirectoryTreeFilterNode extends FilterNode {
                             || (purgeSlackFiles && childFile.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)) {
                         numVisibleChildren--;
                     }
-                } else if(child instanceof BlackboardArtifact){
+                } else if (child instanceof BlackboardArtifact) {
                     BlackboardArtifact bba = (BlackboardArtifact) child;
-                    
+
                     // Only message type artifacts are displayed in the tree
-                    if((bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID()) 
-                            && (bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())){
+                    if ((bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_EMAIL_MSG.getTypeID())
+                            && (bba.getArtifactTypeID() != ARTIFACT_TYPE.TSK_MESSAGE.getTypeID())) {
                         numVisibleChildren--;
                     }
                 }
             }
         }
-        
 
         return numVisibleChildren;
     }
@@ -163,6 +163,9 @@ class DirectoryTreeFilterNode extends FilterNode {
         List<Action> actions = new ArrayList<>();
         final Content content = this.getLookup().lookup(Content.class);
         if (content != null) {
+            if (content instanceof Volume) {
+                actions.add(new FileSystemDetailsAction((Volume) content));
+            }
             actions.addAll(ExplorerNodeActionVisitor.getActions(content));
 
             Directory dir = this.getLookup().lookup(Directory.class);

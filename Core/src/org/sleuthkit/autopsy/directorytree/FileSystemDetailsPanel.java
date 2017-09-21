@@ -19,9 +19,10 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.awt.event.ActionListener;
-import org.openide.util.Exceptions;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sleuthkit.datamodel.FileSystem;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.TskCoreException;
 
 /**
@@ -30,7 +31,7 @@ import org.sleuthkit.datamodel.TskCoreException;
  * @author jantonius
  */
 final class FileSystemDetailsPanel extends javax.swing.JPanel {
-
+    private static final Logger logger = Logger.getLogger(FileSystemDetailsPanel.class.getName());
     private static final long serialVersionUID = 1L;
 
     /**
@@ -40,10 +41,10 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
         initComponents();
     }
 
-    FileSystemDetailsPanel(FsContent content) {
+    FileSystemDetailsPanel(Volume content) {
         initComponents();
         try {
-            FileSystem fSystem = content.getFileSystem();
+            FileSystem fSystem = content.getFileSystems().get(0);  //Autopsy currently only supports one file system per Volume
             setFileSystemTypeValue(fSystem.getFsType().toString());
             setImageOffsetValue(Long.toString(fSystem.getImageOffset()));
             setVolumeIDValue(Long.toString(fSystem.getId()));
@@ -52,8 +53,8 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
             setRootInumValue(Long.toString(fSystem.getRoot_inum()));
             setFirstInumValue(Long.toString(fSystem.getFirst_inum()));
             setLastInumValue(Long.toString(fSystem.getLastInum()));
-        } catch (TskCoreException ex) {
-            Exceptions.printStackTrace(ex);
+        } catch (TskCoreException|ArrayIndexOutOfBoundsException ex) {
+            logger.log(Level.SEVERE, "Unable to construct FileSystemDetailsPanel",ex);
         }
 
     }

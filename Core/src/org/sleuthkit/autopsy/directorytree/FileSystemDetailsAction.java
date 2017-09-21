@@ -22,36 +22,47 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import org.openide.util.NbBundle;
 import org.openide.windows.WindowManager;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.FsContent;
+import org.sleuthkit.datamodel.Volume;
+import org.sleuthkit.datamodel.TskCoreException;
 
 /**
  * Action which opens a dialog containing the FileSystemDetailsPanel.
  */
-public class FileSystemDetailsAction extends AbstractAction {
-
-    final Content fsContent;
+final public class FileSystemDetailsAction extends AbstractAction {
+    private static final Logger logger = Logger.getLogger(FileSystemDetailsPanel.class.getName());
+    final Volume fsContent;
 
     @NbBundle.Messages({"FileSystemDetailsAction.title.text=File System Details"})
-    public FileSystemDetailsAction(Content content) {
+    public FileSystemDetailsAction(Volume content) {
         super(Bundle.FileSystemDetailsAction_title_text());
+        enabled = false;
         fsContent = content;
+        try {
+            if (!fsContent.getFileSystems().isEmpty()) {
+                enabled = true;
+            }
+        } catch (TskCoreException ex) {
+            logger.log(Level.SEVERE, "Unable to create FileSystemDetailsAction", ex);
+        }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (fsContent instanceof FsContent) {
-            FileSystemDetailsDialog fsDetailsDialog = new FileSystemDetailsDialog();
-            fsDetailsDialog.display((FsContent) fsContent);
-        }
+        FileSystemDetailsDialog fsDetailsDialog = new FileSystemDetailsDialog();
+        fsDetailsDialog.display(fsContent);
+
     }
 
     private final class FileSystemDetailsDialog extends JDialog implements ActionListener {
+
+        private static final long serialVersionUID = 1L;
 
         private FileSystemDetailsDialog() {
             super((JFrame) WindowManager.getDefault().getMainWindow(),
@@ -59,7 +70,7 @@ public class FileSystemDetailsAction extends AbstractAction {
                     false);
         }
 
-        private void display(FsContent content) {
+        private void display(Volume content) {
             FileSystemDetailsPanel fsPanel = new FileSystemDetailsPanel(content);
             fsPanel.setOKButtonActionListener(this);
             setContentPane(fsPanel);
