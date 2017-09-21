@@ -162,9 +162,10 @@ class DirectoryTreeFilterNode extends FilterNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
-        actions.addAll(Arrays.asList(super.getActions(true)));
+        
         final Content content = this.getLookup().lookup(Content.class);
         if (content != null) {
+            actions.addAll(Arrays.asList(super.getActions(true)));
             if (content instanceof Volume) {
                 actions.add(new FileSystemDetailsAction((Volume) content));
             }
