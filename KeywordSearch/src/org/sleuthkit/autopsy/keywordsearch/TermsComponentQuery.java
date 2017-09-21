@@ -77,17 +77,17 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      *
      */
     /**
-     * 15,16,19 digits, with possible single spaces or dashes in between. First
-     * digit is 1,2,3,4,5, or 6 
+     * 14-19 digits, with possible single spaces or dashes in between. First
+     * digit is 2 through 6 
      *
      */
     static final Pattern CREDIT_CARD_NUM_PATTERN =
-            Pattern.compile("(?<ccn>[2-6](([ -]?[0-9]){18}|([ -]?[0-9]){15}|([ -]?[0-9]){14}))");
+            Pattern.compile("(?<ccn>[2-6]([ -]?[0-9]){13,18})");
     static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
             /*
              * Track 1 is alphanumeric.
              *
-             * This regex matches 12-19 digit ccns embeded in a track 1 formated
+             * This regex matches 14-19 digit ccns embeded in a track 1 formated
              * string. This regex matches (and extracts groups) even if the
              * entire track is not present as long as the part that is conforms
              * to the track format.
@@ -95,7 +95,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             "(?:" //begin nested optinal group //NON-NLS
             + "%?" //optional start sentinal: % //NON-NLS
             + "B)?" //format code  //NON-NLS
-            + "(?<accountNumber>[2-6](([ -]?[0-9]){18}|([ -]?[0-9]){15}|([ -]?[0-9]){14}))" //15,16,19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[2-6](([ -]?[0-9]){13,18}))" //14-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "\\^" //separator //NON-NLS
             + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
             + "(?:\\^" //separator //NON-NLS
@@ -109,14 +109,14 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             /*
              * Track 2 is numeric plus six punctuation symbolls :;<=>?
              *
-             * This regex matches 12-19 digit ccns embeded in a track 2 formated
+             * This regex matches 14-19 digit ccns embeded in a track 2 formated
              * string. This regex matches (and extracts groups) even if the
              * entire track is not present as long as the part that is conforms
              * to the track format.
              *
              */
             "[:;<=>?]?" //(optional)start sentinel //NON-NLS
-            + "(?<accountNumber>[2-6](([ -]?[0-9]){18}|([ -]?[0-9]){15}|([ -]?[0-9]){14}))" //15,16,19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[2-6](([ -]?[0-9]){13,18}))" //14-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
             + "(?:[:;<=>?]" //separator //NON-NLS
             + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
             + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS

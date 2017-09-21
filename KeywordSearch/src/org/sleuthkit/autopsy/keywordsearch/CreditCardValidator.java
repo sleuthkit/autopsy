@@ -19,8 +19,6 @@
 package org.sleuthkit.autopsy.keywordsearch;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.collect.ImmutableSet;
-import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
 
@@ -33,7 +31,6 @@ final class CreditCardValidator {
     }
 
     private static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
-    Set<Integer> allowedLengths = ImmutableSet.of(15, 16, 19);
 
     /**
      * Does the given string represent a valid credit card number? It must have
@@ -70,8 +67,8 @@ final class CreditCardValidator {
             cannonicalCCN = rawCCN;
             splitCCN = new String[]{cannonicalCCN};
         }
-        
-        // validate digit grouping
+
+        // validate digit grouping for 15, 16, and 19 digit cards
         switch (cannonicalCCN.length()) {
             case 15:
                 if (false == isValid15DigitGrouping(splitCCN)) {
@@ -88,8 +85,6 @@ final class CreditCardValidator {
                     return false;
                 }
                 break;
-            default:
-                return false;
         }
 
         return CREDIT_CARD_NUM_LUHN_CHECK.isValid(cannonicalCCN);
