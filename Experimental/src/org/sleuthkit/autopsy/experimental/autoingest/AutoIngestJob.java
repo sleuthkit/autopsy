@@ -502,7 +502,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * Comparator that supports doing a descending sort of jobs based on job
      * completion date.
      */
-    static class ReverseCompletedDateComparator implements Comparator<AutoIngestJob> {
+    static class CompletedDateDescendingComparator implements Comparator<AutoIngestJob> {
 
         @Override
         public int compare(AutoIngestJob o1, AutoIngestJob o2) {
@@ -512,8 +512,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Comparator that supports doing a descending sort of jobs based on job
-     * priority.
+     * Comparator that orders jobs in descending order by job priority.
      */
     public static class PriorityComparator implements Comparator<AutoIngestJob> {
 
@@ -525,20 +524,34 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Comparator that supports doing an alphabetical sort of jobs based on a
-     * combination of case name and processing host.
+     * Comparator that orders jobs such that those running on the local host
+     * appear first, then the remaining jobs are sorted alphabetically by case
+     * name. This is very specific to the auto ionghest control panel use case,
+     * where there is at most one job running on the local host.
      */
-    static class CaseNameAndProcessingHostComparator implements Comparator<AutoIngestJob> {
+    static class LocalHostAndCaseComparator implements Comparator<AutoIngestJob> {
 
         @Override
         public int compare(AutoIngestJob aJob, AutoIngestJob anotherJob) {
             if (aJob.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
-                return -1; // aJob is for this, float to top
+                return -1;
             } else if (anotherJob.getProcessingHostName().equalsIgnoreCase(LOCAL_HOST_NAME)) {
-                return 1; // anotherJob is for this, float to top
+                return 1;
             } else {
                 return aJob.getManifest().getCaseName().compareToIgnoreCase(anotherJob.getManifest().getCaseName());
             }
+        }
+
+    }
+
+    /**
+     * Comparator that orders jobs by data source name.
+     */
+    static class DataSourceFileNameComparator implements Comparator<AutoIngestJob> {
+
+        @Override
+        public int compare(AutoIngestJob aJob, AutoIngestJob anotherJob) {
+            return aJob.getManifest().getDataSourceFileName().compareToIgnoreCase(anotherJob.getManifest().getDataSourceFileName());
         }
 
     }
