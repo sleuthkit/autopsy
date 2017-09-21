@@ -19,6 +19,7 @@
 package org.sleuthkit.autopsy.directorytree;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -161,6 +162,7 @@ class DirectoryTreeFilterNode extends FilterNode {
     @Override
     public Action[] getActions(boolean context) {
         List<Action> actions = new ArrayList<>();
+        actions.addAll(Arrays.asList(super.getActions(true)));
         final Content content = this.getLookup().lookup(Content.class);
         if (content != null) {
             if (content instanceof Volume) {
