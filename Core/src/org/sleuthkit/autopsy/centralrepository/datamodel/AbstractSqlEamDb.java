@@ -570,7 +570,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     preparedStatement.setString(2, eamInstance.getEamDataSource().getDeviceID());
                     preparedStatement.setString(3, eamArtifact.getCorrelationValue());
                     preparedStatement.setString(4, eamInstance.getFilePath());
-                    preparedStatement.setString(5, eamInstance.getKnownStatus().name());
+                    preparedStatement.setByte(5, eamInstance.getKnownStatus().getFileKnownValue());
                     if ("".equals(eamInstance.getComment())) {
                         preparedStatement.setNull(6, Types.INTEGER);
                     } else {
@@ -957,7 +957,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                                 bulkPs.setString(2, eamInstance.getEamDataSource().getDeviceID());
                                 bulkPs.setString(3, eamArtifact.getCorrelationValue());
                                 bulkPs.setString(4, eamInstance.getFilePath());
-                                bulkPs.setString(5, eamInstance.getKnownStatus().name());
+                                bulkPs.setByte(5, eamInstance.getKnownStatus().getFileKnownValue());
                                 if ("".equals(eamInstance.getComment())) {
                                     bulkPs.setNull(6, Types.INTEGER);
                                 } else {
@@ -1109,7 +1109,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 int instance_id = resultSet.getInt("id");
                 preparedUpdate = conn.prepareStatement(sqlUpdate.toString());
 
-                preparedUpdate.setString(1, knownStatus.name());
+                preparedUpdate.setByte(1, knownStatus.getFileKnownValue());
                 // NOTE: if the user tags the same instance as BAD multiple times,
                 // the comment from the most recent tagging is the one that will
                 // prevail in the DB.
@@ -1184,7 +1184,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, value);
-            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
+            preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 artifactInstance = getEamArtifactInstanceFromResultSet(resultSet);
@@ -1226,7 +1226,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, value);
-            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
+            preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
@@ -1277,7 +1277,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             preparedStatement.setString(1, value);
-            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
+            preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 caseNames.add(resultSet.getString("case_name"));
@@ -1319,7 +1319,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(aType)));
             preparedStatement.setString(1, value);
-            preparedStatement.setString(2, TskData.FileKnown.BAD.name());
+            preparedStatement.setByte(2, TskData.FileKnown.BAD.getFileKnownValue());
             resultSet = preparedStatement.executeQuery();
             resultSet.next();
             badInstances = resultSet.getLong(1);
@@ -1532,7 +1532,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(String.format(sql, EamDbUtil.correlationTypeToReferenceTableName(correlationType)));
             preparedStatement.setInt(1, eamGlobalFileInstance.getGlobalSetID());
             preparedStatement.setString(2, eamGlobalFileInstance.getMD5Hash());
-            preparedStatement.setString(3, eamGlobalFileInstance.getKnownStatus().name());
+            preparedStatement.setByte(3, eamGlobalFileInstance.getKnownStatus().getFileKnownValue());
             preparedStatement.setString(4, eamGlobalFileInstance.getComment());
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
@@ -1565,7 +1565,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             for (EamGlobalFileInstance globalInstance : globalInstances) {
                 bulkPs.setInt(1, globalInstance.getGlobalSetID());
                 bulkPs.setString(2, globalInstance.getMD5Hash());
-                bulkPs.setString(3, globalInstance.getKnownStatus().name());
+                bulkPs.setByte(3, globalInstance.getKnownStatus().getFileKnownValue());
                 bulkPs.setString(4, globalInstance.getComment());
                 bulkPs.addBatch();
             }
@@ -1948,7 +1948,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 new EamDataSource(resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
-                TskData.FileKnown.valueOf(resultSet.getString("known_status")),
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
                 EamArtifactInstance.GlobalStatus.LOCAL
         );
 
@@ -1996,7 +1996,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 resultSet.getInt("id"),
                 resultSet.getInt("reference_set_id"),
                 resultSet.getString("value"),
-                TskData.FileKnown.valueOf(resultSet.getString("known_status")),
+                TskData.FileKnown.valueOf(resultSet.getByte("known_status")),
                 resultSet.getString("comment")
         );
 
