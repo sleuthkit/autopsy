@@ -196,8 +196,12 @@ public class EamArtifactUtil {
     
     /**
      * Create an EamArtifact from the given Content.
-     * Will return null if an artifact can not be created. Does not
-     * add the artifact to the database.
+     * Will return null if an artifact can not be created - this is not
+     * necessarily an error case, it just means an artifact can't be made.
+     * If creation fails due to an error (and not that the file is the wrong type
+     * or it has no hash), the error will be logged before returning. 
+     *
+     * Does not add the artifact to the database.
      * 
      * @param content     The content object
      * @param knownStatus Unknown, notable, or known

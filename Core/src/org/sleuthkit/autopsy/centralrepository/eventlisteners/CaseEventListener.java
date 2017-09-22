@@ -148,8 +148,6 @@ public class CaseEventListener implements PropertyChangeListener {
                     // TODO: send r into a thread pool instead
                     Thread t = new Thread(r);
                     t.start();
-                } else {
-                    LOGGER.log(Level.SEVERE, "Error creating artifact instance for {0}", af.getName());
                 }
             } // CONTENT_TAG_ADDED, CONTENT_TAG_DELETED
             break;
