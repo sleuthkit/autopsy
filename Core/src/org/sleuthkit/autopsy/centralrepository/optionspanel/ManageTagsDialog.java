@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -336,9 +336,8 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             List<BlackboardArtifactTag> artifactTags = curCase.getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);                  
             
             for(BlackboardArtifactTag bbTag:artifactTags){
-                List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbTag.getArtifact(), true, 
-                        EamDb.getInstance().getCorrelationTypes(), true);
-                for (EamArtifact eamArtifact : convertedArtifacts) {
+                List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
+                for (CorrelationAttribute eamArtifact : convertedArtifacts) {
                     EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact,TskData.FileKnown.BAD);
                 }
             }
@@ -346,7 +345,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             // Now search for files
             List<ContentTag> fileTags = curCase.getSleuthkitCase().getContentTagsByTagName(tagName);
             for(ContentTag contentTag:fileTags){
-                final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
+                final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
                             TskData.FileKnown.BAD, "");
                 EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
             }

@@ -24,7 +24,8 @@ import org.sleuthkit.datamodel.TskData;
 
 /**
  *
- * Used to store info about a specific Artifact Instance.
+ * Used to store details about a specific instance of a
+ * CorrelationAttribute. Includes its data source, path, etc.
  *
  */
 @Messages({"EamArtifactInstances.globalStatus.local=Local",
@@ -32,7 +33,7 @@ import org.sleuthkit.datamodel.TskData;
     "EamArtifactInstances.knownStatus.bad=Bad",
     "EamArtifactInstances.knownStatus.known=Known",
     "EamArtifactInstances.knownStatus.unknown=Unknown"})
-public class EamArtifactInstance implements Serializable {
+public class CorrelationAttributeInstance implements Serializable {
 
     public enum GlobalStatus {
         LOCAL(Bundle.EamArtifactInstances_globalStatus_local()),
@@ -54,39 +55,39 @@ public class EamArtifactInstance implements Serializable {
 
     private String ID;
     private EamCase eamCase;
-    private EamDataSource eamDataSource;
+    private CorrelationDataSource eamDataSource;
     private String filePath;
     private String comment;
     private TskData.FileKnown knownStatus;
     private GlobalStatus globalStatus;
 
-    public EamArtifactInstance(
+    public CorrelationAttributeInstance(
             EamCase eamCase,
-            EamDataSource eamDataSource
+            CorrelationDataSource eamDataSource
     ) {
         this("", eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
-    public EamArtifactInstance(
+    public CorrelationAttributeInstance(
             EamCase eamCase,
-            EamDataSource eamDataSource,
+            CorrelationDataSource eamDataSource,
             String filePath
     ) {
         this("", eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
-    public EamArtifactInstance(
+    public CorrelationAttributeInstance(
             EamCase eamCase,
-            EamDataSource eamDataSource,
+            CorrelationDataSource eamDataSource,
             String filePath,
             String comment
     ) {
         this("", eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
-    public EamArtifactInstance(
+    public CorrelationAttributeInstance(
             EamCase eamCase,
-            EamDataSource eamDataSource,
+            CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
             TskData.FileKnown knownStatus,
@@ -95,10 +96,10 @@ public class EamArtifactInstance implements Serializable {
         this("", eamCase, eamDataSource, filePath, comment, knownStatus, globalStatus);
     }
 
-    public EamArtifactInstance(
+    public CorrelationAttributeInstance(
             String ID,
             EamCase eamCase,
-            EamDataSource eamDataSource,
+            CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
             TskData.FileKnown knownStatus,
@@ -114,7 +115,7 @@ public class EamArtifactInstance implements Serializable {
         this.globalStatus = globalStatus;
     }
 
-    public Boolean equals(EamArtifactInstance otherInstance) {
+    public Boolean equals(CorrelationAttributeInstance otherInstance) {
         return ((this.getID().equals(otherInstance.getID()))
                 && (this.getEamCase().equals(otherInstance.getEamCase()))
                 && (this.getEamDataSource().equals(otherInstance.getEamDataSource()))
@@ -166,14 +167,14 @@ public class EamArtifactInstance implements Serializable {
     /**
      * @return the eamDataSource
      */
-    public EamDataSource getEamDataSource() {
+    public CorrelationDataSource getEamDataSource() {
         return eamDataSource;
     }
 
     /**
      * @param eamDataSource the eamDataSource to set
      */
-    public void setEamDataSource(EamDataSource eamDataSource) {
+    public void setEamDataSource(CorrelationDataSource eamDataSource) {
         this.eamDataSource = eamDataSource;
     }
 

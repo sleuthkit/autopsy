@@ -88,9 +88,9 @@ public class EamDbUtil {
         String sql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
 
         try {
-            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
+            List<CorrelationAttribute.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttribute.getDefaultCorrelationTypes();
             preparedStatement = conn.prepareStatement(sql);
-            for (EamArtifact.Type newType : DEFAULT_CORRELATION_TYPES) {
+            for (CorrelationAttribute.Type newType : DEFAULT_CORRELATION_TYPES) {
                 preparedStatement.setInt(1, newType.getId());
                 preparedStatement.setString(2, newType.getDisplayName());
                 preparedStatement.setString(3, newType.getDbTableName());
@@ -217,7 +217,7 @@ public class EamDbUtil {
      *
      * @return Instance table name for this Type.
      */
-    public static String correlationTypeToInstanceTableName(EamArtifact.Type type) {
+    public static String correlationTypeToInstanceTableName(CorrelationAttribute.Type type) {
         return type.getDbTableName() + "_instances";
     }
 
@@ -228,7 +228,7 @@ public class EamDbUtil {
      *
      * @return Reference table name for this Type.
      */
-    public static String correlationTypeToReferenceTableName(EamArtifact.Type type) {
+    public static String correlationTypeToReferenceTableName(CorrelationAttribute.Type type) {
         return "reference_" + type.getDbTableName();
     }
 
