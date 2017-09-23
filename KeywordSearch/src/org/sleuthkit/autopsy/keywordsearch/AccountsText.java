@@ -228,14 +228,10 @@ class AccountsText implements IndexedText {
 
             //add both the canonical form and the form in the text as accountNumbers to highlight.
             BlackboardAttribute attribute = artifact.getAttribute(TSK_KEYWORD);
-            if (attribute != null) {
-                this.accountNumbers.add(attribute.getValueString());
-            }
+            this.accountNumbers.add(attribute.getValueString());
             attribute = artifact.getAttribute(TSK_CARD_NUMBER);
-            if (attribute != null) {
-                this.accountNumbers.add(attribute.getValueString());
-            }
-            
+            this.accountNumbers.add(attribute.getValueString());
+
             //if the chunk id is present just use that.
             Optional<Integer> chunkID =
                     Optional.ofNullable(artifact.getAttribute(TSK_KEYWORD_SEARCH_DOCUMENT_ID))
@@ -323,7 +319,7 @@ class AccountsText implements IndexedText {
             // extracted content (minus highlight tags) is HTML-escaped
             return "<html><pre>" + highlightedText + "</pre></html>"; //NON-NLS
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage , ex); //NON-NLS
+            logger.log(Level.SEVERE, "Error getting highlighted text for Solr doc id " + this.solrObjectId + ", chunkID " + this.currentPage, ex); //NON-NLS
             return Bundle.AccountsText_getMarkup_queryFailedMsg();
         }
     }
