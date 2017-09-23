@@ -30,7 +30,6 @@ import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -62,19 +61,26 @@ final class TermsComponentQuery implements KeywordSearchQuery {
     private static final String CASE_INSENSITIVE = "case_insensitive"; //NON-NLS
     private static final boolean DEBUG_FLAG = Version.Type.DEVELOPMENT.equals(Version.getBuildType());
     private static final int MAX_TERMS_QUERY_RESULTS = 20000;
+
     private final KeywordList keywordList;
     private final Keyword originalKeyword;
+    private final List<KeywordQueryFilter> filters = new ArrayList<>(); // THIS APPEARS TO BE UNUSED
+
     private String searchTerm;
     private boolean searchTermIsEscaped;
-    private final List<KeywordQueryFilter> filters = new ArrayList<>(); // THIS APPEARS TO BE UNUSED
 
     /*
      * The following fields are part of the initial implementation of credit
      * card account search and should be factored into another class when time
      * permits.
      */
-    static final Pattern CREDIT_CARD_NUM_PATTERN = Pattern.compile("(?<ccn>[3-6]([ -]?[0-9]){11,18})");   //12-19 digits, with possible single spaces or dashes in between. First digit is 3,4,5, or 6 //NON-NLS
-    static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
+    /**
+     * 12-19 digits, with possible single spaces or dashes in between. First
+     * digit is 2 through 6
+     *
+     */
+    static final Pattern CREDIT_CARD_NUM_PATTERN =
+            Pattern.compile("(?<ccn>[2-6]([ -]?[0-9]){11,18})");
     static final Pattern CREDIT_CARD_TRACK1_PATTERN = Pattern.compile(
             /*
              * Track 1 is alphanumeric.
@@ -87,7 +93,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             "(?:" //begin nested optinal group //NON-NLS
             + "%?" //optional start sentinal: % //NON-NLS
             + "B)?" //format code  //NON-NLS
-            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[2-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 2,3,4,5, or 6 //NON-NLS
             + "\\^" //separator //NON-NLS
             + "(?<name>[^^]{2,26})" //2-26 charachter name, not containing ^ //NON-NLS
             + "(?:\\^" //separator //NON-NLS
@@ -108,7 +114,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              *
              */
             "[:;<=>?]?" //(optional)start sentinel //NON-NLS
-            + "(?<accountNumber>[3-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 3,4,5, or 6 //NON-NLS
+            + "(?<accountNumber>[2-6]([ -]?[0-9]){11,18})" //12-19 digits, with possible single spaces or dashes in between. first digit is 2,3,4,5, or 6 //NON-NLS
             + "(?:[:;<=>?]" //separator //NON-NLS
             + "(?:(?<expiration>\\d{4})" //4 digit expiration date YYMM //NON-NLS
             + "(?:(?<serviceCode>\\d{3})" //3 digit service code //NON-NLS
@@ -117,6 +123,8 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "(?<LRC>.)" //longitudinal redundancy check //NON-NLS
             + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
     static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
+
+    private static final CreditCardValidator CREDIT_CARD_VALIDATOR = new CreditCardValidator();
 
     /**
      * Constructs an object that implements a regex query that will be performed
@@ -289,9 +297,8 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              */
             if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 Matcher matcher = CREDIT_CARD_NUM_PATTERN.matcher(term.getTerm());
-                matcher.find();
-                final String ccn = CharMatcher.anyOf(" -").removeFrom(matcher.group("ccn"));
-                if (false == CREDIT_CARD_NUM_LUHN_CHECK.isValid(ccn)) {
+                if (false == matcher.find()
+                        || false == CREDIT_CARD_VALIDATOR.isValidCCN(matcher.group("ccn"))) {
                     continue;
                 }
             }
@@ -319,7 +326,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
         return results;
     }
 
-    
     @Override
     public BlackboardArtifact writeSingleFileHitsToBlackBoard(Content content, Keyword foundKeyword, KeywordHit hit, String snippet, String listName) {
         /*
@@ -460,9 +466,9 @@ final class TermsComponentQuery implements KeywordSearchQuery {
      * hit and turns them into artifact attributes. The track 1 data has the
      * same fields as the track two data, plus the account holder's name.
      *
-     * @param attributesMap A map of artifact attribute objects, used to avoid
-     *                      creating duplicate attributes.
-     * @param matcher       A matcher for the snippet.
+     * @param attributeMap A map of artifact attribute objects, used to avoid
+     *                     creating duplicate attributes.
+     * @param matcher      A matcher for the snippet.
      */
     static private void parseTrack1Data(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, Matcher matcher) {
         parseTrack2Data(attributeMap, matcher);
