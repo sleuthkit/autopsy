@@ -55,6 +55,8 @@ class AccountsText implements IndexedText {
     private static final Logger logger = Logger.getLogger(AccountsText.class.getName());
     private static final boolean DEBUG = (Version.getBuildType() == Version.Type.DEVELOPMENT);
 
+    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";
+
     private static final String HIGHLIGHT_PRE = "<span style='background:yellow'>"; //NON-NLS
     private static final String ANCHOR_NAME_PREFIX = AccountsText.class.getName() + "_";
 
@@ -80,23 +82,24 @@ class AccountsText implements IndexedText {
     private int numberPagesForFile = 0;
     private Integer currentPage = 0;
 
-    /*
+    /**
      * map from page/chunk to number of hits. value is 0 if not yet known.
      */
     private final TreeMap<Integer, Integer> numberOfHitsPerPage = new TreeMap<>();
-    /*
+
+    /**
      * set of pages, used for iterating back and forth. Only stores pages with
      * hits
      */
     private final Set<Integer> pages = numberOfHitsPerPage.keySet();
-    /*
+
+    /**
      * map from page/chunk number to current hit on that page.
      */
     private final HashMap<Integer, Integer> currentHitPerPage = new HashMap<>();
 
     AccountsText(long objectID, BlackboardArtifact artifact) {
         this(objectID, Arrays.asList(artifact));
-
     }
 
     @NbBundle.Messages({
@@ -201,11 +204,7 @@ class AccountsText implements IndexedText {
 
     @Override
     public int currentItem() {
-        if (this.currentHitPerPage.containsKey(currentPage)) {
-            return currentHitPerPage.get(currentPage);
-        } else {
-            return 0;
-        }
+        currentHitPerPage.getOrDefault(currentPage, 0);
     }
 
     /**
@@ -261,10 +260,11 @@ class AccountsText implements IndexedText {
 
         isPageInfoLoaded = true;
     }
-    private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";
 
     /**
      * Load the paging info from the QueryResults object.
+     *
+     * @param hits The QueryResults to load the paging info from.
      */
     synchronized private void loadPageInfoFromHits(QueryResults hits) {
         //organize the hits by page, filter as needed
@@ -370,9 +370,6 @@ class AccountsText implements IndexedText {
 
     @Override
     public int getNumberHits() {
-        if (!this.numberOfHitsPerPage.containsKey(this.currentPage)) {
-            return 0;
-        }
-        return this.numberOfHitsPerPage.get(this.currentPage);
+        return numberOfHitsPerPage.getOrDefault(currentPage, 0);
     }
 }
