@@ -57,8 +57,6 @@ abstract class KeywordSearchList {
      * expression used by the code that validates credit card account numbers.
      * This regex used to attempt to limit hits to numbers starting with the
      * digits 3 through 6 but this resulted in an error when we moved to Solr 6.
-     *
-     * //TODO: is this regex actually used anywhere? Does it matter?
      */
     private static final String CCN_REGEX = "(%?)(B?)([0-9][ \\-]*?){12,19}(\\^?)";  //NON-NLS
 
