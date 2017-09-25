@@ -120,6 +120,6 @@ public final class RunIngestModulesAction extends AbstractAction {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        return super.clone(); //To change body of generated methods, choose Tools | Templates.
+        throw new CloneNotSupportedException("Clone is not supported for the RunIngestModulesAction");
     }
 }
