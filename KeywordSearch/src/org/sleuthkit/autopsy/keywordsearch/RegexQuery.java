@@ -275,7 +275,7 @@ final class RegexQuery implements KeywordSearchQuery {
                     ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 
                     if (artifactAttributeType == null) {
-                        hits.add(createHit(content, hitMatcher, hit, docId));
+                        hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                     } else {
                         switch (artifactAttributeType) {
                             case TSK_EMAIL:
@@ -286,7 +286,7 @@ final class RegexQuery implements KeywordSearchQuery {
                                  */
                                 if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
                                         && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                                    hits.add(createHit(content, hitMatcher, hit, docId));
+                                    hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                                 }
 
                                 break;
@@ -303,14 +303,15 @@ final class RegexQuery implements KeywordSearchQuery {
                                     if (ccnMatcher.find()) {
                                         final String group = ccnMatcher.group("ccn");
                                         if (CREDIT_CARD_VALIDATOR.isValidCCN(group)) {
-                                            hits.add(createHit(content, hitMatcher, hit, docId));
+                                            hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                                         };
                                     }
                                 }
 
                                 break;
                             default:
-                                hits.add(createHit(content, hitMatcher, hit, docId));
+                                hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
+                                break;
                         }
                     }
                 }
@@ -332,21 +333,7 @@ final class RegexQuery implements KeywordSearchQuery {
         return hits;
     }
 
-    /**
-     * Create a KeywordHit from the given information.
-     *
-     *
-     * @param content
-     * @param hitMatcher
-     * @param hit
-     * @param docId
-     *
-     * @return
-     *
-     * @throws TskCoreException
-     */
-    private KeywordHit createHit(String content, Matcher hitMatcher, String hit, final String docId) throws TskCoreException {
-
+    static private String makeSnippet(String content, Matcher hitMatcher, String hit) {
         // Get the snippet from the document.
         int maxIndex = content.length() - 1;
         StringBuilder snippet = new StringBuilder(
@@ -361,8 +348,7 @@ final class RegexQuery implements KeywordSearchQuery {
                 Integer.min(maxIndex, hitMatcher.end()),
                 Integer.min(maxIndex, hitMatcher.end() + 20)
         ));
-
-        return new KeywordHit(docId, snippet.toString(), hit);
+        return snippet.toString();
     }
 
     @Override
