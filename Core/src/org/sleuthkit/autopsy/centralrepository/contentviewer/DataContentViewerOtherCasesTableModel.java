@@ -43,15 +43,15 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
     private enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
-        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 75),
-        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 75),
-        TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 40),
-        VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 145),
-        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 45),
-        SCOPE(Bundle.DataContentViewerOtherCasesTableModel_scope(), 20),
+        CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
+        DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 100),
+        TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 100),
+        VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 200),
+        KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 50),
+        SCOPE(Bundle.DataContentViewerOtherCasesTableModel_scope(), 50),
+        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 450),
         COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200),
-        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 250),
-        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 145);
+        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 250);
 
         private final String columnName;
         private final int columnWidth;

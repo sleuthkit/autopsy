@@ -592,7 +592,15 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         org.openide.awt.Mnemonics.setLocalizedText(showCommonalityMenuItem, org.openide.util.NbBundle.getMessage(DataContentViewerOtherCases.class, "DataContentViewerOtherCases.showCommonalityMenuItem.text")); // NOI18N
         rightClickPopupMenu.add(showCommonalityMenuItem);
 
-        tableScrollPane.setPreferredSize(new java.awt.Dimension(452, 30));
+        setMinimumSize(new java.awt.Dimension(1500, 10));
+        setOpaque(false);
+        setPreferredSize(new java.awt.Dimension(1500, 44));
+
+        otherCasesPanel.setPreferredSize(new java.awt.Dimension(1500, 144));
+
+        tableContainerPanel.setPreferredSize(new java.awt.Dimension(1500, 63));
+
+        tableScrollPane.setPreferredSize(new java.awt.Dimension(1500, 30));
 
         otherCasesTable.setAutoCreateRowSorter(true);
         otherCasesTable.setModel(tableModel);
@@ -600,6 +608,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         otherCasesTable.setComponentPopupMenu(rightClickPopupMenu);
         otherCasesTable.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         tableScrollPane.setViewportView(otherCasesTable);
+
+        tableStatusPanel.setPreferredSize(new java.awt.Dimension(1500, 16));
 
         tableStatusPanelLabel.setForeground(new java.awt.Color(255, 0, 51));
 
@@ -643,16 +653,16 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         otherCasesPanel.setLayout(otherCasesPanelLayout);
         otherCasesPanelLayout.setHorizontalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 800, Short.MAX_VALUE)
+            .addGap(0, 1500, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addComponent(tableContainerPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         otherCasesPanelLayout.setVerticalGroup(
             otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 144, Short.MAX_VALUE)
+            .addGap(0, 60, Short.MAX_VALUE)
             .addGroup(otherCasesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(otherCasesPanelLayout.createSequentialGroup()
-                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(tableContainerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
                     .addGap(0, 0, 0)))
         );
 
@@ -664,7 +674,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(otherCasesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 60, Short.MAX_VALUE)
         );
     }// </editor-fold>//GEN-END:initComponents
 
