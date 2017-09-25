@@ -142,11 +142,13 @@ public class CaseEventListener implements PropertyChangeListener {
                 final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(af, 
                         knownStatus, comment);
 
-                // send update to Central Repository db
-                Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
-                // TODO: send r into a thread pool instead
-                Thread t = new Thread(r);
-                t.start();
+                if(eamArtifact != null){
+                    // send update to Central Repository db
+                    Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
+                    // TODO: send r into a thread pool instead
+                    Thread t = new Thread(r);
+                    t.start();
+                }
             } // CONTENT_TAG_ADDED, CONTENT_TAG_DELETED
             break;
 

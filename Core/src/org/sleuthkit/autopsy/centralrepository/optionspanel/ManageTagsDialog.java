@@ -347,7 +347,9 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             for(ContentTag contentTag:fileTags){
                 final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
                             TskData.FileKnown.BAD, "");
-                EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
+                if(eamArtifact != null){
+                    EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
+                }
             }
         } catch (TskCoreException ex){
             throw new EamDbException("Error updating artifacts", ex);
