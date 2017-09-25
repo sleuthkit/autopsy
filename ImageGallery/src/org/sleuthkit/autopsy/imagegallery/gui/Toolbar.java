@@ -136,7 +136,15 @@ public class Toolbar extends ToolBar {
             tagGroupMenuButton.setText(followUpGroupAction.getText());
             tagGroupMenuButton.setGraphic(followUpGroupAction.getGraphic());
         } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Could create follow up tag menu item", ex); //NON-NLS
+            /*
+             * The problem appears to be a timing issue where a case is closed
+             * before this initialization is completed, which It appears to be
+             * harmless, so we are temporarily changing this log message to a
+             * WARNING.
+             *
+             * TODO (JIRA-3010): SEVERE error logged by image Gallery UI
+             */
+            LOGGER.log(Level.WARNING, "Could not create Follow Up tag menu item", ex); //NON-NLS
         }
         tagGroupMenuButton.showingProperty().addListener(showing -> {
             if (tagGroupMenuButton.isShowing()) {

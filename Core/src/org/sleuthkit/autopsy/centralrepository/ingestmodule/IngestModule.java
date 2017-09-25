@@ -54,7 +54,8 @@ import org.sleuthkit.datamodel.TskDataException;
  * Ingest module for inserting entries into the Central Repository database on
  * ingest of a data source
  */
-@Messages({"IngestModule.prevcases.text=Previous Cases"})
+@Messages({"IngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
+           "IngestModule.prevCaseComment.text=Previous Case: "})
 class IngestModule implements FileIngestModule {
 
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
@@ -187,7 +188,7 @@ class IngestModule implements FileIngestModule {
     // see ArtifactManagerTimeTester for details
     @Messages({
         "IngestModule.notfyBubble.title=Central Repository Not Initialized",
-        "IngestModule.errorMessage.isNotEnabled=Central Repository settings are not initialized, cannot run Correlation Engine ingest module."
+        "IngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Correlation Engine ingest module."
     })
     @Override
     public void startUp(IngestJobContext context) throws IngestModuleException { 
@@ -210,8 +211,8 @@ class IngestModule implements FileIngestModule {
         // Don't allow sqlite central repo databases to be used for multi user cases
         if((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) 
                 && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)){
-            LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite Central Repository.");
-            throw new IngestModuleException("Cannot run on a multi-user case with a SQLite Central Repository."); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
+            throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
         eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
@@ -230,8 +231,8 @@ class IngestModule implements FileIngestModule {
         try {
             dbManager = EamDb.getInstance();
         } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); // NON-NLS
-            throw new IngestModuleException("Error connecting to Central Repository database.", ex); // NON-NLS
+            LOGGER.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
+            throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
         
         try {
@@ -289,9 +290,9 @@ class IngestModule implements FileIngestModule {
             String MODULE_NAME = IngestModuleFactory.getModuleName();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_FILE_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestModule_prevcases_text());
+                    Bundle.IngestModule_prevTaggedSet_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                    "Previous Case: " + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
+                     Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);
             tifArtifact.addAttribute(att2);
 
@@ -319,7 +320,7 @@ class IngestModule implements FileIngestModule {
             String MODULE_NAME = IngestModuleFactory.getModuleName();
             BlackboardArtifact tifArtifact = abstractFile.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_HASHSET_HIT);
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
-                    Bundle.IngestModule_prevcases_text());
+                    Bundle.IngestModule_prevCaseComment_text());
             tifArtifact.addAttribute(att);
 
             try {
