@@ -166,33 +166,6 @@ class DirectoryTreeFilterNode extends FilterNode {
         final Content content = this.getLookup().lookup(Content.class);
         if (content != null) {
             actions.addAll(Arrays.asList(super.getActions(true)));
-            if (content instanceof Volume) {
-                actions.add(new FileSystemDetailsAction((Volume) content));
-            }
-            actions.addAll(ExplorerNodeActionVisitor.getActions(content));
-
-            Directory dir = this.getLookup().lookup(Directory.class);
-            if (dir != null) {
-                actions.add(ExtractAction.getInstance());
-                actions.add(new RunIngestModulesAction(dir));
-            }
-
-            final Image img = this.getLookup().lookup(Image.class);
-            final VirtualDirectory virtualDirectory = this.getLookup().lookup(VirtualDirectory.class);
-            boolean isRootVD = false;
-            if (virtualDirectory != null) {
-                try {
-                    if (virtualDirectory.getParent() == null) {
-                        isRootVD = true;
-                    }
-                } catch (TskCoreException ex) {
-                    logger.log(Level.WARNING, "Error determining the parent of the virtual directory", ex); // NON-NLS
-                }
-            }
-            if (img != null || isRootVD) {
-                actions.add(new FileSearchAction(NbBundle.getMessage(this.getClass(), "DirectoryTreeFilterNode.action.openFileSrcByAttr.text")));
-                actions.add(new RunIngestModulesAction(Collections.<Content>singletonList(content)));
-            }
         }
         actions.add(collapseAllAction);
         return actions.toArray(new Action[actions.size()]);
