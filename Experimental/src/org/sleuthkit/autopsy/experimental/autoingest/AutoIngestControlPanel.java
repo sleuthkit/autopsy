@@ -1570,7 +1570,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                             JOptionPane.INFORMATION_MESSAGE);
                 } else if (CaseDeletionResult.PARTIALLY_DELETED == result) {
                     JOptionPane.showMessageDialog(this,
-                            String.format("Could not delete case %s. See system log for details.", caseName),
+                            String.format("Could not fully delete case %s. See system log for details.", caseName),
                             org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
                             JOptionPane.INFORMATION_MESSAGE);
                 }

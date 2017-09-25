@@ -23,6 +23,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -35,9 +36,9 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -64,9 +65,9 @@ class IngestModule implements FileIngestModule {
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
     private long jobId;
     private EamCase eamCase;
-    private EamDataSource eamDataSource;
+    private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
-    private EamArtifact.Type filesType;
+    private CorrelationAttribute.Type filesType;
 
     @Override
     public ProcessResult process(AbstractFile af) {
@@ -137,14 +138,14 @@ class IngestModule implements FileIngestModule {
         }
 
         try {
-            EamArtifact eamArtifact = new EamArtifact(filesType, md5);
-            EamArtifactInstance cefi = new EamArtifactInstance(
+            CorrelationAttribute eamArtifact = new CorrelationAttribute(filesType, md5);
+            CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
                     eamCase,
                     eamDataSource,
                     af.getParentPath() + af.getName(),
                     null,
                     TskData.FileKnown.UNKNOWN,
-                    EamArtifactInstance.GlobalStatus.LOCAL
+                    CorrelationAttributeInstance.GlobalStatus.LOCAL
             );
             eamArtifact.addInstance(cefi);
             dbManager.prepareBulkArtifact(eamArtifact);
@@ -217,15 +218,12 @@ class IngestModule implements FileIngestModule {
         jobId = context.getJobId();
         eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
 
-        String deviceId;
         try {
-            deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(context.getDataSource().getId()).getDeviceId();
-        } catch (TskCoreException | TskDataException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting data source device id in ingest module start up.", ex); // NON-NLS
-            throw new IngestModuleException("Error getting data source device id in ingest module start up.", ex); // NON-NLS
+            eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource());
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
+            throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
         }
-
-        eamDataSource = new EamDataSource(deviceId, context.getDataSource().getName());
 
         EamDb dbManager;
         try {
@@ -236,7 +234,7 @@ class IngestModule implements FileIngestModule {
         }
         
         try {
-            filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
+            filesType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS

@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 
@@ -34,10 +34,10 @@ public class NewArtifactsRunner implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(NewArtifactsRunner.class.getName());
     private static final long serialVersionUID = 1L;
 
-    private final Collection<EamArtifact> eamArtifacts;
+    private final Collection<CorrelationAttribute> eamArtifacts;
 
     @SuppressWarnings(value = {"unchecked", "rawtypes"})
-    public NewArtifactsRunner(Collection<EamArtifact> eamArtifacts) {
+    public NewArtifactsRunner(Collection<CorrelationAttribute> eamArtifacts) {
         this.eamArtifacts = new ArrayList(eamArtifacts);
     }
 
@@ -51,7 +51,7 @@ public class NewArtifactsRunner implements Runnable {
         try {
             EamDb dbManager = EamDb.getInstance();
         
-            for (EamArtifact eamArtifact : eamArtifacts) {
+            for (CorrelationAttribute eamArtifact : eamArtifacts) {
                 dbManager.addArtifact(eamArtifact);
             }
         } catch (EamDbException ex) {

@@ -21,18 +21,19 @@ package org.sleuthkit.autopsy.corecomponents;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import java.util.logging.Level;
 import javax.swing.JComponent;
 import org.openide.explorer.ExplorerManager;
 import org.openide.explorer.ExplorerUtils;
-import org.openide.util.NbBundle;
-import org.openide.windows.TopComponent;
 import org.openide.nodes.Node;
+import org.openide.util.NbBundle;
 import org.openide.windows.Mode;
+import org.openide.windows.RetainLocation;
+import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.casemodule.Case;
+import org.sleuthkit.autopsy.corecomponentinterfaces.DataResult;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataResultViewer;
 import org.sleuthkit.autopsy.coreutils.Logger;
 
@@ -55,11 +56,12 @@ import org.sleuthkit.autopsy.coreutils.Logger;
  * Implements DataResult interface by delegating to the encapsulated
  * DataResultPanel.
  */
+@RetainLocation("editor")
 public class DataResultTopComponent extends TopComponent implements DataResult, ExplorerManager.Provider {
 
     private static final Logger logger = Logger.getLogger(DataResultTopComponent.class.getName());
-    private ExplorerManager explorerManager = new ExplorerManager();
-    private DataResultPanel dataResultPanel; //embedded component with all the logic
+    private final ExplorerManager explorerManager = new ExplorerManager();
+    private final DataResultPanel dataResultPanel; //embedded component with all the logic
     private boolean isMain;
     private String customModeName;
 
@@ -86,7 +88,7 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
      *
      * @param name                unique name of the data result window, also
      *                            used as title
-     * @param customModeName      custom mode to dock into
+     * @param mode                custom mode to dock into
      * @param customContentViewer custom content viewer to send selection events
      *                            to
      */
@@ -255,16 +257,10 @@ public class DataResultTopComponent extends TopComponent implements DataResult, 
         if (customModeName != null) {
             Mode mode = WindowManager.getDefault().findMode(customModeName);
             if (mode != null) {
-                StringBuilder message = new StringBuilder("Found custom mode, setting: "); //NON-NLS
-                message.append(customModeName);
-                logger.log(Level.INFO, message.toString());
+                logger.log(Level.INFO, "Found custom mode, setting: {0}", customModeName);//NON-NLS
                 mode.dockInto(this);
-
             } else {
-                StringBuilder message = new StringBuilder("Could not find mode: "); //NON-NLS
-                message.append(customModeName);
-                message.append(", will dock into the default one"); //NON-NLS
-                logger.log(Level.WARNING, message.toString());
+                logger.log(Level.WARNING, "Could not find mode: {0}, will dock into the default one", customModeName);//NON-NLS
             }
         }
     }
