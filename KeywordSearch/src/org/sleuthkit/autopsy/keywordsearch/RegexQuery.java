@@ -88,6 +88,7 @@ final class RegexQuery implements KeywordSearchQuery {
     private static final CreditCardValidator CREDIT_CARD_VALIDATOR = new CreditCardValidator();
     private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
+    private static final String SNIPPET_DELIMITER = String.valueOf(Character.toChars(171));
 
     private final List<KeywordQueryFilter> filters = new ArrayList<>();
     private final KeywordList keywordList;
@@ -150,7 +151,7 @@ final class RegexQuery implements KeywordSearchQuery {
         final Server solrServer = KeywordSearch.getServer();
         SolrQuery solrQuery = new SolrQuery();
 
-        /**
+        /*
          * The provided regular expression may include wildcards at the
          * beginning and/or end. These wildcards are used to indicate that the
          * user wants to find hits for the regex that are embedded within other
@@ -333,22 +334,28 @@ final class RegexQuery implements KeywordSearchQuery {
         return hits;
     }
 
-    static private String makeSnippet(String content, Matcher hitMatcher, String hit) {
+    /**
+     * Make a snippet from the given content that has the given hit plus some
+     * surrounding context.
+     *
+     * @param content    The content to extract the snippet from.
+     *
+     * @param hitMatcher The Matcher that has the start/end info for where the
+     *                   hit is in the content.
+     * @param hit        The actual hit in the content.
+     *
+     * @return A snippet extracted from content that contains hit plus some
+     *         surrounding context.
+     */
+    private String makeSnippet(String content, Matcher hitMatcher, String hit) {
         // Get the snippet from the document.
         int maxIndex = content.length() - 1;
-        StringBuilder snippet = new StringBuilder(
-                content.substring(
-                        Integer.max(0, hitMatcher.start() - 20),
-                        Integer.max(0, hitMatcher.start())
-                ));
-        snippet.appendCodePoint(171);
-        snippet.append(hit);
-        snippet.appendCodePoint(171);
-        snippet.append(content.substring(
-                Integer.min(maxIndex, hitMatcher.end()),
-                Integer.min(maxIndex, hitMatcher.end() + 20)
-        ));
-        return snippet.toString();
+        final int end = hitMatcher.end();
+        final int start = hitMatcher.start();
+
+        return content.substring(Integer.max(0, start - 20), Integer.max(0, start))
+                + SNIPPET_DELIMITER + hit + SNIPPET_DELIMITER
+                + content.substring(Integer.min(maxIndex, end), Integer.min(maxIndex, end + 20));
     }
 
     @Override
@@ -563,7 +570,7 @@ final class RegexQuery implements KeywordSearchQuery {
      */
     static private void addAttributeIfNotAlreadyCaptured(Map<BlackboardAttribute.Type, BlackboardAttribute> attributeMap, ATTRIBUTE_TYPE attrType, String groupName, Matcher matcher) {
         BlackboardAttribute.Type type = new BlackboardAttribute.Type(attrType);
-        attributeMap.computeIfAbsent(type, (BlackboardAttribute.Type t) -> {
+        attributeMap.computeIfAbsent(type, t -> {
             String value = matcher.group(groupName);
             if (attrType.equals(ATTRIBUTE_TYPE.TSK_CARD_NUMBER)) {
                 attributeMap.put(new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD),
@@ -572,8 +579,9 @@ final class RegexQuery implements KeywordSearchQuery {
             }
             if (StringUtils.isNotBlank(value)) {
                 return new BlackboardAttribute(attrType, MODULE_NAME, value);
+            } else {
+                return null;
             }
-            return null;
         });
     }
 }
