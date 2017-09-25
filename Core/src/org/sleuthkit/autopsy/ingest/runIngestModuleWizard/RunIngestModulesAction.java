@@ -23,13 +23,12 @@ import java.awt.event.ActionEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JOptionPane;
 import org.openide.DialogDisplayer;
 import org.openide.WizardDescriptor;
-import org.openide.util.HelpCtx;
 import org.openide.util.NbBundle.Messages;
-import org.openide.util.actions.CallableSystemAction;
 import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.ingest.IngestJobSettings;
 import org.sleuthkit.autopsy.ingest.IngestManager;
@@ -41,7 +40,7 @@ import org.sleuthkit.datamodel.Directory;
  * When the data source is pressed, it should open the wizard for ingest
  * modules.
  */
-public final class RunIngestModulesAction extends CallableSystemAction {
+public final class RunIngestModulesAction extends AbstractAction {
 
     @Messages("RunIngestModulesAction.name=Run Ingest Modules")
     private static final long serialVersionUID = 1L;
@@ -51,6 +50,21 @@ public final class RunIngestModulesAction extends CallableSystemAction {
      * used instead of this wizard and is retained for backwards compatibility.
      */
     private static final String EXECUTION_CONTEXT = "org.sleuthkit.autopsy.ingest.RunIngestModulesDialog";
+    /**
+     * Display any warnings that the ingestJobSettings have.
+     *
+     * @param ingestJobSettings
+     */
+    private static void showWarnings(IngestJobSettings ingestJobSettings) {
+        List<String> warnings = ingestJobSettings.getWarnings();
+        if (warnings.isEmpty() == false) {
+            StringBuilder warningMessage = new StringBuilder(1024);
+            for (String warning : warnings) {
+                warningMessage.append(warning).append("\n");
+            }
+            JOptionPane.showMessageDialog(null, warningMessage.toString());
+        }
+    }
     private final List<Content> dataSources = new ArrayList<>();
     private final IngestJobSettings.IngestType ingestType;
 
@@ -103,35 +117,9 @@ public final class RunIngestModulesAction extends CallableSystemAction {
         }
     }
 
-    /**
-     * Display any warnings that the ingestJobSettings have.
-     *
-     * @param ingestJobSettings
-     */
-    private static void showWarnings(IngestJobSettings ingestJobSettings) {
-        List<String> warnings = ingestJobSettings.getWarnings();
-        if (warnings.isEmpty() == false) {
-            StringBuilder warningMessage = new StringBuilder(1024);
-            for (String warning : warnings) {
-                warningMessage.append(warning).append("\n");
-            }
-            JOptionPane.showMessageDialog(null, warningMessage.toString());
-        }
-    }
 
     @Override
-    public void performAction() {
-        actionPerformed(null);
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone(); //To change body of generated methods, choose Tools | Templates.
     }
-
-    @Override
-    public String getName() {
-        return Bundle.RunIngestModulesAction_name();
-    }
-
-    @Override
-    public HelpCtx getHelpCtx() {
-        return HelpCtx.DEFAULT_HELP;
-    }
-    
 }
