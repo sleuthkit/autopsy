@@ -32,10 +32,10 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
@@ -139,7 +139,7 @@ public class CaseEventListener implements PropertyChangeListener {
                     }
                 }
 
-                final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(af, 
+                final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(af, 
                         knownStatus, comment);
 
                 // send update to Central Repository db
@@ -220,18 +220,15 @@ public class CaseEventListener implements PropertyChangeListener {
                     return;
                 }
 
-                try {
-                    List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                    for (EamArtifact eamArtifact : convertedArtifacts) {
-                        eamArtifact.getInstances().get(0).setComment(comment);
-                        Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
-                        // TODO: send r into a thread pool instead
-                        Thread t = new Thread(r);
-                        t.start();
-                    }
-                } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error, unable to get artifact types during BLACKBOARD_ARTIFACT_TAG_ADDED/BLACKBOARD_ARTIFACT_TAG_DELETED event.", ex);
+                List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, true, true);
+                for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                    eamArtifact.getInstances().get(0).setComment(comment);
+                    Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
+                    // TODO: send r into a thread pool instead
+                    Thread t = new Thread(r);
+                    t.start();
                 }
+                
             } // BLACKBOARD_ARTIFACT_TAG_ADDED, BLACKBOARD_ARTIFACT_TAG_DELETED
             break;
 
@@ -245,9 +242,8 @@ public class CaseEventListener implements PropertyChangeListener {
 
                 try {
                     String deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
-
                     if (null == dbManager.getDataSourceDetails(deviceId)) {
-                        dbManager.newDataSource(new EamDataSource(deviceId, newDataSource.getName()));
+                        dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(newDataSource));
                     }
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
