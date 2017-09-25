@@ -142,7 +142,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             jobsSnapshot.removePendingJob(event.getJob());
             jobsSnapshot.addOrReplaceRunningJob(event.getJob());
             setChanged();
-            notifyObservers(jobsSnapshot.deepCopy());
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -160,7 +160,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             jobsSnapshot.removePendingJob(job);
             jobsSnapshot.addOrReplaceRunningJob(job);
             setChanged();
-            notifyObservers(jobsSnapshot.deepCopy());
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -176,7 +176,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             jobsSnapshot.removeRunningJob(job);
             jobsSnapshot.addOrReplaceCompletedJob(job);
             setChanged();
-            notifyObservers(jobsSnapshot.deepCopy());
+            notifyObservers(jobsSnapshot);
         }
     }
 
@@ -207,7 +207,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      */
     JobsSnapshot getJobsSnapshot() {
         synchronized (jobsLock) {
-            return jobsSnapshot.deepCopy();
+            return jobsSnapshot;
         }
     }
 
@@ -221,7 +221,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     JobsSnapshot refreshJobsSnapshot() {
         synchronized (jobsLock) {
             jobsSnapshot = queryCoordinationService();
-            return jobsSnapshot.deepCopy();
+            return jobsSnapshot;
         }
     }
 
@@ -323,7 +323,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                 }).start();
 
             }
-            return jobsSnapshot.deepCopy();
+            return jobsSnapshot;
         }
     }
 
@@ -345,7 +345,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                 synchronized (jobsLock) {
                     jobsSnapshot = queryCoordinationService();
                     setChanged();
-                    notifyObservers(jobsSnapshot.deepCopy());
+                    notifyObservers(jobsSnapshot);
                 }
             }
         }
@@ -468,27 +468,8 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             jobSet.add(job);
         }
 
-        /**
-         * Creates a deep copy of a jobs snapshot.
-         *
-         * @return The deep copy.
-         */
-        private JobsSnapshot deepCopy() {
-            JobsSnapshot copy = new JobsSnapshot();
-            this.pendingJobs.forEach((job) -> {
-                this.addOrReplacePendingJob(new AutoIngestJob(job));
-            });
-            this.runningJobs.forEach((job) -> {
-                this.addOrReplacePendingJob(new AutoIngestJob(job));
-            });
-            this.completedJobs.forEach((job) -> {
-                this.addOrReplacePendingJob(new AutoIngestJob(job));
-            });
-            return copy;
-        }
-
     }
-
+    
     /**
      * Exception type thrown when there is an error completing an auto ingest
      * monitor operation.

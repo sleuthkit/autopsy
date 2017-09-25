@@ -149,37 +149,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     }
 
     /**
-     * Copy constructs an automated ingest job.
-     *
-     * @param job The job to be copied.
-     */
-    AutoIngestJob(AutoIngestJob job) {
-        /*
-         * Version 0 fields.
-         */
-        this.manifest = job.getManifest(); // Manifest is immutable.
-        this.nodeName = job.getProcessingHostName();
-        this.caseDirectoryPath = job.getCaseDirectoryPath().toString();
-        this.priority = job.getPriority();
-        this.stage = job.getProcessingStage();
-        this.stageStartDate = job.getProcessingStageStartDate();
-        this.dataSourceProcessor = job.getDataSourceProcessor();
-        this.ingestJob = job.getIngestJob();
-        this.cancelled = job.isCanceled();
-        this.completed = job.isCompleted();
-        this.completedDate = new Date(job.getCompletedDate().getTime());
-        this.errorsOccurred = job.getErrorsOccurred();
-
-        /*
-         * Version 1 fields.
-         */
-        this.version = job.getVersion();
-        this.processingStatus = job.getProcessingStatus();
-        this.numberOfCrashes = job.getNumberOfCrashes();
-        this.stageDetails = job.getProcessingStageDetails(); // StageDetails is immutable.
-    }
-
-    /**
      * Gets the job manifest.
      *
      * @return The job manifest.
@@ -323,13 +292,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
         this.dataSourceProcessor = dataSourceProcessor;
     }
 
-    /**
-     * Gets the data source processor for the job.
-     */
-    private DataSourceProcessor getDataSourceProcessor() {
-        return this.dataSourceProcessor;
-    }
-    
     /**
      * Sets the ingest job for the auto ingest job. Used for obtaining
      * processing stage details, cancelling the currently running data source
@@ -534,15 +496,6 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
     @Override
     public int compareTo(AutoIngestJob otherJob) {
         return -this.getManifest().getDateFileCreated().compareTo(otherJob.getManifest().getDateFileCreated());
-    }
-
-    /**
-     * gest the version number of the job data.
-     *
-     * @return The version number.
-     */
-    private int getVersion() {
-        return this.version;
     }
 
     /**
