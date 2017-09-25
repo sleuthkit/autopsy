@@ -214,10 +214,6 @@
                 <binary-origin>release/modules/ext/slf4j-api-1.7.12.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-17.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-17.0.jar</binary-origin>
-            </class-path-extension>
-            <class-path-extension>
                 <runtime-relative-path>ext/opennlp-maxent-3.0.3.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/opennlp-maxent-3.0.3.jar</binary-origin>
             </class-path-extension>
@@ -676,6 +672,10 @@
             <class-path-extension>
                 <runtime-relative-path>ext/sis-storage-0.6.jar</runtime-relative-path>
                 <binary-origin>release/modules/ext/sis-storage-0.6.jar</binary-origin>
+            </class-path-extension>
+            <class-path-extension>
+                <runtime-relative-path>ext/guava-21.0.jar</runtime-relative-path>
+                <binary-origin>ext/guava-21.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/jcip-annotations-1.0.jar</runtime-relative-path>

@@ -46,6 +46,18 @@ public class CreditCardValidatorTest {
     public void tearDown() {
     }
 
+    @Test 
+    public void testLengthMatchesBin(){
+           System.out.println("lengthMatchesBin");
+        CreditCardValidator validator = new CreditCardValidator();
+
+        //amex must be 15
+        assertEquals(true, validator.isValidCCN("3431 136294 58529"));
+        assertEquals(false, validator.isValidCCN("3431-136294-5850"));
+        assertEquals(false, validator.isValidCCN("34311362945850"));
+        assertEquals(false, validator.isValidCCN("3431 1362 9458 5034"));
+    }
+    
     /**
      * Test of isValidCCN method, of class CreditCardValidator.
      */
@@ -187,4 +199,6 @@ public class CreditCardValidatorTest {
         assertEquals(false,  CreditCardValidator.isValidCCN("123 456789031"));  //grouping
         assertEquals(false,  CreditCardValidator.isValidCCN("1234-56789 031")); //separators
     }
+
+   
 }
