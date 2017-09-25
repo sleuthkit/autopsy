@@ -219,9 +219,8 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @return The refreshed snapshot.
      */
     JobsSnapshot refreshJobsSnapshot() {
-        JobsSnapshot newJobsSnapshot = queryCoordinationService();
         synchronized (jobsLock) {
-            jobsSnapshot = newJobsSnapshot;
+            jobsSnapshot = queryCoordinationService();
             return jobsSnapshot;
         }
     }
@@ -283,9 +282,9 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @param job The job to be prioritized.
      */
     JobsSnapshot prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
-        int highestPriority = 0;
-        AutoIngestJob prioritizedJob = null;
         synchronized (jobsLock) {
+            int highestPriority = 0;
+            AutoIngestJob prioritizedJob = null;
             /*
              * Get the highest known priority and make sure the job is still in
              * the pending jobs queue.
@@ -343,11 +342,10 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
         @Override
         public void run() {
             if (!Thread.currentThread().isInterrupted()) {
-                JobsSnapshot newJobsSnapshot = queryCoordinationService();
                 synchronized (jobsLock) {
-                    jobsSnapshot = newJobsSnapshot;
+                    jobsSnapshot = queryCoordinationService();
                     setChanged();
-                    notifyObservers(null);
+                    notifyObservers(jobsSnapshot);
                 }
             }
         }
@@ -471,7 +469,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
         }
 
     }
-
+    
     /**
      * Exception type thrown when there is an error completing an auto ingest
      * monitor operation.
