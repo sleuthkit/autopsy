@@ -26,17 +26,18 @@ import java.util.regex.Pattern;
 import org.openide.util.NbBundle.Messages;
 
 /**
- *
- * Used to store info about a specific artifact.
+ * Represents a type and value pair that can be used for correlation. 
+ * CorrelationAttributeInstances store information about the actual
+ * occurences of the attribute. 
  */
-public class EamArtifact implements Serializable {
+public class CorrelationAttribute implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private String ID;
     private String correlationValue;
     private Type correlationType;
-    private final List<EamArtifactInstance> artifactInstances;
+    private final List<CorrelationAttributeInstance> artifactInstances;
 
     // Type ID's for Default Correlation Types
     public static final int FILES_TYPE_ID = 0;
@@ -55,17 +56,17 @@ public class EamArtifact implements Serializable {
         "CorrelationType.EMAIL.displayName=Email Addresses",
         "CorrelationType.PHONE.displayName=Phone Numbers",
         "CorrelationType.USBID.displayName=USB Devices"})
-    public static List<EamArtifact.Type> getDefaultCorrelationTypes() throws EamDbException {
-        List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new EamArtifact.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, false)); // NON-NLS
+    public static List<CorrelationAttribute.Type> getDefaultCorrelationTypes() throws EamDbException {
+        List<CorrelationAttribute.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, false)); // NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
 
-    public EamArtifact(Type correlationType, String correlationValue) {
+    public CorrelationAttribute(Type correlationType, String correlationValue) {
         this.ID = "";
         this.correlationType = correlationType;
         // Lower-case all values to normalize and improve correlation hits, going forward make sure this makes sense for all correlation types
@@ -73,7 +74,7 @@ public class EamArtifact implements Serializable {
         this.artifactInstances = new ArrayList<>();
     }
 
-    public Boolean equals(EamArtifact otherArtifact) {
+    public Boolean equals(CorrelationAttribute otherArtifact) {
         return ((this.getID().equals(otherArtifact.getID()))
                 && (this.getCorrelationType().equals(otherArtifact.getCorrelationType()))
                 && (this.getCorrelationValue().equals(otherArtifact.getCorrelationValue()))
@@ -136,14 +137,14 @@ public class EamArtifact implements Serializable {
      * @return the List of artifactInstances; empty list of none have been
      *         added.
      */
-    public List<EamArtifactInstance> getInstances() {
+    public List<CorrelationAttributeInstance> getInstances() {
         return new ArrayList<>(artifactInstances);
     }
 
     /**
      * @param artifactInstances the List of artifactInstances to set.
      */
-    public void setInstances(List<EamArtifactInstance> artifactInstances) {
+    public void setInstances(List<CorrelationAttributeInstance> artifactInstances) {
         this.artifactInstances.clear();
         if (null != artifactInstances) {
             this.artifactInstances.addAll(artifactInstances);
@@ -153,7 +154,7 @@ public class EamArtifact implements Serializable {
     /**
      * @param instance the instance to add
      */
-    public void addInstance(EamArtifactInstance artifactInstance) {
+    public void addInstance(CorrelationAttributeInstance artifactInstance) {
         this.artifactInstances.add(artifactInstance);
     }
 
@@ -214,10 +215,10 @@ public class EamArtifact implements Serializable {
         public boolean equals(Object that) {
             if (this == that) {
                 return true;
-            } else if (!(that instanceof EamArtifact.Type)) {
+            } else if (!(that instanceof CorrelationAttribute.Type)) {
                 return false;
             } else {
-                return ((EamArtifact.Type) that).sameType(this);
+                return ((CorrelationAttribute.Type) that).sameType(this);
             }
         }
 
@@ -229,7 +230,7 @@ public class EamArtifact implements Serializable {
          *
          * @return true if it is the same type
          */
-        private boolean sameType(EamArtifact.Type that) {
+        private boolean sameType(CorrelationAttribute.Type that) {
             return this.id == that.getId()
                     && Objects.equals(this.supported, that.isSupported())
                     && Objects.equals(this.enabled, that.isEnabled());

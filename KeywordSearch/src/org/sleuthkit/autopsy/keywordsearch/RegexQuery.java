@@ -85,7 +85,6 @@ final class RegexQuery implements KeywordSearchQuery {
     private static final CharSequence[] UNSUPPORTED_CHARS = {"\\d", "\\D", "\\w", "\\W", "\\s", "\\S", "\\n",
         "\\t", "\\r", "\\f", "\\a", "\\e", "\\v", "\\V", "\\h", "\\H", "\\p"}; //NON-NLS
 
-    private static final CreditCardValidator CREDIT_CARD_VALIDATOR = new CreditCardValidator();
     private static final int MAX_RESULTS_PER_CURSOR_MARK = 512;
     private static final int MIN_EMAIL_ADDR_LENGTH = 8;
     private static final String SNIPPET_DELIMITER = String.valueOf(Character.toChars(171));
@@ -252,6 +251,7 @@ final class RegexQuery implements KeywordSearchQuery {
                     String hit = hitMatcher.group();
 
                     offset = hitMatcher.end();
+                    final ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 
                     // We attempt to reduce false positives for phone numbers and IP address hits
                     // by querying Solr for hits delimited by a set of known boundary characters.
@@ -260,9 +260,9 @@ final class RegexQuery implements KeywordSearchQuery {
                     // needs to be chopped off, unless the user has supplied their own wildcard suffix
                     // as part of the regex.
                     if (!queryStringContainsWildcardSuffix
-                            && (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_PHONE_NUMBER
-                            || originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_IP_ADDRESS)) {
-                        if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_PHONE_NUMBER) {
+                            && (artifactAttributeType == ATTRIBUTE_TYPE.TSK_PHONE_NUMBER
+                            || artifactAttributeType == ATTRIBUTE_TYPE.TSK_IP_ADDRESS)) {
+                        if (artifactAttributeType == ATTRIBUTE_TYPE.TSK_PHONE_NUMBER) {
                             // For phone numbers replace all non numeric characters (except "(") at the start of the hit.
                             hit = hit.replaceAll("^[^0-9\\(]", "");
                         } else {
@@ -272,8 +272,6 @@ final class RegexQuery implements KeywordSearchQuery {
                         // Replace all non numeric at the end of the hit.
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
-
-                    ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 
                     if (artifactAttributeType == null) {
                         hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
@@ -303,7 +301,7 @@ final class RegexQuery implements KeywordSearchQuery {
                                     ccnMatcher.region(0, rLength);
                                     if (ccnMatcher.find()) {
                                         final String group = ccnMatcher.group("ccn");
-                                        if (CREDIT_CARD_VALIDATOR.isValidCCN(group)) {
+                                        if (CreditCardValidator.isValidCCN(group)) {
                                             hits.add(new KeywordHit(docId, makeSnippet(content, hitMatcher, hit), hit));
                                         };
                                     }

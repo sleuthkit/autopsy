@@ -23,11 +23,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
 
 /**
+ * Utility class to validate Credit Card Numbers. Validation entails checking
+ * that numbers are compatible but not necessarily 'real'. Validation checks the
+ * following properties:
+ * <ul>
+ * <li> A number can have obly one of dashes, spaces, or none as a seperator
+ * character. </li>
+ * <li> If a number has seperator character, the digits must be grouped into a
+ * valid pattern for the number length</li>
+ * <li> A number must pass the luhn check.</li>
+ * </ul>
  *
  */
 final class CreditCardValidator {
 
-    CreditCardValidator() {
+    private CreditCardValidator() {
     }
 
     private static final LuhnCheckDigit CREDIT_CARD_NUM_LUHN_CHECK = new LuhnCheckDigit();
@@ -42,7 +52,7 @@ final class CreditCardValidator {
      *
      * @return True if rawCCN represents a valid credit card number.
      */
-    public boolean isValidCCN(String rawCCN) {
+    static public boolean isValidCCN(String rawCCN) {
         //check for a valid separator
         boolean hasSpace = StringUtils.contains(rawCCN, ' ');
         boolean hasDash = StringUtils.contains(rawCCN, '-');
@@ -95,7 +105,7 @@ final class CreditCardValidator {
         return CREDIT_CARD_NUM_LUHN_CHECK.isValid(cannonicalCCN);
     }
 
-    private boolean isValidOtherDigitGrouping(String[] splitCCN) {
+    static private boolean isValidOtherDigitGrouping(String[] splitCCN) {
         if (splitCCN.length == 1) {
             return true;
         } else {
@@ -103,7 +113,7 @@ final class CreditCardValidator {
         }
     }
 
-    private boolean isValid19DigitGrouping(String[] splitCCN) {
+    static private boolean isValid19DigitGrouping(String[] splitCCN) {
         switch (splitCCN.length) {
             case 1:
                 return true;
@@ -121,7 +131,7 @@ final class CreditCardValidator {
         }
     }
 
-    private boolean isValid16DigitGrouping(String[] splitCCN) {
+    static private boolean isValid16DigitGrouping(String[] splitCCN) {
         switch (splitCCN.length) {
             case 1:
                 return true;
@@ -135,7 +145,7 @@ final class CreditCardValidator {
         }
     }
 
-    private boolean isValid15DigitGrouping(String[] splitCCN) {
+    static private boolean isValid15DigitGrouping(String[] splitCCN) {
         switch (splitCCN.length) {
             case 1:
                 return true;

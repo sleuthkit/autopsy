@@ -124,7 +124,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             + "?)?)?)?)?)?"); //close nested optional groups //NON-NLS
     static final BlackboardAttribute.Type KEYWORD_SEARCH_DOCUMENT_ID = new BlackboardAttribute.Type(ATTRIBUTE_TYPE.TSK_KEYWORD_SEARCH_DOCUMENT_ID);
 
-    private static final CreditCardValidator CREDIT_CARD_VALIDATOR = new CreditCardValidator();
 
     /**
      * Constructs an object that implements a regex query that will be performed
@@ -298,7 +297,7 @@ final class TermsComponentQuery implements KeywordSearchQuery {
             if (originalKeyword.getArtifactAttributeType() == ATTRIBUTE_TYPE.TSK_CARD_NUMBER) {
                 Matcher matcher = CREDIT_CARD_NUM_PATTERN.matcher(term.getTerm());
                 if (false == matcher.find()
-                        || false == CREDIT_CARD_VALIDATOR.isValidCCN(matcher.group("ccn"))) {
+                        || false == CreditCardValidator.isValidCCN(matcher.group("ccn"))) {
                     continue;
                 }
             }

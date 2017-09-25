@@ -55,7 +55,8 @@ public class DataContentViewerOtherCasesTableCellRenderer implements TableCellRe
                     background = Color.RED;
             } else if (known_status.equals(TskData.FileKnown.UNKNOWN.getName())) {
                     foreground = Color.BLACK;
-                    background = Color.YELLOW;
+                    //background = Color.YELLOW;
+                    background = Color.WHITE;
             } else {
                     foreground = Color.BLACK;
                     background = Color.WHITE;
