@@ -240,7 +240,6 @@ final class RegexQuery implements KeywordSearchQuery {
                 int offset = 0;
 
                 while (hitMatcher.find(offset)) {
-                    StringBuilder snippet = new StringBuilder();
 
                     // If the location of the hit is beyond this chunk (i.e. it
                     // exists in the overlap region), we skip the hit. It will
@@ -273,41 +272,46 @@ final class RegexQuery implements KeywordSearchQuery {
                         hit = hit.replaceAll("[^0-9]$", "");
                     }
 
-                    switch (originalKeyword.getArtifactAttributeType()) {
-                        case TSK_EMAIL:
-                            /*
-                             * Reduce false positives by eliminating email
-                             * address hits that are either too short or are not
-                             * for valid top level domains.
-                             */
-                            if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
-                                    && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
-                                addHit(content, snippet, hitMatcher, hit, hits, docId);
-                            }
+                    ATTRIBUTE_TYPE artifactAttributeType = originalKeyword.getArtifactAttributeType();
 
-                            break;
-                        case TSK_CARD_NUMBER:
-                            /*
-                             * If searching for credit card account numbers, do
-                             * extra validation on the term and discard it if it
-                             * does not pass.
-                             */
-                            Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
-
-                            for (int rLength = hit.length(); rLength >= 12; rLength--) {
-                                ccnMatcher.region(0, rLength);
-                                if (ccnMatcher.find()) {
-                                    final String group = ccnMatcher.group("ccn");
-                                    if (CREDIT_CARD_VALIDATOR.isValidCCN(group)) {
-                                        addHit(content, snippet, hitMatcher, hit, hits, docId);
-                                    };
+                    if (artifactAttributeType == null) {
+                        hits.add(createHit(content, hitMatcher, hit, docId));
+                    } else {
+                        switch (artifactAttributeType) {
+                            case TSK_EMAIL:
+                                /*
+                                 * Reduce false positives by eliminating email
+                                 * address hits that are either too short or are
+                                 * not for valid top level domains.
+                                 */
+                                if (hit.length() >= MIN_EMAIL_ADDR_LENGTH
+                                        && DomainValidator.getInstance(true).isValidTld(hit.substring(hit.lastIndexOf('.')))) {
+                                    hits.add(createHit(content, hitMatcher, hit, docId));
                                 }
-                            }
 
-                            break;
-                        default:
-                            addHit(content, snippet, hitMatcher, hit, hits, docId);
+                                break;
+                            case TSK_CARD_NUMBER:
+                                /*
+                                 * If searching for credit card account numbers,
+                                 * do extra validation on the term and discard
+                                 * it if it does not pass.
+                                 */
+                                Matcher ccnMatcher = CREDIT_CARD_NUM_PATTERN.matcher(hit);
 
+                                for (int rLength = hit.length(); rLength >= 12; rLength--) {
+                                    ccnMatcher.region(0, rLength);
+                                    if (ccnMatcher.find()) {
+                                        final String group = ccnMatcher.group("ccn");
+                                        if (CREDIT_CARD_VALIDATOR.isValidCCN(group)) {
+                                            hits.add(createHit(content, hitMatcher, hit, docId));
+                                        };
+                                    }
+                                }
+
+                                break;
+                            default:
+                                hits.add(createHit(content, hitMatcher, hit, docId));
+                        }
                     }
                 }
 
@@ -328,19 +332,37 @@ final class RegexQuery implements KeywordSearchQuery {
         return hits;
     }
 
-    private void addHit(String content, StringBuilder snippet, Matcher hitMatcher, String hit, List<KeywordHit> hits, final String docId) throws TskCoreException {
-        /**
-         * Get the snippet from the document if keyword search is configured to
-         * use snippets.
-         */
+    /**
+     * Create a KeywordHit from the given information.
+     *
+     *
+     * @param content
+     * @param hitMatcher
+     * @param hit
+     * @param docId
+     *
+     * @return
+     *
+     * @throws TskCoreException
+     */
+    private KeywordHit createHit(String content, Matcher hitMatcher, String hit, final String docId) throws TskCoreException {
+
+        // Get the snippet from the document.
         int maxIndex = content.length() - 1;
-        snippet.append(content.substring(Integer.max(0, hitMatcher.start() - 20), Integer.max(0, hitMatcher.start())));
+        StringBuilder snippet = new StringBuilder(
+                content.substring(
+                        Integer.max(0, hitMatcher.start() - 20),
+                        Integer.max(0, hitMatcher.start())
+                ));
         snippet.appendCodePoint(171);
         snippet.append(hit);
         snippet.appendCodePoint(171);
-        snippet.append(content.substring(Integer.min(maxIndex, hitMatcher.end()), Integer.min(maxIndex, hitMatcher.end() + 20)));
+        snippet.append(content.substring(
+                Integer.min(maxIndex, hitMatcher.end()),
+                Integer.min(maxIndex, hitMatcher.end() + 20)
+        ));
 
-        hits.add(new KeywordHit(docId, snippet.toString(), hit));
+        return new KeywordHit(docId, snippet.toString(), hit);
     }
 
     @Override

@@ -204,7 +204,7 @@ class AccountsText implements IndexedText {
 
     @Override
     public int currentItem() {
-        currentHitPerPage.getOrDefault(currentPage, 0);
+        return currentHitPerPage.getOrDefault(currentPage, 0);
     }
 
     /**
@@ -244,6 +244,7 @@ class AccountsText implements IndexedText {
             } else {
                 //otherwise we need to do a query to figure out the paging.
                 needsQuery = true;
+                // we can't break the for loop here because we need to accumulate all the accountNumbers
             }
         }
 
