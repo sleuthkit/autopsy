@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -277,7 +277,7 @@ public class CaseEventListener implements PropertyChangeListener {
                         LOGGER.log(Level.SEVERE, "Error adding tag.", ex); // NON-NLS
                     }
 
-                    EamCase curCeCase = new EamCase(
+                    CorrelationCase curCeCase = new CorrelationCase(
                             -1,
                             curCase.getName(), // unique case ID
                             EamOrganization.getDefault(),
@@ -296,7 +296,7 @@ public class CaseEventListener implements PropertyChangeListener {
                     try {
                         // NOTE: Cannot determine if the opened case is a new case or a reopened case,
                         //  so check for existing name in DB and insert if missing.
-                        EamCase existingCase = dbManager.getCaseDetails(curCeCase.getCaseUUID());
+                        CorrelationCase existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
 
                         if (null == existingCase) {
                             dbManager.newCase(curCeCase);
@@ -319,7 +319,7 @@ public class CaseEventListener implements PropertyChangeListener {
                     String newName = (String)evt.getNewValue();
                     try {
                         // See if the case is in the database. If it is, update the display name.
-                        EamCase existingCase = dbManager.getCaseDetails(Case.getCurrentCase().getName());
+                        CorrelationCase existingCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
 
                         if (null != existingCase) {
                             existingCase.setDisplayName(newName);

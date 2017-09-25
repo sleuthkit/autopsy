@@ -97,7 +97,7 @@ public class EamArtifactUtil {
 
                 // make an instance for the BB source file 
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
-                        new EamCase(currentCase.getName(), currentCase.getDisplayName()),
+                        new CorrelationCase(currentCase.getName(), currentCase.getDisplayName()),
                         CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource()),
                         bbSourceFile.getParentPath() + bbSourceFile.getName(),
                         "",
@@ -245,7 +245,7 @@ public class EamArtifactUtil {
             CorrelationAttribute.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             eamArtifact = new CorrelationAttribute(filesType, af.getMd5Hash());
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
-                    new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
+                    new CorrelationCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
                     CorrelationDataSource.fromTSKDataSource(af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     comment,

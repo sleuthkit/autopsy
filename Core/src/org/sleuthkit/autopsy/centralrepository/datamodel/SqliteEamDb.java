@@ -271,7 +271,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param case The case to add
      */
     @Override
-    public EamCase newCase(Case autopsyCase) throws EamDbException {
+    public CorrelationCase newCase(Case autopsyCase) throws EamDbException {
          try{
             acquireExclusiveLock();
             return super.newCase(autopsyCase);
@@ -288,7 +288,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to add
      */
     @Override
-    public void newCase(EamCase eamCase) throws EamDbException {
+    public void newCase(CorrelationCase eamCase) throws EamDbException {
          try{
             acquireExclusiveLock();
             super.newCase(eamCase);
@@ -303,7 +303,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to update
      */
     @Override
-    public void updateCase(EamCase eamCase) throws EamDbException {
+    public void updateCase(CorrelationCase eamCase) throws EamDbException {
          try{
             acquireExclusiveLock();
             super.updateCase(eamCase);
@@ -320,10 +320,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return The retrieved case
      */
     @Override
-    public EamCase getCaseDetails(String caseUUID) throws EamDbException {
+    public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getCaseDetails(caseUUID);
+            return super.getCaseByUUID(caseUUID);
         } finally {
             releaseSharedLock();
         }            
@@ -335,7 +335,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of cases
      */
     @Override
-    public List<EamCase> getCases() throws EamDbException {
+    public List<CorrelationCase> getCases() throws EamDbException {
         try{
             acquireSharedLock();
             return super.getCases();
@@ -364,15 +364,15 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @param eamDataSource the data source to update
      */
-    @Override
-    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
-         try{
-            acquireExclusiveLock();
-            super.updateDataSource(eamDataSource);
-        } finally {
-            releaseExclusiveLock();
-        }               
-    }   
+//    @Override
+//    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+//         try{
+//            acquireExclusiveLock();
+//            super.updateDataSource(eamDataSource);
+//        } finally {
+//            releaseExclusiveLock();
+//        }               
+//    }   
     
     /**
      * Retrieves Data Source details based on data source device ID
@@ -561,7 +561,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * Executes a bulk insert of the cases
      */
     @Override
-    public void bulkInsertCases(List<EamCase> cases) throws EamDbException {
+    public void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException {
         try{
             acquireExclusiveLock();
             super.bulkInsertCases(cases);
