@@ -309,6 +309,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                     } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
                         throw new AutoIngestMonitorException("Error bumping priority for job " + job.toString(), ex);
                     }
+                    job.setPriority(highestPriority);
                 }
 
                 /*
