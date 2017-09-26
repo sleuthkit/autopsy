@@ -849,7 +849,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 if (null != ingestJob) {
                     IngestJob.DataSourceIngestModuleHandle moduleHandle = ingestJob.getSnapshot().runningDataSourceIngestModule();
                     if (null != moduleHandle) {
-                        currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING_MODULE);
+                        currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING_MODULE, Date.from(Instant.now()));
                         moduleHandle.cancel();
                         SYS_LOGGER.log(Level.INFO, "Cancelling {0} module for manifest {1}", new Object[]{moduleHandle.displayName(), currentJob.getManifest().getFilePath()});
                     }
@@ -1297,10 +1297,12 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 AutoIngestJob job = new AutoIngestJob(manifest);
                 job.setCaseDirectoryPath(caseDirectoryPath);
                 job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
-                job.setProcessingStage(AutoIngestJob.Stage.COMPLETED);
+                job.setProcessingStage(AutoIngestJob.Stage.COMPLETED, nodeData.getCompletedDate());
                 job.setCompletedDate(nodeData.getCompletedDate());
-                job.setErrorsOccurred(true);
-                newCompletedJobsList.add(new AutoIngestJob(nodeData));
+                job.setErrorsOccurred(nodeData.getErrorsOccurred());
+                job.setPriority(nodeData.getPriority());
+                job.setNumberOfCrashes(nodeData.getNumberOfCrashes());
+                newCompletedJobsList.add(job);
 
                 /*
                  * Try to upgrade/update the coordination service node data for
@@ -1868,7 +1870,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             Path manifestPath = currentJob.getManifest().getFilePath();
             SYS_LOGGER.log(Level.INFO, "Started processing of {0}", manifestPath);
             currentJob.setProcessingStatus(AutoIngestJob.ProcessingStatus.PROCESSING);
-            currentJob.setProcessingStage(AutoIngestJob.Stage.STARTING);
+            currentJob.setProcessingStage(AutoIngestJob.Stage.STARTING, Date.from(Instant.now()));
             currentJob.setProcessingHostName(AutoIngestManager.LOCAL_HOST_NAME);
             updateCoordinationServiceNode(currentJob);
             setChanged();
@@ -1990,7 +1992,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             if (AutoIngestUserPreferences.getSharedConfigEnabled()) {
                 Path manifestPath = currentJob.getManifest().getFilePath();
                 SYS_LOGGER.log(Level.INFO, "Downloading shared configuration for {0}", manifestPath);
-                currentJob.setProcessingStage(AutoIngestJob.Stage.UPDATING_SHARED_CONFIG);
+                currentJob.setProcessingStage(AutoIngestJob.Stage.UPDATING_SHARED_CONFIG, Date.from(Instant.now()));
                 new SharedConfiguration().downloadConfiguration();
             }
         }
@@ -2008,7 +2010,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         private void verifyRequiredSevicesAreRunning() throws ServicesMonitorException, DatabaseServerDownException, KeywordSearchServerDownException {
             Path manifestPath = currentJob.getManifest().getFilePath();
             SYS_LOGGER.log(Level.INFO, "Checking services availability for {0}", manifestPath);
-            currentJob.setProcessingStage(AutoIngestJob.Stage.CHECKING_SERVICES);
+            currentJob.setProcessingStage(AutoIngestJob.Stage.CHECKING_SERVICES, Date.from(Instant.now()));
             if (!isServiceUp(ServicesMonitor.Service.REMOTE_CASE_DATABASE.toString())) {
                 throw new DatabaseServerDownException("Case database server is down");
             }
@@ -2055,7 +2057,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             Manifest manifest = currentJob.getManifest();
             String caseName = manifest.getCaseName();
             SYS_LOGGER.log(Level.INFO, "Opening case {0} for {1}", new Object[]{caseName, manifest.getFilePath()});
-            currentJob.setProcessingStage(AutoIngestJob.Stage.OPENING_CASE);
+            currentJob.setProcessingStage(AutoIngestJob.Stage.OPENING_CASE, Date.from(Instant.now()));
             /*
              * Acquire and hold a case name lock so that only one node at as
              * time can scan the output directory at a time. This prevents
@@ -2168,7 +2170,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
             DataSource dataSource = identifyDataSource(caseForJob);
             if (null == dataSource) {
-                currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED);
+                currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
             }
 
@@ -2178,7 +2180,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
             runDataSourceProcessor(caseForJob, dataSource);
             if (dataSource.getContent().isEmpty()) {
-                currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED);
+                currentJob.setProcessingStage(AutoIngestJob.Stage.COMPLETED, Date.from(Instant.now()));
                 return;
             }
 
@@ -2223,7 +2225,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Identifying data source for {0} ", manifestPath);
-            currentJob.setProcessingStage(AutoIngestJob.Stage.IDENTIFYING_DATA_SOURCE);
+            currentJob.setProcessingStage(AutoIngestJob.Stage.IDENTIFYING_DATA_SOURCE, Date.from(Instant.now()));
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             Path dataSourcePath = manifest.getDataSourcePath();
@@ -2259,7 +2261,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Adding data source for {0} ", manifestPath);
-            currentJob.setProcessingStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE);
+            currentJob.setProcessingStage(AutoIngestJob.Stage.ADDING_DATA_SOURCE, Date.from(Instant.now()));
             UUID taskId = UUID.randomUUID();
             DataSourceProcessorCallback callBack = new AddDataSourceCallback(caseForJob, dataSource, taskId);
             DataSourceProcessorProgressMonitor progressMonitor = new DoNothingDSPProgressMonitor();
@@ -2424,7 +2426,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Starting ingest modules analysis for {0} ", manifestPath);
-            currentJob.setProcessingStage(AutoIngestJob.Stage.ANALYZING_DATA_SOURCE);
+            currentJob.setProcessingStage(AutoIngestJob.Stage.ANALYZING_DATA_SOURCE, Date.from(Instant.now()));
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             IngestJobEventListener ingestJobEventListener = new IngestJobEventListener();
@@ -2460,7 +2462,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                                     }
                                     jobLogger.logAnalysisCompleted();
                                 } else {
-                                    currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING);
+                                    currentJob.setProcessingStage(AutoIngestJob.Stage.CANCELLING, Date.from(Instant.now()));
                                     currentJob.setErrorsOccurred(true);
                                     AutoIngestAlertFile.create(caseDirectoryPath); // Do this first, it is more important than the case log
                                     jobLogger.logAnalysisCancelled();
@@ -2523,7 +2525,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             Manifest manifest = currentJob.getManifest();
             Path manifestPath = manifest.getFilePath();
             SYS_LOGGER.log(Level.INFO, "Exporting files for {0}", manifestPath);
-            currentJob.setProcessingStage(AutoIngestJob.Stage.EXPORTING_FILES);
+            currentJob.setProcessingStage(AutoIngestJob.Stage.EXPORTING_FILES, Date.from(Instant.now()));
             Path caseDirectoryPath = currentJob.getCaseDirectoryPath();
             AutoIngestJobLogger jobLogger = new AutoIngestJobLogger(manifestPath, manifest.getDataSourceFileName(), caseDirectoryPath);
             try {
