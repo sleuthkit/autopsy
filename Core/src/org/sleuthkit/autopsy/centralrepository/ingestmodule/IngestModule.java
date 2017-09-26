@@ -18,7 +18,7 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
@@ -64,7 +64,7 @@ class IngestModule implements FileIngestModule {
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
     private long jobId;
-    private EamCase eamCase;
+    private CorrelationCase eamCase;
     private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
     private CorrelationAttribute.Type filesType;
@@ -216,7 +216,7 @@ class IngestModule implements FileIngestModule {
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
-        eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
+        eamCase = new CorrelationCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
 
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource());
@@ -256,9 +256,9 @@ class IngestModule implements FileIngestModule {
             }
 
             // ensure we have this case defined in the EAM DB
-            EamCase existingCase;
+            CorrelationCase existingCase;
             Case curCase = Case.getCurrentCase();
-            EamCase curCeCase = new EamCase(
+            CorrelationCase curCeCase = new CorrelationCase(
                     -1,
                     curCase.getName(), // unique case ID
                     EamOrganization.getDefault(),
@@ -270,7 +270,7 @@ class IngestModule implements FileIngestModule {
                     null,
                     null);
             try {
-                existingCase = dbManager.getCaseDetails(curCeCase.getCaseUUID());
+                existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
                 if (existingCase == null) {
                     dbManager.newCase(curCeCase);
                 }
