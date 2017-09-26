@@ -296,9 +296,11 @@ public final class SqliteEamDbSettings {
         StringBuilder createDataSourcesTable = new StringBuilder();
         createDataSourcesTable.append("CREATE TABLE IF NOT EXISTS data_sources (");
         createDataSourcesTable.append("id integer primary key autoincrement NOT NULL,");
+        createDataSourcesTable.append("case_id integer NOT NULL,");
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
-        createDataSourcesTable.append("CONSTRAINT device_id_unique UNIQUE(device_id)");
+        createDataSourcesTable.append("foreign key (case_id) references case(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
@@ -346,13 +348,13 @@ public final class SqliteEamDbSettings {
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
         createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
         createArtifactInstancesTableTemplate.append("id integer primary key autoincrement NOT NULL,");
-        createArtifactInstancesTableTemplate.append("case_id integer,");
-        createArtifactInstancesTableTemplate.append("data_source_id integer,");
+        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("value text NOT NULL,");
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(case_id, data_source_id, value, file_path) ON CONFLICT IGNORE,");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique UNIQUE(data_source_id, value, file_path) ON CONFLICT IGNORE,");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createArtifactInstancesTableTemplate.append(")");
