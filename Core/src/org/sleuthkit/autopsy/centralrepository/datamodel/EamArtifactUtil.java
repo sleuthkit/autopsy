@@ -266,12 +266,30 @@ public class EamArtifactUtil {
      * @return true if the file should be added to the central repo, false otherwise
      */
     public static boolean isValidCentralRepoFile(AbstractFile af){
-        if(af == null) return false;
-        return (false == ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                    || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                    || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
-                    || (af.getKnown() == TskData.FileKnown.KNOWN)
-                    || (af.isDir() == true)
-                    || ((af.getType() != TskData.TSK_DB_FILES_TYPE_ENUM.CARVED) && !af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))));
+        if(af == null){
+            return false;
+        }
+        
+        if(af.getKnown() == TskData.FileKnown.KNOWN){
+            return false;
+        }
+        
+        switch (af.getType()){
+            case UNALLOC_BLOCKS:
+            case UNUSED_BLOCKS:
+            case SLACK:
+            case VIRTUAL_DIR:
+            case LOCAL_DIR:
+                return false;                
+            case CARVED:
+            case DERIVED:
+            case LOCAL:
+                return true;
+            case FS:
+                return af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC);
+            default:
+                LOGGER.log(Level.WARNING, "Unexpected file type {0}", af.getType().getName());
+                return false;
+        }
     }
 }
