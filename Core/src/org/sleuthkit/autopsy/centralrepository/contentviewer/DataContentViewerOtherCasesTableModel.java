@@ -40,9 +40,8 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
-    private enum TableColumns {
+    enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
-        // If order is changed, update the CellRenderer to ensure correct row coloring.
         CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 75),
         DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 75),
         TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 40),
