@@ -198,7 +198,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param eamCase The case to add
      */
     @Override
-    public void newCase(EamCase eamCase) throws EamDbException {
+    public void newCase(CorrelationCase eamCase) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -259,12 +259,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param case The case to add
      */
     @Override    
-    public EamCase newCase(Case autopsyCase) throws EamDbException{
+    public CorrelationCase newCase(Case autopsyCase) throws EamDbException{
         if(autopsyCase == null){
             throw new EamDbException("Case is null");
         }
         
-        EamCase curCeCase = new EamCase(
+        CorrelationCase curCeCase = new CorrelationCase(
                 -1,
                 autopsyCase.getName(), // unique case ID
                 EamOrganization.getDefault(),
@@ -285,7 +285,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @param eamCase The case to update
      */
     @Override
-    public void updateCase(EamCase eamCase) throws EamDbException {
+    public void updateCase(CorrelationCase eamCase) throws EamDbException {
         Connection conn = connect();
 
         PreparedStatement preparedStatement = null;
@@ -349,10 +349,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @return The retrieved case
      */
     @Override
-    public EamCase getCaseDetails(String caseUUID) throws EamDbException {
+    public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
+        // @@@ We should have a cache here...
+        
         Connection conn = connect();
 
-        EamCase eamCaseResult = null;
+        CorrelationCase eamCaseResult = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
@@ -386,11 +388,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @return List of cases
      */
     @Override
-    public List<EamCase> getCases() throws EamDbException {
+    public List<CorrelationCase> getCases() throws EamDbException {
         Connection conn = connect();
 
-        List<EamCase> cases = new ArrayList<>();
-        EamCase eamCaseResult;
+        List<CorrelationCase> cases = new ArrayList<>();
+        CorrelationCase eamCaseResult;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
@@ -450,27 +452,27 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @param eamDataSource the data source to update
      */
-    @Override
-    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
-        Connection conn = connect();
-
-        PreparedStatement preparedStatement = null;
-        String sql = "UPDATE data_sources SET name=? WHERE device_id=?";
-
-        try {
-            preparedStatement = conn.prepareStatement(sql);
-
-            preparedStatement.setString(1, eamDataSource.getName());
-            preparedStatement.setString(2, eamDataSource.getDeviceID());
-
-            preparedStatement.executeUpdate();
-        } catch (SQLException ex) {
-            throw new EamDbException("Error updating case.", ex); // NON-NLS
-        } finally {
-            EamDbUtil.closePreparedStatement(preparedStatement);
-            EamDbUtil.closeConnection(conn);
-        }
-    }
+//    @Override
+//    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+//        Connection conn = connect();
+// BC: This needs to be updated because device_id is not unique.  Query needs to also use case_id
+//        PreparedStatement preparedStatement = null;
+//        String sql = "UPDATE data_sources SET name=? WHERE device_id=?";
+//
+//        try {
+//            preparedStatement = conn.prepareStatement(sql);
+//
+//            preparedStatement.setString(1, eamDataSource.getName());
+//            preparedStatement.setString(2, eamDataSource.getDeviceID());
+//
+//            preparedStatement.executeUpdate();
+//        } catch (SQLException ex) {
+//            throw new EamDbException("Error updating case.", ex); // NON-NLS
+//        } finally {
+//            EamDbUtil.closePreparedStatement(preparedStatement);
+//            EamDbUtil.closeConnection(conn);
+//        }
+//    }
 
     /**
      * Retrieves Data Source details based on data source device ID
@@ -568,8 +570,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql.toString());
             for (CorrelationAttributeInstance eamInstance : eamInstances) {
                 if(! eamArtifact.getCorrelationValue().isEmpty()){
-                    preparedStatement.setString(1, eamInstance.getEamCase().getCaseUUID());
-                    preparedStatement.setString(2, eamInstance.getEamDataSource().getDeviceID());
+                    preparedStatement.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
+                    preparedStatement.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
                     preparedStatement.setString(3, eamArtifact.getCorrelationValue());
                     preparedStatement.setString(4, eamInstance.getFilePath());
                     preparedStatement.setByte(5, eamInstance.getKnownStatus().getFileKnownValue());
@@ -928,8 +930,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
                         for (CorrelationAttributeInstance eamInstance : eamInstances) {                            
                             if(! eamArtifact.getCorrelationValue().isEmpty()){
-                                bulkPs.setString(1, eamInstance.getEamCase().getCaseUUID());
-                                bulkPs.setString(2, eamInstance.getEamDataSource().getDeviceID());
+                                bulkPs.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
+                                bulkPs.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
                                 bulkPs.setString(3, eamArtifact.getCorrelationValue());
                                 bulkPs.setString(4, eamInstance.getFilePath());
                                 bulkPs.setByte(5, eamInstance.getKnownStatus().getFileKnownValue());
@@ -962,7 +964,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Executes a bulk insert of the cases
      */
     @Override
-    public void bulkInsertCases(List<EamCase> cases) throws EamDbException {
+    public void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException {
         Connection conn = connect();
 
         if (cases.isEmpty()) {
@@ -978,7 +980,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     + getConflictClause();
             bulkPs = conn.prepareStatement(sql);
 
-            for (EamCase eamCase : cases) {
+            for (CorrelationCase eamCase : cases) {
                 bulkPs.setString(1, eamCase.getCaseUUID());
                 if (null == eamCase.getOrg()) {
                     bulkPs.setNull(2, Types.INTEGER);
@@ -1075,8 +1077,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         try {
             preparedQuery = conn.prepareStatement(sqlQuery.toString());
-            preparedQuery.setString(1, eamInstance.getEamCase().getCaseUUID());
-            preparedQuery.setString(2, eamInstance.getEamDataSource().getDeviceID());
+            preparedQuery.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
+            preparedQuery.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
             preparedQuery.setString(3, eamArtifact.getCorrelationValue());
             preparedQuery.setString(4, eamInstance.getFilePath());
             resultSet = preparedQuery.executeQuery();
@@ -1103,12 +1105,12 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 // in the database, but we don't expect the user to be tagging large numbers
                 // of items (that didn't have the CE ingest module run on them) at once.
                 
-                if(null == getCaseDetails(eamInstance.getEamCase().getCaseUUID())){
-                    newCase(eamInstance.getEamCase());
+                if(null == getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID())){
+                    newCase(eamInstance.getCorrelationCase());
                 }
                 
-                if (null == getDataSourceDetails(eamInstance.getEamDataSource().getDeviceID())) {
-                    newDataSource(eamInstance.getEamDataSource());
+                if (null == getDataSourceDetails(eamInstance.getCorrelationDataSource().getDeviceID())) {
+                    newDataSource(eamInstance.getCorrelationDataSource());
                 }
                 
                 eamArtifact.getInstances().get(0).setKnownStatus(knownStatus);
@@ -1836,7 +1838,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws SQLException when an expected column name is not in the resultSet
      */
-    private EamCase getEamCaseFromResultSet(ResultSet resultSet) throws SQLException {
+    private CorrelationCase getEamCaseFromResultSet(ResultSet resultSet) throws SQLException {
         if (null == resultSet) {
             return null;
         }
@@ -1853,8 +1855,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     resultSet.getString("poc_phone"));
         }
 
-        EamCase eamCase = new EamCase(resultSet.getString("case_uid"), resultSet.getString("case_name"));
-        eamCase.setID(resultSet.getInt("case_id"));
+        CorrelationCase eamCase = new CorrelationCase(resultSet.getInt("case_id"), resultSet.getString("case_uid"), resultSet.getString("case_name"));
         eamCase.setOrg(eamOrg);
         eamCase.setCreationDate(resultSet.getString("creation_date"));
         eamCase.setCaseNumber(resultSet.getString("case_number"));
@@ -1911,7 +1912,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             return null;
         }
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
-                new EamCase(resultSet.getString("case_uid"), resultSet.getString("case_name")),
+                new CorrelationCase(resultSet.getString("case_uid"), resultSet.getString("case_name")),
                 new CorrelationDataSource(-1, resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),

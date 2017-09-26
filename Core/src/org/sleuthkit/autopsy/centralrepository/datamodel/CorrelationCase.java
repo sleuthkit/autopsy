@@ -29,13 +29,13 @@ import org.openide.util.NbBundle.Messages;
  * Used to store info about a case.
  *
  */
-public class EamCase implements Serializable {
+public class CorrelationCase implements Serializable {
 
     private static long serialVersionUID = 1L;
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss (z)");
 
-    private int ID;
-    private String caseUUID;
+    private int databaseId; 
+    private String caseUUID;    // globally unique
     private EamOrganization org;
     private String displayName;
     private String creationDate;
@@ -45,11 +45,20 @@ public class EamCase implements Serializable {
     private String examinerPhone;
     private String notes;
 
-    public EamCase(String caseUUID, String displayName) {
+    /**
+     * 
+     * @param caseUUID Globally unique identifier
+     * @param displayName 
+     */
+    public CorrelationCase(String caseUUID, String displayName) {
         this(-1, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
     }
+    
+    CorrelationCase(int ID, String caseUUID, String displayName) {
+        this(ID, caseUUID, null, displayName, DATE_FORMAT.format(new Date()), null, null, null, null, null);
+    }
 
-    public EamCase(int ID,
+    public CorrelationCase(int ID,
             String caseUUID,
             EamOrganization org,
             String displayName,
@@ -59,7 +68,7 @@ public class EamCase implements Serializable {
             String examinerEmail,
             String examinerPhone,
             String notes) {
-        this.ID = ID;
+        this.databaseId = ID;
         this.caseUUID = caseUUID;
         this.org = org;
         this.displayName = displayName;
@@ -149,18 +158,13 @@ public class EamCase implements Serializable {
     }
 
     /**
-     * @return the ID
+     * @return the database ID for the case or -1 if it is unknown (or not in the DB)
      */
-    public int getID() {
-        return ID;
+    int getID() {
+        // @@@ Should probably have some lazy logic here to lead the ID from the DB if it is -1
+        return databaseId;
     }
 
-    /**
-     * @param ID the ID to set
-     */
-    public void setID(int ID) {
-        this.ID = ID;
-    }
 
     /**
      * @return the caseUUID
@@ -169,12 +173,6 @@ public class EamCase implements Serializable {
         return caseUUID;
     }
 
-    /**
-     * @param caseUUID the caseUUID to set
-     */
-    public void setCaseUUID(String caseUUID) {
-        this.caseUUID = caseUUID;
-    }
 
     /**
      * @return the org
@@ -287,5 +285,4 @@ public class EamCase implements Serializable {
     public void setNotes(String notes) {
         this.notes = notes;
     }
-
 }

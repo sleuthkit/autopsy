@@ -34,7 +34,7 @@ public class CorrelationDataSource implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final int dataSourceId;   //< Id in the central repo
-    private final String deviceID;
+    private final String deviceID;  //< Unique to its associated case (not necessarily globally unique)
     private final String name;
 
 
@@ -73,7 +73,7 @@ public class CorrelationDataSource implements Serializable {
     public String toString() {
         StringBuilder str = new StringBuilder();
         str.append("(");
-        str.append("ID=").append(Integer.toString(getDataSourceID()));
+        str.append("ID=").append(Integer.toString(getID()));
         str.append(",deviceID=").append(getDeviceID());
         str.append(",name=").append(getName());
         str.append(")");
@@ -81,13 +81,16 @@ public class CorrelationDataSource implements Serializable {
     }
 
     /**
+     * Get the database row ID
+     * 
      * @return the ID
      */
-    public int getDataSourceID() {
+    int getID() {
         return dataSourceId;
     }
 
     /**
+     * Get the device ID that is unique to the case
      * @return the deviceID
      */
     public String getDeviceID() {
