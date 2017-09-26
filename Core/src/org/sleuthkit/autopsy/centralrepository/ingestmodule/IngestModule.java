@@ -23,7 +23,6 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -49,7 +49,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -83,12 +82,7 @@ class IngestModule implements FileIngestModule {
 
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
-        if ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
-                || (af.getKnown() == TskData.FileKnown.KNOWN)
-                || (af.isDir() == true)
-                || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
+        if (! EamArtifactUtil.isValidCentralRepoFile(af)) {
             return ProcessResult.OK;
         }
 
