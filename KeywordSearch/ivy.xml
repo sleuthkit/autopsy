@@ -14,8 +14,6 @@
         <conf name="servlet"/>
     </configurations>
     <dependencies>
-         <dependency conf="autopsy->*" org="com.google.guava" name="guava" rev="21.0"/>
-        
         <!-- Solr -->
         <dependency conf="solr-libs->default" org="org.apache.solr" name="solr-cell" rev="4.9.1"/>
         <dependency conf="solr-war->default" org="org.apache.solr" name="solr" rev="4.9.1" transitive="false" /> <!-- the war file -->

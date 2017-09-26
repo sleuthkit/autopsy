@@ -848,8 +848,8 @@
                 <binary-origin>release/modules/ext/slf4j-simple-1.6.1.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
-                <runtime-relative-path>ext/guava-21.0.jar</runtime-relative-path>
-                <binary-origin>release/modules/ext/guava-21.0.jar</binary-origin>
+                <runtime-relative-path>ext/guava-19.0.jar</runtime-relative-path>
+                <binary-origin>release/modules/ext/guava-19.0.jar</binary-origin>
             </class-path-extension>
             <class-path-extension>
                 <runtime-relative-path>ext/commons-io-2.5.jar</runtime-relative-path>
