@@ -299,7 +299,7 @@ public final class SqliteEamDbSettings {
         createDataSourcesTable.append("case_id integer NOT NULL,");
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
-        createDataSourcesTable.append("foreign key (case_id) references case(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
 
