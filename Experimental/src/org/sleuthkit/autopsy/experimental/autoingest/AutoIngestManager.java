@@ -652,9 +652,14 @@ public final class AutoIngestManager extends Observable implements PropertyChang
              */
             if (null != completedJob && !completedJob.getCaseDirectoryPath().toString().isEmpty()) {
                 try {
+                    /**
+                     * We reset the status, completion date and processing stage
+                     * but we keep the original priority.
+                     */
                     completedJob.setErrorsOccurred(false);
                     completedJob.setCompletedDate(new Date(0));
-                    completedJob.setPriority(DEFAULT_JOB_PRIORITY);
+                    completedJob.setProcessingStatus(PENDING);
+                    completedJob.setProcessingStage(AutoIngestJob.Stage.PENDING, Date.from(Instant.now()));
                     updateCoordinationServiceNode(completedJob);
                     pendingJobs.add(completedJob);
                 } catch (CoordinationServiceException ex) {
@@ -1224,7 +1229,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
 
                         /*
                          * Update the coordination service node for the job. If
-                         * this fails, leave the recovery to anoterh host.
+                         * this fails, leave the recovery to another host.
                          */
                         try {
                             updateCoordinationServiceNode(job);
