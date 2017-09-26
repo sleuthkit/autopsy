@@ -83,6 +83,8 @@ public class CorrelationAttribute implements Serializable {
 
     @Override
     public String toString() {
+        // NOTE: This string is currently being used in IngestEventsListener to detect if we have already seen
+        // the value and type pair.  Be careful if this method is changed.  
         String result = this.getID()
                 + this.getCorrelationType().toString()
                 + this.getCorrelationValue();
