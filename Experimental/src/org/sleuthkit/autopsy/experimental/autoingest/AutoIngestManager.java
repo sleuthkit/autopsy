@@ -1294,14 +1294,25 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         private void addCompletedJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws CoordinationServiceException, InterruptedException {
             Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
             if (null != caseDirectoryPath) {
+                /**
+                 * We use the manifest rather than the nodeData here to create
+                 * a new AutoIngestJob instance because the AutoIngestJob
+                 * constructor that takes a nodeData expects the nodeData to
+                 * have fields that do not exist in earlier versions.
+                 */
                 AutoIngestJob job = new AutoIngestJob(manifest);
-                job.setCaseDirectoryPath(caseDirectoryPath);
-                job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
-                job.setProcessingStage(AutoIngestJob.Stage.COMPLETED, nodeData.getCompletedDate());
+                /**
+                 * Update the job with the fields that exist in all versions
+                 * of the nodeData.
+                 */
                 job.setCompletedDate(nodeData.getCompletedDate());
                 job.setErrorsOccurred(nodeData.getErrorsOccurred());
                 job.setPriority(nodeData.getPriority());
                 job.setNumberOfCrashes(nodeData.getNumberOfCrashes());
+                job.setProcessingStage(AutoIngestJob.Stage.COMPLETED, nodeData.getCompletedDate());
+
+                job.setCaseDirectoryPath(caseDirectoryPath);
+                job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
                 newCompletedJobsList.add(job);
 
                 /*
