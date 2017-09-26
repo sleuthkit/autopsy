@@ -22,8 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.openide.util.NbBundle.Messages;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 
 /**
  * Model for cells in data content viewer table
@@ -45,13 +45,13 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         // If order is changed, update the CellRenderer to ensure correct row coloring.
         CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 75),
         DATA_SOURCE(Bundle.DataContentViewerOtherCasesTableModel_dataSource(), 75),
-        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 145),
         TYPE(Bundle.DataContentViewerOtherCasesTableModel_type(), 40),
         VALUE(Bundle.DataContentViewerOtherCasesTableModel_value(), 145),
         KNOWN(Bundle.DataContentViewerOtherCasesTableModel_known(), 45),
         SCOPE(Bundle.DataContentViewerOtherCasesTableModel_scope(), 20),
         COMMENT(Bundle.DataContentViewerOtherCasesTableModel_comment(), 200),
-        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 250);
+        FILE_PATH(Bundle.DataContentViewerOtherCasesTableModel_path(), 250),
+        DEVICE(Bundle.DataContentViewerOtherCasesTableModel_device(), 145);
 
         private final String columnName;
         private final int columnWidth;
@@ -70,7 +70,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         }
     };
 
-    List<EamArtifact> eamArtifacts;
+    List<CorrelationAttribute> eamArtifacts;
 
     DataContentViewerOtherCasesTableModel() {
         eamArtifacts = new ArrayList<>();
@@ -127,8 +127,8 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @return value in the cell
      */
     private Object mapValueById(int rowIdx, TableColumns colId) {
-        EamArtifact eamArtifact = eamArtifacts.get(rowIdx);
-        EamArtifactInstance eamArtifactInstance = eamArtifact.getInstances().get(0);
+        CorrelationAttribute eamArtifact = eamArtifacts.get(rowIdx);
+        CorrelationAttributeInstance eamArtifactInstance = eamArtifact.getInstances().get(0);
         String value = Bundle.DataContentViewerOtherCasesTableModel_noData();
 
         switch (colId) {
@@ -180,13 +180,14 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
      * @param eamArtifact central repository artifact to add to the
      *                   table
      */
-    public void addEamArtifact(EamArtifact eamArtifact) {
+    public void addEamArtifact(CorrelationAttribute eamArtifact) {
         eamArtifacts.add(eamArtifact);
         fireTableDataChanged();
     }
 
     public void clearTable() {
         eamArtifacts.clear();
+        fireTableDataChanged();
     }
 
 }

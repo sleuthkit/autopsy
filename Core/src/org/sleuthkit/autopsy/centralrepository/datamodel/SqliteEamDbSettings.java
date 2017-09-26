@@ -403,11 +403,11 @@ public final class SqliteEamDbSettings {
             stmt.execute(createDbInfoTable.toString());
 
             // Create a separate instance and reference table for each artifact type
-            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
+            List<CorrelationAttribute.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttribute.getDefaultCorrelationTypes();
 
             String reference_type_dbname;
             String instance_type_dbname;
-            for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+            for (CorrelationAttribute.Type type : DEFAULT_CORRELATION_TYPES) {
                 reference_type_dbname = EamDbUtil.correlationTypeToReferenceTableName(type);
                 instance_type_dbname = EamDbUtil.correlationTypeToInstanceTableName(type);
 
@@ -418,7 +418,7 @@ public final class SqliteEamDbSettings {
                 stmt.execute(String.format(instancesIdx4, instance_type_dbname, instance_type_dbname));
 
                 // FUTURE: allow more than the FILES type
-                if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
                     stmt.execute(String.format(createReferenceTypesTableTemplate.toString(), reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx1, reference_type_dbname, reference_type_dbname));
                     stmt.execute(String.format(referenceTypesIdx2, reference_type_dbname, reference_type_dbname));

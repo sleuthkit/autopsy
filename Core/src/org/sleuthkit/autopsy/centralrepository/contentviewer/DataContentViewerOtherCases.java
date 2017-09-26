@@ -47,8 +47,8 @@ import org.openide.util.NbBundle.Messages;
 import org.openide.util.lookup.ServiceProvider;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
@@ -73,18 +73,18 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     private final static Logger LOGGER = Logger.getLogger(DataContentViewerOtherCases.class.getName());
 
     private final DataContentViewerOtherCasesTableModel tableModel;
-    private final Collection<EamArtifact> correlatedArtifacts;
+    private final Collection<CorrelationAttribute> correlationAttributes;
 
     /**
      * Creates new form DataContentViewerOtherCases
      */
     public DataContentViewerOtherCases() {
         this.tableModel = new DataContentViewerOtherCasesTableModel();
-        this.correlatedArtifacts = new ArrayList<>();
+        this.correlationAttributes = new ArrayList<>();
 
         initComponents();
         customizeComponents();
-        readSettings();
+        reset();
     }
 
     private void customizeComponents() {
@@ -119,11 +119,14 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         "# {0} - commonality percentage",
         "# {1} - correlation type",
         "# {2} - correlation value",
-        "DataContentViewerOtherCases.correlatedArtifacts.byType={0}% for Correlation Type: {1} and Correlation Value: {2}.\n",
-        "DataContentViewerOtherCases.correlatedArtifacts.title=Commonality Percentages",
-        "DataContentViewerOtherCases.correlatedArtifacts.failed=Failed to get commonality details."})
+        "DataContentViewerOtherCases.correlatedArtifacts.byType={0}% of data sources have {2} (type: {1})\n",
+        "DataContentViewerOtherCases.correlatedArtifacts.title=Attribute Frequency",
+        "DataContentViewerOtherCases.correlatedArtifacts.failed=Failed to get frequency details."})
+    /**
+     * Show how common the selected 
+     */
     private void showCommonalityDetails() {
-        if (correlatedArtifacts.isEmpty()) {
+        if (correlationAttributes.isEmpty()) {
             JOptionPane.showConfirmDialog(showCommonalityMenuItem,
                     Bundle.DataContentViewerOtherCases_correlatedArtifacts_isEmpty(),
                     Bundle.DataContentViewerOtherCases_correlatedArtifacts_title(),
@@ -133,8 +136,8 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             int percentage;
             try {
                 EamDb dbManager = EamDb.getInstance();
-                for (EamArtifact eamArtifact : correlatedArtifacts) {
-                    percentage = dbManager.getCommonalityPercentageForTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                for (CorrelationAttribute eamArtifact : correlationAttributes) {
+                    percentage = dbManager.getFrequencyPercentage(eamArtifact);
                     msg.append(Bundle.DataContentViewerOtherCases_correlatedArtifacts_byType(percentage,
                             eamArtifact.getCorrelationType().getDisplayName(),
                             eamArtifact.getCorrelationValue()));
@@ -163,7 +166,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             if (-1 != selectedRowViewIdx) {
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = otherCasesTable.convertRowIndexToModel(selectedRowViewIdx);
-                EamArtifact eamArtifact = (EamArtifact) tableModel.getRow(selectedRowModelIdx);
+                CorrelationAttribute eamArtifact = (CorrelationAttribute) tableModel.getRow(selectedRowModelIdx);
                 EamCase eamCasePartial = eamArtifact.getInstances().get(0).getEamCase();
                 if (eamCasePartial == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
@@ -262,14 +265,12 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     }
 
     /**
-     * Read the module settings from the config file and reset the table model.
+     * Reset the UI and clear cached data.
      */
-    private boolean readSettings() {
+    private void reset() {
         // start with empty table
         tableModel.clearTable();
-        correlatedArtifacts.clear();
-
-        return true;
+        correlationAttributes.clear();
     }
 
     @Override
@@ -294,7 +295,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     @Override
     public void resetComponent() {
-        readSettings();
+        reset();
     }
 
     @Override
@@ -365,102 +366,61 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     }
 
     /**
-     * Scan a Node for blackboard artifacts / content that we can correlate on
-     * and create the corresponding Central Repository artifacts for display
+     * Determine what attributes can be used for correlation based on the node. 
      *
-     * @param node The node to view
+     * @param node The node to correlate
      *
-     * @return A collection of central repository artifacts to display
+     * @return A list of attributes that can be used for correlation 
      */
-    private Collection<EamArtifact> getArtifactsFromCorrelatableAttributes(Node node) {
-        Collection<EamArtifact> ret = new ArrayList<>();
+    private Collection<CorrelationAttribute> getCorrelationAttributesFromNode(Node node) {
+        Collection<CorrelationAttribute> ret = new ArrayList<>();
 
-        /*
-         * If the user selected a blackboard artifact or tag of a BB artifact,
-         * correlate both the artifact and the associated file. If the user
-         * selected a file, correlate only the file
-         */
-        BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);
-        AbstractFile abstractFile = getAbstractFileFromNode(node);
-        List<EamArtifact.Type> artifactTypes = null;
-        try {
-            EamDb dbManager = EamDb.getInstance();
-            artifactTypes = dbManager.getCorrelationTypes();
-            if (bbArtifact != null) {
-                ret.addAll(EamArtifactUtil.fromBlackboardArtifact(bbArtifact, false, artifactTypes, false));
-            }
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error retrieving correlation types", ex); // NON-NLS
+        // correlate on blackboard artifact attributes if they exist and supported
+        BlackboardArtifact bbArtifact = getBlackboardArtifactFromNode(node);   
+        if (bbArtifact != null) {
+            ret.addAll(EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, false, false));
         }
-
+        
+        // we can correlate based on the MD5 if it is enabled
+        AbstractFile abstractFile = getAbstractFileFromNode(node);
         if (abstractFile != null) {
-            String md5 = abstractFile.getMd5Hash();
-            if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
-                for (EamArtifact.Type aType : artifactTypes) {
-                    if (aType.getId() == EamArtifact.FILES_TYPE_ID) {
-                        ret.add(new EamArtifact(aType, md5));
-                        break;
+            try {
+                List<CorrelationAttribute.Type> artifactTypes = EamDb.getInstance().getDefinedCorrelationTypes();
+                String md5 = abstractFile.getMd5Hash();
+                if (md5 != null && !md5.isEmpty() && null != artifactTypes && !artifactTypes.isEmpty()) {
+                    for (CorrelationAttribute.Type aType : artifactTypes) {
+                        if (aType.getId() == CorrelationAttribute.FILES_TYPE_ID) {
+                            ret.add(new CorrelationAttribute(aType, md5));
+                            break;
+                        }
                     }
                 }
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Error connecting to DB", ex); // NON-NLS
             }
         }
 
         return ret;
     }
 
-    /**
-     * Given a node, return the associated data source
-     *
-     * @param node The node
-     *
-     * @return The name of the data source
-     */
-    private String getDataSourceNameFromNode(Node node) {
-        AbstractFile af = getAbstractFileFromNode(node);
-        try {
-            if (af != null) {
-                return af.getDataSource().getName();
-            }
-        } catch (TskException ex) {
-            return "";
-        }
 
-        return "";
-    }
-
-    /**
-     * Given a node, return the associated data source's device ID
-     *
-     * @param node The node
-     *
-     * @return The ID of the data source's device
-     */
-    private String getDeviceIdFromNode(Node node) {
-        AbstractFile af = getAbstractFileFromNode(node);
-        try {
-            if (af != null) {
-                return Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
-            }
-        } catch (TskException ex) {
-            return "";
-        }
-
-        return "";
-    }
 
     /**
      * Query the db for artifact instances from other cases correlated to the
-     * given central repository artifact.
+     * given central repository artifact.  Will not show instances from the same datasource / device
      *
-     * @param eamArtifact The artifact to correlate against
+     * @param corAttr CorrelationAttribute to query for
+     * @param dataSourceName Data source to filter results
+     * @param deviceId Device Id to filter results 
      *
      * @return A collection of correlated artifact instances from other cases
      */
-    private Collection<EamArtifactInstance> getCorrelatedInstances(EamArtifact.Type aType, String value, String dataSourceName, String deviceId) {
+    private Collection<CorrelationAttributeInstance> getCorrelatedInstances(CorrelationAttribute corAttr, String dataSourceName, String deviceId) {
+        // @@@ Check exception
         String caseUUID = Case.getCurrentCase().getName();
         try {
             EamDb dbManager = EamDb.getInstance();
-            Collection<EamArtifactInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(aType, value).stream()
+            Collection<CorrelationAttributeInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
                     .filter(artifactInstance -> !artifactInstance.getEamCase().getCaseUUID().equals(caseUUID)
                     || !artifactInstance.getEamDataSource().getName().equals(dataSourceName)
                     || !artifactInstance.getEamDataSource().getDeviceID().equals(deviceId))
@@ -475,25 +435,25 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
 
     /**
      * Get the global file instances matching the given eamArtifact and convert
-     * them to central repository artifact instancess.
+     * them to central repository artifact instances.
      *
      * @param eamArtifact Artifact to use for ArtifactTypeEnum matching
      *
      * @return List of central repository artifact instances, empty list if none
      *         found
      */
-    public Collection<EamArtifactInstance> getReferenceInstancesAsArtifactInstances(EamArtifact eamArtifact) {
-        Collection<EamArtifactInstance> eamArtifactInstances = new ArrayList<>();
+    public Collection<CorrelationAttributeInstance> getReferenceInstancesAsArtifactInstances(CorrelationAttribute eamArtifact) {
+        Collection<CorrelationAttributeInstance> eamArtifactInstances = new ArrayList<>();
         // FUTURE: support other reference types
-        if (eamArtifact.getCorrelationType().getId() != EamArtifact.FILES_TYPE_ID) {
+        if (eamArtifact.getCorrelationType().getId() != CorrelationAttribute.FILES_TYPE_ID) {
             return Collections.emptyList();
         }
         try {
             EamDb dbManager = EamDb.getInstance();
             Collection<EamGlobalFileInstance> eamGlobalFileInstances = dbManager.getReferenceInstancesByTypeValue(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
             eamGlobalFileInstances.forEach((eamGlobalFileInstance) -> {
-                eamArtifactInstances.add(new EamArtifactInstance(
-                        null, null, "", eamGlobalFileInstance.getComment(), eamGlobalFileInstance.getKnownStatus(), EamArtifactInstance.GlobalStatus.GLOBAL
+                eamArtifactInstances.add(new CorrelationAttributeInstance(
+                        null, null, "", eamGlobalFileInstance.getComment(), eamGlobalFileInstance.getKnownStatus(), CorrelationAttributeInstance.GlobalStatus.GLOBAL
                 ));
             });
             return eamArtifactInstances;
@@ -510,7 +470,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         }
 
         // Is supported if this node has correlatable content (File, BlackboardArtifact)
-        return !getArtifactsFromCorrelatableAttributes(node).isEmpty();
+        return !getCorrelationAttributesFromNode(node).isEmpty();
     }
 
     @Override
@@ -520,7 +480,10 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
             return;
         }
 
-        readSettings(); // reset the table to empty.
+        reset(); // reset the table to empty.
+        if (node == null) {
+            return;
+        }
         populateTable(node);
     }
 
@@ -533,26 +496,40 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
     @Messages({"DataContentViewerOtherCases.table.isempty=There are no associated artifacts or files from other occurrences to display.",
         "DataContentViewerOtherCases.table.noArtifacts=Correlation cannot be performed on the selected file."})
     private void populateTable(Node node) {
-        String dataSourceName = getDataSourceNameFromNode(node);
-        String deviceId = getDeviceIdFromNode(node);
-        correlatedArtifacts.addAll(getArtifactsFromCorrelatableAttributes(node));
-        correlatedArtifacts.forEach((eamArtifact) -> {
-            // get local instances
-            Collection<EamArtifactInstance> eamArtifactInstances = getCorrelatedInstances(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue(), dataSourceName, deviceId);
-            // get global instances
-            eamArtifactInstances.addAll(getReferenceInstancesAsArtifactInstances(eamArtifact));
+        AbstractFile af = getAbstractFileFromNode(node);
+        String dataSourceName = "";
+        String deviceId = "";
+        try {
+            if (af != null) {
+                Content dataSource = af.getDataSource();
+                dataSourceName = dataSource.getName();
+                deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(dataSource.getId()).getDeviceId();
+            }
+        } catch (TskException ex) {
+            // do nothing. 
+            // @@@ Review this behavior
+        }
+        
+        // get the attributes we can correlate on
+        correlationAttributes.addAll(getCorrelationAttributesFromNode(node));
+        for (CorrelationAttribute corAttr : correlationAttributes) {
+            Collection<CorrelationAttributeInstance> corAttrInstances = new ArrayList<>();
+            
+            // get correlation and reference set instances from DB
+            corAttrInstances.addAll(getCorrelatedInstances(corAttr, dataSourceName, deviceId));
+            corAttrInstances.addAll(getReferenceInstancesAsArtifactInstances(corAttr));
 
-            eamArtifactInstances.forEach((eamArtifactInstance) -> {
-                EamArtifact newCeArtifact = new EamArtifact(
-                        eamArtifact.getCorrelationType(),
-                        eamArtifact.getCorrelationValue()
+            corAttrInstances.forEach((corAttrInstance) -> {
+                CorrelationAttribute newCeArtifact = new CorrelationAttribute(
+                        corAttr.getCorrelationType(),
+                        corAttr.getCorrelationValue()
                 );
-                newCeArtifact.addInstance(eamArtifactInstance);
+                newCeArtifact.addInstance(corAttrInstance);
                 tableModel.addEamArtifact(newCeArtifact);
             });
-        });
+        }
 
-        if (correlatedArtifacts.isEmpty()) {
+        if (correlationAttributes.isEmpty()) {
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_noArtifacts());
         } else if (0 == tableModel.getRowCount()) {
             displayMessageOnTableStatusPanel(Bundle.DataContentViewerOtherCases_table_isempty());
