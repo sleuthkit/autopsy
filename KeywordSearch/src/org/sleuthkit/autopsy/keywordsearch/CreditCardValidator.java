@@ -181,7 +181,7 @@ final class CreditCardValidator {
         return CREDIT_CARD_NUM_LUHN_CHECK.isValid(cannonicalCCN);
     }
 
-    private boolean lengthMatchesBin(String cannonicalCCN) {
+    static private boolean lengthMatchesBin(String cannonicalCCN) {
         String BIN = cannonicalCCN.substring(0, 8);
         final Set<Integer> lengthsForBIN = allowedLengths.get(Integer.valueOf(BIN));
         return null == lengthsForBIN ||  lengthsForBIN.contains(cannonicalCCN.length());
