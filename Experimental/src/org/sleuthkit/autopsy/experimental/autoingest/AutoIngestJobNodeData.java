@@ -33,13 +33,13 @@ final class AutoIngestJobNodeData {
 
     private static final int CURRENT_VERSION = 1;
     private static final int DEFAULT_PRIORITY = 0;
-    
+
     /*
      * This number is the sum of each piece of data, based on it's type. For the
      * types boolean, int, and long, values 1, 4, and 8 will be added
      * respectively. For String objects, the length of the string, plus either a
      * byte or short respesenting the length of the string, will be added.
-     * 
+     *
      * This field is used to set the size of the buffer during the byte array
      * creation in the 'toArray()' method. Since the final size of the array
      * isn't immediately known at the time of creation, this number is used to
@@ -73,6 +73,16 @@ final class AutoIngestJobNodeData {
     private long processingStageStartDate;
     private String processingStageDetailsDescription;   // 'byte' length used in byte array
     private long processingStageDetailsStartDate;
+
+    /**
+     * Gets the current version of the auto ingest job coordination service node
+     * data.
+     *
+     * @return The version number.
+     */
+    static int getCurrentVersion() {
+        return AutoIngestJobNodeData.CURRENT_VERSION;
+    }
 
     /**
      * Uses an auto ingest job to construct an object that converts auto ingest
@@ -333,7 +343,7 @@ final class AutoIngestJobNodeData {
      * Gets the path to the case directory of the case associated with the job.
      *
      * @return The case directory path or an empty string path if the case
-     * directory has not been created yet.
+     *         directory has not been created yet.
      */
     synchronized Path getCaseDirectoryPath() {
         if (!caseDirectoryPath.isEmpty()) {
@@ -535,10 +545,10 @@ final class AutoIngestJobNodeData {
      * This method retrieves a string from a given buffer. Depending on the type
      * specified, either a 'byte' or a 'short' will first be read out of the
      * buffer which gives the length of the string so it can be properly parsed.
-     * 
-     * @param buffer The buffer from which the string will be read.
+     *
+     * @param buffer     The buffer from which the string will be read.
      * @param lengthType The size of the length data.
-     * 
+     *
      * @return The string read from the buffer.
      */
     private String getStringFromBuffer(ByteBuffer buffer, TypeKind lengthType) {
@@ -568,10 +578,10 @@ final class AutoIngestJobNodeData {
      * type specified, either a 'byte' or a 'short' will be inserted prior to
      * the string which gives the length of the string so it can be properly
      * parsed.
-     * 
+     *
      * @param stringValue The string to write to the buffer.
-     * @param buffer The buffer to which the string will be written.
-     * @param lengthType The size of the length data.
+     * @param buffer      The buffer to which the string will be written.
+     * @param lengthType  The size of the length data.
      */
     private void putStringIntoBuffer(String stringValue, ByteBuffer buffer, TypeKind lengthType) {
         switch (lengthType) {

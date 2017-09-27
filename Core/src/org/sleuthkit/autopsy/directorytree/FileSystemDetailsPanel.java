@@ -45,7 +45,7 @@ final class FileSystemDetailsPanel extends javax.swing.JPanel {
         initComponents();
         try {
             FileSystem fSystem = content.getFileSystems().get(0);  //Autopsy currently only supports one file system per Volume
-            setFileSystemTypeValue(fSystem.getFsType().toString());
+            setFileSystemTypeValue(fSystem.getFsType().getDisplayName());
             setImageOffsetValue(Long.toString(fSystem.getImageOffset()));
             setVolumeIDValue(Long.toString(fSystem.getId()));
             setBlockSizeValue(Long.toString(fSystem.getBlock_size()));
