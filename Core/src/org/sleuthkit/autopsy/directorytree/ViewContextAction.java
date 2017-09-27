@@ -72,8 +72,8 @@ public class ViewContextAction extends AbstractAction {
      */
     public ViewContextAction(String displayName, BlackboardArtifactNode artifactNode) {
         super(displayName);
-        this.content = artifactNode.getLookup().lookup(Content.class);
-        if (content instanceof AbstractFile) {
+        this.content = artifactNode.getLookup().lookup(AbstractFile.class);
+        if(this.content != null) {
             AbstractFile file = (AbstractFile) content;
             if ((TskData.FileKnown.KNOWN == file.getKnown() && UserPreferences.hideKnownFilesInDataSourcesTree())
                     || (TskData.TSK_DB_FILES_TYPE_ENUM.SLACK == file.getType() && UserPreferences.hideSlackFilesInDataSourcesTree())) {
