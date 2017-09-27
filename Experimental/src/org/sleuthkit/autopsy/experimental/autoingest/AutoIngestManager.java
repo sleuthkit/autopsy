@@ -343,6 +343,10 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         hostNamesToRunningJobs.remove(hostName);
         if (event.shouldRetry() == false) {
             synchronized (jobsLock) {
+                AutoIngestJob job = event.getJob();
+                if(completedJobs.contains(job)) {
+                    completedJobs.remove(job);
+                }
                 completedJobs.add(event.getJob());
             }
         }
