@@ -53,52 +53,52 @@ public class CorrelationAttributeInstance implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String ID;
-    private EamCase eamCase;
-    private CorrelationDataSource eamDataSource;
+    private int ID;
+    private CorrelationCase correlationCase;
+    private CorrelationDataSource correlationDataSource;
     private String filePath;
     private String comment;
     private TskData.FileKnown knownStatus;
     private GlobalStatus globalStatus;
 
     public CorrelationAttributeInstance(
-            EamCase eamCase,
+            CorrelationCase eamCase,
             CorrelationDataSource eamDataSource
     ) {
-        this("", eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this(-1, eamCase, eamDataSource, "", null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public CorrelationAttributeInstance(
-            EamCase eamCase,
+            CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath
     ) {
-        this("", eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this(-1, eamCase, eamDataSource, filePath, null, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public CorrelationAttributeInstance(
-            EamCase eamCase,
+            CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment
     ) {
-        this("", eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
+        this(-1, eamCase, eamDataSource, filePath, comment, TskData.FileKnown.UNKNOWN, GlobalStatus.LOCAL);
     }
 
     public CorrelationAttributeInstance(
-            EamCase eamCase,
+            CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
             TskData.FileKnown knownStatus,
             GlobalStatus globalStatus
     ) {
-        this("", eamCase, eamDataSource, filePath, comment, knownStatus, globalStatus);
+        this(-1, eamCase, eamDataSource, filePath, comment, knownStatus, globalStatus);
     }
 
     public CorrelationAttributeInstance(
-            String ID,
-            EamCase eamCase,
+            int ID,
+            CorrelationCase eamCase,
             CorrelationDataSource eamDataSource,
             String filePath,
             String comment,
@@ -106,8 +106,8 @@ public class CorrelationAttributeInstance implements Serializable {
             GlobalStatus globalStatus
     ) {
         this.ID = ID;
-        this.eamCase = eamCase;
-        this.eamDataSource = eamDataSource;
+        this.correlationCase = eamCase;
+        this.correlationDataSource = eamDataSource;
         // Lower case paths to normalize paths and improve correlation results, if this causes significant issues on case-sensitive file systems, remove
         this.filePath = filePath.toLowerCase();
         this.comment = comment;
@@ -116,9 +116,9 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     public Boolean equals(CorrelationAttributeInstance otherInstance) {
-        return ((this.getID().equals(otherInstance.getID()))
-                && (this.getEamCase().equals(otherInstance.getEamCase()))
-                && (this.getEamDataSource().equals(otherInstance.getEamDataSource()))
+        return ((this.getID() == otherInstance.getID())
+                && (this.getCorrelationCase().equals(otherInstance.getCorrelationCase()))
+                && (this.getCorrelationDataSource().equals(otherInstance.getCorrelationDataSource()))
                 && (this.getFilePath().equals(otherInstance.getFilePath()))
                 && (this.getGlobalStatus().equals(otherInstance.getGlobalStatus()))
                 && (this.getKnownStatus().equals(otherInstance.getKnownStatus()))
@@ -128,8 +128,8 @@ public class CorrelationAttributeInstance implements Serializable {
     @Override
     public String toString() {
         return this.getID()
-                + this.getEamCase().getCaseUUID()
-                + this.getEamDataSource().getName()
+                + this.getCorrelationCase().getCaseUUID()
+                + this.getCorrelationDataSource().getName()
                 + this.getFilePath()
                 + this.getGlobalStatus()
                 + this.getKnownStatus()
@@ -137,45 +137,24 @@ public class CorrelationAttributeInstance implements Serializable {
     }
 
     /**
-     * @return the ID
+     * @return the database ID
      */
-    public String getID() {
+    int getID() {
         return ID;
-    }
-
-    /**
-     * @param ID the ID to set
-     */
-    public void setID(String ID) {
-        this.ID = ID;
     }
 
     /**
      * @return the eamCase
      */
-    public EamCase getEamCase() {
-        return eamCase;
-    }
-
-    /**
-     * @param eamCase the eamCase to set
-     */
-    public void setEamCase(EamCase eamCase) {
-        this.eamCase = eamCase;
+    public CorrelationCase getCorrelationCase() {
+        return correlationCase;
     }
 
     /**
      * @return the eamDataSource
      */
-    public CorrelationDataSource getEamDataSource() {
-        return eamDataSource;
-    }
-
-    /**
-     * @param eamDataSource the eamDataSource to set
-     */
-    public void setEamDataSource(CorrelationDataSource eamDataSource) {
-        this.eamDataSource = eamDataSource;
+    public CorrelationDataSource getCorrelationDataSource() {
+        return correlationDataSource;
     }
 
     /**
@@ -183,14 +162,6 @@ public class CorrelationAttributeInstance implements Serializable {
      */
     public String getFilePath() {
         return filePath;
-    }
-
-    /**
-     * @param filePath the filePath to set
-     */
-    public void setFilePath(String filePath) {
-        // Lower case paths to normalize paths and improve correlation results, if this causes significant issues on case-sensitive file systems, remove
-        this.filePath = filePath.toLowerCase();
     }
 
     /**

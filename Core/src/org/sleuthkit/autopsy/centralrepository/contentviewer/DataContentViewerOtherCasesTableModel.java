@@ -40,7 +40,7 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
         "DataContentViewerOtherCasesTableModel.known=Known",
         "DataContentViewerOtherCasesTableModel.comment=Comment",
         "DataContentViewerOtherCasesTableModel.noData=No Data.",})
-    private enum TableColumns {
+    enum TableColumns {
         // Ordering here determines displayed column order in Content Viewer.
         // If order is changed, update the CellRenderer to ensure correct row coloring.
         CASE_NAME(Bundle.DataContentViewerOtherCasesTableModel_case(), 100),
@@ -133,18 +133,18 @@ public class DataContentViewerOtherCasesTableModel extends AbstractTableModel {
 
         switch (colId) {
             case CASE_NAME:
-                if (null != eamArtifactInstance.getEamCase()) {
-                    value = eamArtifactInstance.getEamCase().getDisplayName();
+                if (null != eamArtifactInstance.getCorrelationCase()) {
+                    value = eamArtifactInstance.getCorrelationCase().getDisplayName();
                 }
                 break;
             case DEVICE:
-                if (null != eamArtifactInstance.getEamDataSource()) {
-                    value = eamArtifactInstance.getEamDataSource().getDeviceID();
+                if (null != eamArtifactInstance.getCorrelationDataSource()) {
+                    value = eamArtifactInstance.getCorrelationDataSource().getDeviceID();
                 }
                 break;
             case DATA_SOURCE:
-                if (null != eamArtifactInstance.getEamDataSource()) {
-                    value = eamArtifactInstance.getEamDataSource().getName();
+                if (null != eamArtifactInstance.getCorrelationDataSource()) {
+                    value = eamArtifactInstance.getCorrelationDataSource().getName();
                 }
                 break;
             case FILE_PATH:

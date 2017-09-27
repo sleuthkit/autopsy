@@ -50,7 +50,7 @@ import org.sleuthkit.autopsy.corecomponentinterfaces.DataContentViewer;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamGlobalFileInstance;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -167,7 +167,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 EamDb dbManager = EamDb.getInstance();
                 int selectedRowModelIdx = otherCasesTable.convertRowIndexToModel(selectedRowViewIdx);
                 CorrelationAttribute eamArtifact = (CorrelationAttribute) tableModel.getRow(selectedRowModelIdx);
-                EamCase eamCasePartial = eamArtifact.getInstances().get(0).getEamCase();
+                CorrelationCase eamCasePartial = eamArtifact.getInstances().get(0).getCorrelationCase();
                 if (eamCasePartial == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
                             Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetailsReference(),
@@ -177,7 +177,7 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
                 }
                 caseDisplayName = eamCasePartial.getDisplayName();
                 // query case details
-                EamCase eamCase = dbManager.getCaseDetails(eamCasePartial.getCaseUUID());
+                CorrelationCase eamCase = dbManager.getCaseByUUID(eamCasePartial.getCaseUUID());
                 if (eamCase == null) {
                     JOptionPane.showConfirmDialog(showCaseDetailsMenuItem,
                             Bundle.DataContentViewerOtherCases_caseDetailsDialog_noDetails(),
@@ -421,9 +421,9 @@ public class DataContentViewerOtherCases extends javax.swing.JPanel implements D
         try {
             EamDb dbManager = EamDb.getInstance();
             Collection<CorrelationAttributeInstance> artifactInstances = dbManager.getArtifactInstancesByTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).stream()
-                    .filter(artifactInstance -> !artifactInstance.getEamCase().getCaseUUID().equals(caseUUID)
-                    || !artifactInstance.getEamDataSource().getName().equals(dataSourceName)
-                    || !artifactInstance.getEamDataSource().getDeviceID().equals(deviceId))
+                    .filter(artifactInstance -> !artifactInstance.getCorrelationCase().getCaseUUID().equals(caseUUID)
+                    || !artifactInstance.getCorrelationDataSource().getName().equals(dataSourceName)
+                    || !artifactInstance.getCorrelationDataSource().getDeviceID().equals(deviceId))
                     .collect(Collectors.toList());
             return artifactInstances;
         } catch (EamDbException ex) {

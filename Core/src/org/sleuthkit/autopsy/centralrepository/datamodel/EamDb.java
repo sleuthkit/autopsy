@@ -147,21 +147,21 @@ public interface EamDb {
      *
      * @param eamCase The case to add
      */
-    void newCase(EamCase eamCase) throws EamDbException;
+    void newCase(CorrelationCase eamCase) throws EamDbException;
     
      /**
      * Creates new Case in the database from the given case
      * 
      * @param case The case to add
      */
-    EamCase newCase(Case autopsyCase) throws EamDbException;   
+    CorrelationCase newCase(Case autopsyCase) throws EamDbException;   
 
     /**
      * Updates an existing Case in the database
      *
      * @param eamCase The case to update
      */
-    void updateCase(EamCase eamCase) throws EamDbException;
+    void updateCase(CorrelationCase eamCase) throws EamDbException;
 
     /**
      * Retrieves Case details based on Case UUID
@@ -170,14 +170,14 @@ public interface EamDb {
      *
      * @return The retrieved case
      */
-    EamCase getCaseDetails(String caseUUID) throws EamDbException;
+    CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException;
 
     /**
      * Retrieves cases that are in DB.
      *
      * @return List of cases
      */
-    List<EamCase> getCases() throws EamDbException;
+    List<CorrelationCase> getCases() throws EamDbException;
 
     /**
      * Creates new Data Source in the database
@@ -191,7 +191,7 @@ public interface EamDb {
      *
      * @param eamDataSource the data source to update
      */
-    void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
+    //void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
      * Retrieves Data Source details based on data source device ID
@@ -312,7 +312,7 @@ public interface EamDb {
     /**
      * Executes a bulk insert of the cases
      */
-    void bulkInsertCases(List<EamCase> cases) throws EamDbException;
+    void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException;
 
     /**
      * Sets an eamArtifact instance to the given known status. If eamArtifact

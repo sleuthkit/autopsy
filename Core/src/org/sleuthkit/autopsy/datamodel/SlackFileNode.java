@@ -77,7 +77,6 @@ public class SlackFileNode extends AbstractFsContentNode<AbstractFile> {
         for (Action a : super.getActions(true)) {
             actionsList.add(a);
         }
-        
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(NbBundle.getMessage(this.getClass(), "SlackFileNode.viewFileInDir.text"), this.content));
             actionsList.add(null); // creates a menu separator

@@ -147,6 +147,7 @@ public class FileNode extends AbstractFsContentNode<AbstractFile> {
     public Action[] getActions(boolean context) {
         List<Action> actionsList = new ArrayList<>();
         actionsList.addAll(Arrays.asList(super.getActions(true)));
+        
         if (!this.getDirectoryBrowseMode()) {
             actionsList.add(new ViewContextAction(Bundle.FileNode_getActions_viewFileInDir_text(), this));
             actionsList.add(null); // Creates an item separator

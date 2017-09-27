@@ -18,12 +18,11 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -41,6 +40,7 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeIns
 import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
+import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -49,7 +49,6 @@ import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
 import org.sleuthkit.autopsy.centralrepository.eventlisteners.IngestEventsListener;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  * Ingest module for inserting entries into the Central Repository database on
@@ -64,7 +63,7 @@ class IngestModule implements FileIngestModule {
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
     private long jobId;
-    private EamCase eamCase;
+    private CorrelationCase eamCase;
     private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
     private CorrelationAttribute.Type filesType;
@@ -83,12 +82,7 @@ class IngestModule implements FileIngestModule {
 
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
-        if ((af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS)
-                || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)
-                || (af.getType() == TskData.TSK_DB_FILES_TYPE_ENUM.SLACK)
-                || (af.getKnown() == TskData.FileKnown.KNOWN)
-                || (af.isDir() == true)
-                || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
+        if (! EamArtifactUtil.isValidCentralRepoFile(af)) {
             return ProcessResult.OK;
         }
 
@@ -216,7 +210,7 @@ class IngestModule implements FileIngestModule {
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
-        eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
+        eamCase = new CorrelationCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
 
         try {
             eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource());
@@ -256,9 +250,9 @@ class IngestModule implements FileIngestModule {
             }
 
             // ensure we have this case defined in the EAM DB
-            EamCase existingCase;
+            CorrelationCase existingCase;
             Case curCase = Case.getCurrentCase();
-            EamCase curCeCase = new EamCase(
+            CorrelationCase curCeCase = new CorrelationCase(
                     -1,
                     curCase.getName(), // unique case ID
                     EamOrganization.getDefault(),
@@ -270,7 +264,7 @@ class IngestModule implements FileIngestModule {
                     null,
                     null);
             try {
-                existingCase = dbManager.getCaseDetails(curCeCase.getCaseUUID());
+                existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
                 if (existingCase == null) {
                     dbManager.newCase(curCeCase);
                 }
