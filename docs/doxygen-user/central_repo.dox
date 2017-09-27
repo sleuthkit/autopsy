@@ -138,7 +138,7 @@ The \ref content_viewer_page panel is where previous instances of properties are
 
 If at least one other case or data source has been ingested with this module enabled, there is a potential that data will be displayed in the Other Occurrences content viewer. Note that the Correlation Engine Ingest Module does not have to have been run on the current data source to see correlated files from other cases/data sources. If the selected file or artifact is associated by one of the supported Correlation Types, to one or more file(s) or artifact(s) in the database, the associated files/artifacts will be displayed. Note: the Content Viewer will display ALL associated files and artifacts available in the database. It ignores the user's enabled/disabled Correlation Properties.
 
-By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Files/artifacts that are notable will have a Red background, unknown will have Yellow background, and known will have a White background.
+By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Files/artifacts that are notable will have a Red background, all others will have a White background.
 
 \image html central_repo_content_viewer.png
 
@@ -149,7 +149,7 @@ This menu has several options.
 -# Select All
 -# Export Selected Rows to CSV
 -# Show Case Details
--# Show Commonality Details
+-# Show Frequency
 
 <b>Select All</b>
 
@@ -177,9 +177,9 @@ details will include:
 These details would have been entered by the examiner of the selected case, by visiting
 the Case -> Central Repository Case Properties menu, when that case was open.
 
-<b>Show Commonality Details</b>
+<b>Show Frequency</b>
 
-The concept of Commonality simply means, how common is the selected file. The value is the percentage of case/data source tuples that have the selected file or artifact.
+This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected file or artifact.
 
 \subsection cr_interesting_items Interesting Items
 
