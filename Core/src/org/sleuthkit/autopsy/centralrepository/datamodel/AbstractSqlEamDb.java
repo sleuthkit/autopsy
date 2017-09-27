@@ -449,34 +449,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
     }
 
     /**
-     * Updates a Data Source in the database
-     *
-     * @param eamDataSource the data source to update
-     */
-//    @Override
-//    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
-//        Connection conn = connect();
-// BC: This needs to be updated because device_id is not unique.  Query needs to also use case_id
-//        PreparedStatement preparedStatement = null;
-//        String sql = "UPDATE data_sources SET name=? WHERE device_id=? AND case_id=?";
-//
-//        try {
-//            preparedStatement = conn.prepareStatement(sql);
-//
-//            preparedStatement.setString(1, eamDataSource.getName());
-//            preparedStatement.setString(2, eamDataSource.getDeviceID());
-//            preparedStatement.setInt(3, eamDataSource.getCaseID());
-//
-//            preparedStatement.executeUpdate();
-//        } catch (SQLException ex) {
-//            throw new EamDbException("Error updating case.", ex); // NON-NLS
-//        } finally {
-//            EamDbUtil.closePreparedStatement(preparedStatement);
-//            EamDbUtil.closeConnection(conn);
-//        }
-//    }
-
-    /**
      * Retrieves Data Source details based on data source device ID
      *
      * @param dataSourceDeviceId the data source device ID number

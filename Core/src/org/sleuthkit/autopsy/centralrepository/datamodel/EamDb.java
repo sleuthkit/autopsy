@@ -187,13 +187,6 @@ public interface EamDb {
     void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
 
     /**
-     * Updates a Data Source in the database
-     *
-     * @param eamDataSource the data source to update
-     */
-    //void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException;
-
-    /**
      * Retrieves Data Source details based on data source device ID
      *
      * @param dataSourceDeviceId the data source device ID number
