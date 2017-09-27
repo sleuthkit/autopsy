@@ -382,10 +382,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId, CorrelationCase correlationCase) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getDataSourceDetails(dataSourceDeviceId);
+            return super.getDataSourceDetails(dataSourceDeviceId, correlationCase);
         } finally {
             releaseSharedLock();
         }               

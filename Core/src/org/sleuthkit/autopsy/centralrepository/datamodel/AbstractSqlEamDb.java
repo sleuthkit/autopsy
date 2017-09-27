@@ -458,13 +458,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
 //        Connection conn = connect();
 // BC: This needs to be updated because device_id is not unique.  Query needs to also use case_id
 //        PreparedStatement preparedStatement = null;
-//        String sql = "UPDATE data_sources SET name=? WHERE device_id=?";
+//        String sql = "UPDATE data_sources SET name=? WHERE device_id=? AND case_id=?";
 //
 //        try {
 //            preparedStatement = conn.prepareStatement(sql);
 //
 //            preparedStatement.setString(1, eamDataSource.getName());
 //            preparedStatement.setString(2, eamDataSource.getDeviceID());
+//            preparedStatement.setInt(3, eamDataSource.getCaseID());
 //
 //            preparedStatement.executeUpdate();
 //        } catch (SQLException ex) {
@@ -483,18 +484,19 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId, CorrelationCase correlationCase) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 
-        String sql = "SELECT * FROM data_sources WHERE device_id=?"; // NON-NLS
+        String sql = "SELECT * FROM data_sources WHERE device_id=? AND case_id=?"; // NON-NLS
 
         try {
             preparedStatement = conn.prepareStatement(sql);
             preparedStatement.setString(1, dataSourceDeviceId);
+            preparedStatement.setInt(2, correlationCase.getID());
             resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 eamDataSourceResult = getEamDataSourceFromResultSet(resultSet);
@@ -565,7 +567,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         sql.append(tableName);
         sql.append("(case_id, data_source_id, value, file_path, known_status, comment) ");
         sql.append("VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), ");
-        sql.append("(SELECT id FROM data_sources WHERE device_id=? LIMIT 1), ?, ?, ?, ?)");
+        sql.append("(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?)");
 
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
@@ -573,13 +575,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 if(! eamArtifact.getCorrelationValue().isEmpty()){
                     preparedStatement.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
                     preparedStatement.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
-                    preparedStatement.setString(3, eamArtifact.getCorrelationValue());
-                    preparedStatement.setString(4, eamInstance.getFilePath());
-                    preparedStatement.setByte(5, eamInstance.getKnownStatus().getFileKnownValue());
+                    preparedStatement.setInt(3, eamInstance.getCorrelationDataSource().getCaseID());
+                    preparedStatement.setString(4, eamArtifact.getCorrelationValue());
+                    preparedStatement.setString(5, eamInstance.getFilePath());
+                    preparedStatement.setByte(6, eamInstance.getKnownStatus().getFileKnownValue());
                     if ("".equals(eamInstance.getComment())) {
-                        preparedStatement.setNull(6, Types.INTEGER);
+                        preparedStatement.setNull(7, Types.INTEGER);
                     } else {
-                        preparedStatement.setString(6, eamInstance.getComment());
+                        preparedStatement.setString(7, eamInstance.getComment());
                     }
 
                     preparedStatement.executeUpdate();
@@ -920,7 +923,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     sql.append(tableName);
                     sql.append(" (case_id, data_source_id, value, file_path, known_status, comment) ");
                     sql.append("VALUES ((SELECT id FROM cases WHERE case_uid=? LIMIT 1), ");
-                    sql.append("(SELECT id FROM data_sources WHERE device_id=? LIMIT 1), ?, ?, ?, ?) ");
+                    sql.append("(SELECT id FROM data_sources WHERE device_id=? AND case_id=? LIMIT 1), ?, ?, ?, ?) ");
                     sql.append(getConflictClause());
 
                     bulkPs = conn.prepareStatement(sql.toString());
@@ -933,13 +936,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
                             if(! eamArtifact.getCorrelationValue().isEmpty()){
                                 bulkPs.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
                                 bulkPs.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
-                                bulkPs.setString(3, eamArtifact.getCorrelationValue());
-                                bulkPs.setString(4, eamInstance.getFilePath());
-                                bulkPs.setByte(5, eamInstance.getKnownStatus().getFileKnownValue());
+                                bulkPs.setInt(3, eamInstance.getCorrelationDataSource().getCaseID());
+                                bulkPs.setString(4, eamArtifact.getCorrelationValue());
+                                bulkPs.setString(5, eamInstance.getFilePath());
+                                bulkPs.setByte(6, eamInstance.getKnownStatus().getFileKnownValue());
                                 if ("".equals(eamInstance.getComment())) {
-                                    bulkPs.setNull(6, Types.INTEGER);
+                                    bulkPs.setNull(7, Types.INTEGER);
                                 } else {
-                                    bulkPs.setString(6, eamInstance.getComment());
+                                    bulkPs.setString(7, eamInstance.getComment());
                                 }
                                 bulkPs.addBatch();
                             }
@@ -1105,12 +1109,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 // We could improve effiency by keeping a list of all datasources and cases
                 // in the database, but we don't expect the user to be tagging large numbers
                 // of items (that didn't have the CE ingest module run on them) at once.
-                
-                if(null == getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID())){
+                CorrelationCase correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
+                if(null == correlationCase){
                     newCase(eamInstance.getCorrelationCase());
+                    correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
                 }
                 
-                if (null == getDataSourceDetails(eamInstance.getCorrelationDataSource().getDeviceID())) {
+                if (null == getDataSourceDetails(eamInstance.getCorrelationDataSource().getDeviceID(), correlationCase)) {
                     newDataSource(eamInstance.getCorrelationDataSource());
                 }
                 

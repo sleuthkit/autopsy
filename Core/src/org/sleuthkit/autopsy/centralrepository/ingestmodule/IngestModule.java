@@ -268,7 +268,7 @@ class IngestModule implements FileIngestModule {
                 == 1) {
             // ensure we have this data source in the EAM DB
             try {
-                if (null == dbManager.getDataSourceDetails(eamDataSource.getDeviceID())) {
+                if (null == dbManager.getDataSourceDetails(eamDataSource.getDeviceID(), eamCase)) {
                     dbManager.newDataSource(eamDataSource);
                 }
             } catch (EamDbException ex) {

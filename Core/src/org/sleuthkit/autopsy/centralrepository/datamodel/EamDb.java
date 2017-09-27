@@ -200,7 +200,7 @@ public interface EamDb {
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId) throws EamDbException;
+    CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId, CorrelationCase correlationCase) throws EamDbException;
 
     /**
      * Retrieves data sources that are in DB

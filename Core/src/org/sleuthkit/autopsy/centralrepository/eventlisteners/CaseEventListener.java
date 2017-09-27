@@ -244,8 +244,8 @@ public class CaseEventListener implements PropertyChangeListener {
 
                 try {
                     String deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
-                    if (null == dbManager.getDataSourceDetails(deviceId)) {
-                        CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                    CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                    if (null == dbManager.getDataSourceDetails(deviceId, correlationCase)) {
                         dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(newDataSource, correlationCase));
                     }
                 } catch (EamDbException ex) {
