@@ -245,7 +245,8 @@ public class CaseEventListener implements PropertyChangeListener {
                 try {
                     String deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
                     if (null == dbManager.getDataSourceDetails(deviceId)) {
-                        dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(newDataSource));
+                        CorrelationCase correlationCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+                        dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(newDataSource, correlationCase));
                     }
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS

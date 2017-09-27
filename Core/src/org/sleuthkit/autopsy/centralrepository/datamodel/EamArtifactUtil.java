@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
-import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -96,9 +95,11 @@ public class EamArtifactUtil {
                 }
 
                 // make an instance for the BB source file 
+                CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+               // CorrelationCase correlationCase = new CorrelationCase(currentCase.getName(), currentCase.getDisplayName());
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
-                        new CorrelationCase(currentCase.getName(), currentCase.getDisplayName()),
-                        CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource()),
+                        correlationCase,
+                        CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource(),correlationCase),
                         bbSourceFile.getParentPath() + bbSourceFile.getName(),
                         "",
                         TskData.FileKnown.UNKNOWN,
@@ -248,9 +249,10 @@ public class EamArtifactUtil {
         try {
             CorrelationAttribute.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             eamArtifact = new CorrelationAttribute(filesType, af.getMd5Hash());
+             CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
-                    new CorrelationCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
-                    CorrelationDataSource.fromTSKDataSource(af.getDataSource()),
+                    correlationCase,
+                    CorrelationDataSource.fromTSKDataSource(af.getDataSource(), correlationCase),
                     af.getParentPath() + af.getName(),
                     comment,
                     TskData.FileKnown.BAD,

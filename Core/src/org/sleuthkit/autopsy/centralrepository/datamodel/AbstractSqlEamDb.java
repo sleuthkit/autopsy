@@ -430,13 +430,14 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         PreparedStatement preparedStatement = null;
 
-        String sql = "INSERT INTO data_sources(device_id, name) VALUES (?, ?)";
+        String sql = "INSERT INTO data_sources(device_id, case_id, name) VALUES (?, ?, ?)";
 
         try {
             preparedStatement = conn.prepareStatement(sql);
 
             preparedStatement.setString(1, eamDataSource.getDeviceID());
-            preparedStatement.setString(2, eamDataSource.getName());
+            preparedStatement.setInt(2,eamDataSource.getCaseID());
+            preparedStatement.setString(3, eamDataSource.getName());
 
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
@@ -612,7 +613,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
+        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -664,7 +665,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
+        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -1148,7 +1149,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(aType);
         StringBuilder sql = new StringBuilder();
-        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment FROM ");
+        sql.append("SELECT cases.case_name, cases.case_uid, data_sources.name, device_id, file_path, known_status, comment, data_sources.case_id FROM ");
         sql.append(tableName);
         sql.append(" LEFT JOIN cases ON ");
         sql.append(tableName);
@@ -1875,7 +1876,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
         CorrelationDataSource eamDataSource = new CorrelationDataSource(
                 resultSet.getInt("id"),
                 resultSet.getString("device_id"),
-                resultSet.getString("name")
+                resultSet.getString("name"),
+                resultSet.getInt("case_id")
         );
 
         return eamDataSource;
@@ -1913,7 +1915,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
                 new CorrelationCase(resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(-1, resultSet.getString("device_id"), resultSet.getString("name")),
+                new CorrelationDataSource(-1, resultSet.getString("device_id"), resultSet.getString("name"), resultSet.getInt("case_id")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),

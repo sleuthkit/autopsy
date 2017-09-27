@@ -36,14 +36,17 @@ public class CorrelationDataSource implements Serializable {
     private final int dataSourceId;   //< Id in the central repo
     private final String deviceID;  //< Unique to its associated case (not necessarily globally unique)
     private final String name;
+    private final int caseID;
 
 
     CorrelationDataSource(int dataSourceId,
             String deviceID,
-            String name) {
+            String name,
+            int caseID) {
         this.dataSourceId = dataSourceId;
         this.deviceID = deviceID;
         this.name = name;
+        this.caseID = caseID;
     }
     
     /**
@@ -53,7 +56,7 @@ public class CorrelationDataSource implements Serializable {
      * @return 
      * @throws EamDbException 
      */
-    public static CorrelationDataSource fromTSKDataSource(Content dataSource) throws EamDbException {
+    public static CorrelationDataSource fromTSKDataSource(Content dataSource, CorrelationCase correlationCase) throws EamDbException {
         Case curCase;
         try {
             curCase = Case.getCurrentCase();
@@ -66,7 +69,7 @@ public class CorrelationDataSource implements Serializable {
         } catch (TskDataException | TskCoreException ex) {
             throw new EamDbException("Error getting data source info: " + ex.getMessage());
         }
-        return new CorrelationDataSource(-1, deviceId, dataSource.getName());
+        return new CorrelationDataSource(-1, deviceId, dataSource.getName(), correlationCase.getID());
     }
 
     @Override
@@ -74,6 +77,7 @@ public class CorrelationDataSource implements Serializable {
         StringBuilder str = new StringBuilder();
         str.append("(");
         str.append("ID=").append(Integer.toString(getID()));
+        str.append(",caseID=").append(Integer.toString(getCaseID()));
         str.append(",deviceID=").append(getDeviceID());
         str.append(",name=").append(getName());
         str.append(")");
@@ -97,6 +101,14 @@ public class CorrelationDataSource implements Serializable {
         return deviceID;
     }
 
+    /**
+     * Get the Case ID that is unique
+     * @return 
+     */
+    public int getCaseID(){
+        return caseID;
+    }
+    
     /**
      * @return the name
      */

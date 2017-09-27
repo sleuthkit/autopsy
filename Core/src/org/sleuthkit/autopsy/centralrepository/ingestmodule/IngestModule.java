@@ -56,7 +56,7 @@ import org.sleuthkit.datamodel.TskDataException;
  * ingest of a data source
  */
 @Messages({"IngestModule.prevTaggedSet.text=Previously Tagged As Notable (Central Repository)",
-           "IngestModule.prevCaseComment.text=Previous Case: "})
+    "IngestModule.prevCaseComment.text=Previous Case: "})
 class IngestModule implements FileIngestModule {
 
     private final static Logger LOGGER = Logger.getLogger(IngestModule.class.getName());
@@ -192,7 +192,7 @@ class IngestModule implements FileIngestModule {
         "IngestModule.errorMessage.isNotEnabled=Central repository settings are not initialized, cannot run Correlation Engine ingest module."
     })
     @Override
-    public void startUp(IngestJobContext context) throws IngestModuleException { 
+    public void startUp(IngestJobContext context) throws IngestModuleException {
         IngestEventsListener.incrementCorrelationEngineModuleCount();
         if (EamDb.isEnabled() == false) {
             /*
@@ -210,20 +210,12 @@ class IngestModule implements FileIngestModule {
             return;
         }
         // Don't allow sqlite central repo databases to be used for multi user cases
-        if((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE) 
-                && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)){
+        if ((Case.getCurrentCase().getCaseType() == Case.CaseType.MULTI_USER_CASE)
+                && (EamDbPlatformEnum.getSelectedPlatform() == EamDbPlatformEnum.SQLITE)) {
             LOGGER.log(Level.SEVERE, "Cannot run correlation engine on a multi-user case with a SQLite central repository.");
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
-        eamCase = new CorrelationCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
-
-        try {
-            eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource());
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
-            throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
-        }
 
         EamDb dbManager;
         try {
@@ -232,14 +224,49 @@ class IngestModule implements FileIngestModule {
             LOGGER.log(Level.SEVERE, "Error connecting to central repository database.", ex); // NON-NLS
             throw new IngestModuleException("Error connecting to central repository database.", ex); // NON-NLS
         }
-        
+
         try {
             filesType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
+        // ensure we have this case defined in the EAM DB
+        CorrelationCase existingCase;
+        Case curCase = Case.getCurrentCase();
+        CorrelationCase curCeCase = new CorrelationCase(
+                -1,
+                curCase.getName(), // unique case ID
+                EamOrganization.getDefault(),
+                curCase.getDisplayName(),
+                curCase.getCreatedDate(),
+                curCase.getNumber(),
+                curCase.getExaminer(),
+                null,
+                null,
+                null);
+        try {
+            existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
+            if (existingCase == null) {
+                dbManager.newCase(curCeCase);
+            }
 
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
+            throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
+        }
+
+        try {
+            eamCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+        } catch (EamDbException ex) {
+            throw new IngestModuleException("Unable to get case from central repository database ", ex);
+        }
+        try {
+            eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource(), eamCase);
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
+            throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
+        }
         // TODO: once we implement a shared cache, load/init it here w/ syncronized and define reference counter
         // if we are the first thread / module for this job, then make sure the case
         // and image exist in the DB before we associate artifacts with it.
@@ -255,30 +282,6 @@ class IngestModule implements FileIngestModule {
                 throw new IngestModuleException("Error creating new data source in ingest module start up.", ex); // NON-NLS
             }
 
-            // ensure we have this case defined in the EAM DB
-            CorrelationCase existingCase;
-            Case curCase = Case.getCurrentCase();
-            CorrelationCase curCeCase = new CorrelationCase(
-                    -1,
-                    curCase.getName(), // unique case ID
-                    EamOrganization.getDefault(),
-                    curCase.getDisplayName(),
-                    curCase.getCreatedDate(),
-                    curCase.getNumber(),
-                    curCase.getExaminer(),
-                    null,
-                    null,
-                    null);
-            try {
-                existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
-                if (existingCase == null) {
-                    dbManager.newCase(curCeCase);
-                }
-
-            } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
-                throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
-            }
         }
     }
 
@@ -290,7 +293,7 @@ class IngestModule implements FileIngestModule {
             BlackboardAttribute att = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME, MODULE_NAME,
                     Bundle.IngestModule_prevTaggedSet_text());
             BlackboardAttribute att2 = new BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_COMMENT, MODULE_NAME,
-                     Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
+                    Bundle.IngestModule_prevCaseComment_text() + caseDisplayNames.stream().distinct().collect(Collectors.joining(",", "", "")));
             tifArtifact.addAttribute(att);
             tifArtifact.addAttribute(att2);
 
