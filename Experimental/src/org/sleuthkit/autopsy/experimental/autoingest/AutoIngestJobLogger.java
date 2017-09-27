@@ -350,19 +350,6 @@ final class AutoIngestJobLogger {
     }
 
     /**
-     * Logs that automated file export is not enabled.
-     *
-     * @throws AutoIngestJobLoggerException if there is an error writing the log
-     *                                      message.
-     * @throws InterruptedException         if interrupted while blocked waiting
-     *                                      to acquire an exclusive lock on the
-     *                                      log file.
-     */
-    void logFileExportDisabled() throws AutoIngestJobLoggerException, InterruptedException {
-        log(MessageCategory.WARNING, "Automated file export is not enabled");
-    }
-
-    /**
      * Logs completion of file export.
      *
      * @throws AutoIngestJobLoggerException if there is an error writing the log

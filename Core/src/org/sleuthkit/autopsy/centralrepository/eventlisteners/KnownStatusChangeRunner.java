@@ -20,23 +20,23 @@ package org.sleuthkit.autopsy.centralrepository.eventlisteners;
 
 import java.util.logging.Level;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.datamodel.TskData.FileKnown;
 
 /**
- * Thread to send info to remote DB that tags a file as known, unknown, or known bad.
+ * Thread to send info to remote DB that tags a file as known, unknown, or notable.
  */
 public class KnownStatusChangeRunner implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(KnownStatusChangeRunner.class.getName());
     private static final long serialVersionUID = 1L;
 
-    private final EamArtifact artifact;
+    private final CorrelationAttribute artifact;
     private final FileKnown knownStatus;
 
-    public KnownStatusChangeRunner(EamArtifact artifact, FileKnown knownStatus) {
+    public KnownStatusChangeRunner(CorrelationAttribute artifact, FileKnown knownStatus) {
         this.artifact = artifact;
         this.knownStatus = knownStatus;
     }

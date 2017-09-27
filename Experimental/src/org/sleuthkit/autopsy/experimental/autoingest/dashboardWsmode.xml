@@ -6,5 +6,5 @@
     <bounds x="76" y="68" width="1005" height="750"/>
     <frame state="0"/>
     
-    <empty-behavior permanent="false"/>
+    <empty-behavior permanent="true"/>
 </mode>

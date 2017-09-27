@@ -123,10 +123,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
 
                 String instancesTemplate = "DELETE FROM %s_instances";
                 String referencesTemplate = "DELETE FROM global_files";
-                for (EamArtifact.Type type : DEFAULT_CORRELATION_TYPES) {
+                for (CorrelationAttribute.Type type : DEFAULT_CORRELATION_TYPES) {
                     dropContent.executeUpdate(String.format(instancesTemplate, type.getDbTableName()));
                     // FUTURE: support other reference types
-                    if (type.getId() == EamArtifact.FILES_TYPE_ID) {
+                    if (type.getId() == CorrelationAttribute.FILES_TYPE_ID) {
                         dropContent.executeUpdate(String.format(referencesTemplate, type.getDbTableName()));
                     }
                 }
@@ -271,7 +271,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param case The case to add
      */
     @Override
-    public EamCase newCase(Case autopsyCase) throws EamDbException {
+    public CorrelationCase newCase(Case autopsyCase) throws EamDbException {
          try{
             acquireExclusiveLock();
             return super.newCase(autopsyCase);
@@ -288,7 +288,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to add
      */
     @Override
-    public void newCase(EamCase eamCase) throws EamDbException {
+    public void newCase(CorrelationCase eamCase) throws EamDbException {
          try{
             acquireExclusiveLock();
             super.newCase(eamCase);
@@ -303,7 +303,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamCase The case to update
      */
     @Override
-    public void updateCase(EamCase eamCase) throws EamDbException {
+    public void updateCase(CorrelationCase eamCase) throws EamDbException {
          try{
             acquireExclusiveLock();
             super.updateCase(eamCase);
@@ -320,10 +320,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return The retrieved case
      */
     @Override
-    public EamCase getCaseDetails(String caseUUID) throws EamDbException {
+    public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getCaseDetails(caseUUID);
+            return super.getCaseByUUID(caseUUID);
         } finally {
             releaseSharedLock();
         }            
@@ -335,7 +335,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of cases
      */
     @Override
-    public List<EamCase> getCases() throws EamDbException {
+    public List<CorrelationCase> getCases() throws EamDbException {
         try{
             acquireSharedLock();
             return super.getCases();
@@ -350,7 +350,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamDataSource the data source to add
      */
     @Override
-    public void newDataSource(EamDataSource eamDataSource) throws EamDbException {
+    public void newDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
          try{
             acquireExclusiveLock();
             super.newDataSource(eamDataSource);
@@ -364,15 +364,15 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      *
      * @param eamDataSource the data source to update
      */
-    @Override
-    public void updateDataSource(EamDataSource eamDataSource) throws EamDbException {
-         try{
-            acquireExclusiveLock();
-            super.updateDataSource(eamDataSource);
-        } finally {
-            releaseExclusiveLock();
-        }               
-    }   
+//    @Override
+//    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
+//         try{
+//            acquireExclusiveLock();
+//            super.updateDataSource(eamDataSource);
+//        } finally {
+//            releaseExclusiveLock();
+//        }               
+//    }   
     
     /**
      * Retrieves Data Source details based on data source device ID
@@ -382,7 +382,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return The data source
      */
     @Override
-    public EamDataSource getDataSourceDetails(String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getDataSourceDetails(dataSourceDeviceId);
@@ -397,7 +397,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return list of data sources in the DB
      */
     @Override
-    public List<EamDataSource> getDataSources() throws EamDbException {
+    public List<CorrelationDataSource> getDataSources() throws EamDbException {
         try{
             acquireSharedLock();
             return super.getDataSources();
@@ -413,7 +413,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamArtifact The artifact to add
      */
     @Override
-    public void addArtifact(EamArtifact eamArtifact) throws EamDbException {
+    public void addArtifact(CorrelationAttribute eamArtifact) throws EamDbException {
          try{
             acquireExclusiveLock();
             super.addArtifact(eamArtifact);
@@ -431,7 +431,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List of artifact instances for a given type/value
      */
     @Override
-    public List<EamArtifactInstance> getArtifactInstancesByTypeValue(EamArtifact.Type aType, String value) throws EamDbException {
+    public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getArtifactInstancesByTypeValue(aType, value);
@@ -452,7 +452,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamArtifactInstance> getArtifactInstancesByPath(EamArtifact.Type aType, String filePath) throws EamDbException {
+    public List<CorrelationAttributeInstance> getArtifactInstancesByPath(CorrelationAttribute.Type aType, String filePath) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getArtifactInstancesByPath(aType, filePath);
@@ -472,7 +472,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      *         ArtifactValue.
      */
     @Override
-    public Long getCountArtifactInstancesByTypeValue(EamArtifact.Type aType, String value) throws EamDbException {
+    public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getCountArtifactInstancesByTypeValue(aType, value);
@@ -481,22 +481,11 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         }    
     }
     
-    /**
-     * Using the ArtifactType and ArtifactValue from the given eamArtfact,
-     * compute the ratio of: (The number of unique case_id/datasource_id tuples
-     * where Type/Value is found) divided by (The total number of unique
-     * case_id/datasource_id tuples in the database) expressed as a percentage.
-     *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                    for
-     *
-     * @return Int between 0 and 100
-     */
     @Override
-    public int getCommonalityPercentageForTypeValue(EamArtifact.Type aType, String value) throws EamDbException {
+    public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getCommonalityPercentageForTypeValue(aType, value);
+            return super.getFrequencyPercentage(corAttr);
         } finally {
             releaseSharedLock();
         }            
@@ -513,7 +502,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Number of unique tuples
      */
     @Override
-    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(EamArtifact.Type aType, String value) throws EamDbException {
+    public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getCountUniqueCaseDataSourceTuplesHavingTypeValue(aType, value);
@@ -522,17 +511,12 @@ public class SqliteEamDb extends AbstractSqlEamDb {
         }  
     }    
     
-    /**
-     * Retrieves number of unique caseDisplayName/dataSource tuples in the
-     * database.
-     *
-     * @return Number of unique tuples
-     */
+
     @Override
-    public Long getCountUniqueCaseDataSourceTuples() throws EamDbException {
+    public Long getCountUniqueDataSources() throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getCountUniqueCaseDataSourceTuples();
+            return super.getCountUniqueDataSources();
         } finally {
             releaseSharedLock();
         }  
@@ -577,7 +561,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * Executes a bulk insert of the cases
      */
     @Override
-    public void bulkInsertCases(List<EamCase> cases) throws EamDbException {
+    public void bulkInsertCases(List<CorrelationCase> cases) throws EamDbException {
         try{
             acquireExclusiveLock();
             super.bulkInsertCases(cases);
@@ -593,7 +577,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
      */
     @Override
-    public void setArtifactInstanceKnownStatus(EamArtifact eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
+    public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
         try{
             acquireExclusiveLock();
             super.setArtifactInstanceKnownStatus(eamArtifact, knownStatus);
@@ -612,7 +596,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return List with 0 or more matching eamArtifact instances.
      */
     @Override
-    public List<EamArtifactInstance> getArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException {
+    public List<CorrelationAttributeInstance> getArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getArtifactInstancesKnownBad(aType, value);
@@ -630,7 +614,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Number of matching eamArtifacts
      */
     @Override
-    public Long getCountArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException {
+    public Long getCountArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getCountArtifactInstancesKnownBad(aType, value);
@@ -652,7 +636,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public List<String> getListCasesHavingArtifactInstancesKnownBad(EamArtifact.Type aType, String value) throws EamDbException {
+    public List<String> getListCasesHavingArtifactInstancesKnownBad(CorrelationAttribute.Type aType, String value) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getListCasesHavingArtifactInstancesKnownBad(aType, value);
@@ -670,7 +654,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @return Global known status of the artifact
      */
     @Override
-    public boolean isArtifactlKnownBadByReference(EamArtifact.Type aType, String value) throws EamDbException {   
+    public boolean isArtifactlKnownBadByReference(CorrelationAttribute.Type aType, String value) throws EamDbException {   
         try{
             acquireSharedLock();
             return super.isArtifactlKnownBadByReference(aType, value);
@@ -780,7 +764,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, EamArtifact.Type correlationType) throws EamDbException {
+    public void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException {
         try{
             acquireExclusiveLock();
             super.addReferenceInstance(eamGlobalFileInstance, correlationType);
@@ -795,7 +779,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, EamArtifact.Type contentType) throws EamDbException {
+    public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttribute.Type contentType) throws EamDbException {
         try{
             acquireExclusiveLock();
             super.bulkInsertReferenceTypeEntries(globalInstances, contentType);
@@ -815,7 +799,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(EamArtifact.Type aType, String aValue) throws EamDbException {
+    public List<EamGlobalFileInstance> getReferenceInstancesByTypeValue(CorrelationAttribute.Type aType, String aValue) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getReferenceInstancesByTypeValue(aType, aValue);
@@ -834,7 +818,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public int newCorrelationType(EamArtifact.Type newType) throws EamDbException {
+    public int newCorrelationType(CorrelationAttribute.Type newType) throws EamDbException {
         try{
             acquireExclusiveLock();
             return super.newCorrelationType(newType);
@@ -853,10 +837,10 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamArtifact.Type> getCorrelationTypes() throws EamDbException {
+    public List<CorrelationAttribute.Type> getDefinedCorrelationTypes() throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getCorrelationTypes();
+            return super.getDefinedCorrelationTypes();
         } finally {
             releaseSharedLock();
         }    
@@ -872,7 +856,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamArtifact.Type> getEnabledCorrelationTypes() throws EamDbException {
+    public List<CorrelationAttribute.Type> getEnabledCorrelationTypes() throws EamDbException {
         try{
             acquireSharedLock();
             return super.getEnabledCorrelationTypes();
@@ -891,7 +875,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public List<EamArtifact.Type> getSupportedCorrelationTypes() throws EamDbException {
+    public List<CorrelationAttribute.Type> getSupportedCorrelationTypes() throws EamDbException {
         try{
             acquireSharedLock();
             return super.getSupportedCorrelationTypes();
@@ -908,7 +892,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public void updateCorrelationType(EamArtifact.Type aType) throws EamDbException {
+    public void updateCorrelationType(CorrelationAttribute.Type aType) throws EamDbException {
         try{
             acquireExclusiveLock();
             super.updateCorrelationType(aType);
@@ -927,7 +911,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * @throws EamDbException
      */
     @Override
-    public EamArtifact.Type getCorrelationTypeById(int typeId) throws EamDbException {
+    public CorrelationAttribute.Type getCorrelationTypeById(int typeId) throws EamDbException {
         try{
             acquireSharedLock();
             return super.getCorrelationTypeById(typeId);

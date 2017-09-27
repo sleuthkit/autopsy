@@ -21,6 +21,7 @@ package org.sleuthkit.autopsy.centralrepository.datamodel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
@@ -55,53 +56,65 @@ public class EamArtifactUtil {
      * null.
      *
      * @param bbArtifact BlackboardArtifact to examine
+     * @param addInstanceDetails If true, add instance details from bbArtifact into the returned structure
+     * @param checkEnabled If true, only create a CorrelationAttribute if it is enabled
+     
      * @return List of EamArtifacts
      */
-    public static List<EamArtifact> fromBlackboardArtifact(BlackboardArtifact bbArtifact,
-            boolean includeInstances,
-            List<EamArtifact.Type> artifactTypes,
-            boolean checkEnabled) {
+    public static List<CorrelationAttribute> getCorrelationAttributeFromBlackboardArtifact(BlackboardArtifact bbArtifact,
+            boolean addInstanceDetails, boolean checkEnabled) {
+        
+        List<CorrelationAttribute> eamArtifacts = new ArrayList<>();
 
-        List<EamArtifact> eamArtifacts = new ArrayList<>();
-
-        for (EamArtifact.Type aType : artifactTypes) {
-            if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
-                EamArtifact eamArtifact = getTypeFromBlackboardArtifact(aType, bbArtifact);
-                if (eamArtifact != null) {
-                    eamArtifacts.add(eamArtifact);
+        try {
+            // Cycle through the types and see if there is a correlation attribute that works
+            // for the given blackboard artifact
+            //
+            // @@@ This seems ineffecient. Instead of cycling based on correlation type, we should just
+            // have switch based on artifact type
+            for (CorrelationAttribute.Type aType : EamDb.getInstance().getDefinedCorrelationTypes()) {
+                if ((checkEnabled && aType.isEnabled()) || !checkEnabled) {
+                    CorrelationAttribute eamArtifact = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(aType, bbArtifact);
+                    if (eamArtifact != null) {
+                        eamArtifacts.add(eamArtifact);
+                    }
                 }
             }
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting defined correlation types.", ex); // NON-NLS
+            return eamArtifacts;
         }
 
-        if (!eamArtifacts.isEmpty() && includeInstances) {
+        // if they asked for it, add the instance details associated with this occurance.
+        if (!eamArtifacts.isEmpty() && addInstanceDetails) {
             try {
-                AbstractFile af = Case.getCurrentCase().getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
-                if (null == af) {
-                    return null;
+                Case currentCase = Case.getCurrentCase();
+                AbstractFile bbSourceFile = currentCase.getSleuthkitCase().getAbstractFileById(bbArtifact.getObjectID());
+                if (null == bbSourceFile) {
+                    //@@@ Log this
+                    return eamArtifacts;
                 }
 
-                String deviceId = "";
-                try {
-                    deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
-                } catch (TskCoreException | TskDataException ex) {
-                    LOGGER.log(Level.SEVERE, "Error, failed to get deviceID or data source from current case.", ex);
-                }
-
-                EamArtifactInstance eamInstance = new EamArtifactInstance(
-                        new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
-                        new EamDataSource(deviceId, af.getDataSource().getName()),
-                        af.getParentPath() + af.getName(),
+                // make an instance for the BB source file 
+                CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
+                        new CorrelationCase(currentCase.getName(), currentCase.getDisplayName()),
+                        CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource()),
+                        bbSourceFile.getParentPath() + bbSourceFile.getName(),
                         "",
                         TskData.FileKnown.UNKNOWN,
-                        EamArtifactInstance.GlobalStatus.LOCAL
+                        CorrelationAttributeInstance.GlobalStatus.LOCAL
                 );
 
-                for (EamArtifact eamArtifact : eamArtifacts) {
+                // add the instance details
+                for (CorrelationAttribute eamArtifact : eamArtifacts) {
                     eamArtifact.addInstance(eamInstance);
                 }
-            } catch (TskCoreException ex) {
+            } catch (TskCoreException | EamDbException ex) {
                 LOGGER.log(Level.SEVERE, "Error creating artifact instance.", ex); // NON-NLS
-                return null;
+                return eamArtifacts;
+            } catch (IllegalStateException ex) {
+                LOGGER.log(Level.SEVERE, "Case is closed.", ex); // NON-NLS
+                return eamArtifacts;
             }
         }
 
@@ -109,16 +122,16 @@ public class EamArtifactUtil {
     }
 
     /**
-     * Convert a blackboard artifact to an EamArtifact.
-     * Returns null if the converted artifact does not contain valid
-     * correlation data.
+     * Create an EamArtifact of type correlationType if one can be generated
+     * based on the data in the blackboard artifact. 
      *
-     * @param aType      The Central Repository artifact type to create
-     * @param bbArtifact The blackboard artifact to convert
+     * @param correlationType      The Central Repository artifact type to create
+     * @param bbArtifact            The blackboard artifact to pull data from
      *
-     * @return the new EamArtifact, or null if one was not created
+     * @return the new EamArtifact, or null if one was not created because bbArtifact
+     *   did not contain the needed data
      */
-    public static EamArtifact getTypeFromBlackboardArtifact(EamArtifact.Type aType, BlackboardArtifact bbArtifact) {
+    private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType, BlackboardArtifact bbArtifact) {
         String value = null;
         int artifactTypeID = bbArtifact.getArtifactTypeID();
         
@@ -128,10 +141,10 @@ public class EamArtifactUtil {
                 BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
                     BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
-                    return getTypeFromBlackboardArtifact(aType, associatedArtifact);
+                    return EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(correlationType, associatedArtifact);
                 }
                 
-            } else if (aType.getId() == EamArtifact.EMAIL_TYPE_ID
+            } else if (correlationType.getId() == CorrelationAttribute.EMAIL_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
 
                 BlackboardAttribute setNameAttr = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_SET_NAME));
@@ -139,7 +152,7 @@ public class EamArtifactUtil {
                         && EamArtifactUtil.getEmailAddressAttrString().equals(setNameAttr.getValueString())) {
                     value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_KEYWORD)).getValueString();
                 }
-            } else if (aType.getId() == EamArtifact.DOMAIN_TYPE_ID
+            } else if (correlationType.getId() == CorrelationAttribute.DOMAIN_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_BOOKMARK.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_COOKIE.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_WEB_DOWNLOAD.getTypeID() == artifactTypeID
@@ -147,7 +160,7 @@ public class EamArtifactUtil {
 
                 // Lower-case this to normalize domains
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DOMAIN)).getValueString();
-            } else if (aType.getId() == EamArtifact.PHONE_TYPE_ID
+            } else if (correlationType.getId() == CorrelationAttribute.PHONE_TYPE_ID
                     && (BlackboardArtifact.ARTIFACT_TYPE.TSK_CONTACT.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_CALLLOG.getTypeID() == artifactTypeID
                     || BlackboardArtifact.ARTIFACT_TYPE.TSK_MESSAGE.getTypeID() == artifactTypeID)) {
@@ -176,7 +189,7 @@ public class EamArtifactUtil {
                     }
                 }               
                 
-            } else if (aType.getId() == EamArtifact.USBID_TYPE_ID
+            } else if (correlationType.getId() == CorrelationAttribute.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
                 value = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_DEVICE_ID)).getValueString();
@@ -188,7 +201,7 @@ public class EamArtifactUtil {
         }
 
         if (null != value) {
-            return new EamArtifact(aType, value);
+            return new CorrelationAttribute(correlationType, value);
         } else {
             return null;
         }
@@ -196,15 +209,19 @@ public class EamArtifactUtil {
     
     /**
      * Create an EamArtifact from the given Content.
-     * Will return null if an artifact can not be created. Does not
-     * add the artifact to the database.
+     * Will return null if an artifact can not be created - this is not
+     * necessarily an error case, it just means an artifact can't be made.
+     * If creation fails due to an error (and not that the file is the wrong type
+     * or it has no hash), the error will be logged before returning. 
+     *
+     * Does not add the artifact to the database.
      * 
      * @param content     The content object
-     * @param knownStatus Unknown, known bad, or known
+     * @param knownStatus Unknown, notable, or known
      * @param comment     The comment for the new artifact (generally used for a tag comment)
      * @return The new EamArtifact or null if creation failed
      */
-    public static EamArtifact getEamArtifactFromContent(Content content, TskData.FileKnown knownStatus, String comment){
+    public static CorrelationAttribute getEamArtifactFromContent(Content content, TskData.FileKnown knownStatus, String comment){
         
         if(! (content instanceof AbstractFile)){
             return null;
@@ -220,45 +237,29 @@ public class EamArtifactUtil {
                 || (!af.isMetaFlagSet(TskData.TSK_FS_META_FLAG_ENUM.ALLOC))) {
             return null;
         }
-
-        String dsName;
-        try {
-            dsName = af.getDataSource().getName();
-        } catch (TskCoreException ex) {
-            LOGGER.log(Level.SEVERE, "Error, unable to get name of data source from abstract file.", ex);
-            return null;
-        }
         
         // We need a hash to make the artifact
         String md5 = af.getMd5Hash();
         if (md5 == null || md5.isEmpty()) {
             return null;
         }
-        
-        String deviceId;
-        try {
-            deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(af.getDataSource().getId()).getDeviceId();
-        } catch (TskCoreException | TskDataException ex) {
-            LOGGER.log(Level.SEVERE, "Error, failed to get deviceID or data source from current case.", ex);
-            return null;
-        }
 
-        EamArtifact eamArtifact;
+        CorrelationAttribute eamArtifact;
         try {
-            EamArtifact.Type filesType = EamDb.getInstance().getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
-            eamArtifact = new EamArtifact(filesType, af.getMd5Hash());
-            EamArtifactInstance cei = new EamArtifactInstance(
-                    new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
-                    new EamDataSource(deviceId, dsName),
+            CorrelationAttribute.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
+            eamArtifact = new CorrelationAttribute(filesType, af.getMd5Hash());
+            CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
+                    new CorrelationCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName()),
+                    CorrelationDataSource.fromTSKDataSource(af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     comment,
                     TskData.FileKnown.BAD,
-                    EamArtifactInstance.GlobalStatus.LOCAL
+                    CorrelationAttributeInstance.GlobalStatus.LOCAL
             );
             eamArtifact.addInstance(cei);
             return eamArtifact;
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error, unable to get FILES correlation type.", ex);
+        } catch (TskCoreException | EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error making correlation attribute.", ex);
             return null;
         }
     }

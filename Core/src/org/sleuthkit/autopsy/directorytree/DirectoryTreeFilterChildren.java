@@ -286,17 +286,17 @@ class DirectoryTreeFilterChildren extends FilterNode.Children {
 
         @Override
         public Boolean visit(LocalFileNode lfn) {
-            return lfn.hasContentChildren();
+            return lfn.hasVisibleContentChildren();
         }
 
         @Override
         public Boolean visit(LayoutFileNode ln) {
-            return ln.hasContentChildren();
+            return ln.hasVisibleContentChildren();
         }
         
         @Override
         public Boolean visit(SlackFileNode sfn) {
-            return sfn.hasContentChildren();
+            return sfn.hasVisibleContentChildren();
         }
 
         @Override

@@ -32,10 +32,10 @@ import org.sleuthkit.autopsy.casemodule.events.ContentTagDeletedEvent;
 import org.sleuthkit.autopsy.casemodule.events.DataSourceAddedEvent;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.coreutils.Logger;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamOrganization;
@@ -97,8 +97,8 @@ public class CaseEventListener implements PropertyChangeListener {
                     }
                 } else { // CONTENT_TAG_DELETED
                     // For deleted tags, we want to set the file status to UNKNOWN if:
-                    //   - The tag that was just removed is known bad in central repo
-                    //   - There are no remaining tags that are known bad 
+                    //   - The tag that was just removed is notable in central repo
+                    //   - There are no remaining tags that are notable 
                     final ContentTagDeletedEvent tagDeletedEvent = (ContentTagDeletedEvent) evt;
                     long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
 
@@ -139,14 +139,16 @@ public class CaseEventListener implements PropertyChangeListener {
                     }
                 }
 
-                final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(af, 
+                final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(af, 
                         knownStatus, comment);
 
-                // send update to Central Repository db
-                Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
-                // TODO: send r into a thread pool instead
-                Thread t = new Thread(r);
-                t.start();
+                if(eamArtifact != null){
+                    // send update to Central Repository db
+                    Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
+                    // TODO: send r into a thread pool instead
+                    Thread t = new Thread(r);
+                    t.start();
+                }
             } // CONTENT_TAG_ADDED, CONTENT_TAG_DELETED
             break;
 
@@ -177,8 +179,8 @@ public class CaseEventListener implements PropertyChangeListener {
                     }
                 } else { //BLACKBOARD_ARTIFACT_TAG_DELETED
                     // For deleted tags, we want to set the file status to UNKNOWN if:
-                    //   - The tag that was just removed is known bad in central repo
-                    //   - There are no remaining tags that are known bad 
+                    //   - The tag that was just removed is notable in central repo
+                    //   - There are no remaining tags that are notable 
                     final BlackBoardArtifactTagDeletedEvent tagDeletedEvent = (BlackBoardArtifactTagDeletedEvent) evt;
                     long contentID = tagDeletedEvent.getDeletedTagInfo().getContentID();
                     long artifactID = tagDeletedEvent.getDeletedTagInfo().getArtifactID();
@@ -220,18 +222,15 @@ public class CaseEventListener implements PropertyChangeListener {
                     return;
                 }
 
-                try {
-                    List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                    for (EamArtifact eamArtifact : convertedArtifacts) {
-                        eamArtifact.getInstances().get(0).setComment(comment);
-                        Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
-                        // TODO: send r into a thread pool instead
-                        Thread t = new Thread(r);
-                        t.start();
-                    }
-                } catch (EamDbException ex) {
-                    LOGGER.log(Level.SEVERE, "Error, unable to get artifact types during BLACKBOARD_ARTIFACT_TAG_ADDED/BLACKBOARD_ARTIFACT_TAG_DELETED event.", ex);
+                List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, true, true);
+                for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                    eamArtifact.getInstances().get(0).setComment(comment);
+                    Runnable r = new KnownStatusChangeRunner(eamArtifact, knownStatus);
+                    // TODO: send r into a thread pool instead
+                    Thread t = new Thread(r);
+                    t.start();
                 }
+                
             } // BLACKBOARD_ARTIFACT_TAG_ADDED, BLACKBOARD_ARTIFACT_TAG_DELETED
             break;
 
@@ -245,9 +244,8 @@ public class CaseEventListener implements PropertyChangeListener {
 
                 try {
                     String deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(newDataSource.getId()).getDeviceId();
-
                     if (null == dbManager.getDataSourceDetails(deviceId)) {
-                        dbManager.newDataSource(new EamDataSource(deviceId, newDataSource.getName()));
+                        dbManager.newDataSource(CorrelationDataSource.fromTSKDataSource(newDataSource));
                     }
                 } catch (EamDbException ex) {
                     LOGGER.log(Level.SEVERE, "Error connecting to Central Repository database.", ex); //NON-NLS
@@ -281,7 +279,7 @@ public class CaseEventListener implements PropertyChangeListener {
                         LOGGER.log(Level.SEVERE, "Error adding tag.", ex); // NON-NLS
                     }
 
-                    EamCase curCeCase = new EamCase(
+                    CorrelationCase curCeCase = new CorrelationCase(
                             -1,
                             curCase.getName(), // unique case ID
                             EamOrganization.getDefault(),
@@ -300,7 +298,7 @@ public class CaseEventListener implements PropertyChangeListener {
                     try {
                         // NOTE: Cannot determine if the opened case is a new case or a reopened case,
                         //  so check for existing name in DB and insert if missing.
-                        EamCase existingCase = dbManager.getCaseDetails(curCeCase.getCaseUUID());
+                        CorrelationCase existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
 
                         if (null == existingCase) {
                             dbManager.newCase(curCeCase);
@@ -323,7 +321,7 @@ public class CaseEventListener implements PropertyChangeListener {
                     String newName = (String)evt.getNewValue();
                     try {
                         // See if the case is in the database. If it is, update the display name.
-                        EamCase existingCase = dbManager.getCaseDetails(Case.getCurrentCase().getName());
+                        CorrelationCase existingCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
 
                         if (null != existingCase) {
                             existingCase.setDisplayName(newName);

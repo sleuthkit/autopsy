@@ -18,11 +18,12 @@
  */
 package org.sleuthkit.autopsy.centralrepository.ingestmodule;
 
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamCase;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationCase;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import org.openide.util.Exceptions;
 import org.openide.util.NbBundle.Messages;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.casemodule.Case;
@@ -35,9 +36,9 @@ import org.sleuthkit.autopsy.ingest.IngestMessage;
 import org.sleuthkit.autopsy.ingest.IngestModuleReferenceCounter;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactInstance;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamDataSource;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttributeInstance;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationDataSource;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbPlatformEnum;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -63,10 +64,10 @@ class IngestModule implements FileIngestModule {
     private static final IngestModuleReferenceCounter refCounter = new IngestModuleReferenceCounter();
     private static final IngestModuleReferenceCounter warningMsgRefCounter = new IngestModuleReferenceCounter();
     private long jobId;
-    private EamCase eamCase;
-    private EamDataSource eamDataSource;
+    private CorrelationCase eamCase;
+    private CorrelationDataSource eamDataSource;
     private Blackboard blackboard;
-    private EamArtifact.Type filesType;
+    private CorrelationAttribute.Type filesType;
 
     @Override
     public ProcessResult process(AbstractFile af) {
@@ -121,12 +122,12 @@ class IngestModule implements FileIngestModule {
                     postCorrelatedBadFileToBlackboard(af, caseDisplayNames);
                 }
             } catch (EamDbException ex) {
-                LOGGER.log(Level.SEVERE, "Error counting known bad artifacts.", ex); // NON-NLS
+                LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex); // NON-NLS
                 return ProcessResult.ERROR;
             }
         }
 
-        // Make a TSK_HASHSET_HIT blackboard artifact for global known bad files
+        // Make a TSK_HASHSET_HIT blackboard artifact for global notable files
         try {
             if (dbManager.isArtifactlKnownBadByReference(filesType, md5)) {
                 postCorrelatedHashHitToBlackboard(af);
@@ -137,14 +138,14 @@ class IngestModule implements FileIngestModule {
         }
 
         try {
-            EamArtifact eamArtifact = new EamArtifact(filesType, md5);
-            EamArtifactInstance cefi = new EamArtifactInstance(
+            CorrelationAttribute eamArtifact = new CorrelationAttribute(filesType, md5);
+            CorrelationAttributeInstance cefi = new CorrelationAttributeInstance(
                     eamCase,
                     eamDataSource,
                     af.getParentPath() + af.getName(),
                     null,
                     TskData.FileKnown.UNKNOWN,
-                    EamArtifactInstance.GlobalStatus.LOCAL
+                    CorrelationAttributeInstance.GlobalStatus.LOCAL
             );
             eamArtifact.addInstance(cefi);
             dbManager.prepareBulkArtifact(eamArtifact);
@@ -215,17 +216,14 @@ class IngestModule implements FileIngestModule {
             throw new IngestModuleException("Cannot run on a multi-user case with a SQLite central repository."); // NON-NLS
         }
         jobId = context.getJobId();
-        eamCase = new EamCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
+        eamCase = new CorrelationCase(Case.getCurrentCase().getName(), Case.getCurrentCase().getDisplayName());
 
-        String deviceId;
         try {
-            deviceId = Case.getCurrentCase().getSleuthkitCase().getDataSource(context.getDataSource().getId()).getDeviceId();
-        } catch (TskCoreException | TskDataException ex) {
-            LOGGER.log(Level.SEVERE, "Error getting data source device id in ingest module start up.", ex); // NON-NLS
-            throw new IngestModuleException("Error getting data source device id in ingest module start up.", ex); // NON-NLS
+            eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource());
+        } catch (EamDbException ex) {
+            LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
+            throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
         }
-
-        eamDataSource = new EamDataSource(deviceId, context.getDataSource().getName());
 
         EamDb dbManager;
         try {
@@ -236,7 +234,7 @@ class IngestModule implements FileIngestModule {
         }
         
         try {
-            filesType = dbManager.getCorrelationTypeById(EamArtifact.FILES_TYPE_ID);
+            filesType = dbManager.getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
@@ -258,9 +256,9 @@ class IngestModule implements FileIngestModule {
             }
 
             // ensure we have this case defined in the EAM DB
-            EamCase existingCase;
+            CorrelationCase existingCase;
             Case curCase = Case.getCurrentCase();
-            EamCase curCeCase = new EamCase(
+            CorrelationCase curCeCase = new CorrelationCase(
                     -1,
                     curCase.getName(), // unique case ID
                     EamOrganization.getDefault(),
@@ -272,7 +270,7 @@ class IngestModule implements FileIngestModule {
                     null,
                     null);
             try {
-                existingCase = dbManager.getCaseDetails(curCeCase.getCaseUUID());
+                existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
                 if (existingCase == null) {
                     dbManager.newCase(curCeCase);
                 }
@@ -354,8 +352,8 @@ class IngestModule implements FileIngestModule {
         "IngestModule.postToBB.md5Hash=MD5 Hash",
         "IngestModule.postToBB.hashSetSource=Source of Hash",
         "IngestModule.postToBB.eamHit=Central Repository",
-        "# {0} - Name of file that is Known Bad",
-        "IngestModule.postToBB.knownBadMsg=Known Bad: {0}"})
+        "# {0} - Name of file that is Notable",
+        "IngestModule.postToBB.knownBadMsg=Notable: {0}"})
     public void sendBadFileInboxMessage(BlackboardArtifact artifact, String name, String md5Hash) {
         StringBuilder detailsSb = new StringBuilder();
         //details
