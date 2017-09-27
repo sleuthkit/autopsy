@@ -51,7 +51,7 @@ public class IngestEventsListener {
 
     private static final Logger LOGGER = Logger.getLogger(CorrelationAttribute.class.getName());
 
-    final Collection<String> addedCeArtifactTrackerSet = new LinkedHashSet<>();
+    final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int ceModuleInstanceCount = 0;
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
@@ -139,7 +139,7 @@ public class IngestEventsListener {
                             for (CorrelationAttribute eamArtifact : convertedArtifacts) {
                                 try {
                                     // Only do something with this artifact if it's unique within the job
-                                    if (addedCeArtifactTrackerSet.add(eamArtifact.toString())) {
+                                    if (recentlyAddedCeArtifacts.add(eamArtifact.toString())) {
                                         // Was it previously marked as bad?
                                         // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
                                         // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
@@ -178,10 +178,10 @@ public class IngestEventsListener {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED: {
                     // clear the tracker to reduce memory usage
-                    // @@@ This isnt' entirely accurate to do here.  We could have multiple
-                    // ingest jobs at the same time
-                    addedCeArtifactTrackerSet.clear();
-
+                    if (getCeModuleInstanceCount() == 0) {
+                        recentlyAddedCeArtifacts.clear();
+                    }
+                    //else another instance of the Correlation Engine Module is still being run.
                 } // DATA_SOURCE_ANALYSIS_COMPLETED
                 break;
             }

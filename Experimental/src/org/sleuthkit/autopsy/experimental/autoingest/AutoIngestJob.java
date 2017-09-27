@@ -208,13 +208,14 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * is set when the stage is set.
      *
      * @param newStage The processing stage.
+     * @param stageStartDate The date and time this stage started.
      */
-    synchronized void setProcessingStage(Stage newStage) {
+    synchronized void setProcessingStage(Stage newStage, Date stageStartDate) {
         if (Stage.CANCELLING == this.stage && Stage.COMPLETED != newStage) {
             return;
         }
         this.stage = newStage;
-        this.stageStartDate = Date.from(Instant.now());
+        this.stageStartDate = stageStartDate;
     }
 
     /**
@@ -319,7 +320,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * Cancels the job.
      */
     synchronized void cancel() {
-        setProcessingStage(Stage.CANCELLING);
+        setProcessingStage(Stage.CANCELLING, Date.from(Instant.now()));
         cancelled = true;
         errorsOccurred = true;
         if (null != dataSourceProcessor) {
@@ -347,7 +348,7 @@ public final class AutoIngestJob implements Comparable<AutoIngestJob>, Serializa
      * the job.
      */
     synchronized void setCompleted() {
-        setProcessingStage(Stage.COMPLETED);
+        setProcessingStage(Stage.COMPLETED, Date.from(Instant.now()));
         completed = true;
     }
 

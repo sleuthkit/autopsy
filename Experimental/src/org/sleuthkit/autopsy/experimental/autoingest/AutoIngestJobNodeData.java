@@ -84,7 +84,7 @@ final class AutoIngestJobNodeData {
     AutoIngestJobNodeData(AutoIngestJob job) {
         setProcessingStatus(job.getProcessingStatus());
         setPriority(job.getPriority());
-        setNumberOfCrashes(numberOfCrashes); // RJCTODO
+        setNumberOfCrashes(job.getNumberOfCrashes());
         setCompletedDate(job.getCompletedDate());
         setErrorsOccurred(job.getErrorsOccurred());
         this.version = CURRENT_VERSION;
