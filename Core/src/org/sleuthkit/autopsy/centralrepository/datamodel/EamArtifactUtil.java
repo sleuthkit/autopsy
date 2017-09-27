@@ -96,7 +96,6 @@ public class EamArtifactUtil {
 
                 // make an instance for the BB source file 
                 CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
-               // CorrelationCase correlationCase = new CorrelationCase(currentCase.getName(), currentCase.getDisplayName());
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
                         correlationCase,
                         CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource(),correlationCase),
