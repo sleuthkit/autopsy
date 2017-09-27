@@ -344,7 +344,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         if (event.shouldRetry() == false) {
             synchronized (jobsLock) {
                 AutoIngestJob job = event.getJob();
-                if(completedJobs.contains(job)) {
+                if (completedJobs.contains(job)) {
                     completedJobs.remove(job);
                 }
                 completedJobs.add(event.getJob());
@@ -1123,33 +1123,47 @@ public final class AutoIngestManager extends Observable implements PropertyChang
          *                              shutting down.
          */
         private void addPendingJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws InterruptedException {
-            AutoIngestJob job = new AutoIngestJob(manifest);
-            job.setPriority(nodeData.getPriority());
+            AutoIngestJob job;
+            if (nodeData.getVersion() == AutoIngestJobNodeData.getCurrentVersion()) {
+                job = new AutoIngestJob(nodeData);
+                Path caseDirectory = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
+                if (null != caseDirectory) {
+                    job.setCaseDirectoryPath(caseDirectory);
+                }
+            } else {
+                job = new AutoIngestJob(manifest);
+                job.setPriority(nodeData.getPriority()); // Retain priority, present in all versions of the node data.
+                Path caseDirectory = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
+                if (null != caseDirectory) {
+                    job.setCaseDirectoryPath(caseDirectory);
+                }
+
+                /*
+                 * Try to upgrade/update the coordination service node data for
+                 * the job.
+                 *
+                 * An exclusive lock is obtained before doing so because another
+                 * host may have already found the job, obtained an exclusive
+                 * lock, and started processing it. However, this locking does
+                 * make it possible that two processing hosts will both try to
+                 * obtain the lock to do the upgrade operation at the same time.
+                 * If this happens, the host that is holding the lock will
+                 * complete the upgrade operation, so there is nothing more for
+                 * this host to do.
+                 */
+                try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
+                    if (null != manifestLock) {
+                        updateCoordinationServiceNode(job);
+                    }
+                } catch (CoordinationServiceException ex) {
+                    SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
+                }
+            }
             Path caseDirectory = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
             if (null != caseDirectory) {
                 job.setCaseDirectoryPath(caseDirectory);
             }
             newPendingJobsList.add(job);
-
-            /*
-             * Try to upgrade/update the coordination service node data for the
-             * job.
-             *
-             * An exclusive lock is obtained before doing so because another
-             * host may have already found the job, obtained an exclusive lock,
-             * and started processing it. However, this locking does make it
-             * possible that two hosts will both try to obtain the lock to do
-             * the upgrade/update operation at the same time. If this happens,
-             * the host that is holding the lock will complete the
-             * update/upgrade operation, so there is nothing more to do.
-             */
-            try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
-                if (null != manifestLock) {
-                    AutoIngestManager.this.updateCoordinationServiceNode(job);
-                }
-            } catch (CoordinationServiceException ex) {
-                SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
-            }
         }
 
         /**
@@ -1180,7 +1194,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
             try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
                 if (null != manifestLock) {
                     AutoIngestJob job = new AutoIngestJob(manifest);
-                    AutoIngestManager.this.updateCoordinationServiceNode(job);
+                    updateCoordinationServiceNode(job);
                     newPendingJobsList.add(job);
                 }
             } catch (CoordinationServiceException ex) {
@@ -1303,46 +1317,48 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         private void addCompletedJob(Manifest manifest, AutoIngestJobNodeData nodeData) throws CoordinationServiceException, InterruptedException {
             Path caseDirectoryPath = PathUtils.findCaseDirectory(rootOutputDirectory, manifest.getCaseName());
             if (null != caseDirectoryPath) {
-                /**
-                 * We use the manifest rather than the nodeData here to create
-                 * a new AutoIngestJob instance because the AutoIngestJob
-                 * constructor that takes a nodeData expects the nodeData to
-                 * have fields that do not exist in earlier versions.
-                 */
-                AutoIngestJob job = new AutoIngestJob(manifest);
-                /**
-                 * Update the job with the fields that exist in all versions
-                 * of the nodeData.
-                 */
-                job.setCompletedDate(nodeData.getCompletedDate());
-                job.setErrorsOccurred(nodeData.getErrorsOccurred());
-                job.setPriority(nodeData.getPriority());
-                job.setNumberOfCrashes(nodeData.getNumberOfCrashes());
-                job.setProcessingStage(AutoIngestJob.Stage.COMPLETED, nodeData.getCompletedDate());
+                AutoIngestJob job;
+                if (nodeData.getVersion() == AutoIngestJobNodeData.getCurrentVersion()) {
+                    job = new AutoIngestJob(nodeData);
+                    job.setCaseDirectoryPath(caseDirectoryPath);
+                } else {
+                    /**
+                     * Use the manifest rather than the node data here to create
+                     * a new AutoIngestJob instance because the AutoIngestJob
+                     * constructor that takes a node data object expects the
+                     * node data to have fields that do not exist in earlier
+                     * versions.
+                     */
+                    job = new AutoIngestJob(manifest);
+                    job.setCaseDirectoryPath(caseDirectoryPath);
 
-                job.setCaseDirectoryPath(caseDirectoryPath);
-                job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
-                newCompletedJobsList.add(job);
+                    /**
+                     * Update the job with the fields that exist in all versions
+                     * of the nodeData.
+                     */
+                    job.setCompletedDate(nodeData.getCompletedDate());
+                    job.setErrorsOccurred(nodeData.getErrorsOccurred());
+                    job.setPriority(nodeData.getPriority());
+                    job.setNumberOfCrashes(nodeData.getNumberOfCrashes());
+                    job.setProcessingStage(AutoIngestJob.Stage.COMPLETED, nodeData.getCompletedDate());
+                    job.setProcessingStatus(AutoIngestJob.ProcessingStatus.COMPLETED);
 
-                /*
-                 * Try to upgrade/update the coordination service node data for
-                 * the job.
-                 *
-                 * An exclusive lock is obtained before doing so because another
-                 * host may have already found the job, obtained an exclusive
-                 * lock, and started processing it. However, this locking does
-                 * make it possible that two hosts will both try to obtain the
-                 * lock to do the upgrade/update operation at the same time. If
-                 * this happens, the host that is holding the lock will complete
-                 * the update/upgrade operation, so there is nothing more to do.
-                 */
-                try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
-                    if (null != manifestLock) {
-                        updateCoordinationServiceNode(job);
+                    /*
+                     * Try to upgrade/update the coordination service node data
+                     * for the job. It is possible that two hosts will both try
+                     * to obtain the lock to do the upgrade operation at the
+                     * same time. If this happens, the host that is holding the
+                     * lock will complete the upgrade operation.
+                     */
+                    try (Lock manifestLock = coordinationService.tryGetExclusiveLock(CoordinationService.CategoryNode.MANIFESTS, manifest.getFilePath().toString())) {
+                        if (null != manifestLock) {
+                            updateCoordinationServiceNode(job);
+                        }
+                    } catch (CoordinationServiceException ex) {
+                        SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
                     }
-                } catch (CoordinationServiceException ex) {
-                    SYS_LOGGER.log(Level.SEVERE, String.format("Error attempting to set node data for %s", manifest.getFilePath()), ex);
                 }
+                newCompletedJobsList.add(job);
 
             } else {
                 SYS_LOGGER.log(Level.WARNING, String.format("Job completed for %s, but cannot find case directory, ignoring job", nodeData.getManifestFilePath()));
@@ -2553,7 +2569,7 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 if (fileExporter.isEnabled()) {
                     fileExporter.process(manifest.getDeviceId(), dataSource.getContent(), currentJob::isCanceled);
                     jobLogger.logFileExportCompleted();
-                } 
+                }
             } catch (FileExportException ex) {
                 SYS_LOGGER.log(Level.SEVERE, String.format("Error doing file export for %s", manifestPath), ex);
                 currentJob.setErrorsOccurred(true);
