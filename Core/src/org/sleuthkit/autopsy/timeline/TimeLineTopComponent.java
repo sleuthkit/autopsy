@@ -53,6 +53,7 @@ import org.openide.windows.WindowManager;
 import org.sleuthkit.autopsy.actions.AddBookmarkTagAction;
 import org.sleuthkit.autopsy.corecomponents.DataContentPanel;
 import org.sleuthkit.autopsy.corecomponents.DataResultPanel;
+import org.sleuthkit.autopsy.corecomponents.TableFilterNode;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.ThreadConfined;
 import org.sleuthkit.autopsy.timeline.actions.Back;
@@ -105,7 +106,6 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
             //depending on the active view mode, we either update the dataResultPanel, or update the contentViewerPanel directly.
             switch (controller.getViewMode()) {
                 case LIST:
-
                     //make an array of EventNodes for the selected events
                     EventNode[] childArray = new EventNode[selectedEventIDs.size()];
                     try {
@@ -144,15 +144,15 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                                     .showError();
                         });
                     }
-
                     break;
                 case COUNTS:
                 case DETAIL:
                     //make a root node with nodes for the selected events as children and push it to the result viewer.
                     EventRootNode rootNode = new EventRootNode(selectedEventIDs, controller.getEventsModel());
+                    TableFilterNode tableFilterNode = new TableFilterNode(rootNode, true, "Event");
                     SwingUtilities.invokeLater(() -> {
                         dataResultPanel.setPath(getResultViewerSummaryString());
-                        dataResultPanel.setNode(rootNode);
+                        dataResultPanel.setNode(tableFilterNode);
                     });
                     break;
                 default:
@@ -182,9 +182,7 @@ public final class TimeLineTopComponent extends TopComponent implements Explorer
                  * For list mode, remove the result table, and let the content
                  * viewer expand across the bottom.
                  */
-                SwingUtilities.invokeLater(() -> {
-                    splitYPane.setBottomComponent(contentViewerPanel);
-                });
+                SwingUtilities.invokeLater(() -> splitYPane.setBottomComponent(contentViewerPanel));
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown ViewMode: " + controller.getViewMode());
