@@ -154,6 +154,10 @@ class Ingester {
         try (BufferedReader reader = new BufferedReader(extractor.getReader(source));) {
             Chunker chunker = new Chunker(reader);
             for (Chunk chunk : chunker) {
+                if (context.fileIngestIsCancelled()) {
+                    logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
+                    return false;
+                }
                 String chunkId = Server.getChunkIdString(sourceID, numChunks + 1);
                 fields.put(Server.Schema.ID.toString(), chunkId);
                 fields.put(Server.Schema.CHUNK_SIZE.toString(), String.valueOf(chunk.getBaseChunkLength()));
@@ -176,13 +180,15 @@ class Ingester {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
-            //after all chunks, index just the meta data, including the  numChunks, of the parent file
-            fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
-            //reset id field to base document id
-            fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
-            //"parent" docs don't have chunk_size
-            fields.remove(Server.Schema.CHUNK_SIZE.toString());
-            indexChunk(null, sourceName, fields);
+            if (!context.fileIngestIsCancelled()) {
+                //after all chunks, index just the meta data, including the  numChunks, of the parent file
+                fields.put(Server.Schema.NUM_CHUNKS.toString(), Integer.toString(numChunks));
+                //reset id field to base document id
+                fields.put(Server.Schema.ID.toString(), Long.toString(sourceID));
+                //"parent" docs don't have chunk_size
+                fields.remove(Server.Schema.CHUNK_SIZE.toString());
+                indexChunk(null, sourceName, fields);
+            }
         }
 
         return true;
