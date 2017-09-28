@@ -225,38 +225,34 @@ class IngestModule implements FileIngestModule {
             LOGGER.log(Level.SEVERE, "Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
             throw new IngestModuleException("Error getting correlation type FILES in ingest module start up.", ex); // NON-NLS
         }
-        // ensure we have this case defined in the EAM DB
-        CorrelationCase existingCase;
         Case curCase = Case.getCurrentCase();
-        CorrelationCase curCeCase = new CorrelationCase(
-                -1,
-                curCase.getName(), // unique case ID
-                EamOrganization.getDefault(),
-                curCase.getDisplayName(),
-                curCase.getCreatedDate(),
-                curCase.getNumber(),
-                curCase.getExaminer(),
-                null,
-                null,
-                null);
-        try {
-            existingCase = dbManager.getCaseByUUID(curCeCase.getCaseUUID());
-            if (existingCase == null) {
-                dbManager.newCase(curCeCase);
-            }
-
-        } catch (EamDbException ex) {
-            LOGGER.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
-            throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
-        }
-
         try {
             eamCase = dbManager.getCaseByUUID(curCase.getName());
             //will have been created above where existingCase is null checked
         } catch (EamDbException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
-
+        if (eamCase == null) {
+            // ensure we have this case defined in the EAM DB
+            CorrelationCase curCeCase = new CorrelationCase(
+                    -1,
+                    curCase.getName(), // unique case ID
+                    EamOrganization.getDefault(),
+                    curCase.getDisplayName(),
+                    curCase.getCreatedDate(),
+                    curCase.getNumber(),
+                    curCase.getExaminer(),
+                    null,
+                    null,
+                    null);
+            try {
+                dbManager.newCase(curCeCase);
+                eamCase = dbManager.getCaseByUUID(curCase.getName());
+            } catch (EamDbException ex) {
+                LOGGER.log(Level.SEVERE, "Error creating new case in ingest module start up.", ex); // NON-NLS
+                throw new IngestModuleException("Error creating new case in ingest module start up.", ex); // NON-NLS
+            }
+        }
         try {
 
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
