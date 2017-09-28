@@ -358,34 +358,20 @@ public class SqliteEamDb extends AbstractSqlEamDb {
             releaseExclusiveLock();
         }            
     }    
-    
-    /**
-     * Updates a Data Source in the database
-     *
-     * @param eamDataSource the data source to update
-     */
-//    @Override
-//    public void updateDataSource(CorrelationDataSource eamDataSource) throws EamDbException {
-//         try{
-//            acquireExclusiveLock();
-//            super.updateDataSource(eamDataSource);
-//        } finally {
-//            releaseExclusiveLock();
-//        }               
-//    }   
-    
+     
     /**
      * Retrieves Data Source details based on data source device ID
      *
+     * @param correlationCase the current CorrelationCase used for ensuring uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId) throws EamDbException {
+    public CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getDataSourceDetails(dataSourceDeviceId);
+            return super.getDataSourceDetails(correlationCase, dataSourceDeviceId);
         } finally {
             releaseSharedLock();
         }               
