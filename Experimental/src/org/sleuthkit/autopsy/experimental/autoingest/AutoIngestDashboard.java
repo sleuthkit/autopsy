@@ -257,7 +257,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 return;
             }
             int row = pendingTable.getSelectedRow();
-            this.prioritizeButton.setEnabled(row >= 0 && row < pendingTable.getRowCount());
+			
+			boolean enablePrioritizeButtons = (row >= 0 && row < pendingTable.getRowCount());
+            this.prioritizeJobButton.setEnabled(enablePrioritizeButtons);
+            this.prioritizeCaseButton.setEnabled(enablePrioritizeButtons);
         });
     }
 
@@ -657,7 +660,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         refreshButton = new javax.swing.JButton();
         lbServicesStatus = new javax.swing.JLabel();
         tbServicesStatusMessage = new javax.swing.JTextField();
-        prioritizeButton = new javax.swing.JButton();
+        prioritizeJobButton = new javax.swing.JButton();
+        prioritizeCaseButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
@@ -740,12 +744,21 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         tbServicesStatusMessage.setText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.tbServicesStatusMessage.text")); // NOI18N
         tbServicesStatusMessage.setBorder(null);
 
-        org.openide.awt.Mnemonics.setLocalizedText(prioritizeButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeButton.text")); // NOI18N
-        prioritizeButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeButton.toolTipText")); // NOI18N
-        prioritizeButton.setEnabled(false);
-        prioritizeButton.addActionListener(new java.awt.event.ActionListener() {
+        org.openide.awt.Mnemonics.setLocalizedText(prioritizeJobButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeJobButton.text")); // NOI18N
+        prioritizeJobButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeJobButton.toolTipText")); // NOI18N
+        prioritizeJobButton.setEnabled(false);
+        prioritizeJobButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                prioritizeButtonActionPerformed(evt);
+                prioritizeJobButtonActionPerformed(evt);
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(prioritizeCaseButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeCaseButton.text")); // NOI18N
+        prioritizeCaseButton.setToolTipText(org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.prioritizeCaseButton.toolTipText")); // NOI18N
+        prioritizeCaseButton.setEnabled(false);
+        prioritizeCaseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                prioritizeCaseButtonActionPerformed(evt);
             }
         });
 
@@ -769,7 +782,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(prioritizeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING))
@@ -797,7 +812,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
-                    .addComponent(prioritizeButton))
+                    .addComponent(prioritizeJobButton)
+                    .addComponent(prioritizeCaseButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -817,9 +833,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     }//GEN-LAST:event_refreshButtonActionPerformed
 
     @Messages({
-        "AutoIngestDashboard.PrioritizeError=Failed to prioritize job \"%s\"."
+        "AutoIngestDashboard.PrioritizeJobError=Failed to prioritize job \"%s\"."
     })
-    private void prioritizeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeButtonActionPerformed
+    private void prioritizeJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeJobButtonActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             AutoIngestJob job = (AutoIngestJob) (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
@@ -828,13 +844,33 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 jobsSnapshot = autoIngestMonitor.prioritizeJob(job);
                 refreshTables(jobsSnapshot);
             } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
-                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeError"), job.getManifest().getFilePath());
+                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeJobError"), job.getManifest().getFilePath());
                 logger.log(Level.SEVERE, errorMessage, ex);
                 MessageNotifyUtil.Message.error(errorMessage);
             }
             setCursor(Cursor.getDefaultCursor());
         }
-    }//GEN-LAST:event_prioritizeButtonActionPerformed
+    }//GEN-LAST:event_prioritizeJobButtonActionPerformed
+
+    @Messages({
+        "AutoIngestDashboard.PrioritizeCaseError=Failed to prioritize job \"%s\"."
+    })
+    private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
+        if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            String caseName = (pendingTableModel.getValueAt(pendingTable.getSelectedRow(), JobsTableModelColumns.CASE.ordinal())).toString();
+            JobsSnapshot jobsSnapshot;
+            try {
+                jobsSnapshot = autoIngestMonitor.prioritizeCase(caseName);
+                refreshTables(jobsSnapshot);
+            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.PrioritizeCaseError"), caseName);
+                logger.log(Level.SEVERE, errorMessage, ex);
+                MessageNotifyUtil.Message.error(errorMessage);
+            }
+            setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JScrollPane completedScrollPane;
@@ -846,7 +882,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
     private javax.swing.JLabel lbServicesStatus;
     private javax.swing.JScrollPane pendingScrollPane;
     private javax.swing.JTable pendingTable;
-    private javax.swing.JButton prioritizeButton;
+    private javax.swing.JButton prioritizeCaseButton;
+    private javax.swing.JButton prioritizeJobButton;
     private javax.swing.JButton refreshButton;
     private javax.swing.JScrollPane runningScrollPane;
     private javax.swing.JTable runningTable;
