@@ -21,7 +21,6 @@ package org.sleuthkit.autopsy.keywordsearch;
 import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -230,7 +229,6 @@ public class CreditCardValidatorTest {
         assertEquals(false, CreditCardValidator.isValidCCN("123456789030")); //luhn
         assertEquals(false, CreditCardValidator.isValidCCN("123 456789031"));  //grouping
         assertEquals(false, CreditCardValidator.isValidCCN("1234-56789 031")); //separators
-        fail("Please email me this is failed.");
     }
 
 }
