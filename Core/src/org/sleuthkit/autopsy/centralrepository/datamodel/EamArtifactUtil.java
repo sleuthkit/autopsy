@@ -54,15 +54,17 @@ public class EamArtifactUtil {
      * EamArtifact with a single EamArtifactInstance within. If not, return
      * null.
      *
-     * @param bbArtifact BlackboardArtifact to examine
-     * @param addInstanceDetails If true, add instance details from bbArtifact into the returned structure
-     * @param checkEnabled If true, only create a CorrelationAttribute if it is enabled
-     
+     * @param bbArtifact         BlackboardArtifact to examine
+     * @param addInstanceDetails If true, add instance details from bbArtifact
+     *                           into the returned structure
+     * @param checkEnabled       If true, only create a CorrelationAttribute if
+     *                           it is enabled
+     *
      * @return List of EamArtifacts
      */
     public static List<CorrelationAttribute> getCorrelationAttributeFromBlackboardArtifact(BlackboardArtifact bbArtifact,
             boolean addInstanceDetails, boolean checkEnabled) {
-        
+
         List<CorrelationAttribute> eamArtifacts = new ArrayList<>();
 
         try {
@@ -96,9 +98,13 @@ public class EamArtifactUtil {
 
                 // make an instance for the BB source file 
                 CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+                if (null == correlationCase) {
+                    EamDb.getInstance().newCase(Case.getCurrentCase());
+                    correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+                }
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
                         correlationCase,
-                        CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource(),correlationCase),
+                        CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource(), correlationCase),
                         bbSourceFile.getParentPath() + bbSourceFile.getName(),
                         "",
                         TskData.FileKnown.UNKNOWN,
@@ -120,30 +126,30 @@ public class EamArtifactUtil {
 
         return eamArtifacts;
     }
-
+    
     /**
      * Create an EamArtifact of type correlationType if one can be generated
-     * based on the data in the blackboard artifact. 
+     * based on the data in the blackboard artifact.
      *
-     * @param correlationType      The Central Repository artifact type to create
-     * @param bbArtifact            The blackboard artifact to pull data from
+     * @param correlationType The Central Repository artifact type to create
+     * @param bbArtifact      The blackboard artifact to pull data from
      *
-     * @return the new EamArtifact, or null if one was not created because bbArtifact
-     *   did not contain the needed data
+     * @return the new EamArtifact, or null if one was not created because
+     *         bbArtifact did not contain the needed data
      */
     private static CorrelationAttribute getCorrelationAttributeFromBlackboardArtifact(CorrelationAttribute.Type correlationType, BlackboardArtifact bbArtifact) {
         String value = null;
         int artifactTypeID = bbArtifact.getArtifactTypeID();
-        
+
         try {
-            if(BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifactTypeID){
+            if (BlackboardArtifact.ARTIFACT_TYPE.TSK_INTERESTING_ARTIFACT_HIT.getTypeID() == artifactTypeID) {
                 // Get the associated artifact
                 BlackboardAttribute attribute = bbArtifact.getAttribute(new BlackboardAttribute.Type(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_ASSOCIATED_ARTIFACT));
                 if (attribute != null) {
                     BlackboardArtifact associatedArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(attribute.getValueLong());
                     return EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(correlationType, associatedArtifact);
                 }
-                
+
             } else if (correlationType.getId() == CorrelationAttribute.EMAIL_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_KEYWORD_HIT.getTypeID() == artifactTypeID) {
 
@@ -181,14 +187,14 @@ public class EamArtifactUtil {
                     }
 
                     value = newValue;
-                    
+
                     // If the resulting phone number is too small to be of use, return null
                     // (these 3-5 digit numbers can be valid, but are not useful for correlation)
-                    if(value.length() <= 5){
+                    if (value.length() <= 5) {
                         return null;
                     }
-                }               
-                
+                }
+
             } else if (correlationType.getId() == CorrelationAttribute.USBID_TYPE_ID
                     && BlackboardArtifact.ARTIFACT_TYPE.TSK_DEVICE_ATTACHED.getTypeID() == artifactTypeID) {
 
@@ -206,33 +212,35 @@ public class EamArtifactUtil {
             return null;
         }
     }
-    
+
     /**
-     * Create an EamArtifact from the given Content.
-     * Will return null if an artifact can not be created - this is not
-     * necessarily an error case, it just means an artifact can't be made.
-     * If creation fails due to an error (and not that the file is the wrong type
-     * or it has no hash), the error will be logged before returning. 
+     * Create an EamArtifact from the given Content. Will return null if an
+     * artifact can not be created - this is not necessarily an error case, it
+     * just means an artifact can't be made. If creation fails due to an error
+     * (and not that the file is the wrong type or it has no hash), the error
+     * will be logged before returning.
      *
      * Does not add the artifact to the database.
-     * 
+     *
      * @param content     The content object
      * @param knownStatus Unknown, notable, or known
-     * @param comment     The comment for the new artifact (generally used for a tag comment)
+     * @param comment     The comment for the new artifact (generally used for a
+     *                    tag comment)
+     *
      * @return The new EamArtifact or null if creation failed
      */
-    public static CorrelationAttribute getEamArtifactFromContent(Content content, TskData.FileKnown knownStatus, String comment){
-        
-        if(! (content instanceof AbstractFile)){
+    public static CorrelationAttribute getEamArtifactFromContent(Content content, TskData.FileKnown knownStatus, String comment) {
+
+        if (!(content instanceof AbstractFile)) {
             return null;
         }
-        
+
         final AbstractFile af = (AbstractFile) content;
 
-        if ( ! isValidCentralRepoFile(af)) {
+        if (!isValidCentralRepoFile(af)) {
             return null;
         }
-        
+
         // We need a hash to make the artifact
         String md5 = af.getMd5Hash();
         if (md5 == null || md5.isEmpty()) {
@@ -243,7 +251,11 @@ public class EamArtifactUtil {
         try {
             CorrelationAttribute.Type filesType = EamDb.getInstance().getCorrelationTypeById(CorrelationAttribute.FILES_TYPE_ID);
             eamArtifact = new CorrelationAttribute(filesType, af.getMd5Hash());
-             CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+            CorrelationCase correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+            if (null == correlationCase) {
+                EamDb.getInstance().newCase(Case.getCurrentCase());
+                correlationCase = EamDb.getInstance().getCaseByUUID(Case.getCurrentCase().getName());
+            }
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
                     correlationCase,
                     CorrelationDataSource.fromTSKDataSource(af.getDataSource(), correlationCase),
@@ -259,29 +271,32 @@ public class EamArtifactUtil {
             return null;
         }
     }
-    
+
     /**
-     * Check whether the given abstract file should be processed for
-     * the central repository.
+     * Check whether the given abstract file should be processed for the central
+     * repository.
+     *
      * @param af The file to test
-     * @return true if the file should be added to the central repo, false otherwise
+     *
+     * @return true if the file should be added to the central repo, false
+     *         otherwise
      */
-    public static boolean isValidCentralRepoFile(AbstractFile af){
-        if(af == null){
+    public static boolean isValidCentralRepoFile(AbstractFile af) {
+        if (af == null) {
             return false;
         }
-        
-        if(af.getKnown() == TskData.FileKnown.KNOWN){
+
+        if (af.getKnown() == TskData.FileKnown.KNOWN) {
             return false;
         }
-        
-        switch (af.getType()){
+
+        switch (af.getType()) {
             case UNALLOC_BLOCKS:
             case UNUSED_BLOCKS:
             case SLACK:
             case VIRTUAL_DIR:
             case LOCAL_DIR:
-                return false;                
+                return false;
             case CARVED:
             case DERIVED:
             case LOCAL:

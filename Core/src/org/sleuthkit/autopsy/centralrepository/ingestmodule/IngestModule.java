@@ -82,7 +82,7 @@ class IngestModule implements FileIngestModule {
 
         blackboard = Case.getCurrentCase().getServices().getBlackboard();
 
-        if (! EamArtifactUtil.isValidCentralRepoFile(af)) {
+        if (!EamArtifactUtil.isValidCentralRepoFile(af)) {
             return ProcessResult.OK;
         }
 
@@ -251,11 +251,14 @@ class IngestModule implements FileIngestModule {
         }
 
         try {
-            eamCase = dbManager.getCaseByUUID(Case.getCurrentCase().getName());
+            eamCase = dbManager.getCaseByUUID(curCase.getName());
+            //will have been created above where existingCase is null checked
         } catch (EamDbException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
+
         try {
+
             eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource(), eamCase);
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS

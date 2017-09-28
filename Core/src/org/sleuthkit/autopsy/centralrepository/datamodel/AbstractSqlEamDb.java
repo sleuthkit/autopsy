@@ -59,7 +59,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @throws UnknownHostException, EamDbException
      */
-    protected AbstractSqlEamDb() throws EamDbException{
+    protected AbstractSqlEamDb() throws EamDbException {
         badTags = new ArrayList<>();
         bulkArtifactsCount = 0;
         bulkArtifacts = new HashMap<>();
@@ -224,7 +224,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setString(5, eamCase.getCaseNumber());
             }
             if ("".equals(eamCase.getExaminerName())) {
-                preparedStatement.setNull(6, Types.INTEGER);  
+                preparedStatement.setNull(6, Types.INTEGER);
             } else {
                 preparedStatement.setString(6, eamCase.getExaminerName());
             }
@@ -253,17 +253,17 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }
     }
 
-     /**
+    /**
      * Creates new Case in the database from the given case
-     * 
+     *
      * @param case The case to add
      */
-    @Override    
-    public CorrelationCase newCase(Case autopsyCase) throws EamDbException{
-        if(autopsyCase == null){
+    @Override
+    public CorrelationCase newCase(Case autopsyCase) throws EamDbException {
+        if (autopsyCase == null) {
             throw new EamDbException("Case is null");
         }
-        
+
         CorrelationCase curCeCase = new CorrelationCase(
                 -1,
                 autopsyCase.getName(), // unique case ID
@@ -274,7 +274,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 autopsyCase.getExaminer(),
                 null,
                 null,
-                null);        
+                null);
         newCase(curCeCase);
         return curCeCase;
     }
@@ -310,7 +310,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 preparedStatement.setString(4, eamCase.getCaseNumber());
             }
             if ("".equals(eamCase.getExaminerName())) {
-                preparedStatement.setNull(5, Types.INTEGER);  
+                preparedStatement.setNull(5, Types.INTEGER);
             } else {
                 preparedStatement.setString(5, eamCase.getExaminerName());
             }
@@ -351,7 +351,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public CorrelationCase getCaseByUUID(String caseUUID) throws EamDbException {
         // @@@ We should have a cache here...
-        
+
         Connection conn = connect();
 
         CorrelationCase eamCaseResult = null;
@@ -436,7 +436,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
             preparedStatement = conn.prepareStatement(sql);
 
             preparedStatement.setString(1, eamDataSource.getDeviceID());
-            preparedStatement.setInt(2,eamDataSource.getCaseID());
+            preparedStatement.setInt(2, eamDataSource.getCaseID());
             preparedStatement.setString(3, eamDataSource.getName());
 
             preparedStatement.executeUpdate();
@@ -531,7 +531,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
         List<CorrelationAttributeInstance> eamInstances = eamArtifact.getInstances();
         PreparedStatement preparedStatement = null;
 
-        
         // @@@ We should cache the case and data source IDs in memory
         String tableName = EamDbUtil.correlationTypeToInstanceTableName(eamArtifact.getCorrelationType());
         StringBuilder sql = new StringBuilder();
@@ -544,7 +543,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         try {
             preparedStatement = conn.prepareStatement(sql.toString());
             for (CorrelationAttributeInstance eamInstance : eamInstances) {
-                if(! eamArtifact.getCorrelationValue().isEmpty()){
+                if (!eamArtifact.getCorrelationValue().isEmpty()) {
                     preparedStatement.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
                     preparedStatement.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
                     preparedStatement.setInt(3, eamInstance.getCorrelationDataSource().getCaseID());
@@ -710,7 +709,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
         return instanceCount;
     }
 
-
     @Override
     public int getFrequencyPercentage(CorrelationAttribute corAttr) throws EamDbException {
         Double uniqueTypeValueTuples = getCountUniqueCaseDataSourceTuplesHavingTypeValue(corAttr.getCorrelationType(), corAttr.getCorrelationValue()).doubleValue();
@@ -761,7 +759,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         return instanceCount;
     }
-
 
     @Override
     public Long getCountUniqueDataSources() throws EamDbException {
@@ -904,8 +901,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     for (CorrelationAttribute eamArtifact : eamArtifacts) {
                         List<CorrelationAttributeInstance> eamInstances = eamArtifact.getInstances();
 
-                        for (CorrelationAttributeInstance eamInstance : eamInstances) {                            
-                            if(! eamArtifact.getCorrelationValue().isEmpty()){
+                        for (CorrelationAttributeInstance eamInstance : eamInstances) {
+                            if (!eamArtifact.getCorrelationValue().isEmpty()) {
                                 bulkPs.setString(1, eamInstance.getCorrelationCase().getCaseUUID());
                                 bulkPs.setString(2, eamInstance.getCorrelationDataSource().getDeviceID());
                                 bulkPs.setInt(3, eamInstance.getCorrelationDataSource().getCaseID());
@@ -973,7 +970,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     bulkPs.setString(5, eamCase.getCaseNumber());
                 }
                 if ("".equals(eamCase.getExaminerName())) {
-                    bulkPs.setNull(6, Types.INTEGER);  
+                    bulkPs.setNull(6, Types.INTEGER);
                 } else {
                     bulkPs.setString(6, eamCase.getExaminerName());
                 }
@@ -1015,11 +1012,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
     /**
      * Sets an eamArtifact instance to the given knownStatus. If eamArtifact
-     * exists, it is updated. If eamArtifact does not exist it is added
-     * with the given status.
+     * exists, it is updated. If eamArtifact does not exist it is added with the
+     * given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param FileKnown The status to change the artifact to
+     * @param FileKnown   The status to change the artifact to
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
@@ -1082,15 +1079,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
                 // in the database, but we don't expect the user to be tagging large numbers
                 // of items (that didn't have the CE ingest module run on them) at once.
                 CorrelationCase correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
-                if(null == correlationCase){
+                if (null == correlationCase) {
                     newCase(eamInstance.getCorrelationCase());
                     correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
                 }
-                
                 if (null == getDataSourceDetails(eamInstance.getCorrelationDataSource().getDeviceID(), correlationCase)) {
                     newDataSource(eamInstance.getCorrelationDataSource());
                 }
-                
                 eamArtifact.getInstances().get(0).setKnownStatus(knownStatus);
                 addArtifact(eamArtifact);
             }
@@ -1111,7 +1106,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      *
      * @param aType EamArtifact.Type to search for
      * @param value Value to search for
-     * 
+     *
      * @return List with 0 or more matching eamArtifact instances.
      */
     @Override
@@ -1506,11 +1501,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
     @Override
     public void bulkInsertReferenceTypeEntries(Set<EamGlobalFileInstance> globalInstances, CorrelationAttribute.Type contentType) throws EamDbException {
         Connection conn = connect();
-        
+
         PreparedStatement bulkPs = null;
         try {
             conn.setAutoCommit(false);
-            
+
             // FUTURE: have a separate global_files table for each Type.
             String sql = "INSERT INTO %s(reference_set_id, value, known_status, comment) VALUES (?, ?, ?, ?) "
                     + getConflictClause();
@@ -1528,9 +1523,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
             bulkPs.executeBatch();
             conn.commit();
         } catch (SQLException ex) {
-            try{
+            try {
                 conn.rollback();
-            } catch (SQLException ex2){
+            } catch (SQLException ex2) {
                 // We're alredy in an error state
             }
             throw new EamDbException("Error inserting bulk artifacts.", ex); // NON-NLS           
@@ -1641,7 +1636,6 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }
         return typeId;
     }
-
 
     @Override
     public List<CorrelationAttribute.Type> getDefinedCorrelationTypes() throws EamDbException {
