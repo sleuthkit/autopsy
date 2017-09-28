@@ -228,7 +228,6 @@ class IngestModule implements FileIngestModule {
         Case curCase = Case.getCurrentCase();
         try {
             eamCase = dbManager.getCaseByUUID(curCase.getName());
-            //will have been created above where existingCase is null checked
         } catch (EamDbException ex) {
             throw new IngestModuleException("Unable to get case from central repository database ", ex);
         }
@@ -254,7 +253,6 @@ class IngestModule implements FileIngestModule {
             }
         }
         try {
-
             eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
