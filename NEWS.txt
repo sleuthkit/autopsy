@@ -1,7 +1,7 @@
 ---------------- VERSION 4.5.0  --------------
 - Memory usage has been reduced to improve support for very large cases.
 - The central repository and correlation engine introduced in version 4.4.1 have 
-been moved to the Core Autopsy, so they are available without doing a plugin 
+been moved to Core Autopsy, so they are available without doing a plugin 
 installation. This optional feature includes a database (SQLite or PostgreSQL) 
 and logic for correlating artifacts across cases. Results are displayed using an 
 Interesting Artifacts branch of the Interesting Items tree and an 
@@ -13,7 +13,7 @@ the source file in the tree, and the attachments can be seen in the result view
 by selecting the message.
 - Volume nodes in the tree view and results view now have a context menu item 
 that displays a file system properties dialog.
-- Nodes in the tree view have the same context menu items as nodes in the 
+- Nodes in the tree view now have the same context menu items as nodes in the 
 results view.
 - Virtual directory nodes in the tree view are distinguished in the Data Sources 
 tree by the addition of a "V" to their icon.
