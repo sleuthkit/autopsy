@@ -59,10 +59,10 @@ public class CorrelationAttribute implements Serializable {
     public static List<CorrelationAttribute.Type> getDefaultCorrelationTypes() throws EamDbException {
         List<CorrelationAttribute.Type> DEFAULT_CORRELATION_TYPES = new ArrayList<>();
         DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(FILES_TYPE_ID, Bundle.CorrelationType_FILES_displayName(), "file", true, true)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, false)); // NON-NLS
-        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, false)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(DOMAIN_TYPE_ID, Bundle.CorrelationType_DOMAIN_displayName(), "domain", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(EMAIL_TYPE_ID, Bundle.CorrelationType_EMAIL_displayName(), "email_address", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(PHONE_TYPE_ID, Bundle.CorrelationType_PHONE_displayName(), "phone_number", true, true)); // NON-NLS
+        DEFAULT_CORRELATION_TYPES.add(new CorrelationAttribute.Type(USBID_TYPE_ID, Bundle.CorrelationType_USBID_displayName(), "usb_devices", true, true)); // NON-NLS
         return DEFAULT_CORRELATION_TYPES;
     }
 
