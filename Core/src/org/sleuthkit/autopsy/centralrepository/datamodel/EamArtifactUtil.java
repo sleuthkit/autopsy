@@ -30,7 +30,6 @@ import org.sleuthkit.datamodel.BlackboardAttribute;
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.sleuthkit.datamodel.TskData;
-import org.sleuthkit.datamodel.TskDataException;
 
 /**
  *
@@ -104,7 +103,7 @@ public class EamArtifactUtil {
                 }
                 CorrelationAttributeInstance eamInstance = new CorrelationAttributeInstance(
                         correlationCase,
-                        CorrelationDataSource.fromTSKDataSource(bbSourceFile.getDataSource(), correlationCase),
+                        CorrelationDataSource.fromTSKDataSource(correlationCase, bbSourceFile.getDataSource()),
                         bbSourceFile.getParentPath() + bbSourceFile.getName(),
                         "",
                         TskData.FileKnown.UNKNOWN,
@@ -126,7 +125,7 @@ public class EamArtifactUtil {
 
         return eamArtifacts;
     }
-    
+
     /**
      * Create an EamArtifact of type correlationType if one can be generated
      * based on the data in the blackboard artifact.
@@ -258,7 +257,7 @@ public class EamArtifactUtil {
             }
             CorrelationAttributeInstance cei = new CorrelationAttributeInstance(
                     correlationCase,
-                    CorrelationDataSource.fromTSKDataSource(af.getDataSource(), correlationCase),
+                    CorrelationDataSource.fromTSKDataSource(correlationCase, af.getDataSource()),
                     af.getParentPath() + af.getName(),
                     comment,
                     TskData.FileKnown.BAD,

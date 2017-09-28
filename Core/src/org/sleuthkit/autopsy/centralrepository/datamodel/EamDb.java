@@ -148,13 +148,13 @@ public interface EamDb {
      * @param eamCase The case to add
      */
     void newCase(CorrelationCase eamCase) throws EamDbException;
-    
-     /**
+
+    /**
      * Creates new Case in the database from the given case
-     * 
+     *
      * @param case The case to add
      */
-    CorrelationCase newCase(Case autopsyCase) throws EamDbException;   
+    CorrelationCase newCase(Case autopsyCase) throws EamDbException;
 
     /**
      * Updates an existing Case in the database
@@ -189,11 +189,13 @@ public interface EamDb {
     /**
      * Retrieves Data Source details based on data source device ID
      *
+     * @param correlationCase    the current CorrelationCase used for ensuring
+     *                           uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
-    CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId, CorrelationCase correlationCase) throws EamDbException;
+    CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException;
 
     /**
      * Retrieves data sources that are in DB
@@ -312,10 +314,10 @@ public interface EamDb {
      * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param FileKnown The status to change the artifact to
+     * @param FileKnown   The status to change the artifact to
      */
     void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
-    
+
     /**
      * Gets list of matching eamArtifact instances that have knownStatus =
      * "Bad".

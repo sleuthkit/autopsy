@@ -259,7 +259,7 @@ class IngestModule implements FileIngestModule {
 
         try {
 
-            eamDataSource = CorrelationDataSource.fromTSKDataSource(context.getDataSource(), eamCase);
+            eamDataSource = CorrelationDataSource.fromTSKDataSource(eamCase, context.getDataSource());
         } catch (EamDbException ex) {
             LOGGER.log(Level.SEVERE, "Error getting data source info.", ex); // NON-NLS
             throw new IngestModuleException("Error getting data source info.", ex); // NON-NLS
@@ -271,7 +271,7 @@ class IngestModule implements FileIngestModule {
                 == 1) {
             // ensure we have this data source in the EAM DB
             try {
-                if (null == dbManager.getDataSourceDetails(eamDataSource.getDeviceID(), eamCase)) {
+                if (null == dbManager.getDataSourceDetails(eamCase, eamDataSource.getDeviceID())) {
                     dbManager.newDataSource(eamDataSource);
                 }
             } catch (EamDbException ex) {

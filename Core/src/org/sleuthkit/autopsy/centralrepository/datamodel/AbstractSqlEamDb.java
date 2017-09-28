@@ -451,12 +451,13 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Retrieves Data Source details based on data source device ID
      *
+     * @param correlationCase the current CorrelationCase used for ensuring uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId, CorrelationCase correlationCase) throws EamDbException {
+    public CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         Connection conn = connect();
 
         CorrelationDataSource eamDataSourceResult = null;
@@ -1083,7 +1084,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
                     newCase(eamInstance.getCorrelationCase());
                     correlationCase = getCaseByUUID(eamInstance.getCorrelationCase().getCaseUUID());
                 }
-                if (null == getDataSourceDetails(eamInstance.getCorrelationDataSource().getDeviceID(), correlationCase)) {
+                if (null == getDataSourceDetails(correlationCase, eamInstance.getCorrelationDataSource().getDeviceID())) {
                     newDataSource(eamInstance.getCorrelationDataSource());
                 }
                 eamArtifact.getInstances().get(0).setKnownStatus(knownStatus);
@@ -1846,9 +1847,9 @@ public abstract class AbstractSqlEamDb implements EamDb {
 
         CorrelationDataSource eamDataSource = new CorrelationDataSource(
                 resultSet.getInt("id"),
+                resultSet.getInt("case_id"),
                 resultSet.getString("device_id"),
-                resultSet.getString("name"),
-                resultSet.getInt("case_id")
+                resultSet.getString("name")        
         );
 
         return eamDataSource;
@@ -1886,7 +1887,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
         }
         CorrelationAttributeInstance eamArtifactInstance = new CorrelationAttributeInstance(
                 new CorrelationCase(resultSet.getString("case_uid"), resultSet.getString("case_name")),
-                new CorrelationDataSource(-1, resultSet.getString("device_id"), resultSet.getString("name"), resultSet.getInt("case_id")),
+                new CorrelationDataSource(-1, resultSet.getInt("case_id"), resultSet.getString("device_id"), resultSet.getString("name")),
                 resultSet.getString("file_path"),
                 resultSet.getString("comment"),
                 TskData.FileKnown.valueOf(resultSet.getByte("known_status")),

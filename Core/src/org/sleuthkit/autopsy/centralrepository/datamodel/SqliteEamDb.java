@@ -362,15 +362,16 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     /**
      * Retrieves Data Source details based on data source device ID
      *
+     * @param correlationCase the current CorrelationCase used for ensuring uniqueness of DataSource
      * @param dataSourceDeviceId the data source device ID number
      *
      * @return The data source
      */
     @Override
-    public CorrelationDataSource getDataSourceDetails(String dataSourceDeviceId, CorrelationCase correlationCase) throws EamDbException {
+    public CorrelationDataSource getDataSourceDetails(CorrelationCase correlationCase, String dataSourceDeviceId) throws EamDbException {
         try{
             acquireSharedLock();
-            return super.getDataSourceDetails(dataSourceDeviceId, correlationCase);
+            return super.getDataSourceDetails(correlationCase, dataSourceDeviceId);
         } finally {
             releaseSharedLock();
         }               
