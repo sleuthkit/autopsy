@@ -344,7 +344,8 @@ public final class PostgresEamDbSettings {
         createCasesTable.append("examiner_email text,");
         createCasesTable.append("examiner_phone text,");
         createCasesTable.append("notes text,");
-        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL");
+        createCasesTable.append("foreign key (org_id) references organizations(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createCasesTable.append("CONSTRAINT case_uid_unique UNIQUE (case_uid)");
         createCasesTable.append(")");
 
         // NOTE: when there are few cases in the cases table, these indices may not be worthwhile
@@ -354,9 +355,11 @@ public final class PostgresEamDbSettings {
         StringBuilder createDataSourcesTable = new StringBuilder();
         createDataSourcesTable.append("CREATE TABLE IF NOT EXISTS data_sources (");
         createDataSourcesTable.append("id SERIAL PRIMARY KEY,");
+        createDataSourcesTable.append("case_id integer NOT NULL,");
         createDataSourcesTable.append("device_id text NOT NULL,");
         createDataSourcesTable.append("name text NOT NULL,");
-        createDataSourcesTable.append("CONSTRAINT device_id_unique UNIQUE (device_id)");
+        createDataSourcesTable.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
+        createDataSourcesTable.append("CONSTRAINT datasource_unique UNIQUE (case_id, device_id, name)");
         createDataSourcesTable.append(")");
 
         String dataSourceIdx1 = "CREATE INDEX IF NOT EXISTS data_sources_name ON data_sources (name)";
@@ -404,13 +407,13 @@ public final class PostgresEamDbSettings {
         StringBuilder createArtifactInstancesTableTemplate = new StringBuilder();
         createArtifactInstancesTableTemplate.append("CREATE TABLE IF NOT EXISTS %s (");
         createArtifactInstancesTableTemplate.append("id SERIAL PRIMARY KEY,");
-        createArtifactInstancesTableTemplate.append("case_id integer,");
-        createArtifactInstancesTableTemplate.append("data_source_id integer,");
+        createArtifactInstancesTableTemplate.append("case_id integer NOT NULL,");
+        createArtifactInstancesTableTemplate.append("data_source_id integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("value text NOT NULL,");
         createArtifactInstancesTableTemplate.append("file_path text NOT NULL,");
         createArtifactInstancesTableTemplate.append("known_status integer NOT NULL,");
         createArtifactInstancesTableTemplate.append("comment text,");
-        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (case_id, data_source_id, value, file_path),");
+        createArtifactInstancesTableTemplate.append("CONSTRAINT %s_multi_unique_ UNIQUE (data_source_id, value, file_path),");
         createArtifactInstancesTableTemplate.append("foreign key (case_id) references cases(id) ON UPDATE SET NULL ON DELETE SET NULL,");
         createArtifactInstancesTableTemplate.append("foreign key (data_source_id) references data_sources(id) ON UPDATE SET NULL ON DELETE SET NULL");
         createArtifactInstancesTableTemplate.append(")");
