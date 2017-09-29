@@ -156,7 +156,7 @@ class Ingester {
         try (BufferedReader reader = new BufferedReader(extractor.getReader(source));) {
             Chunker chunker = new Chunker(reader);
             for (Chunk chunk : chunker) {
-                if (context.fileIngestIsCancelled()) {
+                if (context != null && context.fileIngestIsCancelled()) {
                     logger.log(Level.INFO, "File ingest cancelled. Cancelling keyword search indexing of {0}", sourceName);
                     return false;
                 }
@@ -182,7 +182,7 @@ class Ingester {
             extractor.logWarning("Unexpected error, can't read content stream from " + sourceID + ": " + sourceName, ex);//NON-NLS
             return false;
         } finally {
-            if (context.fileIngestIsCancelled()) {
+            if (context != null && context.fileIngestIsCancelled()) {
                 return false;
             } else {
                 //after all chunks, index just the meta data, including the  numChunks, of the parent file
