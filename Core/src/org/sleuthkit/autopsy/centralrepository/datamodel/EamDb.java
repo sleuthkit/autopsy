@@ -152,7 +152,7 @@ public interface EamDb {
     /**
      * Creates new Case in the database from the given case
      *
-     * @param case The case to add
+     * @param autopsyCase The case to add
      */
     CorrelationCase newCase(Case autopsyCase) throws EamDbException;
 
@@ -314,7 +314,7 @@ public interface EamDb {
      * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param FileKnown   The status to change the artifact to
+     * @param knownStatus   The status to change the artifact to
      */
     void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException;
 
@@ -425,14 +425,6 @@ public interface EamDb {
      */
     void addReferenceInstance(EamGlobalFileInstance eamGlobalFileInstance, CorrelationAttribute.Type correlationType) throws EamDbException;
 
-    /**
-     * Add a new global file instance to the bulk collection
-     *
-     * @param eamGlobalFileInstance The global file instance to add
-     *
-     * @throws EamDbException
-     */
-//    void prepareGlobalFileInstance(EamGlobalFileInstance eamGlobalFileInstance) throws EamDbException;
     /**
      * Insert the bulk collection of Global File Instances
      *

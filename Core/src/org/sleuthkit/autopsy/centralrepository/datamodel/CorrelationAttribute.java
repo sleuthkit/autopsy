@@ -144,6 +144,8 @@ public class CorrelationAttribute implements Serializable {
     }
 
     /**
+     * Set the list of artifact instances
+     * 
      * @param artifactInstances the List of artifactInstances to set.
      */
     public void setInstances(List<CorrelationAttributeInstance> artifactInstances) {
@@ -154,7 +156,9 @@ public class CorrelationAttribute implements Serializable {
     }
 
     /**
-     * @param instance the instance to add
+     * Add an artifact instance to the list
+     * 
+     * @param artifactInstance the instance to add
      */
     public void addInstance(CorrelationAttributeInstance artifactInstance) {
         this.artifactInstances.add(artifactInstance);
@@ -209,7 +213,7 @@ public class CorrelationAttribute implements Serializable {
         /**
          * Determine if 2 Type objects are equal
          *
-         * @param otherType Type object for comparison.
+         * @param that Type object for comparison.
          *
          * @return true or false
          */

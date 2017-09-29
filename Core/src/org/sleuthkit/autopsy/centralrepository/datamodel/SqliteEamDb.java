@@ -268,7 +268,7 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      /**
      * Creates new Case in the database from the given case
      * 
-     * @param case The case to add
+     * @param autopsyCase The case to add
      */
     @Override
     public CorrelationCase newCase(Case autopsyCase) throws EamDbException {
@@ -412,7 +412,8 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
      *
-     * @param eamArtifact The type/value to look up (artifact with 0 instances)
+     * @param aType  The type of the artifact
+     * @param value  The correlation value
      *
      * @return List of artifact instances for a given type/value
      */
@@ -451,11 +452,12 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * Retrieves number of artifact instances in the database that are
      * associated with the ArtifactType and artifactValue of the given artifact.
      *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                    for
+     * @param aType The correlation type
+     * @param value The value to search for
      *
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
+     * @throws EamDbException 
      */
     @Override
     public Long getCountArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
@@ -482,10 +484,11 @@ public class SqliteEamDb extends AbstractSqlEamDb {
      * database that are associated with the artifactType and artifactValue of
      * the given artifact.
      *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                    for
+     * @param aType The correlation type
+     * @param value The value to search for
      *
      * @return Number of unique tuples
+     * @throws EamDbException
      */
     @Override
     public Long getCountUniqueCaseDataSourceTuplesHavingTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
@@ -557,10 +560,11 @@ public class SqliteEamDb extends AbstractSqlEamDb {
     }    
     
     /**
-     * Sets an eamArtifact instance as knownStatus = "Bad". If eamArtifact
+     * Sets an eamArtifact instance as the given knownStatus. If eamArtifact
      * exists, it is updated. If eamArtifact does not exist nothing happens
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
+     * @param knownStatus The known status of the artifact
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
