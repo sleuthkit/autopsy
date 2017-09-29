@@ -256,7 +256,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
     /**
      * Creates new Case in the database from the given case
      *
-     * @param case The case to add
+     * @param autopsyCase The case to add
      */
     @Override
     public CorrelationCase newCase(Case autopsyCase) throws EamDbException {
@@ -572,9 +572,11 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Retrieves eamArtifact instances from the database that are associated
      * with the eamArtifactType and eamArtifactValue of the given eamArtifact.
      *
-     * @param eamArtifact The type/value to look up (artifact with 0 instances)
+     * @param aType  The type of the artifact
+     * @param value  The correlation value
      *
      * @return List of artifact instances for a given type/value
+     * @throws EamDbException
      */
     @Override
     public List<CorrelationAttributeInstance> getArtifactInstancesByTypeValue(CorrelationAttribute.Type aType, String value) throws EamDbException {
@@ -673,8 +675,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * Retrieves number of artifact instances in the database that are
      * associated with the ArtifactType and artifactValue of the given artifact.
      *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                    for
+     * @param aType  The type of the artifact
+     * @param value  The correlation value
      *
      * @return Number of artifact instances having ArtifactType and
      *         ArtifactValue.
@@ -723,8 +725,8 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * database that are associated with the artifactType and artifactValue of
      * the given artifact.
      *
-     * @param eamArtifact Artifact with artifactType and artifactValue to search
-     *                    for
+     * @param aType  The type of the artifact
+     * @param value  The correlation value
      *
      * @return Number of unique tuples
      */
@@ -1017,7 +1019,7 @@ public abstract class AbstractSqlEamDb implements EamDb {
      * given status.
      *
      * @param eamArtifact Artifact containing exactly one (1) ArtifactInstance.
-     * @param FileKnown   The status to change the artifact to
+     * @param knownStatus   The status to change the artifact to
      */
     @Override
     public void setArtifactInstanceKnownStatus(CorrelationAttribute eamArtifact, TskData.FileKnown knownStatus) throws EamDbException {
