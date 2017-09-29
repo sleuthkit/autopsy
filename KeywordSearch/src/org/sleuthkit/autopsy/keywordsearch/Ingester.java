@@ -192,9 +192,9 @@ class Ingester {
                 //"parent" docs don't have chunk_size
                 fields.remove(Server.Schema.CHUNK_SIZE.toString());
                 indexChunk(null, sourceName, fields);
-                return true;
             }
         }
+        return true;
     }
 
     /**
