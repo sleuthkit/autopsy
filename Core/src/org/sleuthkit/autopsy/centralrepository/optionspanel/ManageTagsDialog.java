@@ -37,7 +37,7 @@ import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.casemodule.services.TagsManager;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -49,7 +49,7 @@ import org.sleuthkit.datamodel.TskData;
 /**
  * Instances of this class allow a user to select an existing hash database and
  * add it to the set of hash databases used to classify files as unknown, known,
- * or known bad.
+ * or notable.
  */
 final class ManageTagsDialog extends javax.swing.JDialog {
 
@@ -58,7 +58,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     /**
      * Displays a dialog that allows a user to select an existing hash database
      * and add it to the set of hash databases used to classify files as
-     * unknown, known, or known bad.
+     * unknown, known, or notable.
      */
     @Messages({"ManageTagDialog.title=Manage Tags",
         "ManageTagDialog.tagInfo.text=Select the tags that cause files and results to be recorded in the central repository. Additional tags can be created in the Tags options panel."})
@@ -273,11 +273,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
     }
     
     /**
-     * If the user sets a tag to "Implies known bad", give them the option to update
+     * If the user sets a tag to "Notable", give them the option to update
      * any existing tagged items (in the current case only) in the central repo.
      */
     public class CheckBoxModelListener implements TableModelListener {
-        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as known bad any files/results in the current case that have this tag?",
+        @Messages({"ManageTagsDialog.updateCurrentCase.msg=Mark as notable any files/results in the current case that have this tag?",
                     "ManageTagsDialog.updateCurrentCase.title=Update current case?",
                     "ManageTagsDialog.updateCurrentCase.error=Error updating existing central repository entries"})
         
@@ -309,7 +309,7 @@ final class ManageTagsDialog extends javax.swing.JDialog {
                                 dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                                 setArtifactsKnownBadByTag(tagName, Case.getCurrentCase());
                             } catch (EamDbException ex) {
-                                LOGGER.log(Level.SEVERE, "Failed to apply known bad status to current case", ex);
+                                LOGGER.log(Level.SEVERE, "Failed to apply notable status to artifacts in current case", ex);
                                 JOptionPane.showMessageDialog(null, Bundle.ManageTagsDialog_updateCurrentCase_error());
                             } finally {
                                 dialog.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -336,9 +336,8 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             List<BlackboardArtifactTag> artifactTags = curCase.getSleuthkitCase().getBlackboardArtifactTagsByTagName(tagName);                  
             
             for(BlackboardArtifactTag bbTag:artifactTags){
-                List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbTag.getArtifact(), true, 
-                        EamDb.getInstance().getCorrelationTypes(), true);
-                for (EamArtifact eamArtifact : convertedArtifacts) {
+                List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbTag.getArtifact(), true, true);
+                for (CorrelationAttribute eamArtifact : convertedArtifacts) {
                     EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact,TskData.FileKnown.BAD);
                 }
             }
@@ -346,9 +345,11 @@ final class ManageTagsDialog extends javax.swing.JDialog {
             // Now search for files
             List<ContentTag> fileTags = curCase.getSleuthkitCase().getContentTagsByTagName(tagName);
             for(ContentTag contentTag:fileTags){
-                final EamArtifact eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
+                final CorrelationAttribute eamArtifact = EamArtifactUtil.getEamArtifactFromContent(contentTag.getContent(), 
                             TskData.FileKnown.BAD, "");
-                EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
+                if(eamArtifact != null){
+                    EamDb.getInstance().setArtifactInstanceKnownStatus(eamArtifact, TskData.FileKnown.BAD);
+                }
             }
         } catch (TskCoreException ex){
             throw new EamDbException("Error updating artifacts", ex);

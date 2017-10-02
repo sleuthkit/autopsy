@@ -2,22 +2,22 @@
 
 \section cr_overview Overview
 
-The Central Repository allows a user to find matching artifacts both across cases and across data sources in the same case. 
-It is a combination of an ingest module that extracts, stores, and compares properties against lists of known or known bad 
+The central repository allows a user to find matching artifacts both across cases and across data sources in the same case. 
+It is a combination of an ingest module that extracts, stores, and compares properties against lists of notable 
 properties, a database that stores these properties, and an additional panel in Autopsy to display other instances of each 
-property. The Central Repository database can either be SQLite or PostgreSQL.
+property. The central repository database can either be SQLite or PostgreSQL.
 
 The following are some use cases for the Central Repository:
 - <b>Finding Other Instances of a Property</b>
  - If you find a file or Autopsy artifact (such as a Web History item), there is a content viewer in the bottom right that will show you other cases that had this same file or that had items with the same feature (such as Domain name).   You will also be able to see what other data sources in the same case had this feature. 
 - <b>Alerting When Previously Notable Properties Occur</b>
- - You can use the Central Repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as 'BAD' they will be added to the Interesting Items section of the tree when seen again in any future cases.
+ - You can use the Central Repository to record which properties were associated with files and artifacts that were evidence (or notable).  Once these properties have been tagged as notable they will be added to the Interesting Items section of the tree when seen again in any future cases.
 
 \section cr_terms Terms and Concepts
 
-- <b>Central Repository</b> - The Autopsy feature containing the Central Repository Database and Correlation Engine Ingest Module. Also responsible for displaying correlated properties to the user
+- <b>Central Repository</b> - The Autopsy feature containing the central repository database and Correlation Engine Ingest Module. Also responsible for displaying correlated properties to the user
 - <b>Central Repository Database</b> - the SQLite or PostgreSQL database that holds all the data
-- <b>Correlation Engine Ingest Module</b> - The ingest module responsible for adding new properties to the database and comparing these properties against the Known/Known Bad lists
+- <b>Correlation Engine Ingest Module</b> - The ingest module responsible for adding new properties to the database and comparing these properties against existing notable properties
 - <b>Property</b> - The data being stored/correlated. These can be file paths/MD5 hashes, email addresses, phone numbers, etc.
 
 \section cr_setup Setup
@@ -62,14 +62,14 @@ Enter or browse to a folder for the database. If the database file does not exis
 
 In Autopsy, you are allowed to define your own Tag names, tag files and artifacts,and add comments when you tag a file or artifact. The purpose of this 
 feature is to associate one or more of those tags with this module to be used for Correlation. Associating a tag with the Correlation Engine means 
-that when a file/artifact is tagged by the user, any property created from that file/artifact in the Correlation Database is marked as Bad. After 
-this point, whenever the Correlation Engine Ingest Module creates a property that matches this Bad one, it is automatically flagged 
+that when a file/artifact is tagged by the user, any property created from that file/artifact in the Correlation Database is marked as notable. After 
+this point, whenever the Correlation Engine Ingest Module creates a property that matches this notable one, it is automatically flagged 
 and added to the list of Interesting Items.
 
 \image html central_repo_manage_tags.png
 
-If a case is open, checking the Implies Known Bad checkbox will give you the option to add the known bad status to anything in the current case
-that has already been tagged. For example, if you create a tag named "Alpha", tag a few items and then go into Manage Tags and check the box for the Alpha tag, you can optionally choose to have the status for those tagged items changed in the Central Repository. The effect is the same as if you had checked the box in Manage Tags before tagging the items. Note that data from any previous cases will not be changed. 
+If a case is open, checking the Notable checkbox will give you the option to add the notable status to anything in the current case
+that has already been tagged. For example, if you create a tag named "Alpha", tag a few items and then go into Manage Tags and check the box for the Alpha tag, you can optionally choose to have the status for those tagged items changed in the central repository. The effect is the same as if you had checked the box in Manage Tags before tagging the items. Note that data from any previous cases will not be changed. 
 
 By default there is a tag called "Evidence" as the only tag associated with this module. To associate one or more tag(s) with this module, check the Correlate box next to the tag
 name(s) and click OK. To create additional tags, use the Tags options panel.
@@ -99,9 +99,9 @@ Descriptions of the property types:
 \subsection cr_ingest_module Correlation Engine Module
 
 The Correlation Engine ingest module is responsible for adding properties to the database and comparing each property 
-against the list of Known/Known Bad property. It is best to run all ingest modules to get the most out of the Correlation 
+against the list of notable properties. It is best to run all ingest modules to get the most out of the Correlation 
 Engine. For example, if Hash Lookup is not run then the Correlation Engine module will not put any files into the 
-database. If the Correlation Engine module is not run on a particular case but the Central Repository is enabled, 
+database. If the Correlation Engine module is not run on a particular case but a central repository is enabled, 
 there will still be some limited functionality. The Content Viewer will still display matching properties from 
 other cases/data sources where the Correlation Engine was run.
 
@@ -109,13 +109,13 @@ other cases/data sources where the Correlation Engine was run.
 
 Any file or artifact that a user tags with one of the tags associated with the Correlation Engine will be added 
 to the database as a file or artifact of interest. Any future data source ingest, where this module is enabled, 
-will use those files or artifacts as if they were part of the Known Bad list, causing matching files from that 
+will use those files or artifacts in a similar manner as a Known Bad hash set, causing matching files from that 
 ingest to be added to the Interesting Artifacts list in that currently open case.
 
 \image html central_repo_tag_file.png
 
 If a tag is accidentally added to a file or artifact, it can be removed though the context menu. This will remove its
-Known Bad status in the Central Repository.
+notable status in the Central Repository.
 
 \subsection cr_case_properties Edit Central Repository Case Properties
 
@@ -128,17 +128,17 @@ This is where the examiner can store a number of details about the case.
 
 \section cr_viewing_results Viewing Results
 
-Results from enabling the Central Repository and running the Correlation Engine Ingest Module can be seen in two places:
+Results from enabling a central repository and running the Correlation Engine Ingest Module can be seen in two places:
 - The Content Viewer for each file or artifact will display all matching properties from other cases/data sources
-- The Interesting Files node of the result tree will contain any files or results that matched properties previously flagged as BAD
+- The Interesting Files node of the result tree will contain any files or results that matched properties previously marked as notable
 
 \subsection cr_content_viewer Content Viewer
 
-The \ref content_viewer_page panel is where previous instances of properties are displayed. This module adds a new tab to the Content Viewer. The tab for this module is called "Other Data Sources". It can display data that is found in other cases, other data sources for the same case, or imported global artifacts.
+The \ref content_viewer_page panel is where previous instances of properties are displayed. This module adds a new tab to the Content Viewer. The tab for this module is called "Other Occurrences". It can display data that is found in other cases, other data sources for the same case, or imported global artifacts.
 
-If at least one other case or data source has been ingested with this module enabled, there is a potential that data will be displayed in the Other Data Sources content viewer. Note that the Correlation Engine Ingest Module does not have to have been run on the current data source to see correlated files from other cases/data sources. If the selected file or artifact is associated by one of the supported Correlation Types, to one or more file(s) or artifact(s) in the database, the associated files/artifacts will be displayed. Note: the Content Viewer will display ALL associated files and artifacts available in the database. It ignores the user's enabled/disabled Correlation Properties.
+If at least one other case or data source has been ingested with this module enabled, there is a potential that data will be displayed in the Other Occurrences content viewer. Note that the Correlation Engine Ingest Module does not have to have been run on the current data source to see correlated files from other cases/data sources. If the selected file or artifact is associated by one of the supported Correlation Types, to one or more file(s) or artifact(s) in the database, the associated files/artifacts will be displayed. Note: the Content Viewer will display ALL associated files and artifacts available in the database. It ignores the user's enabled/disabled Correlation Properties.
 
-By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Files/artifacts that are Known Bad will have a Red background, Unknown will have Yellow background, and Known will have a White background.
+By default, the rows in the content viewer will have background colors to indicate if they are known to be of interest. Files/artifacts that are notable will have a Red background, all others will have a White background.
 
 \image html central_repo_content_viewer.png
 
@@ -149,7 +149,7 @@ This menu has several options.
 -# Select All
 -# Export Selected Rows to CSV
 -# Show Case Details
--# Show Commonality Details
+-# Show Frequency
 
 <b>Select All</b>
 
@@ -173,13 +173,13 @@ details will include:
 - Case Creation Date
 - Case Examiner contact information
 - Case Examiner's notes
-T
-hese details would have been entered by the examiner of the selected case, by visiting
+
+These details would have been entered by the examiner of the selected case, by visiting
 the Case -> Central Repository Case Properties menu, when that case was open.
 
-<b>Show Commonality Details</b>
+<b>Show Frequency</b>
 
-The concept of Commonality simply means, how common is the selected file. The value is the percentage of case/data source tuples that have the selected file or artifact.
+This shows how common the selected file is. The value is the percentage of case/data source tuples that have the selected file or artifact.
 
 \subsection cr_interesting_items Interesting Items
 
@@ -187,11 +187,11 @@ In the Results tree of an open case is an entry called Interesting Items. When t
 
 \image html central_repo_interesting_items.png
 
-As an example, if the Files Correlatable Property is enabled, and the ingest is currently processing a file, for example "badfile.exe", and the MD5 hash for that file already exists in the database as a KNOWN BAD file, then an entry in the Interesting Items tree will be added for the current instance of "badfile.exe" in the data source currently being ingested.
+As an example, if the Files Correlatable Property is enabled, and the ingest is currently processing a file, for example "badfile.exe", and the MD5 hash for that file already exists in the database as a notable file, then an entry in the Interesting Items tree will be added for the current instance of "badfile.exe" in the data source currently being ingested.
 
 The same type of thing will happen for each enabled Correlatable Property.
 
-In the case of the phone number correlatable type, the Interesting Items tree will start a sub-tree for each phone number. The sub-tree will then contain each instance of that Known Bad phone number.
+In the case of the phone number correlatable type, the Interesting Items tree will start a sub-tree for each phone number. The sub-tree will then contain each instance of that notable phone number.
 
 
 

@@ -263,9 +263,11 @@
     <target name="build-installer" depends="getProps, doxygen, build-zip" description="Builds Autopsy installer.">
         <delete dir="${nbdist.dir}/${app.name}-installer" quiet="true"/>
         <unzip src="${nbdist.dir}/${app.name}-${app.version}.zip" dest="${nbdist.dir}/${app.name}-installer"/>
-        <!-- Disable the Experimental module by default for the installed version -->
+	    
+        <!-- Disable the Experimental module by default for the installed version.  Need to update .lastModified time for change to be seen. -->
         <replace file="${nbdist.dir}/${app.name}-installer/autopsy/config/modules/org-sleuthkit-autopsy-experimental.xml" token="&lt;param name=&quot;enabled&quot;&gt;true&lt;/param&gt;" value="&lt;param name=&quot;enabled&quot;&gt;false&lt;/param&gt;"/>
         <echo file="${nbdist.dir}/${app.name}-installer/autopsy/.lastModified" message="" />
+        
         <antcall target="build-installer-${os.family}" />
     </target>
 </project>

@@ -219,9 +219,8 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
      * @return The refreshed snapshot.
      */
     JobsSnapshot refreshJobsSnapshot() {
-        JobsSnapshot newJobsSnapshot = queryCoordinationService();
         synchronized (jobsLock) {
-            jobsSnapshot = newJobsSnapshot;
+            jobsSnapshot = queryCoordinationService();
             return jobsSnapshot;
         }
     }
@@ -278,14 +277,66 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     }
 
     /**
+     * Bumps the priority of all pending ingest jobs for a specified case.
+     *
+     * @param caseName The name of the case to be prioritized.
+     *
+     * @throws AutoIngestMonitorException If there is an error bumping the
+     *                                    priority of the jobs for the case.
+     * 
+     * @return The latest jobs snapshot.
+     */
+    JobsSnapshot prioritizeCase(final String caseName) throws AutoIngestMonitorException {
+        List<AutoIngestJob> prioritizedJobs = new ArrayList<>();
+        int highestPriority = 0;
+        synchronized (jobsLock) {
+            for (AutoIngestJob pendingJob : jobsSnapshot.getPendingJobs()) {
+                if (pendingJob.getPriority() > highestPriority) {
+                    highestPriority = pendingJob.getPriority();
+                }
+                if (pendingJob.getManifest().getCaseName().equals(caseName)) {
+                    prioritizedJobs.add(pendingJob);
+                }
+            }
+            if (!prioritizedJobs.isEmpty()) {
+                ++highestPriority;
+                for (AutoIngestJob job : prioritizedJobs) {
+                    String manifestNodePath = job.getManifest().getFilePath().toString();
+                    try {
+                        AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                        nodeData.setPriority(highestPriority);
+                        coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+                    } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
+                        throw new AutoIngestMonitorException("Error bumping priority for job " + job.toString(), ex);
+                    }
+                    job.setPriority(highestPriority);
+                }
+
+                /*
+                 * Publish a prioritization event.
+                 */
+                new Thread(() -> {
+                    eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
+                }).start();
+            }
+            return jobsSnapshot;
+        }
+    }
+
+    /**
      * Bumps the priority of an auto ingest job.
      *
      * @param job The job to be prioritized.
+     * 
+     * @throws AutoIngestMonitorException If there is an error bumping the
+     *                                    priority of the job.
+     * 
+     * @return The latest jobs snapshot.
      */
     JobsSnapshot prioritizeJob(AutoIngestJob job) throws AutoIngestMonitorException {
-        int highestPriority = 0;
-        AutoIngestJob prioritizedJob = null;
         synchronized (jobsLock) {
+            int highestPriority = 0;
+            AutoIngestJob prioritizedJob = null;
             /*
              * Get the highest known priority and make sure the job is still in
              * the pending jobs queue.
@@ -343,11 +394,10 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
         @Override
         public void run() {
             if (!Thread.currentThread().isInterrupted()) {
-                JobsSnapshot newJobsSnapshot = queryCoordinationService();
                 synchronized (jobsLock) {
-                    jobsSnapshot = newJobsSnapshot;
+                    jobsSnapshot = queryCoordinationService();
                     setChanged();
-                    notifyObservers(null);
+                    notifyObservers(jobsSnapshot);
                 }
             }
         }
@@ -471,7 +521,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
         }
 
     }
-
+    
     /**
      * Exception type thrown when there is an error completing an auto ingest
      * monitor operation.

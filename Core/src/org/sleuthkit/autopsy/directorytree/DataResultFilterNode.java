@@ -231,7 +231,7 @@ public class DataResultFilterNode extends FilterNode {
         final Node orig = getOriginal();
         String name = orig.getDisplayName();
         if ((orig instanceof BlackboardArtifactNode)) {
-            name = ((BlackboardArtifactNode) orig).getSrcName();
+            name = ((BlackboardArtifactNode) orig).getSourceName();
         }
         return name;
     }

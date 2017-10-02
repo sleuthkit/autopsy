@@ -41,7 +41,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param shouldCalculateHashes          Whether or not hashes should be
      *                                       calculated.
      * @param namesOfEnabledKnownHashSets    A list of enabled known hash sets.
-     * @param namesOfEnabledKnownBadHashSets A list of enabled known bad hash
+     * @param namesOfEnabledKnownBadHashSets A list of enabled notable hash
      *                                       sets.
      */
     HashLookupModuleSettings(boolean shouldCalculateHashes,
@@ -56,11 +56,11 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
      * @param shouldCalculateHashes           Whether or not hashes should be
      *                                        calculated.
      * @param namesOfEnabledKnownHashSets     A list of enabled known hash sets.
-     * @param namesOfEnabledKnownBadHashSets  A list of enabled known bad hash
+     * @param namesOfEnabledKnownBadHashSets  A list of enabled notable hash
      *                                        sets.
      * @param namesOfDisabledKnownHashSets    A list of disabled known hash
      *                                        sets.
-     * @param namesOfDisabledKnownBadHashSets A list of disabled known bad hash
+     * @param namesOfDisabledKnownBadHashSets A list of disabled notable hash
      *                                        sets.
      */
     HashLookupModuleSettings(boolean shouldCalculateHashes,
@@ -129,7 +129,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     }
 
     /**
-     * Get the names of all explicitly enabled known bad files hash sets.
+     * Get the names of all explicitly enabled notable files hash sets.
      *
      * @return The list of names.
      */
@@ -139,7 +139,7 @@ final class HashLookupModuleSettings implements IngestModuleIngestJobSettings {
     }
 
     /**
-     * Get the names of all explicitly disabled known bad files hash sets.
+     * Get the names of all explicitly disabled notable files hash sets.
      *
      * @return The list of names.
      */

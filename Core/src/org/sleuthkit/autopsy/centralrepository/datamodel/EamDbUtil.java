@@ -1,7 +1,20 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Central Repository
+ *
+ * Copyright 2015-2017 Basis Technology Corp.
+ * Contact: carrier <at> sleuthkit <dot> org
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.sleuthkit.autopsy.centralrepository.datamodel;
 
@@ -88,9 +101,9 @@ public class EamDbUtil {
         String sql = "INSERT INTO correlation_types(id, display_name, db_table_name, supported, enabled) VALUES (?, ?, ?, ?, ?)";
 
         try {
-            List<EamArtifact.Type> DEFAULT_CORRELATION_TYPES = EamArtifact.getDefaultCorrelationTypes();
+            List<CorrelationAttribute.Type> DEFAULT_CORRELATION_TYPES = CorrelationAttribute.getDefaultCorrelationTypes();
             preparedStatement = conn.prepareStatement(sql);
-            for (EamArtifact.Type newType : DEFAULT_CORRELATION_TYPES) {
+            for (CorrelationAttribute.Type newType : DEFAULT_CORRELATION_TYPES) {
                 preparedStatement.setInt(1, newType.getId());
                 preparedStatement.setString(2, newType.getDisplayName());
                 preparedStatement.setString(3, newType.getDbTableName());
@@ -217,7 +230,7 @@ public class EamDbUtil {
      *
      * @return Instance table name for this Type.
      */
-    public static String correlationTypeToInstanceTableName(EamArtifact.Type type) {
+    public static String correlationTypeToInstanceTableName(CorrelationAttribute.Type type) {
         return type.getDbTableName() + "_instances";
     }
 
@@ -228,7 +241,7 @@ public class EamDbUtil {
      *
      * @return Reference table name for this Type.
      */
-    public static String correlationTypeToReferenceTableName(EamArtifact.Type type) {
+    public static String correlationTypeToReferenceTableName(CorrelationAttribute.Type type) {
         return "reference_" + type.getDbTableName();
     }
 

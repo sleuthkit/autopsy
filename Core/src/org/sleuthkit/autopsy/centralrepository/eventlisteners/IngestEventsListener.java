@@ -34,7 +34,7 @@ import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.IngestServices;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
-import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifact;
+import org.sleuthkit.autopsy.centralrepository.datamodel.CorrelationAttribute;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamArtifactUtil;
 import org.sleuthkit.autopsy.centralrepository.datamodel.EamDbException;
 import org.sleuthkit.datamodel.AbstractFile;
@@ -49,9 +49,9 @@ import org.sleuthkit.autopsy.centralrepository.datamodel.EamDb;
  */
 public class IngestEventsListener {
 
-    private static final Logger LOGGER = Logger.getLogger(EamArtifact.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CorrelationAttribute.class.getName());
 
-    final Collection<String> addedCeArtifactTrackerSet = new LinkedHashSet<>();
+    final Collection<String> recentlyAddedCeArtifacts = new LinkedHashSet<>();
     private static int ceModuleInstanceCount = 0;
     private final PropertyChangeListener pcl1 = new IngestModuleEventListener();
     private final PropertyChangeListener pcl2 = new IngestJobEventListener();
@@ -131,34 +131,32 @@ public class IngestEventsListener {
                         if (null == bbArtifacts) { //the ModuleDataEvents don't always have a collection of artifacts set
                             return;
                         }
-                        List<EamArtifact> eamArtifacts = new ArrayList<>();
-                        try {
-                            for (BlackboardArtifact bbArtifact : bbArtifacts) {
-                                // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
-                                List<EamArtifact> convertedArtifacts = EamArtifactUtil.fromBlackboardArtifact(bbArtifact, true, dbManager.getCorrelationTypes(), true);
-                                for (EamArtifact eamArtifact : convertedArtifacts) {
-                                    try {
-                                        // Only do something with this artifact if it's unique within the job
-                                        if (addedCeArtifactTrackerSet.add(eamArtifact.toString())) {
-                                            // Was it previously marked as bad?
-                                            // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
-                                            // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
-                                            // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
-                                            List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
-                                            if (!caseDisplayNames.isEmpty()) {
-                                                postCorrelatedBadArtifactToBlackboard(bbArtifact,
-                                                        caseDisplayNames);
-                                            }
-                                            eamArtifacts.add(eamArtifact);
+                        List<CorrelationAttribute> eamArtifacts = new ArrayList<>();
+                        
+                        for (BlackboardArtifact bbArtifact : bbArtifacts) {
+                            // eamArtifact will be null OR a EamArtifact containing one EamArtifactInstance.
+                            List<CorrelationAttribute> convertedArtifacts = EamArtifactUtil.getCorrelationAttributeFromBlackboardArtifact(bbArtifact, true, true);
+                            for (CorrelationAttribute eamArtifact : convertedArtifacts) {
+                                try {
+                                    // Only do something with this artifact if it's unique within the job
+                                    if (recentlyAddedCeArtifacts.add(eamArtifact.toString())) {
+                                        // Was it previously marked as bad?
+                                        // query db for artifact instances having this TYPE/VALUE and knownStatus = "Bad".
+                                        // if gettKnownStatus() is "Unknown" and this artifact instance was marked bad in a previous case, 
+                                        // create TSK_INTERESTING_ARTIFACT_HIT artifact on BB.
+                                        List<String> caseDisplayNames = dbManager.getListCasesHavingArtifactInstancesKnownBad(eamArtifact.getCorrelationType(), eamArtifact.getCorrelationValue());
+                                        if (!caseDisplayNames.isEmpty()) {
+                                            postCorrelatedBadArtifactToBlackboard(bbArtifact,
+                                                    caseDisplayNames);
                                         }
-                                    } catch (EamDbException ex) {
-                                        LOGGER.log(Level.SEVERE, "Error counting known bad artifacts.", ex);
+                                        eamArtifacts.add(eamArtifact);
                                     }
+                                } catch (EamDbException ex) {
+                                    LOGGER.log(Level.SEVERE, "Error counting notable artifacts.", ex);
                                 }
                             }
-                        } catch (EamDbException ex) {
-                            LOGGER.log(Level.SEVERE, "Error getting correlation types.", ex);
                         }
+                        
                         if (FALSE == eamArtifacts.isEmpty()) {
                             // send update to entperirse artifact manager db
                             Runnable r = new NewArtifactsRunner(eamArtifacts);
@@ -180,10 +178,10 @@ public class IngestEventsListener {
             switch (IngestManager.IngestJobEvent.valueOf(evt.getPropertyName())) {
                 case DATA_SOURCE_ANALYSIS_COMPLETED: {
                     // clear the tracker to reduce memory usage
-                    // @@@ This isnt' entirely accurate to do here.  We could have multiple
-                    // ingest jobs at the same time
-                    addedCeArtifactTrackerSet.clear();
-
+                    if (getCeModuleInstanceCount() == 0) {
+                        recentlyAddedCeArtifacts.clear();
+                    }
+                    //else another instance of the Correlation Engine Module is still being run.
                 } // DATA_SOURCE_ANALYSIS_COMPLETED
                 break;
             }

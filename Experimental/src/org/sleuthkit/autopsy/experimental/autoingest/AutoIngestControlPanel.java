@@ -982,7 +982,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
             List<AutoIngestJob> completedJobs = new ArrayList<>();
             manager.getJobs(pendingJobs, runningJobs, completedJobs);
             // Sort the completed jobs list by completed date
-            Collections.sort(completedJobs, new AutoIngestJob.ReverseCompletedDateComparator());
+            Collections.sort(completedJobs, new AutoIngestJob.CompletedDateDescendingComparator());
             EventQueue.invokeLater(new RefreshComponentsTask(pendingJobs, runningJobs, completedJobs));
         }
     }
@@ -1570,7 +1570,7 @@ public final class AutoIngestControlPanel extends JPanel implements Observer {
                             JOptionPane.INFORMATION_MESSAGE);
                 } else if (CaseDeletionResult.PARTIALLY_DELETED == result) {
                     JOptionPane.showMessageDialog(this,
-                            String.format("Could not delete case %s. See system log for details.", caseName),
+                            String.format("Could not fully delete case %s. See system log for details.", caseName),
                             org.openide.util.NbBundle.getMessage(AutoIngestControlPanel.class, "AutoIngestControlPanel.DeletionFailed"),
                             JOptionPane.INFORMATION_MESSAGE);
                 }
