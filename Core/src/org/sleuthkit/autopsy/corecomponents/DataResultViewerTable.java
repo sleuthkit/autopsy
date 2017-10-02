@@ -79,7 +79,7 @@ public class DataResultViewerTable extends AbstractDataResultViewer {
     private static final Logger logger = Logger.getLogger(DataResultViewerTable.class.getName());
     @NbBundle.Messages("DataResultViewerTable.firstColLbl=Name")
     static private final String FIRST_COLUMN_LABEL = Bundle.DataResultViewerTable_firstColLbl();
-    private static final Color TAGGED_COLOR = new Color(200, 210, 220);
+    private static final Color TAGGED_COLOR = new Color(255, 255, 195);
     /**
      * The properties map:
      *
