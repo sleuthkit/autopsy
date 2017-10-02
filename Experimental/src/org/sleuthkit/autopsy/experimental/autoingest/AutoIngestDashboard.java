@@ -31,6 +31,7 @@ import java.util.logging.Level;
 import javax.swing.DefaultListSelectionModel;
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.SwingWorker;
@@ -336,6 +337,18 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
          * Prevent sorting when a column header is clicked.
          */
         runningTable.setAutoCreateRowSorter(false);
+
+        /*
+         * Create a row selection listener to enable/disable the Cancel Job
+         * button.
+         */
+        runningTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) {
+                return;
+            }
+            int row = runningTable.getSelectedRow();
+            this.cancelJobButton.setEnabled(row >= 0 && row < runningTable.getRowCount());
+        });
     }
 
     /**
@@ -467,7 +480,8 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 AutoIngestJob.StageDetails status = job.getProcessingStageDetails();
                 tableModel.addRow(new Object[]{
                     job.getManifest().getCaseName(), // CASE
-                    job.getManifest().getDataSourcePath().getFileName(), job.getProcessingHostName(), // HOST_NAME
+                    job.getManifest().getDataSourcePath().getFileName(), // DATA_SOURCE
+                    job.getProcessingHostName(), // HOST_NAME
                     job.getManifest().getDateFileCreated(), // CREATED_TIME
                     job.getProcessingStageStartDate(), // STARTED_TIME 
                     job.getCompletedDate(), // COMPLETED_TIME
@@ -662,6 +676,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         tbServicesStatusMessage = new javax.swing.JTextField();
         prioritizeJobButton = new javax.swing.JButton();
         prioritizeCaseButton = new javax.swing.JButton();
+        cancelJobButton = new javax.swing.JButton();
 
         org.openide.awt.Mnemonics.setLocalizedText(jButton1, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.jButton1.text")); // NOI18N
 
@@ -750,6 +765,7 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         prioritizeJobButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 prioritizeJobButtonActionPerformed(evt);
+
             }
         });
 
@@ -759,6 +775,14 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         prioritizeCaseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 prioritizeCaseButtonActionPerformed(evt);
+
+            }
+        });
+
+        org.openide.awt.Mnemonics.setLocalizedText(cancelJobButton, org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.cancelJobButton.text")); // NOI18N
+        cancelJobButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelJobButtonActionPerformed(evt);
             }
         });
 
@@ -784,7 +808,9 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(prioritizeJobButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(prioritizeCaseButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(cancelJobButton)))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(runningScrollPane, javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(completedScrollPane, javax.swing.GroupLayout.Alignment.LEADING))
@@ -812,8 +838,10 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(refreshButton)
+
                     .addComponent(prioritizeJobButton)
-                    .addComponent(prioritizeCaseButton))
+                    .addComponent(prioritizeCaseButton)
+                    .addComponent(cancelJobButton))
                 .addContainerGap())
         );
     }// </editor-fold>//GEN-END:initComponents
@@ -852,8 +880,19 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
     }//GEN-LAST:event_prioritizeJobButtonActionPerformed
 
+
+
+
+
+
+
     @Messages({
         "AutoIngestDashboard.PrioritizeCaseError=Failed to prioritize job \"%s\"."
+
+
+
+
+
     })
     private void prioritizeCaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prioritizeCaseButtonActionPerformed
         if (pendingTableModel.getRowCount() > 0 && pendingTable.getSelectedRow() >= 0) {
@@ -872,7 +911,48 @@ public final class AutoIngestDashboard extends JPanel implements Observer {
         }
     }//GEN-LAST:event_prioritizeCaseButtonActionPerformed
 
+    /**
+     * Handles a click on the Cancel Job button. Cancels the selected job.
+     *
+     * @param evt The button click event.
+     */
+    @Messages({
+        "AutoIngestDashboard.CancelJob=Cancel Job",
+        "AutoIngestDashboard.DoNotCancelJob=Do Not Cancel Job",
+        "AutoIngestDashboard.CancelJobAreYouSure=The currently running job will be canceled. Are you sure?",
+        "AutoIngestDashboard.ConfirmCancellationHeader=Confirm Cancellation",
+        "AutoIngestDashboard.CancelJobError=Failed to cancel job \"%s\"."
+    })
+    private void cancelJobButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelJobButtonActionPerformed
+        Object[] options = {
+            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.CancelJob"),
+            org.openide.util.NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.DoNotCancelJob")};
+        int reply = JOptionPane.showOptionDialog(this,
+                NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.CancelJobAreYouSure"),
+                NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.ConfirmCancellationHeader"),
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.WARNING_MESSAGE,
+                null,
+                options,
+                options[1]);
+        if (reply == 0) {
+            this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            AutoIngestJob job = (AutoIngestJob) (runningTableModel.getValueAt(runningTable.getSelectedRow(), JobsTableModelColumns.JOB.ordinal()));
+            JobsSnapshot jobsSnapshot;
+            try {
+                jobsSnapshot = autoIngestMonitor.requestJobCancellation(job);
+                refreshTables(jobsSnapshot);
+            } catch (AutoIngestMonitor.AutoIngestMonitorException ex) {
+                String errorMessage = String.format(NbBundle.getMessage(AutoIngestDashboard.class, "AutoIngestDashboard.CancelJobError"), job.getManifest().getFilePath());
+                logger.log(Level.SEVERE, errorMessage, ex);
+                MessageNotifyUtil.Message.error(errorMessage);
+            }
+            setCursor(Cursor.getDefaultCursor());
+        }
+    }//GEN-LAST:event_cancelJobButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton cancelJobButton;
     private javax.swing.JScrollPane completedScrollPane;
     private javax.swing.JTable completedTable;
     private javax.swing.JButton jButton1;

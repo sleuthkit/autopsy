@@ -55,7 +55,8 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
         AutoIngestManager.Event.JOB_STATUS_UPDATED.toString(),
         AutoIngestManager.Event.JOB_COMPLETED.toString(),
         AutoIngestManager.Event.CASE_PRIORITIZED.toString(),
-        AutoIngestManager.Event.JOB_STARTED.toString()}));
+        AutoIngestManager.Event.JOB_STARTED.toString(),
+        AutoIngestManager.Event.JOB_CANCELLATION_REQUEST.toString()}));
     private final AutopsyEventPublisher eventPublisher;
     private CoordinationService coordinationService;
     private final ScheduledThreadPoolExecutor coordSvcQueryExecutor;
@@ -125,6 +126,8 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             handleJobStatusEvent((AutoIngestJobStatusEvent) event);
         } else if (event instanceof AutoIngestJobCompletedEvent) {
             handleJobCompletedEvent((AutoIngestJobCompletedEvent) event);
+        } else if (event instanceof JobCancellationRequestEvent) {
+            handleJobCancellationRequestEvent((JobCancellationRequestEvent) event);
         } else if (event instanceof AutoIngestCasePrioritizedEvent) {
             handleCasePrioritizationEvent((AutoIngestCasePrioritizedEvent) event);
         } else if (event instanceof AutoIngestCaseDeletedEvent) {
@@ -135,7 +138,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     /**
      * Handles an auto ingest job started event.
      *
-     * @param event A auto ingest job started event.
+     * @param event An auto ingest job started event.
      */
     private void handleJobStartedEvent(AutoIngestJobStartedEvent event) {
         synchronized (jobsLock) {
@@ -149,7 +152,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     /**
      * Handles an auto ingest job status event.
      *
-     * @param event A auto ingest job status event.
+     * @param event An auto ingest job status event.
      */
     private void handleJobStatusEvent(AutoIngestJobStatusEvent event) {
         synchronized (jobsLock) {
@@ -167,7 +170,7 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
     /**
      * Handles an auto ingest job completed event.
      *
-     * @param event A auto ingest job completed event.
+     * @param event An auto ingest job completed event.
      */
     private void handleJobCompletedEvent(AutoIngestJobCompletedEvent event) {
         synchronized (jobsLock) {
@@ -175,6 +178,18 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
             jobsSnapshot.removePendingJob(job);
             jobsSnapshot.removeRunningJob(job);
             jobsSnapshot.addOrReplaceCompletedJob(job);
+            setChanged();
+            notifyObservers(jobsSnapshot);
+        }
+    }
+
+    /**
+     * Handles an auto ingest job cancellation request event.
+     *
+     * @param event An auto ingest job cancellation request event.
+     */
+    private void handleJobCancellationRequestEvent(JobCancellationRequestEvent event) {
+        synchronized (jobsLock) {
             setChanged();
             notifyObservers(jobsSnapshot);
         }
@@ -374,6 +389,50 @@ public final class AutoIngestMonitor extends Observable implements PropertyChang
                     eventPublisher.publishRemotely(new AutoIngestCasePrioritizedEvent(LOCAL_HOST_NAME, caseName));
                 }).start();
 
+            }
+            return jobsSnapshot;
+        }
+    }
+
+    /**
+     * Sends a request for a job to be cancelled to the client doing the ingest.
+     *
+     * @param job The job to be requested for cancellation.
+     */
+    JobsSnapshot requestJobCancellation(AutoIngestJob job) throws AutoIngestMonitorException {
+        synchronized (jobsLock) {
+            AutoIngestJob jobToCancel = null;
+            /*
+             * Find the job in the running jobs table.
+             */
+            for (AutoIngestJob runningJob : jobsSnapshot.getRunningJobs()) {
+                if (runningJob.equals(job)) {
+                    jobToCancel = runningJob;
+                    break;
+                }
+            }
+            
+            if(null != jobToCancel) {
+                jobToCancel.cancel();
+                
+                String manifestNodePath = job.getManifest().getFilePath().toString();
+                try {
+                    AutoIngestJobNodeData nodeData = new AutoIngestJobNodeData(coordinationService.getNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath));
+                    nodeData.setErrorsOccurred(true);
+                    nodeData.setProcessingStage(AutoIngestJob.Stage.CANCELLING);
+                    nodeData.setProcessingStageStartDate(jobToCancel.getProcessingStageStartDate());
+                    coordinationService.setNodeData(CoordinationService.CategoryNode.MANIFESTS, manifestNodePath, nodeData.toArray());
+                } catch (AutoIngestJobNodeData.InvalidDataException | CoordinationServiceException | InterruptedException ex) {
+                    throw new AutoIngestMonitorException("Error cancelling job " + job.toString(), ex);
+                }
+
+                /*
+                 * Publish a job cancellation request event.
+                 */
+                final AutoIngestJob cancelledJob = jobToCancel;
+                new Thread(() -> {
+                    eventPublisher.publishRemotely(new JobCancellationRequestEvent(cancelledJob));
+                }).start();
             }
             return jobsSnapshot;
         }

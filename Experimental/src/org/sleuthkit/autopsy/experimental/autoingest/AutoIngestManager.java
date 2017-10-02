@@ -128,7 +128,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         Event.JOB_STATUS_UPDATED.toString(),
         Event.JOB_COMPLETED.toString(),
         Event.CASE_PRIORITIZED.toString(),
-        Event.JOB_STARTED.toString()}));
+        Event.JOB_STARTED.toString(),
+        Event.JOB_CANCELLATION_REQUEST.toString()}));
     private static final long JOB_STATUS_EVENT_INTERVAL_SECONDS = 10;
     private static final String JOB_STATUS_PUBLISHING_THREAD_NAME = "AIM-job-status-event-publisher-%d";
     private static final long MAX_MISSED_JOB_STATUS_UPDATES = 10;
@@ -265,6 +266,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                     handleRemoteJobStatusEvent((AutoIngestJobStatusEvent) event);
                 } else if (event instanceof AutoIngestJobCompletedEvent) {
                     handleRemoteJobCompletedEvent((AutoIngestJobCompletedEvent) event);
+                } else if (event instanceof JobCancellationRequestEvent) {
+                    handleRemoteJobCancellationRequestEvent((JobCancellationRequestEvent) event);
                 } else if (event instanceof AutoIngestCasePrioritizedEvent) {
                     handleRemoteCasePrioritizationEvent((AutoIngestCasePrioritizedEvent) event);
                 } else if (event instanceof AutoIngestCaseDeletedEvent) {
@@ -352,6 +355,34 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         }
         setChanged();
         notifyObservers(Event.JOB_COMPLETED);
+    }
+    
+    /**
+     * Handles a cancellation request made by another node. If the current job
+     * is the job being requested for cancellation, the job will be cancelled.
+     *
+     * @param event An job cancellation request event from another auto ingest
+     * node.
+     */
+    private void handleRemoteJobCancellationRequestEvent(JobCancellationRequestEvent event) {
+        String hostName = event.getJob().getProcessingHostName();
+        hostNamesToLastMsgTime.put(hostName, Instant.now());
+        hostNamesToRunningJobs.remove(hostName);
+        synchronized (jobsLock) {
+            AutoIngestJob job = event.getJob();
+            if(currentJob.equals(job)) {
+                currentJob.cancel();
+                SYS_LOGGER.log(Level.INFO, String.format("The job '%s' has been cancelled.", currentJob.getManifest().getDataSourcePath().getFileName()));
+            }
+            else {
+                if(completedJobs.contains(job)) {
+                    completedJobs.remove(job);
+                }
+                completedJobs.add(job);
+            }
+        }
+        setChanged();
+        notifyObservers(Event.JOB_CANCELLATION_REQUEST);
     }
 
     /**
@@ -1946,6 +1977,9 @@ public final class AutoIngestManager extends Observable implements PropertyChang
                 }
                 synchronized (jobsLock) {
                     if (!retry) {
+                        if(completedJobs.contains(currentJob)) {
+                            completedJobs.remove(currentJob);
+                        }
                         completedJobs.add(currentJob);
                     }
                     eventPublisher.publishRemotely(new AutoIngestJobCompletedEvent(currentJob, retry));
@@ -2899,7 +2933,8 @@ public final class AutoIngestManager extends Observable implements PropertyChang
         CASE_DELETED,
         PAUSED_BY_REQUEST,
         PAUSED_FOR_SYSTEM_ERROR,
-        RESUMED
+        RESUMED,
+        JOB_CANCELLATION_REQUEST
     }
 
     /**
