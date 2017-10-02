@@ -493,10 +493,9 @@ final class RegexQuery implements KeywordSearchQuery {
             }
 
             /*
-             * Create an account artifact.
+             * Create an account instance.
              */
             try {
-                //newArtifact = content.newArtifact(BlackboardArtifact.ARTIFACT_TYPE.TSK_ACCOUNT);
                 AccountInstance ccAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
                 newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccountInstance.getArtifactId());
             } catch (TskCoreException ex) {
