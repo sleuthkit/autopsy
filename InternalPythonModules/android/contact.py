@@ -46,7 +46,7 @@ from org.sleuthkit.datamodel import Account
 import traceback
 import general
 
-deviceAccount = None
+deviceAccountInstance = None
 
 """
 Locates a variety of different contacts databases, parses them, and populates the blackboard.
@@ -64,8 +64,8 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
             ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
             deviceID = ds.getDeviceId()
 
-            global deviceAccount
-            deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            global deviceAccountInstance
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "contacts.db")
             absFiles.addAll(fileManager.findFiles(dataSource, "contacts2.db"))
@@ -146,11 +146,11 @@ class ContactAnalyzer(general.AndroidComponentAnalyzer):
                     artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_EMAIL, general.MODULE_NAME, data1))
                     acctType = Account.Type.EMAIL
 
-                # Create an account
-                contactAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(acctType, data1, general.MODULE_NAME, abstractFile);
+                # Create an account instance
+                contactAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(acctType, data1, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [contactAccount], artifact);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [contactAccountInstance], artifact);
 
                 oldName = name
 

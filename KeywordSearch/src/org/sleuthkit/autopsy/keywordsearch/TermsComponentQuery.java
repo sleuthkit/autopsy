@@ -33,11 +33,13 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.TermsResponse.Term;
+import org.sleuthkit.autopsy.casemodule.Case;
 import org.sleuthkit.autopsy.coreutils.Logger;
 import org.sleuthkit.autopsy.coreutils.Version;
 import org.sleuthkit.autopsy.datamodel.CreditCards;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -346,7 +348,6 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * Parse the credit card account attributes from the snippet for the
              * hit.
              */
-            attributes.add(new BlackboardAttribute(ATTRIBUTE_TYPE.TSK_ACCOUNT_TYPE, MODULE_NAME, Account.Type.CREDIT_CARD.getTypeName()));
             Map<BlackboardAttribute.Type, BlackboardAttribute> parsedTrackAttributeMap = new HashMap<>();
             Matcher matcher = CREDIT_CARD_TRACK1_PATTERN.matcher(hit.getSnippet());
             if (matcher.find()) {
@@ -409,7 +410,8 @@ final class TermsComponentQuery implements KeywordSearchQuery {
              * Create an account artifact.
              */
             try {
-                newArtifact = content.newArtifact(ARTIFACT_TYPE.TSK_ACCOUNT);
+                AccountInstance ccAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.CREDIT_CARD, ccnAttribute.getValueString() , MODULE_NAME, content);
+                newArtifact = Case.getCurrentCase().getSleuthkitCase().getBlackboardArtifact(ccAccountInstance.getArtifactId());
             } catch (TskCoreException ex) {
                 LOGGER.log(Level.SEVERE, "Error adding artifact for account to blackboard", ex); //NON-NLS
                 return null;

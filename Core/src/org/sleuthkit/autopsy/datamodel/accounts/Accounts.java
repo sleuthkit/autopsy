@@ -71,6 +71,7 @@ import org.sleuthkit.autopsy.ingest.IngestManager;
 import org.sleuthkit.autopsy.ingest.ModuleDataEvent;
 import org.sleuthkit.datamodel.AbstractFile;
 import org.sleuthkit.datamodel.Account;
+import org.sleuthkit.datamodel.AccountInstance;
 import org.sleuthkit.datamodel.BlackboardArtifact;
 import org.sleuthkit.datamodel.BlackboardArtifact.ARTIFACT_TYPE;
 import org.sleuthkit.datamodel.BlackboardAttribute;
@@ -1427,7 +1428,8 @@ final public class Accounts implements AutopsyVisitableItem {
             final Collection<? extends BlackboardArtifact> artifacts = Utilities.actionsGlobalContext().lookupAll(BlackboardArtifact.class);
             artifacts.forEach(artifact -> {
                 try {
-                    skCase.setReviewStatus(artifact, newStatus);
+                    AccountInstance accountInstance = skCase.getCommunicationsManager().getAccountInstance(artifact);
+                    accountInstance.setReviewStatus(newStatus);
                 } catch (TskCoreException ex) {
                     LOGGER.log(Level.SEVERE, "Error changing artifact review status.", ex); //NON-NLS
                 }

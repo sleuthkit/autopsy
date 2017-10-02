@@ -47,7 +47,7 @@ from org.sleuthkit.datamodel import Account
 import traceback
 import general
 
-deviceAccount = None
+deviceAccountInstance = None
 
 """
 Finds database with SMS/MMS messages and adds them to blackboard.
@@ -65,8 +65,8 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
             ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
             deviceID = ds.getDeviceId()
 
-            global deviceAccount
-            deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            global deviceAccountInstance
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "mmssms.db")
             for abstractFile in absFiles:
@@ -118,10 +118,10 @@ class TextMessageAnalyzer(general.AndroidComponentAnalyzer):
                 artifact.addAttribute(BlackboardAttribute(BlackboardAttribute.ATTRIBUTE_TYPE.TSK_MESSAGE_TYPE, general.MODULE_NAME, "SMS Message"))
 
                 # Create an account
-                msgAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
+                msgAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.PHONE, address, general.MODULE_NAME, abstractFile);
 
                 # create relationship between accounts
-                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccount, [msgAccount], artifact);
+                Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().addRelationships(deviceAccountInstance, [msgAccountInstance], artifact);
 
                 bbartifacts.append(artifact)
                 try:

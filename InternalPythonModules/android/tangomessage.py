@@ -46,7 +46,7 @@ from org.sleuthkit.datamodel import Account
 import traceback
 import general
 
-deviceAccount = None
+deviceAccountInstance = None
 
 """
 Locates database for the Tango app and adds info to blackboard.
@@ -63,8 +63,8 @@ class TangoMessageAnalyzer(general.AndroidComponentAnalyzer):
             ds = Case.getCurrentCase().getSleuthkitCase().getDataSource(datasourceObjId)
             deviceID = ds.getDeviceId()
 
-            global deviceAccount
-            deviceAccount = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().getOrCreateAccount(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
+            global deviceAccountInstance
+            deviceAccountInstance = Case.getCurrentCase().getSleuthkitCase().getCommunicationsManager().createAccountInstance(Account.Type.DEVICE, deviceID, general.MODULE_NAME, dataSource)
 
             absFiles = fileManager.findFiles(dataSource, "tc.db")
             for abstractFile in absFiles:
