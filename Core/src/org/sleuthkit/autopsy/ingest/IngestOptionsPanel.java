@@ -41,11 +41,11 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
         "IngestOptionsPanel.profilesTab.text=Profiles",
         "IngestOptionsPanel.profilesTab.toolTipText=Settings for creating and editing profiles."})
 
-    private FilesSetDefsPanel filterPanel;
+    private FilesSetDefsPanel filterPanel = null;
     private final static int INDEX_OF_FILTER_PANEL = 0;
-    private IngestSettingsPanel settingsPanel;
+    private IngestSettingsPanel settingsPanel = null;
     private final static int INDEX_OF_SETTINGS_PANEL = 2;
-    private ProfileSettingsPanel profilePanel;
+    private ProfileSettingsPanel profilePanel = null;
     private final static int INDEX_OF_PROFILE_PANEL = 1;
     private int indexOfPreviousTab;
     /**
@@ -63,9 +63,9 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
     }
 
     private void customizeComponents() {
-        filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
-        settingsPanel = new IngestSettingsPanel();
-        profilePanel = new ProfileSettingsPanel();
+        if (filterPanel == null) filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
+        if (settingsPanel == null) settingsPanel = new IngestSettingsPanel();
+        if (profilePanel == null) profilePanel = new ProfileSettingsPanel();
 
         tabbedPane.insertTab(NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.text"), null,
                 filterPanel, NbBundle.getMessage(IngestOptionsPanel.class, "IngestOptionsPanel.fileFiltersTab.toolTipText"), INDEX_OF_FILTER_PANEL);
@@ -140,6 +140,9 @@ public class IngestOptionsPanel extends IngestModuleGlobalSettingsPanel implemen
 
     @Override
     public void addPropertyChangeListener(PropertyChangeListener l) {
+        if (filterPanel == null) filterPanel = new FilesSetDefsPanel(PANEL_TYPE.FILE_INGEST_FILTERS);
+        if (settingsPanel == null) settingsPanel = new IngestSettingsPanel();
+        if (profilePanel == null) profilePanel = new ProfileSettingsPanel();
         filterPanel.addPropertyChangeListener(l);
         settingsPanel.addPropertyChangeListener(l);
         profilePanel.addPropertyChangeListener(l);
